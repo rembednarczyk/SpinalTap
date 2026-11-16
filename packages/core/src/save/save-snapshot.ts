@@ -5,8 +5,11 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
- * v41: W-3's loud way (ADR-0082 stage 3b): the contract's `charges`, `planting`, `fuseTick`,
+ * v42: W-3's loud way (ADR-0082 stage 3b): the contract's `charges`, `planting`, `fuseTick`,
  * `detonated` and `alarmTick`, optional; the hunt and the wrecks are plain flags.
+ * v41: what a fight leaves between two steps (G-883), optional: an entity's velocity and its blow
+ * in progress (`velocity`, `melee`), and the player's posture, gun, time in the air and dash
+ * (`stance`). An older save loads as before, everyone at rest.
  * v40: the sabotage of W-3 (ADR-0082 stage 3): the contract's `route` and `seenLeaving`, optional;
  * an entity's quickhack effects still running (`hackFx`, G-882), optional.
  * v39: the docks rebuilt as Tessen's sector W-3 (ADR-0082 stage 1): no new fields, but an older
@@ -82,7 +85,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 41;
+export const SAVE_SCHEMA_VERSION = 42;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -132,6 +135,75 @@ export interface EntitySnapshot {
    * through a save. Absent when none runs.
    */
   readonly hackFx?: { readonly pinged: number; readonly blind: number; readonly crippled: number };
+  /** Its velocity (G-883, v41): a fleeing civilian keeps its course, the player her speed in the air. Absent at rest. */
+  readonly velocity?: Vec3;
+  /** Its blow in progress, its guard or its stagger (ADR-0019, G-883, v41). Absent at rest. */
+  readonly melee?: MeleeSnapshot;
+  /** The player's posture, gun and time in the air (G-883, v41). The player only. */
+  readonly stance?: StanceSnapshot;
+}
+
+/**
+ * A character's melee between two steps (ADR-0019, G-883): the swing, the combo, the guard, the
+ * stagger, the parry and the knockback, so a loaded game strikes when the saved one would.
+ */
+export interface MeleeSnapshot {
+  readonly phase: "idle" | "windup" | "recovery";
+  /** Seconds left of the phase. */
+  readonly timer: number;
+  /** Index of the strike in the weapon's combo. */
+  readonly strike: number;
+  /** Seconds left in which the next strike follows on. */
+  readonly combo: number;
+  readonly queued: boolean;
+  readonly stagger: number;
+  /** The stagger is a parry's (a takedown from any side). */
+  readonly stunned: boolean;
+  readonly guard: boolean;
+  readonly parry: number;
+  readonly parryCooldown: number;
+  /** The push of the last blow taken, m/s, and its seconds left. */
+  readonly knock: { readonly x: number; readonly z: number; readonly time: number };
+}
+
+/**
+ * The player between two steps (G-883): transient until v41 (ADR-0016), so a game saved crouched,
+ * mid-reload, mid-jump or mid-dash went on otherwise after loading (she fired at once).
+ */
+export interface StanceSnapshot {
+  /** The crouch held, and how far down she is, 0..1. */
+  readonly crouched: boolean;
+  readonly crouch: number;
+  readonly sprinting: boolean;
+  /** Aiming down sights held, and how far the sights are up, 0..1. */
+  readonly aiming: boolean;
+  readonly aim: number;
+  /** Her gun: put away, seconds left of the reload and of the draw, and the spread of recent shots. */
+  readonly holstered: boolean;
+  readonly reloading: number;
+  readonly drawing: number;
+  readonly bloom: number;
+  /** Vertical speed in the air, m/s, and the highest feet height of the time in it (ADR-0021). */
+  readonly fall?: number;
+  readonly airPeak?: number;
+  /** Seconds left of the slow walk after a hard landing. */
+  readonly landing?: number;
+  /** Coyote time and a jump pressed too early, seconds left. */
+  readonly jump?: { readonly coyote: number; readonly buffer: number };
+  /** The dash and the deflection (ADR-0033). */
+  readonly perks?: PerkSnapshot;
+}
+
+/** The dash, its cooldown, the stamina and the second heart's wait (ADR-0033). */
+export interface PerkSnapshot {
+  readonly dash: number;
+  readonly dashDir: { readonly x: number; readonly z: number };
+  readonly dashCooldown: number;
+  readonly airDash: boolean;
+  readonly dashFlight: boolean;
+  readonly iframes: number;
+  readonly stamina: number;
+  readonly secondHeart: number;
 }
 
 /**

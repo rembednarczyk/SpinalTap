@@ -26,7 +26,7 @@ export const findContractError = (c: unknown): string | null => {
 
 const tick = (n: unknown): boolean => Number.isInteger(n) && (n as number) >= 0;
 
-/** The loud way's fields (ADR-0082 stage 3b, v41): its charges on distinct stations, at most three; the planting, fuse, blast and alarm. */
+/** The loud way's fields (ADR-0082 stage 3b, v42): its charges on distinct stations, at most three; the planting, fuse, blast and alarm. */
 const findLoudError = (c: Json): string | null => {
   const charges = c.charges;
   if (charges !== undefined && (!Array.isArray(charges) || charges.length > SABOTAGE_LOUD.charges || !charges.every(isW3Station) || new Set(charges).size !== charges.length)) return "contract charges";

@@ -30,6 +30,8 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   // The scanner's card takes the left column of a phone held sideways (G-433); the stick still works.
   const scanning = useUi((s) => s.scanning);
+  // So does the contract card, down to the weapon strip (G-846); the ring is only a hint.
+  const briefing = useUi((s) => s.debrief !== null);
 
   const end = () => {
     setOrigin(null);
@@ -66,7 +68,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
           <div className="touch__knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
         </div>
       )}
-      {!origin && !scanning && <div className="touch__stick-hint">{t("touch.move")}</div>}
+      {!origin && !scanning && !briefing && <div className="touch__stick-hint">{t("touch.move")}</div>}
     </div>
   );
 };

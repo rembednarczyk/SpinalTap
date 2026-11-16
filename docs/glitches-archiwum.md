@@ -2,6 +2,534 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
+- Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
+- Opis: Zgłoszenie użytkownika 15.11. vest-plate (garment-addons.ts) to dwa prostopadłościany na kości chest w stałym miejscu (at 0,-0,05,0,085, size 0,78), nieświadome kształtu ciała. Decyzja użytkownika: kamizelka jako powłoka z ubrania modelu (jak buildVest/buildShell w model-apron.ts), plus osobny research ubrań jako assetów (ADR).
+- Status: naprawione (16.11, 603 scalony); wcześniej: gotowe na gałęzi (3b1d870), zrzuty do akceptacji użytkownika; wcześniej: w naprawie (powłoka z ubrania modelu, gałąź ccr-ec2c4269-ilh8k8-g870; docelowo asset wg ADR-0086); wcześniej: nowy
+- Pakiet właściciela: packages/engine/src/renderer
+- powłoka-płyta z Tops (model-apron.ts PLATE, przycinanie model-shell-clip.ts, 3b1d870); test vest-plate-model.test.ts: przed Seki 272 z 505 wierzchołków do 3,3 cm przed płytą, po 0 w 4 pozach na Seki, gangerze i pliku Kaito; mori.vrm 4 mm, nie nosi kamizelki
+
+### G-873 Graf poziomów: brak testu, że krawędzie nie przekraczają REACH 120 m
+- Ważność: S4 · Zasięg: packages/sim/src/world/nav.ts (REACH), graf W-3, S7, metro, Alchemia
+- Opis: PR #592 (3ac9856): attach w nav.ts testował linię wzroku do węzłów metra Targowa 1,74 km dalej (946 fałszywych przejść przez ziemię, 2,9 s z 4,0 s testów reinforcement-sidestep). Poprawka REACH 120 m (najdłuższa krawędź 84 m). Brakuje testu, który pilnuje, że nowe krawędzie grafu mieszczą się w REACH.
+- Status: naprawione (15.11, 601 scalony); wcześniej: w PR #601; wcześniej: nowy
+- Pakiet właściciela: packages/sim
+
+### G-658 Jezdnie w kształcie „lizaka” mają samoprzecinający się obrys
+- Status: naprawione (15.11, 559 scalony); wcześniej: zgłoszone (12.11, naprawiacz G-654)
+- Ważność: S4 · Zasięg: w173489056, w179269926, w296752325, w360030910, w1561106064 (drogi serwisowe z pętlą zamkniętą na własnym węźle); `simplePieces` z #433 celowo ich nie tnie, bo pocięcie odsłania lukę w cięciu chodnika w Nabrzeżu przy (2696; 299), +1 próbka `landuse-bare`; razem z tym wypełnienie zewnętrznych rogów na stykach kawałków dróg (proste końce `bufferLine`, do 1 m² na róg); nabrzeze-1-1 (12.11): `ground-ring-self-cross` droga (road) 14 punktów (2685; 280) i `kerb-fill-wide-estimated` 7 kwadratów (708 próbek), skupisko (2695; 300), obok miejsca (2696; 299) z G-658; niepotwierdzone, że ta sama droga.
+- Pakiet właściciela: tools/osm-import
+- 15.11 przesiew po kluczach skanu: ground-ring-self-cross 30 → 8 (#509) → 1 (#559, podział płaszczyzny gruntu ADR-0078 etap 3); żadna z pięciu pętli w173489056, w179269926, w296752325, w360030910, w1561106064 nie ma już klucza (jedyny został stare-miasto-1-0 742,-97).
+
+### G-837 Zygzaki i schodki krawędzi chodnika przy jezdni i zebrze
+- Ważność: S3 · Zasięg: kerb-jag 55 trafień w 42 kwadratach 10 m; Podzamcze 18, Krakowskie 16, Nabrzeże 6, Stare Miasto 2
+- Opis: cutSidewalk tnie chodnik próbkowaniem co 0,5 m, a krawężnik składa się z pasów kerbFills/widened: schodki i zygzaki, zwłaszcza przy zebrach i narożnikach. Kontrola w PR #581; zrzuty scratchpad/jag/final/f7–f10
+- Status: naprawione (15.11, #588 scalony); wcześniej: naprawione (#588); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g837, 906eb3d, czeka na przegląd kuratora); wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+- 15.11: kerb-jag 55 -> 16 (14 kwadratów); kontrola liczy łuk między wierzchołkami obrysu, po dogęszczeniu co 0,5 m wzdłuż krawężnika 81 -> 43, przy zebrach 123 -> 109; kontrolę trzeba dogęścić (PR #581) przed scaleniem; zostają zebry (G-836) i kliny narożników (G-845); 30 obiektów przy krawężniku przesuniętych o 0,2–1,0 m do przeglądu kuratora
+- Przegląd kuratora 15.11 @ 906eb3d: ZGODNE. Krawędź jezdni wobec krawężnika na ortofoto: średnio +0,14 → −0,09 m (2025-04), +0,17 → −0,03 m (2024-06); 49 przesuniętych obiektów, żaden na jezdni ani zebrze; latarnie, drzewa i słupy na jezdni w mieście 17 → 16. Parkometr n9596789942 (T-306).
+
+### G-820 Brak rzędów słupków z łańcuchami wzdłuż ulic Śródmieścia poza punktami z OSM (reguła dla centrum, decyzja użytkownika 15.11)
+- Ważność: S3 (proponowana; rozpoznawalność Krakowskiego i Śródmieścia) · Zasięg: Krakowskie i Stare Miasto poza murami: ok. 3650 m osi ulic tertiary/residential, ok. 7300 m krawężnika; po przerwach szacunkowo 3600–4400 m rzędu, ok. 2000–2400 słupków (dziś 373, z OSM)
+- Opis: Użytkownik 15.11: słupki z łańcuchami stoją wzdłuż każdej większej ulicy Śródmieścia i całego Krakowskiego Przedmieścia. OSM ma tylko część (368 węzłów, 16 linii, 0 barrier=chain i 0 tagów chain w czterech dzielnicach). Reguła deterministyczna: (1) obszar: dzielnice krakowskie i stare-miasto, bez wnętrza murów Starego Miasta i bez dróg pieszych/living_street bez krawężnika; Podzamcze i Nabrzeże tylko z OSM; (2) klasy: jezdnie tertiary, residential, unclassified (i wyższe w tym obszarze) po obu stronach, na krawędzi chodnika 0,35 m od krawężnika; place i deptaki (Pl. Łokietka, Pl. Wolności, Pl. Litewski) na swojej granicy z jezdnią, z zawinięciem narożnika po łuku; (3) rozstaw 1,8 m (przedział 1,5–2,2), na odcinku między przerwami równy: n = round(L/1,8), pierwszy i ostatni słupek 0,5 m od przerwy; (4) przerwy: przejście dla pieszych (pasma crossing-bands) +0,5 m z każdej strony, wjazd (droga service, barrier=gate, tunnel=building_passage, wejście z entrances.json typu garage/service) szerokość +1 m, skrzyżowanie od stycznej łuku narożnika (wyjątek: narożnik placu), przystanek autobusowy/trolejbusowy na długości peronu +5 m, postój taksówek i pas parkingowy (parking:lane/parking:both, amenity=parking przy krawężniku) bez rzędu, drzewo w rzędzie, latarnia i słup trakcji w rzędzie jako punkt zaczepu łańcucha (jak G-032); ogródek kawiarniany nie przerywa rzędu; (5) słupek z OSM w 1,0 m od pozycji reguły zastępuje ją (OSM jako kotwica i uzupełnienie); węzły OSM poza linią krawężnika zostają pojedynczo, bez łańcucha; (6) łańcuch tylko gdy chodnik za rzędem (krawężnik do najbliższej ściany, muru, płotu, poręczy) ma ≥3,0 m albo rząd graniczy z placem/deptakiem; węższy chodnik, poręcz za rzędem albo spadek ulicy >6%: słupki bez łańcucha, gęściej co 1,4 m (wzór: Wyszyńskiego, GSV 2025). Ryzyka: brakujące w OSM wjazdy i pasy parkingowe (fałszywe rzędy przed bramami), kawiarnie zajmujące krawężnik, nowsze ulice z donicami zamiast słupków, uwięzienie pieszych i AI (rząd z łańcuchem zamyka jezdnię poza przejściami); budżet rysowania (instancje). T-303
+- Status: naprawione (15.11, #573 scalony); wcześniej: naprawione (#573); wcześniej: w PR #573 (przegląd kuratora runda 2: ZGODNE; resztki G-831, G-832, G-833); wcześniej: runda 2 (PR #573): P1 podwójne rzędy, P2 parkowanie prostopadłe, P3 przystanki, P4 Wyszyńskiego, P5 narożniki; wcześniej: w PR #573 (przegląd kuratora); wcześniej: zgłoszone (kurator 15.11, decyzja użytkownika 15.11; do przeglądu kuratora z próbką 5 ulic na zdjęciach)
+- Pakiet właściciela: tools/osm-import (props-gen, props-rows; nowa reguła jak lit dla latarni G-798)
+- Test przyjęcia: test reguły na Pl. Łokietka (rząd x≈439 od −45 do −113 z przerwą na przejście), Pl. Wolności (rząd zgodny z węzłami OSM ±1 m) i ulicy z wąskim chodnikiem (bez łańcucha); kontrole skanu: kerb-bollard-gap (odcinek krawężnika tertiary/residential w obszarze dłuższy niż 6 m bez słupka i bez powodu przerwy) i bollard-blocks-mouth (słupek albo łańcuch w paśmie przejścia, wjazdu lub drzwi pojazdów przystanku), baza po wdrożeniu 0; budżety e2e bez wzrostu draw calls
+- Przegląd kuratora 15.11 (gałąź ccr-ec2c4269-ilh8k8-g820, 15fc2a4): NIEZGODNE, poprawki w tym PR. P1 podwójne rzędy: 212 słupków reguły stoi 1–2,5 m od słupka OSM/G-818 obok jego rzędu (3 Maja 82, Królewska 43, Pl. Wolności 33, Narutowicza 15; zrzuty krolewska i plac-wolnosci pokazują dwa rzędy), kontrola: słupek reguły z istniejącym słupkiem w 1–2,5 m, baza 0. P2 parkowanie prostopadłe/skośne i na chodniku spoza OSM: rzędy z łańcuchem przez stanowiska na Karmelickiej (obie strony), Peowiaków (pn. strona) i Cichej (skośne zatoki) na ortofoto 2025-04; równoległy pas parkowania przy krawężniku rzędu nie wyklucza (Kapucyńska, Lubartowska). P3 przystanek: 11 m symetrycznie za mało za słupkiem dla trolejbusu 18 m (Lubartowska (454; 16): autobus 10–20 m od słupka wzdłuż rzędu); proponowane 20 m pod prąd i 5 m z prądem. P4 Wyszyńskiego: 9 z 14 słupków z łańcuchem, GSV 2025 (zdjęcie 7287a04c) pokazuje całą zachodnią stronę bez łańcucha z płotem za rzędem. P5 brak zawinięcia rzędu po łuku narożnika placu (Pl. Wolności, zdjęcie 2f717e7d), punkt (2) definicji. Zgodne: Królewska przy Ratuszu, 3 Maja, Radziwiłłowska pn. (cienie słupków na ortofoto), Krakowskie (-200..-104) bez rzędów przy parkowaniu prostopadłym i żywopłotach; Ogród Saski leży poza mapą (x < -200).
+- Przegląd kuratora rundy 2 (15.11, d8638c2): ZGODNE. P1 kerb-bollard-double-row 173→2 (plan przy Bramie Krakowskiej), P3, P4 (Wyszyńskiego zach. bez łańcucha) i P5 przyjęte; P2 łapie Cichą, Karmelicką wsch. i Peowiaków. Reszta jako S4 bez blokowania: G-831 Karmelicka zach. (ok. 50 m rzędu przez stanowiska), G-832 fałszywe wyłączenia z cieni (3 Maja 24 m, Staszica 15 m, Narutowicza 18 m potwierdzone na nalocie 2024-06; Radziwiłłowska 43 m niepewne, auta skośnie na przedpolu), G-833 łańcuch nie zawija łuku placu.
+
+### G-813 Pasy parkowania Świętoduskiej w1514058888/89/90 bez aut
+- Ważność: S4 · Zasięg: Świętoduska, 3 pasy (0 aut z 6,4 / 3,2 / 1,6 oczekiwanych), ten sam stan na main
+- Opis: Odsłonięte przez kontrolę bay-strip-sparse przy G-804 (nowa latarnia przy krawężniku). Prawdopodobnie ten sam spadek co w1514058885 (G-133).
+- Status: naprawione (15.11, #574 scalony); wcześniej: odrzucone, duplikat G-190 (przegląd S4 15.11: sonda surfaceY pod autem wzdłuż ulicy daje spadek 0,25–0,35 m > LEVEL_DROP 0,15 m na wszystkich trzech pasach, ta sama przyczyna co w1514058885; w skanie przeniesione do bay-strip-empty-known, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6bab190); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-817 Latarnia z linii przesunięta z jezdni lub ściany traci 7 m odstępu scalania
+- Ważność: S4 · Zasięg: linie latarni planu przy offRoad/offWall; widoczność w mieście niesprawdzona
+- Opis: fromLine w props-gen działa po tożsamości obiektu, więc latarnia przesunięta przez offRoad/offWall dostaje odstęp 0,3 m zamiast 7 m.
+- Status: naprawione (15.11, #574 scalony); wcześniej: naprawione (#574); wcześniej: w PR #574; wcześniej: w poprawce (przegląd S4 15.11, gałąź ccr-ec2c4269-ilh8k8-s4-batch-1, 6a4e9af: odstęp scalania pytany o element tak, jak go postawiono; tablica bez zmian, dziś w mieście brak przypadku); wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-gen)
+
+### G-806 Drzewa przy ścianach rysowane niżej niż NMPT: korona nie może urosnąć przy budynku (18 miejsc tree-height-vs-nmpt)
+- Ważność: S4 · Zasięg: 18 drzew 0,5–5,3 m od ściany, rysowane z ziarna 7–12 m, NMPT 12–26 m
+- Opis: Gałąź ccr-ec2c4269-ilh8k8-tree-heights (wysokości drzew z NMPT EVRF2007): drzewa przy ścianach mają pomiar, ale korona przy budynku nie może urosnąć ponad rozmiar z ziarna; 18 kluczy tree-height-vs-nmpt przyjętych świadomie jako dotąd niewidoczne (brak pomiaru przed zmianą). Ortofoto (kwiecień) nie potwierdza korony przy 4 z nich — część może być dachem z przesuniętym obrysem. Poprawka: węższa korona przy ścianie w rendererze (wariant drzewa) albo odrzut odczytów z dachów.
+- Status: naprawione (15.11, #576 scalony); wcześniej: naprawione (#576, 9c36d5e); wcześniej: w PR #576; wcześniej: zgłoszone (14.11, raport agenta wysokości drzew)
+- Pakiet właściciela: packages/engine (drzewa), tools/osm-import (measureTree)
+- Test przyjęcia: tree-height-vs-nmpt wraca do ≤ 6 bez nowych kluczy tree-unmeasured
+- Kurator 14.11: 15 z 18 kluczy to realne drzewa przy ścianach (NMPT przy pniu ≥ 9 m), zgoda na osobne zadanie; 3 klucze (−123,24) n2416068304, (176,139) n2410102295 i (160,155) n2410102343 to błędy pomiaru (sąsiad lub dach), schodzą z poprawką bufora dachu przed scaleniem.
+
+### G-814 Drzewo przy ścianie rysowane w rozmiarze z ziarna zamiast największej korony, która się mieści
+- Ważność: S4 · Zasięg: 35 drzew OSM (tree-unmeasured) i 79 wierzchołków reguły koron (G-797)
+- Opis: treeVariant (#558) wraca do plainTreeVariant, gdy korona z pomiaru nie mieści się przy ścianach; reguła koron pomija przez to duże drzewa przy budynkach, np. (700, 570).
+- Status: naprawione (15.11, #576 scalony); wcześniej: naprawione (#576, 9c36d5e); wcześniej: w PR #576; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (tree-heights)
+- Runda 2 G-797: 41 wierzchołków prawdziwych drzew przy ścianach nadal pomijanych (z listy kuratora zostały 2 z 16).
+- Kurator r2 (2b26e13): z 22 prawdziwych drzew przy ścianach z rundy 1 zostaje 8 (c92, c345, c350, c357, c585, c623, c626, c639), 2 zastąpione drzewem w 3 m (c641, c1159); bez drzewa: (351,5; −64,5), (409,5; 145,5), (406,5; 148,5), (740,5; −190,5), (530,5; 128,5), (530,5; 110,5), (530,5; 515,5), (577,5; 418,5), (832,5; 488,5), (2555,5; 84,5), (2349,5; 465,5), (2317,5; 444,5) — kandydaci na test przyjęcia.
+
+### G-815 Drzewa reguły koron na okapach, dachach podwórek, budowach, krytym targu i krawędziach pomostów (T-300)
+- Ważność: S3 · Zasięg: ok. 28 drzew na okapach/dachach (z 57 wskazanych przez sondę), 20 w landuse=construction (12 na stanie surowym Zielona 5a), 3 w Targu „Bazar” w67502759, 3 przy pomostach; wszystkie dzielnice
+- Opis: Reguła crown-trees.ts (G-797) stawia drzewo na wierzchołku korony liczonym tylko po komórkach dopuszczonych, więc piksel okapu przy wyższym dachu (NMPT = maks. z 4 komórek 0,5 m; obrys OSM 1–3 m mniejszy niż dach; przybudówki spoza OSM) staje się wierzchołkiem, a ortofoto daje canopy na miedzi, mchu, pnączach i cieniu podwórek. Przykłady: c152 (117,5; 72,5) 9,4 m na miedzianym dachu, c81 (375,5; −262,5), c86 (385,5; −139,5) przybudówka z pnączem, c273 (497,5; 13,5), c595 (608,5; 569,5). Budowa Zielona 5a (w770678456, w1382552286): drzewa 6–16 m na płaskowyżu stanu surowego. Targ „Bazar”: c592, c593, c594 po 4,0 m w alejkach między dachami straganów. Pomosty: c441, c452 (kładka ok. x 778, z 202), c937 (most nad Bystrzycą x 2451, z 421) — CHM = pomost. Nakładki: scratchpad/topo-g797/eave0.png, eave1.png, budowy.png, targ.png, decks.png, zoom2.png; raport scratchpad/topo-g797-raport.md
+- Status: naprawione (15.11, #567 scalony); wcześniej: w PR #567; wcześniej: w ponownym przeglądzie (gałąź ccr-ec2c4269-ilh8k8-g797, 2b26e13): K1 28 → 1, K3 5 → 0, lista kuratora: 12 znika, 6 zostaje; wcześniej: nowe (przegląd kuratora G-797, 15.11); do poprawy w gałęzi G-797 przed scaleniem albo osobno
+- Pakiet właściciela: tools/osm-import (crown-trees.ts, crown-ground.ts)
+- Test przyjęcia: drzewa reguły: żaden pień w obrysie OSM building (bez ruins), landuse=construction, amenity=marketplace (kontrola K1, baza 27 → 0); żaden do 2 m od pomostu (K3, baza 5 → 0); wierzchołek nie łączy się plateau CHM (bez spadku o 1 m) z obrysem budynku w 3,5 m albo ma lokalne maksimum surowego CHM — lista z raportu: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają, a c345, c350, c357, c585, c623, c639 zostają
+- Przegląd kuratora r2 15.11 (2b26e13): ZGODNE z uwagami. Test przyjęcia spełniony: c13, c51, c81, c86, c152, c159, c165, c198, c221, c244, c273, c595 znikają; c345, c350, c357, c585, c623, c639 zostają. Z 29 dachów/okapów rundy 1 zostają 3: c134 (−173,5; −14,5) to jednak małe drzewo w podwórzu (ortofoto 2024-06), c575 wątpliwe, c588 dach garaży; resztki w G-827. Targ, Zielona 5a, pomosty, doki: 0 drzew. Raport scratchpad/topo-g797r2-raport.md.
+
+### G-797 Drzewa tylko z węzłów OSM: 496 kwadratów korony z ortofoto bez drzewa w grze (ADR-0077 krok 5)
+- Ważność: S3 · Zasięg: całe miasto; najgorzej nabrzeże (9% korony w zasięgu drzew) i podzamcze (11%); obejmuje G-207
+- Opis: Krok 5 ADR-0077 niewdrożony: drzewa wyłącznie z natural=tree i tree_row przez plan; modele drzew GUGiK LoD1 2023 ani NMPT nie są używane. Pomiar 14.11 (audyt ADR-0077): klasy canopy/canopyHard data/orto, promień 6 m. T-292
+- Status: naprawione (15.11, #567 scalony); wcześniej: w PR #567 (przegląd kuratora runda 2: ZGODNE z uwagami); wcześniej: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g797, dffa980): canopy-without-tree 481 → 112, drzewa 640 → 1812; wcześniej: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props), tools/gugik
+- Test przyjęcia: kontrola canopy-without-tree (kwadrat 10 m, ≥ 40 m² korony, ≥ 80% dalej niż 6 m od drzewa gry), baza 496, spada; 0 drzew na drogach, schodach i w budynkach
+- Przegląd kuratora 15.11 (dffa980): NIEZGODNE z poprawkami. Próbka 32 drzew: 26 zgodnych, 1 na dachu, 3 na okapach, 2 wątpliwe. Skarpa N Zamku 2 → 44 drzew (korony rysowane 36% wobec CHM 46%), skarpa S 0 → 49 (29% wobec 36%), Plac Litewski 100 → 131 (29% wobec 26%), nabrzeże zgodne. Zabytki niezasłonięte (Brama Krakowska, Trybunał, Brama Grodzka, Kaplica, Donżon: 0 nowych w 10 m). Ruiny Rybna 12 zarośnięte, zgodne. Poprawki: P1 okapy i dachy podwórek, P2 budowy (landuse/building=construction), P3 kryty targ (amenity=marketplace), P4 odstęp 2 m od pomostów — wszystkie w G-815 / T-300; P5 wykluczyć CLEARED_BUILDINGS (112 drzew w dokach T-002 usuwa dopiero clearOfGame, a liczą się w 1812 i w skanie). Raport scratchpad/topo-g797-raport.md, nakładki scratchpad/topo-g797/.
+
+### G-117 Dach całego obrysu przykrywa wyższą część z OSM (ryzalit Ratusza)
+- Status: naprawione (15.11, #571 scalony); wcześniej: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S3 (proponowana; Ratusz z Placu Łokietka) · Zasięg: 1 w mieście (Ratusz); części kościoła Dominikanów przykryte ścianami, ale ich dachy wychodzą ponad połać · Koszt: średni
+- Gdzie: ryzalit w619138853 (414.8, −79.4) na Ratuszu w66264120; T-065
+- Dowód: dach czterospadowy z `addHipRoof` nad całym obrysem od y 17,1 do 24,0; nad środkiem ryzalitu 22,6, a szczyt ryzalitu 20,3 (bez dachu). Widać tylko pas 1,6 m przy okapie
+- Przyczyna: `stackParts` stawia część z OSM na bryle (`soffit` = ściany obrysu), a renderer kryje dachem cały obrys, także pod częściami wyższymi od niego
+- Pakiet właściciela: packages/engine (mapcity/roof-plan) albo przepis zabytku ADR-0062 etap 4
+- Test przyjęcia: połać obrysu nie wchodzi nad obrys części, która jest wyższa od ścian obrysu i dochodzi do jego krawędzi (dach kończy się na ścianach ryzalitu); kontrola `part-buried-in-roof` 1 → 0
+
+### G-818 Rzędy słupków z OSM (drogi barrier=bollard) zredukowane do jednego słupka albo pominięte
+- Ważność: S3 (proponowana; Plac Łokietka przed Ratuszem, Królewska, Krakowskie) · Zasięg: 16 dróg OSM, 383 m: 14 daje po 1 słupku (plan 29.10), 2 (w1090997949, w1090997950, 63 m, Krakowskie z −246…−209) brak; szacunkowo ok. 200 słupków brakuje
+- Opis: OSM ma rzędy słupków jako linie barrier=bollard bez otagowanych węzłów (w1514057822 Pl. Łokietka 439,−89…−45 43,6 m; w1514057825 439,−113…−99; w1514057826/27/28 Królewska; w1514057829–33 i w1302893330 Królewska przy Katedrze 547…612,−203…−211, 66,7 m; w1514057837 Krakowskie 362…392,−21…−27; w1514057823 Lubartowska; w1024029950 Podzamcze). fetch.ts/furniture.ts bierze tylko węzły (FURNITURE_TAGS), plan ma każdą linię jako jeden punkt. Przed Ratuszem gra stawia 3 słupki z 1 łańcuchem (438,9…439,0; −91,9…−99,5) i 1 przy −65,9; ortofoto 2025-04 i zdjęcie GSV 2025 pokazują ciągły rząd z łańcuchami co 1,5–1,8 m od −45 do −113. T-301
+- Status: naprawione (15.11, #570 scalony); wcześniej: w PR #570 (krótki przegląd kuratora); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g818); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
+- Pakiet właściciela: tools/osm-import (fetch, furniture, props-gen)
+- Test przyjęcia: każda droga barrier=bollard w czterech dzielnicach daje słupki wzdłuż linii co ≤2,0 m (przerwy na przejścia jak w props-rows), łańcuchy według reguły G-032; kontrola skanu osm-bollard-line-missing: droga barrier=bollard z mniej niż długość/2,5 słupkami w 0,8 m od linii, baza 16
+
+### G-819 Słupek z łańcuchem jako gruby granitowy graniastosłup zamiast smukłego czarnego słupka żeliwnego z kulą
+- Ważność: S4 (proponowana; charakterystyczny mebel Lublina, zgłoszenie użytkownika 15.11) · Zasięg: wszystkie słupki miasta (373 na main, 275 z łańcuchem)
+- Opis: furniture.ts BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 }, prop-street.ts: kwadratowy trzon 0,34 m z granitu #8e8d88 z czapą-piramidą, łańcuch 4-boczną rurą r 0,018 na 0,74 m ze zwisem 1/20 przęsła. W Lublinie (GSV 2025 Pl. Łokietka i Pl. Wolności, Lublin360 2017): czarny słupek żeliwny, okrągły trzon ok. Ø 0,10 m (u stopy kołnierz ok. Ø 0,15 m, wys. 0,15 m), głowica kulista ok. Ø 0,12 m z małym zwieńczeniem, wysokość ok. 0,95 m, uchwyt łańcucha ok. 0,75 m, łańcuch ogniwowy (drut 8–10 mm, ogniwo ok. 50 × 80 mm, widoczny pas 4–5 cm), zwis ok. 0,15 m na przęśle 1,8 m (ok. 1/10–1/12). Kolizja r 0,17 zamiast ok. 0,08. T-302
+- Status: naprawione (15.11, #569 scalony); wcześniej: w PR #569; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g819); wcześniej: zgłoszone (kurator 15.11, audyt słupków)
+- Pakiet właściciela: packages/sim (content/lublin/furniture.ts: BOLLARD, kolizja) i packages/engine (mapcity/prop-street.ts)
+- Test przyjęcia: BOLLARD: trzon okrągły Ø 0,10–0,12, wysokość 0,90–1,00, głowica kulista, czarne żeliwo; łańcuch o widocznej szerokości 0,04–0,05 m (ogniwa albo dwie skrzyżowane wstęgi), zwis 1/10 przęsła; kolizja z promienia trzonu; zrzut z modelami w dzień przy Pl. Łokietka obejrzany przez kuratora; warstwa 2077 (pasek światła) zostaje
+
+### G-828 Kontrole skanu wolne pod obciążeniem CI (paving-overlap, kerb-fill-wide-estimated)
+- Ważność: S3 · Zasięg: CI shard testów jednostkowych; main 76cd282 i PR #564
+- Opis: Po #559 i #565 kawałków gruntu przybyło, a kontrole przeglądają liniowo listy całego miasta; paving-overlap G-301 naprawione w #566 (4,9 s → 0,1 s), kerb-fill-wide-estimated ok. 11 s lokalnie i ponad 20 s w CI. Poprawka: indeks przestrzenny, bez podnoszenia limitów.
+- Status: naprawione (15.11, #566, #568 scalony); wcześniej: w PR #568 (paving-overlap naprawione w #566); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-scan-speed)
+- Pakiet właściciela: tools/glitch-scan
+
+### G-821 Przesunięcie stacji lit przy G-812 stawia 3 latarnie lamp-road na jezdni według ortofoto (Mełgiewska, Al. Solidarności, Lwowska)
+- Ważność: S3 · Zasięg: gałąź ccr-ec2c4269-ilh8k8-lit-edge (406efb1): ziarno 5849 (2320,5; 307,1), 32338 (531,5; 398,9), nowa 55187 (1119,3; 445,2)
+- Opis: Przegląd kuratora G-810/G-812 (ortofoto 2025-04, nakładka scratchpad/topo-lit-bad.png, topo-lit-sheet10.png). Zmiana padded przesuwa stacje reguły lit na długich drogach. 5849: przed na chodniku z kostki po południowej stronie Mełgiewskiej w931927880 (2308,6; 302,4), po w klinie między Mełgiewską a łącznicą Andersa w40051729 (po 3,9 m od obu osi), w rzeczywistości na asfalcie pasa włączania. 32338: przed na trawniku przy przejściu (523,3; 389,2), po 5,5 m od osi Al. Solidarności w215609082 (3 pasy), w rzeczywistości na pasach do skrętu poszerzonej jezdni. 55187 (nowa): 5,2 m od osi Lwowskiej w139586648 (3 pasy), na przejściu dla pieszych przy rondzie Ojca Piotra, ok. 1,3 m w głąb jezdni. Pozostałe 17 zmian (park, pastoral, 1807, 25057, 55863, 21231, 65452, 31521 zamiast 44642 i 65094 z jezdni Podzamcza) stoją na chodnikach, ścieżkach albo ich skraju.
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR #564 (02d0180): stacje jak na main, zmienia się jedna latarnia; wcześniej: zgłoszone (przegląd kuratora 15.11); do poprawy w gałęzi lit-edge przed scaleniem albo osobno
+- Pakiet właściciela: tools/osm-import (props-lit, props-gen)
+- Test przyjęcia: żadna latarnia lamp-road z gałęzi nie stoi w klasie asfalt/jezdnia ortofoto 2025-04 dalej niż 0,5 m od krawędzi; ziarna 5849, 32338, 55187 wracają na chodnik albo trawnik za krawężnikiem
+- Rejestr topografii: T-304.
+
+### G-812 Przebieg uzupełniający lit wydłuża ciemny odcinek poza brzeg mapy i uznaje sąsiedni chodnik za oświetlony
+- Ważność: S4 · Zasięg: w185762620 / w232464409, 10 m przy (455..470; 150..160)
+- Opis: Znalezione przy G-804: linia przebiegu uzupełniającego reguły lit sięga poza brzeg mapy; chodnik obok liczy się jako oświetlony, choć latarnia tam nie staje (lit-street-dark +2 na gałęzi g804).
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 406efb1): padded tylko po punktach na mapie; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-810 Reguła latarni lit stawia latarnię na brzegu mapy z y 0, gdy krawędź Mełgiewskiej przesunie się o 2,5 cm
+- Ważność: S3 · Zasięg: Mełgiewska w225998472, wschodni brzeg mapy (2700; 93,5)
+- Opis: Znalezione w PR 10 runda 2 (ADR-0080): przesunięcie krawędzi jezdni o 2,5 cm sprawia, że reguła lit (#557, props-lit / props-lit-spot) stawia latarnię poza terenem z y = 0; props.test pada. Mełgiewska trzymana na HELD jako obejście. Reguła powinna odrzucać punkt poza mapą albo bez wysokości terenu.
+- Status: naprawione (15.11, #564 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-lit-edge, 0c0c5fd): chunk sprawdzany po zaokrągleniu punktu; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-802 Staszica: chodniki OSM pod zmierzonym asfaltem po szerokościach z ortofoto (gałąź ADR-0080 PR 10)
+- Ważność: S2 · Zasięg: Staszica i ulice, gdzie chodnik OSM leży bliżej osi niż krawężnik na ortofoto; sidewalk-under-carriageway 29 -> 34
+- Opis: Gałąź ccr-ec2c4269-ilh8k8-adr80-pr10: zmierzona jezdnia 8,3 m przykrywa oba chodniki (w1261814240 bliżej osi niż krawężnik). Wg odpowiedzi użytkownika 13.11 pierwszeństwo ma ortofoto, więc chodnik powinien przesunąć się na krawężnik, co jest zakresem ADR-0080 PR 7; do tego czasu takie ulice zostają w HELD.
+- Status: naprawione (15.11, #565 scalony); wcześniej: zgłoszone (14.11, raport agenta PR 10)
+- Pakiet właściciela: tools/osm-import (street-section, orto widths)
+- Test przyjęcia: sidewalk-under-carriageway nie rośnie wobec main po zastosowaniu tabeli szerokości
+
+### G-804 Latarnie reguły lit: strona z kierunku rysowania OSM, Narutowicza tylko z jednej strony
+- Ważność: S4 · Zasięg: ulice tertiary/residential reguły SIDE, m.in. Narutowicza, Peowiaków
+- Opis: props-lit SIDE stawia lampy po lewej względem kierunku drogi w OSM; Narutowicza ma w rzeczywistości słupy przy obu krawężnikach co ok. 34 m (ortofoto 2025-04). Propozycja: strona z przejętej linii planu, sides 2 dla ulic z chodnikami separate po obu stronach i jezdnią ponad ok. 10 m. T-297
+- Status: naprawione (15.11, #563 scalony); wcześniej: w PR #563 (przegląd kuratora: ZGODNE); wcześniej: w przeglądzie kuratora (gałąź ccr-ec2c4269-ilh8k8-g804, 642425d); wcześniej: zgłoszone (14.11, przegląd kuratora G-798)
+- Pakiet właściciela: tools/osm-import (props-lit)
+
+### G-808 Podgląd menu pobiera seki.vrm drugi raz (własna ModelLibrary) już na ekranie tytułowym, równolegle z miastem
+- Ważność: S3 · Zasięg: start gry, słabe łącze
+- Opis: PreviewStage ma własną ModelLibrary i pobiera 7 MB seki.vrm drugi raz równolegle z plikami miasta; dubluje transfer i zwiększa szansę na limit bezczynności (G-807).
+- Status: naprawione (14.11, #562 scalony); wcześniej: w PR #562; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g808); wcześniej: nowe
+- Pakiet właściciela: packages/engine/src/renderer
+
+### G-809 Limit bezczynności pobierania modelu liczy czas w kolejce przeglądarki
+- Ważność: S3 · Zasięg: słabe łącze (8 Mbit/s)
+- Opis: Zegar bezczynności w fetchModelBytes startuje przed wysłaniem żądania; czas w kolejce przeglądarki (6 połączeń na host) liczy się jako przestój, co daje fałszywe 'no data for 30 s' (G-807).
+- Status: naprawione (14.11, #561 scalony); wcześniej: w PR #561; wcześniej: nowe
+- Pakiet właściciela: packages/engine/src/renderer
+
+### G-807 Seki w grze zostaje proceduralnym szkieletem zamiast modelu seki.vrm
+- Ważność: S2 · Zasięg: postać gracza, cała gra (zgłoszenie użytkownika 14.11)
+- Opis: Użytkownik widzi w grze (APK lub Render) proceduralną Seki z brył zamiast modelu VRM. Pliki models/manifest.json i models/seki.vrm są na Renderze (HTTP 206, typy JSON i x-world/x-vrml). Do ustalenia: widok (TPP, FPP, menu), urządzenie, od kiedy; podejrzane zmiany: #504 (ręce FPP z modelu), #539 (kompilacja za ekranem ładowania), #546, ADR-0076 4b (zwalnianie plików, limit na telefonie).
+- Status: naprawione (14.11, #560 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g807, 903fd0e): ponawianie pobrania modelu po błędzie; wcześniej: w diagnozie
+- Pakiet właściciela: packages/engine/src/renderer (character-models, model-library), packages/app
+- Przyczyna: jedno nieudane pobranie seki.vrm zostawiało Seki proceduralną do końca sesji (CharacterModels.dress tylko ostrzegał; PreviewStage ustawiał dressFailed na stałe). Bez zakłóceń sieci nie odtwarza się; odtwarza się przy 8 Mbit/s i przerwanych żądaniach. Do potwierdzenia u użytkownika: widok i łącze; w APK pliki są lokalne.
+
+### G-803 Krawężnik poszerzonej jezdni 0,4 m za daleko od osi, ząbki (ADR-0078 etap 3)
+- Ważność: S3 · Zasięg: ok. 1,9 km krawężnika z kerbFills, cała mapa
+- Opis: Po podziale płaszczyzny kamień krawężnika leży za krawędzią asfaltu (reach..reach+0,3), krawężnik w u=+0,1 od chodnika OSM; ortofoto: mediana u=-0,25 (2025-04), -0,5 (oba naloty); na 3 Maja (-101; -20..-40) krawężnik z wcięciami. Zrzut scratchpad/adr78-etap3-kurator.png, T-294.
+- Status: naprawione (14.11, #559 scalony); wcześniej: w naprawie na gałęzi adr78-etap3 (przed scaleniem)
+- Pakiet właściciela: tools/osm-import (kerb-fill.ts)
+- Test przyjęcia: kamień w [gap-0,3; gap+0,1] na próbkach full, krawędź asfaltu bez wcięć
+
+### G-798 Latarnie z linii planu zamiast reguły lit: 4,4 km oświetlonych dróg bez latarni (ADR-0064 etap 3)
+- Ważność: S3 · Zasięg: całe miasto, 4390 m próbek dróg lit=yes
+- Opis: osm-import nie czyta tagu lit (1068 dróg lit=yes w wyciągach); latarnie stawiają linie lamps.* z docs/world/lublin-props.todo.json (29.10), więc nowe ulice i pas z < −200 zostają ciemne. T-293
+- Status: naprawione (14.11, #557 scalony); wcześniej: w PR #557 (runda 2: P1 Dziedziniec, P2 Podwale poprawione); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-lit-lamps, przegląd kuratora w toku; wcześniej: zgłoszone (14.11, audyt ADR-0077)
+- Pakiet właściciela: tools/osm-import (props-gen), tools/glitch-scan
+- Test przyjęcia: kontrola lit-street-dark (próbki co 5 m dróg lit=yes dalej niż 30 m od lamp-*, kwadraty 10 m), baza 4390 m, spada; kontrole lamp-* nie rosną
+- Przegląd kuratora 14.11 (946e866): NIEZGODNE, 2 poprawki przed scaleniem: (P1) Dziedziniec Zamkowy 5 lamp-park, w tym 2 na środku z w73811514 (868,2; 233,6), (915,4; 227,9); w rzeczywistości latarenki ścienne i oprawy w bruku; (P2) Podwale: 10 lamp-road planu zmienione na lamp-candelabra (lookOf: 3 punkty na linii Placu Zamkowego, styleClashes), w rzeczywistości pastorały. Kontrole: lamp-freestanding-in-courtyard (baza 5), lamp-square-style-leak (baza 11).
+
+### G-800 Cień linki girlandy znika z daleka, zostają cienie samych lampek (po #542)
+- Ważność: S3 · Zasięg: wszystkie girlandy i przewody nad ulicami, noc, High; widać dopiero z bliska
+- Opis: Zgłoszenie użytkownika 14.11 (gra po #542): linka z kwadracikami rzuca cień tylko z bliska, z daleka widać same kwadraciki; to nie cień kontaktowy. Najpewniej cień księżyca: przy patrzeniu w dal kwadrat cienia wraca do 56 m (teksel 2,7 cm), a linka cieńsza niż teksel po nowym filtrze krawędzi (PCF 3 teksele, próg ok. 1 px przez fwidth) znika zamiast iść w kropki; agent G-795 wskazał to ryzyko w raporcie. Przed #542 cień linki był kropkowany.
+- Status: naprawione (14.11, #555 scalony); wcześniej: w PR #555 (test CPU 0-3% → 100%; potwierdzenie w grze do zrobienia); wcześniej: zgłoszone (14.11, użytkownik)
+- Pakiet właściciela: packages/engine/src/npr (moon-shadow, shadow-fit, toon-shader)
+- Test przyjęcia: cienka bryła (przewód 1-2 cm) rzuca w mapie cienia ciągły ślad na ziemi także przy kwadracie 56 m (udział zacienionych pikseli wzdłuż śladu ≥ 80%)
+- Ograniczenie: na Medium i Low (mapa cienia 1024) cień linki z daleka może nadal znikać. Potwierdzenie w grze na APK u użytkownika.
+
+### G-801 Raport ortofoto liczy meble z wyciągu OSM jako postawione regułami
+- Ważność: S4 · Zasięg: raporty komórek orto, całe miasto
+- Opis: tools/orto/src/furniture.ts osmPlanPoints czyta sam plan docs/world/lublin-props.todo.json, a grupy osm.furniture.* z props-osm.ts nie mają inOsm. furnitureCounts (report.ts:55) zalicza 68 obiektów z pasa z < −200 do reguł generatora, nie do OSM.
+- Status: naprawione (14.11, #552 scalony); wcześniej: w PR #552; wcześniej: zgłoszone (przegląd kuratora 14.11)
+- Pakiet właściciela: tools/orto, tools/osm-import
+- Test przyjęcia: furnitureCounts dla krakowskie-0-0 i krakowskie-1-0 liczy obiekty z grup osm.furniture.* jako z OSM: osmPlanPoints bierze loadPropsPlan(), a osmFurnitureItems ustawia inOsm: true
+
+### G-796 Ziarnisty cień kontaktowy pod postacią przy kamerze z góry
+- Ważność: S3 · Zasięg: High, cień kontaktowy; zrzut użytkownika z telefonu 14.11 (rozdzielczość renderu 70%, kamera z góry)
+- Opis: pod postacią plama z widocznym ziarnem/szachownicą zamiast gładkiego cienia; podejrzenie: wzór Bayera 4x4 i rozmycie 4x4 w połowie rozdzielczości przestają się znosić przy skali renderu 0,7 albo postać (skórowana) jako zasłona daje szum; do naprawy po zmianie formatów G-buffera (gałąź gbuffer-lite)
+- Status: naprawione (14.11, #549 scalony); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g796 (po gbuffer-lite), zrzuty do akceptacji; wcześniej: w naprawie (14.11): druga runda agenta od G-buffera (gałąź gbuffer-lite albo g796); wcześniej: zgłoszone (14.11, użytkownik)
+- Pakiet właściciela: packages/engine (npr/contact-shade*.ts)
+- Test przyjęcia: zrzut z góry nad postacią przy skali 0,7 i 1,0 bez ziarna
+
+### G-795 Cień twardy z poszarpanymi krawędziami (teksele mapy cieni)
+- Ważność: S3 · Zasięg: cały świat, High i Medium; zrzut użytkownika z telefonu 14.11 (noc, kamera z góry, postać z bronią przy latarni)
+- Opis: schodkowe, pikselowe krawędzie cienia postaci i budynków; przyczyna do ustalenia: rozmiar mapy, zasięg frustum cienia, brak filtrowania
+- Status: naprawione (14.11, #542 scalony); wcześniej: w PR #542, zrzuty zaakceptowane przez użytkownika 14.11; scalenie po zielonym CI; wcześniej: w PR #542 (zrzuty do akceptacji); wcześniej: w naprawie (14.11, gałąź ccr-ec2c4269-ilh8k8-shadow-edges)
+- Pakiet właściciela: packages/engine (npr/moon-shadow.ts)
+- Test przyjęcia: zrzut nocny z góry bez schodków na krawędzi cienia; migawka NPR obejrzana
+
+### G-782 roundJoints: suma NonZero pierścieni zgodnych z ruchem wskazówek zegara w fazie okrągłych końców
+- Ważność: S4 · Zasięg: 242 z 2141 pasów ma pierścień zgodny z ruchem wskazówek zegara
+- Opis: covered w pierwszej fazie roundJoints sumuje pierścienie bez obracania; obszar zgodny z ruchem wskazówek zegara znosi pasy na nim, bit końca może trafić w fałszywą dziurę
+- Status: naprawione (14.11, PR #540 scalony 14.11 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (0ab44d4, scalony main), czeka na przegląd kuratora; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g782 (482856c); test ground-over-steps pada na 3 przesuniętych kluczach; decyzja nocna: nie przyjmować accept, poczekać na #535 (G-781, ground-over-steps -> 0), scalić main i sprawdzić ponownie; potem przegląd kuratora (klin trawnika 768,211); wcześniej: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pierścienie obrócone przed sumą; ground-strip-overlap i ground-over-steps nie rosną
+- Skutek potwierdzony: 51 obrysów, ok. 98 m² bitów końców drugą warstwą na obszarach; nakładki ścieżki i bruku na schodach 8,27 -> 1,20 m²; ground-over-steps 234 -> 231 (5 usuniętych, 3 klucze przesunięte: krakowskie-0-1 -4,127, podzamcze-1-0 768,211, stare-miasto-1-0 694,-176); złoty map-ground-golden 170580 -> 169847, ba4027c1; zrzuty /dev/shm/g782-shots
+- Runda 2 po G-781: map-ground-golden 173375 - 676 = 172699 (7610321b); scan:diff wobec main bez zmian (7212), ground-over-steps 0; zrzuty /dev/shm/g782-r2-shots i /dev/shm/g782-shots; ok. 98 m² czap końców znika z placów i trawników
+- Kurator topografii: ZGODNE Z UWAGAMI. orto:diff vs merge-base 5,8 m², bilans klas zamknięty, bez gołego terenu, teren i pomosty 0. Oznakowania Al. Tysiąclecia 741–745 kończą się na węźle sygnalizacji, przed zebrą 730,7. Przed PR scalić main (G-775).
+
+### G-775 Beżowa kostka i patyna pomnika jako zieleń w komórkach SM z dwoma nalotami
+- Ważność: S4 · Zasięg: stare-miasto-0-1 (476..478; 75..81), stare-miasto-0-0 (607..610; -207..-212); klucze 470,70
+- Opis: Po G-771 SM-0-0/0-1 mają 2 naloty; beżowa kostka (exg 0,035 w 2025-04) i nalot letni w cieniu albo z przechyłem dają green/canopy; patyna pomnika daje green; bare-cover kładzie trawę na chodniku. Proponowana kontrola: grass-on-light-paving
+- Status: naprawione (14.11, PR #534 scalony 14.11 scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g775 (89751b9, merge c1ad6ed), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-771)
+- Pakiet właściciela: tools/orto (classify.ts)
+- Test przyjęcia: narożnik Lubartowska/Noworybna i chodnik Królewskiej przy (608,-210) kostką; klucze 470,70 znikają
+- 14.11 G-771 runda 2 (scalenie z regułą koron #519): klucze 470,70 zniknęły; do sprawdzenia, czy zostaje tylko kępa trawy przy pomniku na Królewskiej (607..610; -207..-212)
+- 14.11 naprawiacz: reguły patyny i beżowej kostki w cieniu przy jednym nalocie letnim (CLASSIFIER_VERSION 5); raster tylko SM-0-0/0-1, 330 m²; orto:diff 25 m² (trawa -23,6, square +11,1); Królewska trawa 3,6 m² -> square; grass-on-light-paving 61,5 -> 38,25 m² (test z kafli, skipIf bez cache); skan bez zmian kluczy, złote bez zmian; zrzuty /dev/shm/g775-shots/grid.png
+
+### G-772 Mediany barw z ortofoto liczone z pustego kafla 2024-06/stare-miasto-0-1
+- Ważność: S4 · Zasięg: albedo-medians.json (ALBEDO_FLIGHTS 2025-04, 2024-06), stare-miasto-0-1
+- Opis: albedo-report.ts nie pomija pustych nalotów (isBlank z G-771), biały kafel wchodzi do median barw; przeliczenie zmienia wygląd
+- Status: naprawione (14.11, PR #531 scalony 14.11 (c2a2765) scalony); wcześniej: w PR (14.11, gałąź ccr-ec2c4269-ilh8k8-g772, 9754068); wcześniej: zgłoszone (13.11, naprawiacz G-771)
+- Pakiet właściciela: tools/orto
+- Test przyjęcia: albedo-report pomija nalot z isBlank; mediany bez kafla 2024-06/SM-0-1
+- albedo-medians przeliczone; 2024-06 cobble do trawy 1,586→1,502; 2025-04 bez zmian od poprawki; renderer nie czyta pliku, wygląd bez zmian; plik nie jest pilnowany wobec pokryć (był nieaktualny już na main)
+
+### G-781 Footway i łaty G-760 na obrysie schodów (193 klucze ground-over-steps na main)
+- Ważność: S4 · Zasięg: 193 miejsca, m.in. 950;229, Podzamcze 803-829;237-247, Krakowskie 411-421;-86..-90
+- Opis: kawałki gruntu z liftem wyższym niż schody (footway 0,09 nad 0,05) zachodzą na obrys steps ponad 0,01 m² i przebijają najniższy stopień
+- Status: naprawione (14.11, PR #535 scalony 14.11 (b37f157) scalony); wcześniej: w PR (14.11, bff7cdd, po przeglądzie kuratora i rundzie 2); wcześniej: w naprawie, runda 2 (14.11): przywrócić drzwi wejścia n4934217573; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g781 (768efbb), czeka na przegląd kuratora; wcześniej: zgłoszone (14.11, naprawiacz G-777)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: ground-over-steps spada; zrzut 1009,6;447,5 bez kostki na stopniach
+- chunkGround wycina obrys schodów z gruntu wyższego od nich (steps-cut.ts), narożniki cięcia z dokładnością do mm; ground-over-steps 234 -> 0 (193 klucze -> 0), żaden rodzaj nie rośnie; map-ground-golden 170580 -> 173539 wierzchołków; ubyły drzwi (0,44;-74,64) krakowskie-0-0, ich próg wypadał na stopniach
+- Przegląd kuratora 14.11 (768efbb): ZGODNE Z UWAGAMI; brak szczelin poza krawędziami cięcia; grass +0,8 m² w orto:diff to artefakt kolejności mapy (pod stopniami); ubyte drzwi to wejście OSM n4934217573 (Poczta Główna, KP 50), odrzucone regułą ground (front ościeżnicy na pasie schodów 3 m, Site: rail). Decyzja nocna: regresja tej gałęzi, naprawa w rundzie 2 przed PR; kontrola entrance-no-door (baza main 9).
+- runda 2: drzwi Poczty Głównej (n4934217573) wróciły: ościeżnica może wychodzić na górny stopień biegu na wysokości progu (props-doors.ts); nowa kontrola entrance-no-door, baza 9 z main, gałąź 10 -> 9; props.generated.ts jak na main; bff7cdd
+
+### G-769 Ciemny trójkąt ok. 0,2 m w kostce na Krakowskim przy (297; -226) po G-764
+- Ważność: S4 · Zasięg: krakowskie, (297; -226); zrzut /dev/shm/g764-reshoot/pair/krakowskie-297-215.png na 6b0ebb7
+- Opis: drobna dziura w fills między nowym kawałkiem kostki z canopyHard a sąsiednim kawałkiem; widać ciemne podłoże; zauważone przez kuratora w przeglądzie G-764, potwierdzone ponownym zrzutem
+- Status: naprawione (14.11, PR #532 scalony 14.11 (aa3d6fd) scalony); wcześniej: w PR #532 (14.11); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); PR po scaleniu #528 i przegenerowaniu; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g769b (f80370a), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, kurator, przegląd G-764)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: brak dziury w fills przy (297; -226) (sonda 0,1 m), kontrola lawn-leafoff-patch lub fills-gap
+- 14.11: #519 (G-764) w main, można naprawiać
+- 14.11: tileRings obrysowuje kafel o komórkę dalej i tnie na krawędzi; nowa kontrola fill-gap 130 -> 16; map-ground-golden 171963 -> 171799 (146ff8d4); przyjęte (decyzja nocna: rekomendowane przyjęcie, artefakty pomiaru) +1 ground-strip-gap nabrzeze-1-0 2521,96 (podzbiór gołego pola z main) i +1 kerb-gap-bare nabrzeze-0-0 2442.6,92.9 (próbka na wspólnej krawędzi, 0,4 mm)
+- 14.11 przegląd kuratora (f80370a vs ebed0d2): ZGODNE Z UWAGAMI; orto:diff 6,3 m² (trawa +4,8 na green/canopy, kostka +1,3 na paving), teren 0, pomosty 0; odsłonięte 0,44 m² (paski ≤ 3 cm), nakładki fills bez zmian; klucze 2442,6;92,9 i 2521,1;95,9 potwierdzone jako artefakty; po scaleniu z main powtórzyć osm:build, scan:diff, orto:diff
+
+### G-786 Goły teren zamiast trawnika pod pochyloną patyną dachu przy (475; -195)
+- Ważność: S4 · Zasięg: stare-miasto-0-0 (470..480; -200..-190), ok. 14 m²
+- Opis: Po G-775 próbki z patyną dachu na 2025-04 i cieniem na 2024-06 mają klasę asphalt; bare-cover zostawia asfalt goły, więc pas przy budynku jest gołym terenem (wcześniej błędny trawnik)
+- Status: naprawione (14.11, duplikat G-788 (14.11, przegląd kuratora G-775) scalony); wcześniej: zgłoszone (14.11, naprawiacz G-775)
+- Pakiet właściciela: tools/orto / tools/osm-import (bare-cover)
+- Test przyjęcia: pas przy (475; -195) kostką, bez gołego terenu
+
+### G-759 walk-blocked nie widzi płyt chodnika i podestu Arkad
+- Ważność: S4 · Zasięg: klucze `stare-miasto-0-1 460,100/110/120`, `krakowskie-2-1 450,*`; ok. 500 stromych par po G-748
+- Opis: kontrola z #497 bierze tylko teren, więc obniżenie gruntu pod płytami `arkady.ts` liczy jako uskoki i strome pary
+- Status: naprawione (14.11, PR #529 scalony 14.11 (f312866) scalony); wcześniej: w PR (14.11), po G-778; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 038d716): walk-blocked bierze wierzch płyt i brył scen (floorOver), bez budynków mapy i ich pokoi; pary na płytach Arkad 1117 -> 0, pary z dachów budynków 34426 -> 0; klucze skanu 1 -> 1; walk-review B zielony na scaleniu z G-778 (#526); do PR po #526; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g759, 6c4fc01): walk-blocked bierze wierzch płyt i brył scen (floorOver); pary na płytach Arkad 1117 -> 0 (G-758: 262 -> 0); klucze skanu 1 -> 1; czeka na poprawkę uskoków płyt Arkad (walk-review B); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Pakiet właściciela: tools/glitch-scan (walk-blocked)
+- Test przyjęcia: `walk-blocked` bez kluczy pod płytami Arkad
+- walk-review B pada z poprawką: łapie prawdziwe uskoki płyt Arkad (G-778); osie along zostają na groundY, bo z floorOver wychodzą bryły Alchemii na chodnikach (krakowskie-2-0 416,-38 i inne). Decyzja nocna (wariant rekomendowany): najpierw naprawa uskoków, potem G-759, bez ruszania testu B.
+- 14.11 (naprawiacz G-778): floorOver traktuje budynek mapy jako podłogę: budynek stare-miasto-0-1 (468; 124,2, y -9,1..-2,3) daje w kwadracie 460,120 pary ledge 5,7-6,6 m przy ground -2,30; test B tego kwadratu nie sprawdza. Do poprawy w gałęzi g759 przed PR.
+- runda 2 (679ef68): dachy budynków mapy i ściany pokoi nie są podłogą (budynek 468;124,2 w 460,120); test B wymaga #526 przed scaleniem
+
+### G-768 Ustępowanie nadwozi G-744 kruche w zakręcie Kołłątaja przy Zesłańców Sybiru
+- Ważność: S3 · Zasięg: -108,-150; ziarna 10/13/15/38 przy pasach przesuniętych o 5–10 cm
+- Opis: bodiesMeet daje odległość spotkania na przemian z próbek co 1 m i z próbki za zakrętem, goesFirst zmienia decyzję, auto 9,9 m/s nie hamuje, oba są już za późno
+- Status: naprawione (14.11, PR #530 scalony 14.11 (562804b) scalony); wcześniej: w PR (14.11): 82ace33, test abcd513 (12 s); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g768 (82ace33), runda 2: skrócenie testu (100 s z własnym limitem); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 3)
+- Pakiet właściciela: packages/sim/src/systems
+- Test przyjęcia: przemiatanie ziaren 1–40 w zakręcie bez kolizji przy pasach ±0,1 m
+- przyczyna: próbki nadwozia co 1 m liczone od pozycji pojazdu gubiły wąskie miejsce za zakrętem co drugą klatkę; kolizje 1-40 ziaren przy pasach -0,2/-0,15/-0,1/-0,05 m: 4/1/4/1 -> 0; hash determinizmu bez zmian
+
+### G-777 Szczeliny 10-30 cm między wstęgami różnych nawierzchni w złączach (gapFills łata tylko tę samą nawierzchnię)
+- Ważność: S4 · Zasięg: ok. 10 złączy, ok. 0,8 m²: 837,0;205,3 (chodnik/jezdnia), 949,1;230,7, 247,7;-201,0, 1014,2;450,8, 743,7;13,7 (chodnik/footway), 97,9;98,4 (jezdnia/trawa)
+- Opis: gapFills (line-buffer.ts) łata pęknięcia tylko między pasami tej samej nawierzchni, a kliny tylko szersze niż pęknięcie; wąska goła szczelina między chodnikiem a jezdnią lub footway w tarczy złącza zostaje; widać ciemny teren
+- Status: naprawione (14.11, PR #528 scalony 14.11 (6c4c5bf) scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11, runda 2), w PR; wcześniej: naprawione na gałęzi (14.11, runda 2: ccr-ec2c4269-ilh8k8-g777, 1a83319; szczeliny poza schodami, kontrola ground-over-steps; komórki w tarczach 130 -> 58); do scalenia z main po #519 i ponownego przeglądu; wcześniej: w naprawie, runda 2 (14.11): przegląd kuratora NIEZGODNE, slitFills ma odjąć stopnie; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g777 (928f25a): komórki w tarczach 130 -> 55, w mieście między wstęgami 870 -> 528; czeka na przegląd kuratora; reszta 97,9;98,4 w osobnym wpisie; wcześniej: zgłoszone (13.11, naprawiacz G-765)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: brak gołych komórek 0,1 m między wstęgami w tarczy złącza w tych miejscach; ground-strip-gap nie rośnie
+- Przegląd kuratora 14.11 (928f25a): NIEZGODNE. slitFills nie odejmuje stopni (above): 25 łat nad obrysem steps, 2,03 m² (949,0;230,4 wyszczerbia dolny stopień, 1009,6;445,4 kostka na trzech stopniach, 886,3;222,2 0,31 m²). Poprawka w tej gałęzi (runda 2); T-290; proponowana kontrola ground-over-steps
+- Przegląd kuratora 14.11 (6ccd1ba, runda 2): ZGODNE Z UWAGAMI. orto:diff wobec main 6,8 m², teren 0, pomosty 0; wiersze bazowe bez zmian. Łaty na steps najwyżej 0,0064 m². Po wycięciu 47 łat G-760 przybyło 0,026 m² gołego gruntu w 3 szczelinach poniżej MIN_SLIT: 186,3;-210,7 (0,015 m², widoczny klin ok. 1,1 m), -90,3;-75,1 (0,009), 1082,3;255,9 (0,002). Zrzuty /dev/shm/g777-cur2/grid.png
+
+### G-770 Rewolwer: kciuk i palec wskazujący wchodzą w bryłę broni w FPP
+- Ważność: S4 · Zasięg: rewolwer w widoku FPP (ta sama poza co pistolet): kciuk do 9,8 mm, wskazujący do 10 mm w bryle; kłąb kciuka lewej dłoni (Thumb1) ok. 11 mm w chwycie pistoletu
+- Opis: poza RIGHT_ON_HANDGUN dobrana do szkieletu pistoletu; szerszy bęben rewolweru; test głębokości (mesh-depth.ts) obejmuje tylko pistolet i kości Thumb2/Thumb3
+- Status: naprawione (14.11, PR #504 scalony 14.11 (7064224); poza R1, test G-770 w zakresie przodu chwytu (2 mm), tył chwytu do 13 mm zasłonięty pięścią scalony); wcześniej: zgłoszone (13.11, ręce FPP runda 6)
+- Pakiet właściciela: packages/engine (renderer/fpp-hand-poses.ts)
+- Test przyjęcia: test głębokości skóry dłoni w bryle broni ≤ 2 mm dla każdej broni krótkiej i wszystkich kości kciuka
+
+### G-771 Puste (białe) kafle ortofoto w pokryciu i raporcie komórek stare-miasto-0-0 i 0-1
+- Ważność: S3 · Zasięg: kafle 2023-09/stare-miasto-0-0 i 2024-06/stare-miasto-0-1 (100% białe, jedyne w mieście); w pokryciu ok. 2 740 m² zieleni i koron jako kostka/asfalt (0-0: 1 256, 0-1: 1 484) i ok. 250 m² cienia; raport wybiera pusty nalot jako najmniejszy przechył
+- Opis: fetch.ts zostawia biały kafel z ostatniej usługi; classifyRect uśrednia go jak nalot; lean.ts daje mu wynik 0. Skutek: bare-cover.ts i kontrole bare-on-cover/fill-on-green czytają zieleń jako twardą; 'twarde 100%' w notatkach 0-0 i 0-1 to artefakt (działka Rybna 12: zieleń i gruz). Proponowana kontrola cover-blank-flight (baza 2).
+- Status: naprawione (14.11, PR #527 scalony 14.11 (f4f4df8) scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6, merge 4c6fe3b z #519; CLASSIFIER_VERSION 4), w PR; wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (13.11); scalać po #519 z CLASSIFIER_VERSION 4, przebudową data/orto, osm:build i scan:update; poprawić nazwy ulic w opisie PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g771 (5c0dc65, 32c6ec6), czeka na przegląd kuratora; konflikt CLASSIFIER_VERSION z #519 (druga wchodząca daje 4 i przebudowuje data/orto); wcześniej: zgłoszone (13.11, kurator, audyt luk SM)
+- Pakiet właściciela: tools/orto (fetch.ts, cover.ts, lean.ts), potem data/orto i osm:build
+- Test przyjęcia: nalot z bielą > 95% pominięty w klasyfikacji i w przechyle; stare-miasto.cover przeliczone; raport 0-0/0-1 wybiera nalot ze zdjęciem; orto:diff do kuratora
+- 13.11 przegląd kuratora: nazwy w 32c6ec6 („Rybna/Grodzka”) błędne: Królewska, narożnik Lubartowska/Noworybna, 1 m² przy Rybnej. Klucze 510,-170 i 610,-220 powinny zniknąć po #519. Klucze 470,70 to nowe odstępstwo (G-775).
+
+### G-778 Uskoki między płytami chodnika i podestu Arkad
+- Ważność: S3 · Zasięg: stare-miasto-0-1 (465..468; 116..119), krakowskie-2-1 (448; 80)
+- Opis: arkady.ts pavement(): płyty co 2 m na maksimum terenu mapy, wierzchy a 38..44: -6,17/-6,71/-7,46 (stopnie 0,54 i 0,75 m > STEP_HEIGHT), podest -5,72 przy płycie -5,22 (0,50 m); od północy nie wejdzie się wyżej; wyszło z G-759 (walk-review B)
+- Status: naprawione (14.11, PR #526 scalony 14.11 (ebed0d2) scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (14.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g778, 327028f), czeka na przegląd kuratora; wcześniej: zgłoszone (13.11, naprawiacz G-759)
+- Pakiet właściciela: packages/sim (content/alchemia)
+- Test przyjęcia: walk-review B zielony; między sąsiednimi płytami Arkad <= 0,45 m
+- 327028f: chodnik w dwóch pasach (ściana 2 m do a 44, zewnętrzny do a 38), komórki 0,5 m; stopnie 0,75 -> 0,25 m, krawędzie 0,6/0,48 -> 0,42/0,30 m; wierzch nad NMT maks. 1,08 -> 0,41 m; hashe i skan bez zmian; walk-review B zielony na scaleniu z g759
+- Przegląd kuratora 14.11 (327028f): ZGODNE Z UWAGAMI. Stopnie do 0,26 m (nie 0,25), krawędzie do 0,42 m, 0 punktów obwodu > 0,45 m; 18 m² na nawierzchni mapy square, bez gołego gruntu; T-206/207/219/230/231 bez zmian; dopisek do T-218.
+
+### G-766 Kawałki fills dotykające same siebie (ósemki) triangulowane z nadmiarem
+- Ważność: S4 · Zasięg: stare-miasto-1-0 (619,94; -232,85) 2,0/1,1 m²; na main m.in. trawa podzamcze-1-1 112,4/103,9 m², nabrzeze-0-0 24,5/20,9 m²
+- Opis: cutByPieces (bare-cover.ts) przepuszcza obrysy z powtórzonym wierzchołkiem (crossesItself łapie tylko przecięcia); triangulacja daje więcej niż pole; od G-764 czerwony grass-under-paving; naprawa w rundzie 2 G-764
+- Status: naprawione (14.11, PR #519 scalony 14.11 (75ab680) scalony); wcześniej: naprawione na gałęzi G-764 (6b0ebb7), do archiwum razem z PR G-764; wcześniej: w naprawie (13.11, gałąź G-764)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola fill-area-mismatch: |triangulacja - pole| <= 0,01 m² dla każdego kawałka fills
+
+### G-764 Trawnik pod koronami drzew na kostce (reguła koron, ADR-0077 krok 1.2)
+- Ważność: S4 · Zasięg: 4 dzielnice, ok. 474–670 m², m.in. promenada nad Czechówką przy VIVO (x 1090, z 185), Furmańska (x 646, z 257)
+- Opis: bare-clean.ts mixedRow zamienia koronę (klasa canopy) w trawnik, gdy g > q || s > q, także wśród samej kostki (g = 0). Nalot bezlistny 2025-04 pokazuje tam jasną kostkę (L ≥ 115, S ≤ 0,12: 474 m², z tego 199 m² było kostką na main). Propozycja: rozdzielić w tools/orto klasę canopy na koronę nad twardym i nad miękkim; nad twardym kostka, nad miękkim trawnik; kontrola skanu lawn-on-leafoff-paving. Szczegóły: scratchpad topo-adr77kerb-raport.md.
+- Status: naprawione (14.11, PR #519 scalony 14.11 (75ab680) scalony); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g764, e936eb2): klasa canopyHard, lawn-on-leafoff-paving 619 -> 71,5 m² (plamki < 2 m²); runda 2: ósemki w cutByPieces; potem przegląd kuratora (orto:diff, prawda bez leisure=park); wcześniej: zgłoszone (13.11, kurator, przegląd kroku 1.2)
+- Pakiet właściciela: tools/osm-import, tools/orto
+- Test przyjęcia: kontrola lawn-on-leafoff-paving < 50 m², a zarośla Nabrzeża (x 2500..2534, z 107..139) i żywopłot Podzamcza (x 551..569, z 353..359) zostają trawą
+- Wiersz topografii: T-287.
+- runda 2 (6b0ebb7): obrysy fills dotykające same siebie rozcinane na proste pierścienie (splitTouching); kontrola fill-area-mismatch 12 -> 0; grass-under-paving zielony; map-ground-golden 168809/f7705141
+- Przegląd topografii 13.11 (6b0ebb7): ZGODNE Z UWAGAMI (T-287); zrzut Krakowskie (297; -226) do powtórzenia.
+- Ponowny zrzut (297; -226) na 6b0ebb7 potwierdza ciemny trójkąt: zgłoszony jako G-769, nie blokuje PR #519 (kurator).
+
+### G-758 Import wybiera komórki terenu 4 i 8 m niepodzielne przez 2,5 i 5 m sąsiadów
+- Ważność: S3 · Zasięg: krakowskie-2-1 i inne kawałki siatki 4/8 m; szwy zostają 0,51 / 0,225 / 0,18 m po G-748
+- Opis: `tools/osm-import/src/terrain.ts` `CELLS`: siatka 4 m ma z siatkami 2,5 i 5 m wspólne punkty tylko co 20 m, więc `stitchSeams` nie może jej zszyć; ADR-0043 zakłada wspólny wiersz punktów na szwach
+- Status: naprawione (13.11, PR #522 scalony 13.11 (5009251) scalony); wcześniej: przegląd kuratora ZGODNE Z UWAGAMI (13.11); do PR; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g758, 571459c): CELLS 10/5/2,5/1,25, seam-gap 0,05 m: 2 -> 0 kluczy, szwy 0,51 -> 0 m; czeka na przegląd kuratora (orto:diff); wcześniej: zgłoszone (13.11, naprawiacz G-748)
+- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+- Test przyjęcia: na każdym szwie różnica ≤ 0,05 m
+- Do zrobienia razem z kontrolą `seam-gap` z przeglądu #502 (kurator 13.11).
+- Kontrola seam-gap (gałąź ccr-ec2c4269-ilh8k8-seam-gap, 29f7b55): baza main 16 kluczy / 210 próbek; po #502 zostaje 1 (myjnia 380,-20); (240;114) w obrysie budynku, x=460 pod płytami Arkad – nie liczone
+- Kontrola seam-gap w main (#507, 13.11): baza 1 klucz (krakowskie-2-1 380,-20, myjnia); G-754 w toku.
+- seam-gap krakowskie-2-1 380,-20 to był pad myjni; po G-754 baza seam-gap 0
+
+### G-765 roundJoints odrzuca bit klinu 3,5-10 st. (dwa obrysy po mm Clippera)
+- Ważność: S4 · Zasięg: złącza dróg pod kątem 3,5-10 st.; sonda losowa: 21/400 par
+- Opis: Bit round endu dzielący wspólną krawędź z pasem daje po unii 2 obrysy i jest odrzucany; po G-760 klin kryje osobna łata, więc pas nie ma okrągłego końca w jednym pierścieniu
+- Status: zamknięte bez zmian (13.11, fałszywy alarm co do skutku; resztki w G-777); wcześniej: fałszywy alarm co do skutku (13.11, naprawiacz): po G-760 klin kryje łata, bez skutku dla gracza i skanu; poprawka (bit +2 mm) pogarsza skan (marking-step +1, overlap +2) i daje +0,9 m² gołych komórek; wcześniej: zgłoszone (13.11, naprawiacz G-760)
+- Pakiet właściciela: tools/osm-import
+- Miasto: 74 odrzucenia / 66 bitów; w chunkach gry goło 3,0 m²: 2,2 m² koniec footway w nieutwardzone (856,5;304,6), ok. 0,8 m² szczelin między różnymi nawierzchniami (G-777); wariant ich nie zamyka. Sondy: scratchpad g765-*
+
+### G-761 Trawniki w pierścieniu skweru na Podzamczu pod kostką ścieżki
+- Ważność: S4 · Zasięg: w804709919, w804709920 (1045, 424), 46 m²; podobnie zieleń pod footway w pętlach w1343050082 (58,-83) 19 m², w154012559 15 m², w515648305 10 m²
+- Opis: Pas footway pierścienia (szerokość domyślna) leży na półksiężycach trawnika widocznych na ortofoto; skwer traci rysunek. Proponowana kontrola skanu loop-paving-on-green (m² kostki na zieleni wewnątrz pętli ścieżek, baza 5 pętli).
+- Status: zamknięte bez zmian (13.11, fałszywy alarm, przyczyna w rastrze: G-774); wcześniej: fałszywy alarm (13.11, naprawiacz): zawyżenie przez raster cover, geometria zgodna z ortofoto; wcześniej: zgłoszone (13.11, kurator, przegląd ADR-0078 etap 2)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: zieleń z ortofoto pod footway/square wewnątrz pętli w804709919 < 5 m²
+- Wiersz topografii: T-286.
+- 13.11 naprawiacz: ortofoto 0,1 m (ExG>0,07 na 2025-04 i 2024-06): trawnik pod footway/square w pętli w804709919 4,0 m² (<5, test przyjęcia spełniony na main), w1343050082 0, w154012559 1,9, w515648305 0. 43,75 m² z rastra to wygładzanie 1,5 m i zielonkawy bruk 2023-09. Pierścień 2,4-2,7 m na zdjęciu, domyślne 2,5 m; półksiężyce zgodne do 0,25 m.
+
+### G-755 Droga pieszo-rowerowa w179264855 w grze za stroma (0,8–0,92) przy (667–682; 134–141)
+- Ważność: S3 · Zasięg: zejście ze Starego Miasta na Podzamcze; ok. 1 440 par `walk-blocked` (kwadraty 670,130 i 670,140)
+- Opis: OSM: highway=pedestrian, bicycle=yes, lit, nie schody; oś w grze spada 4,5 m na 4 m; sprawdzić NMT i zdjęcia: jeśli spadek jest łagodniejszy — wygładzić, jeśli to schody/rampa — wymusić schody (flightRamps)
+- Status: naprawione (13.11, PR #515 scalony 13.11 (7877dda) scalony); wcześniej: w PR (13.11, ccr-ec2c4269-ilh8k8-g755, 7d61872; walk-blocked 5 -> 1); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren)
+- Test przyjęcia: `walk-blocked` bez kluczy na osi w179264855; postać przechodzi
+- Teren gry zgodny z NMT (NMT 9 m na 10 m); reguła steepWays (import) + wayRamps (sim): odcinki dróg pieszych za strome na terenie gry kładzione równym spadkiem tg 30°; przy okazji ścieżka w202269259 (podzamcze 770,180) też poprawiona; orto:diff: teren 30 pkt, maks. 1,86 m w dół (670; 132,5)
+- Przegląd kuratora 13.11: ZGODNE Z UWAGAMI (T-288).
+
+### G-762 startOf wybiera komórkę startową 3 m nad stopami u muru przyczółka dolnego mostu Mełgiewskiej
+- Ważność: S3 · Zasięg: planer pościgu przy murach przyczółków, np. (2415; 280)
+- Opis: u stopy muru przyczółka komórka stóp zamknięta (stroma); startOf bierze sąsiada na murze 3,4 m wyżej, a wallOnWay nie widzi ściany ze stromej komórki; droga prowadzi po murze, ganger napiera na niego, dalej idzie tylko po bocznym kroku kontroli utknięcia
+- Status: naprawione (13.11, #516 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g762, b4b7410); wcześniej: zgłoszone (13.11, naprawiacz G-747)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: pościg z (2414,5; 280,1) na pomost nabrzeze-0-1/0 przy t=0,1 bez napierania na mur; startOf nie wybiera komórki wyżej niż krok + stok
+- startOf: komórka startowa nie wyżej nad stopami niż krok + stok (aboveLevel); stopa muru: krok w bok kontroli utknięcia 18/30 -> 0/30, najgorszy czas 19,7 -> 6,1 s; sonda G-741 129/150 -> 129/150, 14 prób szybszych
+
+### G-760 Dziury 5–20 cm w nawierzchni jezdni pod pasami aut
+- Ważność: S3 · Zasięg: car-lane-off-road i lane-off-ground po G-756: 930,15,329,81 (Al. Tysiąclecia#81:1), 1080,10,564,02 (Podzamcze#107:0), 2525,7,357,5 i 2505,04,331,52 (Turystyczna#122:0), 26,18,−102,66 (Kościuszki#4, pod pasem plac zamiast jezdni)
+- Opis: siatka próbek w układzie świata (G-756) trafia w małe dziury nawierzchni pod pasem, które stara siatka po łuku omijała
+- Status: naprawione (13.11, #514 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g760, merge 74a981d); wcześniej: wstrzymane: przyczyna w kodzie G-744/ADR-0078 etap 2 (końce pasów w złączach); wcześniej: zgłoszone (13.11, naprawiacz G-756)
+- Pakiet właściciela: packages/sim (content/lublin nawierzchnie), tools/osm-import
+- Test przyjęcia: `car-lane-off-road` i `lane-off-ground` bez tych kluczy
+- Przyczyna: proste ucięcia pasów jezdni dwóch dróg we wspólnym węźle nie pokrywają się (wierzchołki zaokrąglane osobno do 0,1 m, różne szerokości, klin na zakręcie); szczeliny 5-10 cm. Kościuszki#4 to ta sama szczelina, plac tylko prześwituje. Na danych g744 zostają 4 z 5 miejsc (i dziury ok. 25 cm przy ~2526,356): roundJoints pomija kawałki < SLIVER 0,1 m / MIN_CAP 0,3 m² i liczy przed zaokrągleniem do 0,1 m. Naprawa po scaleniu g744, w line-buffer.ts (złącze po zaokrągleniu albo nakładka w złączu); test: odcinek między ucięciami pasów ze wspólnym węzłem leży na road. Sonda: scratchpad g760-probe.test.ts.
+- Skan car-lane-off-road nabrzeze-0-1 2340,420 (Kalinowszczyzna#131:f, 2340,427): dziura w jezdni 5-10 cm przy przejściu ścieżki, przyjęta do bazy w 8179d72 na gałęzi G-744; po poprawce scan:update ją usuwa
+- Łaty szczelin i klinów w złączach (line-buffer.ts gapFills, osobne wstęgi). Skan: car-lane-off-road 5->0, lane-off-ground 3->0; ground-strip-overlap +20, kerb-gap-bare +2 przyjęte z uzasadnieniem. map-ground-golden 155341/1117bd89. orto:diff 49,8 m² do kuratora.
+- 13.11 przegląd kuratora 74a981d: ZGODNE Z UWAGAMI. footway +17,5 m² to łaty szczelin ścieżek (gołe 7,4, schody 5,3, plac 4,9, chodnik 1,4, trawa 0,9); jezdnia na zieleni ortofoto 0,3 m²; kliny jezdni do 4,3 m² na kostce ortofoto; przejścia leżą wyżej (0,13). Uwagi do rundy 2: łaty ścieżek na schodach (10 miejsc, 5,3 m²), zniknięcie 2 kratek ściekowych (126,89;100,89) i (2349,39;314,29), 2 jasne kropki na zrzucie Podzamcza; propozycja kontroli patch-on-steps.
+- Runda 2 (#514, 9f0bad0): łaty nie wchodzą na schody i zebry (test), krawężniki i wypełnienia z ortofoto czytają ziemię bez łat (kratki jak w main), Podzamcze 0 dziurek w rastrze 0,1 m. Skan: ground-strip-overlap +18, kerb-gap-bare +1 przyjęte; map-ground-golden 171653/2f66bb82; bench +8,4% / +11,9%.
+- Kolejna szczelina 1–2 cm w poprzek jezdni Narutowicza przy 239,-172.9 (krakowskie-1-0); pas trafia w nią przy przesunięciu o 8 mm (ADR-0080 PR 3, wariant odrzucony)
+
+### G-767 Main czerwony: test venues „sign nearly all” ponad 20 s w CI po #510
+- Ważność: S2 · Zasięg: CI na main 4f42767 i wszystkie PR-y w osm-import (#514, #515)
+- Opis: czas testu rósł z kolejnymi zmianami mapy: etap 2 ADR-0078 (#509) +29% (dług ADR-0046), krok 1.2 ADR-0077 (#510) +9%; pod coverage w CI przekroczył limit 20 s
+- Status: naprawione (13.11, #517 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed, 6fa4b7b): miasto dla testów w osobnym procesie bez pokrycia; z coverage 11–13,4 s → 3,9–6,2 s; wcześniej: w naprawie (13.11, gałąź ccr-ec2c4269-ilh8k8-venues-speed)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: test pod --coverage < 10 s lokalnie, wynik generowania bajt w bajt, bez podnoszenia limitu
+- Poboczne: kerbStrips i steps w bare-strips.ts startują BFS od wszystkich komórek jezdni i chodnika (także wnętrza bez wolnych sąsiadów) — do przyspieszenia osobno.
+
+### G-763 Ganger stoi pod krawędzią dolnego mostu Mełgiewskiej (2449,4; 258,8) i (2454,6; 293,5) mimo przejść obok
+- Ważność: S3 · Zasięg: sonda G-741, ok. 6 z 30 punktów przy pomostach nabrzeze-0-1/0 i /1
+- Opis: krawędź pomostu 0,1-0,25 m nad gruntem: raster i walkable widzą przejście, bankNear/offTheBank zatrzymuje stopy; ganger stoi od kilku sekund pościgu bez fallbacku followDetour
+- Status: naprawione (13.11, #513 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g763, 13.11); wcześniej: zgłoszone (13.11, naprawiacz G-747)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: sonda G-741: punkty nabrzeze-0-1 0 0.85 ±9,5 i 1 0.1 8 dochodzą
+- Przyczyna: bankNear przepuszczał poślizg wzdłuż skarpy (CREEP), a pole (passable) nie brało Raster.walls. Poprawka: każdy poślizg w pierwszych 0,6 m to brak prostego marszu; pole nie idzie w górę ściany. Sonda G-741: 94 → 129/150, bez regresji, hash bez zmian.
+- Po poprawce nadal nie dochodzą w sondzie G-741: podzamcze-2-0 0 0.5 4 i 0 0.3 5 (5/5), nabrzeze-0-1 1 0.15 -14 (5/5), 1 0.9 -12 (3/5), 1 0.15 7 (3/5, stoi w 2451,9; 299,2). Test app alchemia-ramp-traffic trwa ok. 5 s także na main (granica limitu).
+
+### G-754 Podkład myjni (T-051) tworzy skarpę 1,19 m na Bajkowskiego i przejściu
+- Ważność: S3 · Zasięg: Krakowskie 380..390, -30..-10; 10 par `walk-blocked`
+- Opis: podkład CAR_WASH_AREA (blend 3 m) podnosi teren o 1,3 m; NMT 0,04, w grze 1,19 na ulicy Wacława Bajkowskiego i przejściu; błąd zrobiony przez grę
+- Status: naprawione (13.11, #512 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g754, f395319); wcześniej: zgłoszone (13.11, kurator, przegląd walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren, podkłady)
+- Test przyjęcia: `walk-blocked` bez kluczy przy 380,-20; teren ulicy w ±0,1 m od NMT
+- 13.11: walk-blocked 1,19 przy 380,-20 to był artefakt błędu pamięci skanu (fix c17fcb5 w #497); po poprawce brak zablokowanych par, zostaje odstępstwo terenu ulicy od NMT o 1,31 m (topografia, nie przejście)
+- 13.11 f395319: pad T-051 x 388..422, z -41..-27; Bajkowskiego i przejścia ≤0,1 m od NMT; pad-on-road krakowskie 7→1, seam-gap 1→0; złote hashe determinism, reinforcement-sidestep i ground-cut krakowskie-2-0 zmienione świadomie (treść)
+- 13.11 kurator: ZGODNE Z UWAGAMI; krawędź padu z −25 ≤0,18 m, z −45 = NMT, meble i auto na gruncie; T-003 zaktualizowane
+
+### G-747 `followDetour` bez osiągalnej komórki w linii prostej kieruje gangera do `way[1]`, nawet nieosiągalnej
+- Ważność: S3 · Zasięg: planer pościgu w terenie ze skarpami; możliwe źródło części z 14 z 30 nieudanych dojść przy przyczółkach Mełgiewskiej (G-741), np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)
+- Opis: gdy żadna linia z punktu gangera nie przechodzi, fallback wybiera następny punkt drogi bez sprawdzenia osiągalności; ganger napiera na skarpę albo krąży w kieszeni
+- Status: naprawione (13.11, #511 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g747, 7bbafa1): fallback do osiągalnej komórki niżej w polu (walkable + poziom stóp); sonda G-741 18/30 -> 19/30, 150 prób 87 -> 94 bez regresji; hash bez zmian; wcześniej: zgłoszone (13.11, naprawiacze G-741 i G-740)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: 30 punktów przy bokach pomostów (sonda G-741): dojścia ponad 16/30 bez regresji; test z jednego z punktów wyżej pada bez poprawki
+- Po G-746: `followDetour` w `steering.ts` (l. 144), fallback `way[1]` w l. 162.
+- Punkty (2454,5; 293,7) i (2449,5; 258,9) stoją na main bez udziału fallbacku, (2481,5; 415,7) już dochodzi; test przyjęcia z punktu sondy przy podzamcze-1-0 (772,7; 200,3)
+
+### G-757 Chodnik w295849309 przy kładce w295849307 ponad tg 35° wzdłuż osi
+- Ważność: S4 · Zasięg: Podzamcze 1070..1080,160..170; 44 pary `walk-blocked`
+- Opis: oś chodnika do zachodniego końca kładki spada ponad 0,7 na 2 m (skarpa rowu Czechówki); prawdopodobnie ustąpi po G-739 (#501: koniec pomostu na szczycie skarpy) — sprawdzić po scaleniu
+- Status: naprawione (13.11, #509 scalony); wcześniej: zgłoszone (13.11, budowniczy walk-blocked)
+- Pakiet właściciela: packages/sim (content/lublin teren, pomosty)
+- Test przyjęcia: `walk-blocked` bez kluczy przy 1070,160 po G-739
+- Po scaleniu main do gałęzi G-744 (141d155) klucz walk-blocked podzamcze-2-0 1070,160 zniknął po scan:update; do archiwum razem z PR G-744
+
+### G-744 Pasy ruchu biorą odsunięcie od zmierzonego zasięgu asfaltu: przesunięcie krawędzi jezdni o centymetry daje kolizje aut
+- Ważność: S3 · Zasięg: ruch w całym mieście; ujawnione przez etap 2 ADR-0078 (łuki łączeń zmieniają zasięg asfaltu o kilka cm, pasy przesuwają się do 12 cm): `traffic-junction-drive` przy 3 Maja (1 ziarno z 12), Kołłątaja/Zesłańców Sybiru (−108; −149) seed 10, Cicha seed 30; na main 0
+- Opis: `reachAt`/`roadHalfWidth` w `sim/content/traffic.ts` liczą odsunięcie pasów od zmierzonego asfaltu, bez minimalnego odstępu przeciwnych pasów; kruche wobec każdej zmiany geometrii nawierzchni
+- Status: naprawione (13.11, #509 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g744 (13.11, 18967c1, na etapie 2 ADR-0078: przyczyną obrót auta na załamaniu pasa i brak sprawdzania brył z naprzeciwka, nie przesunięcie pasów; `traffic-bodies.ts` z pierwszeństwem, spawn bez kolizji z nadjeżdżającym; seedy 1–40 w 3 miejscach 0/120; czas testów ruchu +5–10%; do scalenia razem z etapem 2); wcześniej: w naprawie (13.11, zgłoszone przez budowniczego etapu 2 ADR-0078); blokuje scalenie etapu 2
+- Pakiet właściciela: packages/sim (content/traffic)
+- Test przyjęcia: `traffic-junction-drive` zielony na gałęzi etapu 2 (12/12 ziaren), probe seedów 1–40 bez kolizji na main i na gałęzi; złoty hash świadomie
+- Gałąź zsynchronizowana z main (bf81314): hashes zgodne, skan 7412 -> 7159, wzrosty tylko sidewalk-under-carriageway +4 (Podwale x2, Dolna PM, Bernardyńska 390,-240 z footway-on-carriageway) i car-lane-off-road +1 (G-760); dług czasu w ADR-0046
+
+### G-749 Test `grass-under-paving` (Plac Litewski, szwy kawałków) przekracza 20 s w CI
+- Ważność: S4 · Zasięg: `tools/glitch-scan/test/grass-under-paving.test.ts` › „leaves no bare strip in Plac Litewski's lawns…”; w CI #491 (13.11) przekroczył 20 s, po ponowieniu przeszedł; lokalnie przechodzi
+- Opis: test liczy wyciąg całego obszaru placu przy każdym uruchomieniu; blisko limitu, więc pod obciążeniem runnera pada niezależnie od zmiany
+- Status: naprawione (13.11, #508 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g749, c424df6): pomijanie trawników po prostokącie +0,5 m; test 4631 -> 274 ms (bench:ab, 6 par, load 12-16), pod --coverage 8368 -> 337 ms; 80 940 próbek bez różnic; wcześniej: zgłoszone (13.11, orkiestrator, CI #491)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: czas testu w CI ≤ 50% limitu (pomiar `pnpm test:rerun`/raport vitest), bez podnoszenia limitu
+
+### G-746 `steering.ts` ma 717 linii, ponad limit 500 z ADR-0031
+- Ważność: S4 · Zasięg: packages/sim/src/systems/ai/steering.ts (686 → 717 po G-741), wyjątek w lincie
+- Opis: plik nawigacji urósł przy G-738/G-741; kandydat do podziału (planer, pole odległości, sprawdzanie krawędzi)
+- Status: naprawione (13.11, #505 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g746, 5f19528): steering.ts 707 → 186 linii, podział na nav-field.ts (259), straight-walk.ts (187), chase-detour.ts (118); hashe bez zmian; wcześniej: zgłoszone (13.11, naprawiacz G-741); po scaleniu G-740 i G-741
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: plik ≤ 500 linii bez wyjątku w lincie, złoty hash bez zmian
+
+### G-756 Klucze rodzajów próbkowanych w bazie skanu przesuwają się przy zmianie tablic, choć suma maleje
+- Ważność: S3 · Zasięg: `ground-strip-gap`, `ground-strip-overlap` (i pewnie inne z `SAMPLED_KINDS`); przy G-739 (2 pomosty w podzamcze-2-0) +49/−53 i +145/−155 kwadratów w podzamcze-0-1 i 2-0, z dala od zmiany
+- Opis: siatka próbek tych kontroli zależy od zawartości kawałka (np. obrysu albo kolejności kawałków nawierzchni), więc lokalna zmiana przesuwa próbki w całym kawałku i nowe klucze wymagają `GLITCH_BASELINE=accept`; zakotwiczyć siatkę próbek w układzie świata (wielokrotności kroku), żeby klucze zmieniały się tylko tam, gdzie zmienia się mapa
+- Status: naprawione (13.11, #503 scalony); wcześniej: w PR (13.11, gałąź ccr-ec2c4269-ilh8k8-g756 @ 3b1b8d3: liczniki i próbki zakotwiczone w kwadratach świata); wcześniej: zgłoszone (13.11, orkiestrator przy scalaniu G-739)
+- Pakiet właściciela: tools/glitch-scan
+- Test przyjęcia: przesunięcie jednego pomostu w kawałku zmienia klucze tylko w kwadratach, które on dotyka (test na kopii tablic)
+
+### G-748 Uskok terenu do 3,3 m na szwie kawałków krakowskie-2-1 | stare-miasto-0-1
+- Ważność: S3 · Zasięg: x = 460, z 104–110: teren krakowskie-2-1 −9,20, stare-miasto-0-1 −5,80…−7,12
+- Opis: teren dwóch sąsiednich kawałków rozjeżdża się na szwie; `walk-blocked` (ADR-0080 PR 4): 48 par
+- Status: naprawione (13.11, #502 scalony); wcześniej: w PR (13.11, częściowo: x=460 3,30 → 0,51 m, 12 szwów → 0; gałąź ccr-ec2c4269-ilh8k8-g748); wcześniej: zgłoszone (13.11, budowniczy ADR-0080 PR 4)
+- Pakiet właściciela: packages/sim (content/lublin terrain)
+- Test przyjęcia: `walk-blocked` bez kluczy na szwie x = 460; teren obu kawałków ciągły (różnica ≤ 0,05 m wzdłuż szwu)
+- Przegląd topografii PR #502: ZGODNE Z UWAGAMI. Względem NMT (σ 1,5) punkty szwów: mediana 0,028 → 0,035 m, maks. 0,054 → 0,43 m (sm1-1|pz0-0, z 160), w tolerancji importu. Zostają szczeliny > 0,1 m: (240; 113,75–115,25) do 0,18 m, (384,5–386,5; −20) do 0,22 m (krawędź pada myjni T-051), (460; 103–109,25) do 0,51 m pod płytami Arkad. Propozycja kuratora: kontrola skanu `seam-gap` (|h_a − h_b| na szwach co 0,25 m, > 0,1 m, poza płytami; baza 2 miejsca, 16 próbek) razem z G-758.
+
+### G-739 Koniec kładki Podzamcza (1073,9; 160,5) leży na skarpie rowu Czechówki, pomost o 2,7 m za nisko (T-166)
+- Status: naprawione (13.11, #501 scalony); wcześniej: w PR #501 (13.11, d70ed63 po scaleniu main: skan z obiema nowymi kontrolami, tablice przegenerowane, golden +20 wierzchołków); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g739 (13.11, ae90173: koniec pomostu na skarpie przesuwany wzdłuż drogi do szczytu skarpy; kładka −23,04…−23,91, ok. 3,8°; `bridge-end-in-slope` 3 → 0, `ground-over-deck` 397 → 395; przy okazji G-362 koniec +0,58 m; przegląd kuratora ZGODNE Z UWAGAMI 13.11; czeka na G-741 i G-743); wcześniej: zgłoszone (13.11, kurator, ortofoto 2025-04 i 2024-06, NMT)
+- Ważność: S3 · Zasięg: 1 pomost (podzamcze-2-0, kładka w295849307, 8 m): gracz i AI przechodzą po zjeździe 2,2 m na 8,3 m (15°) zamiast po poziomym przęśle · Koszt: mały
+- Gdzie: (1073,9; 160,5) pomost −25,63, chodnik zachodni −22,9, teren na x 1071–1073 od −22,9 do −23,4; 2 próbki `ground-over-deck` (0,054 m); 3 próbki `deck-abutment-step` (1073,8; 161,7), (1073,8; 161,1), (1073,9; 160,6)
+- Dowód: nakładki ortofoto w scratchpadzie sesji (`topo-kladka-orto-2025-04.png`, `-2024-06.png`): przęsło poziome, ciągłe z chodnikiem, bez schodów; NMT wzdłuż z = 160,6: krawędź rowu x≈1072,5 (−22,9), skarpa 45° do dna −27,7; koniec osi 1,4 m w głąb skarpy. Drugi koniec (1082,2; 160,9) zgodny (−23,47)
+- Przyczyna: `bridge-ends.ts` (`AT_EDGE` 0,5 m) nie przedłuża końca, bo obrys `man_made=bridge` też zachodzi na skarpę (dokładność OSM ok. 1 m); `makeDeck` bierze `rawHeight` końca osi
+- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (`content/lublin/decks.ts`)
+- Test przyjęcia: `deck-abutment-step` i `ground-over-deck` = 0 przy kładce; nowa kontrola `bridge-end-in-slope` (koniec osi pomostu z NMT niższym o > 0,5 m od maksimum NMT w 2,5 m wzdłuż osi na zewnątrz) = 0 (baza 1, pozostałe końce do zmierzenia). Propozycja: wysokość końca z najbliższego węzła dojścia albo koniec osi wyniesiony do krawędzi rowu; pomost wtedy ok. −22,9…−23,5
+
+### G-742 Białe fasady przepalają się w słońcu (4,6–4,8% dolnej połowy kadru)
+- Ważność: S4 · Zasięg: ujęcia z chodników przy Placu Litewskim (-91;127) i (-89;-199) o 12:00; przepalenie z białych fasad, nie z nawierzchni; próg przyjęty przy G-721: ≤ 3%
+- Status: naprawione (13.11, #499 scalony); wcześniej: w PR #499 (13.11, 9f46ff4: `sunSafe()` w `facade-style.ts`, budynki przepalone 543/705 → 0; przepalenie ujęć poniżej 3%); wcześniej: zgłoszone (13.11, naprawiacz G-734)
+- Pakiet właściciela: packages/engine (barwy fasad, światło dnia)
+
+### G-740 Ganger staje pod ścianą przyczółka mostu południowego Mełgiewskiej poza planerem pościgu (2 przypadki)
+- Ważność: S3 · Zasięg: ta sama ściana co G-738 (do 1,5 m, rampa przyczółka w50733068); po G-738 6 z 225 przebiegów siatki wokół rampy nie dochodzi, także po 90 s
+- Opis: (1) z (2410; 310) do (2449; 318): powrót na posterunek przez `straightWalk`, którego próbki co 0,5 m przeskakują ścianę, staje w (2415,6; 310,8); (2) z (2422; 310) do (2405; 318): ganger pod pomostem napiera na ścianę przyczółka, staje w (2416,5; 311,5)
+- Status: naprawione (13.11, #495 scalony); wcześniej: w PR #495 (13.11, 8218817 + merge G-741: ściany między komórkami rastra z reguły `offTheBank`, `wallOnWay` w `walkable`/`startOf`/`straightWalk`; przypadki 4/4, siatka 225/225; raster w pagórkach 1,5–2× dłuższy; po #490); wcześniej: zgłoszone (13.11, naprawiacz G-738)
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: oba przypadki dochodzą (test w `bridge-edges-ai.test.ts`), siatka wokół rampy 225/225
+- 13.11 (naprawiacz G-741): przy przyczółkach Mełgiewskiej 14 z 30 punktów nie dochodzi (osiłki na skarpach przy końcach pomostów, np. (2454,5; 293,7), (2449,5; 258,9), (2481,5; 415,7)); `followDetour` bez osiągalnej komórki w linii prostej kieruje do `way[1]`, nawet nieosiągalnej: źródło zakleszczeń w kieszeniach przy skarpach
+
+### G-743 Fascja i spód pomostu: nieciągła grubość daje zęby i skośne trójkąty nad skarpą (T-166)
+- Ważność: S4 · Zasięg: pomosty nad skarpą, gdzie prześwit pod pokładem przechodzi przez 2–2,8 m; przykład kładka podzamcze-2-0 po G-739, (1074; 161,8) i (1079; 161,8); błąd istniał (G-062), G-739 go odsłania
+- Opis: `deckDepth` (`packages/sim/src/world/deck.ts`) skacze nieciągle: przy prześwicie ≤ 2 m 0,9 m, tuż powyżej 0,2 m, potem rośnie do 0,9 m przy ok. 2,8 m. Fascja (`planDeckEdges`, `packages/engine/src/renderer/mapcity/deck-plan.ts`) bierze grubość co ok. 1,9 m, a spód (`planDeckUnderside`) tylko w narożach pierścienia (wszędzie 0,9 m), więc płaski spód wystaje poniżej cienkich odcinków fascji
+- Status: naprawione (13.11, #491 scalony); wcześniej: w PR #491 (13.11, 2192ee2: ciągła grubość `deckDepth`, fascja łamana w punktach siatki spodu; testy padają bez poprawki; zrzut spod kładki bez zębów); wcześniej: w naprawie (13.11, zgłoszone przez kuratora przy przeglądzie G-739)
+- Pakiet właściciela: packages/engine (`deck-plan.ts`), packages/sim (`deckDepth`)
+- Test przyjęcia: grubość fascji ciągła względem prześwitu; spód nigdy nie wystaje poniżej fascji (test na siatce pomostu); zrzut kładki z dołu bez trójkątów
+- 13.11: test G-062 „headroom” sprawdzał spód tylko w wierzchołkach; wnętrza spodu nie sprawdza nic (luka testowa, do rozważenia przy ADR-0080)
+
+### G-745 `pnpm osm:props` nie jest idempotentne: wynik zależy od poprzedniego `props.generated.ts`
+- Ważność: S3 · Zasięg: generator rekwizytów czyta przez sim własny poprzedni wynik; punkt stały dopiero po drugim przebiegu (pierwszy dał `figure-in-crowd` 2 przy (−74; 160))
+- Opis: niedeterministyczny proces budowy danych: ten sam wejściowy OSM daje różne tablice zależnie od stanu pliku wyjściowego; łamie powtarzalność i porównania przed/po
+- Status: naprawione (13.11, #494 scalony); wcześniej: w PR #494 (13.11, 60035c4: `buildProps` podaje modułom sim tabelę z bieżącego przebiegu, kolejność jawna w jednym przebiegu; test bajt w bajt z pustym i bieżącym plikiem); wcześniej: zgłoszone (13.11, budowniczy etapu 2 ADR-0078)
+- Pakiet właściciela: tools/osm-import (props), packages/sim (odczyt rekwizytów)
+- Test przyjęcia: dwa kolejne `osm:props` z tego samego wejścia i z pustego/innego `props.generated.ts` dają ten sam plik bajt w bajt (test w osm-import)
+- 13.11: do sprawdzenia, czy `barrier-report.ts` i `tools/orto/src/game.ts` (też ładują sim z zatwierdzonymi tabelami) zapisują coś do repo
+
+### G-741 AI nie widzi boków pomostów jako ścian poza okolicą schodów
+- Ważność: S3 · Zasięg: wszystkie pomosty nad niższym terenem; `nav-raster.ts` (`ledgesOf`) zamyka krawędzie pomostów tylko przy biegach schodów, więc planer nie obchodzi pomostu przez koniec i ganger staje pod bokiem pomostu
+- Opis: po G-739 (kładka podzamcze-2-0 na poziomie ulicy) osiłek w `bridge-edges-ai.test.ts` („gets from beside the footbridge of podzamcze-2-0 onto its middle”) idzie prosto i staje pod północnym bokiem, 0,77 m niżej, 4,5 m od gracza; na main test przechodzi tylko dzięki przechyleniu pomostu z G-739
+- Status: naprawione (13.11, #490 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g741 (13.11, 56f597f: krawędzie pomostów w każdym oknie z pomostem, `passable` nie wchodzi na krawędź, `startOf` przy krawędzi; test podzamcze-2-0 zaostrzony do 0,3 m; 30 punktów przy bokach pomostów: 11 → 16; w PR); wcześniej: w naprawie (13.11, zgłoszone przez naprawiacza G-739); blokuje scalenie G-739
+- Pakiet właściciela: packages/sim/src/systems/ai (`nav-raster.ts`)
+- Test przyjęcia: `bridge-edges-ai` przechodzi na gałęzi G-739; nowy test na main z boku innego pomostu nad niższym terenem
+
+### G-734 `sidewalk` za ciemny wobec trawy (1,31 zamiast 1,46–1,58)
+- Status: naprawione (13.11, #488 scalony); wcześniej: w PR #488 (13.11, cffd922: `sidewalk` z mediany ortofoto, #858277, chodnik/trawa w planie 1,31 → 1,56; kontrola `paving-albedo-drift` odłożona: mediany wymagają danych ortofoto spoza repo); wcześniej: zgłoszone (12.11, kurator, przegląd G-721)
+- Ważność: S4 · Zasięg: wszystkie chodniki miasta (#6a6d73); ortofoto: chodnik do trawy 1,46–1,58; poprawka: 0,9 × square (ok. #868378) tą samą regułą co G-721; kontrola `paving-albedo-drift` (plan/trawa wobec mediany ortofoto > 0,25)
+- Pakiet właściciela: packages/engine (`ground-plan.ts`)
+
+### G-737 Chodnik mostu Mełgiewskiej przy Andersa 0,14–0,16 m pod jezdnią (T-283)
+- Ważność: S4 · Zasięg: most w50733068, chodnik w230881193 przy Andersa, (2420-2426; 323), zachodni koniec; chodnik −25,86…−25,88, jezdnia −25,72
+- Opis: pomost chodnika leży na NMT końca swojej osi, a jezdni na swojej; w poprzek mostu powstaje uskok 0,14–0,16 m poniżej progu `deck-step-face` (0,3). W Lublinie chodnik za krawężnikiem jest w poziomie jezdni.
+- Status: naprawione (13.11, #485 scalony); wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g737 (13.11, db84383: chodnik i wypełnienia w obrysie mostu biorą oś pomostu jezdni; `deck-kerb-step` 1201 → 0, `ground-over-deck` 397 → 233; przegląd kuratora ZGODNE Z UWAGAMI 13.11; w PR #485, #484 scalony, CI po aktualizacji do main); wcześniej: zgłoszone (13.11, naprawiacz G-736, potwierdzone przez kuratora); propozycja kontroli skanu: różnica chodnik–jezdnia w jednym przekroju mostu > 0,05 m
+- Pakiet właściciela: tools/osm-import (`bridge-ends.ts`, wysokości pomostów)
+
+### G-738 Ganger utyka przy narożniku rampy przyczółka mostu południowego Mełgiewskiej (2415; 311)
+- Ważność: S3 (pościg staje na stałe) · Zasięg: NW narożnik rampy przyczółka jezdni mostu w50733068, na dnie ściany 1,5 m; na main przy starcie pościgu z (2411,9; 296,0) albo (2414,2; 307,4)
+- Opis: plan pościgu prowadzi gangera przez narożnik rampy, gdzie utyka pod ścianą. Po G-737 (chodnik mostu w poziomie jezdni) trasa przez to miejsce staje się wybierana też w `bridge-edges-ai.test.ts` („gets from the lower bridge of Mełgiewska down to the street south of it”), więc test pada; pułapka istnieje na main niezależnie od G-737.
+- Status: naprawione (13.11, #484 scalony); wcześniej: w PR #484 (13.11, 3da8ee0: `walkable` sprawdza pominięty odcinek `NEAR_SKIP` regułą ruchu `offTheBank`; siatka 25 startów × 3 cele × 3 ziarna: 192/225 → 219/225; reszta w G-740); wcześniej: zgłoszone (13.11, naprawiacz G-737); blokuje scalenie G-737 (#485)
+- Pakiet właściciela: packages/sim/src/systems/ai (nawigacja), ewentualnie dane rampy w content/lublin
+
 ### G-708 Trzy budynki przy Grodzkiej i Rybnej o 9–12 m wyższe niż w NMPT; oficyna bez OSM (T-269)
 - Status: naprawione (13.11, #481 scalony); wcześniej: w PR #481 (13.11, 3644e06: runda 2, `height-vs-nmpt` na 55 budynków komórki z bazą 0, taras w232362965 −8,4, teren nad dachem 51 → 0, atrybucja NMPT); naprawione na gałęzi ccr-ec2c4269-ilh8k8-g708 (12.11, 990a49b; przegląd kuratora ZGODNE Z UWAGAMI; oficyna (682..691; 72..80) skreślona, to studnia doświetlająca); wcześniej: zgłoszone (12.11, kurator, przegląd stare-miasto-1-1)
 - Ważność: S3 (sylwetka skarpy nad Podwalem w widoku od Zamku; płyta 16 m zamiast niskiej zabudowy na Rybnej) · Zasięg: stare-miasto-1-1. Środek dachu gry minus mediana NMPT GUGiK 0,5 m w obrysie: Rybna 13 w66293276 (613,5; 95,6) +11,6 m (gra 16,1 m z LoD1 na całym obrysie 528 m²; NMPT: 25% przy ziemi, 68% na 2–8 m, 7% ≥ 8 m); w232362965 (708,1; 100,7) +10,0 m (16,7 m z wartości domyślnej, cokół 7,1; NMPT: dach na poziomie podwórzy Grodzkiej, y −8,9); w364575978 (703,4; 89,6) +8,6 m (14,6 m: cokół 5 i 3 kondygnacje z tagu; NMPT p90 y −4,3). Obu ostatnich nie ma w LoD1 2024 ani w LoD2. Pozostałe 52 budynki komórki: mediana +0,24 m, p90 +1,0. Do tego oficyna (682..691; 72..80), 52 m², która jest w LoD2 (okap 11,9) i w NMPT, a w OSM jej nie ma. Nakładki `topo-sm11-img/panas.png` i `rybna13.png`

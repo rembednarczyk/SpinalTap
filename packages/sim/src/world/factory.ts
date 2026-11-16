@@ -13,6 +13,7 @@ import type { Combatant, Entity, MeleeState, WalkProgress } from "./components";
 import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
 import { type EnemyScaling, enemyMaxHp, gradeEnemy } from "./enemy-grade";
+import { applyMotion, withMotion } from "./stance-snapshot";
 
 export const BODY = { radius: BODY_RADIUS, height: 1.8 } as const;
 
@@ -343,7 +344,10 @@ export const toughen = (e: Entity, s: EnemyScaling): Entity => {
 const restoredHealth = (health: NonNullable<Entity["health"]>, hp: number, savedMax: number): number =>
   savedMax === health.max || hp <= 0 ? hp : Math.min(health.max, Math.max(1, Math.round((health.max * hp) / savedMax)));
 
-/** An NPC's gun not at rest with a full magazine (G-185), else null; the player's is in the domain. */
+/**
+ * An NPC's gun not at rest with a full magazine (G-185), else null; the player's magazine is in
+ * the domain and her gun's timers in her stance (G-883).
+ */
 const gunOf = (e: Entity): GunSnapshot | null => {
   const c = e.combatant;
   if (!c || e.player || (c.loaded === c.stats?.magazine && c.reloading === 0 && c.drawing === 0 && c.bloom === 0)) return null;
@@ -400,7 +404,9 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
   const fighting = withFight(e, counted);
   // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
-  const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
+  const walking = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
+  // Moving, mid-blow, the player crouched or mid-reload (G-883): it goes on in the same step.
+  const body = withMotion(e, walking);
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
   // A quickhack still running (G-882): a rebooted camera stays blind through a save.
   const fx = e.hackFx;
@@ -436,6 +442,7 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.sniper = { ...e.sniper, ...s.sniper, ...(s.sniper.phase === "aim" ? { relight: true as const } : {}) };
   }
   if (e.ai && s.walk) e.walk = walkOf(s.walk);
+  applyMotion(e, s);
   if (e.ai) {
     e.ai.alerted = s.alerted;
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;

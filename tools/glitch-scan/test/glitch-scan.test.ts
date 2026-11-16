@@ -2216,8 +2216,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "ground-ring-self-cross": () => groundRingSelfCross(MAP_CHUNKS),
   /** A m² of the tables' ground under two pieces or more, on a 0.25 m raster: the strips laid over each other in draw order (ADR-0078 stage 3 takes it to about 0, `ground-strips.ts`). */
   "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
-  /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces, on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
-  "ground-strip-gap": () => groundStripGap(STRIP_RASTERS()),
+  /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces off the buildings (G-864), on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
+  "ground-strip-gap": () => groundStripGap(STRIP_RASTERS(), inBuilding),
   /** A piece of the tables' ground lifted over the steps, on a flight's outline by over 0.01 m²: it breaks through the lowest tread (G-777, `ground-over-steps.ts`). */
   "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */

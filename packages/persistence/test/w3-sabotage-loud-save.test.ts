@@ -3,7 +3,7 @@ import { type Contract, SAVE_SCHEMA_VERSION } from "@seki/core";
 import { MIGRATIONS, decodeSave, encodeSave, findSchemaError } from "../src";
 import { snapshot } from "./fixtures";
 
-/** W-3's loud way in the save (ADR-0082 stage 3b): schema v41 and the v40 -> v41 migration. */
+/** W-3's loud way in the save (ADR-0082 stage 3b): schema v42 and the v41 -> v42 migration. */
 const JOB: Contract = {
   id: "c4",
   kind: "sabotage",
@@ -24,14 +24,14 @@ const withJob = (c: unknown) => {
   return { ...s, domain: { ...s.domain, contracts: { ...s.domain.contracts, active: c as Contract } } };
 };
 
-describe("the loud way in the save (v40 to v41, ADR-0082 stage 3b)", () => {
-  it("is schema v41 or later", () => {
-    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(41);
+describe("the loud way in the save (v41 to v42, ADR-0082 stage 3b)", () => {
+  it("is schema v42 or later", () => {
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(42);
   });
 
-  it("a v40 save changes only the version: its sabotage, if any, is on the quiet way", () => {
-    const old = { version: 40, tick: 5, entities: [] };
-    expect(MIGRATIONS[40]!(old)).toEqual({ ...old, version: 41 });
+  it("a v41 save changes only the version: its sabotage, if any, is on the quiet way", () => {
+    const old = { version: 41, tick: 5, entities: [] };
+    expect(MIGRATIONS[41]!(old)).toEqual({ ...old, version: 42 });
   });
 
   it("keeps the charges, the one being planted, the fuse and the blast through the codec", () => {
