@@ -1,4 +1,4 @@
-import { segmentDistance } from "../../../packages/core/src";
+import { pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { areaSurface } from "../../osm-import/src/ground.ts";
@@ -13,6 +13,9 @@ import { raisedGreen } from "../../osm-import/src/raised-green.ts";
  * is not drawn, T-025), within `NEAR` of a shop's or a public building's walls (a stop's shelter
  * among them) or within `STOP_REACH` of a stop. Points in a building, and in the map's lawns, beds
  * and water (drawn or not), are left out: a bed bare of paving is the photograph's, not a glitch.
+ * So is a point in a building's outline as the map has it, within `WALL_ROUNDING` of the wall the
+ * table draws (G-875): the import lays no ground in the map's outline, and the table's rounding
+ * moves a slanting wall a few millimetres off the samples on its line.
  * A lawn mapped above the ground (`layer` > 0 or on a roof, G-664) is not: the ground under a
  * roof's green is no bed of the map's, and only the lawn's pieces drawn on the ground cover it.
  * The grid is rasterised once for the whole city, so the scan stays well under a second.
@@ -29,6 +32,11 @@ export const BARE_GRID = 0.5;
 export const NEAR = 5;
 /** How far round a bus or tram stop of the map its platform reaches (m). */
 export const STOP_REACH = 10;
+/**
+ * How far the table's outline of a building lies off the map's (m): its vertices rounded to 0.1 m
+ * (under 0.071 m) and the nearly collinear ones dropped (0.02 m more), `prepareOutline` of the import.
+ */
+export const WALL_ROUNDING = 0.1;
 
 export interface LanduseWorld {
   /** Where a town has paving: the map's areas, and the shops' and public buildings' outlines with their forecourts. */
@@ -38,6 +46,8 @@ export interface LanduseWorld {
   readonly stops: readonly Pt[];
   /** Every building's outline: no ground in it. */
   readonly buildings: readonly Ring[];
+  /** The buildings' outlines as the table draws them (`drawn`) and as the map has them (`ring`): the import's walls. */
+  readonly mapped: readonly { readonly drawn: Ring; readonly ring: Ring }[];
   /** The map's ground pieces, any surface. */
   readonly ground: readonly Ring[];
   /** Lawns, beds and water of the map, drawn or not. */
@@ -113,6 +123,22 @@ export class Grid {
         for (let i = i0; i <= i1; i++) if (segmentGap(a, b, this.x(i), this.z(j)) <= d) this.cells[j * this.nx + i]! |= bit;
     }
   }
+  /** Marks the samples within `d` of the ring's edges that lie in `inside`. */
+  aroundIn(ring: Ring, d: number, inside: Ring, bit: number): void {
+    for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) {
+      const a = ring[m]!;
+      const b = ring[k]!;
+      const i0 = Math.max(0, Math.floor((Math.min(a.x, b.x) - d - this.x0) / BARE_GRID));
+      const i1 = Math.min(this.nx - 1, Math.ceil((Math.max(a.x, b.x) + d - this.x0) / BARE_GRID));
+      const j0 = Math.max(0, Math.floor((Math.min(a.z, b.z) - d - this.z0) / BARE_GRID));
+      const j1 = Math.min(this.nz - 1, Math.ceil((Math.max(a.z, b.z) + d - this.z0) / BARE_GRID));
+      for (let j = j0; j <= j1; j++)
+        for (let i = i0; i <= i1; i++) {
+          const [x, z] = [this.x(i), this.z(j)];
+          if (segmentGap(a, b, x, z) <= d && pointInRingEvenOdd(x, z, inside)) this.cells[j * this.nx + i]! |= bit;
+        }
+    }
+  }
 }
 
 const segmentGap = (a: Pt, b: Pt, x: number, z: number): number => segmentDistance(x, z, a.x, a.z, b.x, b.z);
@@ -131,6 +157,7 @@ const landuseGrid = (w: LanduseWorld): Grid | undefined => {
   }
   for (const p of w.stops) grid.around([p], STOP_REACH, IN_REGION);
   for (const r of [...w.buildings, ...w.ground, ...w.green]) grid.fill(r, COVERED);
+  for (const b of w.mapped) grid.aroundIn(b.drawn, WALL_ROUNDING, b.ring, COVERED);
   // The ground is a partition of the plane (ADR-0078 step 3): two pieces cut along each other share an
   // edge to the millimetre, and a hairline between them is no bare terrain. Each piece covers 2 mm past its edge.
   for (const r of w.ground) for (const [dx, dz] of HAIRLINE) grid.fill(r.map((p) => ({ x: p.x + dx, z: p.z + dz })), COVERED);
@@ -185,12 +212,17 @@ const stopShelter = (t: Tags): boolean => t.shelter_type === "public_transport" 
 export const cityLanduseWorld = (osm: OsmData): LanduseWorld => {
   const areas = extractFeatures(osm).areas;
   const buildings = MAP_CHUNKS.flatMap((c) => c.buildings);
+  const rings = new Map(areas.map((a) => [a.id, a.ring]));
   const tagsOf = (id: string) => (id.startsWith("w") ? osm.ways.get(Number(id.split("/")[0]!.slice(1)))?.tags : undefined) ?? {};
   return {
     landuse: areas.filter((a) => paved(a.tags)).map((a) => a.ring),
     shops: buildings.filter((b) => SHOP_USE.has(b.use) || stopShelter(tagsOf(b.id))).map((b) => flatRing(b.outline, b.x, b.z)),
     stops: [...osm.nodes.values()].filter((n) => n.tags?.highway === "bus_stop" || n.tags?.railway === "tram_stop" || n.tags?.public_transport === "platform").map((n) => geoToWorld(n.lat, n.lon)),
     buildings: buildings.map((b) => flatRing(b.outline, b.x, b.z)),
+    mapped: buildings.flatMap((b) => {
+      const ring = rings.get(b.id);
+      return ring ? [{ drawn: flatRing(b.outline, b.x, b.z), ring }] : [];
+    }),
     ground: MAP_CHUNKS.flatMap((c) => c.ground.map((g) => flatRing(g.outline))),
     green: areas.filter((a) => GREEN.has(areaSurface(a.tags) ?? "") && !raisedGreen(a.tags)).map((a) => a.ring),
     chunks: MAP_CHUNKS.map((c) => c.bounds),
