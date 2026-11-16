@@ -64,7 +64,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     expect(session.sim.player()!.position).toEqual(saved);
     expect(session.sim.district).toBe("targ");
     expect(session.sim.streamer.loadedChunks).toEqual(chunks);
-  }, 60_000);
+  });
 
   it("rides the metro from Plac Zamkowy to Nabrzeże Bystrzycy and takes Genzō's job in the dialogue", () => {
     const { session, ui } = setup();

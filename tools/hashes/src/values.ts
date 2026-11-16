@@ -79,6 +79,22 @@ export const compare = (expected: string, actual: string): Comparison => {
   return { verdict, hashes, numbers, numbersChanged, otherChanged };
 };
 
+/**
+ * Golden tests whose hash only a person changes (decision of 16.11): the determinism of the
+ * simulation on its test floor moves only when a rule does, so its new hash goes in by hand
+ * (`vitest -u`) with the rule named in the commit. `--write` reports it and never writes it,
+ * `--bare` or not.
+ */
+export const BY_HAND: readonly string[] = ["packages/sim/test/determinism.test.ts"];
+
+/** Why `--write` leaves the hash of a failing assertion in `file` as it is; null when it may write it. */
+export const refusalOf = (file: string, c: Comparison, bare: boolean): string | null => {
+  if (BY_HAND.includes(file)) return "tylko ręcznie (vitest -u), z regułą w commicie";
+  if (c.verdict === "numbers-changed") return `liczby: ${c.numbersChanged.join(", ") || "klucze"}`;
+  if (c.verdict === "bare" && !bare) return "bez liczb, potrzebne --bare";
+  return null;
+};
+
 const count = (s: string, sub: string) => s.split(sub).length - 1;
 
 /**

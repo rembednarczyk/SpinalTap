@@ -14,7 +14,8 @@ import { SQUARE } from "../src/scan-keys.ts";
  * - `ground-strip-gap`: m² of bare cells of that raster with ground within 0.75 m on both sides,
  *   along x or along z: gaps up to 1.25 m wide between the strips (one to 0.75 m counted whole, a
  *   wider one by its middle, the cells 0.75 m from both sides). Stage 5 (a morphological
- *   closing) is to bring it down by most of it.
+ *   closing) is to bring it down by most of it. A cell in a building's outline is no gap (G-864):
+ *   the building stands on it and no ground is drawn there.
  * The pieces on bridges stay out of all three, as in the prototype: they lie apart, on the deck.
  * The areas are findings one per m² (rounded in each 10 m square of the scan's keys), each at a cell it counts.
  */
@@ -171,5 +172,14 @@ const perSquareMetre = (rasters: readonly StripRaster[], pick: (r: StripRaster) 
 /** `ground-strip-overlap`: m² of the city's ground under two pieces or more. */
 export const groundStripOverlap = (rasters: readonly StripRaster[]): Finding[] => perSquareMetre(rasters, overlapCell, "overlap");
 
-/** `ground-strip-gap`: m² of bare gaps up to 1.25 m wide between the city's ground pieces. */
-export const groundStripGap = (rasters: readonly StripRaster[]): Finding[] => perSquareMetre(rasters, gapCell, "gap");
+/** `ground-strip-gap`: m² of bare gaps up to 1.25 m wide between the city's ground pieces, off the buildings (`inBuilding`). */
+export const groundStripGap = (rasters: readonly StripRaster[], inBuilding: (x: number, z: number) => boolean = () => false): Finding[] =>
+  perSquareMetre(
+    rasters,
+    (raster) => {
+      const gap = gapCell(raster);
+      const { minX, minZ } = raster.bounds;
+      return (c, r) => gap(c, r) && !inBuilding(minX + (c + 0.5) * STRIP_CELL, minZ + (r + 0.5) * STRIP_CELL);
+    },
+    "gap",
+  );

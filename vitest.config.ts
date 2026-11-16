@@ -16,7 +16,11 @@ const SHARED = ["core", "sim", "engine", "persistence"].map((p) => `packages/${p
 export default defineConfig({
   test: {
     projects: [
-      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false } },
+      // ADR-0083 step 3: the steering's rasters and fields made once a worker and shared by its
+      // simulations (`tools/city-cache`); the same results without it (`SEKI_CITY_CACHE=off`). Only
+      // here: an isolated file would load the simulation for it alone (ui), and keep it to itself.
+      // A shared worker also keeps what a file leaves in Babylon's EngineStore: freed after each file (G-865).
+      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false, setupFiles: ["tools/city-cache/src/setup.ts", "packages/engine/test/free-engines.ts"] } },
       { extends: true, test: { name: "isolated", include: ["packages/*/test/**/*.test.{ts,tsx}"], exclude: [...configDefaults.exclude, ...SHARED] } },
     ],
     environment: "node",

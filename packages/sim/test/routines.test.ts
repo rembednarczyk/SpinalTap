@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { ACTIVITY_IDS, type SaveSnapshot, hm } from "@seki/core";
 import {
   ACTIVITY_SPOTS,
@@ -24,9 +24,6 @@ import {
 } from "../src";
 import type { Entity } from "../src";
 import { byKey, input, run, teleportPlayer } from "./helpers";
-
-// Runs of a minute of game time and more: roomy on a busy machine.
-vi.setConfig({ testTimeout: 30_000 });
 
 const at = (x: number, z: number) => ({ x, y: 0, z });
 /** Hideo's stool at the SAKE bar on the Rynek. */

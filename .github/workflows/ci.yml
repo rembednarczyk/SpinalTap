@@ -3,7 +3,7 @@ name: CI
 # tell whether that exact code already passed (see the "changes" job).
 # A workflow_dispatch run (map-refresh.yml starts one on its branch: a PR opened with GITHUB_TOKEN
 # starts no workflow) is named after its branch.
-run-name: ${{ github.event_name == 'pull_request' && format('{0} (#{1}) on base {2}', github.event.pull_request.title, github.event.pull_request.number, github.event.pull_request.base.sha) || github.event_name == 'workflow_dispatch' && format('Dispatch on {0}', github.ref_name) || github.event.head_commit.message }}
+run-name: ${{ github.event_name == 'pull_request' && format('{0} (#{1}) on base {2}', github.event.pull_request.title, github.event.pull_request.number, github.event.pull_request.base.sha) || github.event_name == 'workflow_dispatch' && format('Dispatch on {0}', github.ref_name) || github.event_name == 'schedule' && 'Nightly full run' || github.event.head_commit.message }}
 
 on:
   push:
@@ -13,15 +13,26 @@ on:
   # By hand or from map-refresh.yml: "What changed" has no base to compare with (no PR, no
   # `before`), so it runs everything; the skip of code already tested is for pushes only.
   workflow_dispatch:
+  # ADR-0046 (decision of the user 16.11): a pull request runs what its files reach (job "What
+  # changed", tools/ci-scope); main and this nightly run run everything, so what a light pull
+  # request left out turns main red by the next morning at the latest.
+  schedule:
+    - cron: "17 2 * * *"
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # The nightly run has its own group: a push to main would cancel it (and it the push's run).
+  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
   cancel-in-progress: true
 
 jobs:
   # Minutes (user decision 1.11, no loss of coverage): draft pull requests run nothing (mark the
   # PR ready for CI); a change of docs alone (docs/**, changelog.d/**, *.md) runs nothing either,
   # on a pull request and on main; every job has a time limit, so a hung run cannot burn hours.
+  # A light pull request (user decision 16.11, ADR-0046): typecheck, lint and architecture always;
+  # the unit tests related to its files by the import graph (`vitest related`), no coverage; e2e
+  # only when it touches what a browser draws. Shared files (workflows, package.json, lockfile,
+  # tsconfig) run everything. The rules and their tests: tools/ci-scope. A skipped job counts as
+  # passed (main has no required checks, and GitHub takes a skipped job as a success), as for docs.
   changes:
     name: What changed
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
@@ -34,14 +45,24 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
       tables: ${{ steps.diff.outputs.tables }}
+      e2e: ${{ steps.diff.outputs.e2e }}
+      # full, related (the files in unit_files, a JSON array) or none.
+      unit: ${{ steps.diff.outputs.unit }}
+      unit_files: ${{ steps.diff.outputs.unit_files }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # Node runs the selector's TypeScript directly (tools/ci-scope), no pnpm install.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       # A push to main from a merge whose pull request passed CI on this same base (the main
       # before the push) holds exactly the code that run tested: a squash merge of the PR's head
-      # onto that base. It runs nothing again (saves a full run per merge). A merge onto a main
-      # that moved since the PR's run (another PR in between) runs everything, as before.
+      # onto that base. It runs nothing again (saves a full run per merge), but only when that run
+      # was full (artifact ci-full-run: every unit test and every e2e group); after a light run
+      # main runs everything. A merge onto a main that moved since the PR's run (another PR in
+      # between) runs everything, as before.
       - id: tested
         if: github.event_name == 'push'
         env:
@@ -52,27 +73,43 @@ jobs:
         run: |
           head=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null)][0].head.sha // empty' || true)
           if [ -z "$head" ] || [ -z "$BEFORE" ]; then echo "same=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          runs=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?event=pull_request&head_sha=$head&status=success&per_page=50" \
-            --jq "[.workflow_runs[] | select(.display_title | endswith(\"on base $BEFORE\"))] | length" || echo 0)
-          echo "PR head $head, base $BEFORE: $runs green run(s) on this base"
+          ids=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?event=pull_request&head_sha=$head&status=success&per_page=50" \
+            --jq ".workflow_runs[] | select(.display_title | endswith(\"on base $BEFORE\")) | .id" || true)
+          runs=0
+          for id in $ids; do
+            full=$(gh api "repos/$REPO/actions/runs/$id/artifacts?name=ci-full-run" --jq '.total_count' || echo 0)
+            if [ "${full:-0}" -gt 0 ]; then runs=$((runs + 1)); fi
+          done
+          echo "PR head $head, base $BEFORE: $runs green full run(s) on this base, of $(echo $ids | wc -w) green run(s)"
           if [ "${runs:-0}" -gt 0 ]; then echo "same=true" >> "$GITHUB_OUTPUT"; else echo "same=false" >> "$GITHUB_OUTPUT"; fi
+      # Docs alone: nothing; a pull request: its scope (tools/ci-scope/src/scope.ts); a push to
+      # main: everything; the nightly run and a run by hand (no base to compare with): everything.
       - id: diff
         run: |
           if [ "${{ steps.tested.outputs.same }}" = "true" ]; then
-            echo "The merged code passed CI in its pull request on this base: nothing runs again."
-            echo "code=false" >> "$GITHUB_OUTPUT"; exit 0
+            echo "The merged code passed a full CI run in its pull request on this base: nothing runs again."
+            printf 'code=false\ntables=false\ne2e=false\nunit=none\nunit_files=[]\nfull=false\n' >> "$GITHUB_OUTPUT"; exit 0
           fi
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            files=$(git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD")
-          elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
-            files=$(git -c core.quotePath=false diff --name-only "${{ github.event.before }}" HEAD)
+            git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD" > "$RUNNER_TEMP/changed"
+            mode=""
+          elif [ "${{ github.event_name }}" = "push" ] && [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
+            git -c core.quotePath=false diff --name-only "${{ github.event.before }}" HEAD > "$RUNNER_TEMP/changed"
+            mode="--push"
           else
-            echo "code=true" >> "$GITHUB_OUTPUT"; echo "tables=true" >> "$GITHUB_OUTPUT"; exit 0
+            node tools/ci-scope/src/cli.ts --full "${{ github.event_name }}: no base to compare with, everything"; exit 0
           fi
-          echo "$files"
-          if echo "$files" | grep -qvE '^(docs/|changelog\.d/)|\.md$'; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
-          # The map tables' generators, their data or the tables (ADR-0083): job "Map tables".
-          if echo "$files" | grep -qE '^(tools/osm-import/|tools/orto/|data/|packages/sim/src/content/lublin/)'; then echo "tables=true" >> "$GITHUB_OUTPUT"; else echo "tables=false" >> "$GITHUB_OUTPUT"; fi
+          cat "$RUNNER_TEMP/changed"
+          node tools/ci-scope/src/cli.ts $mode < "$RUNNER_TEMP/changed"
+      - name: Mark a full run (a later push of the same code to main runs nothing again)
+        if: steps.diff.outputs.full == 'true'
+        run: echo "${{ github.event_name }} ${{ github.sha }}" > "$RUNNER_TEMP/ci-full-run.txt"
+      - if: steps.diff.outputs.full == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-full-run
+          path: ${{ runner.temp }}/ci-full-run.txt
+          retention-days: 30
 
   # ADR-0083 step 1: the unit test compares only the fingerprint of the tables' inputs in their
   # headers (milliseconds); this job generates the tables again once and compares them byte for
@@ -117,11 +154,14 @@ jobs:
   # G-376: one job ran the whole suite with coverage in 18.6 min against its 20 min limit. Two
   # shards run in parallel and write blob reports; the checks job merges them and applies the
   # coverage thresholds once, on the merged coverage (a shard alone covers only part of the code).
+  # A light pull request (ADR-0046) runs `vitest related` on its files, in the same two shards and
+  # without coverage; a shard Vitest gives no file passes (`--passWithNoTests`). No file with a
+  # unit test (an e2e spec alone): no job.
   unit:
     # No matrix value in the name, as with the e2e shards.
     name: Unit tests
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.unit != 'none'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -140,10 +180,22 @@ jobs:
       # test-time reporter writes the time of every file for the time gate (job test-time); the
       # github-actions reporter puts each failure (test, message, file:line) as a short annotation
       # on the check run, so a red run is read without downloading the whole log.
-      - run: pnpm exec vitest run --coverage --reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2
+      - name: Unit tests (every test with coverage, or on a pull request the ones related to its files)
         env:
           VITEST_COVERAGE_SHARD: "1"
           TEST_TIME_OUTPUT: reports/unit-times/unit-times-${{ matrix.shard }}.json
+          UNIT: ${{ needs.changes.outputs.unit }}
+          UNIT_FILES: ${{ needs.changes.outputs.unit_files }}
+        run: |
+          reporters=(--reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2)
+          if [ "$UNIT" = "full" ]; then
+            pnpm exec vitest run --coverage "${reporters[@]}"
+            exit
+          fi
+          mapfile -t files < <(node -e 'for (const f of JSON.parse(process.env.UNIT_FILES)) console.log(f)')
+          line="Pull request: unit tests related to ${#files[@]} changed or read file(s), no coverage (ADR-0046, job What changed lists them); main and the nightly run run every test."
+          echo "$line"; echo "$line" >> "$GITHUB_STEP_SUMMARY"
+          pnpm exec vitest related --run --passWithNoTests "${reporters[@]}" "${files[@]}"
       # Only a passing shard: a red run is no reference. On main the times are the reference for
       # the pull requests that follow, so they stay longer than the copy of a pull request.
       - uses: actions/upload-artifact@v4
@@ -151,18 +203,21 @@ jobs:
           name: unit-times-${{ matrix.shard }}
           path: reports/unit-times
           retention-days: ${{ github.event_name == 'push' && 30 || 3 }}
+      # The blob reports feed only the coverage of a full run (job checks).
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && needs.changes.outputs.unit == 'full'
         with:
           name: blob-${{ matrix.shard }}
           path: .vitest/blob
           include-hidden-files: true
           retention-days: 1
 
+  # Typecheck, lint and architecture on every change of code, also when no unit test runs (job unit
+  # skipped) or a shard failed; the merge of the shards with the coverage thresholds only in a full run.
   checks:
     name: Typecheck, lint, architecture, unit tests
     needs: [changes, unit]
-    if: needs.changes.outputs.code == 'true'
+    if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -177,13 +232,15 @@ jobs:
       - run: pnpm lint
       - run: pnpm depcheck
       - uses: actions/download-artifact@v4
+        if: needs.changes.outputs.unit == 'full'
         with:
           pattern: blob-*
           path: .vitest/blob
           merge-multiple: true
-      - run: pnpm exec vitest run --merge-reports --coverage
+      - if: needs.changes.outputs.unit == 'full'
+        run: pnpm exec vitest run --merge-reports --coverage
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && needs.changes.outputs.unit == 'full'
         with:
           name: coverage
           path: reports/coverage
@@ -194,10 +251,12 @@ jobs:
   # reasons); a test file more than 50% and 2 s slower than the last run of main gets a warning.
   # Its own small job after the shards, beside the checks, so it adds nothing to the critical path:
   # no pnpm install, Node runs the tool's TypeScript directly.
+  # A light pull request compares only the tests it ran (gate.ts takes the tests of the head, the sum
+  # of main is over the same files); the reference is only green push runs of main, which are full.
   test-time:
     name: Unit test time
     needs: [changes, unit]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.unit != 'none'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -254,7 +313,9 @@ jobs:
     # change) then reads plainly instead of showing the unexpanded expression.
     name: E2E (build, smoke, NPR snapshot, perf budget)
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    # A pull request only when it touches what a browser draws (tools/ci-scope: engine, app, ui,
+    # e2e, Playwright, models, map tables, shared files); main and the nightly run always.
+    if: needs.changes.outputs.code == 'true' && needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
