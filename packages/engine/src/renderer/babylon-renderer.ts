@@ -328,6 +328,11 @@ export class BabylonRenderer implements RenderPort {
   }
 
   playEffect(effect: EffectDescriptor): void {
+    // W-3's job on its line (ADR-0082 stage 3): the beacons in the alarm's colour, the screens.
+    if (effect.kind === "alarm-light" || effect.kind === "line-screens") {
+      this.w3.setMission(effect);
+      return;
+    }
     this.fx.play(effect);
     if (effect.kind === "time-of-day") {
       this.map.setDaylight(effect.daylight);

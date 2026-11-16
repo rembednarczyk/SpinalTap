@@ -96,6 +96,10 @@ export {
   SNIPER_AIM_TIME,
   SNIPER_RETREAT_RADIUS,
   WATCH_SWEEP,
+  ROUTE_HALT,
+  ROUTE_SPEED,
+  routeLapSeconds,
+  routePose,
   enemySees,
   inSightCone,
   visionOf,
@@ -116,7 +120,7 @@ export {
   WAKE_REACH,
   WAKE_TIME,
 } from "./systems/ai";
-export { BAND_AREAS, CONTRACT_KIND_BANDS, CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt, bandDistrictAt, bandOf } from "./content/district-bands";
+export { BAND_AREAS, type BandId, CONTRACT_KIND_BANDS, CONTRACT_SITE_BANDS, DISTRICT_BANDS, bandAt, bandDistrictAt, bandOf } from "./content/district-bands";
 export { contractLevelOf, enemyRankOf } from "./world/enemy-grade";
 export {
   ESCORT_MAX_HP,

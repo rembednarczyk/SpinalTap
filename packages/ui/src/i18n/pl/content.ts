@@ -27,6 +27,7 @@ export const plContent = {
   "prompt.ladder.up": "Wspinaj się",
   "prompt.ladder.down": "Zejdź po drabinie",
   "prompt.terminal.hack": "Włam się do terminala",
+  "prompt.upload-virus": "Wgraj wirusa",
   "prompt.terminal.read": "Czytaj terminal",
   "prompt.pickup.crate": "Zabierz skrzynkę Hany",
   "prompt.pickup.data": "Zgraj dane Tessen",
@@ -73,6 +74,7 @@ export const plContent = {
   "hook.infiltrate_1": "Kod do drzwi biura przepustek: 4177 (kamera bierze cię za personel)",
   "hook.infiltrate_2": "Strażnik spod drzwi biura co pół godziny wychodzi zapalić",
   "hook.hack_1": "Snajper po trzecim strzale ma cztery sekundy bez lasera",
+  "hook.sabotage_1": "Obchód hali zagląda do serwerowni N co drugie okrążenie",
   "hook.hack_2": "Pod schodami wieży snajper z dachu cię nie widzi",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Kamera",

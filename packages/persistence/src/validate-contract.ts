@@ -18,6 +18,9 @@ export const findContractError = (c: unknown): string | null => {
     if (n !== undefined && (!Number.isInteger(n) || (n as number) < 0)) return "contract progress";
   }
   if (c.breach !== undefined && (!Array.isArray(c.breach) || !c.breach.every((x) => typeof x === "string"))) return "contract breach";
+  // The sabotage's way and its way out seen (ADR-0082 stage 3, v40).
+  if (c.route !== undefined && c.route !== "quiet" && c.route !== "loud") return "contract route";
+  if (c.seenLeaving !== undefined && c.seenLeaving !== true) return "contract seen leaving";
   return findVariationError(c);
 };
 

@@ -181,6 +181,10 @@ export class ScreenFx {
         this.applyLook();
         materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         return;
+      // W-3's line (ADR-0082): the renderer hands these to its view, not to the screen.
+      case "alarm-light":
+      case "line-screens":
+        return;
       default:
         this.playActor(effect);
     }
