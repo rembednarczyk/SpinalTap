@@ -1,9 +1,25 @@
-/** Writes chunks as TypeScript content tables: one record per line, so diffs show what changed. */
+/**
+ * Writes chunks as TypeScript content tables in a line format git merges as text (decision of
+ * 16.11): every element of a chunk's lists (a building, a piece of ground, a street…) is one line
+ * of compact JSON, in the generator's order, and the terrain's heights are one line per row of the
+ * grid (`cols` numbers). An element is never broken inside, however long (a ring of hundreds of
+ * points stays one line): only the grid has a break that stays put when values change.
+ */
 import { type ChunkOut } from "./model.ts";
 
 export const constName = (slug: string): string => `${slug.replace(/-/g, "_").toUpperCase()}_CHUNKS`;
 
 const list = (items: readonly unknown[]): string => (items.length === 0 ? "[]" : `[\n${items.map((i) => `      ${JSON.stringify(i)},`).join("\n")}\n    ]`);
+
+/** The terrain grid: its fields on the first line, then one row of heights (`cols` numbers) per line. */
+export const terrainText = (t: ChunkOut["terrain"]): string => {
+  const { heights, ...head } = t;
+  const fields = JSON.stringify(head).slice(0, -1);
+  if (heights.length === 0 || t.cols <= 0) return `${fields},"heights":[]}`;
+  const rows: string[] = [];
+  for (let i = 0; i < heights.length; i += t.cols) rows.push(`      ${heights.slice(i, i + t.cols).map((h) => JSON.stringify(h)).join(",")},`);
+  return `${fields},"heights":[\n${rows.join("\n")}\n    ]}`;
+};
 
 const chunkText = (c: ChunkOut): string =>
   [
@@ -11,7 +27,7 @@ const chunkText = (c: ChunkOut): string =>
     `    id: ${JSON.stringify(c.id)},`,
     `    district: ${JSON.stringify(c.district)},`,
     `    bounds: ${JSON.stringify(c.bounds)},`,
-    `    terrain: ${JSON.stringify(c.terrain)},`,
+    `    terrain: ${terrainText(c.terrain)},`,
     `    buildings: ${list(c.buildings)},`,
     `    ground: ${list(c.ground)},`,
     `    streets: ${list(c.streets)},`,
@@ -37,6 +53,7 @@ export const emitDistrict = (slug: string, name: string, chunks: readonly ChunkO
     `// ${name}. Map data © OpenStreetMap contributors, ODbL 1.0 (this table is a derived database under`,
     `// the ODbL). Terrain: Główny Urząd Geodezji i Kartografii (geoportal.gov.pl), NMT;`,
     `// building heights: GUGiK LoD1 2024, roofs: GUGiK LoD2 2017, CC BY 4.0. See data/osm/ATTRIBUTION.md.`,
+    `// Format (tools/osm-import/src/emit.ts): one element of a list per line, terrain heights one grid row per line.`,
     `import type { LublinChunkData } from "./types";`,
     "",
     `export const ${constName(slug)}: readonly LublinChunkData[] = [`,

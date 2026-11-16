@@ -11,7 +11,7 @@ const TESTS = [
   "tools/glitch-scan/test/glitch-scan.test.ts",
   "tools/glitch-scan/test/cut-on-road.test.ts",
   "tools/i18n-scan/test/i18n-scan.test.ts",
-  "tools/osm-import/test/fingerprint.test.ts",
+  "tools/osm-import/test/table-inputs.test.ts",
 ];
 const SCANS = ["tools/code-health/test/god-objects.test.ts", "tools/i18n-scan/test/i18n-scan.test.ts"];
 
