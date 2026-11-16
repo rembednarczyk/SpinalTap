@@ -2384,6 +2384,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pas (344..351; 58..88): brak komórek frontu dalej niż 14 m od osi Karmelickiej; kostka na pasie poniżej 5 m²
 
+### G-890 Plamka zieleni pokrycia przy krawężniku w kostce zostaje trawnikiem (T-285) i migocze z kostką
+- Ważność: S4 · Zasięg: pierwszy przebieg reguły gołej ziemi, całe miasto
+- Opis: joinSpecks (T-285) zostawia plamkę zieleni z pokrycia dotykającą jezdni jako trawnik w kostce; kerb-fill-flicker. Klucze krakowskie-2-1 300,100 i 310,50 przyjęte 16.11 (G-825, #595). Do decyzji kuratora: plamka przy krawężniku nie jest dołem po drzewie.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import
+- Klucze skanu: kerb-fill-flicker krakowskie-2-1 300,100; kerb-fill-flicker krakowskie-2-1 310,50
+
+### G-891 Zakłócenia ulicy z wybuchu, alarmu i znalezienia ciała nie trafiają do zapisu
+- Ważność: S4 · Zasięg: zapis dokładnie w kroku zdarzenia
+- Opis: disturb() (sabotage-loud.ts:150, contract-system.ts:36, body-watch-system.ts:59) trafia do session.street.disturbances, których nie ma w zapisie; zapis w kroku wybuchu rozjeżdża hash od drugiego kroku. Znalezione przez weryfikatora W-3 3b (#633); klasa sprzed 3b.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
