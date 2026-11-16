@@ -1,21 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import type { Vec3 } from "@seki/core";
 import type { Simulation } from "../src";
-import { gangerEntity, giveLead } from "../src";
-import { chaseDetour, followDetour, planDetour, wideBuilds } from "../src/systems/ai/steering";
 import type * as Nav from "../src/world/nav";
-import { BYSTRZYCA_FENCE, WALLED_YARD, barrierSim, flat, off, pieceAt, standOff } from "./fixtures/barrier-floor";
 
 /**
  * What the wide way round a long barrier costs a step (G-625): a raster of its window some 37 ms,
  * a field 15. A step makes at most one raster, and gangers keep the goal they planned for, so
  * they do not make them again every step round a corner of the windows' grid, (2352, 432). On the
  * floors of the barriers there (`barrier-floor.ts`): the rules need the barriers, not the city.
+ *
+ * A shared worker (`isolate: false`) may hold the sim from an earlier file, bound to the real
+ * level graph, and a hoisted `vi.mock` does not reach it (G-881): the registry is reset and the
+ * sim (and the floor, which imports it) imported after the counting stand-in, and reset again
+ * after the file.
  */
 
 /** Where the walkers stood that asked the level graph for a way (`from`: the walker's own position). */
 const routed: Vec3[] = [];
-vi.mock("../src/world/nav", async (actual) => {
+vi.resetModules();
+vi.doMock("../src/world/nav", async (actual) => {
   const nav = await actual<typeof Nav>();
   return {
     ...nav,
@@ -24,6 +27,14 @@ vi.mock("../src/world/nav", async (actual) => {
       return nav.routeAcrossLevels(...args);
     },
   };
+});
+const { gangerEntity, giveLead, routeAcrossLevels } = await import("../src");
+const nav = await import("../src/world/nav");
+const { chaseDetour, followDetour, planDetour, wideBuilds } = await import("../src/systems/ai/steering");
+const { BYSTRZYCA_FENCE, WALLED_YARD, barrierSim, flat, off, pieceAt, standOff } = await import("./fixtures/barrier-floor");
+afterAll(() => {
+  vi.doUnmock("../src/world/nav");
+  vi.resetModules();
 });
 
 /** Steps `sim` for `steps`, `each` before every one: the most wide rasters a step made, and all rasters and fields made. */
@@ -72,6 +83,8 @@ describe("the cost of the wide way round a long barrier (G-625)", () => {
     const near = planDetour(sim.world, ganger.position, player.position);
     const wide = chaseDetour(sim.world, ganger.position, player.position);
     expect([near && followDetour(near, ganger.position), wide && followDetour(wide, ganger.position)], "no way round the yard").toEqual([null, null]);
+    // The gangers ask the counting level graph, not one an earlier file left in the worker.
+    expect(routeAcrossLevels).toBe(nav.routeAcrossLevels);
     routed.length = 0;
     for (let i = 0; i < 60 * 10; i++) sim.step();
     expect(routed.filter((from) => from === ganger.position)).toEqual([]);

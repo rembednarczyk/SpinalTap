@@ -1293,12 +1293,15 @@ kbd {
 .hud__bonus--lost .hud__bonus-state { color: var(--danger); }
 .badge-icon { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
 
-/* Debrief card. */
+/* Debrief card: its place and height in its zone are in scale/zones.css (G-846). The body scrolls
+   when the zone is shorter than the card; the head, the total and the close button stay in sight. */
 .debrief {
   position: absolute;
   left: 50%;
-  top: 12%;
   transform: translateX(-50%);
+  display: grid;
+  grid-template: "head" auto "body" minmax(0, 1fr) "sum" auto "close" auto / minmax(0, 1fr);
+  box-sizing: border-box;
   width: 460px;
   max-width: calc(100% - 32px);
   padding: 14px 18px;
@@ -1307,9 +1310,11 @@ kbd {
   border-top: 3px solid var(--ok);
   /* The cut corner sits bottom left, away from the close button (a clipped area takes no clicks). */
   clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
-  animation: toast-in 240ms ease-out;
+  /* Fades in where it stands: a 30 px slide ran it over the messages beside it on a phone and
+     dropped its centring on a desktop for the slide's 240 ms. */
+  animation: toast-fade 240ms ease-out;
 }
-.debrief__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.debrief__head { grid-area: head; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .debrief__eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ok); }
 .debrief__title { font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .debrief__rank { display: flex; flex-direction: column; align-items: center; min-width: 64px; font-family: var(--font-mono); font-size: 44px; line-height: 1; color: var(--cyan); }
@@ -1317,6 +1322,7 @@ kbd {
 .debrief__rank--A { color: var(--magenta); }
 .debrief__rank--C { color: var(--ink-dim); }
 .debrief__rank-text { margin-top: 2px; font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.debrief__body { grid-area: body; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; pointer-events: auto; }
 .debrief__badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 6px; margin: 12px 0; padding: 0; list-style: none; }
 .debrief__badge { position: relative; display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 14px; color: var(--ink-dim); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
 .debrief__badge:not(.debrief__badge--earned) .badge-icon, .debrief__badge:not(.debrief__badge--earned) .debrief__badge-label { opacity: 0.55; }
@@ -1330,9 +1336,10 @@ kbd {
 .debrief__pay > div { display: flex; justify-content: space-between; padding: 2px 0; }
 .debrief__pay dt { color: var(--ink-dim); }
 .debrief__pay dd { margin: 0; font-family: var(--font-mono); }
+.debrief__sum { grid-area: sum; }
 .debrief__pay > .debrief__total { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--panel-edge); font-size: 18px; }
 .debrief__total dd { color: var(--amber); }
-.debrief__close { display: block; margin: 10px 0 0 auto; min-height: 44px; padding: 6px 16px; font-size: 16px; color: var(--ink); background: rgba(95, 242, 255, 0.08); border: 1px solid var(--cyan); cursor: pointer; }
+.debrief__close { grid-area: close; justify-self: end; display: block; margin: 10px 0 0; min-height: 44px; padding: 6px 16px; font-size: 16px; color: var(--ink); background: rgba(95, 242, 255, 0.08); border: 1px solid var(--cyan); cursor: pointer; }
 
 /* Phone: holocall, notifications and the inbox. */
 .phone__portrait {
@@ -1532,7 +1539,7 @@ kbd {
   .holocall, .phone-notice { left: max(16px, var(--safe-left)); top: 64px; width: 360px; padding: 6px 10px; }
   .phone__portrait--big { width: 52px; height: 52px; font-size: 20px; }
   .holocall__line { font-size: 14px; }
-  .debrief { top: 8px; padding: 8px 12px; }
+  .debrief { padding: 8px 12px; }
   .debrief__title { font-size: 18px; }
   .debrief__rank { font-size: 32px; }
   .debrief__badges { margin: 6px 0; }
@@ -1550,8 +1557,15 @@ kbd {
 .touch-mode .heat { left: 50%; transform: none; }
 .touch-mode .holocall { left: 50%; transform: translateX(-50%); top: 48px; }
 .touch-mode .phone-notice { left: 50%; top: 48px; width: 320px; transform: translateX(-50%); }
-.touch-mode .debrief { transform: none; max-height: calc(100% - 16px); overflow: hidden; pointer-events: none; }
+/* Touch: the total and the close button share the last row. */
+.touch-mode .debrief { transform: none; grid-template: "head head" auto "body body" minmax(0, 1fr) "sum close" auto / minmax(0, 1fr) auto; column-gap: 8px; }
+.touch-mode .debrief__sum { align-self: end; }
+.touch-mode .debrief__sum > .debrief__total { flex-wrap: wrap; column-gap: 8px; }
+/* The card lies over the stick's zone: its body lets touches through to the stick, so it does not scroll by touch. */
+.touch-mode .debrief__body { pointer-events: none; }
+.touch-mode .debrief__badges { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
 .touch-mode .debrief__close { pointer-events: auto; }
+.touch-mode .debrief__close kbd { display: none; }
 /* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
    clear of the pad. */
 .touch-mode .scanner__brand { display: none; }
