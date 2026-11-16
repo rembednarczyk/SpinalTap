@@ -465,6 +465,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v39 -> v40 (ADR-0082 stage 3): the sabotage of W-3, a contract with its way (`route`) and its
   // way out seen (`seenLeaving`), both optional. An older save runs no sabotage: nothing changes.
   39: (old) => ({ ...old, version: 40 }),
+  // v40 -> v41 (G-883): what a fight leaves between two steps, optional: velocities, blows in
+  // progress and the player's stance. An older save loads everyone at rest, as it did.
+  40: (old) => ({ ...old, version: 41 }),
 };
 
 export class MigrationError extends Error {}

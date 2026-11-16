@@ -17,6 +17,7 @@ Pakiet walki: kucanie z animacją, celność zależna od postawy i wszczepów, c
 
 ## Konsekwencje
 - Schemat zapisu bez zmian. Kucanie i bloom są przejściowe jak kabura: wczytana gra startuje na stojąco z ustabilizowanym celem. Test „wczytany snapshot kontynuuje identycznie” dzieli replay w chwili bez kucania i bloomu.
+- Zmiana (G-883, zapis v41): postawa, kabura, bloom, przeładowanie i dobywanie gracza, jej czas w powietrzu i zryw (`EntitySnapshot.stance`) oraz prędkość i stan walki wręcz każdej postaci (`velocity`, `melee`) są w zapisie, poza stanem spoczynku. Zapis w trakcie walki prowadzi grę dalej tak samo jak ta, z której zapisano (test podłogi co 50 kroków).
 - Złoty hash replayu zmienia się (rozrzut, hitboxy, pancerz stref, kucanie w skrypcie): 9b3d0871 → 76fe55bd. Skrypt replayu ma teraz odcinek w kucnięciu.
 - Niska osłona działa sama z siebie: przykucnięty gracz za skrzynią nie jest widoczny dla gangera (linia wzroku do niższego torsu), ale też nie strzeli ponad nią.
 - Kalibracja FOV celownika (1,08 rad) jest stałą w UI (`HUD_CAMERA_FOV`) i musi zgadzać się z kamerą. Przy sprincie kamera poszerza FOV, więc kreski są wtedy trochę za szerokie, co przy sprincie nie przeszkadza.
