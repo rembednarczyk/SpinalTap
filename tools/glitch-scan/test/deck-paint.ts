@@ -3,6 +3,7 @@ import { planCrossing } from "../../../packages/engine/src/renderer/mapcity/cros
 import { type GroundEntry, MapEntries } from "../../../packages/engine/src/renderer/mapcity/map-entries";
 import { planMarking } from "../../../packages/engine/src/renderer/mapcity/marking-plan";
 import { type Box2, boundsOf, cleanRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { osmStepCount } from "../../../packages/engine/src/renderer/mapcity/steps-osm";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 
@@ -50,7 +51,7 @@ const paintOf = (entries: MapEntries, g: GroundEntry): MeshSink | null => {
   const h = entries.groundHeight(g);
   if (g.marking) planMarking(sink, g.marking, g.ring, h);
   else if (g.surface === "crossing") planCrossing(sink, g.ring, h);
-  else if (g.surface === "steps") planSteps(sink, g.ring, h, entries.mapEdgeAt);
+  else if (g.surface === "steps") planSteps(sink, g.ring, h, entries.mapEdgeAt, osmStepCount(g.ring));
   else return null;
   return sink;
 };

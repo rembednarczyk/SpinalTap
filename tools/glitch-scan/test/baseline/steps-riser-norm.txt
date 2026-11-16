@@ -1,0 +1,24 @@
+# steps-riser-norm: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-1-1 137,53
+krakowskie-1-1 152,66 *2
+krakowskie-2-0 449,-244 *2
+podzamcze-1-0 730,160
+podzamcze-1-0 806,240 *2
+podzamcze-1-0 781,242 *2
+podzamcze-1-0 807,242
+podzamcze-1-0 782,245
+podzamcze-1-0 807,245
+stare-miasto-0-0 603,-183
+stare-miasto-0-0 572,-70
+stare-miasto-0-0 575,-70
+stare-miasto-0-0 570,-69 *2
+stare-miasto-1-0 680,-193
+stare-miasto-1-0 753,-150
+stare-miasto-1-0 754,-150
+stare-miasto-1-0 754,-149
+stare-miasto-1-0 755,-149
+stare-miasto-1-1 684,23
+stare-miasto-1-1 703,52
+stare-miasto-1-1 718,109
+stare-miasto-1-1 736,143
+stare-miasto-1-1 733,148

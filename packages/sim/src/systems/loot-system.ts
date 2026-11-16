@@ -1,4 +1,4 @@
-import { type LootContainer, addContainer, bestLootRarity, expireContainers, hasFlag, stashLines } from "@seki/core";
+import { type LootContainer, type LootLine, addContainer, bestLootRarity, expireContainers, hasFlag, stashLines } from "@seki/core";
 import { WORLD_STASHES } from "../content/world-map";
 import { districtLevelAt } from "../world/enemy-scaling";
 import { raiseFlag } from "../world/domain-ops";
@@ -67,6 +67,22 @@ const placeStashes = (ctx: SimContext): void => {
     ctx.state.domain = { ...ctx.state.domain, loot: r.loot };
     for (const old of r.evicted) ctx.bus.emit("LootExpired", { containerKey: old.key });
   }
+};
+
+/**
+ * A container placed by a job's deed that never expires, like a stash (the armoury chest of W-3's
+ * loud way, ADR-0082 stage 3b): its weapons of the district's level, within the player's ± 2.
+ */
+export const placeChest = (ctx: SimContext, key: string, at: { x: number; y: number; z: number }, lines: readonly LootLine[]): void => {
+  const r = addContainer(ctx.state.domain.loot, {
+    key,
+    position: { x: at.x, y: at.y, z: at.z },
+    chunk: ctx.streamer.chunkIdAt(at),
+    expiresAtTick: Number.MAX_SAFE_INTEGER,
+    lines: stashLines(lines, districtLevelAt(ctx, at), ctx.state.domain.progression.level),
+  });
+  ctx.state.domain = { ...ctx.state.domain, loot: r.loot };
+  for (const old of r.evicted) ctx.bus.emit("LootExpired", { containerKey: old.key });
 };
 
 export const syncBags = (ctx: SimContext): void => {

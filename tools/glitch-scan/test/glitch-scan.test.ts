@@ -114,6 +114,9 @@ import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-ru
 import { stepsInclineAgainst } from "./steps-incline";
 import { roadDipsOverTunnels } from "./road-tunnel";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
+import { flightOffNorm } from "./steps-norm";
+import { osmStepCount } from "../../../packages/engine/src/renderer/mapcity/steps-osm";
+import { type DrawnBand, stepsCountOsm, stepsLandingOsm, stepsTreadSunk } from "./steps-osm";
 import { deckSlots } from "./deck-slot";
 import { bridgeEndsInSlope } from "./bridge-end-slope";
 import { deckSteps } from "./deck-step";
@@ -446,6 +449,19 @@ const risersOf = (outline: readonly number[]) => {
   for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
   return stepFaces(ring, groundY).flatMap((f) => (f.up ? [] : [riserOf(f)]));
 };
+let drawnFlights: { id: string; band: DrawnBand }[] | null = null;
+/** Every band of map steps as the renderer draws it on the game's ground (`groundY`), its chunk's id with it. */
+const DRAWN_FLIGHTS = () =>
+  (drawnFlights ??= MAP_CHUNKS.flatMap((c) =>
+    c.ground
+      .filter((g) => g.surface === "steps")
+      .map((g) => {
+        const ring = worldOutline({ x: 0, z: 0, outline: g.outline });
+        return { id: c.id, band: { ring, faces: stepFaces(ring, groundY) } };
+      }),
+  ));
+const groundOfPt = (p: Pt) => groundY(p.x, p.z);
+const onChunkPt = (p: Pt) => MAP_CHUNKS.some(({ bounds: b }) => p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ);
 /** The heights of the risers of a map steps surface, metres (`risersOf`). */
 const riserHeights = (outline: readonly number[]) => risersOf(outline).map((r) => r.h);
 /** A riser of a flight of steps taller than this is a wall in the flight, not a step (m): outdoor steps rise 0.15–0.18 m. */
@@ -1144,6 +1160,28 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
         }),
     ),
+  /**
+   * A flight of map steps off the one norm of a step as the renderer draws it on the game's ground
+   * (G-840, `STEP_NORM`): a riser out of 0.12-0.17 m, a tread out of the stride and too short for a
+   * landing, unequal risers in one flight, or more than 12 risers with no landing. One per band.
+   */
+  "steps-riser-norm": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "steps")
+        .flatMap((g) => {
+          const ring: Pt[] = [];
+          for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
+          const off = flightOffNorm(stepFaces(ring, groundY), ring, osmStepCount(ring) !== undefined);
+          return off ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${off}` }] : [];
+        }),
+    ),
+  /** A way of map steps with a `step_count` drawn with more or fewer risers than max(1, 10%) off it (G-840). */
+  "steps-count-osm": () => stepsCountOsm(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), DRAWN_FLIGHTS().map((f) => f.band), groundOfPt, onChunkPt),
+  /** A landing inside a run of a way with a `step_count` that fits one flight of the norm's stride (G-840). */
+  "steps-landing-osm": () => stepsLandingOsm(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), DRAWN_FLIGHTS().map((f) => f.band), groundOfPt, onChunkPt),
+  /** A tread of map steps more than 0.02 m (less its lift) under the game's ground on the band's axis (G-840). */
+  "steps-tread-sunk": () => stepsTreadSunk(DRAWN_FLIGHTS(), groundOfPt, onChunkPt),
   /**
    * A band of map steps with a riser over `TALL_RISER` as the renderer draws it on the game's
    * ground (G-255): the treads drop off a bridge's deck onto the terrain under it, or climb a
