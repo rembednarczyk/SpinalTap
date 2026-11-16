@@ -308,6 +308,34 @@ const runsOf = <T>(samples: readonly Sample[], spanOf: (s: Sample) => T | null, 
   flush(run);
 };
 
+/**
+ * The corners by the steps out of a widened carriageway where the sample past a stretch's end
+ * meets a lawn on its way out (`pavingOut` stops at it, so no strip is laid there) within the
+ * step's reach, a kerb's width (`LAWN_GAP`) and more from the edge and as much short of the paving
+ * the step reaches: the step stands by the lawn's corner, past a strip of paving between the lawn
+ * and the asphalt. From the edge to the step's reach over the two samples the corner is that
+ * paving, laid whole as a square. Left to the bare ground rule, its cells laid the orthophoto's
+ * green of the lawn's corner by the step and paving either side: a metre of grass between two
+ * squares along the kerb (Ruska at its zebra by Podzamcze, G-897). A lawn nearer the edge meets
+ * the kerb itself, and one level with the paving has no corner by the step: the rule's cells are
+ * one strip there.
+ */
+const stepCorners = (side: readonly Sample[], reach: ReadonlyMap<Sample, number>, world: World): Span[][] => {
+  const out: Span[][] = [];
+  side.forEach((s, i) => {
+    const r = reach.get(s)!;
+    if (r <= 0) return;
+    const span = (q: Sample): Span => ({ edge: along(q.edge, q.dir, -INTO), out: along(q.edge, q.dir, r + INTO) });
+    for (const j of [i - 1, i + 1]) {
+      const n = side[j];
+      const lawn = n && reach.get(n)! <= 0 && n.hit === null ? pavingOut(n.edge, n.dir, world, true) : null;
+      if (!n || !lawn?.lawn || lawn.gap < LAWN_GAP || lawn.gap >= r || s.hit!.gap - lawn.gap <= LAWN_GAP) continue;
+      out.push(j < i ? [span(n), span(s)] : [span(s), span(n)]);
+    }
+  });
+  return out;
+};
+
 export interface KerbFills {
   /** Sidewalks over the strips, and kerb stones along the widened carriageways. */
   readonly fills: readonly Band[];
@@ -444,6 +472,7 @@ export const kerbFills = (
       // past the asphalt's edge by `INTO`: two edges of the paving's cut a few millimetres apart
       // left it in slivers.
       runsOf(side, (s) => (full(s) && !s.hit!.kerbed ? { edge: along(s.edge, s.dir, s.hit!.gap - KERB_STONE), out: along(s.edge, s.dir, reach.get(s)! + INTO) } : null), (run) => lay(run, true));
+      if (asRoad) for (const run of stepCorners(side, reach, world)) lay(run, undefined, "square");
     }
   }
   return { fills, widened };

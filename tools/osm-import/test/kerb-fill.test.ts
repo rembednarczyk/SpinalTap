@@ -147,6 +147,18 @@ describe("a carriageway of estimated width reaches the paving (G-570)", () => {
       }
   });
 
+  it("lays the corner by its step out beside a lawn's corner as a square, from the edge to the step's reach (G-897)", () => {
+    // The footway (2.5 m) from x 38 on, 1.75 m off the asphalt; west of x 40 a lawn between it and the
+    // asphalt, 1 m off the edge: the asphalt steps out 1.5 m at x 40.25, and the corner by the step
+    // west of it was bare, the bare ground rule's cells to lay grass and paving by turns.
+    const walk: Way = { tags: { highway: "footway" }, pts: [[38, -6.25], [100, -6.25]] };
+    const lawn = (near: number): Way => ({ tags: { landuse: "grass" }, pts: [[10, -near], [40, -near], [40, -4.9], [10, -4.9]], closed: true });
+    expect(surfacesAt([street, walk, lawn(4.25)], 40, -4)).toEqual(["square"]);
+    // The lawn kept past the step's reach, and kept as it is where it meets the kerb itself.
+    expect(surfacesAt([street, walk, lawn(4.25)], 39.9, -4.85)).toEqual(["grass"]);
+    expect(surfacesAt([street, walk, lawn(3.55)], 39.9, -4)).toEqual(["grass"]);
+  });
+
   it("lays a narrower gap as a sidewalk", () => {
     // The footway starts 3.95 m off the axis: 0.7 m of gap.
     expect(surfacesAt([street, footway(-5.2)], 50, -3.6)).toEqual(["sidewalk"]);
