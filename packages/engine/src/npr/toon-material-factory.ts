@@ -32,6 +32,10 @@ const UNIFORMS = [
   "selfLit",
   "envStrength",
   "dither",
+  "wetTint",
+  "streakLamp",
+  "streakColor",
+  "streakCount",
 ];
 
 const SAMPLERS = ["shadowSampler", "shadowMovingSampler", "baseSampler"];
@@ -65,7 +69,7 @@ export const createToonMaterial = (scene: Scene, name: string, p: ToonPreset, sp
     scene,
     { vertexSource: TOON_VERTEX, fragmentSource: TOON_FRAGMENT },
     {
-      attributes: texture ? ["position", "normal", "uv"] : p.city ? ["position", "normal", "uv", "uv2"] : ["position", "normal"],
+      attributes: texture ? ["position", "normal", "uv"] : p.city ? ["position", "normal", "uv", "uv2", ...(p.water ? ["uv3"] : [])] : ["position", "normal"],
       uniforms: [...UNIFORMS],
       samplers: env ? [...SAMPLERS, "envSampler"] : [...SAMPLERS],
       defines: [
@@ -73,6 +77,7 @@ export const createToonMaterial = (scene: Scene, name: string, p: ToonPreset, sp
         ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
         ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
         ...(p.city === "facade" ? ["UV1", "UV2", "FACADE"] : p.city === "ground" ? ["UV1", "UV2", "MAP_GROUND"] : []),
+        ...(p.water ? ["WATER_MASK"] : []),
         ...extra,
         ...(env ? ["ENV_REFLECT"] : []),
       ],

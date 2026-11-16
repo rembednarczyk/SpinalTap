@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { generateProps } from "../src/props-gen.ts";
 import { type SideSpot, sideOffset, sideSpot } from "../src/props-place.ts";
@@ -128,5 +129,24 @@ describe("a lamp of the plan on a viaduct's span (G-503)", () => {
       [30, 0, 32.9],
       [50, 0, 32.9],
     ]);
+  });
+});
+
+describe("the traffic lights a node on the road stands for (G-825 r3)", () => {
+  it("stand where they stood before G-825: by the nearest pavement, whichever side the traffic arrives on", () => {
+    // A rule of round 2 took the right of the one-way streets driven up to the node when that pavement
+    // lay at most 2 m farther: it moved these onto a lane before the stop line or into the junction.
+    const before: [string, number, number][] = [
+      ["krakowskie-0-1", -104.3, 121],
+      ["krakowskie-0-1", -104.1, 49.7],
+      ["podzamcze-2-0", 1058.8, 288.1],
+      ["nabrzeze-1-0", 2523.5, 261.4],
+      ["nabrzeze-0-1", 2485.3, 284.5],
+    ];
+    const moved = before.filter(([chunk, x, z]) => {
+      const rows = LUBLIN_PROP_TABLE[chunk]?.["traffic-signal"] ?? [];
+      return !Array.from({ length: rows.length / 5 }, (_, k) => Math.hypot(rows[5 * k]! - x, rows[5 * k + 2]! - z)).some((d) => d < 0.15);
+    });
+    expect(moved).toEqual([]);
   });
 });

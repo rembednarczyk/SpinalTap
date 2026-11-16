@@ -17,6 +17,7 @@ export const sinkToMesh = (scene: Scene, name: string, sink: MeshSink, uv2 = fal
   data.colors = sink.colors;
   data.uvs = sink.uvs;
   if (uv2) data.uvs2 = sink.uvs2;
+  if (sink.uvs3.length > 0 && sink.uvs3.length === sink.vertexCount * 2) data.uvs3 = sink.uvs3;
   data.indices = sink.indices;
   const mesh = new MeshClass(name, scene);
   data.applyToMesh(mesh, false);
