@@ -6,10 +6,10 @@
 #
 # Kroki:
 #  1. git fetch origin main, git merge --no-edit origin/main;
-#  2. konflikt tylko w plikach *.generated.ts: bierze wersję main i przelicza tablice
-#     (pnpm osm:build && pnpm osm:props), bo te pliki nie scalają się tekstowo; bez konfliktu
-#     przelicza je, gdy odcisk wejść w nagłówkach nie zgadza się z wejściami (pnpm tables:check);
-#     konflikt w innym pliku: przerywa scalanie (git merge --abort) i wypisuje pliki;
+#  2. konflikt tylko w plikach *.generated.ts: bierze wersję main; konflikt w innym pliku:
+#     przerywa scalanie (git merge --abort) i wypisuje pliki; potem zawsze przelicza tablice
+#     (pnpm osm:build && pnpm osm:props): tablice nie mają już odcisku wejść (ADR-0083, 16.11),
+#     a tylko przeliczenie mówi, czy scalenie tekstowe dało to, co daje generator;
 #  3. pnpm hashes:check i test skanu glitchy (tools/glitch-scan/test/glitch-scan.test.ts);
 #  4. commit scalenia z podsumowaniem; --push wypycha gałąź zwykłym git push.
 # Ciężkie kroki idą przez tools/heavy.sh: dwa miejsca zamka na maszynę (docs/agenci-zasady.md).
@@ -59,16 +59,14 @@ if ! git merge --no-edit -q origin/main >/dev/null 2>&1; then
   fi
 fi
 
-# Tablice przeliczamy także po scaleniu bez konfliktu, gdy odcisk wejść w ich nagłówkach nie
-# zgadza się z wejściami po scaleniu (ADR-0083): tekstowe scalenie dwóch zmian wejść albo tablicy
-# też może dać wynik niezgodny z generatorem.
-if [ "$regen" = 0 ] && ! pnpm -s tables:check >/dev/null 2>&1; then regen=1; fi
-
-if [ "$regen" = 1 ]; then
-  heavy pnpm -s osm:build >/dev/null
-  heavy pnpm -s osm:props >/dev/null
-  git add -A packages/sim/src/content/lublin
-fi
+# Tablice przeliczamy po każdym scaleniu, także bez konfliktu (ADR-0083): tekstowe scalenie dwóch
+# zmian wejść albo tablic może dać wynik niezgodny z generatorem, a odcisku wejść, który by to
+# pokazał bez przeliczania, tablice już nie mają (16.11). `regen`: konflikt w tablicach albo
+# przeliczenie zmieniło scalone tekstowo tablice.
+heavy pnpm -s osm:build >/dev/null
+heavy pnpm -s osm:props >/dev/null
+git diff --quiet -- packages/sim/src/content/lublin || regen=1
+git add -A packages/sim/src/content/lublin
 
 heavy pnpm -s hashes:check
 heavy pnpm exec vitest run tools/glitch-scan/test/glitch-scan.test.ts --reporter=dot >/tmp/merge-main-scan.log 2>&1 || {

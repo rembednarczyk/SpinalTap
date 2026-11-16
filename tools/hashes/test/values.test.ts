@@ -34,17 +34,22 @@ describe("hashes:check's values", () => {
     expect(softCopy("expect(a).toBe(1); expect.soft(b); myexpect(c)")).toBe("expect.soft(a).toBe(1); expect.soft(b); myexpect(c)");
   });
 
-  it("never writes the determinism hash, --bare or not: only by hand (decision of 16.11)", () => {
+  it("never writes the determinism or the ground hash, --bare or not: only by hand (decision of 16.11, ADR-0088)", () => {
     const bare = compare(`"cc9852f4"`, `"cc9852f5"`);
     const det = "packages/sim/test/determinism.test.ts";
-    expect(BY_HAND).toEqual([det]);
-    expect(refusalOf(det, bare, true)).toContain("vitest -u");
-    expect(refusalOf(det, bare, false)).toContain("vitest -u");
-    // The other goldens as before: a bare hash with --bare, the same numbers always, changed numbers never.
     const map = "packages/engine/test/map-ground-golden.test.ts";
-    expect(refusalOf(map, bare, true)).toBeNull();
-    expect(refusalOf(map, bare, false)).toBe("bez liczb, potrzebne --bare");
-    expect(refusalOf(map, compare(MAP(24, 142538, "4a1427e0"), MAP(24, 142538, "4a1427e9")), false)).toBeNull();
-    expect(refusalOf(map, compare(MAP(24, 142538, "4a1427e0"), MAP(25, 142538, "4a1427e9")), true)).toBe("liczby: meshes");
+    expect(BY_HAND).toEqual([det, map]);
+    for (const file of [det, map]) {
+      expect(refusalOf(file, bare, true)).toContain("vitest -u");
+      expect(refusalOf(file, bare, false)).toContain("vitest -u");
+    }
+    // The same numbers with a new hash on the ground's floor: a rule moved it, not the map.
+    expect(refusalOf(map, compare(MAP(5, 4381, "53e83d0b"), MAP(5, 4381, "53e83d0c")), false)).toContain("vitest -u");
+    // The other goldens as before: a bare hash with --bare, the same numbers always, changed numbers never.
+    const cut = "packages/engine/test/ground-cut.test.ts";
+    expect(refusalOf(cut, bare, true)).toBeNull();
+    expect(refusalOf(cut, bare, false)).toBe("bez liczb, potrzebne --bare");
+    expect(refusalOf(cut, compare(CUT("6 408ae391", "13 c2c46b0d"), CUT("6 408ae390", "13 c2c46b0d")), false)).toBeNull();
+    expect(refusalOf(cut, compare(CUT("6 408ae390", "13 c2c46b0d"), CUT("7 11111111", "13 c2c46b0d")), true)).toBe("liczby: krakowskie-2-0");
   });
 });

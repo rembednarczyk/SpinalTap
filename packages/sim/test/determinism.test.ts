@@ -10,7 +10,7 @@ const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
  * Determinism on the test floor (decision of 16.11): a small world of its own (`fixtures/determinism-floor.ts`)
  * far from the city, so the golden hash depends on the rules of the simulation and the floor alone.
  * No change of Lublin's content or its tables moves it (`determinism-floor-content.test.ts`); the
- * map is guarded by the tables' fingerprint (ADR-0083). Update the golden hash only by hand
+ * map is guarded by generating its tables again (CI's Map tables job, ADR-0083). Update the golden hash only by hand
  * (`vitest -u`) and say in the commit which rule changed it; `pnpm hashes:check --write` refuses it.
  */
 describe("determinism on the test floor", () => {
