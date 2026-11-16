@@ -387,7 +387,20 @@ export type EffectDescriptor =
    * fractional hour 0–24, for presentation that wants more than the light level. Not
    * short-lived: the latest one holds until the next.
    */
-  | { readonly kind: "time-of-day"; readonly daylight: number; readonly hour: number };
+  | { readonly kind: "time-of-day"; readonly daylight: number; readonly hour: number }
+  /**
+   * A facility's alarm is up or down (ADR-0082): W-3's lockdown turns the line's beacons red.
+   * Not short-lived: the latest one holds until the next.
+   */
+  | { readonly kind: "alarm-light"; readonly active: boolean }
+  /** What W-3's station screens show (ADR-0082 stage 3), held like `alarm-light`. */
+  | { readonly kind: "line-screens"; readonly state: LineScreens };
+
+/**
+ * W-3's line screens by the job (ADR-0082): the line's own read-out, the calibration being
+ * rewritten during the upload, the virus in for good.
+ */
+export type LineScreens = "idle" | "upload" | "infected";
 
 /**
  * What a character wears and carries (ADR-0015): weapons per slot (the active one in hand,

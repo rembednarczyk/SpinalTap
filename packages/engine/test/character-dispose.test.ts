@@ -86,5 +86,5 @@ describe("characters leave nothing behind (G-184)", () => {
     // The first cycle fills the model pool; the next ones reuse it and add nothing.
     expect(cycles[1]).toEqual(cycles[0]);
     expect(cycles[2]).toEqual(cycles[0]);
-  }, 60_000);
+  });
 });

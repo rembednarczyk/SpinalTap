@@ -8,13 +8,14 @@ import { SPAN_MAX } from "./canyon-plan";
 import { CellBuilder } from "./cell-builder";
 import { type MapLod, streamCells } from "./cell-stream";
 import { landmarkAt } from "./landmarks";
-import { type CellLod, MapCells, releaseCell } from "./map-cells";
+import { type CellLod, MapCells, cellMeshes, releaseCell } from "./map-cells";
+import { closeOff } from "./interior-mode";
 import { type MapCityStats, mapCityMeshes, mapCityStats } from "./map-city-stats";
 import { MapEntries } from "./map-entries";
 import { MapFurniture } from "./map-furniture";
 import { cellKey, grow } from "./map-index";
 import { MapLook } from "./map-look";
-import { type P2, boundsOf, centroid, cleanRing } from "./polygon";
+import { type Box2, type P2, boundsOf, centroid, cleanRing } from "./polygon";
 
 export type { CellLod } from "./map-cells";
 export type { MapLod } from "./cell-stream";
@@ -204,13 +205,29 @@ export class MapCity {
     return changed;
   }
 
-  /** Levels of detail from the camera, the water's ripples and the signs' hum. */
-  update(dt: number, eye: Vec3, frozen: boolean): void {
+  /**
+   * Levels of detail from the camera, the water's ripples and the signs' hum; the interior mode over
+   * them (ADR-0082 §3.8): with `keep`, the box round a closed hall the eye is in, the cells, terrains
+   * and furniture clear of it and the skyline go off; null puts them back.
+   */
+  update(dt: number, eye: Vec3, frozen: boolean, keep: Box2 | null = null): void {
     this.look.update(dt, frozen);
     this.waitingNear = streamCells(this.cells.values(), eye, this.lod, (cell) => this.builder.near(cell, this.furniture.facadeProps, (x, z, r) => this.furniture.current?.obstacles(x, z, r) ?? []));
     this.furniture.current?.update(eye);
     this.look.updateSkyline(dt, eye, frozen);
+    if (keep !== this.keep) {
+      this.keep = keep;
+      this.look.setSkylineShown(keep === null);
+      if (!keep) for (const [, t] of this.entries.terrains) t.mesh?.setEnabled(true);
+    }
+    if (!keep) return;
+    closeOff([...this.cells.values()].map((c) => ({ bounds: c.bounds, meshes: cellMeshes(c) })), keep);
+    closeOff([...this.entries.terrains].map(([, t]) => ({ bounds: t.bounds, meshes: [t.mesh] })), keep);
+    this.furniture.current?.closeOff(keep);
   }
+
+  /** The box round a closed hall the eye is in (ADR-0082 §3.8), null outside. */
+  private keep: Box2 | null = null;
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
   get settled(): boolean {

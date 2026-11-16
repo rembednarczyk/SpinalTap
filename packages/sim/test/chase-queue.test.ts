@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { SIM_DT, Simulation, gangerEntity, ground } from "../src";
+import { SIM_DT, gangerEntity } from "../src";
 import { PLAN_WORK, advanceChasePlans, planChase } from "../src/systems/ai/chase-plan";
 import { chaseDetour, wideBuilds } from "../src/systems/ai/steering";
 import type { Entity, WalkProgress } from "../src/world/components";
 import type { SimContext } from "../src/world/context";
-import { off, pieceAt } from "./barrier-standoff";
-import { teleportPlayer } from "./helpers";
+import { BYSTRZYCA_FENCE, barrierSim, flat, off, pieceAt } from "./fixtures/barrier-floor";
 
 /**
  * The queue of the wide ways being made (G-694). A ganger with no way at all waits standing, or
@@ -17,15 +16,13 @@ import { teleportPlayer } from "./helpers";
 /** A slice runs past `PLAN_WORK` by less than two rows of the wide window (384 cells each). */
 const SLICE = PLAN_WORK + 2 * 384;
 
-/** Two gangers before the fence at (2359, 445), with no walk yet; the city round them streamed in. */
+/** Two gangers before the fence at (2359, 445), with no walk yet, on the floor of its barriers (`barrier-floor.ts`). */
 const scene = () => {
-  const { chunk, item } = pieceAt(2359.33, 445.19);
-  const sim = Simulation.create({ seed: 2 });
-  teleportPlayer(sim, ground(2300, 432));
-  sim.step();
+  const { sim, chunks } = barrierSim(flat(2300, 432), BYSTRZYCA_FENCE);
+  const { chunk, item } = pieceAt(chunks, BYSTRZYCA_FENCE.x, BYSTRZYCA_FENCE.z);
   const at = off(item, -4);
   const [a, b] = [0, 1].map((i) => {
-    const g = gangerEntity(9201 + i, { key: `g694-q${i}`, position: ground(at.x + i, at.z), yaw: 0 }, null, 200, chunk);
+    const g = gangerEntity(9201 + i, { key: `g694-q${i}`, position: flat(at.x + i, at.z), yaw: 0 }, null, 200, chunk);
     sim.world.add(g);
     return g;
   }) as [Entity, Entity];
@@ -41,9 +38,9 @@ describe("the queue of the wide ways being made (G-694)", () => {
     const { sim, a, b, ctx, walk } = scene();
     const tick = sim.tick;
     // A walks an old way to a goal it left behind; its target is now behind the fence.
-    walk(a, { chase: ground(2290, 470) });
-    const goalA: Vec3 = ground(2352, 426);
-    const goalB: Vec3 = ground(2366, 438);
+    walk(a, { chase: flat(2290, 470) });
+    const goalA: Vec3 = flat(2352, 426);
+    const goalB: Vec3 = flat(2366, 438);
     walk(a, planChase(ctx(tick), a.position, goalA, false) ?? {});
     const asked = a.walk!.chaseNext!.ready;
     walk(b, planChase(ctx(tick), b.position, goalB, true) ?? {});
@@ -62,19 +59,19 @@ describe("the queue of the wide ways being made (G-694)", () => {
       }
       expect(wideBuilds(sim.world).units - before, `step ${t}`).toBeLessThanOrEqual(SLICE);
     }
-  }, 120_000);
+  });
 
   it("leaves the queue as it was for a ganger with an old way, and drops its stale next way for one made", () => {
     const { sim, a, b, ctx, walk } = scene();
     const tick = sim.tick;
-    walk(a, planChase(ctx(tick), a.position, ground(2352, 426), true) ?? {});
+    walk(a, planChase(ctx(tick), a.position, flat(2352, 426), true) ?? {});
     const first = a.walk!.chaseNext!.ready;
-    walk(b, { chase: ground(2290, 470) });
-    walk(b, planChase(ctx(tick), b.position, ground(2366, 438), false) ?? {});
+    walk(b, { chase: flat(2290, 470) });
+    walk(b, planChase(ctx(tick), b.position, flat(2366, 438), false) ?? {});
     expect(a.walk!.chaseNext!.ready).toBe(first);
     expect(b.walk!.chaseNext!.ready).toBeGreaterThan(first);
     // A made way within reach of b's goal: b takes it, and its own next way, now stale, goes.
-    walk(a, { chase: ground(2290, 470), chaseNext: null });
-    expect(planChase(ctx(tick), b.position, ground(2291, 471), false)).toEqual({ chase: a.walk!.chase, chaseNext: null });
-  }, 120_000);
+    walk(a, { chase: flat(2290, 470), chaseNext: null });
+    expect(planChase(ctx(tick), b.position, flat(2291, 471), false)).toEqual({ chase: a.walk!.chase, chaseNext: null });
+  });
 });

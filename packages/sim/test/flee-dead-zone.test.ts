@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type ReputationState } from "@seki/core";
 import { FLEE_DEAD_ZONE, FLEE_RADIUS, Simulation, YIELD_RADIUS, stateHash } from "../src";
+import { bareChunk } from "./fixtures/bare-chunk";
 import { collect, offFacingPlayer, passerbyOnDeptak, run, teleportPlayer, watchStandOff } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
@@ -83,10 +84,15 @@ describe("the flee radius's dead zone (ADR-0070)", () => {
   });
 });
 
-/** The same, with the deptak's crowd out (ADR-0041): walkers of its routes and people on benches. */
+/**
+ * The same, with the deptak's crowd out (ADR-0041): walkers of its routes and people on benches.
+ * On its chunk bare (a test floor): the same walkers on the same routes, without the houses and the
+ * chunks round it, which half a minute of a crowded deptak spent most of its time on (ADR-0083).
+ */
+const DEPTAK = bareChunk(300, -84);
 const crowdWith = (reputation: Partial<ReputationState>, seed = 3): Simulation => {
-  const snap = Simulation.create({ seed, crowd: "high" }).snapshot(null, "test", "");
-  return Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } }, undefined, "high");
+  const snap = Simulation.create({ seed, crowd: "high", chunks: DEPTAK }).snapshot(null, "test", "");
+  return Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } }, undefined, "high", "high", DEPTAK);
 };
 
 const STREETS = [

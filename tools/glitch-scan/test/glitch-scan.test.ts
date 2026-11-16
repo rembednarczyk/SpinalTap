@@ -75,7 +75,11 @@ import { generatedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
+import { constructionBuilt, lod1UnderSites, siteLandBuilt } from "./construction-built";
+import { loadStructures } from "../../osm-import/src/props-osm.ts";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
+import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
+import { fillOnConstruction } from "./fill-construction";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
@@ -83,7 +87,6 @@ import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { canopyWithoutTree } from "./canopy-trees";
 import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
-import { structuresOf } from "../../osm-import/src/structures.ts";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
@@ -194,12 +197,33 @@ const SOURCE_OSM = mergeOsm(
     .filter((f) => f.endsWith(".json"))
     .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
 );
+/** The structures the import keeps trees out of (`loadStructures`: the map caught up with its finished sites, G-872), read once. */
+let importStructures: ReturnType<typeof loadStructures> | undefined;
+const IMPORT_STRUCTURES = () => (importStructures ??= loadStructures());
 /** The kerb fills' world (`kerb-fill.ts`), built once for both of its checks. */
 let fillWorld: ReturnType<typeof cityFillWorld> | undefined;
 const FILL_WORLD = () => (fillWorld ??= cityFillWorld(SOURCE_OSM));
 /** The chunks' ground on the 0.25 m raster of ADR-0078 (`ground-strips.ts`), laid once for both of its checks. */
 let stripRasters: ReturnType<typeof stripRaster>[] | undefined;
 const STRIP_RASTERS = () => (stripRasters ??= MAP_CHUNKS.map(stripRaster));
+/** A check's findings computed once: `frontage-bare` leaves the squares of the other kinds of bare ground to them. */
+const once = <T>(f: () => T): (() => T) => {
+  let v: { readonly value: T } | undefined;
+  return () => (v ??= { value: f() }).value;
+};
+const LANDUSE_BARE = once(() => landuseBare(cityLanduseWorld(SOURCE_OSM)));
+const KERB_GAP_BARE = once(() => kerbGapBare(cityKerbWorld(SOURCE_OSM)));
+const GROUND_STRIP_GAP = once(() => groundStripGap(STRIP_RASTERS(), inBuilding));
+const KERB_STRIP_BARE = once(() =>
+  kerbStripBare({
+    lines: withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
+    carriageways: CARRIAGEWAYS,
+    roadWidth,
+    surfacesAt,
+    inBuilding,
+    deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
+  }),
+);
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 /** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
 const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
@@ -257,6 +281,19 @@ const LAMP_PLAN = (): PlanGroup[] => {
 /** The surfaces a lamp of the plan stands on or beside (`lamp-off-band`). */
 const PAVED: ReadonlySet<string> = new Set(["road", "crossing", "sidewalk", "square", "cobble", "footway", "steps"]);
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+/** The ground dug out of the chunks (`GroundCut`) and their rooms in the ground (`GroundVault`, with their walls): W-3's basement and culvert (ADR-0082 stage 2). */
+const CHUNK_CUTS = WORLD_CHUNKS.flatMap((c) => c.cuts ?? []);
+const CHUNK_VAULTS = WORLD_CHUNKS.flatMap((c) => c.vaults ?? []);
+const inBounds = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
+/** The ground a block whose bottom is at `bottom` stands on: a cut's floor, a room's in the ground deep under the terrain, or the terrain. */
+const standingGround = (x: number, z: number, bottom: number): number => {
+  const cut = CHUNK_CUTS.find((c) => inBounds(c.bounds, x, z));
+  if (cut) return cut.floor;
+  const terrain = groundY(x, z);
+  const vault = bottom < terrain - 1 ? CHUNK_VAULTS.find((v) => inBounds(v.bounds, x, z)) : undefined;
+  return vault ? vault.floor : terrain;
+};
 /** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
 const onMapGround = (x: number, z: number): number =>
   MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
@@ -1029,11 +1066,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
-  /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
+  /** A game block standing on the ground (not an awning or a deck) that floats or sinks; in a dug shaft or a room in the ground, on its floor. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
       if (p.view.kind !== "block" || !p.solid || p.view.size.y < 0.8) return [];
-      const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
+      const bottom = p.center.y - p.view.size.y / 2;
+      const gap = bottom - standingGround(p.center.x, p.center.z, bottom);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
   /**
@@ -1437,8 +1475,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     padsNotLevel(
       PADS,
       groundY,
+      // Not the solids of the rooms in the ground under the pads (W-3's culvert's ceiling under the west yard).
       GAME_PROPS.flatMap((p): SolidBox[] =>
-        p.solid && p.view.kind === "block"
+        p.solid && p.view.kind === "block" && !CHUNK_VAULTS.some((v) => inBounds(v.bounds, p.center.x, p.center.z))
           ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2, top: p.center.y + p.view.size.y / 2 }]
           : [],
       ),
@@ -2079,15 +2118,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A zebra whose end is more than 0.15 m off the kerb along its axis (`crossing-shape.ts`). */
   "crossing-shape-kerb": () => crossingKerb(MAP_CHUNKS),
   /** A metre of a fitted street's edge (T-046, G-655) with a metre and more of bare ground before the lawn or pavement past it (`kerb-strip-bare.ts`). */
-  "kerb-strip-bare": () =>
-    kerbStripBare({
-      lines: withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
-      carriageways: CARRIAGEWAYS,
-      roadWidth,
-      surfacesAt,
-      inBuilding,
-      deep: (x, z) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3),
-    }),
+  "kerb-strip-bare": () => KERB_STRIP_BARE(),
   /**
    * A centre or lane line stepping 0.3 m and more sideways where it goes on along one street (G-675,
    * `marking-step.ts`): one street by the nearest map carriageway's name (its way when unnamed) within its half width and a metre.
@@ -2137,8 +2168,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * left off on purpose (`edge-buildings.ts`, G-556): the map's edge dropped it whole.
    */
   "edge-building-dropped": () => edgeBuildingsDropped(osmBuildings(SOURCE_OSM), LUBLIN_CHUNKS.map((c) => c.bounds), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id)))),
+  /** An outline OSM tags `building=construction` that LoD1 2024 covers for half its area or more, with no solid in the game: a finished building the map has not caught up with (`construction-built.ts`, G-872). */
+  "osm-construction-built": () => {
+    const areas = extractFeatures(SOURCE_OSM).areas;
+    return constructionBuilt(areas, lod1UnderSites(areas), new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id))));
+  },
+  /** A building site's land the import keeps (`loadStructures`) round a building of the game OSM still tags `building=construction`: the plot of a finished building (`construction-built.ts`, G-872). */
+  "construction-landuse-built": () => {
+    const buildings = LUBLIN_CHUNKS.flatMap((c) => c.buildings);
+    return siteLandBuilt(IMPORT_STRUCTURES(), buildings, new Set(buildings.filter((b) => osmTags(b.id).building === "construction").map((b) => b.id)));
+  },
   /** A point of a 0.5 m grid on bare terrain in a shops' or market's area, by a shop's or public building's walls or at a stop (`landuse-bare.ts`, decision 5.11). */
-  "landuse-bare": () => landuseBare(cityLanduseWorld(SOURCE_OSM)),
+  "landuse-bare": () => LANDUSE_BARE(),
   /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
@@ -2152,8 +2193,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const city = generatedCity();
     return fillGap(city.stats, city.chunks);
   },
+  /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
+  "fill-on-construction": () => fillOnConstruction(IMPORT_STRUCTURES(), LUBLIN_CHUNKS),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
-  "kerb-gap-bare": () => kerbGapBare(cityKerbWorld(SOURCE_OSM)),
+  "kerb-gap-bare": () => KERB_GAP_BARE(),
+  /**
+   * A 10 m square with 2 m² and more of bare terrain within 8 m of a pedestrian street's axis (inside
+   * the Old Town's walls 6 m of a residential one's) that no other kind of bare ground has: the strips
+   * between the setts and the tenements (`frontage-bare.ts`, G-855).
+   */
+  "frontage-bare": () =>
+    frontageBare(
+      cityFrontageWorld(
+        withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
+        cityLanduseWorld(SOURCE_OSM),
+        squaresOf([...LANDUSE_BARE(), ...KERB_GAP_BARE(), ...KERB_STRIP_BARE(), ...GROUND_STRIP_GAP()]),
+        IMPORT_STRUCTURES()
+          .filter((s) => s.kind === "construction")
+          .map((s) => s.ring),
+      ),
+    ),
   /** A point of a 0.25 m grid in a pavement no paving of the map explains, a metre wide and more, by a carriageway the map gives no width: its asphalt laid as a pavement (`kerb-fill.ts`, G-570). */
   "kerb-fill-wide-estimated": () => kerbFillWideEstimated(FILL_WORLD()),
   /** A bus stop of the map within 2 m of a pavement no paving of the map explains: its bay laid as a pavement (`kerb-fill.ts`, G-570). */
@@ -2170,7 +2229,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A 10 m square with 40 m² of crown or more on the orthophoto cover, 80% of it further than 6 m from every tree of the game: crowns OSM has no tree node under (G-797, `canopy-trees.ts`). */
   "canopy-without-tree": () => canopyWithoutTree(MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined), Object.values(WORLD_STREET_PROPS).flat(), CLEARED_BUILDINGS),
   /** A tree whose trunk lies in an OSM building or building part (ruins aside), a building site, a market or a canopy: a roof or a shell taken for a crown (G-815, `tree-structures.ts`). */
-  "tree-in-structure": () => treesInStructure(structuresOf(SOURCE_OSM), Object.values(WORLD_STREET_PROPS).flat()),
+  "tree-in-structure": () => treesInStructure(IMPORT_STRUCTURES(), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree whose trunk lies 2 m or nearer to a bridge's deck: the deck's height read as a crown (G-815, `tree-structures.ts`). */
   "tree-by-deck": () => treesByDeck(deckRings(MAP_CHUNKS), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
@@ -2205,7 +2264,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A m² of the tables' ground under two pieces or more, on a 0.25 m raster: the strips laid over each other in draw order (ADR-0078 stage 3 takes it to about 0, `ground-strips.ts`). */
   "ground-strip-overlap": () => groundStripOverlap(STRIP_RASTERS()),
   /** A m² of bare gaps up to 1.25 m wide between the tables' ground pieces off the buildings (G-864), on a 0.25 m raster (ADR-0078 stage 5 brings it down, `ground-strips.ts`). */
-  "ground-strip-gap": () => groundStripGap(STRIP_RASTERS(), inBuilding),
+  "ground-strip-gap": () => GROUND_STRIP_GAP(),
   /** A piece of the tables' ground lifted over the steps, on a flight's outline by over 0.01 m²: it breaks through the lowest tread (G-777, `ground-over-steps.ts`). */
   "ground-over-steps": () => groundOverSteps(MAP_CHUNKS),
   /** Two pieces of the drawn paving overlapping in one plane: the depth flickers between them with every move of the camera (G-320, `paving-coplanar.ts`). */

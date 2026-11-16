@@ -11,15 +11,20 @@ import type { DistrictId } from "./world-map";
  * and the market at 23, a little above the tops of 14 and 20, where the jobs stop growing and slow
  * the pace; only the docks have enemies above 21.
  */
-export const DISTRICT_BANDS: Readonly<Record<DistrictId, LevelBand>> = {
+export const DISTRICT_BANDS: Readonly<Record<BandId, LevelBand>> = {
   "shinsekai-7": { min: 1, max: 8 },
   kanal: { min: 5, max: 14 },
   targ: { min: 10, max: 20 },
   doki: { min: 16, max: 30 },
+  // The hall of W-3 (ADR-0082, the user's decision of 15.11): its sabotage from level 10.
+  w3: { min: 10, max: 30 },
 };
 
+/** A band of difficulty: a district's, or W-3's hall's, which is no district of its own (ADR-0082). */
+export type BandId = DistrictId | "w3";
+
 /** The band of a district; none outside every district (the player's own level holds there). */
-export const bandOf = (district: DistrictId | null): LevelBand | null => (district ? DISTRICT_BANDS[district] : null);
+export const bandOf = (district: BandId | null): LevelBand | null => (district ? DISTRICT_BANDS[district] : null);
 
 /**
  * A piece of a district holding another district's band. The market moved into Alchemia
@@ -31,8 +36,8 @@ export interface BandArea {
   /** The district the area lies in; elsewhere it does not hold. */
   readonly within: DistrictId;
   readonly area: Rect;
-  /** The district whose band holds in the area. */
-  readonly band: DistrictId;
+  /** The district whose band holds in the area (or W-3's hall's). */
+  readonly band: BandId;
 }
 
 /**
@@ -48,10 +53,13 @@ export interface BandArea {
 export const BAND_AREAS: readonly BandArea[] = [
   { id: "alchemia-market", within: "shinsekai-7", area: { minX: 379, maxX: 456, minZ: 30, maxZ: 140 }, band: "targ" },
   { id: "alchemia-car-park", within: "shinsekai-7", area: { minX: 379, maxX: 441, minZ: -16, maxZ: 30 }, band: "targ" },
+  // W-3's hall and its rows inside their west wall (ADR-0082): the sabotage's guards; the tower, the quay, the
+  // yards and the sniper's perch on row N's west parapet (x 2500.7) keep the docks' band.
+  { id: "w3-hall", within: "doki", area: { minX: 2501, maxX: 2572, minZ: 396, maxZ: 440 }, band: "w3" },
 ];
 
 /** The district whose band holds at `p` in `district`: an area's of `BAND_AREAS`, or the district's own. */
-export const bandDistrictAt = (district: DistrictId | null, p: { readonly x: number; readonly z: number }): DistrictId | null => {
+export const bandDistrictAt = (district: DistrictId | null, p: { readonly x: number; readonly z: number }): BandId | null => {
   for (const a of BAND_AREAS) {
     if (a.within === district && p.x >= a.area.minX && p.x <= a.area.maxX && p.z >= a.area.minZ && p.z <= a.area.maxZ) return a.band;
   }
@@ -65,7 +73,7 @@ export const bandAt = (district: DistrictId | null, p: { readonly x: number; rea
  * The band of each contract site, by the district it is named for, which gives the job its level
  * (ADR-0059). A test checks it against the band where the site's people stand.
  */
-export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, DistrictId>> = {
+export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, BandId>> = {
   east_lot: "shinsekai-7",
   koi_back: "shinsekai-7",
   car_wash: "shinsekai-7",
@@ -79,6 +87,7 @@ export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, DistrictId>> =
   docks_escort: "doki",
   tessen_office: "doki",
   quay_terminal: "doki",
+  w3_hall: "w3",
 };
 
 /**

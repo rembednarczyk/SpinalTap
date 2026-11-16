@@ -43,6 +43,11 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
     if (e) {
       applyEntitySnapshot(e, s);
       if (s.downed) restoreDowned(world, e, s.downed);
+      // In the world already: as a component, so the effects' query sees it (G-882).
+      if (s.hackFx) {
+        if (e.hackFx) Object.assign(e.hackFx, s.hackFx);
+        else world.addComponent(e, "hackFx", { ...s.hackFx });
+      }
       continue;
     }
     const former = catalog.formerOf(s.key);
