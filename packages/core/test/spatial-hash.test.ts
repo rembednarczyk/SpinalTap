@@ -125,6 +125,55 @@ describe("SpatialHash", () => {
     expect(far.query(3e6 + 1, -3e6, 3e6 + 2, -3e6 + 1)).toEqual(["far"]);
   });
 
+  /** Does the segment pass through the box (on its edge too)? Liang-Barsky clipping. */
+  const crosses = (b: Box, ax: number, az: number, bx: number, bz: number): boolean => {
+    let [t0, t1] = [0, 1];
+    for (const [p, d, lo, hi] of [
+      [ax, bx - ax, b.minX, b.maxX],
+      [az, bz - az, b.minZ, b.maxZ],
+    ] as const) {
+      if (d === 0) {
+        if (p < lo || p > hi) return false;
+        continue;
+      }
+      const [u, v] = [(lo - p) / d, (hi - p) / d];
+      [t0, t1] = [Math.max(t0, Math.min(u, v)), Math.min(t1, Math.max(u, v))];
+    }
+    return t0 <= t1;
+  };
+
+  it("`someAlong` visits each box the segment passes through, once, and of the rest only some of its box's (G-884)", () => {
+    for (const [cell, seed] of [
+      [4, 21],
+      [16, 22],
+      [50, 23],
+    ] as const) {
+      const items = boxes(800, seed);
+      const grid = filled(cell, items);
+      const next = sequence(seed + 100);
+      let [visited, inBox] = [0, 0];
+      for (let q = 0; q < 300; q++) {
+        // Some on the cells' lines, some along an axis, some a point, both ways.
+        const snap = (v: number) => (q % 5 === 0 ? Math.round(v / cell) * cell : v);
+        const [ax, az] = [snap((next() - 0.5) * 450), snap((next() - 0.5) * 450)];
+        const [bx, bz] = q % 7 === 0 ? [ax, q % 2 ? az : snap((next() - 0.5) * 450)] : q % 11 === 0 ? [snap((next() - 0.5) * 450), az] : [snap((next() - 0.5) * 450), snap((next() - 0.5) * 450)];
+        const seen: Box[] = [];
+        expect(grid.someAlong(ax, az, bx, bz, 1e-3, (b) => (seen.push(b), false))).toBe(false);
+        const box = items.filter((b) => meets(b, Math.min(ax, bx), Math.min(az, bz), Math.max(ax, bx), Math.max(az, bz)));
+        expect(new Set(seen).size).toBe(seen.length);
+        expect(seen.every((b) => box.includes(b))).toBe(true);
+        expect(items.filter((b) => crosses(b, ax, az, bx, bz)).every((b) => seen.includes(b))).toBe(true);
+        [visited, inBox] = [visited + seen.length, inBox + box.length];
+      }
+      expect(visited).toBeLessThan(inBox);
+    }
+    const grid = new SpatialHash<number>(1);
+    for (let i = 0; i < 5; i++) grid.insertPoint(i, i + 0.5, i + 0.5);
+    const order: number[] = [];
+    expect(grid.someAlong(5, 5, 0, 0, 1e-3, (i) => (order.push(i), i === 1))).toBe(true);
+    expect(order).toEqual([4, 3, 2, 1]);
+  });
+
   it("refuses a cell that is not above 0", () => {
     expect(() => new SpatialHash(0)).toThrow();
     expect(() => new SpatialHash(Number.NaN)).toThrow();

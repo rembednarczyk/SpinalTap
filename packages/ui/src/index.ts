@@ -29,4 +29,4 @@ export {
 export type { Message, MessageParams, PluralMessage } from "./i18n/message";
 export { useT, useText } from "./i18n/use-t";
 export { formatNumber } from "./i18n/number";
-export { CREDITS, CREDIT_SECTIONS, LICENSES, type Credit, type CreditLicense, type CreditSection } from "./credits/credits";
+export { CREDITS, CREDIT_LICENSES, CREDIT_SECTIONS, LICENSES, NON_COMMERCIAL, SHARE_ALIKE, type Credit, type CreditLicense, type CreditSection, type LicenseInfo } from "./credits/credits";

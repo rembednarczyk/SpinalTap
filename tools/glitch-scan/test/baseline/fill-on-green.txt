@@ -1,6 +1,20 @@
 # fill-on-green: grid 10 m (x,z = the square's corner at its least x and z)
 krakowskie-1-0 120,-230
 krakowskie-1-0 130,-160
+krakowskie-1-0 160,-50
+krakowskie-1-1 200,40
+krakowskie-2-0 260,-180
+krakowskie-2-0 280,-120
+krakowskie-2-0 280,-110
+krakowskie-2-0 260,-90
+krakowskie-2-0 350,-90
+krakowskie-2-0 280,-80
+krakowskie-2-0 350,-80
+krakowskie-2-0 290,-30
+krakowskie-2-1 290,-20
+krakowskie-2-1 440,40
+krakowskie-2-1 330,50
+krakowskie-2-1 350,100
 nabrzeze-0-1 2370,360
 nabrzeze-0-1 2380,420
 nabrzeze-0-1 2390,430
@@ -9,6 +23,10 @@ nabrzeze-1-0 2630,130
 nabrzeze-1-0 2620,190
 nabrzeze-1-0 2620,260
 podzamcze-0-0 530,340
+podzamcze-1-0 840,280
+podzamcze-1-0 720,290
+podzamcze-1-0 890,290
+podzamcze-1-0 800,310
 podzamcze-1-0 790,330
 podzamcze-1-0 890,340
 podzamcze-2-0 930,190
@@ -17,4 +35,14 @@ podzamcze-2-0 950,250
 podzamcze-2-0 930,330
 podzamcze-2-1 1110,390
 podzamcze-2-1 1080,520
+stare-miasto-0-0 490,-120
+stare-miasto-0-1 490,10
+stare-miasto-0-1 460,30
+stare-miasto-0-1 460,80
+stare-miasto-0-1 460,90
+stare-miasto-1-0 610,-130
+stare-miasto-1-0 650,-50
+stare-miasto-1-1 650,-40
+stare-miasto-1-1 610,30
+stare-miasto-1-1 620,30
 stare-miasto-1-1 670,100
