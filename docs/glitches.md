@@ -2304,6 +2304,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 
+### G-880 Robotniki vitest projektu shared dochodzą do ok. 1,8 GB sterty przy limicie Node 2 GB
+- Ważność: S4 · Zasięg: vitest.config.ts projekt shared (isolate: false), pełne test:coverage
+- Opis: Zgłoszone przy ADR-0083 krok 3: jeden robotnik przekroczył 2 GB w teście modeli engine, także z SEKI_CITY_CACHE=off (stan sprzed zmiany). Możliwy związek z G-865 (silniki bez dispose, PR #608).
+- Status: nowy
+- Pakiet właściciela: vitest.config.ts, packages/engine/test
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl

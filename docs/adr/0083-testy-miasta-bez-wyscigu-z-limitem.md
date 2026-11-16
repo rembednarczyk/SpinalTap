@@ -25,6 +25,9 @@ Pierwsze przebiegi pokazały, że ten sam test na wspólnej maszynie CI waha si�
 ### Zakres odcisku tablic (15.11, PR #585)
 Odcisk w nagłówku obejmuje tylko wejścia mapy (`OWNED`) i dane; zmianę w `sim` czy `engine`, która zmienia tablice, łapie job Map tables, uruchamiany przy każdej zmianie kodu.
 
+### Krok 3 wdrożony inaczej (16.11, gałąź ccr-ec2c4269-ilh8k8-adr83-krok3)
+Profil pokazał, że w testach sim z wyjątkami 55–70% czasu to rastry i pola nawigacji (`fieldSteps`, `nav-field.ts`), a budowa świata i gruntu to poniżej 0,4 s na plik. Wspólna pamięć jest więc w pamięci procesu robotnika (`tools/city-cache`, LRU 128 MB + 128 MB, haczyk `shareNav` w `systems/ai/nav-share.ts`, w grze niezainstalowany), a nie na dysku: rastry zależą od kodu sim spoza odcisku `OWNED`, więc klucz dyskowy mógłby się zestarzeć. Klucz z treści (kształty brył, tożsamość gruntu, okno). `SEKI_CITY_CACHE=off` wyłącza. Wynik: suma testów z wyjątkami 209 → 142 s, 13 z 25 wpisów `exceptions.ts` usunięte, złote hashe bez zmian.
+
 ## Konsekwencje
 - Krok 1 i 2 to ok. dzień pracy jednego agenta, bez zmian gry, zapisu i hashy; kroki 3 i 4 po pomiarze kroków 1–2.
 - Tablice: nagłówek z odciskiem zmienia jeden wiersz `*.generated.ts`; `pnpm merge:main` przelicza je jak dotąd.
