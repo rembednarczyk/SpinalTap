@@ -19,6 +19,8 @@ export interface GroundRect {
 /** Ground levelled to `y` over `rect`, blending into the terrain over `blend` metres around it. */
 export interface Pad {
   readonly rect: GroundRect;
+  /** A convex ring inside `rect` (its box) levelled instead of the whole rectangle: a building site's dig along the site (ADR-0087). */
+  readonly ring?: readonly GroundPoint[];
   readonly y: number;
   readonly blend: number;
   /** Its row in `docs/topografia.md` (T-NNN): the departure from the NMT written down (ADR-0042, the scan's `pad-unregistered`). */
@@ -58,6 +60,27 @@ const weight = (d: number, blend: number): number => {
 };
 
 const rectDistance = (r: GroundRect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
+
+/** Distance from (x, z) to a convex counter-clockwise ring, 0 inside it. */
+const ringDistance = (ring: readonly GroundPoint[], x: number, z: number): number => {
+  let inside = true;
+  let d = Infinity;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i]!;
+    const b = ring[(i + 1) % ring.length]!;
+    const [dx, dz] = [b.x - a.x, b.z - a.z];
+    if (dx * (z - a.z) - dz * (x - a.x) < 0) inside = false;
+    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    d = Math.min(d, Math.hypot(x - a.x - dx * t, z - a.z - dz * t));
+  }
+  return inside ? 0 : d;
+};
+
+/** Distance from (x, z) to a pad's ground: its ring, else its rectangle. */
+const padDistance = (p: Pad, x: number, z: number): number => {
+  const d = rectDistance(p.rect, x, z);
+  return p.ring && d < p.blend ? ringDistance(p.ring, x, z) : d;
+};
 
 /**
  * Area of a flat outline `[x0, z0, …]` placed at (ox, oz) inside a rectangle: the outline
@@ -126,7 +149,7 @@ const rampsOver = (x: number, z: number, h: number, ramps: readonly Ramp[], over
 export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[], ramps: readonly Ramp[]): number => {
   let out = rampsOver(x, z, h, ramps, false);
   for (const p of pads) {
-    const w = weight(rectDistance(p.rect, x, z), p.blend);
+    const w = weight(padDistance(p, x, z), p.blend);
     if (w > 0) out += (p.y - out) * w;
   }
   return rampsOver(x, z, out, ramps, true);

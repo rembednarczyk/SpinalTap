@@ -24,6 +24,8 @@ import { loadBuildingTags, loadNodeTags } from "./props-art.ts";
 import type * as DecalWalls from "./decal-walls.ts";
 import { type DecalsOut, addDecals } from "./props-decals.ts";
 import { Site } from "./props-site.ts";
+import { SITES_OUT, emitSites, loadSiteOutlines, planSites } from "./construction-table.ts";
+import type { SitePlan } from "./construction-site.ts";
 import type * as GameDoors from "./game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "./props-roads.ts";
 import { addDoors, loadEntrances } from "./props-doors.ts";
@@ -33,19 +35,25 @@ import { type FiguresOut, addFigures } from "./props-figures.ts";
 /** The table the generator writes, and the simulation imports. */
 export const PROPS_OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
 
-/** A module runner plugin that answers the simulation's import of the table with `source`. */
-const tableAs = (source: string): Plugin => ({
+/** A module runner plugin that answers the simulation's import of the furniture's table with `source`, and of the building sites' with `sites`. */
+const tableAs = (source: string, sites: string): Plugin => ({
   name: "seki-props-table",
-  load: (id) => (id.split("?")[0] === PROPS_OUT ? source : null),
+  load: (id) => (id.split("?")[0] === PROPS_OUT ? source : id.split("?")[0] === SITES_OUT ? sites : null),
 });
 
-/** `file` through the module runner, the simulation's table being `table`; `extra` plugins after (tests). */
-const runWith = async <T>(file: string, table: ReadonlyMap<string, readonly StreetPropItem[]>, extra: readonly Plugin[]): Promise<T> =>
-  (await runnerImport<T>(join(REPO, file), { root: REPO, configFile: false, logLevel: "warn", plugins: [tableAs(emitProps(table)), ...extra] })).module;
+/**
+ * `file` through the module runner, the simulation's table being `table` and the building sites'
+ * `sites` (ADR-0087: this run's, not the committed one); `extra` plugins after (tests).
+ */
+const runWith = async <T>(file: string, table: ReadonlyMap<string, readonly StreetPropItem[]>, sites: string, extra: readonly Plugin[]): Promise<T> =>
+  (await runnerImport<T>(join(REPO, file), { root: REPO, configFile: false, logLevel: "warn", plugins: [tableAs(emitProps(table), sites), ...extra] })).module;
 
 export interface BuiltProps {
   /** The text of `props.generated.ts`. */
   readonly text: string;
+  /** The text of `construction.generated.ts` (ADR-0087), and its sites. */
+  readonly sitesText: string;
+  readonly sites: readonly SitePlan[];
   readonly byChunk: ReadonlyMap<string, StreetPropItem[]>;
   readonly stats: PropsStats;
   readonly decals: DecalsOut;
@@ -62,12 +70,15 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // The current extract's furniture the plan lacks, after the plan's groups (ADR-0077 point 4, G-099).
   const plan = loadPropsPlan();
   const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
+  // The building sites first (ADR-0087): the simulation every pass reads has their fences and digs.
+  const sites = planSites(loadSiteOutlines(), chunks);
+  const sitesText = emitSites(sites);
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
   // Nothing of the furniture is placed yet, so the simulation they read has none.
-  const decalWalls = await runWith<typeof DecalWalls>("tools/osm-import/src/decal-walls.ts", new Map(), extra);
+  const decalWalls = await runWith<typeof DecalWalls>("tools/osm-import/src/decal-walls.ts", new Map(), sitesText, extra);
   // The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
-  const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), extra);
+  const doors = await runWith<typeof GameDoors>("tools/osm-import/src/game-doors.ts", new Map(), sitesText, extra);
   // The rows of bollards along the kerbs of the centre (G-820) once the plan stands, broken by the taxi ranks and the bays the orthophoto shows.
   const kerbRule = loadKerbRule();
   // Read once for every pass of the plan.
@@ -93,7 +104,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   });
   // The still crowd (ADR-0058 stage 8) last: it keeps clear of every piece, and of the simulation's moving
   // crowd, which seats itself on this run's furniture (the crowd does not read the figures).
-  const crowd = await runWith<typeof CrowdClear>("tools/osm-import/src/crowd-clear.ts", table, extra);
+  const crowd = await runWith<typeof CrowdClear>("tools/osm-import/src/crowd-clear.ts", table, sitesText, extra);
   const figures = addFigures(table, new Site(chunks), {
     groundY: (p) => decalWalls.groundY(p.x, p.z),
     surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
@@ -103,6 +114,8 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   });
   return {
     text: emitProps(byChunk),
+    sitesText,
+    sites,
     byChunk,
     stats,
     crowns,

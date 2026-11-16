@@ -2417,7 +2417,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowe
 - Pakiet właściciela: tools/osm-import, engine mapcity/construction
 - Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
-- Topografia: T-321.
+- Topografia: T-322.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

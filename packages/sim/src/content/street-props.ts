@@ -1,4 +1,4 @@
-import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSitting, seatAt, segmentDistance } from "@seki/core";
+import { FIGURE_HOSTS, FIGURE_REACH, SITE_CABIN, type StreetPropItem, figureLayout, siteCabinStacked, isSitting, seatAt, segmentDistance } from "@seki/core";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
@@ -130,7 +130,8 @@ const withHost = (i: StreetPropItem): boolean => {
  * The map's pieces clear of the game, on the shaped terrain. A door on a facade (ADR-0058 stage 9)
  * keeps the foot the import measured on the paving drawn under it: its top was fitted to the
  * facade's windows from there. So does a still figure (stage 8): a sitter the foot of its seat's
- * piece, one standing the paving at its feet, both measured on this terrain.
+ * piece, one standing the paving at its feet, both measured on this terrain. A building site's stacked
+ * container (ADR-0087) stands on the one under it.
  */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
   Object.entries(clear).map(([id, items]) => [
@@ -138,7 +139,7 @@ const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEnt
     items
       .filter(withStall)
       .filter(withHost)
-      .map((i) => (i.prop === "door" || i.prop === "figure" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 })),
+      .map((i) => (i.prop === "door" || i.prop === "figure" ? i : { ...i, y: Math.round((groundY(i.x, i.z) + (i.prop === "site-cabin" && siteCabinStacked(i.variant) ? SITE_CABIN.height : 0)) * 100) / 100 })),
   ]),
 );
 
