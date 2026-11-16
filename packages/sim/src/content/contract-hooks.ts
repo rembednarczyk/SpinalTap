@@ -1,4 +1,4 @@
-import type { ContractHookDef, Vec3 } from "@seki/core";
+import type { ContractHookDef, ContractKind, Vec3 } from "@seki/core";
 import { w3 } from "./tessen-w3/site";
 import { ground } from "./lublin/terrain";
 import { spotNear } from "./lublin/places";
@@ -166,4 +166,4 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
 ];
 
 /** The hooks of one kind of job, in table order. */
-export const hooksOfKind = (kind: ContractHookDef["kind"]): readonly SimHookDef[] => CONTRACT_HOOKS.filter((h) => h.kind === kind);
+export const hooksOfKind = (kind: ContractKind): readonly SimHookDef[] => CONTRACT_HOOKS.filter((h) => h.kind === kind);

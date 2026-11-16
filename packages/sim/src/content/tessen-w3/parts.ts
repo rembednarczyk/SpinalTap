@@ -19,6 +19,15 @@ export const box = (x0: number, x1: number, y0: number, y1: number, z0: number, 
   solid,
 });
 
+/**
+ * A row of lockers along x, `count` cabinets of equal width: each hides one body (ADR-0065,
+ * ADR-0082 §2 "Kryjówki ciał").
+ */
+export const lockers = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, count: number): StaticProp[] => {
+  const w = (x1 - x0) / count;
+  return Array.from({ length: count }, (_, i) => ({ ...box(x0 + i * w, x0 + (i + 1) * w, y0, y1, z0, z1, "metal"), hide: "locker" as const }));
+};
+
 /** A walkable slab whose top is at `top` over the floor. */
 export const slabTop = (x0: number, x1: number, z0: number, z1: number, top: number, thickness = 0.3, material: BlockMaterial = "concrete"): StaticProp =>
   box(x0, x1, top - thickness, top, z0, z1, material);

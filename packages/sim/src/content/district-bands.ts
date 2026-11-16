@@ -79,6 +79,7 @@ export const CONTRACT_SITE_BANDS: Readonly<Record<ContractSiteId, DistrictId>> =
   docks_escort: "doki",
   tessen_office: "doki",
   quay_terminal: "doki",
+  w3_hall: "doki",
 };
 
 /**
