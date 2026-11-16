@@ -2133,9 +2133,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-852 touch-layout: karta dzielnicy raz zachodzi na minimapę przy 844×390 en
 - Ważność: S4 · Zasięg: e2e touch-layout, phone district card, skala 1
 - Opis: Jedno przecięcie 16×74 px przy obciążeniu maszyny, powtórka zielona; możliwy flake e2e albo wyścig układu przy wczytaniu karty (znalezione przy PR #587)
-- Status: nowy
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, e4d1d3f); wcześniej: nowy
 - Pakiet właściciela: e2e, packages/ui
 - 15.11 porządki rejestru: G-868 to duplikat; pada też na czystym main e839d94 (en i pl, 844x390 i 800x370), w śladzie tylko karta dzielnicy, przyczyna nieustalona.
+- przyczyna: pomiar karty w trakcie animacji wejścia trzymanej przez brak klatek (toast-in +30 px = 16×74); test czeka na Animation.finished; dowód: wjazd 20 s pada bez/przechodzi z; 10/10 repeat
 
 ### G-853 Pasy gołej ziemi między kostką deptaku Krakowskiego Przedmieścia a pierzejami
 - Ważność: S3 · Zasięg: deptak x −100..440: 2141 m² w 10 m od osi (2765 m² w 20 m); największe (222,5;−70,6) 620 m², (291,0;−69,9) 592 m², (364,6;−86,0) 200 m²
@@ -2218,8 +2219,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
 - Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
 - Opis: Zgłoszone przez naprawiacza G-853 r2: test:rerun kilku pakietów naraz kończy się brakiem pamięci w tym pliku; sam przechodzi.
-- Status: nowy
+- Status: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, 69b355a); wcześniej: nowy
 - Pakiet właściciela: packages/engine
+- przyczyna: NullEngine bez dispose w EngineStore, worker isolate:false (150 silników, 1722 MB po GC, OOM); setupFiles free-engines.ts; engine 1 worker: OOM -> 151/151; test:rerun engine ui app OK
 
 ### G-866 cover-fixes: plac budowy Zielona 5A opisany jako ogródek kawiarni, front kładzie na nim trawę i kostkę
 - Ważność: S4 · Zasięg: Krakowskie (249–256; 1–7), 48 próbek pokrycia, ok. 40 m² frontu
@@ -2233,6 +2235,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Przyczyna nieustalona: oświetlenie albo cień w przebiegu zrzutów, nie geometria. Zrzuty: scratchpad/g853/shots2 i scratchpad/topo-g853r2/shots2
 - Status: nowy
 - Pakiet właściciela: packages/engine
+- odtworzone na e3175f7 (2/6 stron, 54,1/46,4 wobec 147,2); main 9/9 = 107,3; różnica w treści statycznej mapy cienia księżyca (+335..407 tys. tekseli) przy tych samych rzucających, macierzach i stanie GL; nie zegar, paleta, losowość; kandydaci: shareDepth, kolejność wobec sondy mokrego asfaltu, SwiftShader; capture() po view() zwraca poprzednią klatkę (inna sprawa); bez poprawki
 
 ### G-868 touch-layout:503 flaky: karta dzielnicy zakrywa minimapę o 16×74 px
 - Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts:503, 844x390 i 800x370, en i pl
@@ -2280,6 +2283,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Karta od 84 px pod celem leży na .buffs (84 px) i .touch-mode .gear (92 px); znalezione przy G-846
 - Status: nowy
 - Pakiet właściciela: packages/ui
+
+### G-877 city-kit-loader.test.ts pada w workerze isolate:false, gdy city-kit-loader jest już w pamięci modułów
+- Ważność: S4 · Zasięg: packages/engine/test/city-kit-loader.test.ts, projekt shared
+- Opis: vi.mock city-kit nie działa, gdy moduł jest już załadowany w workerze (kolejność plików); znalezione przy G-865
+- Status: nowy
+- Pakiet właściciela: packages/engine
+
+### G-878 touch-layout scan card: .scan-note wjeżdża toast-in, pomiar w trakcie animacji jak G-852
+- Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts karta skanu
+- Opis: .scan-note dalej używa toast-in 200 ms (+30 px); test może mierzyć w trakcie animacji pod obciążeniem; znalezione przy G-852
+- Status: nowy
+- Pakiet właściciela: e2e
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
