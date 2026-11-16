@@ -45,7 +45,7 @@ const door = (key: string, x: number, z: number, along: "x" | "z", lock?: DoorLo
   width,
   height: DOOR_H,
   leaves: width > 2 ? 2 : 1,
-  thickness: 0.08,
+  thickness: PARTITION,
   ...(lock ? { lock } : {}),
 });
 

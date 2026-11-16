@@ -87,8 +87,8 @@ const chamberWalls = (): StaticProp[] => {
     ...wallX(C.minX + w, C.maxX - o, C.maxZ - w, C.maxZ - o, R, top),
     ...wallZ(C.minZ + w, C.maxZ - w, C.maxX - w, C.maxX - o, 0, top, [{ from: CHAMBER_GATE_E.minZ, to: CHAMBER_GATE_E.maxZ, top: CHAMBER_GATE_E.height }]),
     box(C.minX + w, C.maxX - w, top - 0.3, top, C.minZ + w, C.maxZ - w, "concrete"),
-    // The launch area's frame on the floor and a test stand in it.
-    box(2557, 2563, 0, 0.6, 415, 421, "metal"),
+    // The launch area's pad on the floor, under a knee.
+    box(2557, 2563, 0, 0.3, 415, 421, "metal"),
   ];
 };
 

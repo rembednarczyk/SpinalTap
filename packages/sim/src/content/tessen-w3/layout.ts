@@ -18,7 +18,11 @@ import type { W3Rect } from "./site";
  * - the walkers' second way out of the basement is a stair up into workshop W2.
  */
 
-/** Outer walls (inside the facades by `FACADE_GAP`) and partitions. */
+/**
+ * Outer walls (inside the facades by `FACADE_GAP`) and partitions; the doors' leaves are as thick
+ * as a partition, so the shoulder camera's shot (0.55 m right of the eye) never starts past one
+ * from 0.4 m off it (G-275).
+ */
 export const WALL = 0.3;
 export const PARTITION = 0.2;
 /** The facades drawn by the map city stand this far outside the walls' faces: no z-fighting. */

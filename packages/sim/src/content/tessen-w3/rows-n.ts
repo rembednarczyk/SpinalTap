@@ -50,7 +50,7 @@ const door = (key: string, x: number, z: number, y = 0, lock?: DoorDef["lock"]):
   width: DOOR_W,
   height: DOOR_H,
   leaves: 1,
-  thickness: 0.08,
+  thickness: PARTITION,
   ...(lock ? { lock } : {}),
 });
 
@@ -108,12 +108,11 @@ const furniture = (): StaticProp[] => {
     box(2501, 2512.5, 0, 2.6, back - 0.9, back, "metal"),
     box(2515, 2523, 0, 2.6, back - 0.9, back, "metal"),
     box(2525, 2535, 0, 0.95, back - 1, back, "metal"),
-    box(2529, 2531.2, 0, 0.95, 434, 435.4, "metal"),
     ...[2538.5, 2542, 2545.5].map((x) => box(x - 0.6, x + 0.6, 0, 1.1, back - 1, back - 0.3, "metal")),
-    // Server room N: racks along its walls, the calibration core's terminal in the middle.
+    // Server room N: racks along its walls, the calibration core's terminal at the back.
     box(2560.6, 2561.4, 0, 2.2, 433.2, 439, "metal"),
     box(2570.6, 2571.4, 0, 2.2, 433.2, 437.6, "metal"),
-    box(2565.4, 2566.6, 0, 1.2, 435.6, 436.4, "metal"),
+    box(2565.4, 2566.6, 0, 1.2, 437.6, 438.4, "metal"),
     // The mezzanine: lockers, the shift manager's desk, a cabinet in the technical room.
     box(2501, 2523, MEZZANINE, MEZZANINE + 2, back - 0.6, back, "metal"),
     box(2528.5, 2531.5, MEZZANINE, MEZZANINE + 0.8, 437.6, 438.6, "metal"),

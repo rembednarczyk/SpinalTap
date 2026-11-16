@@ -70,9 +70,9 @@ export const W3_HALL_NODES: readonly NavNode[] = [
   ...[DOORS_N.n1, hallW, DOORS_N.n2, DOORS_N.modules, DOORS_N.calibration, hallE, DOORS_N.server].map((x) => node(`w3-cn-${x}`, w3(x, 0, CN))),
   node("w3-store-n1", w3(DOORS_N.n1, 0, 436)),
   node("w3-store-n2", w3(DOORS_N.n2, 0, 436)),
-  node("w3-modules", w3(DOORS_N.modules, 0, 433.4)),
+  node("w3-modules", w3(DOORS_N.modules, 0, 435.5)),
   node("w3-calibration", w3(DOORS_N.calibration, 0, 436)),
-  node("w3-server-n", w3(DOORS_N.server, 0, 434.8)),
+  node("w3-server-n", w3(DOORS_N.server, 0, 434.6)),
   // The stair from airlock N, the landing, the gallery, the mezzanine's rooms.
   node("w3-stair-n-top", w3(STAIR_N_LANDING.minX + 1, M, 429.2)),
   node("w3-mez-w", w3(2502, M, 433)),
