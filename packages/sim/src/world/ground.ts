@@ -3,7 +3,7 @@ import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import { ChunkIndex, distanceTo } from "./chunk-index";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onBridgeDeck, onFlight } from "./deck";
 import { GentleBlocks } from "./gentle-ground";
 import { type GroundVault, VaultIndex } from "./vault";
 
@@ -280,6 +280,16 @@ export class GroundField {
     const grid = this.chunks[i]?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
     return groundOver(decks, x, z, h, -Infinity) > h;
+  }
+
+  /** Is the ground at (x, z) for feet reaching up to `reach` a bridge's own deck over the terrain, walkable along its axis (G-898)? */
+  onBridgeDeck(x: number, z: number, reach: number): boolean {
+    if (!this.hasTerrain) return false;
+    const i = this.chunkIndex(x, z);
+    const decks = this.chunkDecks[i];
+    if (!decks) return false;
+    const grid = this.chunks[i]?.terrain;
+    return onBridgeDeck(decks, x, z, grid ? terrainHeightAt(grid, x, z) : 0, reach, MAX_WALK_SLOPE);
   }
 
   /** Too steep to walk on (a bank, ADR-0043)? */

@@ -117,6 +117,16 @@ export const groundOver = (decks: readonly GroundDeck[], x: number, z: number, t
 };
 
 /**
+ * Is the ground at (x, z) over the terrain at `terrain`, for feet reaching up to `reach`, a
+ * bridge's own deck over the terrain, not a flight's, no steeper along its axis than `limit` (G-898)?
+ */
+export const onBridgeDeck = (decks: readonly GroundDeck[], x: number, z: number, terrain: number, reach: number, limit: number): boolean => {
+  const y = decksAt(decks, x, z, reach, terrain, flightsIn(decks));
+  if (y === null || y <= terrain || foundFlight) return false;
+  return decks.some((d) => d.flight !== true && over(d, x, z) && deckHeight(d, x, z) === y && Math.abs(d.yb - d.ya) <= limit * Math.hypot(d.b.x - d.a.x, d.b.z - d.a.z));
+};
+
+/**
  * The gradient at (x, z) of a flight of steps hung off a bridge (G-255) that feet reaching up to
  * `reach` walk on there, written into `out`, or null off one: its own grade, so its seams with
  * the terrain beside it, a step or less where the feet get on, are no bank (ADR-0043). A flight
