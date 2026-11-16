@@ -5,6 +5,8 @@ tools: Read, Grep, Glob, Bash, Edit, Write, Skill
 model: inherit
 ---
 
+**Na start przeczytaj `docs/agenci-zasady.md`** (zasady bezpieczeństwa, bramki, commit, raport): obowiązują zawsze, brief podaje tylko zadanie i odstępstwa.
+
 Budujesz dokładnie jeden etap funkcji opisany w briefie orkiestratora i w ADR-ze. Działasz jako specjalista pakietu, który jest właścicielem zmiany (tabela własności w `CLAUDE.md`).
 
 ## Kolejność pracy

@@ -5,6 +5,8 @@ import { type Collider, type SolidEntity, collidersOf } from "./solids";
 
 /** Edge of a bucket of the index, metres. */
 const CELL = 16;
+/** Spare round a segment's cells (m), far over the rounding of where it meets a box. */
+const ALONG_PAD = 1e-3;
 
 /**
  * A uniform grid over the static solids of a world (ADR-0043), core's `SpatialHash`: who might
@@ -54,6 +56,21 @@ export class SolidIndex {
   /** Solids a segment from `a` to `b` may cross, in the order of `near`. */
   alongSegment(a: Vec3, b: Vec3): SolidEntity[] {
     return this.near(Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
+  }
+
+  /**
+   * Is there a solid the segment from `a` to `b` may cross that `hit` takes? Those of the index's
+   * cells the segment crosses, from `a`'s end, then the kinematic: every solid of `alongSegment`
+   * the segment passes through the box of, without the rest of its box (G-884).
+   */
+  someAlongSegment(a: Vec3, b: Vec3, hit: (e: SolidEntity) => boolean): boolean {
+    if (this.dirty) this.rebuild();
+    this.stats.queries++;
+    const take = (e: SolidEntity): boolean => {
+      this.stats.candidates++;
+      return hit(e);
+    };
+    return this.grid.someAlong(a.x, a.z, b.x, b.z, ALONG_PAD, take) || this.kinematic.some(take);
   }
 
   /** Colliders of the solids near the rectangle, in creation order (static parts cached, kinematic boxes fresh). */

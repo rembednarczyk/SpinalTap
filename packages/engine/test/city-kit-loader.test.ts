@@ -1,14 +1,19 @@
 // @ts-expect-error The engine is typed for the browser; the test reads the files off disk.
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { CityKitLoader } from "../src/renderer/city-kit-loader";
 import type { Stage } from "../src/renderer/stage";
 
-/** The kit itself is not under test: a stand-in that loads at once. */
-vi.mock("../src/renderer/city-kit", () => ({
+/**
+ * The kit itself is not under test: a stand-in that loads at once. A shared worker (`isolate:
+ * false`) may hold the loader from an earlier file, bound to the real kit, and a hoisted `vi.mock`
+ * does not reach it (G-877): the registry is reset and the loader imported after the stand-in, and
+ * reset again after the file, so the next file does not get the loader bound to the stand-in.
+ */
+vi.resetModules();
+vi.doMock("../src/renderer/city-kit", () => ({
   CityKit: class {
     static load = async (): Promise<object> => ({});
     setDaylight(): void {}
@@ -16,6 +21,11 @@ vi.mock("../src/renderer/city-kit", () => ({
     setProps(): void {}
   },
 }));
+const { CityKitLoader } = await import("../src/renderer/city-kit-loader");
+afterAll(() => {
+  vi.doUnmock("../src/renderer/city-kit");
+  vi.resetModules();
+});
 
 const bytes = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
