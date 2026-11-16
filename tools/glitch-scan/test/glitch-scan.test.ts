@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -80,6 +80,7 @@ import { loadStructures } from "../../osm-import/src/props-osm.ts";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
+import { siteChecks, siteGroundOf } from "./site-pieces";
 import { crossingGlow, crossingKerb, crossingOverhang, crossingSkew } from "./crossing-shape";
 import { kerbJag } from "./kerb-jag";
 import { kerbStripBare } from "./kerb-strip-bare";
@@ -763,7 +764,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "furniture-overlap": () => {
     const solid = Object.values(WORLD_STREET_PROPS)
       .flat()
-      .filter((i) => i.prop !== "bollard" && i.prop !== "manhole" && furnitureRadius(i) > 0)
+      // A building site's stacked container (ADR-0087) stands on the one under it, not beside it.
+      .filter((i) => i.prop !== "bollard" && i.prop !== "manhole" && furnitureRadius(i) > 0 && !(i.prop === "site-cabin" && siteCabinStacked(i.variant)))
       .map((i) => ({ i, r: furnitureRadius(i), f: footprint(i) }));
     return solid.flatMap((a, k) =>
       solid.slice(k + 1).flatMap((b) => {
@@ -2269,6 +2271,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tree-by-deck": () => treesByDeck(deckRings(MAP_CHUNKS), Object.values(WORLD_STREET_PROPS).flat()),
   /** A tree OSM names a genus of the renderer's models (`genus`, `species`: Quercus, Populus...) drawn as another one: the oaks and the "Baobab" of Plac Litewski as limes and maples (G-423, `tree-species.ts`). */
   "tree-species-ignored": () => treesOfOtherSpecies(cityNamedTrees(), Object.values(WORLD_STREET_PROPS).flat()),
+  // The building sites' pieces of ADR-0087 against the ground the game draws (`site-pieces.ts`): on a carriageway or pavement, through a wall, a gate with no way in.
+  ...siteChecks(
+    () => Object.values(WORLD_STREET_PROPS).flat(),
+    () => siteGroundOf(new Site(MAP_CHUNKS), MAP_CHUNKS),
+  ),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).

@@ -1,4 +1,4 @@
-import { DECAL_KINDS, type EntityId } from "@seki/core";
+import { DECAL_KINDS, type EntityId, SITE_KINDS } from "@seki/core";
 import type { Mesh, Scene } from "../../babylon";
 import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -9,6 +9,7 @@ import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "..
 import { bakePavilionStandIn, pavilionIn } from "../alchemia/pavilion-far";
 import { bakeParkingStandIn, parkingIn } from "../alchemia/parking-far";
 import { bakeBarrier } from "./barrier-models";
+import { bakeSitePiece } from "./construction";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
@@ -121,6 +122,8 @@ const bakePiece = (deps: Pick<PropBakeDeps, "quality" | "poles">, sink: MeshSink
   if (p.prop === "door") bakeDoor(sink, models, p);
   // A wall, fence, hedge or gate of the map (ADR-0077), baked at its own length, height and rise.
   else if (p.prop === "barrier") bakeBarrier(sink, p, deps.quality);
+  // A building site's piece (ADR-0087), at its own layout.
+  else if (SITE_KINDS.has(p.prop)) bakeSitePiece(sink, p, deps.quality);
   // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
   else if (p.prop === "figure") bakeFigure(sink, poles.props, p, deps.quality);
   else if (!(models && bakeStreetModel(sink, models, p))) {
