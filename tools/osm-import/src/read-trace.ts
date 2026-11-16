@@ -1,8 +1,8 @@
 /**
  * `node --import ./tools/osm-import/src/read-trace.ts <script>`: records every file of the repository
  * the script reads, as modules or as data, and writes the list (relative paths, sorted) to
- * `$READ_TRACE` at exit. The `tables` job of CI checks with it that the tables' fingerprints
- * (`fingerprint.ts`) cover every input of `pnpm osm:build` and `pnpm osm:props`.
+ * `$READ_TRACE` at exit. The `tables` job of CI checks with it that the tables' inputs
+ * (`table-inputs.ts`) cover every input of `pnpm osm:build` and `pnpm osm:props`.
  */
 import fs from "node:fs";
 import { registerHooks, syncBuiltinESMExports } from "node:module";

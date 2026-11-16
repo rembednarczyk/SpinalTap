@@ -2,18 +2,18 @@
  * `pnpm osm:props`: street furniture of Lublin 2077 (ADR-0047) from
  * `docs/world/lublin-props.todo.json`, the OSM furniture it lacks (`data/osm/points/furniture.json`)
  * and the generated chunks into
- * `packages/sim/src/content/lublin/props.generated.ts` (`props-build.ts`), then the control numbers.
+ * `packages/sim/src/content/lublin/props.generated.ts` (`props-build.ts`), then the control numbers;
+ * `--check` compares the table with what it would write (`pnpm tables:check`, exit 1 when they differ).
  */
-import { statSync, writeFileSync } from "node:fs";
-import { TABLES, tableFingerprint, withFingerprint } from "./fingerprint.ts";
 import { PROPS_OUT, buildProps } from "./props-build.ts";
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
+import { endCheck, writeTable } from "./table-write.ts";
 
 const { text, byChunk, stats, crowns, decals, doors, figures, entrances, doorWalls } = await buildProps();
-// The fingerprint of the inputs, the districts' tables on the disk among them, in the header (ADR-0083).
-writeFileSync(PROPS_OUT, withFingerprint(text, tableFingerprint("props"), TABLES.props.command));
+writeTable(PROPS_OUT, text);
+endCheck("pnpm osm:props");
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
-console.log(`props.generated.ts: ${(statSync(PROPS_OUT).size / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);
+console.log(`props.generated.ts: ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);
 console.log("per kind:", Object.entries(stats.perKind).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", "));
 console.log("per district:", Object.entries(stats.perDistrict).map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`dropped: ${stats.outside} outside the chunks, ${stats.inBuilding} inside building outlines, ${stats.onRoad} on a road with no pavement near, ${stats.merged} too close to the same kind, ${stats.crowded} with no room beside a solid placed before`);

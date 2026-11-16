@@ -9,7 +9,7 @@ Status: Zaakceptowany (15.11, decyzja użytkownika: z kolizjami, plac jako miejs
 - Ortofoto pokazuje na placach wykopy, stan surowy, dźwigi i kontenery. Gra może to pokazać po swojemu, bo plac i tak wygląda inaczej co kilka miesięcy.
 
 ## Decyzja
-Plac budowy to wynik generatora w `tools/osm-import` (nowy moduł `construction-site.ts`), zapisany w tablicy rozstawienia `*.generated.ts` z odciskiem wejść (ADR-0083). Ten sam obrys i te same dane dają ten sam plac. Losowość tylko z ziarna liczonego z id obrysu (mulberry32 jak `crowd-look.ts`), bez `Math.random` i czasu.
+Plac budowy to wynik generatora w `tools/osm-import` (nowy moduł `construction-site.ts`), zapisany w tablicy rozstawienia `*.generated.ts`, którą sprawdza przeliczenie (ADR-0083). Ten sam obrys i te same dane dają ten sam plac. Losowość tylko z ziarna liczonego z id obrysu (mulberry32 jak `crowd-look.ts`), bez `Math.random` i czasu.
 
 **Wejścia:** obrys i otwory z `structures.ts`, krawędzie ulic i chodników (wejścia na plac), NMT pod obrysem, maska wody (ADR-0084), budynki sąsiednie (ściany przyległe do obrysu), pole i kształt obrysu.
 
