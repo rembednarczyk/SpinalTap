@@ -2435,7 +2435,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
 - Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
 - Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
-- Status: w PR #654; wcześniej: zgłoszone
+- Status: naprawione (PR #654); wcześniej: w PR #654; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
 
