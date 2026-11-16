@@ -86,6 +86,8 @@ export class WorldStreamer {
   readonly streamedOut: Set<EntityId>;
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
   readonly passerbyIds: Map<string, readonly EntityId[]>;
+  /** Keys and ids of the keyed actors, those asleep with their chunk too (G-901: the last shooter). */
+  readonly actorKeys: Pick<StreamCatalog, "keyOf" | "idOf">;
   /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
   readonly ground: GroundField;
   /** The level graph NPCs take between floors (ADR-0021): the city's, or a world of its own's (`ChunkDef.nav`). */
@@ -115,6 +117,7 @@ export class WorldStreamer {
     this.nav = chunks === WORLD_CHUNKS ? WORLD_NAV : mergeNav(...chunks.flatMap((c) => (c.nav ? [c.nav] : [])));
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);
     this.passerbyIds = this.catalog.passerbyIds;
+    this.actorKeys = this.catalog;
     this.streamedOut = this.state.streamedOut;
     this.spawner = new ActorSpawner(this.state, this.catalog, this.ground, (p) => this.chunkIdAt(p), () => this.enemyScaling());
   }

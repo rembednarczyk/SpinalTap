@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v43: the last shot at the player (G-901), optional: its tick and the key of who fired it. The
+ * street takes her shot in the 3 s after it for self-defence; an older save loads with none, as before.
  * v42: W-3's loud way (ADR-0082 stage 3b): the contract's `charges`, `planting`, `fuseTick`,
  * `detonated` and `alarmTick`, optional; the hunt and the wrecks are plain flags.
  * v41: what a fight leaves between two steps (G-883), optional: an entity's velocity and its blow
@@ -85,7 +87,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 42;
+export const SAVE_SCHEMA_VERSION = 43;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -348,6 +350,16 @@ export interface StrayBodySnapshot {
   readonly state: EntitySnapshot;
 }
 
+/**
+ * The last shot that hurt or nearly hit the player, or was fired close by (G-901), at its tick (of
+ * the save's own count, as `tick`). `source` is the shooter's key (a reinforcement's
+ * `security:<n>@<since>`), absent for one with none: loaded, nobody is behind it, as behind one gone.
+ */
+export interface ThreatSnapshot {
+  readonly tick: number;
+  readonly source?: string;
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -383,6 +395,8 @@ export interface SaveSnapshot {
   readonly reinforcements?: ReinforcementsSnapshot;
   /** Bodies of nobody keyed and none of the heat's (G-233): a won mugging's. Absent with none. */
   readonly strayBodies?: readonly StrayBodySnapshot[];
+  /** The last shot at the player (G-901). Absent when none was fired at her yet. */
+  readonly lastThreat?: ThreatSnapshot;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

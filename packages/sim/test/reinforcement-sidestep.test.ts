@@ -82,9 +82,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // v41 (G-883): the reinforcements' velocity and melee are saved; without them, as v40, the runs
   // hash to the goldens of v40. Re-recorded for v42 (ADR-0082 stage 3b, the loud way, none in
   // these runs): only the version; as v41 the runs hash to 0cbe3ba4 and a6df4b6e.
+  // Re-recorded for v43 (G-901, the last threat saved, none in these runs): only the version;
+  // as v42 the runs hash to 3bb52ee5 and 107bf337.
   for (const [seed, level, golden, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "3bb52ee5", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
-    [5, 3, "107bf337", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
+    [21, 2, "3a38e0b2", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
+    [5, 3, "dbf1b948", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
