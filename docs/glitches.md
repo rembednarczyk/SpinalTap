@@ -1619,6 +1619,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: Podzamcze, Zamek w48500136. Od północy (844..920; 262..273) ok. 382 m² gołego terenu między pasem 4 m drogi w66258158 a licem, a na ortofoto asfaltowy podjazd ok. 10 m z parkowaniem. Od południa (830..920; 202..209) ok. 130 m² przy licu i taras (882..900; 193..200) ok. 89 m², na ortofoto kostka. Zrzuty `pz10d-pn-podjazd`, `pz10d-pd-taras`; podzamcze-2-0 (12.11): `landuse-bare` 865 próbek w x 920..930 (z 160..370) tuż za granicą komórki podzamcze-1-0; niepotwierdzone, że to ciąg pasów przy Zamku z wpisu.; 12.11 (kurator, przegląd paczki): pas (920..975; 183..263) w podzamcze-2-0 jest ciągiem wpisu. Droga w66258158 okrąża wschodni koniec Zamku przy Kaplicy Trójcy, a goły teren między jezdnią a licem i kaplicą przechodzi przez x = 920 bez przerwy (wycinek `topo-paczka/crop/pz20w.png`). Do poprawy przedpola (920..960; 227..262) i (944..959; 195..229), twarde 70% i 97%. Zieleń zbocza na wschód od drogi to T-117 i zostaje. Test przyjęcia uzupełnić o `landuse-bare` w (920..975; 183..263) bez próbek zieleni ortofoto < 100.” Z T-274 i G-713 usunąć zastrzeżenie „niepotwierdzone, że ciąg
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS` albo korekta `width`)
 - Test przyjęcia: `landuse-bare` w (844..920; 255..273) 1527 → mniej niż 100, w (830..920; 202..212) i na tarasie 873 → mniej niż 100; zbocze z trawą bez nawierzchni
+- 16.11 (G-874): pas 2,6-3 m odsłonięty spod skrzydła pn. (x 904-942, z 253-262) dochodzi do gołego podjazdu: landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250
 
 ### G-700 Ganger w `seek` podchodzi do bariery na 0,4 m
 - Status: zgłoszone (12.11, z weryfikacji #461)
@@ -2270,9 +2271,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
 - Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
 - Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
-- Status: nowy
+- Status: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
+- 16.11: drop węzłów uskoku w korekcie importu; ściana x 910/925/940 z 257,75/255,77/253,79 (odchyłka do 0,53 m przy x 925, wewnątrz dachu); kontrola landmark-outline-nmpt 1->0; 2 klucze przyjęte przez agenta (landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250: goły pas odsłonięty spod bryły, G-699) — do potwierdzenia użytkownika; kolizja z #602: łatka g874-x602-resolution.patch
 
 ### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
 - Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
