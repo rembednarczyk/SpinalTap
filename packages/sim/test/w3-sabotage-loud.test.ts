@@ -250,6 +250,36 @@ describe("W-3's sabotage, the loud way (ADR-0082 stage 3b)", () => {
     }
   });
 
+  /** Saved in the step itself, loaded, and both stepped on: the same, step by step. */
+  const sameAfter = (sim: Simulation, steps: number) => {
+    const restored = reload(sim);
+    for (let i = 0; i < steps; i++) {
+      sim.step();
+      restored.step();
+      expect(hash(restored), `step ${i}`).toBe(hash(sim));
+    }
+  };
+
+  it("a save in the step of the blast, or of a technician's report, goes on the same after a load (G-891)", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    takeCharges(sim, c);
+    for (const s of ["S1", "S2", "S3"] as const) plant(sim, c, s);
+    teleportPlayer(sim, w3(2585, 0, 415), 0);
+    sim.step();
+    expect(active(sim)?.detonated).toBe(true);
+    sameAfter(sim, 30);
+
+    const seen = Simulation.create({ seed: 3 });
+    const d = accept(seen);
+    knockOut(seen, d);
+    const [tech] = W3_TECHNICIANS;
+    teleportPlayer(seen, w3(tech!.at.x - 1.5, 0, 413.3), 0);
+    for (let i = 0; i < 4 * SIM_HZ && !seen.domain.flags.includes(contractAlarmFlag(d.id)); i++) seen.step();
+    expect(seen.domain.flags).toContain(contractAlarmFlag(d.id));
+    sameAfter(seen, 30);
+  });
+
   it("Tessen's hunt: a squad of 2-3 comes in on Stare Miasto 45 m and more away, never by the clinic, one at a time; three days on it is over", () => {
     const sim = Simulation.create({ seed: 3 });
     const day = gameDayOf(sim.domain.clock);

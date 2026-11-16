@@ -21,8 +21,12 @@ on:
 
 concurrency:
   # The nightly run has its own group: a push to main would cancel it (and it the push's run).
-  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
-  cancel-in-progress: true
+  # A push to main gets a group of its own commit (user decision 16.11): each merge runs whole,
+  # so a red main names the merge that broke it. In one group a newer push would cancel the
+  # older run, and with light pull requests most merges would go untested in full.
+  # A pull request's newer push still cancels its older run.
+  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.event_name == 'push' && format('main-{0}', github.sha) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Minutes (user decision 1.11, no loss of coverage): draft pull requests run nothing (mark the
@@ -111,16 +115,15 @@ jobs:
           path: ${{ runner.temp }}/ci-full-run.txt
           retention-days: 30
 
-  # ADR-0083 step 1: the unit test compares only the fingerprint of the tables' inputs in their
-  # headers (milliseconds); this job generates the tables again once and compares them byte for
-  # byte, and checks that the fingerprints cover every file the generators read. Only when the
-  # generators, their data or the tables change: a change elsewhere that the generators import
-  # changes the fingerprint, the unit test asks for the tables again, and the new tables run this.
+  # ADR-0083: the one check that the committed map tables are what their inputs give. It generates
+  # them again and compares byte for byte, and checks that every file the generators read is an
+  # input in table-inputs.ts and that a change of it runs this job (tools/ci-scope). The tables carry
+  # no fingerprint of their inputs (decision of 16.11: the header line conflicted in 27 of 30 merges).
   tables:
     name: Map tables
     needs: changes
-    # Every change of code too: the header's fingerprint covers only what the map owns (fingerprint.ts,
-    # OWNED), so a change of the simulation or the renderer that shapes the tables shows up only here.
+    # Every change of code: the generators import much of the simulation and the renderer, so a change
+    # there can shape the tables too.
     if: needs.changes.outputs.tables == 'true' || needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -144,10 +147,10 @@ jobs:
             echo "::error title=Map tables out of date::The committed tables differ from what pnpm osm:build && pnpm osm:props write from the inputs: run both and commit packages/sim/src/content/lublin/*.generated.ts (ADR-0083)."
             exit 1
           fi
-      - name: Check that the fingerprints cover every file the generators read
+      - name: Check that the inputs cover every file the generators read, and that each runs this job
         run: |
           node tools/osm-import/src/tables-check.ts --trace "build=$RUNNER_TEMP/build.txt" --trace "props=$RUNNER_TEMP/props.txt" || {
-            echo "::error title=Map tables' inputs::A file the generators read is no input of the tables' fingerprint: add it to TABLES in tools/osm-import/src/fingerprint.ts (ADR-0083; the log above lists it)."
+            echo "::error title=Map tables' inputs::A file the generators read is no input in tools/osm-import/src/table-inputs.ts, or a change of it would not run this job (tools/ci-scope; ADR-0083; the log above lists it)."
             exit 1
           }
 

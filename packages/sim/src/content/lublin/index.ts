@@ -2,6 +2,7 @@ import type { GroundPoint, StreetPropItem, TerrainOpenSides, ViewDescriptor } fr
 import { KRAKOWSKIE_CHUNKS } from "./krakowskie.generated";
 import { NABRZEZE_CHUNKS } from "./nabrzeze.generated";
 import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
+import { LUBLIN_CONSTRUCTION_SITES, withSitePieces } from "./construction";
 import { decodePropTable, propsViewOf } from "./props";
 import { LUBLIN_PROP_TABLE } from "./props.generated";
 import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
@@ -97,7 +98,7 @@ export const terrainView = (c: LublinChunkData): ViewDescriptor => ({ kind: "ter
  * `docs/world/lublin-props.todo.json`: lamps, benches, trees, bollards and the rest, in world
  * metres with `y` from the chunk's terrain.
  */
-export const LUBLIN_STREET_PROPS: Readonly<Record<string, readonly StreetPropItem[]>> = decodePropTable(LUBLIN_PROP_TABLE);
+export const LUBLIN_STREET_PROPS: Readonly<Record<string, readonly StreetPropItem[]>> = withSitePieces(decodePropTable(LUBLIN_PROP_TABLE), LUBLIN_CHUNKS, LUBLIN_CONSTRUCTION_SITES);
 
 /** The `street-props` view of a chunk, positioned at the world origin; empty for an unknown chunk. */
 export const streetPropsView = (chunkId: string): ViewDescriptor => propsViewOf(LUBLIN_STREET_PROPS[chunkId] ?? []);

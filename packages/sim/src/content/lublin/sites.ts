@@ -5,6 +5,7 @@ import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
 import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
 import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
 import { abutmentRamps, flightTopRamps } from "./abutments";
+import { LUBLIN_CONSTRUCTION_SITES, digPads } from "./construction";
 import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
 import { type SteepWay, steepWays } from "./steep-ways";
 import type { LublinChunkData } from "./types";
@@ -191,6 +192,13 @@ export const PADS: readonly Pad[] = [
   // hall, the line of the grid under its back wall at T0, T2 before the Arkady where the Hebi hollow was (T-186).
   ...ALCHEMIA_PADS,
 ];
+
+/**
+ * The building sites' digs (ADR-0087 stage 1, T-321), laid on a grid refined to `FLIGHT_CELL`
+ * (`terrain.ts`): the generator keeps the blend and a cell of that grid past it on the site's free
+ * ground inside its fence, so the fence, the pavements and the walls round it keep the terrain.
+ */
+export const DIG_PADS: readonly Pad[] = digPads(LUBLIN_CONSTRUCTION_SITES);
 
 /**
  * Even ramps along the steps of the map (ADR-0045), then the level ground before the bridges'
