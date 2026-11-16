@@ -5,7 +5,7 @@ import { type Pt, pointInRing } from "../src/geometry.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { fitZebras } from "../src/zebra-fit.ts";
-import { generatedCity } from "./city.ts";
+import { generatedAround } from "./city.ts";
 
 /**
  * A zebra square to its street and from kerb to kerb of the asphalt as laid (G-836): a street along
@@ -154,9 +154,9 @@ describe("a zebra from kerb to kerb, square to its street (G-836)", () => {
 });
 
 describe("the city's zebras where the map draws a crossing way askew or a drive at a crossing (G-836, round 3)", () => {
-  /** The zebras of the whole city: their middle and their long side's angle (degrees, from -z toward +x, mod 180). */
-  const zebras = () =>
-    generatedCity().chunks.flatMap((c) =>
+  /** The zebras of the city's chunks round `points`: their middle and their long side's angle (degrees, from -z toward +x, mod 180). */
+  const zebras = (points: readonly Pt[]) =>
+    generatedAround(points).chunks.flatMap((c) =>
       c.ground
         .filter((g) => g.surface === "crossing")
         .map((g) => {
@@ -171,7 +171,7 @@ describe("the city's zebras where the map draws a crossing way askew or a drive 
   const off = (a: number, b: number) => Math.min(Math.abs(a - b), 180 - Math.abs(a - b));
 
   it("lays a crossing way's zebra square to its street, a drive at its end no junction, and a junction's node along its path", () => {
-    const all = zebras();
+    const all = zebras([{ x: 620.5, z: -217.2 }, { x: 2361.1, z: 432.2 }, { x: 913.3, z: 345.9 }]);
     // w305027462 over Podwale (w40052391, 114 degrees), drawn 12 degrees askew, a drive (w179269926) leaving
     // Podwale under it; on the orthophoto square to Podwale within about a degree, its middle at (620.6, -220.5)
     // along the street (across it, the game's Podwale is narrowed about its axis: T-063).

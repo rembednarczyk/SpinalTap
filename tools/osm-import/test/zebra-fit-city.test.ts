@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Pt } from "../src/geometry.ts";
-import { generatedCity } from "./city.ts";
+import { generatedAround } from "./city.ts";
 
 /**
  * The zebras of the curator's review of G-836 (round 2), on the city's data: a junction's crossing
@@ -8,7 +8,7 @@ import { generatedCity } from "./city.ts";
  * kerb to kerb of the game's asphalt (a road area's mouth too).
  */
 const zebraNear = (x: number, z: number): { len: number; axis: Pt; mid: Pt } => {
-  const rings = generatedCity()
+  const rings = generatedAround([{ x, z }])
     .chunks.flatMap((c) => c.ground)
     .filter((g) => g.surface === "crossing")
     .map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })));
