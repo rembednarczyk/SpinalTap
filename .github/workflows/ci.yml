@@ -21,8 +21,12 @@ on:
 
 concurrency:
   # The nightly run has its own group: a push to main would cancel it (and it the push's run).
-  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
-  cancel-in-progress: true
+  # A push to main gets a group of its own commit (user decision 16.11): each merge runs whole,
+  # so a red main names the merge that broke it. In one group a newer push would cancel the
+  # older run, and with light pull requests most merges would go untested in full.
+  # A pull request's newer push still cancels its older run.
+  group: ci-${{ github.event_name == 'schedule' && 'nightly' || github.event_name == 'push' && format('main-{0}', github.sha) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Minutes (user decision 1.11, no loss of coverage): draft pull requests run nothing (mark the
