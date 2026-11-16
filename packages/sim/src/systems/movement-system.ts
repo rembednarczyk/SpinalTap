@@ -266,7 +266,7 @@ export const offTheBank = (field: GroundField, from: Entity["position"], x: numb
   // A bridge's deck a step or less over feet on the ground is a step up onto it, as onto a kerb
   // (G-898): by its edge the slope over half a metre is the bank's beside it, on a strip narrower
   // than the raster's cell, whose ways take the deck's height there. Not for feet falling off it.
-  if (climb <= STEP_HEIGHT && field.heightAt(from.x, from.z, reach) >= feet - RISE_EPS && field.onBridgeDeck(x, z, reach)) return { x, z };
+  if (climb <= STEP_HEIGHT && field.heightAt(from.x, from.z, reach) >= feet - RISE_EPS && field.onLowDeck(x, z, reach) && !field.onFlight(x, z)) return { x, z };
   const g = field.gradientAt(x, z, slope, reach);
   const len = Math.hypot(g.x, g.z);
   const dx = x - from.x;

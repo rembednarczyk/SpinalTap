@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { GroundField } from "../src";
+import { GroundField, MAX_WALK_SLOPE } from "../src";
+import { BRIDGE_DECKS } from "../src/content/lublin/decks";
+import { WORLD_CHUNKS } from "../src/content/world-map";
 import { STEP_HEIGHT, offTheBank } from "../src/systems/movement-system";
-import { makeDeck } from "../src/world/deck";
+import { deckHeight, makeDeck } from "../src/world/deck";
 import { gridOf } from "./terrain-world";
 
 /**
@@ -41,5 +43,38 @@ describe("the edge of a bridge's deck a step or less over the bank beside it (G-
       const { moved } = stepNorth(field, 9.98);
       expect(moved).toBeCloseTo(0, 6);
     }
+  });
+
+  it("lets feet up onto every bridge's deck in Lublin from the terrain beside its edge a step or less below", () => {
+    const field = new GroundField(WORLD_CHUNKS, WORLD_CHUNKS.flatMap((c) => c.cuts ?? []), WORLD_CHUNKS.flatMap((c) => c.vaults ?? []));
+    const held: string[] = [];
+    let lips = 0;
+    for (const [chunk, decks] of BRIDGE_DECKS)
+      for (const d of decks.filter((e) => e.flight !== true))
+        d.ring.forEach((a, i) => {
+          const b = d.ring[(i + 1) % d.ring.length]!;
+          const len = Math.hypot(b.x - a.x, b.z - a.z);
+          const [nx, nz] = [(b.z - a.z) / len, (a.x - b.x) / len];
+          // Every 25 cm along the side, 3 cm either side of it: the ring's winding left open.
+          for (let s = 0.1; s < len - 0.1; s += 0.25)
+            for (const k of [0.03, -0.03]) {
+              const [px, pz] = [a.x + ((b.x - a.x) * s) / len, a.z + ((b.z - a.z) * s) / len];
+              const [out, into] = [{ x: px + nx * k, z: pz + nz * k }, { x: px - nx * k, z: pz - nz * k }];
+              const feet = field.heightAt(out.x, out.z, -Infinity);
+              const deck = deckHeight(d, into.x, into.z);
+              const climb = deck - feet;
+              if (climb <= 0.02 || climb > STEP_HEIGHT || field.heightAt(into.x, into.z, feet + STEP_HEIGHT) !== deck) continue;
+              lips++;
+              const to = offTheBank(field, { x: out.x, y: feet, z: out.z }, into.x, into.z, feet);
+              if (Math.hypot(to.x - into.x, to.z - into.z) > 1e-9) held.push(`${chunk} ${out.x.toFixed(1)},${out.z.toFixed(1)} +${climb.toFixed(2)}`);
+            }
+        });
+    expect(lips).toBeGreaterThan(100);
+    expect(held).toEqual([]);
+  });
+
+  it("nor is a deck itself a bank anywhere in Lublin: no bridge's deck rises along its axis steeper than a walk", () => {
+    for (const [chunk, decks] of BRIDGE_DECKS)
+      for (const d of decks.filter((e) => e.flight !== true)) expect(Math.abs(d.yb - d.ya), chunk).toBeLessThanOrEqual(MAX_WALK_SLOPE * Math.hypot(d.b.x - d.a.x, d.b.z - d.a.z));
   });
 });
