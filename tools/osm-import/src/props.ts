@@ -6,12 +6,18 @@
  * `--check` compares the table with what it would write (`pnpm tables:check`, exit 1 when they differ).
  */
 import { PROPS_OUT, buildProps } from "./props-build.ts";
+import { SITES_OUT } from "./construction-table.ts";
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import { endCheck, writeTable } from "./table-write.ts";
 
-const { text, byChunk, stats, crowns, decals, doors, figures, entrances, doorWalls } = await buildProps();
+const { text, sitesText, sites, byChunk, stats, crowns, decals, doors, figures, entrances, doorWalls } = await buildProps();
 writeTable(PROPS_OUT, text);
+writeTable(SITES_OUT, sitesText);
 endCheck("pnpm osm:props");
+console.log(
+  `building sites (ADR-0087): ${sites.length}:`,
+  sites.map((s) => `${s.id} ${s.set} ${s.area} m², ${s.pieces.length} pieces, ${s.gate ? (s.gate.wicket ? "wicket" : "gate") : "no gate"}, dig ${s.dig ? `${s.dig.area} m²` : "none"}, ${s.unfenced} m unfenced`).join("; "),
+);
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
 console.log(`props.generated.ts: ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);
 console.log("per kind:", Object.entries(stats.perKind).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", "));

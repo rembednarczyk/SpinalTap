@@ -1,7 +1,7 @@
 import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, P1_PIECES, ARKADY_OSM_ID, ARKADY_OUTLINE, ARKADY_PIECES, ARKADY_PROP, KEPT_OSM, type AlchemiaBox, arkadyLocal } from "../../../packages/sim/src/content/alchemia";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { isLandmark } from "../../../packages/sim/src/content/lublin";
-import { MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
+import { DIG_PADS, MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
 import { ROAD_CHAINS } from "../../../packages/sim/src/content/lublin/roads";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { pavilionPrisms, segmentHitsPrism } from "./pavilion-checks";
@@ -26,7 +26,7 @@ const ROW = /^T-\d{3}$/;
  * down). The baseline only goes down.
  */
 export const padsUnregistered = (): Finding[] =>
-  PADS.flatMap((p) => (p.row && ROW.test(p.row) ? [] : [{ at: near((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2), what: `pad at y ${p.y.toFixed(2)} without a T row` }]));
+  [...PADS, ...DIG_PADS].flatMap((p) => (p.row && ROW.test(p.row) ? [] : [{ at: near((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2), what: `pad at y ${p.y.toFixed(2)} without a T row` }]));
 
 /** Where a segment from a to b first enters a box, as a fraction of it, or null (slabs). */
 const segmentHitsBox = (a: P3, b: P3, q: AlchemiaBox): boolean => {

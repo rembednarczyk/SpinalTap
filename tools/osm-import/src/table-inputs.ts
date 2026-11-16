@@ -9,7 +9,8 @@
  * `pnpm merge:main`. The tables carry no fingerprint of their inputs any more (decision of 16.11,
  * ADR-0083: the header line conflicted in 27 of 30 merges). The job checks with `read-trace.ts`
  * that every file the generators read is an input here and that a change of it runs the job.
- */import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+ */
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { scope } from "../../ci-scope/src/scope.ts";
 import { DISTRICTS } from "./config.ts";
@@ -30,6 +31,8 @@ const LUBLIN = "packages/sim/src/content/lublin";
 /** The districts' tables, as `pnpm osm:build` writes them. */
 export const DISTRICT_TABLES = DISTRICTS.map((d) => `${LUBLIN}/${d.slug}.generated.ts`);
 export const PROPS_TABLE = `${LUBLIN}/props.generated.ts`;
+/** The building sites' table (ADR-0087), written with the furniture's. */
+export const SITES_TABLE = `${LUBLIN}/construction.generated.ts`;
 
 export const TABLES = {
   build: {
@@ -40,7 +43,7 @@ export const TABLES = {
   },
   props: {
     command: "pnpm osm:props",
-    outputs: [PROPS_TABLE],
+    outputs: [PROPS_TABLE, SITES_TABLE],
     entries: ["tools/osm-import/src/props.ts", "tools/osm-import/src/decal-walls.ts", "tools/osm-import/src/game-doors.ts", "tools/osm-import/src/crowd-clear.ts"],
     // The districts' tables come in as modules of the closure.
     data: ["data/osm", "data/terrain", "data/orto", "data/gugik", "docs/world/lublin-props.todo.json"],

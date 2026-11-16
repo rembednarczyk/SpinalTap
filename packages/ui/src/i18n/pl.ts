@@ -7,6 +7,7 @@ import { plContent } from "./pl/content";
 import { plDifficulty } from "./pl/difficulty";
 import { plProgression } from "./pl/progression";
 import { plWait } from "./pl/wait";
+import { plSite } from "./pl/site";
 
 /** Polish: exactly the English keys (ADR-0056); a missing or extra key does not compile. */
 export const pl = {
@@ -207,4 +208,5 @@ export const pl = {
   ...plDifficulty,
   ...plProgression,
   ...plWait,
+  ...plSite,
 } as const satisfies Readonly<Record<MessageKey, Message>>;

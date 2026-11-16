@@ -15,12 +15,15 @@ export const propRows = (items: readonly StreetPropItem[]): [string, number[]][]
   return [...rows.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
 };
 
-/** A kind's row: one piece (x, y, z, yaw, variant) per line, so a moved piece changes one line. */
-export const rowText = (row: readonly number[]): string => {
+/**
+ * A kind's row: one piece (x, y, z, yaw, variant) per line, so a moved piece changes one line;
+ * `indent` is the indent of the row's key, the pieces go two spaces deeper.
+ */
+export const rowText = (row: readonly number[], indent = "    "): string => {
   if (row.length === 0) return "[]";
   const lines: string[] = [];
-  for (let i = 0; i < row.length; i += PROP_STRIDE) lines.push(`      ${row.slice(i, i + PROP_STRIDE).map((n) => JSON.stringify(n)).join(",")},`);
-  return `[\n${lines.join("\n")}\n    ]`;
+  for (let i = 0; i < row.length; i += PROP_STRIDE) lines.push(`${indent}  ${row.slice(i, i + PROP_STRIDE).map((n) => JSON.stringify(n)).join(",")},`);
+  return `[\n${lines.join("\n")}\n${indent}]`;
 };
 
 export const emitProps = (byChunk: ReadonlyMap<string, readonly StreetPropItem[]>): string =>

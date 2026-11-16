@@ -23,6 +23,8 @@ export const writeTable = (file: string, text: string): void => {
 /** With `--check`: the stale tables on stderr and exit 1, if any. */
 export const endCheck = (command: string): void => {
   if (!CHECK || staleTables.length === 0) return;
-  console.error(`${staleTables.join(", ")}: not what \`${command}\` writes from the inputs as they are; run it and commit the tables (ADR-0083).`);
+  console.error(
+    `${staleTables.join(", ")}: not what \`${command}\` writes from the inputs as they are; run it and commit the tables (ADR-0083; \`pnpm osm:build\` comes before \`pnpm osm:props\`, whose inputs are the districts' tables).`,
+  );
   process.exitCode = 1;
 };
