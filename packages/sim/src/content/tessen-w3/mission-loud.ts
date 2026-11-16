@@ -11,6 +11,12 @@ import { w3 } from "./site";
 /** The charges' case on its stand in armoury S (the block at x 2554.4..2555.6, z 400.4..401.2), its top. */
 export const W3_CHARGES_CASE: Vec3 = w3(2555, 0.9, 400.8);
 
+/**
+ * The arms chest by armoury S's back wall (the block at x 2550.6..2553.4, z 396.54..397.44, 0.8 m
+ * high), its top: the chest's loot lies there once the charges' case is opened.
+ */
+export const W3_ARMOURY_CHEST: Vec3 = w3(2552, 0.8, 397);
+
 /** Where Seki stands to plant on a station: the station's aisle side, on the floor. */
 export const W3_STATION_SPOTS: Readonly<Record<W3StationId, Vec3>> = {
   S1: w3(STATIONS.S1.x, 0, STATIONS.S1.z),

@@ -1,3 +1,5 @@
+import type { LootLine } from "../items/types";
+import { sellPrice } from "../shop/trade";
 import { type GameClock, SECONDS_PER_DAY, SECONDS_PER_HOUR, secondOfDay } from "../time/game-clock";
 
 /**
@@ -21,12 +23,13 @@ export const SABOTAGE_LOUD = {
   /** The second wave comes in from the pickup yard this long after the alarm. */
   secondWaveSeconds: 60,
   /**
-   * Pay at level 1 before the giver's standing. The ADR's 1400 holds: with the bonus (nobody killed,
-   * +300) and Genzō's style for it (6%) some 8 minutes of the loud way make 223 €$ a minute, and
-   * with both his badges 234, in the band of ADR-0018 and ADR-0024 (215-235). The armoury's loot is
-   * not counted (it is not in the hall yet).
+   * Pay at level 1 before the giver's standing (the user's decision of 16.11: the armoury's loot
+   * counts in the income, the rate goes down). With the bonus (nobody killed, +300), Genzō's style
+   * for it (6%) and the armoury chest sold (`armouryLootValue`, 472) some 8 minutes of the loud way
+   * make 222 €$ a minute, and with both his badges 230, in the band of ADR-0018 and ADR-0024
+   * (215-235). The ADR's table had 1400 without the loot.
    */
-  loudReward: 1400,
+  loudReward: 950,
   /** Tessen's standing after the loud way: at most this (ADR-0082 balance: min(now, -60)). */
   tessenAfter: -60,
 } as const;
@@ -36,6 +39,24 @@ export const W3_STATIONS = ["S1", "S2", "S3", "S4"] as const;
 export type W3StationId = (typeof W3_STATIONS)[number];
 
 export const isW3Station = (s: unknown): s is W3StationId => typeof s === "string" && (W3_STATIONS as readonly string[]).includes(s);
+
+/**
+ * The chest of armoury S, opened with the charges' case (ADR-0082 §1 p. 2, cut to the band's
+ * 450 €$ of loot): Tessen's AR-5, a belt of 5.56 for it and a medkit. The DMR and the Tessen vest
+ * of the ADR's list stay for armoury N (with them the loot sells for some 1300 €$).
+ */
+export const W3_ARMOURY_LOOT: readonly LootLine[] = [
+  { kind: "item", item: "tessen_ar5", rarity: "common", qty: 1 },
+  { kind: "ammo", ammo: "556", qty: 90 },
+  { kind: "stack", item: "medkit", qty: 1 },
+];
+
+/**
+ * What the chest is worth to her at level 1: the AR-5 and the medkit sold to a trader at standard
+ * terms. The ammunition is not counted: it goes on the waves (ADR-0082 balance, "minus ammo").
+ */
+export const armouryLootValue = (lines: readonly LootLine[] = W3_ARMOURY_LOOT): number =>
+  lines.reduce((sum, l) => sum + (l.kind === "item" || l.kind === "stack" ? l.qty * sellPrice({ def: l.item, rarity: l.kind === "item" ? l.rarity : "common" }) : l.kind === "eddies" ? l.qty : 0), 0);
 
 /** Raised for good when a charge on the station went off: the content puts its wreck there. */
 export const stationDownFlag = (station: W3StationId): string => `w3:station:${station}:down`;

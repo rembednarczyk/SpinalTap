@@ -8,6 +8,7 @@ import {
   SECONDS_PER_DAY,
   SECONDS_PER_HOUR,
   TESSEN_HUNT,
+  armouryLootValue,
   blastDamageAt,
   chargesLeft,
   contractObjective,
@@ -32,13 +33,16 @@ const ctx = { log: EMPTY_CONTRACTS, reputation: createReputation(), flags: [], t
 const job = (): Contract => generateContractOfKind("sabotage", ctx, sequenceRng(0));
 
 describe("the loud way of W-3's sabotage (ADR-0082 stage 3b)", () => {
-  it("the income per minute of the loud way, some 8 minutes, stays in the band of ADR-0018 and ADR-0024 (215–235 €$)", () => {
+  it("the income per minute of the loud way, some 8 minutes, the armoury's loot sold with it, stays in the band of ADR-0018 and ADR-0024 (215–235 €$)", () => {
     const loud: Contract = { ...job(), route: "loud" };
     const pay = sabotagePay(loud);
     expect(pay).toBe(SABOTAGE_LOUD.loudReward);
+    // The chest of armoury S (the user's decision of 16.11: its loot counts): the AR-5 and a medkit sold.
+    const loot = armouryLootValue();
+    expect(loot).toBe(472);
     // The loud way can keep "clean" (the waves are the job's targets), never "ghost": the charges always raise the alarm.
     for (const badges of [["clean"], ["ghost", "clean"]] as const) {
-      const perMinute = (pay + CONTRACT_BONUS.sabotage.bonus + styleBonusOf("sabotage", badges, pay)) / 8;
+      const perMinute = (pay + loot + CONTRACT_BONUS.sabotage.bonus + styleBonusOf("sabotage", badges, pay)) / 8;
       expect(perMinute).toBeGreaterThanOrEqual(215);
       expect(perMinute).toBeLessThanOrEqual(235);
     }

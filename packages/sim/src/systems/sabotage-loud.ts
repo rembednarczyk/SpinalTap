@@ -3,6 +3,7 @@ import {
   SABOTAGE_LOUD,
   SABOTAGE_LOUD_DELTAS,
   TESSEN_HUNT,
+  W3_ARMOURY_LOOT,
   W3_STATIONS,
   type W3StationId,
   applyDamage,
@@ -20,7 +21,7 @@ import {
   tessenHuntUntil,
   virusUploaded,
 } from "@seki/core";
-import { W3_HALL, W3_STATION_SPOTS, inW3Zone, stationChargeAt } from "../content/tessen-w3";
+import { W3_ARMOURY_CHEST, W3_HALL, W3_STATION_SPOTS, inW3Zone, stationChargeAt } from "../content/tessen-w3";
 import type { Entity } from "../world/components";
 import type { SimContext } from "../world/context";
 import { completeContract } from "../world/contract-commands";
@@ -30,6 +31,7 @@ import { inCreationOrder } from "../world/ordering";
 import { contractChargeKey } from "../world/sabotage-templates";
 import { disturb } from "../world/street";
 import { raiseAlarm } from "./contract-system";
+import { placeChest } from "./loot-system";
 
 /**
  * W-3's sabotage, the loud way (ADR-0082 §1 "Droga głośna", stage 3b): the charges taken from
@@ -76,13 +78,20 @@ const useUp = (ctx: SimContext, key: string): void => {
   }
 };
 
-/** The armoury's case: the key takes the three charges and always raises the alarm (its weight sensor). */
+/** Key of the armoury chest's loot of a job: opened once, with the charges' case. */
+export const armouryChestKey = (contractId: string): string => `stash:w3-armoury-${contractId}`;
+
+/**
+ * The armoury's case: the key takes the three charges and always raises the alarm (its weight
+ * sensor); the arms chest by it opens with it (its loot counts in the loud way's income, 16.11).
+ */
 export const takeCharges = (ctx: SimContext, box: Entity): void => {
   const contract = running(ctx);
   if (!contract || !box.key || box.key !== contractChargesKey(contract.id) || contract.charges || virusUploaded(contract, Math.round(1 / ctx.dt))) return;
   const loud = { ...chooseLoud(ctx, contract), charges: [] };
   setActive(ctx, loud);
   useUp(ctx, box.key);
+  placeChest(ctx, armouryChestKey(contract.id), W3_ARMOURY_CHEST, W3_ARMOURY_LOOT);
   raiseAlarm(ctx, loud);
 };
 

@@ -105,6 +105,11 @@ describe("W-3's sabotage, the loud way (ADR-0082 stage 3b)", () => {
     // The case is gone, its charges in her bag: the objective counts them on the line.
     expect(byKey(sim, `${c.id}-charges`)).toBeUndefined();
     expect(contractObjective(active(sim)!, null).params).toMatchObject({ planted: 0, needed: 3 });
+    // The arms chest by it opens too (16.11: its loot counts): an AR-5, 5.56 and a medkit, kept for good.
+    const chest = sim.domain.loot.containers.find((l) => l.key === `stash:w3-armoury-${c.id}`);
+    expect(chest?.lines.map((l) => (l.kind === "item" || l.kind === "stack" ? l.item : l.kind))).toEqual(["tessen_ar5", "ammo", "medkit"]);
+    expect(chest?.expiresAtTick).toBe(Number.MAX_SAFE_INTEGER);
+    expect([...sim.world].some((e) => e.lootBag?.key === chest?.key)).toBe(true);
   });
 
   it("the alarm during the upload cuts the server room off and turns the job loud; the upload stops, paused", () => {
