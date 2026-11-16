@@ -377,14 +377,17 @@ export class Loadouts {
     for (const garment of Object.values(s.look.garments)) {
       for (const a of garment?.attachments ?? []) {
         const spec = ADD_ONS[a.mesh];
-        const anchor = s.model?.anchors[spec.model.bone];
-        const mesh = spec.build(this.scene, `${s.name}-${a.mesh}`);
+        const name = `${s.name}-${a.mesh}`;
+        // A shell of the model's cloth is skinned with it and already in place.
+        const shell = s.model && spec.shell ? spec.shell(this.scene, name, s.model.model.meshes, rig.body) : null;
+        const anchor = shell ? undefined : s.model?.anchors[spec.model.bone];
+        const mesh = shell ?? spec.build(this.scene, name);
         if (anchor) {
           const size = spec.model.size * s.model!.fit;
           mesh.parent = anchor;
           mesh.position.set(...spec.model.at).scaleInPlace(s.model!.fit);
           mesh.scaling.setAll(size);
-        } else {
+        } else if (!shell) {
           const at = spec.rig(rig);
           mesh.parent = at.parent;
           mesh.position.set(...at.at);
@@ -393,7 +396,7 @@ export class Loadouts {
         mesh.material = this.materials.get(spec.preset);
         mesh.isPickable = false;
         applyOutline(mesh);
-        s.attachments.push({ id: a.mesh, mesh, onModel: anchor !== undefined });
+        s.attachments.push({ id: a.mesh, mesh, onModel: shell !== null || anchor !== undefined });
       }
     }
     this.onMeshes(s.attachments.map((a) => a.mesh));
