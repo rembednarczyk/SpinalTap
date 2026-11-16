@@ -102,7 +102,7 @@ export const FOOD_STALL = {
 /**
  * The layouts of the building sites' pieces (`sites.ts` of `@seki/core`, ADR-0087), its own copy
  * as for `treeScale`: the fence's length and rise, the gate's opening and the side its leaf is
- * parked on (local x), in the variant's bits.
+ * parked on (local x, drawn only), in the variant's bits.
  */
 export const SITE = {
   fenceLength: (v: number): number => (v & 511) / 100,
@@ -153,12 +153,11 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
     ...FOOD_STALL.posts.map(([x, z]) => post(0.06, FOOD_STALL.roof, x, z)),
     ...FOOD_STALL.stools.map((x) => post(0.18, 0.75, x, FOOD_STALL.stoolZ)),
   ],
-  // ADR-0087 stage 1: the building sites' fence, the gate's posts and its open leaf parked behind the fence, the office containers.
+  // ADR-0087 stage 1: the building sites' fence, the gate's posts (its open leaf is parked behind the solid fence), the office containers.
   "site-fence": (_s, v) => [box(0, 0, SITE.fenceLength(v) / 2, 0.04, 2.2 + Math.abs(SITE.fenceRise(v)) / 2)],
   "site-gate": (_s, v) => {
     const g = SITE.gate(v);
-    const leaf = box(g.leaf * (g.width / 2 + (g.width + 0.2) / 2), -0.2, (g.width + 0.2) / 2, 0.03, 2.2);
-    return [box(-(g.width / 2 + 0.12), 0, 0.12, 0.12, 2.5), box(g.width / 2 + 0.12, 0, 0.12, 0.12, 2.5), leaf];
+    return [box(-(g.width / 2 + 0.12), 0, 0.12, 0.12, 2.5), box(g.width / 2 + 0.12, 0, 0.12, 0.12, 2.5)];
   },
   "site-cabin": () => [box(0, 0, 3.03, 1.22, 2.6)],
 };
