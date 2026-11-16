@@ -55,9 +55,10 @@ export interface ElevatorGate {
  * The lock of an automatic door (ADR-0038). "sealed": never opens. "code": opens for the staff of
  * `staff`, and for the player who knows the code of the running job of kind `during` (an
  * observation hook, ADR-0034), wears the staff's overalls (ADR-0033) or broke the lock open at
- * the panel.
+ * the panel. "alarm" (a lockdown, ADR-0082): opens for anyone till the running job's alarm goes
+ * up, then shuts (never onto someone in the doorway) and opens for no one while it lasts.
  */
-export type DoorLock = { readonly kind: "sealed" } | { readonly kind: "code"; readonly staff: FactionId; readonly during: ContractKind };
+export type DoorLock = { readonly kind: "sealed" } | { readonly kind: "code"; readonly staff: FactionId; readonly during: ContractKind } | { readonly kind: "alarm" };
 
 /** A leaf of an automatic door (ADR-0038). Its state goes into saves under `key`. */
 export interface DoorLeaf {

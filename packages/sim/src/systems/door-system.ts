@@ -1,4 +1,4 @@
-import { type Contract, type DoorSnapshot, contractKind } from "@seki/core";
+import { type Contract, type DoorSnapshot, contractAlarmFlag, contractKind } from "@seki/core";
 import { DOOR_CLOSE_DELAY, DOOR_MOVE_TIME, DOOR_SENSOR } from "../content/doors";
 import type { DoorLeaf, DoorLock, Entity, Interactable } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -28,10 +28,17 @@ const playerPass = (ctx: SimContext, door: string, lock: Extract<DoorLock, { kin
   return !!c && (codeKnown(ctx) || ctx.state.domain.flags.includes(doorForcedFlag(door, c)));
 };
 
+/** Is a lockdown on: the running job's alarm is up (ADR-0082)? */
+export const lockdown = (ctx: SimContext): boolean => {
+  const c = ctx.state.domain.contracts.active;
+  return c?.status === "active" && ctx.state.domain.flags.includes(contractAlarmFlag(c.id));
+};
+
 const mayOpen = (ctx: SimContext, leaf: DoorLeaf, b: Entity): boolean => {
   const lock = leaf.lock;
   if (!lock) return true;
   if (lock.kind === "sealed") return false;
+  if (lock.kind === "alarm") return !lockdown(ctx);
   if (b.faction === lock.staff) return true;
   return !!b.player && playerPass(ctx, leaf.door, lock);
 };

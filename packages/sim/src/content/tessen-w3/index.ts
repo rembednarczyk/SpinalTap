@@ -11,7 +11,9 @@ export { W3_NAV } from "./nav";
 export { ESCORT_AMBUSH_Z, ESCORT_ROUTE, SNIPER_PERCHES, W3_CONTRACT_POSTS, W3_CONTRACT_SITE_SPAWNS, W3_ITEM_SPOTS, W3_TERMINAL_SPOTS, type ContractPost } from "./posts";
 export { GENZO_SPOT } from "./public";
 export { W3_OFFICE, W3_OFFICE_DOOR, W3_PIPE_LADDER, W3_TOWER_STAIR } from "./tower-pipes";
-export { W3_BRIDGE_Z } from "./hall";
+export { W3_BRIDGE_Z, W3_HALL_DOORS } from "./hall";
+export { W3_CUTS, W3_VAULTS } from "./basement";
+export * as W3_LAYOUT from "./layout";
 export { W3_UNSEEN_WALLS } from "./quay";
 
 /** W-3's props in the world (ADR-0082 stage 1): the hall's shell, the tower and the pipeline, the edges, the public strip. */
