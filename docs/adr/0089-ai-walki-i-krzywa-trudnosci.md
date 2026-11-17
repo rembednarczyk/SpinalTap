@@ -119,6 +119,7 @@ Wszystko bez renderera (ADR-0046): `freeze` + `step`, czekanie na stan gry, nie 
 0. Przed ADR-em, poza nim: G-917 (mała poprawka `attackRange`) i G-909 (zapis startowy poziomu 12 z ADR-0082).
 1. Test tempa walki z botem z opóźnieniem reakcji. Tylko testy, bez zmian reguł i hashy.
 2. Pasmo broni NPC (`combatRange` w `core`) i utrzymanie pasma w drzewie (podejście, cofnięcie). Złote hashe.
+   Zrobione 17.11: pasmo to `npc.band` w `core/src/items/catalog.ts` (czytane przez `npcBand`), z wartościami z wariantu A; snajper (`kagero_dmr`) pasma nie ma. `attackRange` liczy się z `max`, a strzelec bliżej niż `min` cofa się w `ShootAtPlayer` krokami po 1 m z prędkością 0,6 `GANGER_SPEED` (`backOff` w `ganger-walk.ts`), jeśli `straightWalk` puszcza. Test przyjęcia: `packages/sim/test/weapon-band.test.ts`. Dwa przejścia nie mieszczą się w 5 s przy obecnych prędkościach (shotgun z 30 m do 10 m, karabin z 4 m do 14 m), więc dostają czas przejścia i sekundę na reakcję. Złoty hash podłogi się zmienił, a zraniony ganger z podłogi ma 6 PD zamiast 12, żeby przebieg dalej kończył się zabiciem.
 3. Ruch boczny i przerwy: stan `tactic`, zapis i migracja, testy zapisu i ruchu. Złote hashe. Jeśli rig nie ma kroku bocznego: osobny PR w Rendering.
 4. Żetony ataku i rozstawienie wokół gracza. Złote hashe, budżet.
 5. Trudność i krzywa: pole `npcPressure` (kontrakt komendy, migracja, UI, i18n en i pl), zestawy zachowań według typu i stopnia w paśmie, strojenie liczb pod cele z testem tempa. Złote hashe obu presetów.

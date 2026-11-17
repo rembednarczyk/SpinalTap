@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, SABOTAGE, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, SABOTAGE, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcBand, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/tessen-w3";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -152,10 +152,17 @@ export const meleeAttackRange = (weapon: WeaponId): number | null => {
 };
 
 /**
- * Where an NPC with a gun opens fire: `preferred`, but never past 90% of what its weapon reaches.
- * A shot past the range is lost, so a shotgun (12 m) fired from the default 15 m never hit (G-917).
+ * Where an NPC with a gun opens fire: the far end of its weapon's band (ADR-0089 stage 2: shotgun
+ * 10 m, SMG 15, pistol 20, rifle 24); with none, `preferred`, but never past 90% of what its weapon
+ * reaches. A shot past the range is lost, so a shotgun (12 m) fired from the default 15 m never hit (G-917).
  */
-const gunAttackRange = (weapon: WeaponId, preferred: number): number => Math.min(preferred, npcWeapon(weapon).range * 0.9);
+const gunAttackRange = (weapon: WeaponId, preferred: number): number => npcBand(weapon)?.max ?? Math.min(preferred, npcWeapon(weapon).range * 0.9);
+
+/** The near end of its weapon's band (ADR-0089 stage 2), when it has one. */
+const keepOffOf = (weapon: WeaponId): { keepOff?: number } => {
+  const band = npcBand(weapon);
+  return band ? { keepOff: band.min } : {};
+};
 
 /** A Hebi ganger; weapon, outfit and loot come from its enemy type (ADR-0015). */
 export const gangerEntity = (
@@ -187,6 +194,7 @@ export const gangerEntity = (
       home: spawn.position,
       aggroRange: sightOf(type).sight,
       attackRange: meleeAttackRange(def.weapon) ?? gunAttackRange(def.weapon, def.faction === "tessen" ? 20 : 15),
+      ...keepOffOf(def.weapon),
       alerted: false,
       ...(victim ? { victim } : {}),
     },

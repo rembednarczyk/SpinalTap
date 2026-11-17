@@ -15,6 +15,10 @@ import type { WalkPlan, WalkProgress } from "../../world/components";
  */
 
 export const GANGER_SPEED = 3.1;
+/** How far behind it a step back looks for a free way (ADR-0089 stage 2). */
+const BACK_STEP = 1;
+/** A gunner nearer the player than its band backs off at the speed of a sidestep (ADR-0089). */
+export const BACK_SPEED = 0.6 * GANGER_SPEED;
 /** A ganger with a melee weapon runs at whoever it fights to close the distance (ADR-0019). */
 export const MELEE_CHASE_SPEED = 3.9;
 /**
@@ -281,6 +285,26 @@ export class GangerWalk {
     const { ctx, self } = this.at;
     const progress = self?.walk;
     return !!ctx && !!progress && ctx.tick < progress.unstickUntil;
+  }
+
+  /**
+   * A step back from `from` (ADR-0089 stage 2: nearer than its weapon's band to the player) at a
+   * slower pace, its face left as it is (it fires as it goes), where the way behind it is free; else it stands.
+   */
+  backOff(from: Vec3): void {
+    const { ctx, self } = this.at;
+    if (!ctx || !self) return;
+    const dx = self.position.x - from.x;
+    const dz = self.position.z - from.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const to = { x: self.position.x + (dx / d) * BACK_STEP, y: self.position.y, z: self.position.z + (dz / d) * BACK_STEP };
+    if (!straightWalk(ctx.world, self.position, to)) {
+      self.velocity = { x: 0, y: 0, z: 0 };
+      return;
+    }
+    this.walking = true;
+    [this.toward.x, this.toward.z] = [to.x, to.z];
+    self.velocity = { x: (dx / d) * BACK_SPEED, y: 0, z: (dz / d) * BACK_SPEED };
   }
 
   private moveTowards(x: number, z: number, sidestep = true): void {

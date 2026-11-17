@@ -107,7 +107,15 @@ class GangerAgent {
   HasVictim = (): boolean => this.target.victim !== null;
   VictimInAttackRange = (): boolean => !!this.self && this.target.visible && this.target.distance <= this.self.ai.attackRange;
 
-  ShootAtPlayer = (): State => (this.seen.player ? attack(this, this.seen.player) : State.FAILED);
+  /** Fires at her; nearer than its weapon's band it steps back as it fires (ADR-0089 stage 2). */
+  ShootAtPlayer = (): State => {
+    const { self, seen } = this;
+    if (!seen.player) return State.FAILED;
+    const state = attack(this, seen.player);
+    const keepOff = self?.ai.keepOff;
+    if (self && keepOff !== undefined && seen.distance < keepOff && !self.combatant?.stats?.melee) this.walk.backOff(seen.player.position);
+    return state;
+  };
 
   ShootAtVictim = (): State => (this.target.victim ? attack(this, this.target.victim) : State.FAILED);
 

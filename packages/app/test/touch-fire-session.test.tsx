@@ -67,6 +67,8 @@ const faceGuard = (g: Game): Entity => {
   p.yaw = 0;
   p.prevYaw = 0;
   p.pitch = -0.03;
+  // A target, not a fighter: a shot guard 4 m away would back off out of the aim (ADR-0089).
+  g.session.sim.world.removeComponent(guard, "ai");
   return guard;
 };
 
