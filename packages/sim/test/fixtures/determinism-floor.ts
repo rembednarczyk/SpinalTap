@@ -119,7 +119,7 @@ export const floorSim = (seed: number, difficulty: DifficultyProfile = FLOOR_DIF
   // of the run ends in a kill and a bag of loot.
   sim.step();
   const ganger = [...sim.world].find((e) => e.key === "floor-ganger");
-  if (ganger?.health) ganger.health = { ...ganger.health, current: 12 };
+  if (ganger?.health) ganger.health = { ...ganger.health, current: 6 };
   return sim;
 };
 

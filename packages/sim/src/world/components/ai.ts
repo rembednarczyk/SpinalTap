@@ -41,6 +41,8 @@ export interface GangerAi {
   readonly home: Vec3;
   readonly aggroRange: number;
   readonly attackRange: number;
+  /** Nearer than this to the player it steps back while it fires (ADR-0089 stage 2, its weapon's band); none for melee. */
+  readonly keepOff?: number;
   /**
    * Set once the ganger has decided to fight the player; never resets. Gangers friendly to
    * the player only set it when provoked (gunfire nearby or a hit).
