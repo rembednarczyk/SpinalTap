@@ -82,8 +82,8 @@ export const noteHookLoot = (ctx: SimContext, containerKey: string, taken: reado
 const bark = (ctx: SimContext, c: Contract, h: SimHookDef, player: Entity): void => {
   const key = carrierKey(c, h);
   const speaker = key ? ctx.world.with("health").entities.find((e) => e.key === key) : undefined;
-  // One of the job's own people (W-3's smoker, G-929) says nothing knocked out or dead.
-  if (!speaker || ("ofJob" in h.carrier && (speaker.unconscious || speaker.health.current <= 0))) return;
+  // Knocked out or dead, nobody says anything (G-936; W-3's smoker first, G-929).
+  if (!speaker || speaker.unconscious || speaker.health.current <= 0) return;
   const near = Math.hypot(speaker.position.x - player.position.x, speaker.position.z - player.position.z) <= BARK_RADIUS;
   if (!near || Math.abs(speaker.position.y - player.position.y) > BARK_REACH_Y) return;
   ctx.bus.emit("GuardBark", { entityId: speaker.id, knot: h.knot });
