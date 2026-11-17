@@ -57,6 +57,7 @@ export const plTrade = {
   "inventory.section.character": "Postać",
   "inventory.section.bag": "Torba",
   "inventory.section.details": "Szczegóły",
+  "inventory.keyItems": "Przedmioty kluczowe",
   "inventory.closeDetails": "Zamknij szczegóły",
   "inventory.empty": "pusto",
   "inventory.preview": "Podgląd postaci. Przeciągnij, żeby obrócić, stuknij dwa razy, żeby wrócić do przodu.",

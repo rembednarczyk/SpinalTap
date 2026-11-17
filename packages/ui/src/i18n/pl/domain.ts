@@ -6,6 +6,8 @@ export const plDomain = {
   // Consumables and junk.
   "item.medkit.name": "Apteczka",
   "item.medkit.desc": "Iniektor z biożelem. Przywraca 40 HP.",
+  // Przedmioty fabularne (keyItems, G-931).
+  "item.w3_virus.name": "Pendrive Genzō z wirusem",
   "item.bandage.name": "Opatrunek",
   "item.bandage.desc": "Opatrunek z żelem hemostatycznym. Przywraca 15 HP.",
   "item.ramen.name": "Miska ramenu",

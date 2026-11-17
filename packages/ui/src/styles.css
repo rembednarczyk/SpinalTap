@@ -1012,6 +1012,9 @@ kbd {
 .inv__cell-name { display: block; font-size: 11px; line-height: 1.1; word-break: break-word; }
 .inv__cell-qty { position: absolute; right: 3px; bottom: 1px; font-family: var(--font-mono); font-size: 12px; color: var(--amber); }
 .inv__cell-tier { position: absolute; left: 3px; bottom: 1px; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-dim); }
+.inv__keys { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; font-size: 13px; color: var(--ink-dim); }
+.inv__keys-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+.inv__keys-list { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; list-style: none; color: var(--ink); }
 .inv__foot { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink-dim); }
 .inv__count { font-family: var(--font-mono); }
 .inv__count--full { color: var(--danger); }
