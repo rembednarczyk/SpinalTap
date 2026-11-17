@@ -186,6 +186,14 @@ export class SaveController {
     }
   }
 
+  /**
+   * Stores a snapshot made outside the running game (a start save, ADR-0082) the way the game
+   * stores its own: the slot remembers the preset it is played on, for its label in the list.
+   */
+  async writeSnapshot(slot: string, snapshot: SaveSnapshot): Promise<void> {
+    await this.put(slot, snapshot);
+  }
+
   /** Stores a slot and remembers the preset it was played on. */
   private async put(slot: string, snapshot: SaveSnapshot): Promise<void> {
     await this.deps.persistence.save(slot, snapshot);

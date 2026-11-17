@@ -1,4 +1,4 @@
-import { type DifficultyProfile, type Locale, type PersistencePort, textRef } from "@seki/core";
+import { type DifficultyProfile, type Locale, type SaveSnapshot, textRef } from "@seki/core";
 import { Simulation } from "@seki/sim";
 import { type StartSaveIntents, type UiStore, W3_SLICE_SLOT, translate } from "@seki/ui";
 import { w3SliceSnapshot } from "../start-save";
@@ -6,7 +6,8 @@ import { slotDateLabel } from "./save-controller";
 import { pushToastTimed } from "./shared";
 
 export interface StartSaveControllerDeps {
-  readonly persistence: PersistencePort;
+  /** Writes a slot as the game writes its own (`SaveController.writeSnapshot`): the slot's preset label follows. */
+  readonly write: (slot: string, snapshot: SaveSnapshot) => Promise<void>;
   readonly ui: UiStore;
   /** The seed of the game the start save is made from, as a new game's. */
   readonly seed: () => number;
@@ -37,7 +38,7 @@ export class StartSaveController implements StartSaveIntents {
     try {
       const sim = Simulation.create({ seed: this.deps.seed(), ...(difficulty ? { difficulty } : {}) });
       const meta = { label: slotDateLabel(this.deps.now(), this.locale), objective: translate(this.locale, "newGame.w3Place") };
-      await this.deps.persistence.save(W3_SLICE_SLOT, w3SliceSnapshot(sim.snapshot(null, meta.label, meta.objective), meta));
+      await this.deps.write(W3_SLICE_SLOT, w3SliceSnapshot(sim.snapshot(null, meta.label, meta.objective), meta));
     } catch (e) {
       pushToastTimed(ui, "system", translate(this.locale, "save.failed"), String(e), true);
       return false;

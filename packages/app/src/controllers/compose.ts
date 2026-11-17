@@ -191,7 +191,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     return p !== undefined && (p.fall !== undefined || p.mantle !== undefined);
   };
   const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, airborne, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
-  const starts = new StartSaveController({ persistence: deps.persistence, ui, seed: deps.seed, now: deps.now, load: (slot, play) => saves.loadAsync(slot, play) });
+  const starts = new StartSaveController({ write: (slot, snapshot) => saves.writeSnapshot(slot, snapshot), ui, seed: deps.seed, now: deps.now, load: (slot, play) => saves.loadAsync(slot, play) });
   const autosave = new AutosaveController({
     bus,
     sim,

@@ -41,9 +41,8 @@ const slice = async () => {
 
 /** The playtest's game (G-909): a new game raised to level 6 with its kit (the Unity-9), loaded from a slot, by Genzō. */
 const levelSix = async () => {
+  // The game behind the title is a new game of the same seed: raised and loaded without a second one.
   const s = setup();
-  s.session.newGame();
-  steps(s.session, 1);
   const snap = s.session.saves.snapshot();
   const progression = { ...INITIAL_PROGRESSION, xp: xpForLevel(6), level: 6, unspent: { attribute: 5, perk: 5 } };
   await new SavePersistence(s.store).save("slot-1", { ...snap, domain: { ...snap.domain, progression } });
@@ -57,7 +56,7 @@ const levelSix = async () => {
 };
 
 const alive = (e: Entity) => (e.health?.current ?? 0) > 0;
-const hostiles = (session: GameSession, id: string) => [...session.sim.world].filter((e) => e.tag === contractTag(id) && e.enemy && alive(e));
+const hostiles = (session: GameSession, id: string): Entity[] => [...session.sim.world.with("enemy", "health")].filter((e) => e.tag === contractTag(id) && alive(e));
 const eye = (e: Entity) => ({ x: e.position.x, y: e.position.y + 1.62, z: e.position.z });
 const chest = (e: Entity) => ({ x: e.position.x, y: e.position.y + 1.25, z: e.position.z });
 const flat = (a: Entity, b: Entity) => Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z);
@@ -95,10 +94,11 @@ const fight = (session: GameSession, targets: () => Entity[], done: () => boolea
   ];
   let ticks = 0;
   for (; ticks < cap * SIM_HZ; ticks++) {
-    for (const t of targets()) met.add(t);
+    const now = targets();
+    for (const t of now) met.add(t);
     const p = session.sim.player();
     if (!p || !alive(p) || done()) break;
-    const near = targets()
+    const near = now
       .filter((t) => lineOfSight(session.sim.world, eye(p), chest(t)))
       .sort((a, b) => flat(a, p) - flat(b, p))[0];
     if (near) aimAt(p, near);
@@ -122,6 +122,17 @@ const duel = (session: GameSession, id: string): Fight => {
   return fight(session, () => hostiles(session, id).filter((e) => e === g), () => !alive(g), 60);
 };
 
+/**
+ * How long corridor S is fought: the level 6 game of the playtest is dead by 21.9 s (perfect aim),
+ * so 25 s show the difference with 3 s to spare and keep the test short (ADR-0083).
+ */
+const CORRIDOR_SECONDS = 25;
+
+/** The pistol's duel takes longer than this (1.72 s); the start save's rifle takes under half of it. */
+const PISTOL_DUEL_SECONDS = 1.5;
+/** Who the level 6 game takes down in corridor S before she dies (3). */
+const PISTOL_CORRIDOR_KILLS = 3;
+
 /** Into armoury S, the charges taken (the alarm and the first wave), out at its inner door to corridor S. */
 const corridor = (session: GameSession, id: string): Fight => {
   teleport(session, 2555, 402, Math.PI, 0, W3_Y);
@@ -129,15 +140,22 @@ const corridor = (session: GameSession, id: string): Fight => {
   steps(session, 1, frame({ interact: true }));
   expect(session.sim.domain.flags).toContain(contractAlarmFlag(id));
   teleport(session, 2552, 405, -Math.PI / 2, 0, W3_Y);
-  return fight(session, () => hostiles(session, id), () => false, 60);
+  return fight(session, () => hostiles(session, id), () => false, CORRIDOR_SECONDS);
 };
 
-const play = async (make: typeof slice, kind: "duel" | "corridor") => {
+/**
+ * Both fights of one game, the job taken: the duel, then back to the moment after Genzō (a
+ * restore of the state then, cheaper than a second game) and corridor S.
+ */
+const fights = async (make: typeof slice) => {
   const { session, ui } = await make();
   const job = acceptSabotage(session, ui);
   const guard = hostiles(session, job.id).find((e) => e.key === `${job.id}-g0`)!;
-  const r = kind === "duel" ? duel(session, job.id) : corridor(session, job.id);
-  return { ...r, level: session.sim.domain.progression.level, maxHp: session.sim.player()?.health?.max ?? 0, guard: `L${guard.enemy?.level} ${guard.health?.max} HP` };
+  const about = { level: session.sim.domain.progression.level, maxHp: session.sim.player()?.health?.max ?? 0, guard: `L${guard.enemy?.level} ${guard.health?.max} HP` };
+  const taken = session.sim.snapshot(session.narrative.saveState(), "t", "");
+  const duelled = duel(session, job.id);
+  session.restore(taken, false);
+  return { duel: { ...duelled, ...about }, corridor: { ...corridor(session, job.id), ...about } };
 };
 
 describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
@@ -191,6 +209,20 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
     expect(decodeSave(W3_SLICE_SLOT, store.data.get(W3_SLICE_SLOT)!).domain.difficulty).toEqual(DIFFICULTY_PRESETS.normal);
   });
 
+  it("the slot's difficulty label follows a start again on another preset in the same minute", async () => {
+    const { session, ui } = setup();
+    const label = async () => {
+      session.quitToTitle();
+      await session.saves.refreshSlots();
+      return ui.getState().slots.find((s) => s.slot === W3_SLICE_SLOT)?.difficulty;
+    };
+    expect(await session.starts.startW3SliceAsync(DIFFICULTY_PRESETS.hard)).toBe(true);
+    expect(await label()).toBe("hard");
+    // The clock of the session stands still: the label of the slot is the same minute.
+    expect(await session.starts.startW3SliceAsync(DIFFICULTY_PRESETS.story)).toBe(true);
+    expect(await label()).toBe("story");
+  });
+
   it("a store that cannot write leaves the title as it was, with the reason as a toast", async () => {
     const store = new MemorySaveStore();
     store.put = () => Promise.reject(new Error("quota"));
@@ -200,19 +232,28 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Save failed", text: "Error: quota" });
   });
 
-  it("the playtest's fights: at level 6 with the Unity-9 she dies in corridor S, from the start save she lives", async () => {
-    const before = { duel: await play(levelSix, "duel"), corridor: await play(levelSix, "corridor") };
-    const after = { duel: await play(slice, "duel"), corridor: await play(slice, "corridor") };
-    if (process.env.G909_OUT) writeFileSync(process.env.G909_OUT, JSON.stringify({ before, after }, null, 1));
-    // The duel: one guard of her band's level, killed sooner and with fewer rounds than with the pistol.
+  // The playtest's fights (G-909), one game each: at level 6 with the Unity-9, then from the start save.
+  const out = (name: string, r: unknown) => process.env.G909_OUT && writeFileSync(`${process.env.G909_OUT}-${name}.json`, JSON.stringify(r, null, 1));
+
+  it("the playtest's fights at level 6 with the Unity-9: the guard falls in 1.7 s, corridor S kills her", async () => {
+    const before = await fights(levelSix);
+    out("before", before);
     expect(before.duel).toMatchObject({ level: 6, died: false, kills: 1 });
-    expect(after.duel).toMatchObject({ level: 12, died: false, kills: 1 });
-    expect(after.duel.seconds).toBeLessThan(before.duel.seconds / 2);
-    expect(after.duel.shots).toBeLessThanOrEqual(24);
-    // Corridor S after the alarm: the playtest's death at level 6, alive after a minute from the start save.
+    expect(before.duel.seconds).toBeGreaterThan(PISTOL_DUEL_SECONDS);
+    expect(before.corridor.kills).toBeLessThanOrEqual(PISTOL_CORRIDOR_KILLS);
+    // Corridor S after the alarm: the playtest's death.
     expect(before.corridor.died).toBe(true);
-    expect(after.corridor.died).toBe(false);
-    expect(after.corridor.seconds).toBe(60);
-    expect(after.corridor.kills).toBeGreaterThan(before.corridor.kills);
-  }, 120_000);
+    expect(before.corridor.seconds).toBeLessThan(CORRIDOR_SECONDS);
+  });
+
+  it("the same fights from the start save: the guard falls in under half the time, she lives through corridor S", async () => {
+    const after = await fights(slice);
+    out("after", after);
+    expect(after.duel).toMatchObject({ level: 12, died: false, kills: 1 });
+    expect(after.duel.seconds).toBeLessThan(PISTOL_DUEL_SECONDS / 2);
+    expect(after.duel.shots).toBeLessThanOrEqual(24);
+    // Alive past the moment that kills the level 6 game.
+    expect(after.corridor).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
+    expect(after.corridor.kills).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
+  });
 });
