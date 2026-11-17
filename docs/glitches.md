@@ -2478,8 +2478,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
 - Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
 - Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
-- Status: zgłoszone
+- Status: w PR #675 (gałąź ccr-ec2c4269-ilh8k8-g907, 9e63ceb), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- Etap 1: haki i pendrive przy przyjęciu, szafka 14, wylot kolektora (prompt.culvert); P1 przestał być egzekutorem i to on zdzierał przebranie. Dalej: kierownik zmiany, palacz, kod furtki. Pytania do użytkownika: furtka z kodem, rola palacza, wymóg pendrive'a, kierownik zmiany w biurze antresoli.
 
 ### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
 - Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
@@ -2570,6 +2571,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: walka 40 s bez kroku ponad budżet
+
+### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
+- Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
+- Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
