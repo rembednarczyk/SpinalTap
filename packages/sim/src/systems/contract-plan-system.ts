@@ -20,10 +20,14 @@ const crewAlerted = (ctx: SimContext, c: Contract): boolean => {
   return ctx.world.with("ai").entities.some((e) => e.tag === tag && e.ai.alerted);
 };
 
-/** W-3's smoker lies knocked out or dead in the world (a body of a takedown, ADR-0065). */
+/**
+ * W-3's smoker lies knocked out or dead in the world (a body of a takedown, ADR-0065). A corpse
+ * keeps his key and `unconscious` but has no health (`corpseOf`), so the bodies are looked for by
+ * `unconscious`, not among the living.
+ */
 const smokerDown = (ctx: SimContext, c: Contract): boolean => {
   const key = contractSmokerKey(c.id);
-  return ctx.world.with("health").entities.some((e) => e.key === key && (!!e.unconscious || !!e.downed));
+  return ctx.world.with("unconscious").entities.some((e) => e.key === key);
 };
 
 const followClock = (ctx: SimContext, c: Contract): void => {

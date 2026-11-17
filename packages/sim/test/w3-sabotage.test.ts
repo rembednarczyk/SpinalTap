@@ -14,6 +14,7 @@ import {
 } from "@seki/core";
 import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_SMOKER, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
 import { giveLead } from "../src/systems/ai/ganger-perception";
+import { freshDowned } from "../src/world/bodies";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -270,6 +271,28 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     sim.world.removeComponent(s, "unconscious");
     run(sim, 2);
     expect(byKey(sim, `${c.id}-smoker`)).toBeUndefined();
+  });
+
+  it("the smoker killed in a takedown leaves his corpse past 23:00 (G-929)", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + 22.9 * 3600 } }));
+    outside(sim);
+    run(sim, 2);
+    const s = byKey(sim, `${c.id}-smoker`)!;
+    // Knocked out, then killed while down: the death system leaves a corpse (`corpseOf`), no health.
+    sim.world.addComponent(s, "unconscious", true);
+    sim.world.addComponent(s, "downed", freshDowned(s.position, false));
+    s.health = { current: 0, max: s.health!.max };
+    run(sim, 2);
+    const corpse = byKey(sim, `${c.id}-smoker`)!;
+    expect(corpse.health).toBeUndefined();
+    expect(corpse.downed?.dead).toBe(true);
+    teleportPlayer(sim, { ...W3_SMOKER.at, x: W3_SMOKER.at.x - 30 }, Math.PI / 2);
+    run(sim, 10 * SIM_HZ);
+    expect(sim.domain.clock.seconds % 86400).toBeGreaterThan(23 * 3600);
+    expect(byKey(sim, `${c.id}-smoker`)).toBe(corpse);
+    expect(hash(reload(sim))).toBe(hash(sim));
   });
 
   it("the shift manager keeps to the mezzanine (G-929): a lead in the hall below he looks towards from his round, one on the gallery he walks to", () => {
