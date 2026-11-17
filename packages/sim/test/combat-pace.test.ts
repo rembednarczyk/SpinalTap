@@ -92,17 +92,22 @@ interface Pace {
  * way, and the bands with them (seeds 1-10, as above): Plac Litewski, tessen_guard normal kill
  * 1.43-2.57, hard kill 1.72-2.85 and death 9.9-28.4; hebi_enforcer hard death 16.8-38.2; W-3,
  * hebi_enforcer hard death 13.0-24.3, tessen_guard hard kill 1.72-2.57. The rest holds.
+ *
+ * Stage 4 (17.11, attack tokens; one enemy always holds one, but its draws come in another order)
+ * moved five deaths by a few seconds either way (seeds 1-10): Plac Litewski, tessen_guard normal
+ * 21.7-47.8 and hard 9.8-31.7 (past the cap: no upper bound); W-3, hebi_enforcer normal 21.7-50.8,
+ * tessen_guard normal 18.3-45.6 and hard 5.6-24.4.
  */
 const TODAY: Readonly<Record<Scene, Readonly<Record<Foe, Readonly<Record<DifficultyPresetId, Pace>>>>>> = {
   plac: {
     hebi_ganger: { story: { kill: [0.3, 1.2], die: [DIE_CAP, null] }, normal: { kill: [0.55, 1.45], die: [DIE_CAP, null] }, hard: { kill: [0.85, 1.75], die: [DIE_CAP, null] } },
     hebi_enforcer: { story: { kill: [1.1, 2.0], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.3], die: [DIE_CAP, null] }, hard: { kill: [1.7, 2.9], die: [15, null] } },
-    tessen_guard: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.9], die: [24, null] }, hard: { kill: [1.4, 3.15], die: [6, 30] } },
+    tessen_guard: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.9], die: [19.5, null] }, hard: { kill: [1.4, 3.15], die: [6, null] } },
   },
   w3: {
     hebi_ganger: { story: { kill: [0.3, 1.2], die: [DIE_CAP, null] }, normal: { kill: [0.55, 1.45], die: [DIE_CAP, null] }, hard: { kill: [0.55, 1.75], die: [28, null] } },
-    hebi_enforcer: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.3], die: [24, null] }, hard: { kill: [1.4, 2.6], die: [11, 27] } },
-    tessen_guard: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.0], die: [19, null] }, hard: { kill: [1.4, 2.9], die: [5, 24] } },
+    hebi_enforcer: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.3], die: [19.5, null] }, hard: { kill: [1.4, 2.6], die: [11, 27] } },
+    tessen_guard: { story: { kill: [0.85, 1.75], die: [DIE_CAP, null] }, normal: { kill: [1.1, 2.0], die: [16.5, null] }, hard: { kill: [1.4, 2.9], die: [5, 27] } },
   },
 };
 

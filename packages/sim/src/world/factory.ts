@@ -386,7 +386,7 @@ const withFight = (e: Entity, s: EntitySnapshot): EntitySnapshot => {
   const gun = gunOf(e);
   const armed = gun ? { ...s, gun } : s;
   const t = e.ai?.tactic;
-  const tactic = t ? { ...armed, tactic: { shots: t.shots, side: t.side, stride: t.stride, rest: t.rest } } : armed;
+  const tactic = t ? { ...armed, tactic: { shots: t.shots, side: t.side, stride: t.stride, rest: t.rest, ...(t.token ? { token: { ...t.token } } : {}) } } : armed;
   return e.sniper ? { ...tactic, sniper: { phase: e.sniper.phase, timer: e.sniper.timer, perch: e.sniper.perch } } : tactic;
 };
 
@@ -480,6 +480,6 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     if (s.suspicion !== undefined) e.ai.suspicion = s.suspicion;
     if (s.away !== undefined) e.ai.away = s.away;
     // No longer a burst than its weapon's: the weapon is the content's, not the save's.
-    if (s.tactic) e.ai.tactic = { ...s.tactic, shots: Math.min(s.tactic.shots, e.ai.burst ?? s.tactic.shots) };
+    if (s.tactic) e.ai.tactic = { ...s.tactic, shots: Math.min(s.tactic.shots, e.ai.burst ?? s.tactic.shots), ...(s.tactic.token ? { token: { ...s.tactic.token } } : {}) };
   }
 };

@@ -25,8 +25,8 @@ export const faceTowards = ({ self, ctx, timeScale }: GangerBinding, target: Pic
   self.yaw += Math.max(-maxTurn, Math.min(maxTurn, delta));
 };
 
-/** Stands, faces the target and swings or fires once ready. */
-export const attack = (at: GangerBinding, target: Entity): State => {
+/** Stands, faces the target and swings or fires once ready; `fire` false holds a gun's fire (no attack token, ADR-0089). */
+export const attack = (at: GangerBinding, target: Entity, fire = true): State => {
   const { ctx, self } = at;
   if (!ctx || !self) return State.FAILED;
   self.velocity = { x: 0, y: 0, z: 0 };
@@ -46,7 +46,7 @@ export const attack = (at: GangerBinding, target: Entity): State => {
     }
     return State.SUCCEEDED;
   }
-  if (combatant && readyToFire(combatant, combatant.loaded)) {
+  if (fire && combatant && readyToFire(combatant, combatant.loaded)) {
     const origin = eyeOf(self);
     const dir = normalize(sub(chestOf(target), origin));
     fireShot(ctx, { shooter: self, origin, dir, spread: npcSpreadOf(ctx, self), ...NPC_CRIT }, ctx.rng);

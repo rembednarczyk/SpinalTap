@@ -21,12 +21,19 @@ const isGun = (v: unknown, most = MOST_ROUNDS): boolean =>
   isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && (v.loaded as number) <= most && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
 const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(v.phase) && isTime(v.timer) && Number.isInteger(v.perch) && (v.perch as number) >= 0;
 
+const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
+
+/** ADR-0089 stage 4: an attack token taken and last fired on at ticks not after the save's, in that order. */
+const isToken = (v: unknown, tick: number): boolean =>
+  isObject(v) && isTick(v.since) && isTick(v.last) && (v.since as number) <= (v.last as number) && (v.last as number) <= tick;
+
 /**
  * ADR-0089 stage 3: a gunner's shots left of its burst (no more than any burst), its side, the
- * metres left of its sidestep (no longer than any) and the seconds it stands.
+ * metres left of its sidestep (no longer than any) and the seconds it stands; stage 4: its token.
  */
-const isTactic = (v: unknown): boolean =>
+const isTactic = (v: unknown, tick: number): boolean =>
   isObject(v) &&
+  (v.token === undefined || isToken(v.token, tick)) &&
   Number.isInteger(v.shots) &&
   (v.shots as number) >= 1 &&
   (v.shots as number) <= MOST_BURST &&
@@ -35,7 +42,6 @@ const isTactic = (v: unknown): boolean =>
   (v.stride as number) <= MOST_STRIDE &&
   isTime(v.rest);
 
-const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
 const isPlan = (v: unknown): boolean =>
   isObject(v) && isVec(v.from) && isVec(v.goal) && Array.isArray(v.avoid) && v.avoid.length <= MOST_AVOIDED && v.avoid.every(isVec);
 /** G-643: the next wide way of a chase being made, ready no further past the save's tick than any is. */
@@ -80,7 +86,7 @@ export const findEntityError = (e: unknown, tick: number): string | null => {
   if (e.away !== undefined && !(isNum(e.away) && e.away >= 0)) return `entity ${e.key} away`;
   if (e.gun !== undefined && !isGun(e.gun)) return `entity ${e.key} gun`;
   if (e.sniper !== undefined && !isSniper(e.sniper)) return `entity ${e.key} sniper`;
-  if (e.tactic !== undefined && !isTactic(e.tactic)) return `entity ${e.key} tactic`;
+  if (e.tactic !== undefined && !isTactic(e.tactic, tick)) return `entity ${e.key} tactic`;
   if (e.walk !== undefined && !isWalk(e.walk, tick)) return `entity ${e.key} walk`;
   // G-882 (v40): quickhack effects still running, seconds left, none negative.
   if (e.hackFx !== undefined && !isHackFx(e.hackFx)) return `entity ${e.key} hackFx`;

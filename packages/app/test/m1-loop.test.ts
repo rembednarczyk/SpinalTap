@@ -87,7 +87,8 @@ const talkToKaito = (s: GameSession) => {
 const shootDown = (s: GameSession, key: string): number[] => {
   const hits: number[] = [];
   const off = s.bus.on("DamageDealt", (e) => {
-    if (e.targetId !== s.sim.player()?.id && !e.critical && e.zone === "torso") hits.push(e.amount);
+    // Her own hits: a ganger's shot at her may hit the other in its line (ADR-0089).
+    if (e.sourceId === s.sim.player()?.id && e.targetId !== e.sourceId && !e.critical && e.zone === "torso") hits.push(e.amount);
   });
   for (let i = 0; i < 2000; i++) {
     const t = [...s.sim.world].find((e) => e.key === key);
