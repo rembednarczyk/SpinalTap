@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, START_HOUR, TESSEN_HUNT, formatClock, gameDayOf, tessenHuntFlag, tessenSquadFlag, textRef } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { TESSEN_SQUAD_BACK_PREFIX, gangerEntity, tessenSquadBackFlag } from "@seki/sim";
+import { CLINIC_WAKE_SPOT, SIM_HZ, TESSEN_SQUAD_BACK_PREFIX, TESSEN_SQUAD_LATE_SECONDS, gangerEntity, tessenSquadBackFlag } from "@seki/sim";
 import { createUiStore, translateText } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -143,6 +143,33 @@ describe("waiting in the session", () => {
       hunted(session, [flag]);
       refusedForHunt(session, ui);
     }
+  });
+
+  /*
+   * A new game wakes her in the clinic, 60 m from any entry the hunt may send a squad in by: one on
+   * its way does not come in, and its flag waits (G-934, its own fix). It refuses waiting to its tick
+   * and 20 s past it (round 3 of 17.11), not for good.
+   */
+  it("with Tessen's squad on its way and no entry for it by the clinic, it is refused to its tick and 20 s past it, then she waits", () => {
+    const { session, ui } = setup();
+    const p = session.sim.player()!.position;
+    expect(Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z)).toBeLessThan(1);
+    const due = session.sim.tick + 2 * SIM_HZ;
+    const flag = tessenSquadFlag(TESSEN_HUNT.squadMin, due);
+    hunted(session, [flag]);
+    refusedForHunt(session, ui);
+    const late = due + TESSEN_SQUAD_LATE_SECONDS * SIM_HZ;
+    while (session.sim.tick < late - 1) session.step(EMPTY_INPUT);
+    refusedForHunt(session, ui);
+    session.step(EMPTY_INPUT);
+    expect(session.sim.domain.flags).toContain(flag);
+    session.pause();
+    expect(ui.getState().waitBlocked).toBeNull();
+    session.intents.openWait();
+    expect(ui.getState().wait).not.toBeNull();
+    const start = session.sim.clock.seconds;
+    session.intents.waitHours(3);
+    expect(session.sim.clock.seconds - start).toBe(3 * SECONDS_PER_HOUR);
   });
 
   /*

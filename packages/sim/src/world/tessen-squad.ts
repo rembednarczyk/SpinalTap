@@ -1,5 +1,6 @@
 import { type DomainState, type GameClock, SECONDS_PER_HOUR, TESSEN_HUNT, gameDayOf, secondOfDay, tessenHuntActive, tessenSquadDue } from "@seki/core";
 import type { World } from "miniplex";
+import { SIM_HZ } from "../step-rate";
 import type { Entity } from "./components";
 
 /**
@@ -30,13 +31,31 @@ export const tessenSquadOut = (world: World<Entity>): boolean =>
   world.with("security").entities.some((e) => !!e.ai && !e.downed && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
 
 /**
- * Is a squad of Tessen's hunt after her (ADR-0082, after the playtest of 17.11)? On its way, or in
- * the city on its feet; gone back to wait for her where a way leads (G-922) only in the stretch of
- * the day it went back in (the user's decision of 17.11, round 2): past it she may wait. Waiting is
- * refused then: she does not sit the hours out with a squad on her trail. Over with the hunt.
+ * How long past its tick a squad on its way still counts as coming, in seconds (round 3 of 17.11):
+ * the hunt's shortest warning, `TESSEN_HUNT.delayMinSeconds` (20 s). With an entry where she is it
+ * comes in on the first look for one at its tick (once a second); later, none was there (the
+ * clinic's 60 m, her view, no way to her) and its flag waits for one (G-934). The lateness lets
+ * such a moment pass (she steps out of an entry's view) as long again as the shortest warning she
+ * gets, and not more: in the clinic, with no entry for good, she may wait from 20 s past its tick.
  */
-export const tessenSquadAfterHer = (world: World<Entity>, domain: Pick<DomainState, "flags" | "clock">): boolean => {
+export const TESSEN_SQUAD_LATE_SECONDS = TESSEN_HUNT.delayMinSeconds;
+
+/** Is the squad on its way still coming at `tick`: to its tick and the lateness past it? False without one. */
+export const tessenSquadComing = (flags: readonly string[], tick: number): boolean => {
+  const due = tessenSquadDue(flags);
+  return due !== null && tick < due.tick + TESSEN_SQUAD_LATE_SECONDS * SIM_HZ;
+};
+
+/**
+ * Is a squad of Tessen's hunt after her (ADR-0082, after the playtest of 17.11) at the step `tick`?
+ * On its way to its tick and the lateness past it (round 3: one that has no way in where she is
+ * does not keep her from waiting for good), or in the city on its feet; gone back to wait for her
+ * where a way leads (G-922) only in the stretch of the day it went back in (round 2): past it she
+ * may wait. Waiting is refused then: she does not sit the hours out with a squad on her trail. Over
+ * with the hunt.
+ */
+export const tessenSquadAfterHer = (world: World<Entity>, domain: Pick<DomainState, "flags" | "clock">, tick: number): boolean => {
   if (!tessenHuntActive(domain.flags, domain.clock)) return false;
   const back = tessenSquadBack(domain.flags);
-  return tessenSquadDue(domain.flags) !== null || back?.stretch === tessenHuntStretch(domain.clock) || tessenSquadOut(world);
+  return tessenSquadComing(domain.flags, tick) || back?.stretch === tessenHuntStretch(domain.clock) || tessenSquadOut(world);
 };

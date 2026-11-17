@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { type DomainState, SECONDS_PER_HOUR, TESSEN_HUNT, gameDayOf, isTessenHuntRollFlag, tessenHuntFlag, tessenHuntRollFlag, tessenSquadDue, tessenSquadFlag } from "@seki/core";
-import { SIM_HZ, Simulation, TESSEN_SQUAD_BACK_PREFIX, ground, tessenHuntStretch, tessenSquadAfterHer, tessenSquadBack, tessenSquadBackFlag } from "../src";
+import { CLINIC_WAKE_SPOT, SIM_HZ, Simulation, TESSEN_SQUAD_BACK_PREFIX, TESSEN_SQUAD_LATE_SECONDS, ground, tessenHuntStretch, tessenSquadAfterHer, tessenSquadBack, tessenSquadBackFlag } from "../src";
 import { GIVE_UP } from "../src/systems/ai/ganger-perception";
 import { run, teleportPlayer } from "./helpers";
 
 /*
  * ADR-0082, after the playtest of 17.11: while a squad of Tessen's hunt is after her, she cannot
- * wait. On its way (G-911) and in the city on its feet; gone back to wait for her where a way leads
+ * wait. On its way (G-911) to its tick and 20 s past it (round 3), and in the city on its feet; gone back to wait for her where a way leads
  * (G-922) only in the stretch of the day it went back in (round 2 of 17.11); not once the hunt is
  * over, nor once a squad that lost her went home. The `wait` command
  * refuses nothing (ADR-0017): the window asks `tessenSquadAfterHer`, as it asks for a fight.
@@ -18,7 +18,7 @@ const setDomain = (sim: Simulation, change: (d: DomainState) => DomainState): vo
   holder.domain = change(holder.domain);
 };
 const squad = (sim: Simulation) => [...sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
-const afterHer = (sim: Simulation) => tessenSquadAfterHer(sim.world, sim.domain);
+const afterHer = (sim: Simulation) => tessenSquadAfterHer(sim.world, sim.domain, sim.tick);
 
 const STRETCH = TESSEN_HUNT.everyHours * SECONDS_PER_HOUR;
 /** The clock moved to `second` s into the next stretch of the day (negative: before its start). */
@@ -50,6 +50,30 @@ describe("no waiting with Tessen's squad after her (ADR-0082, 17.11)", () => {
     expect(afterHer(sim)).toBe(false);
     run(sim, 2);
     expect(sim.domain.flags.some((f) => f.startsWith("tessen-hunt"))).toBe(false);
+    expect(afterHer(sim)).toBe(false);
+  });
+
+  it("a squad on its way with no entry where she is (the clinic) refuses it to its tick and 20 s past it, then she waits", () => {
+    expect(TESSEN_SQUAD_LATE_SECONDS).toBe(TESSEN_HUNT.delayMinSeconds);
+    const sim = hunted(3);
+    teleportPlayer(sim, CLINIC_WAKE_SPOT, 0);
+    const due = sim.tick + 2 * SIM_HZ;
+    const flag = tessenSquadFlag(TESSEN_HUNT.squadMin, due);
+    setDomain(sim, (d) => ({ ...d, flags: [...d.flags, flag] }));
+    const late = due + TESSEN_SQUAD_LATE_SECONDS * SIM_HZ;
+    run(sim, late - 1 - sim.tick);
+    // No entry 60 m from the clinic: its flag waits (G-934), the squad is not in, she is refused.
+    expect(sim.domain.flags).toContain(flag);
+    expect(squad(sim)).toEqual([]);
+    expect(afterHer(sim)).toBe(true);
+    run(sim, 1);
+    expect(sim.tick).toBe(late);
+    expect(sim.domain.flags).toContain(flag);
+    expect(afterHer(sim)).toBe(false);
+    // Still none in a minute and a half on: she keeps her wait.
+    run(sim, 90 * SIM_HZ);
+    expect(sim.domain.flags).toContain(flag);
+    expect(squad(sim)).toEqual([]);
     expect(afterHer(sim)).toBe(false);
   });
 

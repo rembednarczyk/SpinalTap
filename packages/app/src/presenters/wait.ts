@@ -24,8 +24,8 @@ const alertedNear = (sim: Simulation): boolean => {
  * Why the hours cannot pass now, null when they can. The `wait` command itself refuses nothing
  * (ADR-0017: a cut, the world placed on its schedules), so the window is where the rules live:
  * no waiting out a fight, a contract's raised alarm, a pursuit or Tessen's squad after her (on its
- * way, in the city, or gone back in the stretch of the day it went back in: ADR-0082, 17.11), nor in
- * a takedown, a conversation, on the metro or in the air.
+ * way to its tick and 20 s past it, in the city, or gone back in the stretch of the day it went back
+ * in: ADR-0082, 17.11), nor in a takedown, a conversation, on the metro or in the air.
  */
 export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null => {
   const { domain, session } = sim;
@@ -35,7 +35,7 @@ export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null =
   const contract = domain.contracts.active;
   if (contract && domain.flags.includes(contractAlarmFlag(contract.id))) return "alarm";
   if (domain.heat.level > 0) return "wanted";
-  if (tessenSquadAfterHer(sim.world, domain)) return "hunt";
+  if (tessenSquadAfterHer(sim.world, domain, sim.tick)) return "hunt";
   if (session.takedown || session.dialogueActive || session.passenger || domain.metro.ride || facts.airborne) return "busy";
   return null;
 };
