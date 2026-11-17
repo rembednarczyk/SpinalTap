@@ -61,3 +61,37 @@ export const tessenSquadAfterHer = (world: World<Entity>, domain: Pick<DomainSta
   const back = tessenSquadBack(domain.flags);
   return tessenSquadComing(domain.flags, tick) || back?.stretch === tessenHuntStretch(domain.clock) || tessenSquadOut(world);
 };
+
+/**
+ * How many times a district's roll is tried in a stretch of the day (G-937). A squad on its way
+ * that is gone with no entry it might come in at (G-934) leaves its roll, and the next try puts
+ * another on its way, with its own warning, once an entry is there: a warning is not all the hunt
+ * is (the user's decision of 17.11). Where none is (the clinic) no try comes. A left try takes
+ * 40-60 s (a warning of 20-40 s and 20 s of lateness), so three take 3 min at most, half of the
+ * stretch's 6 game hours (6 min): three warnings in it at most when she keeps stepping out of the
+ * clinic and back in, against 9 with no bound; with two, a second glance at the only entry near
+ * left the hunt empty again to the stretch's end.
+ */
+export const TESSEN_HUNT_TRIES = 3;
+
+/** The roll `key` (`tessenHuntRollFlag`) on its try `n` from 0: the first is the key alone, as in a save of v44, so its draw stays. */
+export const tessenHuntTryFlag = (key: string, n: number): string => (n === 0 ? key : `${key}#${n}`);
+
+/** Is the flag of a roll that of a try left (G-937)? */
+export const isTessenHuntLeftFlag = (flag: string): boolean => flag.includes("~");
+
+/** A try of a roll, left with no squad come in: `<key>~<tries spent>`. */
+export const tessenHuntLeftFlag = (flag: string): string => {
+  const [key = flag, n = "0"] = flag.split("#");
+  return `${key}~${Number(n) + 1}`;
+};
+
+/** The tries of the roll `key` from the flags: how many were spent and whether the last was left; null if it was not rolled. */
+export const tessenHuntTries = (flags: readonly string[], key: string): { spent: number; left: boolean } | null => {
+  for (const f of flags) {
+    if (f === key) return { spent: 1, left: false };
+    if (f.startsWith(`${key}#`)) return { spent: Number(f.slice(key.length + 1)) + 1, left: false };
+    if (f.startsWith(`${key}~`)) return { spent: Number(f.slice(key.length + 1)), left: true };
+  }
+  return null;
+};
