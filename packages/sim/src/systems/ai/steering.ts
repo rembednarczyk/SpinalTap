@@ -3,13 +3,13 @@ import type { World } from "miniplex";
 import type { Entity } from "../../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
-import { type Detour, FAR, type Field, NEAR_WINDOW, type Window, distOf, downhill, fieldFor, grow, growThrough, nearest, outsideWindow } from "./nav-field";
+import { type Detour, FAR, FLEE_FAR_WINDOW, FLEE_WINDOW, type Field, NEAR_WINDOW, type Window, distOf, downhill, fieldFor, grow, growThrough, nearest, outsideWindow } from "./nav-field";
 import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange, pastLedgeOnWay } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 import { SAME_FLOOR, SAMPLE, bankNear, deckReach, floorOf, straightWalk, walkable } from "./straight-walk";
 
 export { NAV_CELL } from "./nav-raster";
-export { type Detour, FLEE_WINDOW, nearBuilds, steeringWork, wideBuilds } from "./nav-field";
+export { type Detour, nearBuilds, steeringWork, wideBuilds } from "./nav-field";
 export { KNEE_HEIGHT, SAME_FLOOR, floorOf, straightWalk } from "./straight-walk";
 export { advanceChaseDetours, chaseDetour, chaseWork, sameChaseKey, sameWideWindow, startChaseDetour } from "./chase-detour";
 
@@ -235,13 +235,63 @@ export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3, win: Wi
   return d ? followDetour(d, from) : null;
 };
 
+/** How many cells cell `c` lies in from the edge of its raster: the edge's cells are 0. */
+const inFromEdge = (r: Raster, c: number): number => {
+  const ix = c % r.cells;
+  const iz = (c - ix) / r.cells;
+  return Math.min(ix, iz, r.cells - 1 - ix, r.cells - 1 - iz);
+};
+
+/**
+ * Does `followDetour` from `from` down `field`, of `FLEE_WINDOW`, give what the near window's field
+ * of the same goal gives? The two rasters differ only in the flee window's edge cells, and a way
+ * to them from the goal's cell costs at least two half cells a cell it lies in (`bound`): every
+ * distance below that is the same in both, the cells past the flee window's edge further. So when
+ * the feet's cell, or with it closed every open cell `startOf` looks at round it, and the start lie
+ * below it, the way and every cell `followDetour` compares are the same.
+ */
+const nearAlike = (field: Field, from: Vec3): boolean => {
+  const { raster } = field;
+  const bound = 2 * inFromEdge(raster, field.source);
+  const here = cellIndex(raster, from.x, from.z);
+  if (here < 0) return false;
+  const known = (n: number) => distOf(field, n) < bound;
+  if (!known(here)) {
+    const ix = here % raster.cells;
+    const iz = (here - ix) / raster.cells;
+    for (let dz = -2; dz <= 2; dz++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const [nx, nz] = [ix + dx, iz + dz];
+        if (nx < 0 || nz < 0 || nx >= raster.cells || nz >= raster.cells) return false;
+        const n = nz * raster.cells + nx;
+        if (raster.open[n] === 1 && !known(n)) return false;
+      }
+    }
+  }
+  const start = startOf(field, from);
+  return start >= 0 && (field.dist[start] ?? FAR) < bound;
+};
+
+/**
+ * `detourStep` of the near window for a runner to a point a few metres ahead (G-928): from
+ * `FLEE_WINDOW` where its way is the same (`nearAlike`), most of the time at a part of the cost,
+ * else from `FLEE_FAR_WINDOW`. Round 2 of G-928: the flee window alone left runners by the
+ * Bystrzyca's fence and the walls of W-3's hall without the way round they had, standing or swinging.
+ */
+export const fleeDetourStep = (world: World<Entity>, from: Vec3, goal: Vec3): Vec3 | null => {
+  const d = planDetour(world, from, goal, [], FLEE_WINDOW);
+  if (d && nearAlike(d.field, from)) return followDetour(d, from);
+  return detourStep(world, from, goal, FLEE_FAR_WINDOW);
+};
+
 /**
  * The point to walk towards this step: straight at `goal` when the walk is free (or the goal is
- * on another floor), around the obstacle otherwise. `forceDetour` (a walker that made no
- * progress for a while) takes the way around even when the knee-high line looks free.
+ * on another floor), around the obstacle otherwise (`detour`, the near window's). `forceDetour` (a
+ * walker that made no progress for a while) takes the way around even when the knee-high line
+ * looks free.
  */
-export const steerPoint = (world: World<Entity>, from: Vec3, goal: Vec3, forceDetour = false, win: Window = NEAR_WINDOW): Vec3 => {
+export const steerPoint = (world: World<Entity>, from: Vec3, goal: Vec3, forceDetour = false, detour: typeof detourStep = detourStep): Vec3 => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return goal;
   if (!forceDetour && straightWalk(world, from, goal)) return goal;
-  return detourStep(world, from, goal, win) ?? goal;
+  return detour(world, from, goal) ?? goal;
 };

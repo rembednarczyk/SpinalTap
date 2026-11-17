@@ -36,14 +36,18 @@ const windowOf = (name: string, half: number, snap: number, rasters: number, fie
 /** The window every walk plans in. */
 export const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
 /**
- * The window a running civilian's way round is planned in (G-928): to a point `FLEE_LOOKAHEAD`
- * (6 m) ahead that moves with it, so a new field for every half metre it runs and a new raster
- * every `snap`. In the near window, 80 m a side, that was most of a fight's step (W-3's line
- * technicians running from the shots: 2-8 ms); 40 m a side still leads round a stall, a car or a
- * row of racks, and the runner is always in it (6 m from a goal at most 6 m from its centre).
- * Its fields are grown only as far as the runners ask (`lazyField`).
+ * The window a running civilian's way round is planned in first (G-928, `fleeDetourStep`): to a
+ * point `FLEE_LOOKAHEAD` (6 m) ahead that moves with it, so a new field for every half metre it
+ * runs and a new raster every `snap`. In the near window, 80 m a side, that was most of a fight's
+ * step (W-3's line technicians running from the shots: 2-8 ms). 40 m a side, the same cells as the
+ * near window's but its edge, its fields grown only as far as the runners ask (`lazyField`).
  */
 export const FLEE_WINDOW = windowOf("flee", 20, 8, 8, 16, true);
+/**
+ * The near window's extent for a runner whose way round may leave `FLEE_WINDOW` (a long fence, a
+ * hall's wall, round 2 of G-928): the near window's way, its fields grown as far as asked.
+ */
+export const FLEE_FAR_WINDOW = windowOf("flee-far", NEAR_WINDOW.half, NEAR_WINDOW.snap, NEAR_WINDOW.rasters, NEAR_WINDOW.fields, true);
 /**
  * A ganger cut off from its target in `NEAR_WINDOW` (a long fence or a wall of a yard, G-625)
  * looks again in this one, 192 m a side (`chaseDetour`): a raster costs some 37 ms and a field
