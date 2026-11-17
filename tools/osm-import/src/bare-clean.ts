@@ -324,6 +324,71 @@ export const joinSpecks = (cells: Cells, speck: number): void => {
   }
 };
 
+/** Which regions of `zoneStrips` are laid: their least share in the strip, and their sizes (m², m). */
+export interface StripRegions {
+  /** The least share of a region's cells in the strip. */
+  readonly share: number;
+  /** Paving: under this area (m²), at least this mean width (m). */
+  readonly area: number;
+  readonly width: number;
+  /** The green beside the paving: under this mean width (m), every cell green on the cover. */
+  readonly thin: number;
+}
+
+/**
+ * Off a town's paved places, the regions of paving most of whose cells `strip` sets, under
+ * `o.area` and `o.width` wide on the average or more, become part of one, whole (G-902): a region
+ * laid in part would leave the rest of it a strip of bare ground along the strip's jagged edge.
+ * With them the thin green beside them in the strip the cover itself shows green (`green`, no shade
+ * nor crown resolved): the lawn's edge, which left bare would be a gap between the paving and the
+ * lawn. A region is laid only where it closes the strip: every free cell beside it laid too or in
+ * a town's paved place; one beside ground left bare would leave a narrower gap than it filled.
+ */
+export const zoneStrips = (cells: Cells, strip: Uint8Array, green: Uint8Array, o: StripRegions): void => {
+  const { nx, label, zone } = cells;
+  const size = label.length;
+  const c = components(cells, true);
+  const [marked, greens] = [scratch.i32("regions.marked", c.runs), scratch.i32("regions.green", c.runs)];
+  const touch = scratch.u8("regions.touch", c.runs);
+  const laid = scratch.u8("regions.laid", size);
+  for (let r = 0; r < c.runs; r++) {
+    const top = root(c.parent, r);
+    let n = 0;
+    let g = 0;
+    for (let k = c.start[r]!; k < c.end[r]!; k++) {
+      n += strip[k]!;
+      g += green[k]!;
+    }
+    marked[top]! += n;
+    greens[top]! += g;
+  }
+  const inStrip = (top: number) => marked[top]! >= o.share * c.size[top]!;
+  const width = (top: number) => c.size[top]! / c.edges[top]!;
+  /** Marks the regions of `key` a cell of which has a cell `near` sets beside it (4 round). */
+  const touching = (key: number, near: (k: number) => boolean): void => {
+    touch.fill(0);
+    for (let r = 0; r < c.runs; r++) {
+      if (c.key[r] !== key) continue;
+      const top = root(c.parent, r);
+      for (let k = c.start[r]!; k < c.end[r]! && !touch[top]; k++) if ((k % nx > 0 && near(k - 1)) || (k % nx < nx - 1 && near(k + 1)) || near(k - nx) || near(k + nx)) touch[top] = 1;
+    }
+  };
+  const lay = (key: number, take: (top: number) => boolean, to = 1): void => {
+    for (let r = 0; r < c.runs; r++) if (c.key[r] === key && take(root(c.parent, r))) laid.fill(to, c.start[r]!, c.end[r]!);
+  };
+  const edges = (): void => {
+    touching(LABEL.grass, (k) => laid[k] === 1 && label[k] === LABEL.square);
+    lay(LABEL.grass, (top) => touch[top] === 1 && width(top) < o.thin && greens[top] === c.size[top] && inStrip(top));
+  };
+  lay(LABEL.square, (top) => c.size[top]! * STEP * STEP < o.area && width(top) >= o.width && inStrip(top));
+  edges();
+  touching(LABEL.square, (k) => k >= 0 && k < size && !taken(label[k]!) && !zone[k] && !laid[k]);
+  lay(LABEL.square, (top) => touch[top] === 1, 0);
+  lay(LABEL.grass, () => true, 0);
+  edges();
+  for (let k = 0; k < size; k++) if (laid[k]) zone[k] = 1;
+};
+
 /**
  * Off a town's paved places, a region of lawn or paving narrower than `width` (m) on the average
  * or under `area` (m²) stays bare. A region's cells and edges out come from its runs

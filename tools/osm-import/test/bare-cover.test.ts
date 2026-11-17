@@ -111,6 +111,20 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     expect(surfaceAt(coverFills(RECT, cover(), [road, piece("sidewalk", box(18, 0, 20, 20))], []), { x: 12.75, z: 10.25 })).toEqual([]);
   });
 
+  it("lays the paving of a strip between a pavement and a lawn far from any carriageway, with the lawn's green edge, where it closes the strip (G-902)", () => {
+    // A 2.5 x 6 m pocket of paving between a pavement (south), a lawn (north) and a wall (west):
+    // 15 m², under the loose regions' least area.
+    const [pavement, lawn, wall] = [piece("sidewalk", box(0, 0, 20, 8)), piece("grass", box(0, 10.5, 20, 20)), box(0, 8, 14, 10.5)];
+    const paved = () => COVER.paving;
+    expect(surfaceAt(coverFills(RECT, cover(paved), [pavement, lawn], [wall]), { x: 17.25, z: 9.25 })).toEqual(["square"]);
+    // The lawn's edge the photograph shows green comes with it.
+    const edged = coverFills(RECT, cover((_, z) => (z > 10 ? COVER.green : COVER.paving)), [pavement, lawn], [wall]);
+    expect([surfaceAt(edged, { x: 17.25, z: 9.25 }), surfaceAt(edged, { x: 17.25, z: 10.25 })]).toEqual([["square"], ["grass"]]);
+    // Between the pavement and a wall it is a loose region; beside ground left bare (asphalt), it would leave a gap.
+    expect(surfaceAt(coverFills(RECT, cover(paved), [pavement], [wall, ringOf(lawn)]), { x: 17.25, z: 9.25 })).toEqual([]);
+    expect(surfaceAt(coverFills(RECT, cover((x) => (x > 18.5 ? COVER.asphalt : COVER.paving)), [pavement, lawn], [wall]), { x: 16.25, z: 9.25 })).toEqual([]);
+  });
+
   it("lays a pedestrian street's frontage up to the walls, paved where the cover shows no lawn or paving, and not a yard behind them (G-853)", () => {
     // A pedestrian street along x at z = 10, its paving 4 m wide; tenements north of z = 15 and a
     // row south of z = 5 with a yard behind it. Asphalt-dark setts north of the paving, a lawn at
