@@ -2507,6 +2507,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: każde SECURITY_ENTRIES w otwartej komórce połączonej z ulicą
+- 17.11 (orkiestrator): przy G-922 pościg je omija (wayless), zostają posiłki ciepła. Przeniesienie wejścia zmienia scenariusze dwóch testów tessen-hunt-trail (zamknięte wejście Grodzkiej jako przypadek awaryjny): do zrobienia razem z nowym przypadkiem zamkniętego wejścia w teście; spotNear wypycha tylko z budynków, a komórka jest zamknięta w rastrze nawigacji.
 
 ### G-925 Szeroka droga pościgu nie planuje dla idącego spoza okna celu
 - Ważność: S3 · Zasięg: pościgi z dalszych niż ok. 96 m na oś od celu
@@ -2514,13 +2515,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: idący 100-140 m od celu poza oknem dochodzi
-
-### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
-- Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
-- Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
-- Status: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: punkt testu w otwartej, połączonej komórce
 
 ### G-927 Walka na ok. 20 m przebudowuje rastry okna bliskiego co kilka kroków (kroki 40-90 ms)
 - Ważność: S3 · Zasięg: walka oddziału lub posiłków, np. 520,-60

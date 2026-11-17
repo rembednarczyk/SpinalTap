@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
+- Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
+- Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
+- Status: naprawione (17.11, #674 scalony); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: punkt testu w otwartej, połączonej komórce
+
 ### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
 - Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
 - Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
