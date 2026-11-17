@@ -14,7 +14,7 @@ export interface ContractTally {
   readonly clearedTick?: number;
   /** An enemy or a camera noticed the player (alerted, or a camera's spot). */
   readonly detected: boolean;
-  /** A crime was reported or a camera raised the alarm (the job's own scripted phase is not one). */
+  /** A crime was reported, a camera raised the alarm, or the sabotage's alarm went up (a docks job's own scripted phase is not one). */
   readonly alarm: boolean;
   /** People the player killed who were not the job's targets (bystanders, other guards). */
   readonly extraKills: number;

@@ -43,7 +43,8 @@ describe("the loud way of W-3's sabotage (ADR-0082 stage 3b)", () => {
     // The chest of armoury S (the user's decision of 16.11: its loot counts): the AR-5 and a medkit sold.
     const loot = armouryLootValue();
     expect(loot).toBe(472);
-    // The loud way can keep "clean" (the waves are the job's targets), never "ghost": the charges always raise the alarm.
+    // The loud way can keep "clean" (the waves are the job's targets), never "no_alarm": the charges always raise the
+    // job's alarm (G-914). The alarm alone does not take "ghost": that one goes only if someone saw her, so the band holds with it too.
     for (const badges of [["clean"], ["ghost", "clean"]] as const) {
       const perMinute = (pay + loot + CONTRACT_BONUS.sabotage.bonus + styleBonusOf("sabotage", badges, pay)) / 8;
       expect(perMinute).toBeGreaterThanOrEqual(215);
