@@ -21,7 +21,8 @@
  * markets' land, a shop's forecourt, a stop's platform), and elsewhere only the compact regions,
  * `FILL.looseWidth` wide on the average and more: a lawn or a yard, not a strip by a wall; but a
  * strip between a carriageway and the next piece past it is laid however narrow (step 1.2,
- * `bare-strips.ts`). Within `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on
+ * `bare-strips.ts`), and so is the paving of a strip between a pavement and a lawn, however far
+ * from the asphalt (G-902, `lawnStrips`). Within `FILL.kerbBand` of a carriageway a fill gives way behind bare ground on
  * the kerb (`keepKerbs`, the asphalt the rule leaves): a fill past it would make it a counted gap.
  */
 import { FillRule, type Path64, difference, intersect, isPositive } from "clipper2-ts";
@@ -32,7 +33,7 @@ import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-c
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { type Frontage, evenKerbs, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
-import { kerbStrips } from "./bare-strips.ts";
+import { kerbStrips, lawnStrips } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
 import { crossesItself } from "./bare-ring.ts";
 import { type Area, type Line } from "./features.ts";
@@ -86,6 +87,15 @@ export const FILL = {
   kerbBand: 5,
   /** The widest strip between a carriageway and the next piece past it laid however narrow (m, step 1.2, `bare-strips.ts`): as far as `kerb-strip-bare` looks. */
   kerbStrip: 5,
+  /** The widest strip between a pavement and a lawn whose paving is laid (m, G-902, `lawnStrips`): as wide as a kerb's. */
+  lawnStrip: 5,
+  /**
+   * Which of its regions are laid (`zoneStrips`): nine tenths in the strip; paving under the loose
+   * regions' least area (a larger one is a strip by a walk the rule leaves on purpose) and a metre
+   * wide on the average or more (a narrower one the tracing cuts into slivers under the least
+   * piece); green beside it under the widest gap `ground-strip-gap` counts.
+   */
+  lawnRegions: { share: 0.9, area: 20, width: 1, thin: 1.25 },
 } as const;
 
 /**
@@ -428,7 +438,10 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
     const [grass, square] = [scratch.u8("fronts.grass", cells.label.length), scratch.u8("fronts.square", cells.label.length)];
     for (const g of ground) if (g.surface === "grass" || g.surface === "square") cells.mark(ringOf(g.outline), g.surface === "grass" ? grass : square);
     evenKerbs(cells, cover, grass, square);
-  } else kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
+  } else {
+    kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
+    lawnStrips(cells, cover, ground, FILL.lawnStrip, FILL.lawnRegions);
+  }
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   if (!base) keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
