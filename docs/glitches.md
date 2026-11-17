@@ -2492,7 +2492,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
 - Ważność: S4 · Zasięg: każda walka z łupem
 - Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
-- Status: zgłoszone
+- Status: w PR #688 (gałąź ccr-ec2c4269-ilh8k8-g915); wcześniej: zgłoszone
 - Pakiet właściciela: packages/app
 - Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
 
@@ -2511,7 +2511,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
 - Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
 - Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
-- Status: zgłoszone
+- Status: w PR #687 (gałąź ccr-ec2c4269-ilh8k8-g919); wcześniej: zgłoszone
 - Pakiet właściciela: packages/ui
 - Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
 
@@ -2562,7 +2562,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
 - Ważność: S3 · Zasięg: droga cicha W-3
 - Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
-- Status: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Status: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
 - Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
