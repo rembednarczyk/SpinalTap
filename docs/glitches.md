@@ -2471,8 +2471,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-902 Goła łata między chodnikiem w793299545 a trawnikiem w804709930 (Ruska, Podzamcze)
 - Ważność: S4 · Zasięg: podzamcze-2-1 x 1066-1070, z 479,5-488
 - Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
-- Status: zgłoszone
+- Status: w PR #657; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
+- Klin 1068,485.5-488 (ścieżka w227713090/chodnik, otwarty na zieleń parku) i obszar 1060-1064,476-484 między chodnikami w856618317 i w793299545 zostają gołe. Kontrola walk-lawn-bare: 14565 próbek w mieście, sufit 14600; największe: podzamcze (998,337) 180 m², (803,317) 113 m², (1077,345) 78 m² (szerokie pasy ponad 20 m²).
 
 ### G-903 Stopy wskakują z terenu na pomost mostu z 0,46-2,0 m niżej (DECK_HEADROOM)
 - Ważność: S3 · Zasięg: boki pomostów przy przyczółkach: Mełgiewska (2405-2457; 240-330), most Lutosławskiego (2440-2486; 410-440), wiadukt Zamkowej i grobla (730-790; 150-205), kładka (1070-1083; 160); 304 z 1 007 328 prób ruchu (sonda kuratora), 105 z 242 838 (sonda weryfikatora G-898); tak samo na main przed #655
