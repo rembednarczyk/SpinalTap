@@ -797,6 +797,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: częściowo naprawione w #305 (6.11, 396131c; wariant z gracza (0; 2), ziarno 11, 1002001: osaczony cywil staje zamiast zawracać ku graczowi, drogi ±3π/4 usunięte). Pozostałe warianty z tego wpisu (43/1002008 gracz (3; 0), 11/1002001 i 7/1002001 gracz (2; 0), 3/1002002 i 29/1002002 gracz (0; −2)) mają inną przyczynę: migotanie skrętu 0 / −π/4 na granicy sondy; przeniesione do G-343 (weryfikator #305)
 - Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) dalej ok. 465 skoków (poprawka z G-326 wycofana, bo przypinała cywila do ściany); także ziarno 43, 1002008, gracz 3 m: cywil staje 1,18 m od gracza; gracz stojący w zaułku przy (308; −101): 213 skoków
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+- 17.11 przy G-928, także na main: deptak (300; -84) ziarno 13 przechodzień stoi 6,9 s przy (316,3; -100,1) w panice; (310; -100) ziarno 8 cywil 658 skoków yaw w 720 krokach (też G-369).
 
 ### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
 - Status: częściowo naprawione w #310 (6.11; przechodzień 294: 84 → 10 skoków, 1082: 283 → 40 w nagranym przebiegu; w tickach 1060–1159 u 294 zostaje 7)
@@ -811,6 +812,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): `makeDeck` bierze `rawHeight` końców osi i robi pomost poziomy w poprzek; droga obok idzie za poprzecznym spadkiem NMT
 - Pakiet właściciela: packages/sim (content/lublin decks, terrain PADS/RAMPS)
 - Test przyjęcia: kontrola `deck-end-step` (różnica `groundY` 0,15 m przed i za krawędzią > 0,15 m, poza drogą pod mostem) = 0
+- 16.11 (kurator, po G-898 #655): przyczyna zmierzona, inna niż przypuszczalna. W 85 z 195 próbek krawędzi pomostów z progiem 0,02-0,45 m surowy NMT 1 m 0,25 m za obrysem leży na poziomie pomostu (-0,20…+0,09 m), a siatka importu 0,15-0,68 m pod NMT (kształtowanie terenu ±0,0). Rozmycie Gaussa NMT (BASE_SIGMA 1,5 m) i siatka 2,5 m wciągają skarpę lub rów pod mostem w pas obok końca pomostu. Miejsca: Zamkowa SW (729-732; 152-156), chodnik wiaduktu (754-764; 183-189), kładka (1070-1083; 162), Mełgiewska (2449-2451; 258-259), (2405-2445; 241-266), most Lutosławskiego (2440-2486; 406-439). Proponowana reguła importu (tools/osm-import/src/terrain.ts): rozmycie z maską, w którym 1 m komórki NMT pod obrysem man_made=bridge (pomostu) nie wchodzą do średniej dla punktów siatki poza obrysem (splot znormalizowany), albo punkty siatki do 2,5 m od boku pomostu i 3,6 m od końca biorą min(surowy NMT, pomost), gdy |surowy NMT − pomost| ≤ 0,15 m. Gdzie surowy NMT jest niżej o > 0,45 m, skarpa zostaje (T-new z tego przeglądu). Kontrola: deck-side-below-nmt, baza 85.
 
 ### G-348 Długi przebieg e2e z modelami pod SwiftShaderem rośnie do 6–7 GB i kończy się OOM; zatrzymany zegar Playwrighta blokuje rysowanie
 - Status: zgłoszone (5.11, autor broni białej)
@@ -2380,9 +2382,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-889 joinLoose dołącza do frontu deptaka wąskie pasy dowolnie daleko od osi (pas zieleni za Karmelicką 12–37 m)
 - Ważność: S4 · Zasięg: Karmelicka: pas ścieżka–parking (344..351; 58..88), ok. 47 m² kostki na zieleni
 - Opis: Przegląd kuratora #595: zoneFronts/joinLoose (bare-fronts.ts) dołącza do frontu każdy wolny region o średniej szerokości <3 m stykający się z frontem, bez limitu odległości od osi; pas zarośli dostaje kostkę (ortofoto 2024-06). Propozycja: dołączać tylko komórki w reach+zoneMargin+FRONT.strip od osi; kontrola skanu front-far.
-- Status: zgłoszone
+- Status: odłożone (17.11, pierwsze podejście za szerokie, wariant b w notatce); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pas (344..351; 58..88): brak komórek frontu dalej niż 14 m od osi Karmelickiej; kostka na pasie poniżej 5 m²
+- 17.11 noc (agent, gałąź ccr-ec2c4269-ilh8k8-g889, 65ab11b, nie do scalenia): odcięcie joinLoose na reach+zoneMargin+FRONT.strip (14 m) naprawia pas (kostka 28,75 → 4,5 m²), ale w mieście zabiera ok. 2017 m² kostki, z czego 993 m² potwierdza ortofoto, i daje 41 nowych kluczy skanu (landuse-bare +12, ground-strip-gap +19, bare-on-cover +5, kerb-gap-bare +3, fill-on-green +1, metro-exit-bare +1), walk-lawn-bare 14 954 > 14 600. Następne podejście (wariant b): za 14 m nie kłaść kostki domyślnej (korony, cień, komórki bez klasy), zostawić to, co ortofoto pokazuje samo; front-far wtedy z bazą. Pole frontu bez osi deptaka w krakowskie-1-0 (130..160; −160..−100) to ten sam mechanizm.
 
 ### G-890 Plamka zieleni pokrycia przy krawężniku w kostce zostaje trawnikiem (T-285) i migocze z kostką
 - Ważność: S4 · Zasięg: pierwszy przebieg reguły gołej ziemi, całe miasto
@@ -2407,14 +2410,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
 - Ważność: S4 · Zasięg: jedno miejsce, Zielona 5A
 - Opis: Rusztowanie z banerem z etapu 2 placów budowy (gałąź place-budowy-2) stoi przy ścianie w67499313 i zasłania szyld FRYZURA Z PRZYTUPEM; rusztowanie powinno omijać ściany z szyldem lokalu albo szyld przenieść.
-- Status: nowy
+- Status: naprawione (PR #649); wcześniej: w PR #649; wcześniej: nowy
 - Pakiet właściciela: osm-import
 - Poprawka identyfikatora (kurator 16.11): rusztowanie stoi 0,25 m od szczytowej ściany w69915878 (Zielona 5), nie w67499313; szyld FRYZURA Z PRZYTUPEM sprawdzić na tej ścianie.
 
 ### G-894 Dźwig 66 m przed fasadą Pałacu Lubomirskich od Placu Litewskiego (plac budowy Muzeum Ziem Wschodnich)
 - Ważność: S4 · Zasięg: plac budowy w1362895448, widok z Placu Litewskiego
 - Opis: Generator dźwigu (construction-crane.ts, ADR-0087 etap 2, gałąź place-budowy-2) stawia maszt w (41; 78) w południowej wnęce Pałacu Lubomirskich w67508859 (historic=castle), między fasadą a Placem Litewskim; 27,1 m, wysięgnik 66 m nad dachem zabytku. Ortofoto 2025-04: budowa trwa (wykop na pn. podwórzu, kontenery), żurawia wieżowego brak; 2024-06 we wnęce trawnik. Miejsce wynika tylko z minimalnego zasięgu do najdalszego narożnika obrysu, który obejmuje cały pałac. Proponowana reguła: na placu, którego obrys obejmuje budynek historic/heritage, maszt nie stoi między fasadą zabytku a placem lub ulicą frontową (preferuj podwórze z wykopem), inaczej bez dźwigu albo wysięgnik do 50 m; kontrola skanu site-crane-heritage z wyjątkiem w1236055101 (żuraw na ortofoto 2025-04).
-- Status: nowe
+- Status: naprawione (PR #649); wcześniej: w PR #649; wcześniej: nowe
 - Pakiet właściciela: tools/osm-import, engine mapcity/construction
 - Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
 - Topografia: T-322.
@@ -2435,21 +2438,170 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
 - Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
 - Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
-- Status: zgłoszone
+- Status: naprawione (PR #654); wcześniej: w PR #654; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
 
 ### G-898 Walczący w pasie 10 cm poniżej jezdni przy dolnym moście Mełgiewskiej nie wychodzi do gracza na pomoście
 - Ważność: S4 · Zasięg: dolny most Mełgiewskiej, (2454,9; 297,05), gracz na nabrzeze-0-1[1] t=0,4
 - Opis: Strome krawędzie terenu poniżej STEP_HEIGHT zatrzymują ruch (offTheBank), a raster ich nie widzi; odchylenie ±31° nie wyprowadza na wschód. Przed i po G-896 (#647). Źródło w imporcie terenu albo w regule offTheBank. Sondy: scratchpad g896-probe.test.ts.
-- Status: zgłoszone
+- Status: naprawione (PR #655); wcześniej: w PR #655; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, teren)
 
 ### G-899 Walczący z treści po wczytaniu w trakcie pościgu stoi jeden krok (velocity undefined, yaw o 0,1)
 - Ważność: S4 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści (np. hebi-grodzka)
 - Opis: Sonda weryfikatora #647: po wczytaniu w trakcie pościgu walczący z treści stoi jeden krok, velocity undefined, yaw różni się o 0,1; hash rozjeżdża się od pierwszego kroku (24 z 33 zapisów, tick 543). Tak samo na main. Sonda ręcznie zmieniała alerted i pozycję, więc do potwierdzenia przez łowcę (scratchpad v-g896-sl-*.json). Pokrewne G-883 (v41: prędkości).
-- Status: do potwierdzenia
+- Status: nie potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
 - Pakiet właściciela: packages/sim, packages/persistence
+- Łowca: 0 rozjazdów w ok. 700 zapisach (hebi-grodzka, hebi-bramowa, ziarna 3-5, strzał z 9 i 22 m, ucieczka sprintem). Sonda #647 daje 21 z 30 tylko po ręcznym przeniesieniu walczącego 130 m od posterunku. Hipoteza nieuzasadniona: zimna pamięć nawigacji (nav-memo, chase-queue) po wczytaniu w pościgu z objazdem bariery; tego wariantu nie sprawdzono. Pułapka sond: te same wejścia i yaw gracza obu symulacjom.
+- Ta sama pułapka sondy co w G-900: zapis bez calmForSave.
+
+### G-900 Zapis w trakcie pościgu gubi zgłoszenie przestępstwa, które przychodzi chwilę później
+- Ważność: S3 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści
+- Opis: Łowca G-899: hebi-bramowa, gracz ucieka sprintem, ziarna 3, 4, 5, zapis w kroku 1005 od startu pościgu (gracz 51 m od walczącego). Po 16 krokach gra żywa ma domain.heat poziom 1 (frakcja hebi, searchLeft 20, cooldown 7,98) i reinforcements.sent 1; wczytana ma heat 0 i reinforcements undefined. Stan przed zapisem identyczny. Przypuszczalnie licznik zgłoszenia (telefon świadka, m.call w crowd, WITNESS_CALL_SECONDS w crime-system.ts) poza zapisem; może się pokrywać z G-891. Sondy: scratchpad g899-heat.txt.
+- Status: nie potwierdzone (artefakt sondy, 16.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim, packages/persistence
+- Naprawiacz 16.11: artefakt sondy, zapis bez calmForSave. Gra zapisuje przez SaveController.snapshot() → sim.calmForSave() → settleCalls (G-240), więc zgłoszenie w toku przychodzi w chwili zapisu w obu grach. Z calmForSave 0 rozjazdów heat w ok. 400 zapisach (Lublin, 576,-24, ziarno 3), bez niego sygnatura G-900 (289+16). Sonda: scratchpad g900/g900-probe2.test.ts. Skutek projektu: zapis w trakcie rozmowy świadka przyspiesza zgłoszenie najwyżej o 5 s.
+
+### G-901 Próg samoobrony (session.lastThreat) poza zapisem: strzał gracza tuż po strzale wroga po wczytaniu liczy się jako przestępstwo
+- Ważność: S4 · Zasięg: zapis i wczytanie do 3 s po strzale wroga
+- Opis: Znalezione przy G-900 (czytanie kodu, bez pomiaru): session.lastThreat (próg 3 s, playerEngaged w world/street.ts) nie trafia do zapisu. Po wczytaniu strzał gracza w ciągu 3 s po strzale wroga liczy się jako przestępstwo, w grze żywej nie. Do potwierdzenia przez łowcę; sonda musi zapisywać przez calmForSave (jak SaveController.snapshot).
+- Status: naprawione (PR #653); wcześniej: w PR #653; wcześniej: potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
+- Pakiet właściciela: packages/sim
+- Łowca: lastThreat (combat-system.ts:128 threaten) nie wchodzi do SaveSnapshot, a calmForSave go nie zeruje. Po wczytaniu strzał gracza <3 s po strzale wroga, gdy w 30 m nie ma zaangażowanego AI (np. strzelec zabity), daje offend(gunfire): incidents 1 zamiast 0, ziarna 4, 1, 7 (scena streetSim, zapis jak SaveController.snapshot). Czytają go też scanner-system.ts:162 i hud-sync.ts:36 (isCalm), niezmierzone.
+
+### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
+- Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
+- Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, W-3)
+
+### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
+- Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
+- Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
+- Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
+- Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
+- Status: zgłoszone
+- Pakiet właściciela: packages/narrative
+- Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
+
+### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
+- Ważność: S4 · Zasięg: każda walka z łupem
+- Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
+- Status: zgłoszone
+- Pakiet właściciela: packages/app
+- Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
+
+### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
+- Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
+- Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
+- Status: zgłoszone
+- Pakiet właściciela: packages/engine
+
+### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
+- Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
+- Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
+- Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
+- Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
+- Status: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
+
+### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
+- Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
+- Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
+- Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
+
+### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
+- Ważność: S4 · Zasięg: tylko uszkodzony zapis
+- Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
+
+### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
+- Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
+- Opis: Znalezione przy G-922: komórka wejścia zamknięta, brak otwartej w 2 m (pole null); oddział z tego wejścia stoi (Rynek 520,0; 540,20; 560,60; 620,-60).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: każde SECURITY_ENTRIES w otwartej komórce połączonej z ulicą
+
+### G-925 Szeroka droga pościgu nie planuje dla idącego spoza okna celu
+- Ważność: S3 · Zasięg: pościgi z dalszych niż ok. 96 m na oś od celu
+- Opis: Znalezione przy G-922: chaseDetour/outsideWindow zwraca null; pościg Tessen czeka w ok. 28% punktów siatki, inni stoją.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: idący 100-140 m od celu poza oknem dochodzi
+
+### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
+- Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
+- Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: punkt testu w otwartej, połączonej komórce
+
+### G-927 Walka na ok. 20 m przebudowuje rastry okna bliskiego co kilka kroków (kroki 40-90 ms)
+- Ważność: S3 · Zasięg: walka oddziału lub posiłków, np. 520,-60
+- Opis: Znalezione przy G-922, także na main: near r+1 f+1 co kilka kroków przy ok. 20 m od Seki.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: walka 40 s bez kroku ponad budżet
+- Przy G-928 nie odtworzył się (pościg Tessen 520,-60, ziarno 3, bez tłumu): to raczej inna przyczyna niż objazdy ucieczki.
+
+### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
+- Ważność: S3 · Zasięg: droga cicha W-3
+- Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
+- Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
+
+### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
+- Ważność: S4 · Zasięg: wylot kolektora W-3
+- Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: podpowiedź tylko z dna wylotu
+
+### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
+- Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
+- Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
+- Status: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
+
+### G-932 Technicy W-3 na zachodnim końcu hali kołyszą się albo stoją w panice
+- Ważność: S3 · Zasięg: hala W-3, zachód (x 2504-2512, z 401-437)
+- Opis: Znalezione przy sprawdzaniu G-928, identyczne na main: technik w (2508; 437) i (2511; 436,5) w scenie walki (ziarna 3/7/42) ma 416 skoków yaw w 480 krokach ucieczki i po 5 s jest 3,3 m od startu; siatka: 67 z 376 przypadków ma >= 20 skoków, 59 stoi > 2 s (np. (2504; 401) 4,7 s). Sondy: scratchpad/g928h/.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: technik uciekający z zachodniego końca hali: zacięcie <= 2 s, skoki yaw < 5, ucieczka >= 10 m
+
+### G-933 Zapis po końcu pościgu Tessen z żywym zaalarmowanym oddziałem rozjeżdża się po wczytaniu
+- Ważność: S3 · Zasięg: zapis w dniu 3+ pościgu Tessen, posiłki ochrony
+- Opis: Znalezione przy weryfikacji G-922 r3, także na main przed G-922 (91deba6): po wczytaniu hash inny, różnią się pole reinforcements i pozycje oddziału. Sondy: scratchpad/v-g922r3/.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zapis po końcu pościgu z żywym oddziałem: ten sam hash krok po kroku po wczytaniu
+
+### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
+- Ważność: S4 · Zasięg: pościg Tessen
+- Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
+- 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

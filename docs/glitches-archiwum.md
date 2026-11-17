@@ -2,6 +2,104 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
+- Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
+- Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
+- Status: naprawione (17.11, #677 scalony); wcześniej: w PR #677 runda 2 (be0a92a), w weryfikacji; wcześniej: w naprawie, runda 2 (łowca: okno ucieczki 40 m daje zacięcia i kołysanie przy Bystrzycy i w hali W-3); wcześniej: w PR #677, przyjęte przez weryfikatora z uwagą (okno 40 m zmienia drogi ucieczki przy długich objazdach); przed scaleniem łowca sprawdza zacięcia i kołysanie, a main potrzebuje #679; wcześniej: w PR #677 (gałąź ccr-ec2c4269-ilh8k8-g928, f26847a), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
+
+### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
+- Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
+- Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
+- Status: naprawione (17.11, #674 scalony); wcześniej: w PR #674 runda 3 (464e37d), w weryfikacji; wcześniej: w naprawie, runda 3 (nowy agent; r2 odrzucona: pętla powrotu przy wejściu bez drogi, dwie flagi oddziału naraz); wcześniej: w PR #674 runda 2 (6b8f9ac), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #674 odrzucony przez weryfikatora: wejście bez drogi na innym piętrze); wcześniej: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
+- Weryfikator #671 (17.11): to samo na main (ziarna 3, 7, 42: oddział 134-139 m od gracza stoi i znika po ok. 20 s), nie regresja #671; lastKnown ustawiane przy wejściu oddziału. Do naprawy osobno.
+
+### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
+- Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
+- Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
+- Status: naprawione (17.11, #675 scalony); wcześniej: w PR #675 (gałąź ccr-ec2c4269-ilh8k8-g907, 9e63ceb), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Etap 1: haki i pendrive przy przyjęciu, szafka 14, wylot kolektora (prompt.culvert); P1 przestał być egzekutorem i to on zdzierał przebranie. Dalej: kierownik zmiany, palacz, kod furtki. Pytania do użytkownika: furtka z kodem, rola palacza, wymóg pendrive'a, kierownik zmiany w biurze antresoli.
+
+### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
+- Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
+- Opis: Odtworzenie 17.11 (łowca, sesja bez renderera, origin/main e2f6330): W-3 głośna, ładunki wzięte w (2555, 402) podnoszą alarm:c1, załoga zabita bronią, 3 ładunki, wyjście (2527, 384), wypłata; debrief: badges [no_alarm, clean, swift], ranga A. Przyczyna: core/contracts/scoring.ts badgeHolds sprawdza tally.alarm, ustawiany tylko przez noteAlarm z crime-system.report; contract-system.raiseAlarm stawia tylko flagę alarm:<id> (celowo dla doków, komentarz). ghost alarm też nie wyklucza (raiseAlarm nie woła noteDetected); komentarz core/test/w3-sabotage-loud.test.ts:43 'never ghost' kod nie wymusza. Do decyzji przy poprawce: czy flaga alarmu zlecenia liczy się do no_alarm tylko w W-3 (sabotage), czy też w dokach; czy alarm odbiera ghost.
+- Status: naprawione (17.11, #673 scalony); wcześniej: w PR #673 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: sesja W-3 głośna: po wzięciu ładunków debrief nie zawiera no_alarm
+
+### G-911 Pościg Tessen: oddział w 0,2 s po wejściu w dzielnicę, bez znaku na HUD
+- Ważność: S3 · Zasięg: dzielnice w ciągu 3 dni po drodze głośnej W-3
+- Opis: Playtest 17.11: z flagą tessen-hunt oddział 2 strażników pojawił się 13 ticków po wejściu w Bramę Krakowską, 50 m od gracza, zaalarmowany (lastKnown = pozycja gracza). HUD nic nie pokazuje (heat 0, brak toastu). Bierny gracz ginie w ok. 30 s. Rozwiązanie: ostrzeżenie na HUD i zwłoka na pierwsze losowanie.
+- Status: naprawione (17.11, #671 scalony); wcześniej: w PR #671 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-913 Zapis na drabinie włazu W-3: yaw gracza rozjeżdża się po wczytaniu
+- Ważność: S4 · Zasięg: drabina w3-hatch (2564; 439,3), inne drabiny niesprawdzone
+- Opis: Playtest 17.11: zapis i wczytanie na drabinie; po 600 tickach hash różni się tylko w yaw gracza (2,43 kontra 0): bez zapisu kierunek zostaje, po wczytaniu przypina się do osi drabiny. Uwaga z lekcji: sonda zapisu musi iść przez SaveController.snapshot() i calmForSave; do potwierdzenia, że tak było.
+- Status: naprawione (17.11, #668 scalony); wcześniej: w PR #668 (17.11, zapis v44); wcześniej: przyjęte (17.11, potwierdzone przez łowcę, mały koszt); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Łowca 17.11 (origin/main e2f6330, sesja bez renderera, snapshot przez saves.snapshot()/calmForSave, identyczne wejścia): POTWIERDZONE w węższym zakresie. Rozjazd tylko, gdy gracz obrócił widok (lookYaw) na drabinie: oryginał zachowuje yaw (1,000 po 600 krokach), wczytana gra przypina do osi drabiny (0,000); y i climb zgodne (w3-hatch y -28,05; w3-pipe y -26,65, ten sam wynik). Przyczyna: sim/systems/ladder-system.ts hangOn() bez settle ustawia e.yaw = l.yaw (gałąź 'game saved on a ladder' w ladderSystem.run, komentarz mówi 'where it was'); w grze yaw na drabinie jest swobodny (player-control-system.ts:289). Ogólne dla drabin. Skutek: po wczytaniu kamera zawraca, kierunek ruchu po zejściu inny niż bez zapisu. Poprawka: nie nadpisywać yaw w hangOn bez settle; test: zapis po lookYaw na drabinie, 600 kroków, yaw równy.
+
+### G-909 Droga głośna W-3 nie do przejścia pistoletem na poziomie 6
+- Ważność: S3 · Zasięg: misja W-3 przy zapisie z aktu I (poziom 6, Unity-9)
+- Opis: Playtest 17.11: strażnicy poziomu 11 (154 HP); pistolet ok. 45 obrażeń z magazynku 12, AR-5 67 naboi na strażnika (90 w skrzyni); wejście do korytarza S i zbrojowni: zgon w 12 s przy 6 wrogach. AR-5 w skrzyni z pustym magazynkiem, trzeba go wyposażyć ręcznie w ekranie postaci. Przyczyna: brak zapisu startowego poziomu 12 z ADR-0082. Rozwiązanie: zapis poziomu 12 z AR-5 w slocie i załadowanym albo poziom wrogów bliżej gracza.
+- Status: naprawione (17.11, #667 scalony); wcześniej: w PR #667 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Agent 17.11: zapis startowy poz. 12 (Nowa gra → Zacznij w W-3, slot w3-slice), gałąź ccr-ec2c4269-ilh8k8-g909; korytarz S: przed zgon 21,9 s, po żyje 60 s (84/133 HP).
+
+### G-910 Łup trupa zasłania podłożenie ładunku w W-3
+- Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
+- Opis: Playtest 17.11 (średnia pewność): przy S3 Użyj dawał Search zamiast Plant a charge i otwierał panel łupu (blokuje zapis); przy S1 po podłożeniu też Search. Rozwiązanie: priorytet celu misji nad łupem i Grab.
+- Status: naprawione (17.11, #663 scalony); wcześniej: w PR #663 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Agent 17.11: odtworzone tylko przy S3 (torba 0,36 m, stanowisko 0,54 m); 'Search' przy S1 po podłożeniu to zachowanie poprawne (stanowiska już nie ma).
+
+### G-920 Cel ucieczki W-3 mówi „za płot”, a płotu 2,7 m nie da się przeskoczyć
+- Ważność: S4 · Zasięg: cel sabotageEscape W-3 (en, pl)
+- Opis: Znalezione przy G-906 (17.11): contract.objective.sabotageEscape mówi „over the fence” / „za płot”, a według ADR-0082 płot W-3 ma 2,7 m i jest nie do przejścia; wyjście przez furtkę, bramę albo metro. Rozwiązanie: tekst wskazujący wyjścia (oba katalogi).
+- Status: naprawione (17.11, #666 scalony); wcześniej: w PR #666 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: tekst celu ucieczki nie wspomina płotu
+
+### G-917 Hebi Enforcer strzela shotgunem poza zasięgiem 12 m i stoi na 15 m: elita nie zadaje obrażeń
+- Ważność: S3 · Zasięg: wariant armored zleceń Hebi (od 5. zlecenia), dowódca zleceniowy
+- Opis: Łowca 17.11 (origin/main e2f6330, sonda sim, Plac Litewski, ziarna 1-3, 30 s): hebi_enforcer alerted; na 12,5, 13 i 15 m 18-19 strzałów, 0 trafień; na 11 i 12 m 46-77 obrażeń. Wróg się nie zbliża. Przyczyna: attackRange w world/factory.ts:173 = meleeAttackRange(...) ?? 15 niezależnie od broni, raijin12 ma npc.range 12; GANGER_TREE strzela w attackRange i nie podchodzi do weapon.range. Inne typy mają zapas (Hebi SMG 18 przy 15, Tessen AR-5 30 przy 20). Rozwiązanie: attackRange = min(15, 0,9 × npc.range) albo pościg do npc.range.
+- Status: naprawione (17.11, #665 scalony); wcześniej: w PR #665 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: Enforcer na 13 m przy stojącym graczu zadaje obrażenia w 30 s (dziś 0 z 3 ziaren)
+
+### G-906 Cele drogi głośnej W-3 z miejscem rdzenia serwerowni
+- Ważność: S3 · Zasięg: wszystkie cele drogi głośnej (weź ładunki, podłóż, uciekaj)
+- Opis: Playtest 17.11: cel "Plant the charges…" kończy się "the calibration core in server room N of hall W-3", choć stanowiska są w hali. Odtworzenie: pobrać ładunki ze skrzynki w zbrojowni S (2555; 400,8), przypiąć kontrakt. Rozwiązanie: miejsce zależne od route i etapu.
+- Status: naprawione (17.11, #664 scalony); wcześniej: w PR #664 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/app
+
+### G-905 HUD nie pokazuje celu W-3 przy aktywnym wątku głównym
+- Ważność: S3 · Zasięg: każde zlecenie Genzō (W-3) przy aktywnym wątku głównym
+- Opis: Playtest 17.11: po przyjęciu zlecenia W-3 HUD dalej pokazuje cel głównego wątku (Talk to Kaito, Ask Grandma Ume) z linią bonusu W-3 pod spodem; cele drogi cichej i głośnej, licznik ładunków, zapalnik i termin 06:00 widać dopiero po przypięciu w dzienniku. Odtworzenie: nowa gra lub po akcie I, Genzō, Co to za partia dronów, brak przypięcia. Przyczyna: shownEntryId w app/src/objective.ts przepuszcza kontrakt tylko dla CONTRACT_STEPS. Rozwiązanie: autoprzypięcie kontraktu W-3.
+- Status: naprawione (17.11, #662 scalony); wcześniej: w PR #662 (17.11); wcześniej: w PR #660; wcześniej: zgłoszone
+- Pakiet właściciela: packages/app
+
+### G-902 Goła łata między chodnikiem w793299545 a trawnikiem w804709930 (Ruska, Podzamcze)
+- Ważność: S4 · Zasięg: podzamcze-2-1 x 1066-1070, z 479,5-488
+- Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
+- Status: naprawione (17.11, #657 scalony); wcześniej: w PR #657; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import
+- Klin 1068,485.5-488 (ścieżka w227713090/chodnik, otwarty na zieleń parku) i obszar 1060-1064,476-484 między chodnikami w856618317 i w793299545 zostają gołe. Kontrola walk-lawn-bare: 14565 próbek w mieście, sufit 14600; największe: podzamcze (998,337) 180 m², (803,317) 113 m², (1077,345) 78 m² (szerokie pasy ponad 20 m²).
+
+### G-903 Stopy wskakują z terenu na pomost mostu z 0,46-2,0 m niżej (DECK_HEADROOM)
+- Ważność: S3 · Zasięg: boki pomostów przy przyczółkach: Mełgiewska (2405-2457; 240-330), most Lutosławskiego (2440-2486; 410-440), wiadukt Zamkowej i grobla (730-790; 150-205), kładka (1070-1083; 160); 304 z 1 007 328 prób ruchu (sonda kuratora), 105 z 242 838 (sonda weryfikatora G-898); tak samo na main przed #655
+- Opis: Pomost do DECK_HEADROOM (2 m) nad terenem jest ziemią dla stóp na każdej wysokości (decksAt), a offTheBank blokuje tylko, gdy steepAt w punkcie docelowym. Przy skośnym albo krótkim kroku przez krawędź punkt docelowy na płaskim pomoście nie jest stromy, więc stopy w jednym kroku wskakują o 0,46-2,0 m (przy schodach w56965515 do 4,9 m). W 65% przypadków NMT potwierdza w Lublinie skarpę 0,5-2,5 m pod bokiem mostu (lico, balustrada), a w 35% teren gry jest dodatkowo za nisko (G-339). Proponowana reguła ruchu: wejście w obrys pomostu stopami z terenu poza nim tylko o ≤ STEP_HEIGHT (jak G-898); reguła DECK_HEADROOM tylko dla stóp już na pomoście albo pod nim. Sonda pomija kolizje (mury w294098689/690 stoją przy grobli), więc do potwierdzenia przez łowcę w grze. Przy okazji: offTheBank dał NaN (735,40; 165,56) dla stóp w piwnicy pod pomostem (gradient o długości 0). Sondy: scratchpad topo-overstep.test.ts, topo-overstep-nmt.tsv
+- Status: naprawione (17.11, #656 scalony); wcześniej: w PR #656; wcześniej: zgłoszone (16.11, kurator, przegląd G-898)
+- Pakiet właściciela: packages/sim (ruch: movement-system offTheBank, world/deck decksAt)
+- Test przyjęcia: przemiatanie krawędzi wszystkich pomostów (odsunięcie 0,05-0,6 m, krok 0,03-0,25 m, kąty do ±1,2 rad): zero ruchów z przyrostem stóp > STEP_HEIGHT; deck-step.test.ts bez zmian
+- Przy okazji (kurator 16.11): offTheBank zwrócił NaN w (735,40; 165,56) dla stóp w piwnicy pod pomostem, prawdopodobnie gradient o długości 0. Do potwierdzenia w grze przez łowcę (sonda pomija kolizje, przy grobli Zamkowej stoją mury w294098689/690). Proponowane kontrole skanu: deck-side-below-nmt (baza 85) i deck-side-overstep (baza 304). Sondy: scratchpad topo-decks*.test.ts, topo-overstep.test.ts.
+- Weryfikator 17.11: PRZYJĘTE (sondy różnicowe gracza 13 152 prób, 18 różnic, każda to usunięty glitch; koszt kroku w szumie). Luka do sprawdzenia: krok z niższego pomostu na wyższy o więcej niż stopień nie jest blokowany (warunek !onLowDeck(from)); przemiatanie takiego miejsca nie znalazło. Pomosty 1,68-2 m nad terenem nie są już osiągalne skokiem z boku, zgodnie z regułą.
+
 ### G-870 Kamizelka kuloodporna wcina się w biust: dwie płytki nie dopasowane do sylwetki
 - Ważność: S3 · Zasięg: garment vest-plate na modelach VRoid (Seki i postacie kobiece)
 - Opis: Zgłoszenie użytkownika 15.11. vest-plate (garment-addons.ts) to dwa prostopadłościany na kości chest w stałym miejscu (at 0,-0,05,0,085, size 0,78), nieświadome kształtu ciała. Decyzja użytkownika: kamizelka jako powłoka z ubrania modelu (jak buildVest/buildShell w model-apron.ts), plus osobny research ubrań jako assetów (ADR).
