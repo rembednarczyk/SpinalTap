@@ -2562,7 +2562,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
 - Ważność: S3 · Zasięg: droga cicha W-3
 - Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
-- Status: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Status: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
 - Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
@@ -2611,6 +2611,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
+
+### G-936 Ogłuszony strażnik dalej podaje bark-hak
+- Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
+- Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
