@@ -2502,8 +2502,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-910 Łup trupa zasłania podłożenie ładunku w W-3
 - Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
 - Opis: Playtest 17.11 (średnia pewność): przy S3 Użyj dawał Search zamiast Plant a charge i otwierał panel łupu (blokuje zapis); przy S1 po podłożeniu też Search. Rozwiązanie: priorytet celu misji nad łupem i Grab.
-- Status: zgłoszone
+- Status: w PR #663 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- Agent 17.11: odtworzone tylko przy S3 (torba 0,36 m, stanowisko 0,54 m); 'Search' przy S1 po podłożeniu to zachowanie poprawne (stanowiska już nie ma).
 
 ### G-911 Pościg Tessen: oddział w 0,2 s po wejściu w dzielnicę, bez znaku na HUD
 - Ważność: S3 · Zasięg: dzielnice w ciągu 3 dni po drodze głośnej W-3
