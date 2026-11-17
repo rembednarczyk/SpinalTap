@@ -16,6 +16,8 @@ Status: Proponowany (17.11), do akceptacji wyglądu przez użytkownika. Dotyczy 
 
 6. **Drabina z klipu „Climbing Ladder” (17.11, paczka z folderu Broadside/Animacje).** Klip wspina się w stronę −Z, więc narzędzie obraca go o 180° (`"turn": true`). Na drabinie nogi i głowa idą za klipem; faza to faza rąk (`reachForRungs`: wysokość na drabinie, pętla na dwa szczeble), a lewa ręka sięga w klipie w tej samej części pętli (0,6–0,9), więc stopy idą na krzyż z rękami, w górę i w dół, i stoją, gdy postać wisi. Tułów zostaje proceduralny, bo z niego liczę chwyt dłoni na szczeblach. Sięg nóg w przód skracam do odległości szczebli (palce klipu sięgają 0,57 długości nogi przed biodra), żeby stopy nie wchodziły w drabinę.
 
+7. **Odrzut przy strzale z „firing rifle” (17.11).** Klip „delta” daje ruch tułowia, głowy i bioder oraz nowy tor `gun`: o ile broń cofa się wzdłuż lufy (prawa dłoń wzdłuż linii do lewej, w klipie do 3 cm). Strzał (`ShotFired`) uruchamia odrzut na 0,27 s: tułów i głowa szarpią się wokół bioder (`clips/recoil.ts`, `body-pose.ts`), długa broń cofa się wzdłuż lufy, a ręce idą za nią z IK, pistolet podbija w wyprostowanej ręce o kąt odpowiadający cofnięciu (obie ręce razem, wokół linii barków, więc dłoń podpierająca zostaje na chwycie).
+
 ## Konsekwencje
 - Ruch w bok, w tył i w kucki ma kroki w swoją stronę; widać to u gracza w TPP i u wrogów z ADR-0089.
 - Tablica ma ok. 50 KB w kodzie (13 pętli po 16-42 klatki), bez nowych plików do pobrania.
@@ -23,4 +25,5 @@ Status: Proponowany (17.11), do akceptacji wyglądu przez użytkownika. Dotyczy 
 - Test `model-background-load` porównywał kierunek uda rigu i modelu z nieprzeliczonych macierzy świata; przechodził tylko przy prawie pionowym udzie. Teraz przelicza macierze (retarget zgadza się co do cyfry).
 - Etap 2 dokłada ok. 30 KB tablicy (idle 83 klatki, trafienie 13).
 - Na drabinie stopy stoją na szczeblach przed postacią; wcześniej zwisały za biodrami.
-- Dalej, osobno: wyjście na górę drabiny z „Climbing To Top”, przeładowanie karabinu z klipu (lewa ręka po magazynek, broń za rękami), odrzut przy strzale z klipu „firing rifle”, obrót w miejscu (klipy obrotów są w paczce), kucanie w miejscu z klipu, skok i drabina z klipów, stopy (kostka) i dopasowanie stóp do gruntu.
+- Odrzut jest tak mały, jak w klipie Mixamo (3 cm, pistolet podbija o około 3°); mocniejszy dla strzelby czy rewolweru to jeden parametr `amount` przy `startRecoil`.
+- Dalej, osobno: wyjście na górę drabiny z „Climbing To Top” (klip trwa 4 s, a wyjście w grze 0,6 s, więc trzeba wyciąć i przyspieszyć jego końcówkę), przeładowanie karabinu z klipu (lewa ręka po magazynek, broń za rękami), odrzut przy strzale z klipu „firing rifle”, obrót w miejscu (klipy obrotów są w paczce), kucanie w miejscu z klipu, skok i drabina z klipów, stopy (kostka) i dopasowanie stóp do gruntu.
