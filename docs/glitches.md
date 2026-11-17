@@ -2538,22 +2538,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: walka 40 s bez kroku ponad budżet
 - Przy G-928 nie odtworzył się (pościg Tessen 520,-60, ziarno 3, bez tłumu): to raczej inna przyczyna niż objazdy ucieczki.
 
-### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
-- Ważność: S3 · Zasięg: droga cicha W-3
-- Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
-- Status: w PR #683 runda 3 (ff4eb7b, orkiestrator): zwłoki palacza zostają, kierownik nie zostaje w oknie przy ciele, testy skrócone; bez weryfikatora (tryb bez agentów); wcześniej: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
-- Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
-- Decyzje użytkownika 17.11 po etapie 2: kierownik zmiany dostaje jeden krótki postój (ok. 4 s) przy oknie galerii nad linią na okrążenie (ok. 50 s), osobny mały PR po #683; palaczowi wystarczy kwestia z hakiem, bez pełnego spotkania enc_w3_smoker.
-
-### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
-- Ważność: S4 · Zasięg: wylot kolektora W-3
-- Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
-- Status: w PR #690 (gałąź ccr-ec2c4269-ilh8k8-g930); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: podpowiedź tylko z dna wylotu
-
 ### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
 - Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
 - Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
@@ -2581,11 +2565,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
+- 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
 ### G-936 Ogłuszony strażnik dalej podaje bark-hak
 - Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
 - Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
-- Status: zgłoszone
+- Status: w PR #693 (gałąź ccr-ec2c4269-ilh8k8-g936); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
 

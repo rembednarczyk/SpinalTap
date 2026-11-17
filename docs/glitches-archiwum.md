@@ -2,6 +2,22 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
+- Ważność: S4 · Zasięg: wylot kolektora W-3
+- Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
+- Status: naprawione (17.11, #690 scalony); wcześniej: w PR #690 (gałąź ccr-ec2c4269-ilh8k8-g930); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: podpowiedź tylko z dna wylotu
+
+### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
+- Ważność: S3 · Zasięg: droga cicha W-3
+- Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
+- Status: naprawione (17.11, #683 scalony); wcześniej: w PR #683 runda 3 (ff4eb7b, orkiestrator): zwłoki palacza zostają, kierownik nie zostaje w oknie przy ciele, testy skrócone; bez weryfikatora (tryb bez agentów); wcześniej: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
+- Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
+- Decyzje użytkownika 17.11 po etapie 2: kierownik zmiany dostaje jeden krótki postój (ok. 4 s) przy oknie galerii nad linią na okrążenie (ok. 50 s), osobny mały PR po #683; palaczowi wystarczy kwestia z hakiem, bez pełnego spotkania enc_w3_smoker.
+
 ### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
 - Ważność: S4 · Zasięg: tylko uszkodzony zapis
 - Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
