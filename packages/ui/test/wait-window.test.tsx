@@ -159,6 +159,14 @@ describe("the pause menu's Wait", () => {
     expect(screen.getByTestId("wait-reason").textContent).toBe("Not with the alarm raised.");
   });
 
+  it("is off with Tessen's squad after her (ADR-0082, 17.11), in English and in Polish", () => {
+    const { store } = mount({ screen: "paused", waitBlocked: "hunt" });
+    expect((screen.getByRole("button", { name: "Wait" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByTestId("wait-reason").textContent).toBe("Not with a Tessen squad on your trail.");
+    act(() => store.setState({ settings: { ...DEFAULT_SETTINGS, locale: "pl" } }));
+    expect(screen.getByTestId("wait-reason").textContent).toBe("Nie, gdy oddział Tessen jest na twoim tropie.");
+  });
+
   it("the window's key does nothing in the pause menu", () => {
     const { i } = mount({ screen: "paused" });
     key("KeyL");

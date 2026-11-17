@@ -20,5 +20,6 @@ export const plWait = {
   "wait.blocked.combat": "Nie w czasie walki.",
   "wait.blocked.alarm": "Nie przy podniesionym alarmie.",
   "wait.blocked.wanted": "Nie, gdy cię ścigają.",
+  "wait.blocked.hunt": "Nie, gdy oddział Tessen jest na twoim tropie.",
   "wait.blocked.busy": "Nie teraz.",
 } as const satisfies Readonly<Record<WaitKey, Message>>;

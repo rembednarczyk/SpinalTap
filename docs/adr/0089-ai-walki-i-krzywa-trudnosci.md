@@ -33,9 +33,11 @@ Do decyzji użytkownika (pytanie 2). Mierzy je bot z opóźnieniem reakcji (opis
 
 | Wróg | Gracz zabija (dziś) | Cel | Bierny gracz ginie (dziś) | Cel |
 |---|---|---|---|---|
-| `hebi_ganger` | 0,9-1,5 s | 1,8-3 s | 31-35 s | 10-14 s |
-| `hebi_enforcer` | brak pomiaru | 3-4,5 s | nie ginie z 15 m (G-917) | 6-9 s |
-| `tessen_guard` | 1,7-2,6 s | 3-4,5 s | 7-10 s | 7-10 s |
+| `hebi_ganger` | 0,9-1,15 s | 1,8-3 s | 57-104 s | 10-14 s |
+| `hebi_enforcer` | 1,4-2,0 s | 3-4,5 s | 27-57 s | 6-9 s |
+| `tessen_guard` | 1,4-2,0 s | 3-4,5 s | 21-53 s | 7-10 s |
+
+Kolumny „dziś” pochodzą z testu tempa z etapu 1 (`packages/sim/test/combat-pace.test.ts`, #684, 17.11). Bot reaguje w nim z opóźnieniem 0,15 s, wróg jest sam w odległości 20 m, sceny to Plac Litewski i podwórze W-3, ziarna 1-3, a gracz i jego broń mają poziom z pasma. Audyt z góry („Liczby z audytu”) grał graczem poziomu 1 przeciw wrogom poziomu 16 i stąd jego krótsze zgony: tym samym botem wychodzi Hebi 1,4-1,7 s i 39-48 s, Tessen 2,3-3,1 s i 9-13,5 s. W paśmie bierny gracz żyje 2-3 razy dłużej, więc cele zgonu wymagają w etapie 5 większej zmiany, niż zakładał projekt. Trudny daje dziś zgon w 0,4-0,7 czasu z Normalnego (cel najwyżej 0,65), a zabicie w 1,0-1,3 (cel co najmniej 1,25).
 
 Trudny: czas zgonu biernego gracza najwyżej 0,65 czasu z Normalnego, czas zabicia co najmniej 1,25. Opowieść: czas zgonu co najmniej 1,6 czasu z Normalnego.
 
@@ -140,3 +142,10 @@ Wszystko bez renderera (ADR-0046): `freeze` + `step`, czekanie na stan gry, nie 
 7. Czy zwykli wrogowie mają widoczny znak przed serią (krótkie celowanie, jak laser snajpera, ale słabszy)? To zmiana `ViewDescriptor` i praca w rendererze.
 8. Odzywki przy przeładowaniu i rozstawieniu: w tym ADR-ze (etap 6), czy razem z reakcją grupową, którą ADR-0069 odłożył?
 9. Jeśli C: osłony najpierw tylko w W-3 i scenach zleceń (rekomendacja), czy od razu w całym mieście z generatora?
+
+## Decyzje użytkownika (17.11, po przyjęciu wariantu B)
+- **Pytanie 2:** cele tempa walki z tabeli zostają. Dłuższy czas zabicia ma wynikać tylko z ruchu wroga (pasmo broni, krok w bok, przerwy). Zdrowie wrogów zostaje bez zmian.
+- **Pytanie 5:** na Normalnym strzela naraz 2 wrogów, na Opowieści 1, na Trudnym 3.
+- **Pytanie 6:** świat zostaje mocniejszy. Poziom wroga trzyma się pasma (ADR-0059), a gracz poniżej pasma ma w wycinku zapis startowy (G-909).
+- **Pytanie 7:** znak przed serią będzie, ale jako osobny etap po ruchu i żetonach (po etapach 3-4), kiedy pomiar pokaże, czy walka jest czytelna bez niego.
+- Otwarte przed etapem 5: pytania 3 (krzywa w paśmie), 4 (pole `npcPressure` jako suwak) i 8 (odzywki).

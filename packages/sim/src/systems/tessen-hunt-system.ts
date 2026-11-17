@@ -20,6 +20,7 @@ import type { SimContext, System } from "../world/context";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { enemyScalingIn } from "../world/enemy-scaling";
 import { reinforcementEntity } from "../world/reinforcements";
+import { TESSEN_SQUAD_BACK_PREFIX, tessenHuntStretch, tessenSquadBack, tessenSquadBackFlag, tessenSquadComing, tessenSquadOut } from "../world/tessen-squad";
 import { worldTimeScale } from "./ability-system";
 import { inPlayerView } from "./crime-system";
 import { TRACK_GRACE } from "./ai/ganger-perception";
@@ -36,7 +37,9 @@ import { heightApart } from "../world/ground";
  * saved with them, and gone home once they lost her. The roll is a flag of the district and the
  * stretch of the day, so a load rolls the same; its draw comes from the seed and the flag. The roll
  * only puts the squad on its way, as a flag the HUD warns of; it comes in 20-40 s later (G-911).
- * One that finds no way to her from its entry goes back and waits for her where one leads (G-922).
+ * One that finds no way to her from its entry goes back and waits for her where one leads (G-922),
+ * in the stretch it went back in; one on its way waits for an entry as long as waiting is refused
+ * past its tick (#682). Then it is gone, and the next roll warns her as any does (G-934).
  */
 
 /** The squad stands this far apart at its entry. */
@@ -70,28 +73,22 @@ const mayWalk = (ctx: SimContext, from: Vec3, to: Vec3): boolean =>
   heightApart(ctx.world, to, from) <= SAME_FLOOR && (!outsideWindow(PLANNED, from, to) || straightWalk(ctx.world, from, to));
 
 /**
- * A squad gone back from where no way led to her (G-922): it comes in where one does, with no new
- * warning, as the one on its way (it was, and she was told). A flag, so a load keeps it waiting.
+ * An entry no way led from to her at a lead (G-922): `<entry>@<x>,<y>,<z>@<day>:<stretch>`, the
+ * entry's index in `SECURITY_ENTRIES` and the stretch of the day the squad went back in (G-934; a
+ * save of v44 has none).
  */
-const BACK_PREFIX = "tessen-hunt-back:";
-/** An entry no way led from to her at a lead (G-922): `<entry>@<x>,<y>,<z>`, the entry's index in `SECURITY_ENTRIES`. */
 const WAYLESS_PREFIX = "tessen-hunt-wayless:";
 
-/** The squad gone back, from the flags; null without one. */
-const tessenSquadBack = (flags: readonly string[]): { flag: string; size: number } | null => {
-  const flag = flags.find((f) => f.startsWith(BACK_PREFIX));
-  return flag ? { flag, size: Number(flag.slice(BACK_PREFIX.length)) } : null;
-};
+const waylessFlag = (entry: number, lead: Vec3, stretch: string): string =>
+  `${WAYLESS_PREFIX}${entry}@${[lead.x, lead.y, lead.z].map((v) => Math.round(v * 10) / 10).join(",")}@${stretch}`;
 
-const waylessFlag = (entry: number, lead: Vec3): string => `${WAYLESS_PREFIX}${entry}@${[lead.x, lead.y, lead.z].map((v) => Math.round(v * 10) / 10).join(",")}`;
-
-/** The flags of the entries no way led from, with the entry and the lead. */
+/** The flags of the entries no way led from, with the entry, the lead and the stretch (null in a flag from before it was kept). */
 const waylessOf = (flags: readonly string[]) =>
   flags.flatMap((flag) => {
     if (!flag.startsWith(WAYLESS_PREFIX)) return [];
-    const [entry = "", at = ""] = flag.slice(WAYLESS_PREFIX.length).split("@");
+    const [entry = "", at = "", stretch] = flag.slice(WAYLESS_PREFIX.length).split("@");
     const [x = 0, y = 0, z = 0] = at.split(",").map(Number);
-    return [{ flag, entry: Number(entry), lead: { x, y, z } }];
+    return [{ flag, entry: Number(entry), lead: { x, y, z }, stretch: stretch ?? null }];
   });
 
 /**
@@ -116,10 +113,6 @@ const entriesFor = (ctx: SimContext, player: Entity): Vec3[] => {
     (p) => !wayless.has(SECURITY_ENTRIES.indexOf(p)) && Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z) >= TESSEN_HUNT.clinicClear && !inPlayerView(ctx, player, p),
   );
 };
-
-/** A squad of the hunt still on its feet in the world? */
-const squadOut = (ctx: SimContext): boolean =>
-  ctx.world.with("security").entities.some((e) => !!e.ai && !e.downed && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
 
 /** The nearest street entry far enough from her and the clinic, out of her view, that a chase may walk to her from. */
 const huntEntry = (ctx: SimContext, player: Entity): Vec3 | null => entriesFor(ctx, player).find((p) => mayWalk(ctx, p, player.position)) ?? null;
@@ -192,9 +185,10 @@ const reroute = (ctx: SimContext, player: Entity): void => {
   // Its own entry (the first stands `SPREAD` off it) and the others the way leads nowhere from.
   const own = SECURITY_ENTRIES.findIndex((p) => Math.hypot(p.x - first.ai.home.x, p.z - first.ai.home.z) <= SPREAD + 0.01);
   const none = entries.flatMap((p) => (judged(spotAt(p, 0, squad.length)) ? [SECURITY_ENTRIES.indexOf(p)] : []));
-  for (const i of new Set([own, ...none])) if (i >= 0) raiseFlag(ctx, waylessFlag(i, lead));
+  const stretch = tessenHuntStretch(ctx.state.domain.clock);
+  for (const i of new Set([own, ...none])) if (i >= 0) raiseFlag(ctx, waylessFlag(i, lead, stretch));
   for (const g of squad) ctx.world.remove(g);
-  raiseFlag(ctx, `${BACK_PREFIX}${squad.length}`);
+  raiseFlag(ctx, tessenSquadBackFlag(squad.length, ctx.state.domain.clock));
 };
 
 /**
@@ -226,6 +220,23 @@ const keepTrail = (ctx: SimContext): void => {
   }
 };
 
+/**
+ * The flags of a squad that did not come in when it should (G-934): gone back, past the stretch of
+ * the day it went back in, with the entries it found no way from (a save of v44 keeps no stretch:
+ * of one past); on its way, once it is no longer coming (past its tick and the lateness waiting is
+ * refused for, #682). The next roll, of the stretch or the district she is in once its own was
+ * spent, puts the next one on its way, with its warning (the user's decision of 17.11).
+ */
+const dropStale = (ctx: SimContext): void => {
+  const { flags, clock } = ctx.state.domain;
+  const stretch = tessenHuntStretch(clock);
+  const due = tessenSquadDue(flags);
+  const back = tessenSquadBack(flags);
+  if (due && !tessenSquadComing(flags, ctx.tick)) lowerFlag(ctx, due.flag);
+  if (back && back.stretch !== stretch) lowerFlag(ctx, back.flag);
+  for (const w of waylessOf(flags)) if (w.stretch !== stretch) lowerFlag(ctx, w.flag);
+};
+
 /** One step of the hunt: its end, the squad on its way coming in, and the roll of the district and the stretch of the day. */
 export const tessenHuntSystem: System = {
   name: "tessen-hunt",
@@ -235,18 +246,19 @@ export const tessenHuntSystem: System = {
     if (until === null) return;
     if (!tessenHuntActive(flags, clock)) {
       lowerFlag(ctx, tessenHuntFlag(until));
-      const hunt = (f: string) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f) || f.startsWith(BACK_PREFIX) || f.startsWith(WAYLESS_PREFIX);
+      const hunt = (f: string) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f) || f.startsWith(TESSEN_SQUAD_BACK_PREFIX) || f.startsWith(WAYLESS_PREFIX);
       for (const f of flags.filter(hunt)) lowerFlag(ctx, f);
       return;
     }
     // Once a second is often enough to look for an entry.
     const rate = Math.round(1 / ctx.dt);
     if (ctx.tick % rate !== 0 || ctx.session.gameOver) return;
+    dropStale(ctx);
     keepTrail(ctx);
     const player = ctx.world.with("player").first;
     const district = player ? ctx.streamer.districtAt(player.position) : null;
     if (!player || !district) return;
-    for (const w of waylessOf(flags)) if (!waylessHolds(ctx, w.lead, player.position)) lowerFlag(ctx, w.flag);
+    for (const w of waylessOf(ctx.state.domain.flags)) if (!waylessHolds(ctx, w.lead, player.position)) lowerFlag(ctx, w.flag);
     reroute(ctx, player);
     // As the squad going back left them (G-922): those of the step's start let a roll put a second one on its way.
     const now = ctx.state.domain.flags;
@@ -254,7 +266,7 @@ export const tessenHuntSystem: System = {
     const due = tessenSquadDue(now);
     const back = tessenSquadBack(now);
     if (due || back) {
-      const at = !squadOut(ctx) && (back || (due && ctx.tick >= due.tick)) ? huntEntry(ctx, player) : null;
+      const at = !tessenSquadOut(ctx.world) && (back || (due && ctx.tick >= due.tick)) ? huntEntry(ctx, player) : null;
       if (!at) return;
       for (const f of [due?.flag, back?.flag]) if (f) lowerFlag(ctx, f);
       sendSquad(ctx, player, at, back?.size ?? due?.size ?? TESSEN_HUNT.squadMin);
@@ -263,8 +275,8 @@ export const tessenHuntSystem: System = {
     const roll = tessenHuntRollFlag(district, clock);
     if (now.includes(roll)) return;
     // One squad at a time: the roll goes by while one is out.
-    const at = squadOut(ctx) ? null : huntEntry(ctx, player);
-    if (!squadOut(ctx) && !at) return;
+    const at = tessenSquadOut(ctx.world) ? null : huntEntry(ctx, player);
+    if (!tessenSquadOut(ctx.world) && !at) return;
     for (const f of now.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
     raiseFlag(ctx, roll);
     if (!at) return;
