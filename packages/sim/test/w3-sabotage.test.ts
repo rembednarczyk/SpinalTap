@@ -295,6 +295,43 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     expect(hash(reload(sim))).toBe(hash(sim));
   });
 
+  it("the shift manager seeing a body in the hall below from his window calls it in and goes back to his round (G-929)", () => {
+    // P1 knocked out in the aisle (the verifier's case); a corpse goes the same way (`lookedAt`).
+    for (const [x, z, dead] of [[2547, 416, false]] as const) {
+      const sim = Simulation.create({ seed: 3 });
+      const c = accept(sim);
+      outside(sim);
+      run(sim, 2);
+      const m = byKey(sim, `${c.id}-manager`)!;
+      // P1 down in the aisle under the window, the rest of the hall as it is.
+      const p1 = [...sim.world.with("ai")].find((e) => e.ai.route?.points === W3_PATROL_HALL)!;
+      const at = w3(x, 0, z);
+      p1.position = { ...at };
+      p1.prevPosition = { ...at };
+      p1.velocity = { x: 0, y: 0, z: 0 };
+      sim.world.addComponent(p1, "unconscious", true);
+      sim.world.addComponent(p1, "downed", freshDowned(at, false, dead));
+      const offRound = () => {
+        const pose = routePose(m.ai!.route!, sim.tick / SIM_HZ).position;
+        return Math.hypot(m.position.x - pose.x, m.position.z - pose.z);
+      };
+      // Stepped until he has seen it from his window and is back on his round, at most 50 s.
+      let lowest = Infinity;
+      let lookedFromAbove = false;
+      for (let i = 0; i < 50 * SIM_HZ; i++) {
+        sim.step();
+        lowest = Math.min(lowest, m.position.y);
+        if (p1.downed?.lookedBy.includes(m.id)) lookedFromAbove = true;
+        if (lookedFromAbove && !m.ai?.lastKnown && offRound() < 1.5) break;
+      }
+      expect(lookedFromAbove, `(${x}; ${z}) seen from the window`).toBe(true);
+      expect(p1.downed?.finder ?? null).not.toBe(m.id);
+      expect(lowest).toBeCloseTo(W3_PATROL_MANAGER[0].y, 1);
+      expect(m.ai?.lastKnown ?? null).toBeNull();
+      expect(offRound(), `(${x}; ${z}) back on his round`).toBeLessThan(1.5);
+    }
+  });
+
   it("the shift manager keeps to the mezzanine (G-929): a lead in the hall below he looks towards from his round, one on the gallery he walks to", () => {
     for (const [lead, below] of [
       [w3(2529, 0, 418), true],
