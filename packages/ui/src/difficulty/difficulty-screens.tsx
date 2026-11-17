@@ -1,12 +1,16 @@
 import { useT } from "../i18n/use-t";
-import { useSessionIntents, useUi } from "../use-ui";
+import { useSessionIntents, useStartSaveIntents, useUi } from "../use-ui";
 import { DifficultyPicker } from "./difficulty-picker";
 import { useNewGameDifficulty, useRunDifficulty } from "./use-difficulty";
 
-/** Before a new game loads (ADR-0066): the difficulty, "normal" at first, then the start. */
+/**
+ * Before a new game loads (ADR-0066): the difficulty, "normal" at first, then the start, or W-3's
+ * start save on the same difficulty (ADR-0082: the slice at level 12).
+ */
 export const NewGameSetup = ({ onBack }: { onBack: () => void }) => {
   const t = useT();
   const intents = useSessionIntents();
+  const starts = useStartSaveIntents();
   const busy = useUi((s) => s.busy);
   const difficulty = useNewGameDifficulty();
   return (
@@ -15,6 +19,9 @@ export const NewGameSetup = ({ onBack }: { onBack: () => void }) => {
       <DifficultyPicker value={difficulty.value} onChange={difficulty.set} />
       <button type="button" className="menu__item" disabled={busy} onClick={() => intents.newGame(difficulty.value)}>
         {t("newGame.start")}
+      </button>
+      <button type="button" className="menu__item" disabled={busy} data-testid="start-w3-slice" onClick={() => starts.startW3Slice(difficulty.value)}>
+        {t("newGame.w3Slice")}
       </button>
       <button type="button" className="menu__item menu__item--ghost" onClick={onBack}>
         {t("menu.back")}

@@ -15,6 +15,7 @@ import type {
   SessionIntents,
   SettingsIntents,
   ShopIntents,
+  StartSaveIntents,
   UiIntents,
   WaitIntents,
 } from "@seki/ui";
@@ -80,6 +81,7 @@ const HACK: Keys<HackIntents> = { setScan: true, pickQuickhack: true, submitBrea
 const METRO: Keys<MetroIntents> = { selectMetroStop: true, buyMetroTicket: true, closeMetro: true };
 const RADIO: Keys<RadioIntents> = { setRadioStation: true, nextRadioStation: true };
 const WAIT: Keys<WaitIntents> = { openWait: true, closeWait: true, waitHours: true };
+const STARTS: Keys<StartSaveIntents> = { startW3Slice: true };
 
 /** The journal has no controller: following an entry is one command to the simulation. */
 const journalIntents = (sim: SimRef): JournalIntents => ({
@@ -104,6 +106,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<MetroIntents>(c.metro, METRO),
   ...part<RadioIntents>(c.radio, RADIO),
   ...part<WaitIntents>(c.wait, WAIT),
+  ...part<StartSaveIntents>(c.starts, STARTS),
 });
 
 /** What the UI gets (`GameUi`'s `intents`): the session's own intents and the controllers' parts. */

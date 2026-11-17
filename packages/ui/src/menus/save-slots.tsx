@@ -9,10 +9,14 @@ const CORRUPT_SLOT = "save.corrupt";
 /** The slot the app autosaves to (only listed when loading: the player never saves into it). */
 export const AUTOSAVE_SLOT = "auto";
 
+/** The slot W-3's start save is written to and loaded from (ADR-0082); loading it again starts the slice over. */
+export const W3_SLICE_SLOT = "w3-slice";
+
 const slotName = (slot: string, t: ReturnType<typeof useT>): string => {
   if (slot === AUTOSAVE_SLOT) return t("slots.auto");
   if (slot === "quick") return t("slots.quick");
   if (slot === "import") return t("slots.imported");
+  if (slot === W3_SLICE_SLOT) return t("slots.w3Slice");
   return t("slots.slot", { n: slot.replace("slot-", "") });
 };
 

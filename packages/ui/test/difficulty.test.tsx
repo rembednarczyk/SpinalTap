@@ -65,6 +65,15 @@ describe("new game setup", () => {
     expect(i.newGame).toHaveBeenCalledWith({ ...DIFFICULTY_PRESETS.hard, npcHealth: 2.05 });
   });
 
+  it("starts W-3's start save on the chosen difficulty instead of a new game (ADR-0082)", () => {
+    const { i } = mount();
+    openSetup();
+    fireEvent.click(radio("Hard"));
+    fireEvent.click(screen.getByRole("button", { name: "Start at W-3 (level 12)" }));
+    expect(i.startW3Slice).toHaveBeenCalledWith(DIFFICULTY_PRESETS.hard);
+    expect(i.newGame).not.toHaveBeenCalled();
+  });
+
   it("speaks Polish with the Polish setting, numbers with a comma", () => {
     mount({ settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
     fireEvent.click(screen.getByRole("button", { name: "Nowa gra" }));
@@ -77,6 +86,7 @@ describe("new game setup", () => {
     expect(slider("Otrzymywane obrażenia").value).toBe("1.4");
     expect(screen.getByText("1,40×")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Rozpocznij" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Zacznij w W-3 (poziom 12)" })).toBeTruthy();
   });
 });
 
