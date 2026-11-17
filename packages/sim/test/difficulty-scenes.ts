@@ -20,7 +20,7 @@ export const tough = (sim: Simulation) => {
 
 /** W-3's hall chunk (ADR-0082) and its east yard, open floor. */
 export const DOCKS_CHUNK = "nabrzeze-1-1";
-const EAST_YARD: Vec3 = w3(2590, 0, 418);
+export const EAST_YARD: Vec3 = w3(2590, 0, 418);
 
 /**
  * On W-3's east yard with a Tessen guard (or `type`) `distance` m west of the player, alerted, after
