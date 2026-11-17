@@ -2522,12 +2522,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
 - Status: zgłoszone
 - Pakiet właściciela: packages/narrative
+- Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
 
 ### G-913 Zapis na drabinie włazu W-3: yaw gracza rozjeżdża się po wczytaniu
 - Ważność: S4 · Zasięg: drabina w3-hatch (2564; 439,3), inne drabiny niesprawdzone
 - Opis: Playtest 17.11: zapis i wczytanie na drabinie; po 600 tickach hash różni się tylko w yaw gracza (2,43 kontra 0): bez zapisu kierunek zostaje, po wczytaniu przypina się do osi drabiny. Uwaga z lekcji: sonda zapisu musi iść przez SaveController.snapshot() i calmForSave; do potwierdzenia, że tak było.
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
+
+### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
+- Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
+- Opis: Odtworzenie 17.11 (łowca, sesja bez renderera, origin/main e2f6330): W-3 głośna, ładunki wzięte w (2555, 402) podnoszą alarm:c1, załoga zabita bronią, 3 ładunki, wyjście (2527, 384), wypłata; debrief: badges [no_alarm, clean, swift], ranga A. Przyczyna: core/contracts/scoring.ts badgeHolds sprawdza tally.alarm, ustawiany tylko przez noteAlarm z crime-system.report; contract-system.raiseAlarm stawia tylko flagę alarm:<id> (celowo dla doków, komentarz). ghost alarm też nie wyklucza (raiseAlarm nie woła noteDetected); komentarz core/test/w3-sabotage-loud.test.ts:43 'never ghost' kod nie wymusza. Do decyzji przy poprawce: czy flaga alarmu zlecenia liczy się do no_alarm tylko w W-3 (sabotage), czy też w dokach; czy alarm odbiera ghost.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: sesja W-3 głośna: po wzięciu ładunków debrief nie zawiera no_alarm
+
+### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
+- Ważność: S4 · Zasięg: każda walka z łupem
+- Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
+- Status: zgłoszone
+- Pakiet właściciela: packages/app
+- Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
