@@ -3,7 +3,7 @@ import { type DomainEvents, type EntityId, EventBus } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { SIM_HZ } from "@seki/sim";
-import { type Toast, createUiStore, dismissToast } from "@seki/ui";
+import { type Toast, createUiStore, dismissToast, patchUi } from "@seki/ui";
 import { bindEventPresenter } from "../src/event-presenter";
 import { GameSession } from "../src/game-session";
 import { FakeRender, frame, steps } from "./story-helpers";
@@ -153,5 +153,32 @@ describe("reaction toasts keep a quiet gap of play time (G-281)", () => {
     clock.seconds = 5;
     flee();
     expect(shown.size).toBe(2);
+  });
+});
+
+describe("a gunner's calls in a fight (ADR-0089 stage 6)", () => {
+  it("say what it does in the gang's talk or the drill, as its faction, in English and Polish", () => {
+    const bus = new EventBus<DomainEvents>();
+    const ui = createUiStore();
+    bindEventPresenter(bus, new FakeRender(), { play() {}, stopAll() {} }, ui, {
+      playerId: () => 1,
+      playSeconds: () => 100,
+      onDialogue() {},
+      onShop() {},
+      onLoot() {},
+      onPlayerDied() {},
+      onDialogueInterrupted() {},
+    });
+    const shown = watchToasts(ui).shown;
+    bus.emit("NpcReacted", { entityId: 7, faction: "hebi", reaction: "reload" });
+    bus.emit("NpcReacted", { entityId: 8, faction: "tessen", reaction: "flank" });
+    expect([...shown.values()].map((t) => [t.title, t.text])).toEqual([
+      ["Hebi gang", "“Empty! Cover me, I'm loading!”"],
+      ["Tessen security", "“Moving to flank.”"],
+    ]);
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    bus.emit("NpcReacted", { entityId: 9, faction: "hebi", reaction: "flank" });
+    bus.emit("NpcReacted", { entityId: 10, faction: "tessen", reaction: "reload" });
+    expect([...shown.values()].slice(2).map((t) => t.text)).toEqual(["„Zajdź ją z boku, jazda!”", "„Przeładowuję. Osłona.”"]);
   });
 });

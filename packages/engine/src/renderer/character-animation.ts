@@ -1,6 +1,6 @@
 import type { CharacterRig } from "./character-rig";
 import { type LadderRungs, reachForRungs } from "./ladder-hands";
-import { AIM_HOLD, applyStagger, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { AIM_HOLD, applyStagger, pointPistol, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
 import { applySwingBody, poseMeleeArms } from "./melee-poses";
 import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
@@ -247,6 +247,7 @@ const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: num
     if (!rig.melee && !rig.leftHold) rig.fist[0] = 0.5 * smooth(Math.min(1, Math.max(0, rig.aim)));
   }
   const w = holdWeight(rig);
+  if (w <= 0) pointPistol(rig);
   if (w > 0) {
     const left = rig.leftHold ? 0 : w;
     holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadPhase(rig));
