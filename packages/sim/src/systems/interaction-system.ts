@@ -1,10 +1,10 @@
-import { type EntityId, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
+import { type Contract, type EntityId, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
-import { useSabotage } from "./sabotage-system";
+import { sabotageGoal, useSabotage } from "./sabotage-system";
 
 import { callElevator } from "./elevator-system";
 import { forceDoor } from "./door-system";
@@ -14,14 +14,36 @@ import { helpPasserBy } from "../world/micro-events";
 import { GRAB_PROMPT, TAKEDOWN_PROMPT } from "../world/takedown";
 import { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "../world/bodies";
 
+/** Is this the crate of the running retrieval job, or the data of an infiltration? */
+const contractCrate = (ctx: SimContext, crate: Entity): boolean => {
+  const contract = ctx.state.domain.contracts.active;
+  const kind = contract ? contractKind(contract) : null;
+  return contract?.status === "active" && (kind === "retrieve" || kind === "infiltrate") && crate.key === contractItemKey(contract.id);
+};
+
+/** The running hack job when this is its terminal. */
+const hackTerminal = (ctx: SimContext, terminal: Entity): Contract | null => {
+  const contract = ctx.state.domain.contracts.active;
+  return contract?.status === "active" && contractKind(contract) === "hack" && terminal.key === contractTerminalKey(contract.id) ? contract : null;
+};
+
+/**
+ * Would the key do the running job's work with this now (G-910): take its crate, start its hack or
+ * open the breach, the sabotage's steps? Such a goal in reach goes before a bag, a takedown or a
+ * body nearer, so the dead of a fight by it do not take the key from the job.
+ */
+const jobGoal = (ctx: SimContext, e: Entity): boolean => {
+  const hack = hackTerminal(ctx, e);
+  if (hack) return hack.progress === undefined || !hack.breach;
+  return contractCrate(ctx, e) || sabotageGoal(ctx, e);
+};
+
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
  * it leaves the world and the job is cleared.
  */
 const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
-  const contract = ctx.state.domain.contracts.active;
-  const kind = contract ? contractKind(contract) : null;
-  if (!crate.key || contract?.status !== "active" || (kind !== "retrieve" && kind !== "infiltrate") || crate.key !== contractItemKey(contract.id)) return;
+  if (!crate.key || !contractCrate(ctx, crate)) return;
   raiseFlag(ctx, takenFlag(crate.key));
   ctx.world.remove(crate);
   ctx.session.focusId = null;
@@ -31,9 +53,8 @@ const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
 
 /** The terminal of the running hack job: the key starts the hack and the alarm (ADR-0024). */
 const startHack = (ctx: SimContext, terminal: Entity): void => {
-  const contract = ctx.state.domain.contracts.active;
-  if (contract?.status !== "active" || contractKind(contract) !== "hack") return;
-  if (terminal.key !== contractTerminalKey(contract.id)) return;
+  const contract = hackTerminal(ctx, terminal);
+  if (!contract || !terminal.key) return;
   // The terminal's network opens (ADR-0029): the HUD plays Breach Protocol and answers with
   // `breach-result`. A breach cut short sends nothing, so the key opens it again until one lands.
   if (!contract.breach) ctx.bus.emit("BreachStarted", { terminalKey: terminal.key, daemons: BREACH_DAEMONS });
@@ -78,12 +99,45 @@ const bodyAction = (session: SimContext["session"], bestDist: number): { id: Ent
 /** Vertical reach of the interact key, metres between feet (or the button's base). */
 const INTERACT_REACH_Y = 1.6;
 
+type Interactable = Entity & { interactable: NonNullable<Entity["interactable"]> };
+
+/**
+ * The nearest interactable in reach and the distance a takedown or a body must beat. With the
+ * job's goal in reach the bags step aside, and when the goal is the nearest of the rest it beats
+ * a takedown or a body too (G-910): the dead of a fight by a station do not take the key from it.
+ */
+const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; bestDist: number } => {
+  let best: Interactable | null = null;
+  let bestDist = Infinity;
+  let near: Interactable | null = null;
+  let nearDist = Infinity;
+  let goal = false;
+  for (const e of ctx.world.with("interactable")) {
+    // On a ladder the only way off is up, down or a jump. Nobody talks to someone knocked out.
+    if ((e.interactable.kind === "ladder" && player.climb) || e.unconscious) continue;
+    const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
+    // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
+    if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y || d > e.interactable.radius) continue;
+    if (d < bestDist) {
+      best = e;
+      bestDist = d;
+    }
+    if (e.interactable.kind !== "loot" && d < nearDist) {
+      near = e;
+      nearDist = d;
+    }
+    goal ||= jobGoal(ctx, e);
+  }
+  if (!goal || !near) return { best, bestDist };
+  return { best: near, bestDist: jobGoal(ctx, near) ? -Infinity : nearDist };
+};
+
 /**
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
  * pickup is taken on the spot instead. A shop opens on any standing: a hostile owner charges
  * more and sells only the basics (ADR-0070). What an NPC on a daily plan offers can change with the hour
  * (see the schedule system). A takedown or a body (ADR-0065) nearer than anything else takes the
- * prompt, and a carried body always does; the app answers its interact key with the `takedown`,
+ * prompt, unless the job's goal is the nearest thing besides bags (G-910), and a carried body always does; the app answers its interact key with the `takedown`,
  * `carry-body` or `drop-body` command, so the key does nothing here.
  */
 export const interactionSystem: System = {
@@ -93,19 +147,7 @@ export const interactionSystem: System = {
     if (session.dialogueActive || session.gameOver) return;
     const player = world.with("player").first;
     if (!player) return;
-    let best: (Entity & { interactable: NonNullable<Entity["interactable"]> }) | null = null;
-    let bestDist = Infinity;
-    for (const e of world.with("interactable")) {
-      // On a ladder the only way off is up, down or a jump. Nobody talks to someone knocked out.
-      if ((e.interactable.kind === "ladder" && player.climb) || e.unconscious) continue;
-      const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
-      // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
-      if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y) continue;
-      if (d <= e.interactable.radius && d < bestDist) {
-        best = e;
-        bestDist = d;
-      }
-    }
+    const { best, bestDist } = nearest(ctx, player);
     const action = bodyAction(session, bestDist);
     const focusId = action ? action.id : (best?.id ?? null);
     const prompt = action ? action.prompt : (best?.interactable.prompt ?? null);
