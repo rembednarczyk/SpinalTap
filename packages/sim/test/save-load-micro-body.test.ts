@@ -113,9 +113,12 @@ describe("the body of a micro-event's mugger in the save (G-233)", () => {
     // Its victim went with the mugging: sent after nobody, in the game as after a load.
     expect(bodies(sim).map((b) => b.ai?.victim)).toEqual([undefined]);
     for (const s of [sim, loaded]) {
-      // The security sent to the body (it fought her) leaves; a passer-by both games have comes by and wakes it.
+      // The street's guards leave: the security sent to the body (it fought her) and the patrols, one
+      // of which may walk over to it (a load forgets who did, so it may come again; ADR-0089 moved
+      // the fight that put the Bramowa's there). A passer-by both games have comes by and wakes it.
       const [body] = bodies(s);
-      for (const g of [...s.world.with("ai")]) if (g.key && g.ai.alerted) s.world.remove(g);
+      for (const g of [...s.world.with("ai")]) if (g.key) s.world.remove(g);
+      body!.downed.finder = null;
       const mei = s.world.with("civilian").entities.find((c) => c.key === "mei")!;
       mei.position = { ...body!.position, x: body!.position.x + 1 };
       mei.prevPosition = { ...mei.position };

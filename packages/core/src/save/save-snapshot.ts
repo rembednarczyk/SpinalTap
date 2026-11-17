@@ -89,7 +89,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 44;
+export const SAVE_SCHEMA_VERSION = 45;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -132,6 +132,8 @@ export interface EntitySnapshot {
   readonly gun?: GunSnapshot;
   /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */
   readonly sniper?: SniperSnapshot;
+  /** A gunner's burst and sidestep (ADR-0089 stage 3, v45). Absent until it first fought. */
+  readonly tactic?: TacticSnapshot;
   /** A walking NPC's stuck check (G-208). Absent for one that never walked since it was made. */
   readonly walk?: WalkSnapshot;
   /**
@@ -288,6 +290,20 @@ export interface SniperSnapshot {
   /** Index into its perches. */
   readonly perch: number;
 }
+
+/**
+ * A gunner's fight between two steps (ADR-0089 stage 3): the shots left of its burst, the side it
+ * goes round the player, the metres left of its sidestep (0 standing) and the seconds it stands.
+ */
+export interface TacticSnapshot {
+  readonly shots: number;
+  readonly side: 1 | -1;
+  readonly stride: number;
+  readonly rest: number;
+}
+
+/** The longest sidestep of a gunner (ADR-0089 stage 3: 1.5-3 m), metres. */
+export const MOST_STRIDE = 3;
 
 /** A body (ADR-0065): what the street knows of it and where the player put it. */
 export interface BodySnapshot {

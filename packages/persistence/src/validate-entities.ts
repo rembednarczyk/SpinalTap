@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_PLAN_STEPS, MOST_UNSTICK_STEPS, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_PLAN_STEPS, MOST_STRIDE, MOST_UNSTICK_STEPS, npcBurst, npcWeapon } from "@seki/core";
 import { findMotionError } from "./validate-motion";
 
 type Json = Record<string, unknown>;
@@ -13,11 +13,27 @@ const SNIPER_PHASES: readonly unknown[] = ["idle", "aim", "rest", "move"];
 
 /** The most rounds an NPC's magazine holds (G-185): a keyed NPC's weapon is the content's, not the save's. */
 const MOST_ROUNDS = Math.max(...Object.values(ENEMY_TYPES).map((t) => npcWeapon(t.weapon).magazine));
+/** The longest burst of an enemy's weapon (ADR-0089 stage 3). */
+const MOST_BURST = Math.max(...Object.values(ENEMY_TYPES).map((t) => npcBurst(t.weapon)));
 
 /** G-185: an NPC's gun between shots, with no more rounds than `most`; a sniper's phase, seconds left and perch. */
 const isGun = (v: unknown, most = MOST_ROUNDS): boolean =>
   isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && (v.loaded as number) <= most && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
 const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(v.phase) && isTime(v.timer) && Number.isInteger(v.perch) && (v.perch as number) >= 0;
+
+/**
+ * ADR-0089 stage 3: a gunner's shots left of its burst (no more than any burst), its side, the
+ * metres left of its sidestep (no longer than any) and the seconds it stands.
+ */
+const isTactic = (v: unknown): boolean =>
+  isObject(v) &&
+  Number.isInteger(v.shots) &&
+  (v.shots as number) >= 1 &&
+  (v.shots as number) <= MOST_BURST &&
+  (v.side === 1 || v.side === -1) &&
+  isTime(v.stride) &&
+  (v.stride as number) <= MOST_STRIDE &&
+  isTime(v.rest);
 
 const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
 const isPlan = (v: unknown): boolean =>
@@ -64,6 +80,7 @@ export const findEntityError = (e: unknown, tick: number): string | null => {
   if (e.away !== undefined && !(isNum(e.away) && e.away >= 0)) return `entity ${e.key} away`;
   if (e.gun !== undefined && !isGun(e.gun)) return `entity ${e.key} gun`;
   if (e.sniper !== undefined && !isSniper(e.sniper)) return `entity ${e.key} sniper`;
+  if (e.tactic !== undefined && !isTactic(e.tactic)) return `entity ${e.key} tactic`;
   if (e.walk !== undefined && !isWalk(e.walk, tick)) return `entity ${e.key} walk`;
   // G-882 (v40): quickhack effects still running, seconds left, none negative.
   if (e.hackFx !== undefined && !isHackFx(e.hackFx)) return `entity ${e.key} hackFx`;

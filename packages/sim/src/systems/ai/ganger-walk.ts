@@ -302,9 +302,22 @@ export class GangerWalk {
       self.velocity = { x: 0, y: 0, z: 0 };
       return;
     }
+    this.goAt(to, BACK_SPEED);
+  }
+
+  /**
+   * Walks straight at `to` at `speed` this step, its face left as it is (a gunner backing off or
+   * stepping aside while it fires, ADR-0089): the way is the caller's to have checked.
+   */
+  goAt(to: Vec3, speed: number): void {
+    const self = this.at.self;
+    if (!self) return;
+    const dx = to.x - self.position.x;
+    const dz = to.z - self.position.z;
+    const d = Math.hypot(dx, dz) || 1;
     this.walking = true;
     [this.toward.x, this.toward.z] = [to.x, to.z];
-    self.velocity = { x: (dx / d) * BACK_SPEED, y: 0, z: (dz / d) * BACK_SPEED };
+    self.velocity = { x: (dx / d) * speed, y: 0, z: (dz / d) * speed };
   }
 
   private moveTowards(x: number, z: number, sidestep = true): void {
