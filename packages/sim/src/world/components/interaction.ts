@@ -26,6 +26,11 @@ export interface Interactable {
    */
   readonly prompt: string;
   readonly radius: number;
+  /**
+   * How far above or below it she may stand and still reach it, in metres; the interaction's 1.6 m
+   * when absent. A crawl's mouth is reached from its own floor only, not from the walls by it (G-930).
+   */
+  readonly reachY?: number;
 }
 
 /**

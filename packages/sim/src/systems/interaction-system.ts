@@ -129,7 +129,7 @@ const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; 
     if ((e.interactable.kind === "ladder" && player.climb) || e.unconscious) continue;
     const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
     // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
-    if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y || d > e.interactable.radius) continue;
+    if (Math.abs(e.position.y - player.position.y) > (e.interactable.reachY ?? INTERACT_REACH_Y) || d > e.interactable.radius) continue;
     if (d < bestDist) {
       best = e;
       bestDist = d;
