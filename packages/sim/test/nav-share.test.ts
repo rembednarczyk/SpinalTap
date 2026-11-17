@@ -72,10 +72,11 @@ describe("the steering's store shared by a process's worlds (ADR-0083 step 3)", 
     expect(second).toEqual(alone);
     expect(alone.near.fields).toBeGreaterThan(0);
     expect(alone.flee.rasters).toBeGreaterThan(0);
-    // The second world made nothing anew: every raster and field it made came out of the store.
+    // The second world made nothing anew: every raster and field it made came out of the store. Not
+    // the runners' fields: each is grown in its own world only as far as its runners ask (G-928).
     expect(store.rasters.size()).toBeGreaterThan(0);
     expect(store.rasters.counts.hits - rasterHits).toBe(alone.near.rasters + alone.wide.rasters + alone.flee.rasters);
-    expect(store.fields.counts.hits - hitsBefore).toBe(alone.near.fields + alone.wide.fields + alone.flee.fields);
+    expect(store.fields.counts.hits - hitsBefore).toBe(alone.near.fields + alone.wide.fields);
   });
 
   it("hands back the work reports of the making, in order, without making it again", () => {

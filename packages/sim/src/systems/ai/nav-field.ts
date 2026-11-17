@@ -27,9 +27,11 @@ export interface Window {
   readonly cells: number;
   readonly rasters: number;
   readonly fields: number;
+  /** Its fields grown only as far as their walkers ask (`lazyField`). */
+  readonly lazy: boolean;
 }
 
-const windowOf = (name: string, half: number, snap: number, rasters: number, fields: number): Window => ({ name, half, snap, cells: Math.round((2 * half) / NAV_CELL), rasters, fields });
+const windowOf = (name: string, half: number, snap: number, rasters: number, fields: number, lazy = false): Window => ({ name, half, snap, cells: Math.round((2 * half) / NAV_CELL), rasters, fields, lazy });
 
 /** The window every walk plans in. */
 export const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
@@ -39,8 +41,9 @@ export const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
  * every `snap`. In the near window, 80 m a side, that was most of a fight's step (W-3's line
  * technicians running from the shots: 2-8 ms); 40 m a side still leads round a stall, a car or a
  * row of racks, and the runner is always in it (6 m from a goal at most 6 m from its centre).
+ * Its fields are grown only as far as the runners ask (`lazyField`).
  */
-export const FLEE_WINDOW = windowOf("flee", 20, 8, 8, 16);
+export const FLEE_WINDOW = windowOf("flee", 20, 8, 8, 16, true);
 /**
  * A ganger cut off from its target in `NEAR_WINDOW` (a long fence or a wall of a yard, G-625)
  * looks again in this one, 192 m a side (`chaseDetour`): a raster costs some 37 ms and a field
@@ -153,16 +156,7 @@ function* growSteps(raster: Raster, source: number): Slices<Field> {
         yield settled;
         settled = 0;
       }
-      for (const [dx, dz, cost] of STEPS) {
-        const n = passable(raster, c, dx, dz, false);
-        if (n < 0) continue;
-        const nd = d + cost;
-        if (nd < (dist[n] ?? FAR)) {
-          dist[n] = nd;
-          buckets[nd & 3]?.push(n);
-          pending++;
-        }
-      }
+      pending += settle(raster, dist, buckets, c, d);
     }
     bucket.length = 0;
   }
@@ -170,7 +164,80 @@ function* growSteps(raster: Raster, source: number): Slices<Field> {
   return { raster, dist, source };
 }
 
+/** Settles cell `c` at distance `d`: its neighbours it lowers go into their buckets; how many. */
+const settle = (raster: Raster, dist: Int32Array, buckets: number[][], c: number, d: number): number => {
+  let pushed = 0;
+  for (const [dx, dz, cost] of STEPS) {
+    const n = passable(raster, c, dx, dz, false);
+    if (n < 0) continue;
+    const nd = d + cost;
+    if (nd < (dist[n] ?? FAR)) {
+      dist[n] = nd;
+      buckets[nd & 3]?.push(n);
+      pushed++;
+    }
+  }
+  return pushed;
+};
+
 export const grow = (raster: Raster, source: number): Field => finish(growSteps(raster, source));
+
+/** Where a field of a `lazy` window has got to: `growSteps`' state between the asks. */
+interface Growth {
+  readonly buckets: number[][];
+  /** The distance of the next bucket to settle. */
+  d: number;
+  pending: number;
+  readonly built: { units: number };
+}
+
+const growing = new WeakMap<Field, Growth>();
+
+/**
+ * A field of a `lazy` window (G-928), grown as far as its walkers ask (`distOf`, `growThrough`):
+ * a runner's goal 6 m ahead moves with it, and the whole window's field for each half metre it ran
+ * was most of a fight's step. Settled in `growSteps`' order, so every distance it gives is the one
+ * the whole field has: the same ways, without the cells farther from the goal than its walkers.
+ */
+const lazyField = (raster: Raster, source: number, built: { units: number }): Field => {
+  const dist = new Int32Array(raster.cells * raster.cells).fill(FAR);
+  dist[source] = 0;
+  const field = { raster, dist, source };
+  growing.set(field, { buckets: [[source], [], [], []], d: 0, pending: 1, built });
+  return field;
+};
+
+/** Settles the buckets of `field` in turn while `more` holds for the next one's distance. */
+const growWhile = (field: Field, more: (d: number) => boolean): void => {
+  const g = growing.get(field);
+  if (!g) return;
+  const { raster, dist } = field;
+  while (g.pending > 0 && more(g.d)) {
+    const bucket = g.buckets[g.d & 3] ?? [];
+    for (let i = 0; i < bucket.length; i++) {
+      const c = bucket[i] ?? 0;
+      g.pending--;
+      if ((dist[c] ?? FAR) !== g.d) continue;
+      g.built.units++;
+      g.pending += settle(raster, dist, g.buckets, c, g.d);
+    }
+    bucket.length = 0;
+    g.d++;
+  }
+  if (g.pending === 0) growing.delete(field);
+};
+
+/**
+ * The distance of cell `c` down `field` (`FAR` off it), a lazy field grown as far as it takes to
+ * know it: past it, or to the end for an open cell it does not reach. A closed cell it never reaches.
+ */
+export const distOf = (field: Field, c: number): number => {
+  if (field.raster.open[c] === 1) growWhile(field, (d) => d <= (field.dist[c] ?? FAR));
+  return field.dist[c] ?? FAR;
+};
+
+/** Grows a lazy `field` through distance `d`: every cell that close to the goal has its distance, the rest more. */
+export const growThrough = (field: Field, d: number): void => growWhile(field, (next) => next <= d);
 
 /** The nearest cell around `c` (rings outwards, fixed order) that passes `ok`, or -1. */
 export const nearest = (c: number, reach: number, cells: number, ok: (n: number) => boolean): number => {
@@ -234,7 +301,7 @@ export function* fieldSteps(world: World<Entity>, win: Window, floor: number, re
   const field = recall(memo.fields, fieldKey);
   if (field) return field;
   const made = raster;
-  const grown = yield* through(share?.fields, share ? `${sharedKeyOf(collidersOf(solids))}|${source}` : "", () => growSteps(made, source));
+  const grown = win.lazy ? lazyField(made, source, memo.built) : yield* through(share?.fields, share ? `${sharedKeyOf(collidersOf(solids))}|${source}` : "", () => growSteps(made, source));
   memo.built.fields++;
   return remember(memo.fields, fieldKey, grown, win.fields);
 }

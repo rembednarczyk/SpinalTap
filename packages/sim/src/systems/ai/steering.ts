@@ -3,7 +3,7 @@ import type { World } from "miniplex";
 import type { Entity } from "../../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
-import { type Detour, FAR, type Field, NEAR_WINDOW, type Window, downhill, fieldFor, grow, nearest, outsideWindow } from "./nav-field";
+import { type Detour, FAR, type Field, NEAR_WINDOW, type Window, distOf, downhill, fieldFor, grow, growThrough, nearest, outsideWindow } from "./nav-field";
 import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange, pastLedgeOnWay } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 import { SAME_FLOOR, SAMPLE, bankNear, deckReach, floorOf, straightWalk, walkable } from "./straight-walk";
@@ -78,17 +78,17 @@ const outOfReach = (r: Raster, n: number, from: Vec3): boolean => !!r.ledges && 
  * G-072): on Zamkowa's viaduct the walk set out from a cell under it, the feet on it.
  */
 const startOf = (field: Field, from: Vec3): number => {
-  const { raster, dist } = field;
+  const { raster } = field;
   const here = cellIndex(raster, from.x, from.z);
   if (here < 0) return -1;
   const reachable = (n: number) =>
-    (dist[n] ?? FAR) < FAR &&
+    distOf(field, n) < FAR &&
     (!raster.base || raster.flight?.[n] !== ON_FLIGHT || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT) &&
     !outOfReach(raster, n, from) &&
     !aboveLevel(raster, n, from, cellCentre(raster, n, from.y)) &&
     !wallOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE) &&
     !pastLedgeOnWay(raster, from, cellCentre(raster, n, from.y), SAMPLE);
-  return (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, raster.cells, reachable);
+  return distOf(field, here) < FAR ? here : nearest(here, 2, raster.cells, reachable);
 };
 
 /**
@@ -131,6 +131,7 @@ export const cutOffNear = (detour: Detour, from: Vec3, goal: Vec3): boolean => {
   const here = startOf(field, from);
   const there = startOf(field, goal);
   if (here < 0 || there < 0) return false;
+  growThrough(field, field.dist[here] ?? FAR);
   // Half cells to metres.
   const apart = (((field.dist[here] ?? FAR) - (field.dist[there] ?? FAR)) * NAV_CELL) / 2;
   if (apart <= CUT_OFF_RATIO * Math.hypot(goal.x - from.x, goal.z - from.z) + CUT_OFF_SLACK) return false;
@@ -153,6 +154,8 @@ export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
   const { raster, dist } = field;
   const start = startOf(field, from);
   if (start < 0) return null;
+  // The way down and the cells round the feet lower than the start: all of them known (`growThrough`).
+  growThrough(field, dist[start] ?? FAR);
   const way: number[] = [start];
   for (let c = start; way.length < LOOKAHEAD && (dist[c] ?? 0) > 0; ) {
     const next = downhill(field, c);

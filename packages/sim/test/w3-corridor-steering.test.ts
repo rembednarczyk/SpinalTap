@@ -43,9 +43,9 @@ const aimAtNearest = (sim: Simulation, c: Contract): boolean => {
 /**
  * At most this many units of the steering's work a step on average after the first second, when
  * the waves' own ways are made (the wide window's raster, G-625): the technicians' running took
- * some 3,500 in the near window, 1,200 in their own.
+ * some 3,500 in the near window, 1,200 in their own and 750 with its fields grown as far as asked.
  */
-const UNITS_A_STEP = 1_600;
+const UNITS_A_STEP = 1_000;
 
 describe("the steering in W-3's corridor S fight (G-928)", () => {
   it("costs little a step while the technicians run from the shots down the aisle: no fields of the near window for them", () => {
