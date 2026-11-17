@@ -18,7 +18,7 @@ export interface SaveControllerDeps {
   /** She is in the air (a jump, a fall, a mantle), which a save does not keep (G-335): no save of the player's now. */
   readonly airborne: () => boolean;
   /** Replaces the running game with a loaded snapshot. */
-  readonly restore: (snapshot: SaveSnapshot) => void;
+  readonly restore: (snapshot: SaveSnapshot, play?: () => void) => void;
   /** Hands a file to the player (a download in the browser); without it a slot cannot be exported. */
   readonly download?: (fileName: string, text: string) => void;
 }
@@ -164,7 +164,8 @@ export class SaveController {
     }
   }
 
-  async loadAsync(slot: string): Promise<boolean> {
+  /** Loads `slot` into the running game; `play` runs once it is on screen (a start save's card). */
+  async loadAsync(slot: string, play?: () => void): Promise<boolean> {
     const { ui } = this.deps;
     patchUi(ui, { busy: true });
     try {
@@ -173,7 +174,7 @@ export class SaveController {
         pushToastTimed(ui, "system", this.t("save.emptySlot"), slot);
         return false;
       }
-      this.deps.restore(snapshot);
+      this.deps.restore(snapshot, play);
       pushToastTimed(ui, "system", this.t("save.loaded"), snapshot.meta.label);
       return true;
     } catch (e) {
@@ -183,6 +184,14 @@ export class SaveController {
     } finally {
       patchUi(ui, { busy: false });
     }
+  }
+
+  /**
+   * Stores a snapshot made outside the running game (a start save, ADR-0082) the way the game
+   * stores its own: the slot remembers the preset it is played on, for its label in the list.
+   */
+  async writeSnapshot(slot: string, snapshot: SaveSnapshot): Promise<void> {
+    await this.put(slot, snapshot);
   }
 
   /** Stores a slot and remembers the preset it was played on. */

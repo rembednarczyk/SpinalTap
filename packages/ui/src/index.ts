@@ -6,7 +6,7 @@ import "./scale/zones.css";
 export * from "./store/ui-store";
 export * from "./intents";
 export { GameUi } from "./game-ui";
-export { AUTOSAVE_SLOT, SAVE_SLOTS } from "./menus/save-slots";
+export { AUTOSAVE_SLOT, SAVE_SLOTS, W3_SLICE_SLOT } from "./menus/save-slots";
 export { quickhacksFor } from "./hud/scanner";
 export { BADGE_ICON } from "./hud/contract-card";
 export { TOKENS, type TokenId } from "./hud/tokens";

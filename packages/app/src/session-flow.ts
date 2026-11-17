@@ -76,19 +76,21 @@ export class SessionFlow implements FlowIntents {
 
   /**
    * Replaces the running game with `snapshot`, ink state included: a load without the slot.
-   * It plays behind the loading screen (ADR-0057) unless `prepare` is false (the debug jump).
+   * It plays behind the loading screen (ADR-0057) unless `prepare` is false (the debug jump);
+   * `play` runs once the game is on screen (a start save's card, ADR-0082).
    */
-  restore(snapshot: SaveSnapshot, prepare = true): void {
+  restore(snapshot: SaveSnapshot, prepare = true, play: () => void = () => {}): void {
     const { session, narrative } = this.deps;
     this.deps.screen.closePanels();
     this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.deps.bus, session.crowd ?? "off", session.traffic ?? session.crowd ?? "off"));
     this.deps.controllers().wave1.inbox.clear();
     if (snapshot.narrative) narrative.loadState(snapshot.narrative);
     else narrative.resetState();
-    if (prepare) this.startPlaying();
+    if (prepare) this.startPlaying(play);
     else {
       this.deps.loading.cancel();
       this.deps.screen.set("playing");
+      play();
     }
   }
 

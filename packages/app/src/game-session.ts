@@ -13,6 +13,7 @@ import { type Screen, type UiIntents, patchUi } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { LoadingController } from "./controllers/loading-controller";
 import type { SaveController } from "./controllers/save-controller";
+import type { StartSaveController } from "./controllers/start-save-controller";
 import { buildCityMap } from "./city-map";
 import { narrativeText } from "./content-text";
 import { composeIntents, controllerIntents } from "./intents";
@@ -52,6 +53,8 @@ export class GameSession {
   readonly narrative: NarrativeRuntime;
   /** Saving and loading slots, save files, the snapshot. */
   readonly saves: SessionSaves;
+  /** The start saves of the new game's setup (ADR-0082: W-3's slice at level 12). */
+  readonly starts: Pick<StartSaveController, "startW3Slice" | "startW3SliceAsync">;
   readonly debug: SessionDebug;
   private readonly flow: SessionFlow;
   private readonly loop: SessionLoop;
@@ -85,10 +88,11 @@ export class GameSession {
       inControl: () => view.inControl,
       setScreen: (screen) => view.set(screen),
       interrupt: () => view.interruptDialogue(),
-      restore: (snapshot) => this.flow.restore(snapshot),
+      restore: (snapshot, play) => this.flow.restore(snapshot, true, play),
     });
     const c = this.c;
     this.saves = c.saves;
+    this.starts = c.starts;
     this.debug = { openBreach: (key, daemons) => c.hack.openBreach(key, daemons), openMetro: (from) => c.metro.open(from, false) };
     this.intents = composeIntents(this.flow, c.saves, controllerIntents(c, () => this.flow.sim));
     void c.saves.refreshSlots();

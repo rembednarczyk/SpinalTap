@@ -24,6 +24,12 @@ export interface SessionIntents {
   quitToTitle(): void;
 }
 
+/** The start saves of the new game's setup (ADR-0082): a game begun further on than a new one. */
+export interface StartSaveIntents {
+  /** W-3's vertical slice on `difficulty`: Seki at level 12 by Genzō, the AR-5 loaded in hand. */
+  startW3Slice(difficulty?: DifficultyProfile): void;
+}
+
 /** The conversation on screen. */
 export interface DialogueIntents {
   choose(index: number): void;
@@ -156,6 +162,7 @@ export interface HackIntents {
  * Implemented by the app composition root; components take only their part (ADR-0031).
  */
 export type UiIntents = SessionIntents &
+  StartSaveIntents &
   DialogueIntents &
   ShopIntents &
   LootIntents &
