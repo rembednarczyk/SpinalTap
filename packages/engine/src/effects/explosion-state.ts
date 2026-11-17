@@ -173,7 +173,7 @@ export class ExplosionState {
         const t = b.age / life;
         if (t >= 1) continue;
         const swell = Math.min(1, b.age / 0.08);
-        const size = b.radius * (per === 1 ? 0.42 : 0.2 + 0.12 * jitter(seed + 1)) * swell * (1 - t * t);
+        const size = b.radius * (per === 1 ? 0.3 : 0.14 + 0.1 * jitter(seed + 1)) * swell * (1 - t * t);
         const a = i * GOLDEN_ANGLE + b.serial;
         const out = i === 0 ? 0 : b.radius * 0.16 * (0.5 + 0.5 * jitter(seed + 2)) * Math.min(1, b.age / 0.25);
         this.p.x = b.at.x + Math.cos(a) * out;
@@ -207,7 +207,7 @@ export class ExplosionState {
         this.p.x = b.at.x + Math.cos(a) * out;
         this.p.y = b.at.y + 0.5 + (1.2 + 0.6 * jitter(seed + 3)) * age ** 0.8;
         this.p.z = b.at.z + Math.sin(a) * out;
-        const size = b.radius * (per === 1 ? 0.35 + 0.5 * Math.sqrt(t) : 0.16 + 0.3 * Math.sqrt(t));
+        const size = b.radius * (per === 1 ? 0.2 + 0.3 * Math.sqrt(t) : 0.1 + 0.2 * Math.sqrt(t));
         this.billboard(view, size, seed + t);
         writeMatrix(matrices, n, this.x, this.y, this.z, this.p);
         writeColor(colors, n, tint[0], tint[1], tint[2], 0.82 * Math.min(1, age / 0.2) * (1 - t) ** 1.2);

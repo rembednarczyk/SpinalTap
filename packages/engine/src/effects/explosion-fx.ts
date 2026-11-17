@@ -1,4 +1,4 @@
-import { Color3, type GlowLayer, type Mesh, type Scene, StandardMaterial } from "../babylon";
+import { Color3, type Mesh, type Scene, StandardMaterial } from "../babylon";
 import { type BlastView, ExplosionState, MAX_BLASTS, PER_BLAST, SIMPLE_BLAST } from "./explosion-state";
 import type { Point } from "./muzzle-state";
 import { type Shape, fan, meshOf, puffShape } from "./muzzle-fx";
@@ -76,13 +76,12 @@ export class ExplosionFx {
   private readonly debris: Layer | null;
   private tint: [number, number, number] = [...SMOKE_NIGHT];
 
-  constructor(scene: Scene, particles: boolean, glow?: GlowLayer) {
+  constructor(scene: Scene, particles: boolean) {
     this.state = new ExplosionState(particles);
     const per = particles ? PER_BLAST : SIMPLE_BLAST;
     this.fire = this.layer(scene, "fx-blast-fire", fireShape(), unlit("fx-blast-fire", scene, false), per.fire);
     this.smoke = this.layer(scene, "fx-blast-smoke", puffShape(11, 0.4), unlit("fx-blast-smoke", scene, true), per.smoke);
     this.debris = per.debris > 0 ? this.layer(scene, "fx-blast-debris", chunkShape(), unlit("fx-blast-debris", scene, false), per.debris) : null;
-    glow?.addIncludedOnlyMesh(this.fire.mesh);
   }
 
   private layer(scene: Scene, name: string, shape: Shape, material: StandardMaterial, per: number): Layer {

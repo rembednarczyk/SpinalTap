@@ -152,7 +152,7 @@ export class ScreenFx {
     this.applyLook();
     this.effects = new Effects(scene, stage.glow);
     this.muzzle = new MuzzleFx(scene);
-    this.blasts = new ExplosionFx(scene, (stage.options.quality ?? "high") === "high", stage.glow);
+    this.blasts = new ExplosionFx(scene, (stage.options.quality ?? "high") === "high");
     this.muzzleSource = new MuzzleSource(camera, deps.actors, (id) => this.isCameraTarget(id));
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
