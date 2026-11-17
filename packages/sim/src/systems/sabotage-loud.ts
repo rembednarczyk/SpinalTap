@@ -81,13 +81,19 @@ const useUp = (ctx: SimContext, key: string): void => {
 /** Key of the armoury chest's loot of a job: opened once, with the charges' case. */
 export const armouryChestKey = (contractId: string): string => `stash:w3-armoury-${contractId}`;
 
+/** Is this the armoury's case of the running sabotage, the charges still in it and the virus not in? */
+export const chargesToTake = (ctx: SimContext, box: Entity): boolean => {
+  const contract = running(ctx);
+  return !!contract && !!box.key && box.key === contractChargesKey(contract.id) && !contract.charges && !virusUploaded(contract, Math.round(1 / ctx.dt));
+};
+
 /**
  * The armoury's case: the key takes the three charges and always raises the alarm (its weight
  * sensor); the arms chest by it opens with it (its loot counts in the loud way's income, 16.11).
  */
 export const takeCharges = (ctx: SimContext, box: Entity): void => {
   const contract = running(ctx);
-  if (!contract || !box.key || box.key !== contractChargesKey(contract.id) || contract.charges || virusUploaded(contract, Math.round(1 / ctx.dt))) return;
+  if (!contract || !box.key || !chargesToTake(ctx, box)) return;
   const loud = { ...chooseLoud(ctx, contract), charges: [] };
   setActive(ctx, loud);
   useUp(ctx, box.key);
@@ -95,13 +101,20 @@ export const takeCharges = (ctx: SimContext, box: Entity): void => {
   raiseAlarm(ctx, loud);
 };
 
+/** The station of this spot when the key would start planting there now: a charge in her bag, nothing being planted, none on it yet. */
+export const plantableStation = (ctx: SimContext, spot: Entity): W3StationId | null => {
+  const contract = running(ctx);
+  if (!contract || !ctx.world.with("player").first?.health || chargesLeft(contract) <= 0 || contract.planting) return null;
+  const station = W3_STATIONS.find((s) => spot.key === contractStationKey(contract.id, s));
+  return station && !contract.charges?.includes(station) ? station : null;
+};
+
 /** A station's spot: with a charge in her bag and nothing being planted, the key starts planting one there. */
 export const startPlanting = (ctx: SimContext, spot: Entity): void => {
   const contract = running(ctx);
   const player = ctx.world.with("player").first;
-  if (!contract || !player?.health || chargesLeft(contract) <= 0 || contract.planting) return;
-  const station = W3_STATIONS.find((s) => spot.key === contractStationKey(contract.id, s));
-  if (!station || contract.charges?.includes(station)) return;
+  const station = plantableStation(ctx, spot);
+  if (!contract || !player?.health || !station) return;
   setActive(ctx, { ...contract, planting: { station, ticks: 0, hp: player.health.current } });
 };
 
