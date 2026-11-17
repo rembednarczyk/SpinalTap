@@ -1,5 +1,5 @@
 import { W3MissionSync } from "../presenters/w3-mission";
-import { ABILITY_CATALOG, type DomainState, type ImplantGrades, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
+import { ABILITY_CATALOG, type DomainState, type AudioPort, type ImplantGrades, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
 import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
@@ -63,6 +63,8 @@ export interface HudSyncDeps {
   readonly sim: SimRef;
   readonly ui: UiStore;
   readonly render: RenderPort;
+  /** W-3's blast, alarm and siren (ADR-0082 stage 3c). */
+  readonly audio: AudioPort;
   readonly wave1: Wave1Hud;
   readonly wave2: Wave2Hud;
   readonly panels: HudPanels;
@@ -84,7 +86,7 @@ export class HudSync implements ContractIntents {
   private readonly w3Mission: W3MissionSync;
 
   constructor(private readonly deps: HudSyncDeps) {
-    this.w3Mission = new W3MissionSync(deps.render);
+    this.w3Mission = new W3MissionSync(deps.render, deps.audio);
   }
 
   /** The player fought within a few seconds or is hunted: the contextual HUD shows. */
@@ -104,7 +106,8 @@ export class HudSync implements ContractIntents {
   /** The render-time part: time of day, the district name, then the store push. */
   frame(): void {
     this.syncTimeOfDay();
-    this.w3Mission.frame(this.deps.sim().domain);
+    const sim = this.deps.sim();
+    this.w3Mission.frame(sim.domain, sim.tick, sim.player()?.position ?? null);
     this.announceDistrict();
     this.sync();
   }

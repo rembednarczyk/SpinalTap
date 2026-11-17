@@ -100,7 +100,7 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     };
     // The bodies' tail lights are red in every pose (6 of them): what is over them is the beacons'.
     expect(swatches(linePose(3)).red).toBe(0);
-    const alarm = { alarm: true, screens: "idle" } as const;
+    const alarm = { alarm: true, screens: "idle", wrecks: [] } as const;
     expect(swatches(linePose(0, undefined, true, alarm)).red).toBe(8);
     expect(swatches(linePose(0, undefined, true)).red).toBe(0);
     const lit = [0, 0.13, 0.27, 0.41].map((t) => swatches(linePose(t, undefined, false, alarm)).red);
@@ -108,8 +108,8 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     expect(lit.every((n) => n <= 8)).toBe(true);
     // Five screens: teal idle, amber during the upload (blinking with teal), violet over red with the virus.
     expect(swatches(linePose(0, undefined, true)).teal).toBe(5);
-    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "upload" })).amber).toBe(5);
-    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "infected" })).violet).toBe(5);
+    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "upload", wrecks: [] })).amber).toBe(5);
+    expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "infected", wrecks: [] })).violet).toBe(5);
   });
 
   it("puts on the two lamps nearest the eye's room: the hall's, the server room's glow, the basement's", () => {

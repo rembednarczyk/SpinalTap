@@ -2,6 +2,7 @@ import type { Vec3 } from "../math/vec3";
 import type { BuildingUse, GroundPoint, GroundSurface, RoadMarkingKind, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
 import type { VenueKind } from "../world/venues";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
+import type { W3StationId } from "../contracts/sabotage-loud";
 import type { CastKey } from "./cast";
 
 export type EntityId = number;
@@ -394,7 +395,11 @@ export type EffectDescriptor =
    */
   | { readonly kind: "alarm-light"; readonly active: boolean }
   /** What W-3's station screens show (ADR-0082 stage 3), held like `alarm-light`. */
-  | { readonly kind: "line-screens"; readonly state: LineScreens };
+  | { readonly kind: "line-screens"; readonly state: LineScreens }
+  /** A blast at `at` (ADR-0082 stage 3c): a flash, a fireball, smoke and debris about `radius` metres round it. */
+  | { readonly kind: "explosion"; readonly at: Vec3; readonly radius: number }
+  /** W-3's stations wrecked for good (ADR-0082 stage 3c), from their flags; held like `alarm-light`. */
+  | { readonly kind: "line-wrecks"; readonly stations: readonly W3StationId[] };
 
 /**
  * W-3's line screens by the job (ADR-0082): the line's own read-out, the calibration being
@@ -456,4 +461,8 @@ export type AudioCue =
   | "land"
   | "land-hard"
   // A car's horn at the player in its way (ADR-0050).
-  | "horn";
+  | "horn"
+  // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
+  | "explosion"
+  | "alarm"
+  | "alarm-siren";

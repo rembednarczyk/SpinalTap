@@ -1,8 +1,8 @@
-import type { LineScreens } from "@seki/core";
+import type { LineScreens, W3StationId } from "@seki/core";
 import { W3_CRANE_BRIDGE, W3_LAYOUT, W3_VIRUS_TERMINAL, W3_Y } from "@seki/sim";
 
 import { type CityKitData, GeometrySink } from "../city-kit-data";
-import { KitPainter, W3_PAINT } from "./w3-kit";
+import { KitPainter, type Tint, W3_PAINT } from "./w3-kit";
 import type { ArmPose, LinePose } from "./w3-line-anim";
 
 /**
@@ -62,9 +62,15 @@ const SCREEN_SWATCH: Readonly<Record<LineScreens, readonly [string, string]>> = 
 const screens = (k: KitPainter, pose: LinePose): void => {
   const pair = SCREEN_SWATCH[pose.screens];
   const face = pose.screenBlink ? pair[0] : pair[1];
-  for (const s of Object.values(W3_LAYOUT.STATIONS)) {
+  for (const [id, s] of Object.entries(W3_LAYOUT.STATIONS) as [W3StationId, { x: number; z: number }][]) {
     const toAisle = s.z < 418 ? 1 : -1;
     const z = s.z + toAisle * 0.1;
+    if (pose.wrecks.includes(id)) {
+      // Blown off its stand: face down on the desk, out (the same two boxes).
+      k.box(s.x - 0.42, s.x + 0.28, W3_Y + 1.1, W3_Y + 1.18, z - 0.3, z + 0.15, "dark");
+      k.box(s.x - 0.37, s.x + 0.23, W3_Y + 1.1, W3_Y + 1.105, z - 0.25, z + 0.1, "dark");
+      continue;
+    }
     k.box(s.x - 0.35, s.x + 0.35, W3_Y + 1.1, W3_Y + 1.55, z - 0.04, z + 0.04, "dark");
     k.box(s.x - 0.3, s.x + 0.3, W3_Y + 1.15, W3_Y + 1.5, z + toAisle * 0.045 - 0.005, z + toAisle * 0.045 + 0.005, face);
   }
@@ -98,12 +104,58 @@ const bridge = (k: KitPainter, x: number): void => {
   k.box(x - 0.25, x + 0.25, W3_Y + c.bottom - 4.7, W3_Y + c.bottom - 4.2, z - 0.25, z + 0.25, "paint", W3_PAINT.yellow);
 };
 
-/** The line's moving parts in a pose, on the kit's texture. */
+/** Soot over burnt metal and the floor round a blown station. */
+const SOOT: Tint = [0.16, 0.145, 0.14];
+const BURNT: Tint = [0.32, 0.27, 0.24];
+
+/** Boxes of one wreck (tests: the topology grows by this many a blown station). */
+export const WRECK_BOXES = 13;
+
+/** Scattered pieces round a wreck: offset along the belt and towards the aisle (m), their size. */
+const PIECES: readonly (readonly [number, number, number])[] = [
+  [-1.3, 0.6, 0.22],
+  [-0.7, 1.4, 0.14],
+  [0.4, 1.8, 0.18],
+  [1.1, 0.9, 0.26],
+  [1.6, 1.5, 0.12],
+  [-1.7, 1.7, 0.16],
+];
+
+/**
+ * A station blown for good (ADR-0082 stage 3c): its desk charred over, the floor sooted towards the
+ * aisle, two strips of its top torn up, its side panel on the floor, pieces round it, two embers
+ * still glowing. Drawn from the stations' flags, so a load shows it as the blast left it.
+ */
+const wreck = (k: KitPainter, id: W3StationId): void => {
+  const s = W3_LAYOUT.STATIONS[id];
+  const toAisle = s.z < 418 ? 1 : -1;
+  const edge = toAisle === 1 ? W3_LAYOUT.BELT_L1.maxZ : W3_LAYOUT.BELT_L2.minZ;
+  const mid = edge + toAisle * 0.25;
+  const y = W3_Y;
+  const across = (a: number, b: number): [number, number] => [Math.min(edge + toAisle * a, edge + toAisle * b), Math.max(edge + toAisle * a, edge + toAisle * b)];
+  const [f0, f1] = across(0.02, 2.4);
+  k.box(s.x - 1.9, s.x + 1.9, y + 0.01, y + 0.02, f0, f1, "paint", SOOT);
+  const [d0, d1] = across(-0.02, 0.52);
+  k.box(s.x - 0.62, s.x + 0.62, y, y + 1.12, d0, d1, "paint", SOOT);
+  k.beam({ x: s.x - 0.5, y: y + 1.1, z: mid }, { x: s.x + 0.2, y: y + 1.75, z: mid + toAisle * 0.45 }, 0.07, "paint", BURNT);
+  k.beam({ x: s.x + 0.45, y: y + 1.1, z: mid - toAisle * 0.1 }, { x: s.x + 0.75, y: y + 1.5, z: mid + toAisle * 0.6 }, 0.05, "paint", BURNT);
+  const [p0, p1] = across(0.7, 1.5);
+  k.box(s.x + 0.8, s.x + 1.7, y + 0.02, y + 0.07, p0, p1, "paint", BURNT);
+  for (const [dx, dz, size] of PIECES) {
+    const z = edge + toAisle * dz;
+    k.box(s.x + dx - size / 2, s.x + dx + size / 2, y + 0.02, y + 0.02 + size * 0.6, z - size / 2, z + size / 2, "paint", size > 0.17 ? BURNT : SOOT);
+  }
+  k.box(s.x - 0.2, s.x - 0.12, y + 1.12, y + 1.16, mid - 0.04, mid + 0.04, "neon-amber");
+  k.box(s.x + 0.25, s.x + 0.31, y + 1.12, y + 1.15, mid + 0.05, mid + 0.11, "neon-red");
+};
+
+/** The line's moving parts in a pose, on the kit's texture; the wrecks after them (their own topology). */
 export const lineGeometry = (data: CityKitData, pose: LinePose): GeometrySink => {
   const k = new KitPainter(new GeometrySink(), data);
   for (const a of pose.arms) arm(k, a, pose.alarm);
   for (const b of pose.bodies) body(k, b);
   bridge(k, pose.bridgeX);
   screens(k, pose);
+  for (const w of pose.wrecks) wreck(k, w);
   return k.sink;
 };

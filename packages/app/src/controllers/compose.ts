@@ -171,6 +171,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     sim,
     ui,
     render,
+    audio,
     wave1,
     wave2,
     panels: {

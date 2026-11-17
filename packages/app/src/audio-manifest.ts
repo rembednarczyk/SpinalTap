@@ -42,6 +42,8 @@ const SOUNDS = {
     // The tin clink sits on the synth's coin triad.
     sell: { urls: range("sell-tin-", ["000", "001"]), gain: 0.45, pitch: 0.05, layerSynth: true },
     repair: { urls: range("repair-hammer-", ["000", "001"]), gain: 0.45, pitch: 0.05, send: 0.2 },
+    // W-3's charges (ADR-0082 stage 3c): the recorded crunch over the synth's low boom and rumble.
+    explosion: { urls: range("blast-crunch-", ["003", "004"]), gain: 0.75, pitch: 0.04, send: 0.8, layerSynth: true },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },

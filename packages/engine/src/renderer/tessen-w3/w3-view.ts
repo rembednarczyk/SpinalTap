@@ -112,11 +112,15 @@ export class W3View {
 
   /**
    * The job's state from the app (ADR-0082 stage 3): `alarm-light` turns the beacons red,
-   * `line-screens` sets the screens. Shown on the line's next pose, on low quality too.
+   * `line-screens` sets the screens, `line-wrecks` the stations blown for good (3c). Shown on the
+   * line's next pose, on low quality too.
    */
-  setMission(effect: Extract<EffectDescriptor, { kind: "alarm-light" | "line-screens" }>): void {
-    const next = effect.kind === "alarm-light" ? { ...this.mission, alarm: effect.active } : { ...this.mission, screens: effect.state };
-    if (next.alarm === this.mission.alarm && next.screens === this.mission.screens) return;
+  setMission(effect: Extract<EffectDescriptor, { kind: "alarm-light" | "line-screens" | "line-wrecks" }>): void {
+    const m = this.mission;
+    const next: LineMission =
+      effect.kind === "alarm-light" ? { ...m, alarm: effect.active } : effect.kind === "line-screens" ? { ...m, screens: effect.state } : { ...m, wrecks: [...effect.stations] };
+    const sameWrecks = next.wrecks.length === m.wrecks.length && next.wrecks.every((s) => m.wrecks.includes(s));
+    if (next.alarm === m.alarm && next.screens === m.screens && sameWrecks) return;
     this.mission = next;
     this.missionShown = false;
   }
@@ -147,13 +151,20 @@ export class W3View {
     return m;
   }
 
-  /** The line's next pose: the same boxes moved, the beacons' swatches swapped. */
+  /**
+   * The line's next pose: the same boxes moved, the beacons' swatches swapped; a station blown or
+   * the wrecks gone (a load) change its boxes, so the mesh is filled anew then, once.
+   */
   private moveLine(kit: CityKit): void {
     const m = this.line;
     if (!m) return;
     this.lineAge = 0;
     this.missionShown = true;
     const s = lineGeometry(kit.data, linePose(this.time, undefined, this.deps.still, this.mission));
+    if (s.vertexCount !== m.getTotalVertices()) {
+      this.line = this.fill(m, "w3-line", s, kit, true);
+      return;
+    }
     m.updateVerticesData(VertexBuffer.PositionKind, s.positions);
     m.updateVerticesData(VertexBuffer.NormalKind, s.normals);
     m.updateVerticesData(VertexBuffer.UVKind, s.uvs);
