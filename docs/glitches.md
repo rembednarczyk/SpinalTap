@@ -2488,12 +2488,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/engine
 
-### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
-- Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
-- Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
-- Status: w PR #696 (gałąź ccr-ec2c4269-ilh8k8-g918), decyzja użytkownika 17.11: łup z nieprzytomnego; wcześniej: w naprawie (orkiestrator): decyzja użytkownika 17.11, łup z nieprzytomnego; torba ogłuszonego 0,8 m za ciałem, bez drugiej przy śmierci; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
 - Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
 - Opis: Znalezione przy G-922: komórka wejścia zamknięta, brak otwartej w 2 m (pole null); oddział z tego wejścia stoi (Rynek 520,0; 540,20; 560,60; 620,-60).

@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
+- Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
+- Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
+- Status: naprawione (17.11, #696 scalony); wcześniej: w PR #696 (gałąź ccr-ec2c4269-ilh8k8-g918), decyzja użytkownika 17.11: łup z nieprzytomnego; wcześniej: w naprawie (orkiestrator): decyzja użytkownika 17.11, łup z nieprzytomnego; torba ogłuszonego 0,8 m za ciałem, bez drugiej przy śmierci; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
 ### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
 - Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
 - Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
