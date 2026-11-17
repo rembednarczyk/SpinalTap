@@ -797,6 +797,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: częściowo naprawione w #305 (6.11, 396131c; wariant z gracza (0; 2), ziarno 11, 1002001: osaczony cywil staje zamiast zawracać ku graczowi, drogi ±3π/4 usunięte). Pozostałe warianty z tego wpisu (43/1002008 gracz (3; 0), 11/1002001 i 7/1002001 gracz (2; 0), 3/1002002 i 29/1002002 gracz (0; −2)) mają inną przyczynę: migotanie skrętu 0 / −π/4 na granicy sondy; przeniesione do G-343 (weryfikator #305)
 - Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) dalej ok. 465 skoków (poprawka z G-326 wycofana, bo przypinała cywila do ściany); także ziarno 43, 1002008, gracz 3 m: cywil staje 1,18 m od gracza; gracz stojący w zaułku przy (308; −101): 213 skoków
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+- 17.11 przy G-928, także na main: deptak (300; -84) ziarno 13 przechodzień stoi 6,9 s przy (316,3; -100,1) w panice; (310; -100) ziarno 8 cywil 658 skoków yaw w 720 krokach (też G-369).
 
 ### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
 - Status: częściowo naprawione w #310 (6.11; przechodzień 294: 84 → 10 skoków, 1082: 283 → 40 w nagranym przebiegu; w tickach 1060–1159 u 294 zostaje 7)
@@ -2569,7 +2570,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
 - Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
 - Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
-- Status: w PR #677, przyjęte przez weryfikatora z uwagą (okno 40 m zmienia drogi ucieczki przy długich objazdach); przed scaleniem łowca sprawdza zacięcia i kołysanie, a main potrzebuje #679; wcześniej: w PR #677 (gałąź ccr-ec2c4269-ilh8k8-g928, f26847a), w weryfikacji; wcześniej: zgłoszone
+- Status: w naprawie, runda 2 (łowca: okno ucieczki 40 m daje zacięcia i kołysanie przy Bystrzycy i w hali W-3); wcześniej: w PR #677, przyjęte przez weryfikatora z uwagą (okno 40 m zmienia drogi ucieczki przy długich objazdach); przed scaleniem łowca sprawdza zacięcia i kołysanie, a main potrzebuje #679; wcześniej: w PR #677 (gałąź ccr-ec2c4269-ilh8k8-g928, f26847a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
 
@@ -2594,6 +2595,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/ui
 - Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
+
+### G-932 Technicy W-3 na zachodnim końcu hali kołyszą się albo stoją w panice
+- Ważność: S3 · Zasięg: hala W-3, zachód (x 2504-2512, z 401-437)
+- Opis: Znalezione przy sprawdzaniu G-928, identyczne na main: technik w (2508; 437) i (2511; 436,5) w scenie walki (ziarna 3/7/42) ma 416 skoków yaw w 480 krokach ucieczki i po 5 s jest 3,3 m od startu; siatka: 67 z 376 przypadków ma >= 20 skoków, 59 stoi > 2 s (np. (2504; 401) 4,7 s). Sondy: scratchpad/g928h/.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: technik uciekający z zachodniego końca hali: zacięcie <= 2 s, skoki yaw < 5, ucieczka >= 10 m
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
