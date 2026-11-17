@@ -1,6 +1,6 @@
 # ADR-0089: AI walki i krzywa trudności
 
-Status: Proponowany (17.11). Projekt czeka na przegląd użytkownika i do jego decyzji nic z niego nie budujemy. Wynika z audytu łowcy z 17.11 („Audyt skradania i walki”, wnioski (a) i (b) w `docs/backlog.md`) oraz z G-909 i G-917. Dotyczy ADR-0024 (ochrona Tessen, snajper), ADR-0029 (pościg do ostatniej pozycji), ADR-0043 (pryzmaty, koszt kroku), ADR-0046 (testy), ADR-0059 (pasma poziomów, etap 8 balansu), ADR-0066 (poziom trudności), ADR-0069 (skradanie), ADR-0072 (celowanie na telefonie) i ADR-0082 (W-3). Wnioski (c) i (d) audytu (wykrywanie binarne, puste miasto) są poza tym ADR-em i czekają na osobną decyzję użytkownika.
+Status: Przyjęty (decyzja użytkownika 17.11): wariant B. Pozostałe pytania z końca dokumentu (cele tempa, płaskie pasmo, `npcPressure`, liczba strzelców naraz, G-909, znak przed serią, odzywki, osłony) zostają otwarte i są rozstrzygane przy etapach, przed budową każdego z nich; do tego czasu obowiązują rekomendacje z dokumentu. Wynika z audytu łowcy z 17.11 („Audyt skradania i walki”, wnioski (a) i (b) w `docs/backlog.md`) oraz z G-909 i G-917. Dotyczy ADR-0024 (ochrona Tessen, snajper), ADR-0029 (pościg do ostatniej pozycji), ADR-0043 (pryzmaty, koszt kroku), ADR-0046 (testy), ADR-0059 (pasma poziomów, etap 8 balansu), ADR-0066 (poziom trudności), ADR-0069 (skradanie), ADR-0072 (celowanie na telefonie) i ADR-0082 (W-3). Wnioski (c) i (d) audytu (wykrywanie binarne, puste miasto) są poza tym ADR-em i czekają na osobną decyzję użytkownika.
 
 ## Kontekst
 
