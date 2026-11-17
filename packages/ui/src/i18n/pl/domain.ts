@@ -215,7 +215,7 @@ export const plDomain = {
   "contract.site.quay_terminal": "terminal Tessen na nabrzeżu przy pomoście",
   "contract.site.w3_hall": "rdzeń kalibracji w serwerowni N hali W-3",
   // The loud way's places on W-3's objective (G-906): the charges' case, then the line.
-  "contract.site.w3_armoury": "skrzynia w zbrojowni S przy korytarzu południowym hali W-3",
+  "contract.site.w3_armoury": "skrzynia przy korytarzu południowym hali W-3",
   "contract.site.w3_stations": "stanowiska S1–S4 na linii montażu hali W-3",
   // The giver as "go back to … for your pay" names them: the genitive.
   "contract.giver.kaito": "Kaito",

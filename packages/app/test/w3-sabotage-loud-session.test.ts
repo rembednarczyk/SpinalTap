@@ -187,6 +187,6 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     steps(session, 2);
     expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud" });
     expect(session.sim.domain.contracts.active?.charges).toBeUndefined();
-    expectPlace(session, u, /^Server room cut off\..*: the case in armoury S, off hall W-3's south corridor$/, /^Serwerownia odcięta\..*: skrzynia w zbrojowni S przy korytarzu południowym hali W-3$/);
+    expectPlace(session, u, /^Server room cut off\..*: the case by hall W-3's south corridor$/, /^Serwerownia odcięta\..*: skrzynia przy korytarzu południowym hali W-3$/);
   });
 });
