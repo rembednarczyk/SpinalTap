@@ -15,7 +15,7 @@ import {
 } from "@seki/core";
 import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash } from "@seki/sim";
 import { translateText } from "@seki/ui";
-import { frame, setup, steps, teleport } from "./story-helpers";
+import { frame, objective, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
 /**
@@ -30,6 +30,10 @@ type Ui = ReturnType<typeof setup>["ui"];
 const step = (session: GameSession): string => {
   const c = session.sim.domain.contracts.active;
   return c ? translateText("pl", contractObjective(c, contractSecondsLeft(c, session.sim.tick, SIM_HZ))) : "";
+};
+const line = (session: GameSession, locale: "en" | "pl"): string => {
+  const c = session.sim.domain.contracts.active!;
+  return translateText(locale, contractObjective(c, contractSecondsLeft(c, session.sim.tick, SIM_HZ)));
 };
 const toasts = (u: Ui) => u.getState().toasts.map((t) => `${t.title} | ${t.text}`);
 
@@ -149,5 +153,40 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(toasts(u).some((t) => /Server room cut off|Serwerownia odcięta/.test(t))).toBe(true);
     expect(step(session)).toContain("Serwerownia odcięta. Zostaje zbrojownia");
     expect(last(effects, "line-screens").at(-1)?.state).toBe("idle");
+  });
+
+  /** G-906: the loud way's step names where it happens, in both languages, and the HUD writes one of them. */
+  const expectPlace = (session: GameSession, u: Ui, en: RegExp, pl: RegExp) => {
+    expect([line(session, "en"), line(session, "pl")]).toContain(objective(u));
+    expect(line(session, "en")).not.toMatch(/server room N|calibration core/);
+    expect(line(session, "pl")).not.toMatch(/serwerowni N|rdzeń kalibracji/);
+    expect(line(session, "en")).toMatch(en);
+    expect(line(session, "pl")).toMatch(pl);
+  };
+
+  it("the loud way names the line's stations once the charges are taken, not server room N (G-906)", () => {
+    const { session, ui: u } = start();
+    const job = acceptSabotage(session, u);
+    knockOut(session, job.id);
+    expect(line(session, "en")).toContain("server room N");
+    expect(line(session, "pl")).toContain("serwerowni N");
+    inHall(session, 2555, 402, Math.PI);
+    steps(session, 1);
+    steps(session, 1, frame({ interact: true }));
+    knockOut(session, job.id);
+    expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud", charges: [] });
+    expectPlace(session, u, /\(0\/3.*: stations S1–S4 on hall W-3's assembly line$/, /\(0\/3.*: stanowiska S1–S4 na linii montażu hali W-3$/);
+    plant(session, job.id, "S1");
+    expectPlace(session, u, /\(1\/3.*: stations S1–S4/, /\(1\/3.*: stanowiska S1–S4/);
+  });
+
+  it("the server rooms cut off before the charges: the step names the armoury's case, not server room N (G-906)", () => {
+    const { session, ui: u } = start();
+    const job = acceptSabotage(session, u);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, contractAlarmFlag(job.id)] }));
+    steps(session, 2);
+    expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud" });
+    expect(session.sim.domain.contracts.active?.charges).toBeUndefined();
+    expectPlace(session, u, /^Server room cut off\..*: the case by hall W-3's south corridor$/, /^Serwerownia odcięta\..*: skrzynia przy korytarzu południowym hali W-3$/);
   });
 });
