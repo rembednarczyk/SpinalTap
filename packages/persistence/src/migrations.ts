@@ -409,6 +409,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v42 -> v43 (G-901): the last shot at the player, optional. A v42 save has none and loads as
   // before, the street taking her next shot as if nobody had fired at her.
   42: (old) => ({ ...old, version: 43 }),
+  // v43 -> v44 (G-913): the player's step onto a ladder's rungs under way, optional. A v43 save
+  // made in it loads hanging where she was, as before.
+  43: (old) => ({ ...old, version: 44 }),
 };
 
 export class MigrationError extends Error {}
