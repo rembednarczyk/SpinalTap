@@ -74,7 +74,10 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     expect(step(session)).toContain("rdzenia kalibracji");
     expect(last(effects, "line-screens")?.state).toBe("idle");
     expect(last(effects, "alarm-light")?.active).toBe(false);
-    for (const g of [...session.sim.world].filter((e) => e.tag === contractTag(job.id))) g.health = { current: 0, max: g.health!.max };
+    // The four posts and the shift manager on the mezzanine (G-929).
+    const crew = [...session.sim.world].filter((e) => e.tag === contractTag(job.id));
+    expect(crew).toHaveLength(5);
+    for (const g of crew) g.health = { current: 0, max: g.health!.max };
     atCore(session);
     expect(ui(u).prompt ?? "").toMatch(/Upload the virus|Wgraj wirusa/);
     steps(session, 1, frame({ interact: true }));
@@ -96,7 +99,7 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     expect(session.sim.domain.contracts.active).toBeNull();
     expect(session.sim.domain.wallet.eddies).toBeGreaterThan(eddies + job.reward - 1);
     // The crew knocked out is Tessen's loss on its own; the job itself costs nothing with Tessen.
-    const crewCost = 4 * 4;
+    const crewCost = crew.length * 4;
     expect(session.sim.domain.reputation.tessen).toBe(tessen - crewCost);
     // Genzō does not offer it again.
     expect(offer(session, u).map((c) => c.text)).not.toContain("Co to za partia dronów?");

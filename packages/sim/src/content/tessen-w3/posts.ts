@@ -1,7 +1,7 @@
 import type { ContractSiteId, EnemyTypeId, Vec3 } from "@seki/core";
 import { ground } from "../lublin/terrain";
 import { W3_PLATFORM, W3_ROOF, w3 } from "./site";
-import { W3_AIRLOCK_POST, W3_ARMOURY_POST, W3_PATROL_HALL, W3_PATROL_MEZZANINE, W3_VIRUS_TERMINAL } from "./mission";
+import { W3_AIRLOCK_POST, W3_ARMOURY_POST, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_PATROL_MEZZANINE, W3_VIRUS_TERMINAL } from "./mission";
 
 
 /**
@@ -69,6 +69,14 @@ export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly
   // The sabotage (ADR-0082 stage 3): P1 in the hall, P2 on the mezzanine, the wagon airlock's and armoury S's guards.
   w3_hall: [{ ...patrol(W3_PATROL_HALL), enforcer: false }, patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2), post(W3_ARMOURY_POST, Math.PI)],
 };
+
+/**
+ * The sabotage's shift manager on the mezzanine (ADR-0082 §1 p. 2, G-929): the hall's enforcer of
+ * disguises, by the rule of the pass office's shift boss (ADR-0033). Not one of the crew's posts
+ * (`SABOTAGE.crew`): the job's templates put him after all the others, so their ids stay and a
+ * saved job finds him too.
+ */
+export const W3_SHIFT_MANAGER: ContractPost = { ...patrol(W3_PATROL_MANAGER), enforcer: true };
 
 /** Mika's way from Genzō's container down the riverside path to the river's bench under the terrace. */
 export const ESCORT_ROUTE: readonly [Vec3, ...Vec3[]] = [ground(2489.4, 386.6), ground(2482, 385.5), ground(2475, 386.5), ground(2469, 390), ground(2463.5, 396), ground(2461.5, 405)];

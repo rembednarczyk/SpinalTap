@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { DOORS_N, HALL_DOORS, MEZZANINE, ROW_N_ROOMS, ROW_N_SPLITS } from "./layout";
+import { DOORS_N, HALL_DOORS, MEZZANINE, MEZZANINE_DOORS, ROW_N_ROOMS, ROW_N_SPLITS } from "./layout";
 import { w3 } from "./site";
 
 /**
@@ -49,6 +49,25 @@ export const W3_PATROL_HALL: readonly [Vec3, ...Vec3[]] = [
 
 /** P2, the mezzanine's patrol: along the gallery from the stair's landing to the window over the chamber and back. */
 export const W3_PATROL_MEZZANINE: readonly [Vec3, ...Vec3[]] = [w3(2503.5, MEZZANINE, 433.5), w3(2557, MEZZANINE, 433.5)];
+
+/**
+ * The shift manager (ADR-0082 §1 p. 2, G-929), the hall's enforcer of disguises: from beside the
+ * desk in his office on the mezzanine to its door, out onto the gallery and east along it over the
+ * calibration room, then back the same way. The gallery's leg keeps 5 m back from the windows over
+ * the line (their sill 1 m over the gallery's floor), so from it he sees nothing of the hall's floor
+ * nearer than his sight: the aisle and the strips by the long walls stay out of his eyes, and he
+ * sees through her only up there, on the gallery or in his office.
+ */
+const [, OFFICE_DOOR] = MEZZANINE_DOORS as [number, number, number];
+const GALLERY_BACK = 435;
+export const W3_PATROL_MANAGER: readonly [Vec3, ...Vec3[]] = [
+  w3(2533.4, MEZZANINE, 437.6),
+  w3(OFFICE_DOOR, MEZZANINE, 436.9),
+  w3(OFFICE_DOOR, MEZZANINE, GALLERY_BACK),
+  w3(2542, MEZZANINE, GALLERY_BACK),
+  w3(OFFICE_DOOR, MEZZANINE, GALLERY_BACK),
+  w3(OFFICE_DOOR, MEZZANINE, 436.9),
+];
 
 /** The wagon airlock's guard, inside it, looking east down the aisle. */
 export const W3_AIRLOCK_POST: Vec3 = w3(2505, 0, 418);

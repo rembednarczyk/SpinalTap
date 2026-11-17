@@ -189,5 +189,97 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     expect(session.sim.player()!.position.z).toBeGreaterThan(430);
     expect(alarmWithin(session, job, 5)).toBeNull();
     expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: false });
+    // The shift manager was on the mezzanine all the while and never saw her (G-929).
+    expect(managerOf(session, job).ai?.suspicion ?? 0).toBe(0);
+  });
+});
+
+/** The job's shift manager on the mezzanine (G-929). */
+const managerOf = (session: GameSession, job: Contract) => {
+  const m = [...session.sim.world.with("ai")].find((g) => g.key === `${job.id}-manager`);
+  if (!m) throw new Error("no shift manager");
+  return m;
+};
+
+/** In the overalls with the gun away at locker 14, the job taken. */
+const disguised = () => {
+  const { session, ui } = start();
+  const job = acceptSabotage(session, ui);
+  teleport(session, W3_LOCKER_14.x, W3_LOCKER_14.z - 1, Math.PI, 0, W3_LOCKER_14.y);
+  steps(session, 2);
+  changeAtLocker(session, ui);
+  holster(session);
+  return { session, job };
+};
+
+/**
+ * Seconds until the disguise is blown, standing still for at most `seconds`, and who blew it;
+ * null: it held. `each` looks at the world after every step.
+ */
+const blownWithin = (session: GameSession, seconds: number, each = () => {}): { at: number; by: number } | null => {
+  const seen: number[] = [];
+  const off = session.bus.on("DisguiseBlown", (e) => seen.push(e.observerId));
+  try {
+    for (let i = 0; i < seconds * SIM_HZ; i++) {
+      session.step(frame());
+      each();
+      if (seen.length > 0) return { at: i / SIM_HZ, by: seen[0]! };
+    }
+    return null;
+  } finally {
+    off();
+  }
+};
+
+/** One lap of the manager's round: 35.5 m at 1.4 m/s and six halts of 4 s. */
+const MANAGER_LAP = 50;
+/** On the gallery between his office's door and its east end, a metre off his way and P2's. */
+const GALLERY = { x: 2536, y: W3_Y + W3_LAYOUT.MEZZANINE, z: 434.1 };
+
+describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises (ADR-0082 §1 p. 2, G-929)", () => {
+  it("sees through the overalls up close on the gallery; without him P2 walks past her there and they hold", () => {
+    for (const manager of [true, false]) {
+      const { session, job } = disguised();
+      const m = managerOf(session, job);
+      if (!manager) session.sim.world.remove(m);
+      const p2 = [...session.sim.world.with("ai")].find((g) => g.key === `${job.id}-g1`)!;
+      teleport(session, GALLERY.x, GALLERY.z, Math.PI / 2, 0, GALLERY.y);
+      let p2Nearest = Infinity;
+      // When and from how far the manager first doubts her.
+      let noticed: { tick: number; distance: number } | null = null;
+      const blown = blownWithin(session, MANAGER_LAP, () => {
+        const p = session.sim.player()!.position;
+        p2Nearest = Math.min(p2Nearest, Math.hypot(p2.position.x - p.x, p2.position.z - p.z));
+        if (!noticed && (m.ai?.suspicion ?? 0) > 0) noticed = { tick: session.sim.tick, distance: Math.hypot(m.position.x - p.x, m.position.z - p.z) };
+      });
+      if (manager) {
+        // Out of his office's door onto the gallery he sees her 6.1 m off and knows her in 2.2 s.
+        expect(blown?.by).toBe(m.id);
+        const seen = noticed as { tick: number; distance: number } | null;
+        expect(seen!.distance).toBeLessThan(8);
+        expect((session.sim.tick - seen!.tick) / SIM_HZ).toBeLessThan(3);
+        expect(m.view?.kind === "enemy" && m.view.enforcer).toBe(true);
+      } else {
+        expect(p2Nearest).toBeLessThan(2);
+        expect(blown).toBeNull();
+        expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: false });
+      }
+    }
+  });
+
+  it("never sees her on the hall's floor: a whole lap of his round standing in the aisle and under the gallery", () => {
+    const { session, job } = disguised();
+    const m = managerOf(session, job);
+    for (const at of ["w3-aisle-mid", "w3-hall-ne"].map(node)) {
+      teleport(session, at.x, at.z, 0, 0, at.y);
+      let suspicion = 0;
+      for (let i = 0; i < MANAGER_LAP * SIM_HZ; i++) {
+        session.step(frame());
+        suspicion = Math.max(suspicion, m.ai?.suspicion ?? 0);
+      }
+      expect(suspicion, `${at.x},${at.z}`).toBe(0);
+    }
+    expect(m.position.y).toBeCloseTo(GALLERY.y, 1);
+    expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: false });
   });
 });
