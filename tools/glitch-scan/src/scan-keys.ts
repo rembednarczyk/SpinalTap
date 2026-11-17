@@ -44,6 +44,7 @@ export const SAMPLED_KINDS: ReadonlySet<string> = new Set([
   "kerb-gap-bare",
   "frontage-bare",
   "fill-on-construction",
+  "front-far",
   "kerb-fill-wide-estimated",
   "ground-strip-overlap",
   "ground-strip-gap",

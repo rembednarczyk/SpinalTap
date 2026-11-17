@@ -82,6 +82,7 @@ import { loadStructures } from "../../osm-import/src/props-osm.ts";
 import { cityKerbWorld, kerbGapBare } from "./kerb-gap-bare";
 import { cityFrontageWorld, frontageBare, squaresOf } from "./frontage-bare";
 import { fillOnConstruction } from "./fill-construction";
+import { frontFar } from "./front-far";
 import { siteBuildingsOf, siteChecks, siteGroundOf } from "./site-pieces";
 import { crossingGlow, crossingKerb, crossingOffPath, crossingOverhang, crossingShortOfAsphalt, crossingSkew } from "./crossing-shape";
 import { kerbFillFlicker } from "./kerb-fill-flicker";
@@ -139,6 +140,7 @@ import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
+import { frontages } from "../../osm-import/src/bare-fronts.ts";
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
@@ -2269,6 +2271,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
   "fill-on-construction": () => fillOnConstruction(IMPORT_STRUCTURES(), LUBLIN_CHUNKS),
+  /** A 0.5 m sample of a piece laid in a pedestrian street's frontage over 6 m past its reach off every frontage's axis: the street's setts along a strip running off it (`front-far.ts`, G-889). */
+  "front-far": () => frontFar(frontages(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l))), LUBLIN_CHUNKS),
   /** A point of a 0.25 m grid on bare terrain in a gap of up to 3 m between a carriageway and its pavement, outside `landuse-bare`'s cells (`kerb-gap-bare.ts`, G-522). */
   "kerb-gap-bare": () => KERB_GAP_BARE(),
   /**

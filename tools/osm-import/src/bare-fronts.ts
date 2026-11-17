@@ -29,7 +29,8 @@ export interface Frontage {
 /**
  * How far off the axis a frontage reaches (m), as `frontage-bare` counts it: a pedestrian way or a
  * living street 8 m, a residential street of the Old Town 6 m (its lanes are narrower); `strip`
- * the widest strip the reach's edge leaves that joins the frontage (`joinLoose`); `lawn` the least
+ * the widest strip the reach's edge leaves that joins the frontage (`joinLoose`), and how far past
+ * the reach and its margin a strip's cells join it; `lawn` the least
  * m² of a lawn the cover alone lays in it (`paveSpecks`).
  */
 export const FRONT = { pedestrian: 8, oldTown: 6, strip: 3, lawn: 5 } as const;
@@ -84,9 +85,9 @@ const inSight = (cells: Cells, i: number, j: number, px: number, pz: number): bo
   return true;
 };
 
-/** Marks the cells within `d` of the segment from `a` to `b`, with no wall between them and it, a frontage. */
-const frontNear = (cells: Cells, a: Pt, b: Pt, d: number): void => {
-  const { rect, nx, nz, front, wall } = cells;
+/** Marks the cells within `d` of the segment from `a` to `b` in `mark` (a frontage), with no wall between them and it when `sight`. */
+const frontNear = (cells: Cells, a: Pt, b: Pt, d: number, mark = cells.front, sight = true): void => {
+  const { rect, nx, nz, wall } = cells;
   const i0 = Math.max(0, Math.floor((Math.min(a.x, b.x) - d - rect.minX) / STEP));
   const i1 = Math.min(nx - 1, Math.ceil((Math.max(a.x, b.x) + d - rect.minX) / STEP));
   const j0 = Math.max(0, Math.floor((Math.min(a.z, b.z) - d - rect.minZ) / STEP));
@@ -97,11 +98,11 @@ const frontNear = (cells: Cells, a: Pt, b: Pt, d: number): void => {
     const z = rect.minZ + (j + 0.5) * STEP;
     for (let i = i0; i <= i1; i++) {
       const k = j * nx + i;
-      if (front[k] || wall[k]) continue;
+      if (mark[k] || wall[k]) continue;
       const x = rect.minX + (i + 0.5) * STEP;
       const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / len2));
       const [px, pz] = [a.x + dx * t, a.z + dz * t];
-      if ((px - x) ** 2 + (pz - z) ** 2 <= d * d && inSight(cells, i, j, px, pz)) front[k] = 1;
+      if ((px - x) ** 2 + (pz - z) ** 2 <= d * d && (!sight || inSight(cells, i, j, px, pz))) mark[k] = 1;
     }
   }
 };
@@ -112,9 +113,12 @@ const frontNear = (cells: Cells, a: Pt, b: Pt, d: number): void => {
  * wall or a pavement out of the ground before it (a notch, a corner the axis does not see square
  * on, the last metre to the next piece), a strip `ground-strip-gap` or `kerb-gap-bare` counts. A
  * wider region past the reach (a yard, a car park) stays as the rest of the rule leaves it. Each
- * 4-connected region of free cells off the frontage and the map's lawns (`green`) is walked once.
+ * 4-connected region of free cells off the frontage and the map's lawns (`green`) is walked once,
+ * and only its cells within a strip's width of the frontage's edge join (`near`): a strip running
+ * off the street (the scrub between the path and the car park behind Karmelicka, 12-37 m off its
+ * axis, G-889) is no notch of its frontage, and the orthophoto shows it green.
  */
-const joinLoose = (cells: Cells, green: Uint8Array, width: number, area: number): void => {
+const joinLoose = (cells: Cells, green: Uint8Array, near: Uint8Array, width: number, area: number): void => {
   const { nx, label, front } = cells;
   const size = label.length;
   const free = (k: number) => label[k] !== COVERED && label[k] !== BLOCKED && !front[k] && !green[k];
@@ -142,7 +146,7 @@ const joinLoose = (cells: Cells, green: Uint8Array, width: number, area: number)
       }
     }
     // Area n / 4 m², outline edges / 2 m: the mean width 2 area / outline, as `dropLoose` reads it.
-    if (touches && (n / edges < width || n * STEP * STEP < area)) for (let q = 0; q < n; q++) front[queue[q]!] = 1;
+    if (touches && (n / edges < width || n * STEP * STEP < area)) for (let q = 0; q < n; q++) if (near[queue[q]!]) front[queue[q]!] = 1;
   }
 };
 
@@ -157,9 +161,14 @@ export const zoneFronts = (cells: Cells, fronts: readonly Frontage[], greens: re
   const { zone, front } = cells;
   const green = scratch.u8("fronts.green", front.length);
   for (const g of greens) cells.mark(g, green);
-  for (const { line, reach } of fronts) for (let k = 0; k + 1 < line.length; k++) frontNear(cells, line[k]!, line[k + 1]!, reach + margin);
+  const near = scratch.u8("fronts.near", front.length);
+  for (const { line, reach } of fronts)
+    for (let k = 0; k + 1 < line.length; k++) {
+      frontNear(cells, line[k]!, line[k + 1]!, reach + margin);
+      frontNear(cells, line[k]!, line[k + 1]!, reach + margin + FRONT.strip, near, false);
+    }
   for (let k = 0; k < front.length; k++) if (green[k]) front[k] = 0;
-  joinLoose(cells, green, FRONT.strip, specks);
+  joinLoose(cells, green, near, FRONT.strip, specks);
   for (let k = 0; k < front.length; k++) if (front[k]) zone[k] = 1;
 };
 
