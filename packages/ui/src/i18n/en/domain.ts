@@ -245,7 +245,7 @@ export const enDomain = {
   "contract.objective.sabotagePlant": "Plant the charges on the line's stations ({planted}/{needed}): {site}",
   "contract.objective.sabotagePlantTimed": "Plant the charges on the line's stations ({planted}/{needed}, {time} to the pickup): {site}",
   "contract.objective.sabotageFuse": "Get out of the hall before the charges go off ({time})",
-  "contract.objective.sabotageEscape": "Get away from W-3: over the fence or into the metro",
+  "contract.objective.sabotageEscape": "Get away from W-3: out through a gate or into the metro",
   "contract.objective.cleared": "{note}. Go back to {giver} for your pay",
   "contract.cleared.eliminate": "Targets down",
   "contract.cleared.delivery": "Package delivered",

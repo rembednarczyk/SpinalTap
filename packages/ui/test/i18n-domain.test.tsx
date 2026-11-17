@@ -106,6 +106,12 @@ describe("domain texts (ADR-0056, stage 3)", () => {
     expect(translateText("pl", CONTRACT_BONUS.delivery.label)).toBe("Bez alarmu i bez heat");
   });
 
+  it("sends Seki out of W-3 by its ways out, not over the fence it cannot cross (G-920)", () => {
+    // ADR-0082: the fence round W-3 is 2.7 m high and has no way over; the gates and the metro are the ways out.
+    expect(translateText("en", "contract.objective.sabotageEscape")).toBe("Get away from W-3: out through a gate or into the metro");
+    expect(translateText("pl", "contract.objective.sabotageEscape")).toBe("Uciekaj z W-3: przez bramę albo do metra");
+  });
+
   it("translates a key, a key with parameters and the texts inside them; a non-key stays as it is", () => {
     expect(translateText("en", "item.medkit.name")).toBe("Medkit");
     expect(translateText("pl", "item.medkit.name")).toBe("Apteczka");

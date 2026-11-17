@@ -242,7 +242,7 @@ export const plDomain = {
   "contract.objective.sabotagePlant": "Podłóż ładunki na stanowiskach linii ({planted}/{needed}): {site}",
   "contract.objective.sabotagePlantTimed": "Podłóż ładunki na stanowiskach linii ({planted}/{needed}, do odbioru {time}): {site}",
   "contract.objective.sabotageFuse": "Wyjdź z hali, zanim ładunki wybuchną ({time})",
-  "contract.objective.sabotageEscape": "Uciekaj z W-3: za płot albo do metra",
+  "contract.objective.sabotageEscape": "Uciekaj z W-3: przez bramę albo do metra",
   "contract.objective.cleared": "{note}. Wróć do {giver} po zapłatę",
   "contract.cleared.eliminate": "Cele zneutralizowane",
   "contract.cleared.delivery": "Paczka oddana",
