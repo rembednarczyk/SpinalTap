@@ -1,5 +1,5 @@
 {
-  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others.",
+  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely.",
   "clips": {
     "walk": "Female Locomotion Pack/walking.fbx",
     "walkLeft": "Female Locomotion Pack/left strafe walk.fbx",
@@ -19,6 +19,17 @@
     "crouchBackLeft": {
       "file": "rifle/Walk Crouching Backward Right.fbx",
       "mirror": true
+    }
+  },
+  "body": {
+    "idle": {
+      "file": "Female Locomotion Pack/idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "hit": {
+      "file": "Basic Shooter Pack/hit reaction.fbx",
+      "mode": "delta"
     }
   }
 }

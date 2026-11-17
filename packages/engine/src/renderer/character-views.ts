@@ -1,3 +1,4 @@
+import { poseBodyFromClips } from "./clips/body-pose";
 import { poseLegsFromClips } from "./clips/leg-pose";
 import type { AbstractMesh, Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
@@ -268,6 +269,8 @@ export class CharacterViews implements FxActors {
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       // The legs from the locomotion clips, by the way it moves against its facing (ADR-0090).
       poseLegsFromClips(v.rig, t.position, t.speed, dt, t.crouch ?? 0);
+      // Standing, the idle clip; on a hit, the hit reaction (ADR-0090 stage 2).
+      poseBodyFromClips(v.rig, t.speed, dt, t.crouch ?? 0);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
       animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
       animateGrab(v.rig, dt, t, id === followed ? "holder" : "held");
