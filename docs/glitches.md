@@ -2475,13 +2475,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, W-3)
 
-### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
-- Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
-- Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
-- Status: w PR #675 (gałąź ccr-ec2c4269-ilh8k8-g907, 9e63ceb), w weryfikacji; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Etap 1: haki i pendrive przy przyjęciu, szafka 14, wylot kolektora (prompt.culvert); P1 przestał być egzekutorem i to on zdzierał przebranie. Dalej: kierownik zmiany, palacz, kod furtki. Pytania do użytkownika: furtka z kodem, rola palacza, wymóg pendrive'a, kierownik zmiany w biurze antresoli.
-
 ### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
 - Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
 - Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
@@ -2578,6 +2571,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
+
+### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
+- Ważność: S3 · Zasięg: droga cicha W-3
+- Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
+
+### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
+- Ważność: S4 · Zasięg: wylot kolektora W-3
+- Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: podpowiedź tylko z dna wylotu
+
+### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
+- Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
+- Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
+- Status: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
+- Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
+- Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
+- Status: naprawione (17.11, #675 scalony); wcześniej: w PR #675 (gałąź ccr-ec2c4269-ilh8k8-g907, 9e63ceb), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Etap 1: haki i pendrive przy przyjęciu, szafka 14, wylot kolektora (prompt.culvert); P1 przestał być egzekutorem i to on zdzierał przebranie. Dalej: kierownik zmiany, palacz, kod furtki. Pytania do użytkownika: furtka z kodem, rola palacza, wymóg pendrive'a, kierownik zmiany w biurze antresoli.
+
 ### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
 - Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
 - Opis: Odtworzenie 17.11 (łowca, sesja bez renderera, origin/main e2f6330): W-3 głośna, ładunki wzięte w (2555, 402) podnoszą alarm:c1, załoga zabita bronią, 3 ładunki, wyjście (2527, 384), wypłata; debrief: badges [no_alarm, clean, swift], ranga A. Przyczyna: core/contracts/scoring.ts badgeHolds sprawdza tally.alarm, ustawiany tylko przez noteAlarm z crime-system.report; contract-system.raiseAlarm stawia tylko flagę alarm:<id> (celowo dla doków, komentarz). ghost alarm też nie wyklucza (raiseAlarm nie woła noteDetected); komentarz core/test/w3-sabotage-loud.test.ts:43 'never ghost' kod nie wymusza. Do decyzji przy poprawce: czy flaga alarmu zlecenia liczy się do no_alarm tylko w W-3 (sabotage), czy też w dokach; czy alarm odbiera ghost.
