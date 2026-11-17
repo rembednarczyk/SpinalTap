@@ -171,6 +171,12 @@ export interface ContractsUiState {
   readonly contractsDone: number;
   readonly debrief: ContractDebriefVm | null;
   readonly contractBonus: ContractBonusVm | null;
+  /**
+   * Whose step the objective line shows: the running contract's or a story entry's (the main
+   * thread, a pinned quest; G-919). The contract's bonus stands only under its own step; null
+   * before the HUD sync says (the bonus as written).
+   */
+  readonly objectiveKind: "story" | "contract" | null;
   /** Hooks found during the running contract (ADR-0032), for the tracker. */
   readonly contractHooks: readonly ContractHookVm[];
 }
@@ -364,6 +370,7 @@ export const initialUiState: UiState = {
   phoneNotice: null,
   debrief: null,
   contractBonus: null,
+  objectiveKind: null,
   heat: NO_HEAT,
   detection: [],
   lastKnown: null,

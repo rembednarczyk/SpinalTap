@@ -164,6 +164,13 @@ describe("contract debrief", () => {
     act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
     expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toBe("Warunek bonusowy stracony");
   });
+
+  it("keeps the contract's bonus off a story entry's step the HUD shows meanwhile (G-919)", () => {
+    const { store } = mount({ objective: "Porozmawiaj z Kaito", questTitle: "Przebudzenie", objectiveKind: "story", contractBonus: { label: "Nie podnoś alarmu", badge: "no_alarm", bonus: 300, kept: true } });
+    expect(screen.queryByTestId("contract-bonus")).toBeNull();
+    act(() => patchUi(store, { objectiveKind: "contract" }));
+    expect(screen.getByTestId("contract-bonus").textContent).toContain("✓");
+  });
 });
 
 const map: MapVm = { bounds: { x: 0, z: 0, w: 100, d: 100 }, blocks: [], streets: [] };
