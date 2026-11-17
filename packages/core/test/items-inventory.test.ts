@@ -8,6 +8,7 @@ import {
   RARITY,
   STACKABLE_CATALOG,
   addAmmo,
+  addKeyItem,
   addInstance,
   addStack,
   ammoCount,
@@ -36,6 +37,7 @@ import {
   updateItem,
   useConsumable,
   usedCells,
+  removeKeyItem,
 } from "../src";
 
 const eq = EMPTY_EQUIPMENT;
@@ -284,5 +286,16 @@ describe("ammo pouch", () => {
     expect(addAmmo(full, "44", 5)).toEqual({ ammo: full, added: 0 });
     expect(ammoCount({}, "556")).toBe(0);
     expect(setAmmo({ "9mm": 3 }, "9mm", -1)).toEqual({ "9mm": 0 });
+  });
+});
+
+describe("story items (keyItems, G-907)", () => {
+  it("go into the bag once, take no cell, and come out only if there", () => {
+    const one = addKeyItem(EMPTY_INVENTORY, "w3_virus");
+    expect(one.keyItems).toEqual(["w3_virus"]);
+    expect(one.items).toBe(EMPTY_INVENTORY.items);
+    expect(addKeyItem(one, "w3_virus")).toBe(one);
+    expect(removeKeyItem(one, "w3_virus").keyItems).toEqual([]);
+    expect(removeKeyItem(EMPTY_INVENTORY, "w3_virus")).toBe(EMPTY_INVENTORY);
   });
 });
