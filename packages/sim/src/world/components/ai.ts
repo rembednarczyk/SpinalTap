@@ -126,6 +126,11 @@ export interface GunTactic {
   stride: number;
   /** Seconds it still stands before the next sidestep. */
   rest: number;
+  /**
+   * Its attack token (ADR-0089 stage 4): the tick it took it and the last tick it fired on it.
+   * Without one it holds its fire and spreads out round the player. Absent when it has none.
+   */
+  token?: { since: number; last: number };
 }
 
 /**

@@ -89,7 +89,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 45;
+export const SAVE_SCHEMA_VERSION = 46;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -300,10 +300,12 @@ export interface TacticSnapshot {
   readonly side: 1 | -1;
   readonly stride: number;
   readonly rest: number;
+  /** Its attack token (ADR-0089 stage 4, v46): the tick it took it and the last it fired on it. Absent without one. */
+  readonly token?: { readonly since: number; readonly last: number };
 }
 
-/** The longest sidestep of a gunner (ADR-0089 stage 3: 1.5-3 m), metres. */
-export const MOST_STRIDE = 3;
+/** The longest stride of a gunner round the player, metres: a sidestep is 1.5-3 m (ADR-0089 stage 3), a stride to spread out up to 6 (stage 4). */
+export const MOST_STRIDE = 6;
 
 /** A body (ADR-0065): what the street knows of it and where the player put it. */
 export interface BodySnapshot {

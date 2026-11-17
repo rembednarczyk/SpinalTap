@@ -134,10 +134,10 @@ const RIFLE_CORRIDOR_HEALTH = 0.6;
 
 /**
  * The pistol's duel takes longer than this; the start save's rifle takes under half of it. The
- * playtest's was 1.72 s; since the guards step aside and pause between bursts (ADR-0089 stage 3)
- * it is 2.28 s, and the rifle's 1.02 s.
+ * playtest's was 1.72 s; with ADR-0089 stage 3 2.28 s (the rifle's 1.02 s), with stage 4's order
+ * of draws 1.72 s again (the rifle's 0.68 s).
  */
-const PISTOL_DUEL_SECONDS = 2.2;
+const PISTOL_DUEL_SECONDS = 1.5;
 /** Who the level 6 game takes down in corridor S before she dies: 3 in the playtest, 2 since ADR-0089 stage 3 (the start save 3). */
 const PISTOL_CORRIDOR_KILLS = 2;
 
@@ -240,7 +240,7 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
   // The playtest's fights (G-909), one game each: at level 6 with the Unity-9, then from the start save.
   const out = (name: string, r: unknown) => process.env.G909_OUT && writeFileSync(`${process.env.G909_OUT}-${name}.json`, JSON.stringify(r, null, 1));
 
-  it("the playtest's duel at level 6 with the Unity-9: the guard falls in over 2.2 s", async () => {
+  it("the playtest's duel at level 6 with the Unity-9: the guard falls in over 1.5 s", async () => {
     const before = await fightOf(levelSix, "duel");
     out("before-duel", before);
     expect(before).toMatchObject({ level: 6, died: false, kills: 1 });

@@ -35,6 +35,20 @@ describe("a gunner's burst and sidestep in the save (v44 to v45, ADR-0089 stage 
     }
   });
 
+  it("a v45 save changes only the version: its gunners take the tokens again (v45 to v46, ADR-0089 stage 4)", () => {
+    const old = { version: 45, tick: 5, entities: [GUARD] };
+    expect(MIGRATIONS[45]!(old)).toEqual({ ...old, version: 46 });
+  });
+
+  it("keeps an attack token through the codec and refuses one taken or fired on after the save", () => {
+    const entities = [{ ...GUARD, tactic: { ...TACTIC, token: { since: 2, last: 5 } } }];
+    expect(errorOf(...entities)).toBeNull();
+    expect(decodeSave("slot", encodeSave(snapshot({ entities }))).entities).toEqual(entities);
+    for (const token of [{ since: 4, last: 3 }, { since: -1, last: 3 }, { since: 1, last: 999_999 }, { since: 1.5, last: 3 }]) {
+      expect(errorOf({ ...GUARD, tactic: { ...TACTIC, token } })).toBe("entity guard tactic");
+    }
+  });
+
   it("refuses a burst or a sidestep that is not one", () => {
     const bad: unknown[] = [
       { ...TACTIC, shots: 0 },
@@ -42,7 +56,7 @@ describe("a gunner's burst and sidestep in the save (v44 to v45, ADR-0089 stage 
       { ...TACTIC, shots: 99 },
       { ...TACTIC, side: 0 },
       { ...TACTIC, stride: -0.1 },
-      { ...TACTIC, stride: 3.5 },
+      { ...TACTIC, stride: 6.5 },
       { ...TACTIC, rest: Number.NaN },
       null,
     ];
