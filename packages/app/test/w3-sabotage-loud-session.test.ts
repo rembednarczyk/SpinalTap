@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AudioCue,
   type DomainState,
   type EffectDescriptor,
   SABOTAGE_LOUD,
@@ -13,17 +14,19 @@ import {
   stationDownFlag,
   tessenHuntUntil,
 } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash, stationChargeAt } from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
+import { SIREN_PERIOD } from "../src/presenters/w3-mission";
 
 /**
  * W-3's sabotage, the loud way, in a session, headless (ADR-0082 stage 3b): the charges' case in
- * armoury S raises the alarm and the toast of the way cut off, three charges on the line, the
- * blast out of the hall as sparks over the wrecked stations, out of the zone Genzō pays the loud
- * rate and Tessen hunts her; the alarm during the upload turns the job loud; a save with the fuse
- * running loads to the same state.
+ * armoury S raises the alarm (its klaxon, the siren while it lasts) and the toast of the way cut
+ * off, three charges on the line, the blast out of the hall as explosions over the stations, their
+ * sound and the wrecks (stage 3c), out of the zone Genzō pays the loud rate and Tessen hunts her;
+ * the alarm during the upload turns the job loud; a save with the fuse running loads to the same
+ * state; a load after the blast shows the wrecks again from the flags, without a blast.
  */
 
 type Ui = ReturnType<typeof setup>["ui"];
@@ -34,7 +37,8 @@ const step = (session: GameSession): string => {
 const toasts = (u: Ui) => u.getState().toasts.map((t) => `${t.title} | ${t.text}`);
 
 const start = () => {
-  const s = setup();
+  const cues: AudioCue[] = [];
+  const s = setup(undefined, { play: (c) => cues.push(c), stopAll() {} });
   const effects: EffectDescriptor[] = [];
   const play = s.render.playEffect.bind(s.render);
   s.render.playEffect = (e: EffectDescriptor) => {
@@ -43,7 +47,7 @@ const start = () => {
   };
   s.session.newGame();
   steps(s.session, 2);
-  return { ...s, effects };
+  return { ...s, effects, cues };
 };
 
 const acceptSabotage = (session: GameSession, u: Ui) => {
@@ -88,9 +92,11 @@ const setDomain = (session: GameSession, change: (d: DomainState) => DomainState
 
 describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () => {
   it("loud: the charges raise the alarm, three on the line, the blast out of the hall, paid the loud rate, Tessen hunts her", async () => {
-    const { session, ui: u, effects } = start();
+    const { session, ui: u, effects, cues } = start();
+    const count = (c: AudioCue) => cues.filter((x) => x === c).length;
     const job = acceptSabotage(session, u);
     knockOut(session, job.id);
+    expect(last(effects, "line-wrecks").at(-1)?.stations).toEqual([]);
     // Armoury S, by the charges' case.
     inHall(session, 2555, 402, Math.PI);
     steps(session, 1);
@@ -99,7 +105,12 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(session.sim.domain.flags).toContain(contractAlarmFlag(job.id));
     expect(toasts(u).some((t) => /Server room cut off|Serwerownia odcięta/.test(t))).toBe(true);
     expect(last(effects, "alarm-light").at(-1)?.active).toBe(true);
+    expect(count("alarm")).toBe(1);
     knockOut(session, job.id);
+    // The siren wails while the alarm lasts and she is in the zone, a wail a period.
+    const wails = count("alarm-siren");
+    steps(session, Math.round(2 * SIREN_PERIOD * SIM_HZ) + 1);
+    expect(count("alarm-siren") - wails).toBeGreaterThanOrEqual(1);
     expect(step(session)).toContain("Podłóż ładunki na stanowiskach linii (0/3");
     plant(session, job.id, "S1");
     expect(step(session)).toContain("(1/3");
@@ -111,12 +122,17 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(await session.saves.saveAsync("fuse")).toBe(true);
     expect(await session.saves.loadAsync("fuse")).toBe(true);
     expect(stateHash(session.sim.snapshot(null, "t", ""))).toBe(hash);
-    const sparks = last(effects, "hit-spark").length;
+    // The load sent the line's state again, the wrecks none yet, and set nothing off.
+    expect(last(effects, "line-wrecks").at(-1)?.stations).toEqual([]);
+    expect(last(effects, "explosion")).toHaveLength(0);
+    expect(count("explosion")).toBe(0);
     // Out of the hall, in the east yard: the line goes off.
     teleport(session, 2585, 415, 0, 0, W3_Y);
     steps(session, 2);
     for (const s of ["S1", "S2", "S4"] as const) expect(session.sim.domain.flags).toContain(stationDownFlag(s));
-    expect(last(effects, "hit-spark").length - sparks).toBeGreaterThanOrEqual(3 * 4);
+    expect(last(effects, "explosion")).toEqual((["S1", "S2", "S4"] as const).map((s) => ({ kind: "explosion", at: stationChargeAt(s), radius: SABOTAGE_LOUD.blastRadius })));
+    expect(count("explosion")).toBe(1);
+    expect(last(effects, "line-wrecks").at(-1)?.stations).toEqual(["S1", "S2", "S4"]);
     expect(step(session)).toContain("Uciekaj z W-3");
     const eddies = session.sim.domain.wallet.eddies;
     teleport(session, 2527, 384, 0);
@@ -128,8 +144,19 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(tessenHuntUntil(session.sim.domain.flags)).toBe(gameDayOf(session.sim.domain.clock) + TESSEN_HUNT.days);
     // The hunt survives a save: the flag is in it.
     expect(await session.saves.saveAsync("hunt")).toBe(true);
+    const blasts = last(effects, "explosion").length;
+    const wrecksSent = last(effects, "line-wrecks").length;
     expect(await session.saves.loadAsync("hunt")).toBe(true);
+    steps(session, 1);
     expect(tessenHuntUntil(session.sim.domain.flags)).not.toBeNull();
+    // The wrecks come back from the stations' flags, without a blast or its sound; the alarm is over.
+    expect(last(effects, "line-wrecks").length).toBe(wrecksSent + 1);
+    expect(last(effects, "line-wrecks").at(-1)?.stations).toEqual(["S1", "S2", "S4"]);
+    expect(last(effects, "explosion")).toHaveLength(blasts);
+    expect(count("explosion")).toBe(1);
+    const silent = count("alarm-siren");
+    steps(session, Math.round(2 * SIREN_PERIOD * SIM_HZ) + 1);
+    expect(count("alarm-siren")).toBe(silent);
   });
 
   it("the alarm during the upload turns the job loud: the toast, the armoury's step, the screens back to idle", () => {

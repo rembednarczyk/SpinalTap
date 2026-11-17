@@ -1,5 +1,18 @@
-import { type DomainState, type LineScreens, type RenderPort, W3_STATIONS, type W3StationId, W3_VIRUS_FLAG, contractAlarmFlag, contractKind, stationDownFlag } from "@seki/core";
-import { stationChargeAt } from "@seki/sim";
+import {
+  type AudioPort,
+  type DomainState,
+  type LineScreens,
+  type RenderPort,
+  SABOTAGE_LOUD,
+  type Vec3,
+  W3_STATIONS,
+  type W3StationId,
+  W3_VIRUS_FLAG,
+  contractAlarmFlag,
+  contractKind,
+  stationDownFlag,
+} from "@seki/core";
+import { SIM_HZ, inW3Zone, stationChargeAt } from "@seki/sim";
 
 /** What W-3's line shows of the job (ADR-0082 stage 3): the lockdown's beacons, the screens, the stations blown (3b). */
 export interface W3MissionVm {
@@ -22,39 +35,54 @@ export const w3MissionOf = (domain: DomainState): W3MissionVm => {
   return { alarm, screens, blown };
 };
 
-/** Sparks of one charge going off: a burst over the station, the renderer's hit sparks at their brightest. */
-const BURST: readonly { readonly dx: number; readonly dy: number; readonly dz: number }[] = [
-  { dx: 0, dy: 0.2, dz: 0 },
-  { dx: -0.6, dy: 0.7, dz: 0.2 },
-  { dx: 0.6, dy: 0.9, dz: -0.2 },
-  { dx: 0.1, dy: 1.4, dz: 0.3 },
-];
+/** One wail of the siren (the `alarm-siren` cue) lasts this long; it starts again while the alarm lasts (s). */
+export const SIREN_PERIOD = 2.4;
 
 /**
- * Sends the line's state to the renderer as world state (`alarm-light`, `line-screens`), only
- * when it changes, and again after the views were cleared (a new game, a load); the blast of a
- * station as sparks, only when it happens (not again after a load: the wrecks are in the world).
+ * Sends the line's state to the renderer as world state (`alarm-light`, `line-screens`,
+ * `line-wrecks`), only when it changes, and again after the views were cleared (a new game, a
+ * load): the wrecks come back from the stations' flags. What happens now plays only when it
+ * happens, not again after a load (ADR-0082 stage 3c): a station's blast as an `explosion` and
+ * its sound, the alarm's klaxon; the siren wails while the alarm lasts and Seki is in W-3's zone.
  */
 export class W3MissionSync {
   private sent: W3MissionVm | null = null;
+  /** The siren's last wail (a count of periods of the simulation's ticks), null while it is silent. */
+  private wail: number | null = null;
 
-  constructor(private readonly render: RenderPort) {}
+  constructor(
+    private readonly render: RenderPort,
+    private readonly audio: AudioPort,
+  ) {}
 
   reset(): void {
     this.sent = null;
+    this.wail = null;
   }
 
-  frame(domain: DomainState): void {
+  /** One rendered frame: the domain, the simulation's tick and where Seki is (null without her). */
+  frame(domain: DomainState, tick: number, seki: Vec3 | null): void {
     const next = w3MissionOf(domain);
     const last = this.sent;
     if (last?.alarm !== next.alarm) this.render.playEffect({ kind: "alarm-light", active: next.alarm });
+    if (last && !last.alarm && next.alarm) this.audio.play("alarm");
     if (last?.screens !== next.screens) this.render.playEffect({ kind: "line-screens", state: next.screens });
-    if (last) for (const s of next.blown) if (!last.blown.includes(s)) this.blast(s);
+    if (!last || last.blown.join() !== next.blown.join()) this.render.playEffect({ kind: "line-wrecks", stations: next.blown });
+    const fresh = last ? next.blown.filter((s) => !last.blown.includes(s)) : [];
+    for (const s of fresh) this.render.playEffect({ kind: "explosion", at: stationChargeAt(s), radius: SABOTAGE_LOUD.blastRadius });
+    if (fresh.length > 0) this.audio.play("explosion");
+    this.siren(next.alarm && seki !== null && inW3Zone(seki.x, seki.z), tick);
     this.sent = next;
   }
 
-  private blast(s: W3StationId): void {
-    const at = stationChargeAt(s);
-    for (const b of BURST) this.render.playEffect({ kind: "hit-spark", at: { x: at.x + b.dx, y: at.y + b.dy, z: at.z + b.dz }, critical: true });
+  /** A wail every `SIREN_PERIOD` of game time while `on`, the first a period after it came on. */
+  private siren(on: boolean, tick: number): void {
+    if (!on) {
+      this.wail = null;
+      return;
+    }
+    const beat = Math.floor(tick / Math.round(SIREN_PERIOD * SIM_HZ));
+    if (this.wail !== null && beat !== this.wail) this.audio.play("alarm-siren");
+    this.wail = beat;
   }
 }
