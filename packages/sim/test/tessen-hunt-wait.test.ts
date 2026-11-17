@@ -53,7 +53,7 @@ describe("no waiting with Tessen's squad after her (ADR-0082, 17.11)", () => {
     expect(afterHer(sim)).toBe(false);
   });
 
-  it("a squad on its way with no entry where she is (the clinic) refuses it to its tick and 20 s past it, then she waits", () => {
+  it("a squad on its way with no entry where she is (the clinic) refuses it to its tick and 20 s past it, then it is gone and she waits", () => {
     expect(TESSEN_SQUAD_LATE_SECONDS).toBe(TESSEN_HUNT.delayMinSeconds);
     const sim = hunted(3);
     teleportPlayer(sim, CLINIC_WAKE_SPOT, 0);
@@ -62,17 +62,19 @@ describe("no waiting with Tessen's squad after her (ADR-0082, 17.11)", () => {
     setDomain(sim, (d) => ({ ...d, flags: [...d.flags, flag] }));
     const late = due + TESSEN_SQUAD_LATE_SECONDS * SIM_HZ;
     run(sim, late - 1 - sim.tick);
-    // No entry 60 m from the clinic: its flag waits (G-934), the squad is not in, she is refused.
+    // No entry 60 m from the clinic: its flag waits, the squad is not in, she is refused.
     expect(sim.domain.flags).toContain(flag);
     expect(squad(sim)).toEqual([]);
     expect(afterHer(sim)).toBe(true);
     run(sim, 1);
     expect(sim.tick).toBe(late);
-    expect(sim.domain.flags).toContain(flag);
     expect(afterHer(sim)).toBe(false);
+    // Late as that, it is gone on the hunt's next look (G-934): it never comes in long after her warning.
+    run(sim, SIM_HZ);
+    expect(sim.domain.flags).not.toContain(flag);
     // Still none in a minute and a half on: she keeps her wait.
     run(sim, 90 * SIM_HZ);
-    expect(sim.domain.flags).toContain(flag);
+    expect(tessenSquadDue(sim.domain.flags)).toBeNull();
     expect(squad(sim)).toEqual([]);
     expect(afterHer(sim)).toBe(false);
   });
@@ -97,13 +99,17 @@ describe("no waiting with Tessen's squad after her (ADR-0082, 17.11)", () => {
     expect(afterHer(sim)).toBe(false);
   });
 
-  it("a save of v44 with the squad gone back by its size alone lets her wait; the squad still comes in", () => {
+  it("a save of v44 with the squad gone back by its size alone lets her wait; the next roll's squad comes in, with its warning (G-934)", () => {
     const sim = hunted(3, `${TESSEN_SQUAD_BACK_PREFIX}${TESSEN_HUNT.squadMin}`);
     expect(tessenSquadBack(sim.domain.flags)).toMatchObject({ size: TESSEN_HUNT.squadMin, stretch: null });
     expect(afterHer(sim)).toBe(false);
     run(sim, 2 * SIM_HZ);
-    expect(squad(sim).length).toBe(TESSEN_HUNT.squadMin);
     expect(tessenSquadBack(sim.domain.flags)).toBeNull();
+    const due = tessenSquadDue(sim.domain.flags);
+    expect(due).not.toBeNull();
+    expect(squad(sim)).toEqual([]);
+    run(sim, due!.tick - sim.tick + SIM_HZ);
+    expect(squad(sim).length).toBe(due!.size);
   });
 
   it("the flag of a squad gone back keeps the stretch of the roll", () => {
