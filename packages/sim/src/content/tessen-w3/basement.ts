@@ -1,3 +1,4 @@
+import type { Vec3 } from "@seki/core";
 import type { GroundCut } from "../../world/ground";
 import type { GroundVault } from "../../world/vault";
 import { type StaticProp, ladderParts, stairs, v } from "../builders";
@@ -148,3 +149,20 @@ const culvert = (): StaticProp[] => {
 
 /** The basement, the culvert and the shafts, in the world. */
 export const W3_BASEMENT_PROPS: readonly StaticProp[] = [...indoor([...basement(), ...stairA(), ...stairB(), ...liftShaft(), ...culvert()])];
+
+/**
+ * The culvert's mouth as a place to interact with (ADR-0082 §3 `prompt.culvert`, G-907): standing in
+ * the mouth by the headwall, the key takes her in under it, crouched, facing the basement.
+ */
+export const W3_CULVERT_ENTRY: StaticProp = {
+  center: v(CULVERT_CRAWL.minX - 1.2, y(CULVERT_MOUTH.floor), (C.minZ + C.maxZ) / 2),
+  view: { kind: "block", size: v(0.01, 0.01, 0.01), material: "metal" },
+  solid: false,
+  mechanism: { kind: "crawl", to: v(CULVERT_CRAWL.minX + 0.5, y(CULVERT_CRAWL.floor), (C.minZ + C.maxZ) / 2), yaw: Math.PI / 2 },
+};
+
+/**
+ * In front of locker 14, the locker room's east one by the culvert's flight (ADR-0082 §1 Q1): the
+ * technician's overalls lie there while the sabotage runs.
+ */
+export const W3_LOCKER_14: Vec3 = { x: 2526.6, y: y(F), z: B.maxZ - 1 };

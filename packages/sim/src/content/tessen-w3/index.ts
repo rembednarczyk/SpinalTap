@@ -1,5 +1,6 @@
 import type { GroundPoint, StreetPropItem, Vec3, ViewDescriptor } from "@seki/core";
 import type { ActorDef, BlockMaterial, StaticProp } from "../builders";
+import { W3_CULVERT_ENTRY } from "./basement";
 import { W3_HALL_BARRIERS, W3_HALL_PROPS, W3_HALL_SHELL } from "./hall";
 import { W3_EDGE_BARRIERS, W3_EDGE_PROPS } from "./quay";
 import { W3_PUBLIC_ACTORS, W3_PUBLIC_PROPS, W3_YARD_PROPS, W3_ZONE_ACTORS } from "./public";
@@ -14,12 +15,15 @@ export { W3_AIRLOCK_POST, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MEZZANIN
 export { W3_ARMOURY_CHEST, W3_CHARGES_CASE, W3_STATION_SPOTS, W3_TECHNICIANS, W3_WAVE_AIRLOCKS, W3_WAVE_PICKUP, stationChargeAt } from "./mission-loud";
 export { W3_OFFICE, W3_OFFICE_DOOR, W3_PIPE_LADDER, W3_TOWER_STAIR } from "./tower-pipes";
 export { W3_BRIDGE_Z, W3_HALL_DOORS } from "./hall";
-export { W3_CUTS, W3_VAULTS } from "./basement";
+export { W3_CUTS, W3_LOCKER_14, W3_VAULTS } from "./basement";
 export * as W3_LAYOUT from "./layout";
 export { W3_UNSEEN_WALLS } from "./quay";
 
-/** W-3's props in the world (ADR-0082 stage 1): the hall's shell, the tower and the pipeline, the edges, the public strip. */
-export const W3_PROPS: readonly StaticProp[] = [...W3_HALL_PROPS, ...W3_TOWER_PROPS, ...W3_EDGE_PROPS, ...W3_YARD_PROPS, ...W3_PUBLIC_PROPS];
+/**
+ * W-3's props in the world (ADR-0082 stage 1): the hall's shell, the tower and the pipeline, the
+ * edges, the public strip; last, the culvert's mouth to crawl in at (G-907), so the others' ids stay.
+ */
+export const W3_PROPS: readonly StaticProp[] = [...W3_HALL_PROPS, ...W3_TOWER_PROPS, ...W3_EDGE_PROPS, ...W3_YARD_PROPS, ...W3_PUBLIC_PROPS, W3_CULVERT_ENTRY];
 /** A plain block of W-3's inside, in the world: drawn by the renderer, not by its entity (ADR-0082 §4). */
 export interface W3Block {
   readonly center: Vec3;

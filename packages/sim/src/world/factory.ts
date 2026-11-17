@@ -68,6 +68,9 @@ export const playerEntity = (id: EntityId, maxHp = PLAYER_MAX_HP): Entity => ({
 /** Reach of a ladder's grab points, metres. */
 const LADDER_REACH = 1.1;
 
+/** Reach of a crawl's mouth, metres. */
+const CRAWL_REACH = 1.4;
+
 /** Reach of a lift's call button, metres. */
 const BUTTON_REACH = 3;
 
@@ -126,6 +129,10 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
       prompt: m.end === "bottom" ? "prompt.ladder.up" : "prompt.ladder.down",
       radius: LADDER_REACH,
     };
+  } else if (m?.kind === "crawl") {
+    // A crawl's mouth is a place too.
+    delete e.view;
+    e.interactable = { kind: "crawl", crawl: { to: m.to, yaw: m.yaw }, dialogueId: "", prompt: "prompt.culvert", radius: CRAWL_REACH };
   }
   return e;
 };
@@ -160,7 +167,8 @@ export const gangerEntity = (
 ): Entity => {
   const def = ENEMY_TYPES[type];
   // Enforcers see through disguises (ADR-0033); the HUD marks them through the view.
-  const enforcer = isEnforcer(spawn.key, id, def.faction);
+  const byKey = isEnforcer(spawn.key, id, def.faction);
+  const enforcer = spawn.enforcer ?? byKey;
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
@@ -183,6 +191,8 @@ export const gangerEntity = (
   };
   if (tag) e.tag = tag;
   if (enforcer && e.ai) e.ai = { ...e.ai, enforcer: true };
+  // A shift boss's post told not to see through disguises keeps its rank (G-907).
+  else if (byKey && def.faction === "tessen" && e.ai) e.ai = { ...e.ai, boss: true };
   return e;
 };
 

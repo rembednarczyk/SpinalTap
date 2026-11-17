@@ -34,12 +34,13 @@ export const enemyScalingOf = (domain: DomainState, districtAt?: (p: Vec3) => Di
     : { npcHealth: domain.difficulty.npcHealth, playerLevel: domain.progression.level };
 
 /**
- * An enemy's rank (ADR-0059): Tessen's shift boss (the enforcer of a docks crew, ADR-0033) is a
- * boss, an elite type (a Hebi enforcer, Kagami's cleaners) an elite, everyone else a regular.
+ * An enemy's rank (ADR-0059): Tessen's shift boss (the enforcer of a docks crew, ADR-0033, or its
+ * post's guard who does not see through disguises, G-907) is a boss, an elite type (a Hebi
+ * enforcer, Kagami's cleaners) an elite, everyone else a regular.
  */
 export const enemyRankOf = (e: Entity): EnemyRank => {
   if (!e.enemy) return "regular";
-  if (e.faction === "tessen" && e.ai?.enforcer) return "boss";
+  if (e.faction === "tessen" && (e.ai?.enforcer || e.ai?.boss)) return "boss";
   return (ENEMY_TYPES[e.enemy.type] as EnemyType).rank ?? "regular";
 };
 

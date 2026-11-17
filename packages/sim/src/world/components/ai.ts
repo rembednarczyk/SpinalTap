@@ -90,6 +90,11 @@ export interface GangerAi {
    */
   readonly enforcer?: true;
   /**
+   * A Tessen shift boss's post whose guard does not see through disguises (W-3's hall patrol P1,
+   * G-907): still a boss in rank (ADR-0059). Fixed at spawn, so it needs no saving.
+   */
+  readonly boss?: true;
+  /**
    * A street patrol on its own ground (ADR-0048): Hebi walking the Old Town among the people
    * who live there. Neutral to the player, it keeps an eye on her instead of attacking; a hostile
    * standing, the heat's hunt, a blown disguise of its faction or a provocation alert it like

@@ -21,6 +21,8 @@ import {
   progressFlag,
   hasFlag,
   hasMemory,
+  jobKeyItems,
+  removeKeyItem,
   reputationEffects,
   setFlag,
   unlockMemory,
@@ -103,6 +105,13 @@ export const clearContract = (ctx: SimContext): void => {
   ctx.bus.emit("ContractCleared", { contract: cleared });
 };
 
+/** The story items a job handed over (W-3's pendrive) go back with it, used or not. */
+export const takeBackJobItems = (ctx: SimContext, kind: string): void => {
+  const items = jobKeyItems(kind);
+  if (items.length === 0) return;
+  ctx.state.domain = { ...ctx.state.domain, inventory: items.reduce(removeKeyItem, ctx.state.domain.inventory) };
+};
+
 /**
  * Drops the running contract without pay. Its id is marked failed and never reused, so the
  * dead flags of its gangers cannot leak into a later contract.
@@ -112,6 +121,7 @@ export const failContract = (ctx: SimContext, reason: ContractFailure): void => 
   if (!contract) return;
   ctx.state.domain = { ...ctx.state.domain, contracts: { active: null, completed: ctx.state.domain.contracts.completed } };
   raiseFlag(ctx, contractFailedFlag(contract.id));
+  takeBackJobItems(ctx, contractKind(contract));
   applyReputationCause(ctx, { type: "contract-failed", kind: contractKind(contract) });
   ctx.bus.emit("ContractFailed", { contract, reason });
   phoneFromFixer(ctx, giverOfContract(contract), "failed");

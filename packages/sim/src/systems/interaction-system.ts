@@ -10,6 +10,7 @@ import { plantableStation } from "./sabotage-loud";
 import { callElevator } from "./elevator-system";
 import { forceDoor } from "./door-system";
 import { grabLadder } from "./ladder-system";
+import { enterCrawl } from "../world/crawl";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
 import { GRAB_PROMPT, TAKEDOWN_PROMPT } from "../world/takedown";
@@ -178,6 +179,10 @@ export const interactionSystem: System = {
       }
       if (interactable.kind === "ladder") {
         if (interactable.ladder) grabLadder(ctx, player, interactable.ladder.key, interactable.ladder.end);
+        return;
+      }
+      if (interactable.kind === "crawl") {
+        if (interactable.crawl) enterCrawl(player, interactable.crawl);
         return;
       }
       if (interactable.kind === "pickup") {

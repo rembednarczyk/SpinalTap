@@ -43,6 +43,11 @@ export const findHook = (ctx: SimContext, c: Contract, h: SimHookDef): void => {
   ctx.bus.emit("ContractHookFound", { contractId: c.id, hookId: h.id, text: h.text });
 };
 
+/** The job was just taken: the giver tells its `brief` hooks (ADR-0082), in table order. */
+export const tellBriefHooks = (ctx: SimContext, c: Contract): void => {
+  for (const h of hooksOfKind(contractKind(c))) if (h.source === "brief") findHook(ctx, c, h);
+};
+
 /** Has a door code of the running job been found (the office camera then lets the player be)? */
 export const codeKnown = (ctx: SimContext): boolean => {
   const c = running(ctx);
