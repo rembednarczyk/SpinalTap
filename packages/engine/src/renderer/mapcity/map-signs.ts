@@ -347,6 +347,12 @@ export class MapSignMaterial {
   readonly material: ShaderMaterial;
   private readonly names: DynamicTexture | null;
   private readonly slots = new Map<string, number>();
+  /** How many cells use each name's row (G-916); the landmarks' texts are not counted, they keep theirs. */
+  private readonly users = new Map<string, number>();
+  private readonly pinned = new Set<string>();
+  /** Rows given back, taken again first; past them the next row never given. */
+  private readonly free: number[] = [];
+  private next = 0;
   private time = 0;
 
   /**
@@ -394,21 +400,45 @@ export class MapSignMaterial {
     this.material = m;
     // The landmarks' texts first (ADR-0062): the building names streamed in before a gate's cell
     // would otherwise fill the atlas and leave its plaque or date blank.
-    for (const text of LANDMARK_TEXTS) this.slotFor(text);
+    for (const text of LANDMARK_TEXTS) {
+      this.slotFor(text);
+      this.pinned.add(text);
+    }
   }
 
-  /** Row of a landmark's name in the names atlas, drawn on first use; null when full. */
+  /**
+   * Row of a name in the names atlas for one more user (a cell's plaque), drawn on first use; null
+   * when every row is in use. Each call is given back by `release` when its cell goes (G-916).
+   */
   slotFor(name: string): number | null {
     const known = this.slots.get(name);
-    if (known !== undefined) return known;
-    if (this.slots.size >= NAME_SLOTS) return null;
-    const slot = this.slots.size;
+    if (known !== undefined) {
+      this.users.set(name, (this.users.get(name) ?? 0) + 1);
+      return known;
+    }
+    const slot = this.free.pop() ?? (this.next < NAME_SLOTS ? this.next++ : null);
+    if (slot === null) return null;
     this.slots.set(name, slot);
+    this.users.set(name, 1);
     if (this.names) {
       drawName(this.names.getContext() as unknown as CanvasRenderingContext2D, slot, name);
       this.names.update();
     }
     return slot;
+  }
+
+  /** One user of `name`'s row is gone: the last one gives the row back, but for a landmark's text. */
+  release(name: string): void {
+    const left = (this.users.get(name) ?? 0) - 1;
+    if (left > 0) {
+      this.users.set(name, left);
+      return;
+    }
+    this.users.delete(name);
+    const slot = this.slots.get(name);
+    if (slot === undefined || this.pinned.has(name)) return;
+    this.slots.delete(name);
+    this.free.push(slot);
   }
 
   setDaylight(daylight: number, fogDensity: number): void {

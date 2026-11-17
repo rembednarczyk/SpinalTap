@@ -208,6 +208,7 @@ export class MapCity {
       if (!cell.dirty) continue;
       changed = true;
       cell.dirty = false;
+      this.builder.releaseNames(cell);
       releaseCell(cell);
       if (cell.buildings.size === 0 && cell.grounds.size === 0) {
         this.cells.delete(key);

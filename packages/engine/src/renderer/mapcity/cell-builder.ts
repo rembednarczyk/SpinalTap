@@ -70,7 +70,15 @@ export class CellBuilder {
     const far = new MeshSink();
     const signs = new MeshSink();
     const field = new WaterField(entries, cell.bounds);
-    planFarFrames(far, signs, cell.frames, (name) => this.deps.signs.slotFor(name), entries.drawnGround, lite);
+    // The rows of the names atlas its plaques take, given back when it is built again or goes (G-916).
+    const names: string[] = [];
+    const nameSlot = (name: string): number | null => {
+      const slot = this.deps.signs.slotFor(name);
+      if (slot !== null) names.push(name);
+      return slot;
+    };
+    planFarFrames(far, signs, cell.frames, nameSlot, entries.drawnGround, lite);
+    cell.names = names;
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, lite);
     // The metro's names (ADR-0071 stage 3) join a cell's signs, never make a mesh of their own.
@@ -88,6 +96,12 @@ export class CellBuilder {
     this.ground(cell, field);
     cell.lod = "off";
     for (const m of [cell.far, cell.signs, cell.ground, cell.water]) m?.setEnabled(false);
+  }
+
+  /** Gives back the rows of the names atlas the cell's plaques took (G-916). */
+  releaseNames(cell: Cell): void {
+    for (const name of cell.names) this.deps.signs.release(name);
+    cell.names = [];
   }
 
   /** The cell's ground with its water field (ADR-0084), piece by piece, and its water. */
