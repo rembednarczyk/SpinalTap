@@ -2527,8 +2527,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-913 Zapis na drabinie włazu W-3: yaw gracza rozjeżdża się po wczytaniu
 - Ważność: S4 · Zasięg: drabina w3-hatch (2564; 439,3), inne drabiny niesprawdzone
 - Opis: Playtest 17.11: zapis i wczytanie na drabinie; po 600 tickach hash różni się tylko w yaw gracza (2,43 kontra 0): bez zapisu kierunek zostaje, po wczytaniu przypina się do osi drabiny. Uwaga z lekcji: sonda zapisu musi iść przez SaveController.snapshot() i calmForSave; do potwierdzenia, że tak było.
-- Status: zgłoszone
+- Status: przyjęte (17.11, potwierdzone przez łowcę, mały koszt); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- Łowca 17.11 (origin/main e2f6330, sesja bez renderera, snapshot przez saves.snapshot()/calmForSave, identyczne wejścia): POTWIERDZONE w węższym zakresie. Rozjazd tylko, gdy gracz obrócił widok (lookYaw) na drabinie: oryginał zachowuje yaw (1,000 po 600 krokach), wczytana gra przypina do osi drabiny (0,000); y i climb zgodne (w3-hatch y -28,05; w3-pipe y -26,65, ten sam wynik). Przyczyna: sim/systems/ladder-system.ts hangOn() bez settle ustawia e.yaw = l.yaw (gałąź 'game saved on a ladder' w ladderSystem.run, komentarz mówi 'where it was'); w grze yaw na drabinie jest swobodny (player-control-system.ts:289). Ogólne dla drabin. Skutek: po wczytaniu kamera zawraca, kierunek ruchu po zejściu inny niż bez zapisu. Poprawka: nie nadpisywać yaw w hangOn bez settle; test: zapis po lookYaw na drabinie, 600 kroków, yaw równy.
 
 ### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
 - Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
