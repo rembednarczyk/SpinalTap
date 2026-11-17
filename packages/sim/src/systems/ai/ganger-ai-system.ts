@@ -15,6 +15,7 @@ import { routePose } from "./route";
 import { GANGER_SPEED, GangerWalk } from "./ganger-walk";
 import { advanceChasePlans } from "./chase-plan";
 import { attack, faceTowards } from "./ganger-fight";
+import { burstShot, sidestep } from "./ganger-tactic";
 import { type AwarenessState } from "@seki/core";
 import {
   AWARENESS_STEP,
@@ -107,7 +108,22 @@ class GangerAgent {
   HasVictim = (): boolean => this.target.victim !== null;
   VictimInAttackRange = (): boolean => !!this.self && this.target.visible && this.target.distance <= this.self.ai.attackRange;
 
-  ShootAtPlayer = (): State => (this.seen.player ? attack(this, this.seen.player) : State.FAILED);
+  /** Fires at her; nearer than its weapon's band it steps back as it fires (ADR-0089 stage 2). */
+  ShootAtPlayer = (): State => {
+    const { self, seen } = this;
+    if (!seen.player) return State.FAILED;
+    const loaded = self?.combatant?.loaded ?? 0;
+    const state = attack(this, seen.player);
+    const keepOff = self?.ai.keepOff;
+    // A gunner fighting the player holds its weapon's band and fires in bursts (ADR-0089): too
+    // near, it steps back; in the band, it steps aside. One shooting a victim does neither.
+    if (self && this.ctx && keepOff !== undefined && !self.combatant?.stats?.melee) {
+      if ((self.combatant?.loaded ?? 0) < loaded) burstShot(this.ctx, self);
+      if (seen.distance < keepOff) this.walk.backOff(seen.player.position);
+      else sidestep(this, this.walk, seen.player.position);
+    }
+    return state;
+  };
 
   ShootAtVictim = (): State => (this.target.victim ? attack(this, this.target.victim) : State.FAILED);
 

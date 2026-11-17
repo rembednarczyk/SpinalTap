@@ -41,6 +41,12 @@ export interface GangerAi {
   readonly home: Vec3;
   readonly aggroRange: number;
   readonly attackRange: number;
+  /** Nearer than this to the player it steps back while it fires (ADR-0089 stage 2, its weapon's band); none for melee. */
+  readonly keepOff?: number;
+  /** Shots of its weapon's burst before it pauses (ADR-0089 stage 3); none for melee and the sniper's. */
+  readonly burst?: number;
+  /** Its burst and sidestep under way (ADR-0089 stage 3), made when it first fires. Saved (`EntitySnapshot.tactic`). */
+  tactic?: GunTactic;
   /**
    * Set once the ganger has decided to fight the player; never resets. Gangers friendly to
    * the player only set it when provoked (gunfire nearby or a hit).
@@ -108,6 +114,18 @@ export interface GangerAi {
    * any ganger. Fixed by content, so it needs no saving.
    */
   readonly patrol?: true;
+}
+
+/** A gunner's fight between two steps (ADR-0089 stage 3), as `TacticSnapshot`. */
+export interface GunTactic {
+  /** Shots left of the burst; after the last it pauses and starts the next one whole. */
+  shots: number;
+  /** The side of the player it goes round: 1 one way, -1 the other. */
+  side: 1 | -1;
+  /** Metres left of the sidestep under way, 0 standing. */
+  stride: number;
+  /** Seconds it still stands before the next sidestep. */
+  rest: number;
 }
 
 /**

@@ -17,6 +17,8 @@ import {
   holsterTime,
   installMod,
   mountedMods,
+  npcBand,
+  npcBurst,
   npcWeapon,
   outfitDefense,
   reloadPlan,
@@ -82,6 +84,18 @@ describe("effective weapon", () => {
   it("NPCs without a profile use the plain weapon", () => {
     expect(npcWeapon("oni44")).toEqual(effectiveWeapon("oni44", "common"));
     expect(npcWeapon("unity9")).toMatchObject({ damage: 14, interval: 1.1 });
+  });
+
+  it("an NPC gun holds the band of ADR-0089; a weapon without one has none", () => {
+    expect(npcBand("raijin12")).toEqual({ min: 4, max: 10 });
+    expect(npcBand("tessen_ar5")).toEqual({ min: 14, max: 24 });
+    expect(npcBand("kagero_dmr")).toBeNull();
+    expect(npcBand("oni44")).toBeNull();
+  });
+
+  it("an NPC gun fires in the bursts of ADR-0089 stage 3; a weapon without one fires single shots", () => {
+    expect([npcBurst("unity9"), npcBurst("hebi_smg"), npcBurst("raijin12"), npcBurst("tessen_ar5")]).toEqual([2, 4, 2, 3]);
+    expect(npcBurst("kagero_dmr")).toBe(1);
   });
 
   it("holsters in half the draw time; melee has no ammo", () => {

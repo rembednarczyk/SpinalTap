@@ -18,7 +18,8 @@ const facingGuard = (distance: number, pitch = 0, patch?: (d: DomainState) => Do
 describe("armor per zone (plan E5)", () => {
   it("a head shot skips the ganger's jacket; the torso takes 3 off", () => {
     const { sim, guard, hits } = facingGuard(5);
-    guard.ai!.alerted = false;
+    // The zones are under test, not the AI: a shot guard would back off out of the aim (ADR-0089).
+    sim.world.removeComponent(guard, "ai");
     guard.health = { current: 10_000, max: 10_000 };
     // Look a touch up and down to land on the torso and on the head.
     for (const pitch of [0.09, -0.01]) {

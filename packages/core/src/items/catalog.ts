@@ -361,6 +361,13 @@ export interface NpcWeaponProfile {
   readonly interval: number;
   readonly range: number;
   readonly spread: SpreadProfile;
+  /**
+   * The band an NPC fights in with it (ADR-0089 stage 2), metres: it closes in to `max` and fires
+   * from there; nearer than `min` it steps back while it fires, where the way behind it is free.
+   */
+  readonly band?: { readonly min: number; readonly max: number };
+  /** Shots of a burst, after which it pauses (ADR-0089 stage 3); one without. */
+  readonly burst?: number;
 }
 
 /**
@@ -484,7 +491,7 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 400,
     look: "pistol",
-    npc: { damage: 14, interval: 1.1, range: 40, spread: { ...GANGER_SMG_SPREAD, base: 0.045 } },
+    npc: { damage: 14, interval: 1.1, range: 40, spread: { ...GANGER_SMG_SPREAD, base: 0.045 }, band: { min: 10, max: 20 }, burst: 2 },
     ads: { zoom: 0.8, time: 0.16, spread: 0.5, move: 0.75 },
   },
   oni44: {
@@ -531,7 +538,7 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 700,
     look: "smg",
-    npc: { damage: 7, interval: 0.9, range: 18, spread: GANGER_SMG_SPREAD },
+    npc: { damage: 7, interval: 0.9, range: 18, spread: GANGER_SMG_SPREAD, band: { min: 7, max: 15 }, burst: 4 },
     ads: { zoom: 0.72, time: 0.2, spread: 0.6, move: 0.75 },
   },
   raijin12: {
@@ -555,7 +562,7 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 1200,
     look: "shotgun",
-    npc: { damage: 6, interval: 1.4, range: 12, spread: { base: 0.11, crouch: 0.85, move: 0.03, sprint: 0.06, bloomPerShot: 0.02, bloomMax: 0.04, recovery: 0.05 } },
+    npc: { damage: 6, interval: 1.4, range: 12, spread: { base: 0.11, crouch: 0.85, move: 0.03, sprint: 0.06, bloomPerShot: 0.02, bloomMax: 0.04, recovery: 0.05 }, band: { min: 4, max: 10 }, burst: 2 },
     ads: { zoom: 0.85, time: 0.26, spread: 0.8, move: 0.7 },
   },
   tessen_ar5: {
@@ -580,7 +587,7 @@ export const WEAPON_CATALOG = {
     value: 1800,
     look: "rifle",
     // Tessen guards in the docks (ADR-0024): short controlled bursts, accurate at street range.
-    npc: { damage: 11, interval: 0.75, range: 30, spread: { ...GANGER_SMG_SPREAD, base: 0.035 } },
+    npc: { damage: 11, interval: 0.75, range: 30, spread: { ...GANGER_SMG_SPREAD, base: 0.035 }, band: { min: 14, max: 24 }, burst: 3 },
     ads: { zoom: 0.55, time: 0.28, spread: 0.35, move: 0.6 },
   },
   kagero_dmr: {

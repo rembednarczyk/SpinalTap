@@ -45,6 +45,10 @@ describe("a save while the street panics (G-240)", () => {
       const scared = sim.world.with("civilian").entities.filter((c) => (c.civilian.crowd?.state ?? "calm") !== "calm").map((c) => c.id);
       expect(afraid(sim)).toContain("hideo");
       const reacted = collect<DomainEvents["CrowdReacted"]>(sim, "CrowdReacted");
+      // The mugging's victim, shot dead by the muggers (seed 13), is a body nobody saves (ADR-0034):
+      // the game saved from goes on without it too, else a gunner stepping aside (ADR-0089) puts
+      // it in the line of a shot at the player.
+      for (const e of [...sim.world] as Entity[]) if (!e.key && e.health && !e.ai && !e.civilian && !e.player) sim.world.remove(e);
       sim.calmForSave();
       // The renderer and the sound hear that it calmed down.
       expect([...reacted].sort((a, b) => a.entityId - b.entityId)).toEqual(scared.sort((a, b) => a - b).map((entityId) => ({ entityId, state: "calm" })));

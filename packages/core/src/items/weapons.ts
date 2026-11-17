@@ -116,6 +116,18 @@ export const npcWeapon = (id: WeaponId): WeaponStats => {
   return def.npc ? { ...stats, damage: def.npc.damage, interval: def.npc.interval, range: def.npc.range, spread: def.npc.spread } : stats;
 };
 
+/** The band an NPC fights in with weapon `id` (ADR-0089 stage 2); null for one without (melee, the sniper's). */
+export const npcBand = (id: WeaponId): { readonly min: number; readonly max: number } | null => {
+  const def: WeaponDefinition = WEAPON_CATALOG[id];
+  return def.npc?.band ?? null;
+};
+
+/** Shots of an NPC's burst with the weapon before it pauses (ADR-0089 stage 3), one without a burst. */
+export const npcBurst = (id: WeaponId): number => {
+  const def: WeaponDefinition = WEAPON_CATALOG[id];
+  return def.npc?.burst ?? 1;
+};
+
 /** Mods mounted on a weapon instance, as catalog ids. */
 export const mountedMods = (inv: InventoryState, uid: string): ModId[] => {
   const ids: ModId[] = [];

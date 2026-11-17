@@ -37,15 +37,15 @@ const [serverS, serverN] = W3_SERVER_ROOMS as [Rect, Rect];
 const B = W3_LAYOUT.BASEMENT;
 
 export const W3_LAMPS: readonly W3Lamp[] = [
-  lamp("hall-w", "#dfe9ff", { x: 2520, y: 14.5, z: 418 }, 26, 0.55, hall, 0, 16),
-  lamp("hall-e", "#dfe9ff", { x: 2538, y: 14.5, z: 418 }, 26, 0.55, hall, 0, 16),
-  lamp("chamber", "#cfdcff", { x: 2560, y: 12.8, z: 418 }, 22, 0.5, W3_CHAMBER, 0, 13.4),
-  lamp("server-n", "#45e8ff", { x: 2566, y: 4.6, z: 436 }, 8, 0.6, serverN, 0, 10),
-  lamp("server-s", "#45e8ff", { x: 2565, y: 4.6, z: 400 }, 8, 0.6, serverS, 0, 5),
-  lamp("armoury-s", "#ffd9a8", { x: 2552, y: 4.6, z: 400 }, 8, 0.55, { minX: 2546, maxX: serverS.minX, minZ: 396, maxZ: 404 }, 0, 5),
-  lamp("row-n", "#e8eef8", { x: 2530, y: 4.6, z: 435 }, 22, 0.45, { minX: W3_ROW_N.minX, maxX: serverN.minX, minZ: W3_ROW_N.minZ, maxZ: W3_ROW_N.maxZ }, 0, 5),
-  lamp("row-s", "#e8eef8", { x: 2526, y: 4.6, z: 401 }, 24, 0.45, { minX: 2500, maxX: 2546, minZ: 396, maxZ: 406 }, 0, 5),
-  lamp("basement", "#d4dcea", { x: 2530, y: -0.8, z: 402 }, 20, 0.5, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
+  lamp("hall-w", "#dfe9ff", { x: 2520, y: 9, z: 418 }, 17, 1.7, hall, 0, 16),
+  lamp("hall-e", "#dfe9ff", { x: 2538, y: 9, z: 418 }, 17, 1.7, hall, 0, 16),
+  lamp("chamber", "#cfdcff", { x: 2560, y: 9, z: 418 }, 16, 1.5, W3_CHAMBER, 0, 13.4),
+  lamp("server-n", "#45e8ff", { x: 2566, y: 4.6, z: 436 }, 9, 1.1, serverN, 0, 10),
+  lamp("server-s", "#45e8ff", { x: 2565, y: 4.6, z: 400 }, 9, 1.1, serverS, 0, 5),
+  lamp("armoury-s", "#ffd9a8", { x: 2552, y: 4.6, z: 400 }, 9, 1.0, { minX: 2546, maxX: serverS.minX, minZ: 396, maxZ: 404 }, 0, 5),
+  lamp("row-n", "#e8eef8", { x: 2530, y: 4.6, z: 435 }, 22, 0.9, { minX: W3_ROW_N.minX, maxX: serverN.minX, minZ: W3_ROW_N.minZ, maxZ: W3_ROW_N.maxZ }, 0, 5),
+  lamp("row-s", "#e8eef8", { x: 2526, y: 4.6, z: 401 }, 24, 0.9, { minX: 2500, maxX: 2546, minZ: 396, maxZ: 406 }, 0, 5),
+  lamp("basement", "#d4dcea", { x: 2530, y: -0.8, z: 402 }, 20, 0.9, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
 ];
 
 /** Distance from the eye to a lamp's room: across its rectangle and up or down to its floors. */
