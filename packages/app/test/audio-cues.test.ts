@@ -116,12 +116,12 @@ describe("weapon, loot and trade cues (E12)", () => {
     bus.emit("EddiesChanged", { balance: 13000, delta: 12500 });
     bus.emit("ItemRepaired", { uid: "i2", defId: "seki_jacket", price: 20, parts: 1 });
     bus.emit("PurchaseFailed", { reason: "closed", shopId: "oyaji" });
+    // A bag that lay too long goes without a toast (G-915): nobody took it.
     bus.emit("LootExpired", { containerKey: "loot:guard" });
     expect(ui.getState().toasts.map((t) => `${t.title} | ${t.text}`)).toEqual([
       "+12 500 €$ | Przelew",
       "Naprawiono: Kurtka Seki | -20 €$, części: 1",
       "Oyaji kręci głową | Zamknięte. Wróć za dnia.",
-      "Torba przepadła | Ktoś był szybszy.",
     ]);
   });
 

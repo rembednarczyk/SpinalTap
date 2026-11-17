@@ -290,8 +290,6 @@ export const enTrade = {
   "loot.toast": "Loot",
   "loot.full": "Backpack full",
   "loot.fullText": "Make room before you take more.",
-  "loot.expired": "Bag gone",
-  "loot.expiredText": "Someone was faster.",
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type TradeKey = keyof typeof enTrade;
