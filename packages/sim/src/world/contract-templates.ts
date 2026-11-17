@@ -54,7 +54,7 @@ const targetTemplates = (ids: IdAllocator, chunk: string, contract: Contract): T
     if (post) {
       // A docks post (ADR-0024): its own facing and type; an alarm post waits for the alarm.
       // The extra guard of a lockdown stands at the site's lookout, not on a copy of a post.
-      const spawn = { key, position: posts && i >= posts.length ? position : post.at, yaw: post.yaw };
+      const spawn = { key, position: posts && i >= posts.length ? position : post.at, yaw: post.yaw, ...(post.enforcer === undefined ? {} : { enforcer: post.enforcer }) };
       const hp = docksGuardHp(post.type);
       const make = (): Entity => {
         if (post.type === "tessen_sniper") return sniperEntity(id, spawn, tag, hp, chunk);

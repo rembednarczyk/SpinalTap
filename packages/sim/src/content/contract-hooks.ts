@@ -13,6 +13,8 @@ import { spotNear } from "./lublin/places";
  *   player comes within earshot.
  * - `terminal`: a mail on a terminal standing `at`, read with the interact key.
  * - `shard`: a datachip in the bag of the job's guard `post` once that guard is down.
+ * - `brief`: the giver (`key`) tells it when the job is taken (ADR-0082: Genzō's ways in to W-3);
+ *   `knot` is then the giver's conversation, which says it.
  *
  * `reveal` says what it opens. A rotation gap is the guard's real timetable: the guard leaves
  * its post in the window whether or not the hook was found (the hook only tells). A code only
@@ -171,6 +173,26 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     knot: "hook_sabotage_1",
     text: "hook.sabotage_1",
     carrier: { post: 2 },
+    reveal: { kind: "intel" },
+  },
+  // W-3's quiet ways in (ADR-0082 §1 p. 1, G-907), told by Genzō with the job: the culvert to the
+  // stores' basement and its locker room (Q1), the pipes over the river onto row N's roof (Q2).
+  {
+    id: "hook_sabotage_culvert",
+    kind: "sabotage",
+    source: "brief",
+    knot: "genzo",
+    text: "hook.sabotage_culvert",
+    carrier: { key: "genzo" },
+    reveal: { kind: "intel" },
+  },
+  {
+    id: "hook_sabotage_pipes",
+    kind: "sabotage",
+    source: "brief",
+    knot: "genzo",
+    text: "hook.sabotage_pipes",
+    carrier: { key: "genzo" },
     reveal: { kind: "intel" },
   },
 ];

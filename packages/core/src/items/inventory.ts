@@ -89,6 +89,12 @@ export const findItem = (inv: InventoryState, uid: string): ItemInstance | undef
 
 export const stackCount = (inv: InventoryState, id: StackableId): number => inv.stacks[id] ?? 0;
 
+/** A story item into the bag (it takes no cell), once. */
+export const addKeyItem = (inv: InventoryState, id: string): InventoryState => (inv.keyItems.includes(id) ? inv : { ...inv, keyItems: [...inv.keyItems, id] });
+
+/** A story item out of the bag, if it is there. */
+export const removeKeyItem = (inv: InventoryState, id: string): InventoryState => (inv.keyItems.includes(id) ? { ...inv, keyItems: inv.keyItems.filter((k) => k !== id) } : inv);
+
 /** Equipped or mounted on a weapon: such a piece takes no bag cell. */
 export const isPlaced = (inv: InventoryState, eq: Equipment, uid: string): boolean =>
   EQUIP_SLOTS.some((s) => eq[s] === uid) || inv.items.some((i) => i.mods !== undefined && Object.values(i.mods).includes(uid));

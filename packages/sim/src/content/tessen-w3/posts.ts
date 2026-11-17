@@ -21,6 +21,12 @@ export interface ContractPost {
   readonly onAlarm?: true;
   /** A patrol (ADR-0082 §3): it walks this loop by the clock in place of holding `at`, where it spawns. */
   readonly route?: readonly [Vec3, ...Vec3[]];
+  /**
+   * Does the guard see through disguises? Absent: the crew's rule (Tessen's first post is the
+   * shift boss, ADR-0033). The hall's patrol P1 is the sabotage's first post, but the ADR's
+   * enforcer there is the shift manager (ADR-0082 §1, G-907): P1 says `false`.
+   */
+  readonly enforcer?: boolean;
 }
 
 const post = (at: Vec3, yaw: number, type: EnemyTypeId = "tessen_guard", onAlarm = false): ContractPost => (onAlarm ? { at, yaw, type, onAlarm: true } : { at, yaw, type });
@@ -61,7 +67,7 @@ export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly
     post(w3(2494, 0, 412.5), -0.6, "tessen_guard", true),
   ],
   // The sabotage (ADR-0082 stage 3): P1 in the hall, P2 on the mezzanine, the wagon airlock's and armoury S's guards.
-  w3_hall: [patrol(W3_PATROL_HALL), patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2), post(W3_ARMOURY_POST, Math.PI)],
+  w3_hall: [{ ...patrol(W3_PATROL_HALL), enforcer: false }, patrol(W3_PATROL_MEZZANINE), post(W3_AIRLOCK_POST, Math.PI / 2), post(W3_ARMOURY_POST, Math.PI)],
 };
 
 /** Mika's way from Genzō's container down the riverside path to the river's bench under the terrace. */

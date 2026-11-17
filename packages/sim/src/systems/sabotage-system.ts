@@ -16,7 +16,7 @@ import {
 import { W3_TERMINAL_SPOTS, inW3Zone } from "../content/tessen-w3";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
-import { adjustReputation, clearContract, failContract, raiseFlag } from "../world/domain-ops";
+import { adjustReputation, clearContract, failContract, raiseFlag, takeBackJobItems } from "../world/domain-ops";
 import { completeContract } from "../world/contract-commands";
 import { BREACH_DAEMONS } from "../world/street";
 import { raiseAlarm } from "./contract-system";
@@ -103,7 +103,10 @@ const upload = (ctx: SimContext, contract: Contract, rate: number): void => {
   const next: Contract = { ...rest, progress: contract.progress + 1 };
   setActive(ctx, next);
   if (away === 1 || (next.progress ?? 0) % rate === 0) ctx.bus.emit("VirusUploadChanged", { contract: next, progress: Math.min(1, (next.progress ?? 0) / total), paused: false });
-  if (virusUploaded(next, rate)) raiseFlag(ctx, W3_VIRUS_FLAG);
+  if (!virusUploaded(next, rate)) return;
+  raiseFlag(ctx, W3_VIRUS_FLAG);
+  // The pendrive stays in the core.
+  takeBackJobItems(ctx, "sabotage");
 };
 
 /** One step of the running sabotage. */
