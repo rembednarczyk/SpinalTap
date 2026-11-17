@@ -80,7 +80,21 @@ const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z
 /** The camera's local axes, for the smoke's billboards. */
 const AXES = { right: Vector3.Right(), up: Vector3.Up(), forward: Vector3.Forward() } as const;
 
-type ActorEffect = Extract<EffectDescriptor, { kind: "weapon" | "talk" | "reload" | "melee" | "stagger" | "block" | "flinch" }>;
+/** How hard a blast at `at` shakes a camera at `eye`: 0 from three of its radii away, at most 1 (ADR-0082 stage 3c). */
+const blastShake = (eye: Vec3, at: Vec3, radius: number): number => Math.min(1, 1.2 * Math.max(0, 1 - Math.hypot(eye.x - at.x, eye.y - at.y, eye.z - at.z) / (radius * 3)));
+
+/**
+ * The flash light of a frame: a blast's while it lasts, else a muzzle's (`life` left of its 0.07 s);
+ * off once when both are over (`wasLit`: a blast lit the last frame). Returns whether a blast lights this one.
+ */
+const lightFlash = (materials: ToonMaterials, blast: { readonly at: Vec3; readonly intensity: number } | null, muzzle: { x: number; y: number; z: number; life: number } | null, wasLit: boolean): boolean => {
+  if (blast) materials.setFlash(blast.at.x, blast.at.y, blast.at.z, blast.intensity);
+  else if (muzzle) materials.setFlash(muzzle.x, muzzle.y, muzzle.z, Math.max(0, Math.min(1, muzzle.life / 0.07)));
+  else if (wasLit) materials.setFlash(0, 0, 0, 0);
+  return blast !== null;
+};
+
+type ActorEffect =Extract<EffectDescriptor, { kind: "weapon" | "talk" | "reload" | "melee" | "stagger" | "block" | "flinch" }>;
 
 /**
  * Everything over the frame (ADR-0030): one-shot effects and lasers, rain, splashes and steam,
@@ -165,9 +179,13 @@ export class ScreenFx {
       case "hit-spark":
         this.effects.hitSpark(v3(effect.at), effect.critical);
         return;
-      case "explosion":
-        this.blast(effect.at, effect.radius);
+      case "explosion": {
+        // Fire, smoke and debris (ADR-0082 stage 3c), the place lit within the flash budget, the camera shaken near it.
+        this.blasts.add(effect.at, effect.radius, !this.reduceFlashes && this.limiter.tryFlash());
+        const shake = blastShake(this.deps.camera.camera.position, effect.at, effect.radius);
+        if (shake > 0) this.deps.camera.shake(shake);
         return;
+      }
       case "memory-glitch":
         this.grading.glitch();
         return;
@@ -217,14 +235,6 @@ export class ScreenFx {
     if (this.isCameraTarget(shooterId)) this.deps.camera.kick();
     // The muzzle lights the whole street: one of the three flashes a second, or none.
     if (!this.reduceFlashes && this.limiter.tryFlash()) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.07 };
-  }
-
-  /** A blast (ADR-0082 stage 3c): fire, smoke and debris, the place lit within the flash budget, the camera shaken near it. */
-  private blast(at: Vec3, radius: number): void {
-    this.blasts.add(at, radius, !this.reduceFlashes && this.limiter.tryFlash());
-    const eye = this.deps.camera.camera.position;
-    const near = 1 - Math.hypot(eye.x - at.x, eye.y - at.y, eye.z - at.z) / (radius * 3);
-    if (near > 0) this.deps.camera.shake(Math.min(1, 1.2 * near));
   }
 
   /** Effects on one character: its rig animates, and the camera follows when it is the player. */
@@ -416,7 +426,9 @@ export class ScreenFx {
     this.lasers.update(dt, (id) => this.deps.actors.transformOf(id));
     this.trails.update(dt, (id) => this.deps.actors.transformOf(id)?.position ?? null);
     this.trailMeshes.update(this.trails.trails);
-    this.updateFlash(dt, materials);
+    if (this.flash) this.flash.life -= dt;
+    this.blastLit = lightFlash(materials, this.blasts.state.flash(), this.flash, this.blastLit);
+    if (this.flash && this.flash.life <= 0) this.flash = null;
     this.deps.atmosphere.update(dt, reference);
     this.deps.farCity.update(dt, camera.camera.position, reference);
     this.deps.signage.update(dt, reference);
@@ -442,19 +454,6 @@ export class ScreenFx {
     cam.getDirectionToRef(AXES.forward, forward);
     this.muzzle.update(dt, (id, at, dir) => void this.muzzleSource.place(id, at, dir), this.view);
     this.blasts.update(dt, this.view);
-  }
-
-  /** The light of a blast while it lasts, else of a muzzle flash; off once both are over. */
-  private updateFlash(dt: number, materials: ToonMaterials): void {
-    const blast = this.blasts.state.flash();
-    if (this.flash) this.flash.life -= dt;
-    if (blast) materials.setFlash(blast.at.x, blast.at.y, blast.at.z, blast.intensity);
-    else if (this.flash || this.blastLit) {
-      const f = this.flash ?? { x: 0, y: 0, z: 0, life: 0 };
-      materials.setFlash(f.x, f.y, f.z, Math.max(0, Math.min(1, f.life / 0.07)));
-    }
-    this.blastLit = blast !== null;
-    if (this.flash && this.flash.life <= 0) this.flash = null;
   }
 
   /** A new game or a load lands anywhere: lasers off, the next district's colours at once, no heat. */
