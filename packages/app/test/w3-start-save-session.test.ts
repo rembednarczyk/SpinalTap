@@ -123,10 +123,14 @@ const duel = (session: GameSession, id: string): Fight => {
 };
 
 /**
- * How long corridor S is fought: the level 6 game of the playtest is dead by 21.9 s (perfect aim),
- * so 25 s show the difference with 3 s to spare and keep the test short (ADR-0083).
+ * How long corridor S is fought: through the second wave (15-18 s), which takes the level 6 game of
+ * the playtest down to about a quarter of its health (it is dead by 21.9 s, perfect aim) and the
+ * start save's to about three quarters. Shorter than the death, to keep the tests short (ADR-0083).
  */
-const CORRIDOR_SECONDS = 25;
+const CORRIDOR_SECONDS = 18;
+/** The share of her health left after corridor S: the level 6 game under it, the start save over it. */
+const PISTOL_CORRIDOR_HEALTH = 0.4;
+const RIFLE_CORRIDOR_HEALTH = 0.6;
 
 /** The pistol's duel takes longer than this (1.72 s); the start save's rifle takes under half of it. */
 const PISTOL_DUEL_SECONDS = 1.5;
@@ -144,18 +148,15 @@ const corridor = (session: GameSession, id: string): Fight => {
 };
 
 /**
- * Both fights of one game, the job taken: the duel, then back to the moment after Genzō (a
- * restore of the state then, cheaper than a second game) and corridor S.
+ * One fight of a game, the job taken: the duel or corridor S, each in a game of its own, so that no
+ * test plays both (both in one test took over 20 s under the coverage of main's full run, 17.11).
  */
-const fights = async (make: typeof slice) => {
+const fightOf = async (make: typeof slice, which: "duel" | "corridor") => {
   const { session, ui } = await make();
   const job = acceptSabotage(session, ui);
   const guard = hostiles(session, job.id).find((e) => e.key === `${job.id}-g0`)!;
   const about = { level: session.sim.domain.progression.level, maxHp: session.sim.player()?.health?.max ?? 0, guard: `L${guard.enemy?.level} ${guard.health?.max} HP` };
-  const taken = session.sim.snapshot(session.narrative.saveState(), "t", "");
-  const duelled = duel(session, job.id);
-  session.restore(taken, false);
-  return { duel: { ...duelled, ...about }, corridor: { ...corridor(session, job.id), ...about } };
+  return { ...(which === "duel" ? duel(session, job.id) : corridor(session, job.id)), ...about };
 };
 
 describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
@@ -235,25 +236,33 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
   // The playtest's fights (G-909), one game each: at level 6 with the Unity-9, then from the start save.
   const out = (name: string, r: unknown) => process.env.G909_OUT && writeFileSync(`${process.env.G909_OUT}-${name}.json`, JSON.stringify(r, null, 1));
 
-  it("the playtest's fights at level 6 with the Unity-9: the guard falls in 1.7 s, corridor S kills her", async () => {
-    const before = await fights(levelSix);
-    out("before", before);
-    expect(before.duel).toMatchObject({ level: 6, died: false, kills: 1 });
-    expect(before.duel.seconds).toBeGreaterThan(PISTOL_DUEL_SECONDS);
-    expect(before.corridor.kills).toBeLessThanOrEqual(PISTOL_CORRIDOR_KILLS);
-    // Corridor S after the alarm: the playtest's death.
-    expect(before.corridor.died).toBe(true);
-    expect(before.corridor.seconds).toBeLessThan(CORRIDOR_SECONDS);
+  it("the playtest's duel at level 6 with the Unity-9: the guard falls in 1.7 s", async () => {
+    const before = await fightOf(levelSix, "duel");
+    out("before-duel", before);
+    expect(before).toMatchObject({ level: 6, died: false, kills: 1 });
+    expect(before.seconds).toBeGreaterThan(PISTOL_DUEL_SECONDS);
   });
 
-  it("the same fights from the start save: the guard falls in under half the time, she lives through corridor S", async () => {
-    const after = await fights(slice);
-    out("after", after);
-    expect(after.duel).toMatchObject({ level: 12, died: false, kills: 1 });
-    expect(after.duel.seconds).toBeLessThan(PISTOL_DUEL_SECONDS / 2);
-    expect(after.duel.shots).toBeLessThanOrEqual(24);
-    // Alive past the moment that kills the level 6 game.
-    expect(after.corridor).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
-    expect(after.corridor.kills).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
+  it("the playtest's corridor S at level 6: the second wave takes most of her health", async () => {
+    const before = await fightOf(levelSix, "corridor");
+    out("before-corridor", before);
+    expect(before.kills).toBeLessThanOrEqual(PISTOL_CORRIDOR_KILLS);
+    expect(before.hpLeft / before.maxHp).toBeLessThan(PISTOL_CORRIDOR_HEALTH);
+  });
+
+  it("the same duel from the start save: the guard falls in under half the time", async () => {
+    const after = await fightOf(slice, "duel");
+    out("after-duel", after);
+    expect(after).toMatchObject({ level: 12, died: false, kills: 1 });
+    expect(after.seconds).toBeLessThan(PISTOL_DUEL_SECONDS / 2);
+    expect(after.shots).toBeLessThanOrEqual(24);
+  });
+
+  it("corridor S from the start save: she comes through the second wave with most of her health", async () => {
+    const after = await fightOf(slice, "corridor");
+    out("after-corridor", after);
+    expect(after).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
+    expect(after.hpLeft / after.maxHp).toBeGreaterThan(RIFLE_CORRIDOR_HEALTH);
+    expect(after.kills).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
   });
 });
