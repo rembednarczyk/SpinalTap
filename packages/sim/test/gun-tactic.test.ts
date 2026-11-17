@@ -4,6 +4,7 @@ import { type Entity, SIM_HZ, Simulation, gangerEntity, stateHash } from "../src
 import { PAUSE_MIN, sidestepProbes } from "../src/systems/ai/ganger-tactic";
 import { BYSTRZYCA_FENCE, barrierFloor, barrierSim, off, pieceAt } from "./fixtures/barrier-floor";
 import { byKey, collect, streetSim, teleportPlayer } from "./helpers";
+import { setProfile } from "./difficulty-scenes";
 
 /*
  * ADR-0089 stage 3: a gunner in its weapon's band steps aside round the player between its
@@ -132,6 +133,36 @@ describe("a gunner steps aside round the player in its band (ADR-0089 stage 3)",
       lowest = Math.min(lowest, g.position.y - ground.heightAt(g.position.x, g.position.z));
     }
     expect(lowest).toBeGreaterThan(-0.05);
+  });
+});
+
+describe("the difficulty's pressure on a gunner (ADR-0089 stage 5)", () => {
+  /** A Tessen guard alone in its band, 24 s: its shots and its sidesteps begun, under `npcPressure`. */
+  const under = (npcPressure: number) => {
+    const sim = streetSim({ seed: 5 });
+    sim.step();
+    for (const o of [...sim.world.with("ai")]) sim.world.remove(o);
+    setProfile(sim, { npcPressure });
+    expect(sim.domain.difficulty.npcPressure).toBe(npcPressure);
+    const g = duel(sim, "tessen_guard", 19);
+    const shots = collect<Shot>(sim, "ShotFired");
+    let strides = 0;
+    let was = 0;
+    for (let i = 0; i < 24 * SIM_HZ; i++) {
+      step(sim);
+      const now = g.ai?.tactic?.stride ?? 0;
+      if (now > was) strides++;
+      was = now;
+    }
+    return { shots: shots.filter((s) => s.shooterId === g.id).length, strides };
+  };
+
+  it("under more pressure it fires more (shorter pauses) and steps aside more often; under less, the other way", () => {
+    const [story, normal, hard] = [0.6, 1, 1.5].map(under) as [ReturnType<typeof under>, ReturnType<typeof under>, ReturnType<typeof under>];
+    expect(story.shots).toBeLessThan(normal.shots);
+    expect(normal.shots).toBeLessThan(hard.shots);
+    expect(story.strides).toBeLessThan(normal.strides);
+    expect(normal.strides).toBeLessThan(hard.strides);
   });
 });
 
