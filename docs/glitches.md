@@ -2562,7 +2562,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
 - Ważność: S3 · Zasięg: droga cicha W-3
 - Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
-- Status: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Status: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
 - Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
@@ -2604,6 +2604,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
 - 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
 - 17.11 weryfikacja #682: to samo dotyczy flagi w drodze tessen-hunt-squad: gdy Seki jest tam, gdzie nie ma wejścia (np. klinika, wejścia bliżej niż 60 m wykluczone), gałąź due wraca bez zdjęcia flagi i flaga wisi do wyjścia albo końca pościgu. #682 ogranicza tylko blokadę czekania (do ticku przyjścia + zapas), reguła sim zostaje do tej poprawki.
+
+### G-935 Patrol z trasą po tropie na innym poziomie nie wraca na trasę
+- Ważność: S3 · Zasięg: patrole z ai.route na piętrach (W-3: P2 i kierownik zmiany na antresoli)
+- Opis: Znalezione przy weryfikacji G-929: HoldPosition wraca przez walk.walkTo(pose.position) (ganger-ai-system.ts:163), a walkTo (ganger-walk.ts:165) chodzi tylko po swoim poziomie. P2 po tropie do (2522; 416) ląduje na parterze pod galerią (2547,3; 433,5) i tam zostaje. Także: trop na antresoli nad halą (nieosiągalny) zostawia P2 przy oknie galerii (z 430,7).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
