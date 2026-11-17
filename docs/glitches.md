@@ -2477,10 +2477,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-903 Stopy wskakują z terenu na pomost mostu z 0,46-2,0 m niżej (DECK_HEADROOM)
 - Ważność: S3 · Zasięg: boki pomostów przy przyczółkach: Mełgiewska (2405-2457; 240-330), most Lutosławskiego (2440-2486; 410-440), wiadukt Zamkowej i grobla (730-790; 150-205), kładka (1070-1083; 160); 304 z 1 007 328 prób ruchu (sonda kuratora), 105 z 242 838 (sonda weryfikatora G-898); tak samo na main przed #655
 - Opis: Pomost do DECK_HEADROOM (2 m) nad terenem jest ziemią dla stóp na każdej wysokości (decksAt), a offTheBank blokuje tylko, gdy steepAt w punkcie docelowym. Przy skośnym albo krótkim kroku przez krawędź punkt docelowy na płaskim pomoście nie jest stromy, więc stopy w jednym kroku wskakują o 0,46-2,0 m (przy schodach w56965515 do 4,9 m). W 65% przypadków NMT potwierdza w Lublinie skarpę 0,5-2,5 m pod bokiem mostu (lico, balustrada), a w 35% teren gry jest dodatkowo za nisko (G-339). Proponowana reguła ruchu: wejście w obrys pomostu stopami z terenu poza nim tylko o ≤ STEP_HEIGHT (jak G-898); reguła DECK_HEADROOM tylko dla stóp już na pomoście albo pod nim. Sonda pomija kolizje (mury w294098689/690 stoją przy grobli), więc do potwierdzenia przez łowcę w grze. Przy okazji: offTheBank dał NaN (735,40; 165,56) dla stóp w piwnicy pod pomostem (gradient o długości 0). Sondy: scratchpad topo-overstep.test.ts, topo-overstep-nmt.tsv
-- Status: zgłoszone (16.11, kurator, przegląd G-898)
+- Status: w PR #656; wcześniej: zgłoszone (16.11, kurator, przegląd G-898)
 - Pakiet właściciela: packages/sim (ruch: movement-system offTheBank, world/deck decksAt)
 - Test przyjęcia: przemiatanie krawędzi wszystkich pomostów (odsunięcie 0,05-0,6 m, krok 0,03-0,25 m, kąty do ±1,2 rad): zero ruchów z przyrostem stóp > STEP_HEIGHT; deck-step.test.ts bez zmian
 - Przy okazji (kurator 16.11): offTheBank zwrócił NaN w (735,40; 165,56) dla stóp w piwnicy pod pomostem, prawdopodobnie gradient o długości 0. Do potwierdzenia w grze przez łowcę (sonda pomija kolizje, przy grobli Zamkowej stoją mury w294098689/690). Proponowane kontrole skanu: deck-side-below-nmt (baza 85) i deck-side-overstep (baza 304). Sondy: scratchpad topo-decks*.test.ts, topo-overstep.test.ts.
+
+### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
+- Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
+- Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, W-3)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
