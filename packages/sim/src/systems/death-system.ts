@@ -1,8 +1,8 @@
-import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, killXp, killedFlag, rollLootFor, secondHeartShare } from "@seki/core";
+import { ENEMY_TYPES, type KillContext, LOOT_TABLES, type LootGrade, SECOND_HEART_COOLDOWN, contractKind, hasFlag, killXp, killedFlag, rollLootFor, secondHeartShare } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
-import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
+import { applyReputationCause, clearContract, dropLoot, lowerFlag, raiseFlag } from "../world/domain-ops";
 import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
 import { grantXp, noteFight } from "../world/progression-ops";
@@ -13,6 +13,9 @@ import { perksOf } from "./perk-system";
 export const BODY_NOISE = 12;
 
 export const deadFlag = (key: string): string => `dead:${key}`;
+
+/** An enemy whose bag the player already got when she knocked it out (G-918): none again at its death. */
+export const lootedFlag = (key: string): string => `looted:${key}`;
 
 type Ctx = Parameters<System["run"]>[0];
 
@@ -25,8 +28,13 @@ type Ctx = Parameters<System["run"]>[0];
  * The table leans towards the player's style (ADR-0059, stage 6); the bag of an enemy she
  * defeated counts towards her bad luck, and lifts a piece to rare when that has run long enough.
  */
-const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean): void => {
+export const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean, at = e.position): void => {
   if (!e.enemy || !e.key) return;
+  // Knocked out by her first, it left its bag then (G-918): one bag an enemy, and the mark goes with it.
+  if (hasFlag(ctx.state.domain.flags, lootedFlag(e.key))) {
+    lowerFlag(ctx, lootedFlag(e.key));
+    return;
+  }
   const key = `loot:${e.key}`;
   const progression = ctx.state.domain.progression;
   const player = progression.level;
@@ -34,7 +42,7 @@ const dropEnemyLoot = (ctx: Ctx, e: Entity, hers: boolean): void => {
   const luck = hers ? { style: progression.style, pity: progression.unlucky } : { style: progression.style };
   const rolled = rollLootFor(LOOT_TABLES[ENEMY_TYPES[e.enemy.type].loot], deriveRandom(ctx.seed, key), grade, luck);
   if (rolled.pity !== undefined && rolled.pity !== progression.unlucky) ctx.state.domain = { ...ctx.state.domain, progression: { ...progression, unlucky: rolled.pity } };
-  dropLoot(ctx, key, e.position, rolled.lines);
+  dropLoot(ctx, key, at, rolled.lines);
 };
 
 /**
