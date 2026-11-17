@@ -1,4 +1,17 @@
-import { TESSEN_HUNT, type Vec3, isTessenHuntRollFlag, tessenHuntActive, tessenHuntFlag, tessenHuntRollFlag, tessenHuntUntil, tessenSquadSize } from "@seki/core";
+import {
+  TESSEN_HUNT,
+  type Vec3,
+  isTessenHuntRollFlag,
+  isTessenSquadFlag,
+  tessenHuntActive,
+  tessenHuntFlag,
+  tessenHuntRollFlag,
+  tessenHuntUntil,
+  tessenSquadDelaySeconds,
+  tessenSquadDue,
+  tessenSquadFlag,
+  tessenSquadSize,
+} from "@seki/core";
 import { SECURITY_ENTRIES } from "../content/devices";
 import { CLINIC_WAKE_SPOT } from "../content/interiors";
 import { deriveRandom } from "../rng/derive-random";
@@ -15,7 +28,8 @@ import { inPlayerView } from "./crime-system";
  * street entry at least 45 m from Seki and out of her view, never within 60 m of the clinic, on
  * her trail; one squad at a time. They are the security's reinforcements (ADR-0029) for the rest:
  * saved with them, and gone home once they lost her. The roll is a flag of the district and the
- * stretch of the day, so a load rolls the same; its draw comes from the seed and the flag.
+ * stretch of the day, so a load rolls the same; its draw comes from the seed and the flag. The roll
+ * only puts the squad on its way, as a flag the HUD warns of; it comes in 20-40 s later (G-911).
  */
 
 /** The squad stands this far apart at its entry. */
@@ -58,7 +72,7 @@ const sendSquad = (ctx: SimContext, player: Entity, at: Vec3, size: number): voi
   }
 };
 
-/** One step of the hunt: its end, and the roll of the district and the stretch of the day. */
+/** One step of the hunt: its end, the squad on its way coming in, and the roll of the district and the stretch of the day. */
 export const tessenHuntSystem: System = {
   name: "tessen-hunt",
   run(ctx) {
@@ -67,14 +81,24 @@ export const tessenHuntSystem: System = {
     if (until === null) return;
     if (!tessenHuntActive(flags, clock)) {
       lowerFlag(ctx, tessenHuntFlag(until));
-      for (const f of flags.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
+      for (const f of flags.filter((f) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f))) lowerFlag(ctx, f);
       return;
     }
     // Once a second is often enough to look for an entry.
-    if (ctx.tick % Math.round(1 / ctx.dt) !== 0 || ctx.session.gameOver) return;
+    const rate = Math.round(1 / ctx.dt);
+    if (ctx.tick % rate !== 0 || ctx.session.gameOver) return;
     const player = ctx.world.with("player").first;
     const district = player ? ctx.streamer.districtAt(player.position) : null;
     if (!player || !district) return;
+    // The squad on its way counts as the one out: it comes in where she is by then.
+    const due = tessenSquadDue(flags);
+    if (due) {
+      const at = ctx.tick >= due.tick ? huntEntry(ctx, player) : null;
+      if (!at) return;
+      lowerFlag(ctx, due.flag);
+      sendSquad(ctx, player, at, due.size);
+      return;
+    }
     const roll = tessenHuntRollFlag(district, clock);
     if (flags.includes(roll)) return;
     // One squad at a time: the roll goes by while one is out.
@@ -82,6 +106,9 @@ export const tessenHuntSystem: System = {
     if (!squadOut(ctx) && !at) return;
     for (const f of flags.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
     raiseFlag(ctx, roll);
-    if (at) sendSquad(ctx, player, at, tessenSquadSize(deriveRandom(ctx.seed, roll).next()));
+    if (!at) return;
+    const draw = deriveRandom(ctx.seed, roll);
+    const size = tessenSquadSize(draw.next());
+    raiseFlag(ctx, tessenSquadFlag(size, ctx.tick + tessenSquadDelaySeconds(draw.next()) * rate));
   },
 };

@@ -70,7 +70,8 @@ export const loudTessenDelta = (tessen: number): number => Math.min(0, SABOTAGE_
 /**
  * Tessen's hunt in the city (ADR-0082 §3.7): three game days from the loud way's end; on entering a
  * district and every 6 game hours in it a squad of 2-3 Tessen guards, at least 45 m from Seki and out
- * of her view, never nearer than 60 m to the clinic, one squad at a time.
+ * of her view, never nearer than 60 m to the clinic, one squad at a time. The roll warns her and the
+ * squad comes in 20-40 s later (G-911): on her trail it came in a second after she entered.
  */
 export const TESSEN_HUNT = {
   days: 3,
@@ -79,10 +80,13 @@ export const TESSEN_HUNT = {
   squadMax: 3,
   minDistance: 45,
   clinicClear: 60,
+  delayMinSeconds: 20,
+  delayMaxSeconds: 40,
 } as const;
 
 const HUNT_PREFIX = "tessen-hunt:";
 const HUNT_ROLL_PREFIX = "tessen-hunt-roll:";
+const HUNT_SQUAD_PREFIX = "tessen-hunt-squad:";
 
 /** The hunt's flag: the game day (from 0) it ends on. */
 export const tessenHuntFlag = (untilDay: number): string => `${HUNT_PREFIX}${untilDay}`;
@@ -109,3 +113,26 @@ export const isTessenHuntRollFlag = (flag: string): boolean => flag.startsWith(H
 
 /** The squad's size from a draw in [0, 1). */
 export const tessenSquadSize = (draw: number): number => TESSEN_HUNT.squadMin + Math.min(TESSEN_HUNT.squadMax - TESSEN_HUNT.squadMin, Math.floor(draw * (TESSEN_HUNT.squadMax - TESSEN_HUNT.squadMin + 1)));
+
+/** The seconds between the roll and the squad coming in, from a draw in [0, 1). */
+export const tessenSquadDelaySeconds = (draw: number): number =>
+  TESSEN_HUNT.delayMinSeconds + Math.floor(draw * (TESSEN_HUNT.delayMaxSeconds - TESSEN_HUNT.delayMinSeconds + 1));
+
+/** A squad on its way: a flag, so a load keeps it, with its size and the tick it comes in on. */
+export interface TessenSquadDue {
+  readonly flag: string;
+  readonly size: number;
+  readonly tick: number;
+}
+
+export const tessenSquadFlag = (size: number, tick: number): string => `${HUNT_SQUAD_PREFIX}${size}@${tick}`;
+
+export const isTessenSquadFlag = (flag: string): boolean => flag.startsWith(HUNT_SQUAD_PREFIX);
+
+/** The squad on its way, from the flags; null without one. */
+export const tessenSquadDue = (flags: readonly string[]): TessenSquadDue | null => {
+  const flag = flags.find(isTessenSquadFlag);
+  if (!flag) return null;
+  const [size = 0, tick = 0] = flag.slice(HUNT_SQUAD_PREFIX.length).split("@").map(Number);
+  return { flag, size, tick };
+};

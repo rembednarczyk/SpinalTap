@@ -16,6 +16,7 @@ import {
   stationDownFlag,
   tessenHuntFlag,
   tessenHuntUntil,
+  tessenSquadDue,
 } from "@seki/core";
 import { CLINIC_WAKE_SPOT, SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_TECHNICIANS, W3_VIRUS_TERMINAL, ground, stateHash, w3 } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
@@ -287,7 +288,20 @@ describe("W-3's sabotage, the loud way (ADR-0082 stage 3b)", () => {
     // The Rynek of Stare Miasto, in the day.
     teleportPlayer(sim, ground(600, 30), 0);
     run(sim, 3 * SIM_HZ);
-    const squad = () => [...sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    const squad = (s = sim) => [...s.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    // G-911: the roll puts a squad on its way for the HUD to warn of; it comes in 20-40 s on, not at once.
+    const due = tessenSquadDue(sim.domain.flags);
+    expect(due).not.toBeNull();
+    expect(due!.tick - sim.tick).toBeGreaterThanOrEqual((TESSEN_HUNT.delayMinSeconds - 3) * SIM_HZ);
+    expect(due!.tick - sim.tick).toBeLessThanOrEqual(TESSEN_HUNT.delayMaxSeconds * SIM_HZ);
+    run(sim, (TESSEN_HUNT.delayMinSeconds - 4) * SIM_HZ);
+    expect(squad()).toEqual([]);
+    // A save on the way keeps the squad coming on the same tick.
+    const loaded = reload(sim);
+    run(sim, due!.tick - sim.tick + 2 * SIM_HZ);
+    run(loaded, due!.tick - loaded.tick + 2 * SIM_HZ);
+    expect(tessenSquadDue(sim.domain.flags)).toBeNull();
+    expect(squad(loaded).map((g) => g.position)).toEqual(squad().map((g) => g.position));
     const first = squad();
     expect(first.length).toBeGreaterThanOrEqual(2);
     expect(first.length).toBeLessThanOrEqual(3);

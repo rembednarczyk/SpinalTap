@@ -8,6 +8,7 @@ import { HackingHud } from "./presenters/hacking-hud";
 import { HeatHud } from "./presenters/heat-hud";
 import { type HudPart, type HudPatch, type Wave1Hooks, createReuse, hudPartContext } from "./presenters/hud-part";
 import { PhoneHud } from "./presenters/phone-hud";
+import { TessenHuntHud } from "./presenters/tessen-hunt-hud";
 
 export { COMBAT_SECONDS } from "./presenters/combat-feedback";
 export { HEAT_ENDING_SECONDS } from "./presenters/heat-hud";
@@ -24,9 +25,9 @@ export interface Wave1Frame {
 
 /**
  * Presentation of wave 1 (ADR-0028): the phone, the contract cards, heat and detection, combat
- * feedback and the scanner, each a presenter of its own (ADR-0031), registered on the bus in
- * that order. This facade looks up the entities they need once per frame and keeps the
- * per-frame values stable for React.
+ * feedback, the scanner and the warning of Tessen's hunt, each a presenter of its own (ADR-0031),
+ * registered on the bus in that order. This facade looks up the entities they need once per frame
+ * and keeps the per-frame values stable for React.
  */
 export class Wave1Hud {
   private readonly phone: PhoneHud;
@@ -45,7 +46,7 @@ export class Wave1Hud {
     const cards = new ContractCards(ctx);
     this.heat = new HeatHud(ctx);
     this.combat = new CombatFeedback(ctx);
-    this.parts = [this.phone, cards, this.heat, this.combat, new HackingHud(ctx)];
+    this.parts = [this.phone, cards, this.heat, this.combat, new HackingHud(ctx), new TessenHuntHud(ctx)];
   }
 
   get queue(): PhoneQueue {
