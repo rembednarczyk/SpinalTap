@@ -191,6 +191,15 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
     expect(decodeSave(W3_SLICE_SLOT, store.data.get(W3_SLICE_SLOT)!).domain.difficulty).toEqual(DIFFICULTY_PRESETS.normal);
   });
 
+  it("a store that cannot write leaves the title as it was, with the reason as a toast", async () => {
+    const store = new MemorySaveStore();
+    store.put = () => Promise.reject(new Error("quota"));
+    const { session, ui } = setup(store);
+    expect(await session.starts.startW3SliceAsync()).toBe(false);
+    expect(session.screen).toBe("title");
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Save failed", text: "Error: quota" });
+  });
+
   it("the playtest's fights: at level 6 with the Unity-9 she dies in corridor S, from the start save she lives", async () => {
     const before = { duel: await play(levelSix, "duel"), corridor: await play(levelSix, "corridor") };
     const after = { duel: await play(slice, "duel"), corridor: await play(slice, "corridor") };
