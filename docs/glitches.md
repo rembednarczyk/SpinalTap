@@ -2550,6 +2550,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/engine
 
+### G-917 Hebi Enforcer strzela shotgunem poza zasięgiem 12 m i stoi na 15 m: elita nie zadaje obrażeń
+- Ważność: S3 · Zasięg: wariant armored zleceń Hebi (od 5. zlecenia), dowódca zleceniowy
+- Opis: Łowca 17.11 (origin/main e2f6330, sonda sim, Plac Litewski, ziarna 1-3, 30 s): hebi_enforcer alerted; na 12,5, 13 i 15 m 18-19 strzałów, 0 trafień; na 11 i 12 m 46-77 obrażeń. Wróg się nie zbliża. Przyczyna: attackRange w world/factory.ts:173 = meleeAttackRange(...) ?? 15 niezależnie od broni, raijin12 ma npc.range 12; GANGER_TREE strzela w attackRange i nie podchodzi do weapon.range. Inne typy mają zapas (Hebi SMG 18 przy 15, Tessen AR-5 30 przy 20). Rozwiązanie: attackRange = min(15, 0,9 × npc.range) albo pościg do npc.range.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: Enforcer na 13 m przy stojącym graczu zadaje obrażenia w 30 s (dziś 0 z 3 ziaren)
+
+### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
+- Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
+- Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
