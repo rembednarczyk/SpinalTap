@@ -25,7 +25,7 @@ import { inPlayerView } from "./crime-system";
 import { TRACK_GRACE } from "./ai/ganger-perception";
 import { GANGER_SPEED } from "./ai/ganger-walk";
 import { WIDE_WINDOW, outsideWindow } from "./ai/nav-field";
-import { SAME_FLOOR, chaseDetour, followDetour, sameChaseKey, straightWalk } from "./ai/steering";
+import { SAME_FLOOR, chaseDetour, followDetour, sameChaseKey, sameWideWindow, straightWalk } from "./ai/steering";
 import { heightApart } from "../world/ground";
 
 /**
@@ -36,6 +36,7 @@ import { heightApart } from "../world/ground";
  * saved with them, and gone home once they lost her. The roll is a flag of the district and the
  * stretch of the day, so a load rolls the same; its draw comes from the seed and the flag. The roll
  * only puts the squad on its way, as a flag the HUD warns of; it comes in 20-40 s later (G-911).
+ * One that finds no way to her from its entry goes back and waits for her where one leads (G-922).
  */
 
 /** The squad stands this far apart at its entry. */
@@ -68,6 +69,38 @@ const SET_OFF = 8;
 const mayWalk = (ctx: SimContext, from: Vec3, to: Vec3): boolean =>
   heightApart(ctx.world, to, from) <= SAME_FLOOR && (!outsideWindow(PLANNED, from, to) || straightWalk(ctx.world, from, to));
 
+/**
+ * A squad gone back from where no way led to her (G-922): it comes in where one does, with no new
+ * warning, as the one on its way (it was, and she was told). A flag, so a load keeps it waiting.
+ */
+const BACK_PREFIX = "tessen-hunt-back:";
+/** An entry no way led from to her at a lead (G-922): `<entry>@<x>,<y>,<z>`, the entry's index in `SECURITY_ENTRIES`. */
+const WAYLESS_PREFIX = "tessen-hunt-wayless:";
+
+/** The squad gone back, from the flags; null without one. */
+const tessenSquadBack = (flags: readonly string[]): { flag: string; size: number } | null => {
+  const flag = flags.find((f) => f.startsWith(BACK_PREFIX));
+  return flag ? { flag, size: Number(flag.slice(BACK_PREFIX.length)) } : null;
+};
+
+const waylessFlag = (entry: number, lead: Vec3): string => `${WAYLESS_PREFIX}${entry}@${[lead.x, lead.y, lead.z].map((v) => Math.round(v * 10) / 10).join(",")}`;
+
+/** The flags of the entries no way led from, with the entry and the lead. */
+const waylessOf = (flags: readonly string[]) =>
+  flags.flatMap((flag) => {
+    if (!flag.startsWith(WAYLESS_PREFIX)) return [];
+    const [entry = "", at = ""] = flag.slice(WAYLESS_PREFIX.length).split("@");
+    const [x = 0, y = 0, z = 0] = at.split(",").map(Number);
+    return [{ flag, entry: Number(entry), lead: { x, y, z } }];
+  });
+
+/**
+ * Does the made way to `lead`, which led nowhere from an entry, answer for her at `me` too? In the
+ * window of the same raster and on her floor: wherever she walked to from there, none leads from it
+ * either. Off it she is asked about afresh.
+ */
+const waylessHolds = (ctx: SimContext, lead: Vec3, me: Vec3): boolean => sameWideWindow(lead, me) && heightApart(ctx.world, me, lead) <= SAME_FLOOR;
+
 /** Entries in a loaded chunk 45-140 m from her, out of her view and off the clinic, nearest first (ties: table order). */
 const entriesFor = (ctx: SimContext, player: Entity): Vec3[] => {
   const me = player.position;
@@ -77,7 +110,11 @@ const entriesFor = (ctx: SimContext, player: Entity): Vec3[] => {
     return d >= TESSEN_HUNT.minDistance && d <= MAX_DISTANCE && ctx.streamer.isLoaded(ctx.streamer.chunkIdAt(p));
   });
   near.sort((a, b) => apart(a) - apart(b));
-  return near.filter((p) => Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z) >= TESSEN_HUNT.clinicClear && !inPlayerView(ctx, player, p));
+  // None a way led nowhere from to where she is (G-922): the squad came in there, went back and came again.
+  const wayless = new Set(waylessOf(ctx.state.domain.flags).flatMap((w) => (waylessHolds(ctx, w.lead, me) ? [w.entry] : [])));
+  return near.filter(
+    (p) => !wayless.has(SECURITY_ENTRIES.indexOf(p)) && Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z) >= TESSEN_HUNT.clinicClear && !inPlayerView(ctx, player, p),
+  );
 };
 
 /** A squad of the hunt still on its feet in the world? */
@@ -125,8 +162,10 @@ const onTrail = (ctx: SimContext) => {
 /**
  * A squad whose way round the blocks is made and leads nowhere from its entry (G-922: in a closed
  * cell, cut off, or she is where none leads) comes in at the nearest entry the same way leads from
- * instead, or goes back on its way, to come again 20 s on. Once a second, after the ways are made:
- * what they show is read off the made field, nothing is planned here.
+ * instead, or goes back on its way: it comes again once she is where one leads, never at an entry
+ * the way led nowhere from while that holds, nor with a new warning. Out of her view only, as the
+ * heat's reinforcements come and go (ADR-0029). Once a second, after the ways are made: what they
+ * show is read off the made field, nothing is planned here.
  */
 const reroute = (ctx: SimContext, player: Entity): void => {
   const squad = onTrail(ctx);
@@ -137,19 +176,25 @@ const reroute = (ctx: SimContext, player: Entity): void => {
   const way = chaseDetour(ctx.world, first.position, lead);
   // One of them on its way is the squad on its way; one in a closed cell gives up as any chase.
   if (way && squad.some((g) => followDetour(way, g.position) !== null)) return;
-  const leads = (p: Vec3) => !!way && sameChaseKey(ctx.world, first.position, p, lead) && followDetour(way, p) !== null;
-  const near = (p: Vec3) => Math.hypot(p.x - lead.x, p.z - lead.z) <= MAX_DISTANCE;
-  const at = entriesFor(ctx, player).find((p) => near(p) && leads(spotAt(p, 0, squad.length)));
-  squad.forEach((g, i) => {
-    if (!at) {
-      ctx.world.remove(g);
-      return;
-    }
-    const p = spotAt(at, i, squad.length);
-    [g.position, g.prevPosition, g.ai] = [p, { ...p }, { ...g.ai, home: { ...p } }];
-  });
-  const rate = Math.round(1 / ctx.dt);
-  if (!at && !tessenSquadDue(ctx.state.domain.flags)) raiseFlag(ctx, tessenSquadFlag(squad.length, ctx.tick + TESSEN_HUNT.delayMinSeconds * rate));
+  if (squad.some((g) => inPlayerView(ctx, player, g.position))) return;
+  // The made way answers for the entries in its window that a walker there keeps it by.
+  const judged = (p: Vec3) => !!way && !outsideWindow(PLANNED, p, lead) && sameChaseKey(ctx.world, first.position, p, lead);
+  const leads = (p: Vec3) => !!way && judged(p) && followDetour(way, p) !== null;
+  const entries = entriesFor(ctx, player).filter((p) => Math.hypot(p.x - lead.x, p.z - lead.z) <= MAX_DISTANCE);
+  const at = entries.find((p) => leads(spotAt(p, 0, squad.length)));
+  if (at) {
+    squad.forEach((g, i) => {
+      const p = spotAt(at, i, squad.length);
+      [g.position, g.prevPosition, g.ai] = [p, { ...p }, { ...g.ai, home: { ...p } }];
+    });
+    return;
+  }
+  // Its own entry (the first stands `SPREAD` off it) and the others the way leads nowhere from.
+  const own = SECURITY_ENTRIES.findIndex((p) => Math.hypot(p.x - first.ai.home.x, p.z - first.ai.home.z) <= SPREAD + 0.01);
+  const none = entries.flatMap((p) => (judged(spotAt(p, 0, squad.length)) ? [SECURITY_ENTRIES.indexOf(p)] : []));
+  for (const i of new Set([own, ...none])) if (i >= 0) raiseFlag(ctx, waylessFlag(i, lead));
+  for (const g of squad) ctx.world.remove(g);
+  raiseFlag(ctx, `${BACK_PREFIX}${squad.length}`);
 };
 
 /**
@@ -190,7 +235,8 @@ export const tessenHuntSystem: System = {
     if (until === null) return;
     if (!tessenHuntActive(flags, clock)) {
       lowerFlag(ctx, tessenHuntFlag(until));
-      for (const f of flags.filter((f) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f))) lowerFlag(ctx, f);
+      const hunt = (f: string) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f) || f.startsWith(BACK_PREFIX) || f.startsWith(WAYLESS_PREFIX);
+      for (const f of flags.filter(hunt)) lowerFlag(ctx, f);
       return;
     }
     // Once a second is often enough to look for an entry.
@@ -200,22 +246,26 @@ export const tessenHuntSystem: System = {
     const player = ctx.world.with("player").first;
     const district = player ? ctx.streamer.districtAt(player.position) : null;
     if (!player || !district) return;
+    for (const w of waylessOf(flags)) if (!waylessHolds(ctx, w.lead, player.position)) lowerFlag(ctx, w.flag);
     reroute(ctx, player);
-    // The squad on its way counts as the one out: it comes in where she is by then.
-    const due = tessenSquadDue(flags);
-    if (due) {
-      const at = ctx.tick >= due.tick ? huntEntry(ctx, player) : null;
+    // As the squad going back left them (G-922): those of the step's start let a roll put a second one on its way.
+    const now = ctx.state.domain.flags;
+    // The squad on its way, or gone back, counts as the one out: it comes in where she is by then, once none is out.
+    const due = tessenSquadDue(now);
+    const back = tessenSquadBack(now);
+    if (due || back) {
+      const at = !squadOut(ctx) && (back || (due && ctx.tick >= due.tick)) ? huntEntry(ctx, player) : null;
       if (!at) return;
-      lowerFlag(ctx, due.flag);
-      sendSquad(ctx, player, at, due.size);
+      for (const f of [due?.flag, back?.flag]) if (f) lowerFlag(ctx, f);
+      sendSquad(ctx, player, at, back?.size ?? due?.size ?? TESSEN_HUNT.squadMin);
       return;
     }
     const roll = tessenHuntRollFlag(district, clock);
-    if (flags.includes(roll)) return;
+    if (now.includes(roll)) return;
     // One squad at a time: the roll goes by while one is out.
     const at = squadOut(ctx) ? null : huntEntry(ctx, player);
     if (!squadOut(ctx) && !at) return;
-    for (const f of flags.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
+    for (const f of now.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
     raiseFlag(ctx, roll);
     if (!at) return;
     const draw = deriveRandom(ctx.seed, roll);
