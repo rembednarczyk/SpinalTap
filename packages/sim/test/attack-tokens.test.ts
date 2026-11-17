@@ -4,6 +4,7 @@ import { type Entity, SIM_HZ, Simulation, gangerEntity } from "../src";
 import { ATTACK_TOKENS, SPREAD, TOKEN_HOLD, holdsToken, spreadOf } from "../src/systems/ai/ganger-tokens";
 import { FLOOR, floorAt } from "./fixtures/determinism-floor";
 import { collect, teleportPlayer } from "./helpers";
+import { BARK_GAP } from "../src/systems/ai/ganger-ai-system";
 import { setProfile } from "./difficulty-scenes";
 
 /*
@@ -131,5 +132,31 @@ describe("attack tokens (ADR-0089 stage 4)", () => {
     const lost = [a, b].filter((g) => !holds(sim, g));
     expect([kept.length, lost.length]).toEqual([1, 1]);
     expect(dist(sim, lost[0]!)).toBeGreaterThanOrEqual(dist(sim, kept[0]!) - 0.5);
+  });
+});
+
+describe("a gunner's calls in a fight (ADR-0089 stage 6)", () => {
+  type Call = { readonly entityId: number; readonly reaction: string };
+
+  it("calls when it starts to reload and when it sets off round her, each gunner no more often than every 6 s", () => {
+    const { sim, guards } = ring([
+      [-25, 18],
+      [-15, 20],
+      [-5, 17],
+      [5, 21],
+      [15, 19],
+      [25, 18],
+    ]);
+    // One with two rounds left reloads soon.
+    guards[0]!.combatant!.loaded = 2;
+    const calls: (Call & { tick: number })[] = [];
+    sim.bus.on("NpcReacted", (e) => calls.push({ ...e, tick: sim.tick }));
+    for (let i = 0; i < 12 * SIM_HZ; i++) step(sim);
+    expect(calls.some((c) => c.reaction === "reload")).toBe(true);
+    expect(calls.some((c) => c.reaction === "flank")).toBe(true);
+    for (const g of guards) {
+      const own = calls.filter((c) => c.entityId === g.id).map((c) => c.tick);
+      for (let k = 1; k < own.length; k++) expect(own[k]! - own[k - 1]!, g.key).toBeGreaterThanOrEqual(BARK_GAP * SIM_HZ);
+    }
   });
 });
