@@ -2483,13 +2483,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 
-### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
-- Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
-- Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
-- Status: w PR #701; wcześniej: zgłoszone; wcześniej: zgłoszone
-- Pakiet właściciela: packages/engine
-- 17.11 (orkiestrator, tryb bez agentów): glitch, nie znany limit. 126 nazw budynków w mieście na 32 wiersze, jeden fragment mapy do 17 nazw; wiersz był trzymany do końca sesji, więc po kilku dzielnicach tabliczki następnych znikały. Poprawka w #701: komórka oddaje wiersze swoich nazw, gdy znika albo jest budowana od nowa; napisy zabytków przypięte. Test map-names-atlas.
-
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
 - Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
 - Opis: Znalezione przy G-922: komórka wejścia zamknięta, brak otwartej w 2 m (pole null); oddział z tego wejścia stoi (Rynek 520,0; 540,20; 560,60; 620,-60).
