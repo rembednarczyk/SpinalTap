@@ -2478,7 +2478,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-905 HUD nie pokazuje celu W-3 przy aktywnym wątku głównym
 - Ważność: S3 · Zasięg: każde zlecenie Genzō (W-3) przy aktywnym wątku głównym
 - Opis: Playtest 17.11: po przyjęciu zlecenia W-3 HUD dalej pokazuje cel głównego wątku (Talk to Kaito, Ask Grandma Ume) z linią bonusu W-3 pod spodem; cele drogi cichej i głośnej, licznik ładunków, zapalnik i termin 06:00 widać dopiero po przypięciu w dzienniku. Odtworzenie: nowa gra lub po akcie I, Genzō, Co to za partia dronów, brak przypięcia. Przyczyna: shownEntryId w app/src/objective.ts przepuszcza kontrakt tylko dla CONTRACT_STEPS. Rozwiązanie: autoprzypięcie kontraktu W-3.
-- Status: zgłoszone
+- Status: w PR #662 (17.11); wcześniej: w PR #660; wcześniej: zgłoszone
 - Pakiet właściciela: packages/app
 
 ### G-906 Cele drogi głośnej W-3 z miejscem rdzenia serwerowni
@@ -2563,6 +2563,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
+
+### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
+- Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
+- Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
+- Status: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
