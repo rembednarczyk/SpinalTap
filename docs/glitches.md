@@ -2531,7 +2531,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
 - Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
 - Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
-- Status: zgłoszone
+- Status: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
 - Weryfikator #671 (17.11): to samo na main (ziarna 3, 7, 42: oddział 134-139 m od gracza stoi i znika po ok. 20 s), nie regresja #671; lastKnown ustawiane przy wejściu oddziału. Do naprawy osobno.
@@ -2542,6 +2542,34 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
+
+### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
+- Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
+- Opis: Znalezione przy G-922: komórka wejścia zamknięta, brak otwartej w 2 m (pole null); oddział z tego wejścia stoi (Rynek 520,0; 540,20; 560,60; 620,-60).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: każde SECURITY_ENTRIES w otwartej komórce połączonej z ulicą
+
+### G-925 Szeroka droga pościgu nie planuje dla idącego spoza okna celu
+- Ważność: S3 · Zasięg: pościgi z dalszych niż ok. 96 m na oś od celu
+- Opis: Znalezione przy G-922: chaseDetour/outsideWindow zwraca null; pościg Tessen czeka w ok. 28% punktów siatki, inni stoją.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: idący 100-140 m od celu poza oknem dochodzi
+
+### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
+- Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
+- Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: punkt testu w otwartej, połączonej komórce
+
+### G-927 Walka na ok. 20 m przebudowuje rastry okna bliskiego co kilka kroków (kroki 40-90 ms)
+- Ważność: S3 · Zasięg: walka oddziału lub posiłków, np. 520,-60
+- Opis: Znalezione przy G-922, także na main: near r+1 f+1 co kilka kroków przy ok. 20 m od Seki.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: walka 40 s bez kroku ponad budżet
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
