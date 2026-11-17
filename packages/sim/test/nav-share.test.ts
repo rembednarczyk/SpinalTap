@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { SIM_HZ, Simulation, ground, stateHash } from "../src";
-import { type Field, nearBuilds, wideBuilds } from "../src/systems/ai/nav-field";
+import { SIM_HZ, Simulation, gangerEntity, giveLead, ground, stateHash } from "../src";
+import { FLEE_WINDOW, type Field, memoOf, nearBuilds, wideBuilds } from "../src/systems/ai/nav-field";
 import type { Raster } from "../src/systems/ai/nav-raster";
 import { type Made, type NavShare, shapesKey, shareNav, through } from "../src/systems/ai/nav-share";
 import type { Collider } from "../src/world/solids";
@@ -29,11 +29,20 @@ const mapStore = <T>() => {
 
 const storeOf = () => ({ rasters: mapStore<Raster>(), fields: mapStore<Field>() });
 
-/** A shot on the deptak: the residents run, round what stands in the way. */
-const panic = (): { hashes: string[]; near: ReturnType<typeof nearBuilds>; wide: ReturnType<typeof wideBuilds> } => {
+type Builds = ReturnType<typeof nearBuilds>;
+
+/**
+ * A shot on the deptak: the residents run, round what stands in the way (in the runners' window,
+ * G-928), and a ganger told of her behind the building south of her plans its way round it (in
+ * the near window).
+ */
+const panic = (): { hashes: string[]; near: Builds; wide: Builds; flee: Builds } => {
   const sim = Simulation.create({ seed: 8, crowd: "low" });
   teleportPlayer(sim, ground(300, -84), Math.PI / 2);
   run(sim, 2);
+  const g = gangerEntity(9301, { key: "nav-share-lead", position: ground(297, -88), yaw: Math.PI }, null, 200, "krakowskie-2-0");
+  sim.world.add(g);
+  giveLead(g, ground(297, -112));
   sim.player()!.pitch = -0.6;
   sim.step(input({ fire: true }));
   const hashes: string[] = [];
@@ -41,7 +50,7 @@ const panic = (): { hashes: string[]; near: ReturnType<typeof nearBuilds>; wide:
     run(sim, SIM_HZ);
     hashes.push(stateHash(sim.snapshot(null, "t", "")));
   }
-  return { hashes, near: nearBuilds(sim.world), wide: wideBuilds(sim.world) };
+  return { hashes, near: nearBuilds(sim.world), wide: wideBuilds(sim.world), flee: { ...memoOf(sim.world, FLEE_WINDOW).built } };
 };
 
 let before: NavShare<Raster, Field> | null = null;
@@ -57,12 +66,16 @@ describe("the steering's store shared by a process's worlds (ADR-0083 step 3)", 
     shareNav(store);
     const first = panic();
     const hitsBefore = store.fields.counts.hits;
+    const rasterHits = store.rasters.counts.hits;
     const second = panic();
     expect(first).toEqual(alone);
     expect(second).toEqual(alone);
     expect(alone.near.fields).toBeGreaterThan(0);
-    // The second world made nothing anew: every raster and field it made came out of the store.
+    expect(alone.flee.rasters).toBeGreaterThan(0);
+    // The second world made nothing anew: every raster and field it made came out of the store. Not
+    // the runners' fields: each is grown in its own world only as far as its runners ask (G-928).
     expect(store.rasters.size()).toBeGreaterThan(0);
+    expect(store.rasters.counts.hits - rasterHits).toBe(alone.near.rasters + alone.wide.rasters + alone.flee.rasters);
     expect(store.fields.counts.hits - hitsBefore).toBe(alone.near.fields + alone.wide.fields);
   });
 
