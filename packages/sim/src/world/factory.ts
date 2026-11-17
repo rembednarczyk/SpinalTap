@@ -142,6 +142,12 @@ export const meleeAttackRange = (weapon: WeaponId): number | null => {
   return stats.melee ? stats.range * 0.8 : null;
 };
 
+/**
+ * Where an NPC with a gun opens fire: `preferred`, but never past 90% of what its weapon reaches.
+ * A shot past the range is lost, so a shotgun (12 m) fired from the default 15 m never hit (G-917).
+ */
+const gunAttackRange = (weapon: WeaponId, preferred: number): number => Math.min(preferred, npcWeapon(weapon).range * 0.9);
+
 /** A Hebi ganger; weapon, outfit and loot come from its enemy type (ADR-0015). */
 export const gangerEntity = (
   id: EntityId,
@@ -170,7 +176,7 @@ export const gangerEntity = (
     ai: {
       home: spawn.position,
       aggroRange: sightOf(type).sight,
-      attackRange: def.faction === "tessen" ? 20 : (meleeAttackRange(def.weapon) ?? 15),
+      attackRange: meleeAttackRange(def.weapon) ?? gunAttackRange(def.weapon, def.faction === "tessen" ? 20 : 15),
       alerted: false,
       ...(victim ? { victim } : {}),
     },
