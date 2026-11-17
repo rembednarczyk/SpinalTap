@@ -2556,7 +2556,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-920 Cel ucieczki W-3 mówi „za płot”, a płotu 2,7 m nie da się przeskoczyć
 - Ważność: S4 · Zasięg: cel sabotageEscape W-3 (en, pl)
 - Opis: Znalezione przy G-906 (17.11): contract.objective.sabotageEscape mówi „over the fence” / „za płot”, a według ADR-0082 płot W-3 ma 2,7 m i jest nie do przejścia; wyjście przez furtkę, bramę albo metro. Rozwiązanie: tekst wskazujący wyjścia (oba katalogi).
-- Status: zgłoszone
+- Status: w PR #666 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/ui
 - Test przyjęcia: tekst celu ucieczki nie wspomina płotu
 
