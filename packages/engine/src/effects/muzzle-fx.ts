@@ -27,14 +27,14 @@ const TONGUE: readonly (readonly [number, number])[] = [
 ];
 
 /** The flame's geometry at unit size: positions, triangles and flat vertex colours. */
-interface Shape {
+export interface Shape {
   readonly positions: number[];
   readonly indices: number[];
   readonly colors: number[];
 }
 
 /** A fan of triangles from `centre` round a closed outline, in one colour. */
-const fan = (shape: Shape, centre: readonly [number, number, number], ring: readonly (readonly [number, number, number])[], color: Color3): void => {
+export const fan = (shape: Shape, centre: readonly [number, number, number], ring: readonly (readonly [number, number, number])[], color: Color3): void => {
   const base = shape.positions.length / 3;
   for (const p of [centre, ...ring]) {
     shape.positions.push(p[0], p[1], p[2]);
@@ -97,8 +97,8 @@ export const puffShape = (sides = 9, inner = 0.36): Shape => {
   return shape;
 };
 
-/** The geometry of a shape on a new mesh. */
-const meshOf = (name: string, shape: Shape, scene: Scene): Mesh => {
+/** The geometry of a shape on a new mesh (the blasts' too, `ExplosionFx`). */
+export const meshOf = (name: string, shape: Shape, scene: Scene): Mesh => {
   const mesh = new MeshClass(name, scene);
   const data = new VertexData();
   data.positions = shape.positions;

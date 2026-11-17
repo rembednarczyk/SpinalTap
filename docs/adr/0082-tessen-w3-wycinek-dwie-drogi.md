@@ -392,6 +392,25 @@ Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki
   - łup zbrojowni liczy się w dochodzie drogi głośnej, a jej stawka spada.
 - **Zostaje na później (poza 3b):** zewnętrzne drzwi zbrojowni z kodem, etap efektów wybuchu (`explosion` i dźwięki z §3, zmiana portów) razem z trwałymi wrakami stanowisk, znacznik pościgu przy HUD heatu, osobny telefon `phone_genzo_w3_paid_loud` (dziś jest ogólny `phone_genzo_paid`), zdejmowanie ładunków po śmierci Seki bez wczytania zapisu.
 
+## Etap 3c: zmiany kontraktów i decyzje (17.11)
+- **Zmiana granicy w `core/src/ports/types.ts`:**
+  - `EffectDescriptor` + `{ kind: "explosion"; at; radius }`: jednorazowy wybuch (błysk, kula ognia, dym, odłamki);
+  - `EffectDescriptor` + `{ kind: "line-wrecks"; stations }`: stanowiska zniszczone na stałe, stan trzymany jak `alarm-light`;
+  - `AudioCue` + `"explosion" | "alarm" | "alarm-siren"`. `"charge-plant"` i `"upload-done"` z §3 nie powstały.
+  Zdarzeń domeny i komend nie dodajemy. `sim` się nie zmienia: wybuch nie ma własnego zdarzenia, bo app widzi go jako nową flagę `w3:station:<id>:down` (`W3MissionSync`). Determinizm i wersja zapisu bez zmian, bo wraki to flagi, które już są w zapisie.
+- **App (`presenters/w3-mission.ts`):**
+  - nowa flaga stanowiska daje `explosion` przy jego ładunku (promień `blastRadius`) i dźwięk `explosion`, ale nie po wczytaniu: `reset` przy wczytaniu nie odpala wybuchu;
+  - `line-wrecks` idzie przy każdej zmianie i po każdym `reset`, więc wraki po wczytaniu wynikają z flag;
+  - podniesienie alarmu daje `alarm` (klakson). Póki trwa alarm i Seki jest w strefie W-3, co 2,4 s gry gra jedno wycie `alarm-siren`. `AudioPort` zostaje jednometodowy, bez pętli w porcie.
+- **Engine:**
+  - `effects/explosion-state.ts` (czysty) i `effects/explosion-fx.ts`: trzy siatki z thin instances (ogień, dym, odłamki), wyłączone w spoczynku;
+  - na High chmura cząsteczek (7 kul ognia, 10 kłębów dymu, 12 odłamków na wybuch), na low i medium jedna kula i jeden kłąb, bez siatki odłamków;
+  - błysk to światło `flashLight` materiałów (zasięg 9 m) przez limiter błysków. Przy ograniczonych błyskach go nie ma, a kula jest ciemniejsza;
+  - wraki to skrzynki w siatce ruchu linii (`w3-line-geometry.ts`), więc nie ma nowego wywołania. Bez wraków siatka jest taka sama jak przedtem;
+  - ramiona przy wraku wiszą martwe, a ekran stanowiska leży zgaszony.
+- **Dźwięk:** `explosion` to nagranie Kenney Sci-fi Sounds (CC0, `explosionCrunch_003/004`) na syntezie niskiego huku. `alarm` i `alarm-siren` to sama synteza, bez plików.
+- **Zostaje na później:** tymczasowa bryła wraku z szablonu kontraktu (`sabotage-templates.ts`) zostaje, póki trwa kontrakt. Usunięcie jej zmienia ids szablonów i złoty hash, więc to osobna zmiana w `sim`.
+
 ## Balans
 Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
 
