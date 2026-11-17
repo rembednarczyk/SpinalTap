@@ -10,6 +10,8 @@ import { awarenessOf } from "./ai/ganger-perception";
 import { seenCommitting } from "./crime-system";
 import { fillMagazine } from "../world/player-weapon";
 import { noteFight } from "../world/progression-ops";
+import { raiseFlag } from "../world/domain-ops";
+import { dropEnemyLoot, lootedFlag } from "./death-system";
 
 /** How close the player has to be, metres between the centres on the ground (ADR-0065). */
 export const TAKEDOWN_REACH = 1.6;
@@ -134,6 +136,9 @@ const breakFree = (target: Target, player: Entity): void => {
   target.ai.lastKnown = { ...player.position };
 };
 
+/** How far past the body (away from her) the bag of one knocked out lies (G-918). */
+const BAG_PAST_BODY = 0.8;
+
 /**
  * Knocked out: down until an NPC finds it and wakes it (the body watch), knowing where the player
  * stood. Its mind is wiped: it no longer counts as fighting (the RAM, the activities, the
@@ -144,6 +149,17 @@ const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boole
   if (target.enemy) noteFight(ctx, target, "stealth");
   ctx.world.addComponent(target, "unconscious", true);
   ctx.world.addComponent(target, "downed", freshDowned(player.position, fought));
+  // Its bag by its body, the one it would leave at its death (G-918, the user's decision of 17.11):
+  // knocking out is worth as much as killing, without the kill's experience.
+  // Past the body as she sees it, so the body's own key (another takedown, carrying, hiding) stays nearer.
+  if (target.enemy && target.key) {
+    const dx = target.position.x - player.position.x;
+    const dz = target.position.z - player.position.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const at = { x: target.position.x + (dx / d) * BAG_PAST_BODY, y: target.position.y, z: target.position.z + (dz / d) * BAG_PAST_BODY };
+    dropEnemyLoot(ctx, target, true, at);
+    raiseFlag(ctx, lootedFlag(target.key));
+  }
   hold(target);
   if (target.ai) {
     target.ai.alerted = false;
