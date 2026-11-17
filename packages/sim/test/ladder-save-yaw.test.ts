@@ -134,3 +134,25 @@ describe("a game saved on a ladder after looking around (G-913)", () => {
     });
   }
 });
+
+describe("a game saved mid-climb goes on climbing as the game saved from (G-921)", () => {
+  for (const { key, near } of LADDERS) {
+    it(`${key}: saved climbing up, loaded, the same steps up: the same height and state`, () => {
+      const { sim } = atFoot(key, near);
+      for (let i = 0; i < 50; i++) sim.step(input({ moveZ: 1 }));
+      expect(sim.player()!.climb?.ladder, key).toBe(key);
+      expect(sim.player()!.climb?.settle, key).toBeUndefined();
+      const loaded = saveAndLoad(sim);
+      // Still climbing in both, then down and off at the foot, and a walk away from it.
+      for (const s of [sim, loaded]) {
+        for (let i = 0; i < 20; i++) s.step(input({ moveZ: 1 }));
+      }
+      expect(loaded.player()!.position.y, key).toBeCloseTo(sim.player()!.position.y, 9);
+      for (const s of [sim, loaded]) {
+        for (let i = 0; i < 400; i++) s.step(input({ moveZ: -1 }));
+        for (let i = 0; i < 60; i++) s.step(input({ moveZ: 1, moveX: 1 }));
+      }
+      expect(hashOf(loaded), key).toBe(hashOf(sim));
+    });
+  }
+});

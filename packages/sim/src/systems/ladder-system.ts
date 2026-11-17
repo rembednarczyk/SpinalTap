@@ -70,6 +70,8 @@ const hangOn = (ctx: SimContext, e: Entity, l: LadderDef, y: number, settle?: Se
   delete e.fall;
   delete e.airPeak;
   if (e.velocity) e.velocity = { x: 0, y: 0, z: 0 };
+  // On the rungs she is off any floor's edge: no jump of a step off one is left (G-921; a load put it at 0).
+  if (e.jump) e.jump.coyote = 0;
   ctx.bus.emit("LadderClimb", { entityId: e.id, ladder: l.key, on: true });
 };
 
@@ -180,25 +182,26 @@ export const ladderSystem: System = {
           continue;
         }
         if (p.fall !== undefined) continue;
-        // A game saved on a ladder: back on it, where it was.
+        // A game saved on a ladder: back on it, where it was, and on with this step's climb as the
+        // game saved from (G-921: the step went on hanging on again, one step behind for good).
         const held = all.find((l) => onLadderLine(p, l.ladder));
-        if (held) {
-          hangOn(ctx, p, held.ladder, p.position.y);
-          // Above where a climb up reaches only the swing from the top (not saved) puts her: she
-          // ends it facing the wall, as live.
-          if (p.position.y >= held.ladder.top - STEP_OFF_LIFT) p.yaw = held.ladder.yaw;
+        if (!held) {
+          if (input.moveZ <= 0.5) continue;
+          for (const { ladder: l } of all) {
+            const near = Math.hypot(p.position.x - l.x, p.position.z - l.z) <= GRAB_REACH;
+            if (near && Math.abs(p.position.y - l.bottom) < 0.3 && angleBetween(p.yaw, l.yaw) <= GRAB_FACING) {
+              hangOn(ctx, p, l, l.bottom, { over: false, duration: GRAB_TIME });
+              break;
+            }
+          }
           continue;
         }
-        if (input.moveZ <= 0.5) continue;
-        for (const { ladder: l } of all) {
-          const near = Math.hypot(p.position.x - l.x, p.position.z - l.z) <= GRAB_REACH;
-          if (near && Math.abs(p.position.y - l.bottom) < 0.3 && angleBetween(p.yaw, l.yaw) <= GRAB_FACING) {
-            hangOn(ctx, p, l, l.bottom, { over: false, duration: GRAB_TIME });
-            break;
-          }
-        }
-        continue;
+        hangOn(ctx, p, held.ladder, p.position.y);
+        // Above where a climb up reaches only the swing from the top (not saved) puts her: she
+        // ends it facing the wall, as live.
+        if (p.position.y >= held.ladder.top - STEP_OFF_LIFT) p.yaw = held.ladder.yaw;
       }
+      if (!p.climb) continue;
       const l = all.find((x) => x.ladder.key === p.climb?.ladder)?.ladder;
       if (!l) {
         // The ladder streamed out under the climber: drop.
