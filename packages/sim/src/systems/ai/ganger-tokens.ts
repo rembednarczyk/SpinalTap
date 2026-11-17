@@ -6,7 +6,7 @@ import { SIM_HZ } from "../../step-rate";
 import type { Entity } from "../../world/components";
 import { straightWalk } from "./steering";
 import { GANGER_SPEED, type GangerBinding, type GangerWalk } from "./ganger-walk";
-import { aside, probed, tacticOf } from "./ganger-tactic";
+import { aside, novice, probed, tacticOf } from "./ganger-tactic";
 
 /*
  * Attack tokens (ADR-0089 stage 4): no more than `ATTACK_TOKENS` gunners fire at the player at
@@ -94,7 +94,8 @@ export const spreadOut = (at: GangerBinding, walk: GangerWalk, her: Vec3): void 
   const { ctx, self, timeScale } = at;
   if (!ctx || !self) return;
   const t = tacticOf(ctx, self);
-  if (!t) return;
+  // A novice holds its fire where it stands (stage 5).
+  if (!t || novice(self)) return;
   const dt = ctx.dt * timeScale;
   if (t.stride <= 0) {
     const others = holders(ctx.world, ctx.tick, self).map((g) => bearing(g.position, her));
