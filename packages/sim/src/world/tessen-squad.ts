@@ -7,7 +7,8 @@ import type { Entity } from "./components";
  * A squad of Tessen's hunt gone back from where no way led to her (G-922): it comes in where one
  * does, with no new warning, as the one on its way (it was, and she was told). A flag, so a load
  * keeps it waiting: `<size>@<day>:<stretch>`, the stretch of the day it went back in; a save from
- * before the stretch was kept has the size alone.
+ * before the stretch was kept has the size alone. Past its stretch it is gone, and the next roll
+ * warns her (G-934; one with no stretch is of one past).
  */
 export const TESSEN_SQUAD_BACK_PREFIX = "tessen-hunt-back:";
 
@@ -34,9 +35,10 @@ export const tessenSquadOut = (world: World<Entity>): boolean =>
  * How long past its tick a squad on its way still counts as coming, in seconds (round 3 of 17.11):
  * the hunt's shortest warning, `TESSEN_HUNT.delayMinSeconds` (20 s). With an entry where she is it
  * comes in on the first look for one at its tick (once a second); later, none was there (the
- * clinic's 60 m, her view, no way to her) and its flag waits for one (G-934). The lateness lets
- * such a moment pass (she steps out of an entry's view) as long again as the shortest warning she
- * gets, and not more: in the clinic, with no entry for good, she may wait from 20 s past its tick.
+ * clinic's 60 m, her view, no way to her) and its flag waits for one. The lateness lets such a
+ * moment pass (she steps out of an entry's view) as long again as the shortest warning she gets,
+ * and not more: in the clinic, with no entry for good, she may wait from 20 s past its tick, and
+ * the squad is gone then (G-934), so it never comes in long after her warning.
  */
 export const TESSEN_SQUAD_LATE_SECONDS = TESSEN_HUNT.delayMinSeconds;
 
