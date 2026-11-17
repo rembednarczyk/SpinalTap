@@ -38,3 +38,11 @@ GENZO: Nobody saw a thing, nobody heard a thing. That's what I pay best for.
 === phone_genzo_failed ===
 GENZO: Tessen knows already. Stay away from the office for a few days.
 -> END
+
+=== phone_genzo_paid_loud ===
+GENZO: Half the river heard that line go up. The money is in your account. Tessen will be looking for you for a few days, so keep off the streets they walk.
+-> END
+
+=== phone_genzo_failed_shipped ===
+GENZO: The batch left the quay at six. Nobody saw you, so Tessen does not know it was us. There will be other jobs.
+-> END

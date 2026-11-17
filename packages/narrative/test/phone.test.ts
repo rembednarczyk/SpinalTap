@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STORY_SOURCE } from "../src/content";
+import { STORY_SOURCE, STORY_SOURCES } from "../src/content";
 import { compileInk } from "../src/narrative-runtime";
 
 describe("phone texts (ADR-0029)", () => {
@@ -15,5 +15,19 @@ describe("phone texts (ADR-0029)", () => {
         expect(text.trim().length).toBeGreaterThan(10);
         expect(story.currentChoices).toHaveLength(0);
       }
+  });
+
+  it("has Genzō's texts of W-3's loud way and of the batch shipped unnoticed, in both languages (G-912)", () => {
+    for (const source of Object.values(STORY_SOURCES)) {
+      const story = compileInk(source);
+      for (const name of ["has_flag", "set_alias", "change_rep", "set_flag", "has_memory", "accept_contract", "offer_contract", "story_choice", "complete_contract", "unlock_memory", "end_act", "end_act2", "deliver_contract"])
+        story.BindExternalFunction(name, () => 0);
+      for (const knot of ["phone_genzo_paid_loud", "phone_genzo_failed_shipped"]) {
+        story.ChoosePathString(knot);
+        const text = story.ContinueMaximally();
+        expect(text.trim().length, knot).toBeGreaterThan(10);
+        expect(story.currentChoices).toHaveLength(0);
+      }
+    }
   });
 });
