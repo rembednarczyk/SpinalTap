@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-910 Łup trupa zasłania podłożenie ładunku w W-3
+- Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
+- Opis: Playtest 17.11 (średnia pewność): przy S3 Użyj dawał Search zamiast Plant a charge i otwierał panel łupu (blokuje zapis); przy S1 po podłożeniu też Search. Rozwiązanie: priorytet celu misji nad łupem i Grab.
+- Status: naprawione (17.11, #663 scalony); wcześniej: w PR #663 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Agent 17.11: odtworzone tylko przy S3 (torba 0,36 m, stanowisko 0,54 m); 'Search' przy S1 po podłożeniu to zachowanie poprawne (stanowiska już nie ma).
+
 ### G-920 Cel ucieczki W-3 mówi „za płot”, a płotu 2,7 m nie da się przeskoczyć
 - Ważność: S4 · Zasięg: cel sabotageEscape W-3 (en, pl)
 - Opis: Znalezione przy G-906 (17.11): contract.objective.sabotageEscape mówi „over the fence” / „za płot”, a według ADR-0082 płot W-3 ma 2,7 m i jest nie do przejścia; wyjście przez furtkę, bramę albo metro. Rozwiązanie: tekst wskazujący wyjścia (oba katalogi).

@@ -2494,13 +2494,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 - Agent 17.11: zapis startowy poz. 12 (Nowa gra → Zacznij w W-3, slot w3-slice), gałąź ccr-ec2c4269-ilh8k8-g909; korytarz S: przed zgon 21,9 s, po żyje 60 s (84/133 HP).
 
-### G-910 Łup trupa zasłania podłożenie ładunku w W-3
-- Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
-- Opis: Playtest 17.11 (średnia pewność): przy S3 Użyj dawał Search zamiast Plant a charge i otwierał panel łupu (blokuje zapis); przy S1 po podłożeniu też Search. Rozwiązanie: priorytet celu misji nad łupem i Grab.
-- Status: w PR #663 (17.11); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Agent 17.11: odtworzone tylko przy S3 (torba 0,36 m, stanowisko 0,54 m); 'Search' przy S1 po podłożeniu to zachowanie poprawne (stanowiska już nie ma).
-
 ### G-911 Pościg Tessen: oddział w 0,2 s po wejściu w dzielnicę, bez znaku na HUD
 - Ważność: S3 · Zasięg: dzielnice w ciągu 3 dni po drodze głośnej W-3
 - Opis: Playtest 17.11: z flagą tessen-hunt oddział 2 strażników pojawił się 13 ticków po wejściu w Bramę Krakowską, 50 m od gracza, zaalarmowany (lastKnown = pozycja gracza). HUD nic nie pokazuje (heat 0, brak toastu). Bierny gracz ginie w ok. 30 s. Rozwiązanie: ostrzeżenie na HUD i zwłoka na pierwsze losowanie.
