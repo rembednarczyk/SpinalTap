@@ -2475,6 +2475,60 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, W-3)
 
+### G-905 HUD nie pokazuje celu W-3 przy aktywnym wątku głównym
+- Ważność: S3 · Zasięg: każde zlecenie Genzō (W-3) przy aktywnym wątku głównym
+- Opis: Playtest 17.11: po przyjęciu zlecenia W-3 HUD dalej pokazuje cel głównego wątku (Talk to Kaito, Ask Grandma Ume) z linią bonusu W-3 pod spodem; cele drogi cichej i głośnej, licznik ładunków, zapalnik i termin 06:00 widać dopiero po przypięciu w dzienniku. Odtworzenie: nowa gra lub po akcie I, Genzō, Co to za partia dronów, brak przypięcia. Przyczyna: shownEntryId w app/src/objective.ts przepuszcza kontrakt tylko dla CONTRACT_STEPS. Rozwiązanie: autoprzypięcie kontraktu W-3.
+- Status: zgłoszone
+- Pakiet właściciela: packages/app
+
+### G-906 Cele drogi głośnej W-3 z miejscem rdzenia serwerowni
+- Ważność: S3 · Zasięg: wszystkie cele drogi głośnej (weź ładunki, podłóż, uciekaj)
+- Opis: Playtest 17.11: cel "Plant the charges…" kończy się "the calibration core in server room N of hall W-3", choć stanowiska są w hali. Odtworzenie: pobrać ładunki ze skrzynki w zbrojowni S (2555; 400,8), przypiąć kontrakt. Rozwiązanie: miejsce zależne od route i etapu.
+- Status: zgłoszone
+- Pakiet właściciela: packages/app
+
+### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
+- Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
+- Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
+- Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
+- Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-909 Droga głośna W-3 nie do przejścia pistoletem na poziomie 6
+- Ważność: S3 · Zasięg: misja W-3 przy zapisie z aktu I (poziom 6, Unity-9)
+- Opis: Playtest 17.11: strażnicy poziomu 11 (154 HP); pistolet ok. 45 obrażeń z magazynku 12, AR-5 67 naboi na strażnika (90 w skrzyni); wejście do korytarza S i zbrojowni: zgon w 12 s przy 6 wrogach. AR-5 w skrzyni z pustym magazynkiem, trzeba go wyposażyć ręcznie w ekranie postaci. Przyczyna: brak zapisu startowego poziomu 12 z ADR-0082. Rozwiązanie: zapis poziomu 12 z AR-5 w slocie i załadowanym albo poziom wrogów bliżej gracza.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-910 Łup trupa zasłania podłożenie ładunku w W-3
+- Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
+- Opis: Playtest 17.11 (średnia pewność): przy S3 Użyj dawał Search zamiast Plant a charge i otwierał panel łupu (blokuje zapis); przy S1 po podłożeniu też Search. Rozwiązanie: priorytet celu misji nad łupem i Grab.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-911 Pościg Tessen: oddział w 0,2 s po wejściu w dzielnicę, bez znaku na HUD
+- Ważność: S3 · Zasięg: dzielnice w ciągu 3 dni po drodze głośnej W-3
+- Opis: Playtest 17.11: z flagą tessen-hunt oddział 2 strażników pojawił się 13 ticków po wejściu w Bramę Krakowską, 50 m od gracza, zaalarmowany (lastKnown = pozycja gracza). HUD nic nie pokazuje (heat 0, brak toastu). Bierny gracz ginie w ok. 30 s. Rozwiązanie: ostrzeżenie na HUD i zwłoka na pierwsze losowanie.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
+- Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
+- Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
+- Status: zgłoszone
+- Pakiet właściciela: packages/narrative
+
+### G-913 Zapis na drabinie włazu W-3: yaw gracza rozjeżdża się po wczytaniu
+- Ważność: S4 · Zasięg: drabina w3-hatch (2564; 439,3), inne drabiny niesprawdzone
+- Opis: Playtest 17.11: zapis i wczytanie na drabinie; po 600 tickach hash różni się tylko w yaw gracza (2,43 kontra 0): bez zapisu kierunek zostaje, po wczytaniu przypina się do osi drabiny. Uwaga z lekcji: sonda zapisu musi iść przez SaveController.snapshot() i calmForSave; do potwierdzenia, że tak było.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
