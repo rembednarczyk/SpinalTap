@@ -122,6 +122,18 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     expect(translate(locale, "prompt.culvert")).not.toBe("prompt.culvert");
   });
 
+  it("the crawl is offered in the mouth only, not from the tops of its wing walls 1.35 m above (G-930)", () => {
+    const { session, ui } = start();
+    const locale = ui.getState().settings.locale;
+    for (const z of [406, 408.4]) {
+      teleport(session, MOUTH.x, z, Math.PI / 2, 0, W3_Y - 0.1);
+      steps(session, 2);
+      // She stands up there, by the mouth's entry point, 1.35 m over its floor.
+      expect(session.sim.player()!.position.y - (W3_Y + W3_LAYOUT.CULVERT_MOUTH.floor), `z ${z}`).toBeGreaterThan(1.2);
+      expect(ui.getState().prompt, `z ${z}`).not.toBe(contentText(locale, "prompt.culvert"));
+    }
+  });
+
   it("in the overalls a technician lets her be, without them it reports her; a gun in hand gives her away", () => {
     for (const [overalls, gun, reported] of [
       [false, false, true],

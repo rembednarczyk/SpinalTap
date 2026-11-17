@@ -70,6 +70,8 @@ const LADDER_REACH = 1.1;
 
 /** Reach of a crawl's mouth, metres. */
 const CRAWL_REACH = 1.4;
+/** From the mouth's floor only: W-3's wing walls stand 1.35 m over it, within the usual 1.6 m (G-930). */
+const CRAWL_REACH_Y = 0.6;
 
 /** Reach of a lift's call button, metres. */
 const BUTTON_REACH = 3;
@@ -132,7 +134,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   } else if (m?.kind === "crawl") {
     // A crawl's mouth is a place too.
     delete e.view;
-    e.interactable = { kind: "crawl", crawl: { to: m.to, yaw: m.yaw }, dialogueId: "", prompt: "prompt.culvert", radius: CRAWL_REACH };
+    e.interactable = { kind: "crawl", crawl: { to: m.to, yaw: m.yaw }, dialogueId: "", prompt: "prompt.culvert", radius: CRAWL_REACH, reachY: CRAWL_REACH_Y };
   }
   return e;
 };
