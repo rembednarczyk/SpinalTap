@@ -23,5 +23,8 @@ export const plDifficulty = {
   "difficulty.slot": "Poziom trudności: {preset}",
   "newGame.heading": "Nowa gra",
   "newGame.start": "Rozpocznij",
+  "newGame.w3Slice": "Zacznij w W-3 (poziom 12)",
+  "newGame.w3Place": "Nabrzeże · W-3",
+  "newGame.w3Intro": "Poziom 12, załadowany AR-5 w dłoni i punkty do wydania. Genzō czeka przy kontenerze KAIUN obok metra: zapytaj go o partię dronów.",
   "pause.difficulty": "Poziom trudności",
 } as const satisfies Readonly<Record<DifficultyKey, Message>>;

@@ -12,11 +12,13 @@ import {
   contractTag,
   gameDayOf,
   stationDownFlag,
+  tessenHuntFlag,
   tessenHuntUntil,
+  tessenSquadDue,
 } from "@seki/core";
 import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash, stationChargeAt } from "@seki/sim";
 import { translateText } from "@seki/ui";
-import { frame, setup, steps, teleport } from "./story-helpers";
+import { frame, objective, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 import { SIREN_PERIOD } from "../src/presenters/w3-mission";
 
@@ -24,15 +26,20 @@ import { SIREN_PERIOD } from "../src/presenters/w3-mission";
  * W-3's sabotage, the loud way, in a session, headless (ADR-0082 stage 3b): the charges' case in
  * armoury S raises the alarm (its klaxon, the siren while it lasts) and the toast of the way cut
  * off, three charges on the line, the blast out of the hall as explosions over the stations, their
- * sound and the wrecks (stage 3c), out of the zone Genzō pays the loud rate and Tessen hunts her;
- * the alarm during the upload turns the job loud; a save with the fuse running loads to the same
- * state; a load after the blast shows the wrecks again from the flags, without a blast.
+ * sound and the wrecks (stage 3c), out of the zone Genzō pays the loud rate and Tessen hunts her,
+ * a toast before each squad; the alarm during the upload turns the job loud; a save with the fuse
+ * running loads to the same state; a load after the blast shows the wrecks again from the flags,
+ * without a blast.
  */
 
 type Ui = ReturnType<typeof setup>["ui"];
 const step = (session: GameSession): string => {
   const c = session.sim.domain.contracts.active;
   return c ? translateText("pl", contractObjective(c, contractSecondsLeft(c, session.sim.tick, SIM_HZ))) : "";
+};
+const line = (session: GameSession, locale: "en" | "pl"): string => {
+  const c = session.sim.domain.contracts.active!;
+  return translateText(locale, contractObjective(c, contractSecondsLeft(c, session.sim.tick, SIM_HZ)));
 };
 const toasts = (u: Ui) => u.getState().toasts.map((t) => `${t.title} | ${t.text}`);
 
@@ -176,5 +183,60 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(toasts(u).some((t) => /Server room cut off|Serwerownia odcięta/.test(t))).toBe(true);
     expect(step(session)).toContain("Serwerownia odcięta. Zostaje zbrojownia");
     expect(last(effects, "line-screens").at(-1)?.state).toBe("idle");
+  });
+
+  /** G-906: the loud way's step names where it happens, in both languages, and the HUD writes one of them. */
+  const expectPlace = (session: GameSession, u: Ui, en: RegExp, pl: RegExp) => {
+    expect([line(session, "en"), line(session, "pl")]).toContain(objective(u));
+    expect(line(session, "en")).not.toMatch(/server room N|calibration core/);
+    expect(line(session, "pl")).not.toMatch(/serwerowni N|rdzeń kalibracji/);
+    expect(line(session, "en")).toMatch(en);
+    expect(line(session, "pl")).toMatch(pl);
+  };
+
+  it("the loud way names the line's stations once the charges are taken, not server room N (G-906)", () => {
+    const { session, ui: u } = start();
+    const job = acceptSabotage(session, u);
+    knockOut(session, job.id);
+    expect(line(session, "en")).toContain("server room N");
+    expect(line(session, "pl")).toContain("serwerowni N");
+    inHall(session, 2555, 402, Math.PI);
+    steps(session, 1);
+    steps(session, 1, frame({ interact: true }));
+    knockOut(session, job.id);
+    expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud", charges: [] });
+    expectPlace(session, u, /\(0\/3.*: stations S1–S4 on hall W-3's assembly line$/, /\(0\/3.*: stanowiska S1–S4 na linii montażu hali W-3$/);
+    plant(session, job.id, "S1");
+    expectPlace(session, u, /\(1\/3.*: stations S1–S4/, /\(1\/3.*: stanowiska S1–S4/);
+  });
+
+  it("the server rooms cut off before the charges: the step names the armoury's case, not server room N (G-906)", () => {
+    const { session, ui: u } = start();
+    const job = acceptSabotage(session, u);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, contractAlarmFlag(job.id)] }));
+    steps(session, 2);
+    expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud" });
+    expect(session.sim.domain.contracts.active?.charges).toBeUndefined();
+    expectPlace(session, u, /^Server room cut off\..*: the case by hall W-3's south corridor$/, /^Serwerownia odcięta\..*: skrzynia przy korytarzu południowym hali W-3$/);
+  });
+
+  it("Tessen's hunt warns her on the HUD 20-40 s before the squad comes in (G-911)", () => {
+    const { session, ui: u } = start();
+    const day = gameDayOf(session.sim.domain.clock);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
+    const squad = () => [...session.sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    const warned = () => toasts(u).filter((t) => /Tessen is on your trail|Tessen na twoim tropie/.test(t)).length;
+    teleport(session, 600, 30, 0);
+    steps(session, 2 * SIM_HZ);
+    const due = tessenSquadDue(session.sim.domain.flags);
+    expect(due).not.toBeNull();
+    expect(warned()).toBe(1);
+    expect(squad()).toEqual([]);
+    expect(due!.tick - session.sim.tick).toBeGreaterThanOrEqual((TESSEN_HUNT.delayMinSeconds - 2) * SIM_HZ);
+    steps(session, due!.tick - session.sim.tick - SIM_HZ);
+    expect(squad()).toEqual([]);
+    steps(session, 2 * SIM_HZ);
+    expect(squad().length).toBeGreaterThanOrEqual(TESSEN_HUNT.squadMin);
+    expect(warned()).toBe(1);
   });
 });

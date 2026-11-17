@@ -59,6 +59,7 @@ export const pl = {
   "slots.export": "Eksportuj",
   "slots.import": "Importuj zapis z pliku",
   "slots.imported": "Zaimportowany",
+  "slots.w3Slice": "Start W-3 (poziom 12)",
   // Controls help.
   "help.move": "ruch",
   "help.sprint": "sprint",

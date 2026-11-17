@@ -214,6 +214,9 @@ export const plDomain = {
   "contract.site.tessen_office": "biuro przepustek w wieży kontrolnej Tessen na Nabrzeżu Bystrzycy",
   "contract.site.quay_terminal": "terminal Tessen na nabrzeżu przy pomoście",
   "contract.site.w3_hall": "rdzeń kalibracji w serwerowni N hali W-3",
+  // The loud way's places on W-3's objective (G-906): the charges' case, then the line.
+  "contract.site.w3_armoury": "skrzynia przy korytarzu południowym hali W-3",
+  "contract.site.w3_stations": "stanowiska S1–S4 na linii montażu hali W-3",
   // The giver as "go back to … for your pay" names them: the genitive.
   "contract.giver.kaito": "Kaito",
   "contract.giver.hana": "Hany",
@@ -239,7 +242,7 @@ export const plDomain = {
   "contract.objective.sabotagePlant": "Podłóż ładunki na stanowiskach linii ({planted}/{needed}): {site}",
   "contract.objective.sabotagePlantTimed": "Podłóż ładunki na stanowiskach linii ({planted}/{needed}, do odbioru {time}): {site}",
   "contract.objective.sabotageFuse": "Wyjdź z hali, zanim ładunki wybuchną ({time})",
-  "contract.objective.sabotageEscape": "Uciekaj z W-3: za płot albo do metra",
+  "contract.objective.sabotageEscape": "Uciekaj z W-3: przez bramę albo do metra",
   "contract.objective.cleared": "{note}. Wróć do {giver} po zapłatę",
   "contract.cleared.eliminate": "Cele zneutralizowane",
   "contract.cleared.delivery": "Paczka oddana",

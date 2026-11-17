@@ -17,6 +17,7 @@ import type {
   SessionIntents,
   SettingsIntents,
   ShopIntents,
+  StartSaveIntents,
   UiIntents,
   WaitIntents,
 } from "./intents";
@@ -36,6 +37,7 @@ export const useUi = <T,>(selector: (s: UiState) => T): T => useStore(useUiConte
 export const useIntents = (): UiIntents => useUiContext().intents;
 
 export const useSessionIntents = (): SessionIntents => useUiContext().intents;
+export const useStartSaveIntents = (): StartSaveIntents => useUiContext().intents;
 export const useDialogueIntents = (): DialogueIntents => useUiContext().intents;
 export const useShopIntents = (): ShopIntents => useUiContext().intents;
 export const useLootIntents = (): LootIntents => useUiContext().intents;

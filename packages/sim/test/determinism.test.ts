@@ -52,7 +52,9 @@ describe("determinism on the test floor", () => {
     // the version: with SAVE_SCHEMA_VERSION at 41 the run hashes to d2d12bd1, the golden of before.
     // v43 (G-901, the last threat in the save): the run ends with lastThreat { tick 1204,
     // floor-ganger }; without the field and at version 42 it hashes to fc3fc982, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"936bb239"`);
+    // v44 (G-913, the step onto a ladder's rungs in the save, no ladder on the floor) changes only
+    // the version: with SAVE_SCHEMA_VERSION at 43 the run hashes to 936bb239, the golden of before.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"2b6b7bcc"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {

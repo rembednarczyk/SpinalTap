@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { GroundField, MAX_WALK_SLOPE } from "../src";
 import { BRIDGE_DECKS } from "../src/content/lublin/decks";
 import { WORLD_CHUNKS } from "../src/content/world-map";
-import { STEP_HEIGHT, offTheBank } from "../src/systems/movement-system";
+import { offTheBank } from "../src/systems/bank";
+import { STEP_HEIGHT } from "../src/systems/movement-system";
 import { deckHeight, makeDeck } from "../src/world/deck";
 import { gridOf } from "./terrain-world";
 

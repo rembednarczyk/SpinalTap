@@ -56,8 +56,9 @@ const angleBetween = (a: number, b: number): number => {
 type Settle = Pick<LadderSettle, "over" | "duration">;
 
 /**
- * Puts `e` on the ladder at feet height `y`, facing it: at once (a game saved on the ladder), or
- * eased onto the rungs from where she stands over `settle`.
+ * Puts `e` on the ladder at feet height `y`: eased onto the rungs from where she stands over
+ * `settle`, turning to face it, or at once (a game saved on the ladder). The latter keeps her
+ * yaw: on the rungs the view turns freely, so the save holds where she looked (G-913).
  */
 const hangOn = (ctx: SimContext, e: Entity, l: LadderDef, y: number, settle?: Settle): void => {
   if (settle) {
@@ -65,7 +66,6 @@ const hangOn = (ctx: SimContext, e: Entity, l: LadderDef, y: number, settle?: Se
   } else {
     e.climb = { ladder: l.key, speed: 0 };
     e.position = { x: l.x, y, z: l.z };
-    e.yaw = l.yaw;
   }
   delete e.fall;
   delete e.airPeak;
@@ -184,6 +184,9 @@ export const ladderSystem: System = {
         const held = all.find((l) => onLadderLine(p, l.ladder));
         if (held) {
           hangOn(ctx, p, held.ladder, p.position.y);
+          // Above where a climb up reaches only the swing from the top (not saved) puts her: she
+          // ends it facing the wall, as live.
+          if (p.position.y >= held.ladder.top - STEP_OFF_LIFT) p.yaw = held.ladder.yaw;
           continue;
         }
         if (input.moveZ <= 0.5) continue;

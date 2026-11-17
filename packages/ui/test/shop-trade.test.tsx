@@ -15,6 +15,7 @@ const intents = (): UiIntents => ({
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),
+  startW3Slice: vi.fn(),
   buyCyberware: vi.fn(),
   buyItem: vi.fn(),
   closeShop: vi.fn(),

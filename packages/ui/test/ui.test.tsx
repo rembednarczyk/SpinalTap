@@ -16,6 +16,7 @@ const intents = (): UiIntents => ({
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),
+  startW3Slice: vi.fn(),
   buyCyberware: vi.fn(),
   buyItem: vi.fn(),
   closeShop: vi.fn(),
@@ -107,6 +108,13 @@ describe("title screen", () => {
     fireEvent.click(exports[0]!);
     expect(i.exportSave).toHaveBeenCalledWith("slot-2");
     expect(i.load).not.toHaveBeenCalled();
+  });
+
+  it("lists W-3's start save under its own name and loads it again from there (ADR-0082)", () => {
+    const { i } = mount({ hasSaves: true, slots: [{ slot: "w3-slice", savedAtLabel: "17/11, 09:30", objective: "Nabrzeże · W-3" }] });
+    fireEvent.click(screen.getByText("Load Game"));
+    fireEvent.click(screen.getByText("W-3 start (level 12)"));
+    expect(i.load).toHaveBeenCalledWith("w3-slice");
   });
 
   it("hands the text of a picked save file to the import, under its own name in the list", async () => {

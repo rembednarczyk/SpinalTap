@@ -5,7 +5,11 @@
  * Such a strip is what `kerb-gap-bare` and `kerb-strip-bare` count: a pavement or a verge the map's
  * bands miss by a metre or two, which the orthophoto shows paved or green.
  */
+import { COVER } from "../../orto/src/classify.ts";
+import { type Cover, coverAt } from "../../orto/src/cover.ts";
 import { type Cells, LABEL as CELL_LABEL, STEP, scratch } from "./bare-cells.ts";
+import { type StripRegions, zoneStrips } from "./bare-clean.ts";
+import { type GroundOut } from "./model.ts";
 
 // A module-local copy of the labels the cell loops read: Vitest's module runner reads an imported
 // binding through a getter of the module's namespace, at each cell.
@@ -81,4 +85,40 @@ export const kerbStrips = (cells: Cells, band: number, margin: number): void => 
   for (let k = 0; k < size; k++) mark[k] = fromRoad[k]! > 0 && fromSide[k]! > 0 && fromRoad[k]! + fromSide[k]! <= reach + 1 ? 1 : 0;
   steps(w, mark, grow, fromSide);
   for (let k = 0; k < size; k++) if (fromSide[k]! <= grow && fromRoad[k]! > 0 && fromRoad[k]! <= reach) zone[k] = 1;
+};
+
+/** The pieces a strip to a lawn begins at (`lawnStrips`): the pavements and the footways. */
+const WALKS: ReadonlySet<string> = new Set(["sidewalk", "footway"]);
+
+const ringOf = (flat: readonly number[]) => Array.from({ length: flat.length >> 1 }, (_, k) => ({ x: flat[2 * k]!, z: flat[2 * k + 1]! }));
+
+/**
+ * The paving of a strip at most `band` metres across between a pavement or a footway and a lawn
+ * of the chunk's `ground`, however far from the asphalt it lies, a town's paved place (G-902): the
+ * pavement's edge the map's bands miss, which the loose regions' rule left bare for its size
+ * (Podzamcze, (1068; 482): the light paving between the sidewalk w793299545 and the lawn
+ * w804709930, cut off where the kerbs' strip ends 5 m from Ruska). A cell is in the strip as in
+ * `kerbStrips`: its steps from the nearest walk and the nearest lawn, through free cells, add up
+ * to the strip's width and one; what of it is laid, region by region, `zoneStrips` says, with the
+ * cells `cover` itself shows green.
+ */
+export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOut[], band: number, regions: StripRegions): void => {
+  const { nx, nz, label } = cells;
+  const size = nx * nz;
+  const reach = Math.round(band / STEP);
+  const [walk, lawn, green] = [scratch.u8("strips.walk", size), scratch.u8("strips.lawn", size), scratch.u8("strips.green", size, null)];
+  for (const g of ground) if (WALKS.has(g.surface) || g.surface === "grass") cells.mark(ringOf(g.outline), g.surface === "grass" ? lawn : walk);
+  for (let j = 0, k = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++, k++) {
+      const p = cells.at(i, j);
+      green[k] = coverAt(cover, p.x, p.z) === COVER.green ? 1 : 0;
+    }
+  const w: Walk = { nx, size, label, dk: Int32Array.from(DI, (di, r) => (r < 3 ? -nx : r < 5 ? 0 : nx) + di), queue: scratch.i32("strips.queue", size, null) };
+  const fromWalk = scratch.i16("strips.road", size, null);
+  const fromLawn = scratch.i16("strips.side", size, null);
+  steps(w, walk, reach, fromWalk);
+  steps(w, lawn, reach, fromLawn);
+  const strip = scratch.u8("strips.mark", size, null);
+  for (let k = 0; k < size; k++) strip[k] = fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= reach + 1 ? 1 : 0;
+  zoneStrips(cells, strip, green, regions);
 };

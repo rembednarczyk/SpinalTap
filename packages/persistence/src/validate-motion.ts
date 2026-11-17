@@ -36,7 +36,20 @@ const isPerks = (v: unknown): boolean =>
 
 const isJump = (v: unknown): boolean => isObject(v) && isTime(v.coyote) && isTime(v.buffer);
 
-/** G-883: the player's posture, gun, time in the air and dash. */
+/** G-913: the step onto a ladder's rungs, `t` of its `duration` gone. */
+const isLadderSettle = (v: unknown): boolean =>
+  isObject(v) &&
+  typeof v.ladder === "string" &&
+  isVec(v.from) &&
+  isNum(v.fromYaw) &&
+  isNum(v.y) &&
+  isBool(v.over) &&
+  isNum(v.duration) &&
+  v.duration > 0 &&
+  isTime(v.t) &&
+  (v.t as number) <= v.duration;
+
+/** G-883: the player's posture, gun, time in the air and dash; G-913: her step onto a ladder. */
 const isStance = (v: unknown): boolean =>
   isObject(v) &&
   (["crouched", "sprinting", "aiming", "holstered"] as const).every((k) => isBool(v[k])) &&
@@ -47,7 +60,8 @@ const isStance = (v: unknown): boolean =>
   optional(v.airPeak, isNum) &&
   optional(v.landing, isTime) &&
   optional(v.jump, isJump) &&
-  optional(v.perks, isPerks);
+  optional(v.perks, isPerks) &&
+  optional(v.ladderSettle, isLadderSettle);
 
 /** What a fight leaves on an entity between two steps (G-883, v41): its velocity, its blow and, the player's only, her stance. */
 export const findMotionError = (e: Json): string | null => {

@@ -1,7 +1,8 @@
 import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
-import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
+import { offTheBank } from "../bank";
+import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
 
 /*
  * The raster of a window of the steering (ADR-0025): which 0.5 m cells a body stands in, made from

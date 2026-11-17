@@ -62,6 +62,7 @@ export const en = {
   "slots.export": "Export",
   "slots.import": "Import a save file",
   "slots.imported": "Imported",
+  "slots.w3Slice": "W-3 start (level 12)",
   // Controls help.
   "help.move": "move",
   "help.sprint": "sprint",
