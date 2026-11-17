@@ -2504,7 +2504,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
 - Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
 - Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
-- Status: zgłoszone
+- Status: w PR #694 (gałąź ccr-ec2c4269-ilh8k8-g921); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
 - Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
@@ -2538,13 +2538,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: walka 40 s bez kroku ponad budżet
 - Przy G-928 nie odtworzył się (pościg Tessen 520,-60, ziarno 3, bez tłumu): to raczej inna przyczyna niż objazdy ucieczki.
 
-### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
-- Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
-- Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
-- Status: w PR #691 (gałąź ccr-ec2c4269-ilh8k8-g931); wcześniej: zgłoszone
-- Pakiet właściciela: packages/ui
-- Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
-
 ### G-932 Technicy W-3 na zachodnim końcu hali kołyszą się albo stoją w panice
 - Ważność: S3 · Zasięg: hala W-3, zachód (x 2504-2512, z 401-437)
 - Opis: Znalezione przy sprawdzaniu G-928, identyczne na main: technik w (2508; 437) i (2511; 436,5) w scenie walki (ziarna 3/7/42) ma 416 skoków yaw w 480 krokach ucieczki i po 5 s jest 3,3 m od startu; siatka: 67 z 376 przypadków ma >= 20 skoków, 59 stoi > 2 s (np. (2504; 401) 4,7 s). Sondy: scratchpad/g928h/.
@@ -2573,13 +2566,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w PR #693 (gałąź ccr-ec2c4269-ilh8k8-g936); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
-
-### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
-- Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
-- Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
-- Status: w PR #692 (gałąź ccr-ec2c4269-ilh8k8-g937, 3ae283c), diff przejrzany przez orkiestratora; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: oddział porzucony po 20 s: następne losowanie w tym samym odcinku z nowym toastem 20-40 s przed wejściem
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

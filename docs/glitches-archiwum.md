@@ -2,6 +2,20 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
+- Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
+- Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
+- Status: naprawione (17.11, #692 scalony); wcześniej: w PR #692 (gałąź ccr-ec2c4269-ilh8k8-g937, 3ae283c), diff przejrzany przez orkiestratora; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział porzucony po 20 s: następne losowanie w tym samym odcinku z nowym toastem 20-40 s przed wejściem
+
+### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
+- Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
+- Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
+- Status: naprawione (17.11, #691 scalony); wcześniej: w PR #691 (gałąź ccr-ec2c4269-ilh8k8-g931); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
+
 ### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
 - Ważność: S4 · Zasięg: wylot kolektora W-3
 - Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
