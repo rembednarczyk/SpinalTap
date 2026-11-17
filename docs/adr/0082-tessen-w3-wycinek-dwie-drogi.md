@@ -404,6 +404,7 @@ Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
 
 - **Dochód na minutę:** cicha 2400 / 11 ≈ 218 €$/min, głośna (1400 + 450) / 8 ≈ 230 €$/min minus amunicja i apteczki. Obie mieszczą się w paśmie ok. 215–220 z ADR-0018 i ADR-0024. Pilnuje tego `core/test/w3-balance.test.ts` albo rozszerzony `m4-balance.test.ts`.
 - **Poziom:** pasmo Nabrzeża to 16–30 (ADR-0059). Rekomenduję pasmo W-3 10–30 i zapis startowy wycinka na poziomie 12 (pytanie 3).
+  - Zapis startowy (#667, 17.11, po playteście G-909): przycisk „Zacznij w W-3 (poziom 12)” na ekranie Nowa gra, na wybranym poziomie trudności. Tworzy nową grę podniesioną do wycinka w slocie `w3-slice` (wczytanie jak każdy zapis: suma, migracja, walidacja): poziom 12 z niewydanymi punktami, AR-5 poziomu 12 w dłoni, 24/24, zapas amunicji i 3 apteczki, start przy Genzō o 21:00 z ofertą W-3, portfel i wątek główny jak w nowej grze. Kod: `packages/app/src/start-save.ts`, `StartSaveController`. Miejsce startu, punkty, portfel i wątek wybrane pod nieobecność użytkownika jako rekomendowane (backlog 17.11), do potwierdzenia.
 - **Liczby czasu:** upload 40 s (25 s z breachem), ładunek 2,5 s, zapalnik 60 s, wybuch 60 obrażeń w 10 m, druga fala po 60 s. Wszystkie są startowe, stroi je etap 8 ADR-0059 bez nowego ADR-u.
 
 ## Konsekwencje

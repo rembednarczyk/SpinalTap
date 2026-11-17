@@ -310,7 +310,8 @@ jobs:
   # ADR-0046: shards in parallel with the checks; each builds once and runs a group of specs
   # (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about 2 min a
   # shard with warm caches (G-387). Three since 15.11: two groups reached 24.7 and 14.7 min of
-  # the 25 min limit (playwright.config.ts).
+  # the 25 min limit (playwright.config.ts). On 17.11 group 3 took up to 24.5 min on a slow
+  # runner and ui-scale moved to group 2 (expected at most about 19 min each).
   e2e:
     # No matrix value in the name: GitHub appends "(1)", "(2)" itself, and a skipped job (docs-only
     # change) then reads plainly instead of showing the unexpanded expression.
