@@ -65,7 +65,8 @@ export type HookContractKind = "eliminate" | "delivery" | "retrieve" | "protect"
 export interface ContractHookDef {
   readonly id: string;
   readonly kind: HookContractKind;
-  readonly source: "bark" | "terminal" | "shard";
+  /** On site (a bark, a mail, a shard), or `brief`: the giver tells it when the job is taken (ADR-0082). */
+  readonly source: "bark" | "terminal" | "shard" | "brief";
   /** Ink knot with the bark or the mail. */
   readonly knot: string;
   /** Catalog key of the tracker's line once found (ADR-0056: `core` holds keys, not sentences). */

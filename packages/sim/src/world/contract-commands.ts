@@ -26,7 +26,8 @@ import { HACK_RANGE } from "../systems/contract-system";
 import { deadFlag } from "../systems/death-system";
 import { SIM_HZ } from "../step-rate";
 import type { SimContext } from "./context";
-import { applyReputationCause, clearContract, raiseProgress } from "./domain-ops";
+import { applyReputationCause, clearContract, raiseProgress, takeBackJobItems } from "./domain-ops";
+import { briefJob } from "./job-brief";
 import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./street";
 import { grantXp } from "./progression-ops";
 import { contractLevelOf } from "./enemy-grade";
@@ -82,6 +83,7 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
   ctx.streamer.registerContract(ctx.world, ctx.state.domain.flags, domain.contracts.completed, contract);
   ctx.bus.emit("ContractAccepted", { contract });
   ctx.bus.emit("ContractBonusChanged", { contractId: contract.id, condition: CONTRACT_BONUS[kind], kept: true });
+  briefJob(ctx, contract);
 };
 
 /** Hands the package of a running delivery over. */
@@ -108,6 +110,7 @@ export const completeContract = (ctx: SimContext): void => {
     contracts: { active: null, completed: domain.contracts.completed + 1 },
   };
   ctx.streamer.clearSite();
+  takeBackJobItems(ctx, kind);
   if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: total });
   // A clean job (ADR-0070): no alarm, nobody killed besides the targets.
   applyReputationCause(ctx, { type: "contract-completed", kind, clean: !tally.alarm && tally.extraKills === 0 });

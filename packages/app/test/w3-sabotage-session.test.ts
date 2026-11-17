@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, type EffectDescriptor, SABOTAGE, W3_VIRUS_FLAG, contractAlarmFlag, contractObjective, contractSecondsLeft, contractTag } from "@seki/core";
+import { type DomainState, type EffectDescriptor, SABOTAGE, W3_VIRUS_FLAG, W3_VIRUS_ITEM, contractAlarmFlag, contractObjective, contractSecondsLeft, contractTag } from "@seki/core";
 import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_VIRUS_TERMINAL, stateHash } from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, setup, steps, teleport } from "./story-helpers";
@@ -86,6 +86,8 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     expect(step(session)).toContain("aż wirus się wgra");
     steps(session, SABOTAGE.uploadSeconds * SIM_HZ);
     expect(session.sim.domain.flags).toContain(W3_VIRUS_FLAG);
+    // Genzō's pendrive stays in the core (G-907).
+    expect(session.sim.domain.inventory.keyItems).not.toContain(W3_VIRUS_ITEM);
     expect(last(effects, "line-screens")?.state).toBe("infected");
     expect(step(session)).toContain("niezauważona");
     const eddies = session.sim.domain.wallet.eddies;
@@ -146,6 +148,8 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     steps(session, 3);
     expect(session.sim.domain.contracts.active).toBeNull();
     expect(session.sim.domain.flags).toContain(`contract_failed:${job.id}`);
+    // The batch gone, Genzō has his pendrive back (G-907).
+    expect(session.sim.domain.inventory.keyItems).not.toContain(W3_VIRUS_ITEM);
     expect(last(effects, "alarm-light")?.active).toBe(false);
   });
 });

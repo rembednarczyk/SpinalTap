@@ -19,14 +19,22 @@ const withJob = (job: Contract, at: Vec3, hour = 21): Simulation => {
 };
 
 describe("the hook table (ADR-0034)", () => {
-  it("gives every kind of job one or two hooks, named after their knots", () => {
+  it("gives every kind of job one or two hooks on site, named after their knots", () => {
     for (const kind of CONTRACT_KIND_IDS) {
-      const hooks = hooksOfKind(kind);
+      const hooks = hooksOfKind(kind).filter((h) => h.source !== "brief");
       expect(hooks.length, kind).toBeGreaterThanOrEqual(1);
       expect(hooks.length, kind).toBeLessThanOrEqual(2);
       hooks.forEach((h, i) => expect(h.knot).toBe(`hook_${kind}_${i + 1}`));
     }
     expect(new Set(CONTRACT_HOOKS.map((h) => h.id)).size).toBe(CONTRACT_HOOKS.length);
+  });
+
+  it("has the giver tell only W-3's ways in, in Genzō's conversation (ADR-0082, G-907)", () => {
+    const told = CONTRACT_HOOKS.filter((h) => h.source === "brief");
+    expect(told.map((h) => [h.id, h.kind, h.knot, h.carrier])).toEqual([
+      ["hook_sabotage_culvert", "sabotage", "genzo", { key: "genzo" }],
+      ["hook_sabotage_pipes", "sabotage", "genzo", { key: "genzo" }],
+    ]);
   });
 
   it.each(CONTRACT_HOOKS.filter((h) => "at" in h.carrier).map((h) => [h.id, h] as const))("%s: the terminal stands on open ground", (_id, h) => {

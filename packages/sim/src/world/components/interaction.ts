@@ -9,7 +9,7 @@ export interface Interactable {
    * terminal (an observation hook, `dialogueId` its knot), "help" a passer-by in need (a
    * micro-event).
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help" | "door";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help" | "door" | "crawl";
   readonly station?: MetroStationId;
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
@@ -17,6 +17,8 @@ export interface Interactable {
   readonly elevator?: { readonly key: string; readonly level: number };
   /** For a ladder's grab point: which ladder and which end (ADR-0021). */
   readonly ladder?: { readonly key: string; readonly end: "bottom" | "top" };
+  /** For a crawl's mouth: where the key puts her, crouched, and which way she faces. */
+  readonly crawl?: { readonly to: Vec3; readonly yaw: number };
   readonly dialogueId: string;
   /**
    * What the HUD offers, as a key of the app's catalogs (`prompt.talk.kaito`), never as text:

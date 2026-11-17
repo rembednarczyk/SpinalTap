@@ -55,6 +55,8 @@ VAR tessen_stance = "neutral"
     ~ offer_contract("sabotage")
     GENZO: Dwanaście dronów bojowych z hali W-3. Wojsko odbiera je o szóstej rano. Mój klient chce, żeby latały krzywo.
     GENZO: Rdzeń kalibracji stoi w serwerowni N, przy północnym korytarzu. Podłącz to do jego terminala i trzymaj się blisko, aż skończy. Odejdziesz, to zaczeka.
+    GENZO: Są dwa wejścia, których nikt nie pilnuje. Wylot kolektora pod nabrzeżem: przeczołgasz się nim do piwnicy magazynów, technicy trzymają tam w szatni kombinezony. W takim nikt na linii nie spojrzy na ciebie drugi raz, dopóki broń jest schowana i nie biegasz.
+    GENZO: Albo rurociąg nad rzeką na dach rzędu N. Nad serwerownią jest właz.
     GENZO: Rdzenia pilnuje kamera, po hali i korytarzu chodzi patrol. Jak podniosą alarm, serwerownie się zamkną. Wyjdź ze strefy niezauważona, to zadzwonię.
     -> END
 + [Nie teraz. #tone:leave]

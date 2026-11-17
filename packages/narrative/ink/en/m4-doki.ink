@@ -55,6 +55,8 @@ VAR tessen_stance = "neutral"
     ~ offer_contract("sabotage")
     GENZO: Twelve combat drones from the W-3 hall. The army collects them at six in the morning. A client of mine wants them to fly wrong.
     GENZO: The calibration core is in server room N, off the north corridor. Plug this in at its terminal and stay close until it's done. Walk away and it waits for you.
+    GENZO: Two ways in nobody watches. The culvert mouth under the quay: crawl it into the stores' basement, the techs keep their overalls in the locker room down there. In those the line won't look at you twice, as long as your gun stays away and you don't run.
+    GENZO: Or the pipes over the river onto row N's roof. There's a hatch over the server room.
     GENZO: A camera watches the core, a patrol walks the hall and the corridor. If they raise the alarm, the server rooms lock down. Get out of the zone unseen and I'll call.
     -> END
 + [Not now. #tone:leave]

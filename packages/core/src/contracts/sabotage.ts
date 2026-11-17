@@ -1,4 +1,5 @@
 import { type GameClock, GAME_SECONDS_PER_REAL_SECOND, SECONDS_PER_DAY, SECONDS_PER_HOUR, secondOfDay } from "../time/game-clock";
+import type { LootLine } from "../items/types";
 import { SABOTAGE_LOUD } from "./sabotage-loud";
 
 /**
@@ -42,6 +43,24 @@ interface SabotageJob {
 
 /** Raised for good once the virus is in the core: the line's screens show it from then on. */
 export const W3_VIRUS_FLAG = "w3:calibration-virus";
+
+/**
+ * The pendrive with the virus (ADR-0082 §1 p. 1), a story item: Genzō hands it over with the job,
+ * the upload leaves it in the core, and a job that ends without it takes it back.
+ */
+export const W3_VIRUS_ITEM = "w3_virus";
+
+/** The story items a job of `kind` hands over when it is taken. */
+export const jobKeyItems = (kind: string): readonly string[] => (kind === "sabotage" ? [W3_VIRUS_ITEM] : []);
+
+/**
+ * Locker 14 in the locker room of the stores' basement, at the culvert's top (ADR-0082 §1 Q1):
+ * a technician's overalls (`tessen_staff`) put in it when the job is taken.
+ */
+export const W3_LOCKER_LOOT: readonly LootLine[] = [{ kind: "item", item: "tessen_overalls", rarity: "common", qty: 1 }];
+
+/** Key of a job's locker 14 (a container that never expires, as the armoury's chest). */
+export const lockerKey = (contractId: string): string => `stash:w3-locker-14-${contractId}`;
 
 /** Key of the core's terminal the virus goes into. */
 export const contractVirusKey = (contractId: string): string => `${contractId}-virus`;

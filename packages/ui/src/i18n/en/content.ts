@@ -33,6 +33,7 @@ export const enContent = {
   "prompt.upload-virus": "Upload the virus",
   "prompt.take-charges": "Take the charges",
   "prompt.plant-charge": "Plant a charge",
+  "prompt.culvert": "Crawl into the culvert",
   "prompt.terminal.read": "Read the terminal",
   "prompt.pickup.crate": "Take Hana's crate",
   "prompt.pickup.data": "Copy the Tessen data",
@@ -80,6 +81,8 @@ export const enContent = {
   "hook.infiltrate_2": "The guard at the office door goes out for a smoke every half hour",
   "hook.hack_1": "After its third shot the sniper has four seconds without a laser",
   "hook.sabotage_1": "The hall patrol checks server room N only every other lap",
+  "hook.sabotage_culvert": "The culvert under the quay leads into the stores' basement; staff overalls in the locker room",
+  "hook.sabotage_pipes": "The pipes over the river lead onto row N's roof; a hatch drops into server room N",
   "hook.hack_2": "Under the tower's stair the sniper on the roof can't see you",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Camera",

@@ -41,6 +41,8 @@ export type Mechanism =
   /** A fire escape ladder (ADR-0021) and the grab points at its ends. */
   | { readonly kind: "ladder"; readonly ladder: LadderDef }
   | { readonly kind: "ladder-end"; readonly ladder: string; readonly end: "bottom" | "top" }
+  /** The mouth of a crawl (W-3's culvert, ADR-0082): the interact key takes her in, crouched, to `to` facing `yaw`. */
+  | { readonly kind: "crawl"; readonly to: Vec3; readonly yaw: number }
   /** A leaf of an automatic door (ADR-0038): it slides by `slide` when open; the panel of a coded one. */
   | { readonly kind: "door"; readonly door: DoorDef; readonly leaf: number; readonly slide: { readonly x: number; readonly z: number } }
   | { readonly kind: "door-panel"; readonly door: string };
@@ -49,6 +51,8 @@ export interface ActorSpawn {
   readonly key: string;
   readonly position: Vec3;
   readonly yaw: number;
+  /** Does an enemy see through disguises (ADR-0033)? Absent: the rule by its key (`isEnforcer`). */
+  readonly enforcer?: boolean;
 }
 
 export interface GangerSpawn extends ActorSpawn {
