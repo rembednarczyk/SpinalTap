@@ -2490,8 +2490,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-909 Droga głośna W-3 nie do przejścia pistoletem na poziomie 6
 - Ważność: S3 · Zasięg: misja W-3 przy zapisie z aktu I (poziom 6, Unity-9)
 - Opis: Playtest 17.11: strażnicy poziomu 11 (154 HP); pistolet ok. 45 obrażeń z magazynku 12, AR-5 67 naboi na strażnika (90 w skrzyni); wejście do korytarza S i zbrojowni: zgon w 12 s przy 6 wrogach. AR-5 w skrzyni z pustym magazynkiem, trzeba go wyposażyć ręcznie w ekranie postaci. Przyczyna: brak zapisu startowego poziomu 12 z ADR-0082. Rozwiązanie: zapis poziomu 12 z AR-5 w slocie i załadowanym albo poziom wrogów bliżej gracza.
-- Status: zgłoszone
+- Status: w PR #667 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- Agent 17.11: zapis startowy poz. 12 (Nowa gra → Zacznij w W-3, slot w3-slice), gałąź ccr-ec2c4269-ilh8k8-g909; korytarz S: przed zgon 21,9 s, po żyje 60 s (84/133 HP).
 
 ### G-910 Łup trupa zasłania podłożenie ładunku w W-3
 - Ważność: S3 · Zasięg: stanowiska S1-S4 po walce
