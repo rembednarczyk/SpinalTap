@@ -21,6 +21,10 @@ import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { enemyScalingIn } from "../world/enemy-scaling";
 import { reinforcementEntity } from "../world/reinforcements";
 import { inPlayerView } from "./crime-system";
+import { TRACK_GRACE } from "./ai/ganger-perception";
+import { GANGER_SPEED } from "./ai/ganger-walk";
+import { WIDE_WINDOW, outsideWindow } from "./ai/nav-field";
+import { straightWalk } from "./ai/straight-walk";
 
 /**
  * Tessen's hunt in the city after W-3's loud way (ADR-0082 §3.7, stage 3b): for three game days, on
@@ -36,12 +40,30 @@ import { inPlayerView } from "./crime-system";
 const SPREAD = 1.4;
 /** An entry this far at most: the squad comes from round the corner, not from across the city. */
 const MAX_DISTANCE = 140;
+/**
+ * The window a chase plans its way round the blocks in, round her (G-922): from an entry off it,
+ * with no straight walk to her either, the squad found no way and stood there. Its spread in from
+ * the edge, so each of them is in it.
+ */
+const PLANNED = { ...WIDE_WINDOW, half: WIDE_WINDOW.half - SPREAD };
+/**
+ * A chase gives up a lead it has not reached in `GIVE_UP` s, some 60 m on (G-922): the squad lost
+ * her before it got half way from a far entry. While one walks its trail, for twice the walk from
+ * its entry to the lead by the crow, its time without her stays a second past the tracking's grace
+ * (checked once a second, so it never follows her through walls); standing with no way there, or
+ * that time over, it gives up as any chase does.
+ */
+const TRAIL_DETOUR = 2;
+const TRAIL_FRESH = TRACK_GRACE + 1;
 
 /** A squad of the hunt still on its feet in the world? */
 const squadOut = (ctx: SimContext): boolean =>
   ctx.world.with("security").entities.some((e) => !!e.ai && !e.downed && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
 
-/** The nearest street entry in a loaded chunk, far enough from her and the clinic and out of her view. */
+/**
+ * The nearest street entry in a loaded chunk, far enough from her and the clinic, out of her view
+ * and with a way to her.
+ */
 const huntEntry = (ctx: SimContext, player: Entity): Vec3 | null => {
   let best: Vec3 | null = null;
   let bestD = Infinity;
@@ -50,6 +72,7 @@ const huntEntry = (ctx: SimContext, player: Entity): Vec3 | null => {
     const d = Math.hypot(p.x - player.position.x, p.z - player.position.z);
     if (d < TESSEN_HUNT.minDistance || d > MAX_DISTANCE || d >= bestD) continue;
     if (Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z) < TESSEN_HUNT.clinicClear || inPlayerView(ctx, player, p)) continue;
+    if (outsideWindow(PLANNED, p, player.position) && !straightWalk(ctx.world, p, player.position)) continue;
     best = p;
     bestD = d;
   }
@@ -72,6 +95,16 @@ const sendSquad = (ctx: SimContext, player: Entity, at: Vec3, size: number): voi
   }
 };
 
+/** The squad on its way to where she was keeps her trail (G-922). */
+const keepTrail = (ctx: SimContext): void => {
+  for (const g of ctx.world.with("security", "ai")) {
+    const { ai, velocity: v } = g;
+    if (g.enemy?.type !== "tessen_guard" || !ai.alerted || !ai.lastKnown || g.downed || !v || Math.hypot(v.x, v.z) === 0) continue;
+    const walk = Math.hypot(ai.lastKnown.x - ai.home.x, ai.lastKnown.z - ai.home.z) / GANGER_SPEED;
+    if ((ctx.tick - g.security.since) * ctx.dt <= TRAIL_DETOUR * walk) ai.lost = Math.min(ai.lost ?? 0, TRAIL_FRESH);
+  }
+};
+
 /** One step of the hunt: its end, the squad on its way coming in, and the roll of the district and the stretch of the day. */
 export const tessenHuntSystem: System = {
   name: "tessen-hunt",
@@ -87,6 +120,7 @@ export const tessenHuntSystem: System = {
     // Once a second is often enough to look for an entry.
     const rate = Math.round(1 / ctx.dt);
     if (ctx.tick % rate !== 0 || ctx.session.gameOver) return;
+    keepTrail(ctx);
     const player = ctx.world.with("player").first;
     const district = player ? ctx.streamer.districtAt(player.position) : null;
     if (!player || !district) return;
