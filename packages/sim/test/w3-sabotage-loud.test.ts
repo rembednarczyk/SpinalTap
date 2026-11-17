@@ -285,8 +285,9 @@ describe("W-3's sabotage, the loud way (ADR-0082 stage 3b)", () => {
     const sim = Simulation.create({ seed: 3 });
     const day = gameDayOf(sim.domain.clock);
     setDomain(sim, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
-    // The Rynek of Stare Miasto, in the day.
-    teleportPlayer(sim, ground(600, 30), 0);
+    // Stare Miasto by the Rynek, in the day. Not (600; 30), inside the Trybunał's block: no way leads
+    // there, so a squad goes back from its entry at once (G-922).
+    teleportPlayer(sim, ground(575, -38), 0);
     run(sim, 3 * SIM_HZ);
     const squad = (s = sim) => [...s.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
     // G-911: the roll puts a squad on its way for the HUD to warn of; it comes in 20-40 s on, not at once.

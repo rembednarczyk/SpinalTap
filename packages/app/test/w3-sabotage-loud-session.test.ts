@@ -226,7 +226,8 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     setDomain(session, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
     const squad = () => [...session.sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
     const warned = () => toasts(u).filter((t) => /Tessen is on your trail|Tessen na twoim tropie/.test(t)).length;
-    teleport(session, 600, 30, 0);
+    // Stare Miasto by the Rynek. Not (600; 30), inside the Trybunał's block, where no way leads (G-922).
+    teleport(session, 575, -38, 0);
     steps(session, 2 * SIM_HZ);
     const due = tessenSquadDue(session.sim.domain.flags);
     expect(due).not.toBeNull();
@@ -237,6 +238,25 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(squad()).toEqual([]);
     steps(session, 2 * SIM_HZ);
     expect(squad().length).toBeGreaterThanOrEqual(TESSEN_HUNT.squadMin);
+    expect(warned()).toBe(1);
+  });
+
+  it("where no way leads to her from an entry near, the squad waits for her without a warning again and again (G-922)", () => {
+    const { session, ui: u } = start();
+    const day = gameDayOf(session.sim.domain.clock);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
+    // The toasts' pushes: a toast like one on screen only counts on it (G-281).
+    const pushes = new Map<number, number>();
+    const warned = () => {
+      for (const t of u.getState().toasts) if (/Tessen is on your trail/.test(`${t.title} | ${t.text}`)) pushes.set(t.id, Math.max(pushes.get(t.id) ?? 0, t.count ?? 1));
+      return [...pushes.values()].reduce((a, b) => a + b, 0);
+    };
+    // In the kanal by Grodzka: the only entry near in a loaded chunk is Grodzka's, in a closed cell.
+    teleport(session, 520, 0, 0);
+    for (let s = 0; s < 150; s++) {
+      steps(session, SIM_HZ);
+      warned();
+    }
     expect(warned()).toBe(1);
   });
 });
