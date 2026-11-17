@@ -4,6 +4,7 @@ import {
   type DomainState,
   type EffectDescriptor,
   SABOTAGE_LOUD,
+  SECONDS_PER_HOUR,
   TESSEN_HUNT,
   type W3StationId,
   contractAlarmFlag,
@@ -16,7 +17,7 @@ import {
   tessenHuntUntil,
   tessenSquadDue,
 } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash, stationChargeAt } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash, stationChargeAt, tessenSquadBack } from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, objective, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
@@ -258,5 +259,40 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
       warned();
     }
     expect(warned()).toBe(1);
+  });
+
+  it("gone back, the squad is its stretch's: past it the next roll warns her before one comes in (G-934)", () => {
+    const { session, ui: u } = start();
+    const day = gameDayOf(session.sim.domain.clock);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
+    const squad = () => [...session.sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    const pushes = new Map<number, number>();
+    const warned = () => {
+      for (const t of u.getState().toasts) if (/Tessen is on your trail/.test(`${t.title} | ${t.text}`)) pushes.set(t.id, Math.max(pushes.get(t.id) ?? 0, t.count ?? 1));
+      return [...pushes.values()].reduce((a, b) => a + b, 0);
+    };
+    const back = () => tessenSquadBack(session.sim.domain.flags);
+    // The Trybunał's block: warned, the squad comes in, finds no way to her and goes back.
+    teleport(session, 608, -5, 0);
+    for (let s = 0; s < 60 && !back(); s++) {
+      steps(session, SIM_HZ);
+      warned();
+    }
+    expect(back()).not.toBeNull();
+    expect(warned()).toBe(1);
+    // A game minute before the stretch's end; the clock takes it on in a second.
+    const stretch = TESSEN_HUNT.everyHours * SECONDS_PER_HOUR;
+    setDomain(session, (d) => ({ ...d, clock: { ...d.clock, seconds: d.clock.seconds - (d.clock.seconds % stretch) + stretch - 60 } }));
+    steps(session, 3 * SIM_HZ);
+    teleport(session, 575, -38, 0);
+    let came = 0;
+    for (let s = 1; s <= 60 && came === 0; s++) {
+      steps(session, SIM_HZ);
+      warned();
+      if (squad().length > 0) came = s;
+    }
+    expect(back()).toBeNull();
+    expect(warned()).toBe(2);
+    expect(came).toBeGreaterThanOrEqual(TESSEN_HUNT.delayMinSeconds - 2);
   });
 });
