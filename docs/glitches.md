@@ -2601,6 +2601,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
+- 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
