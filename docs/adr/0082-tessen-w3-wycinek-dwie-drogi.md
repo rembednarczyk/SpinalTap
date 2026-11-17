@@ -401,7 +401,7 @@ Przed etapem 1 kurator robi audyt miejsca: ortofoto, wysokość pokładu kładki
 - **App (`presenters/w3-mission.ts`):**
   - nowa flaga stanowiska daje `explosion` przy jego ładunku (promień `blastRadius`) i dźwięk `explosion`, ale nie po wczytaniu: `reset` przy wczytaniu nie odpala wybuchu;
   - `line-wrecks` idzie przy każdej zmianie i po każdym `reset`, więc wraki po wczytaniu wynikają z flag;
-  - podniesienie alarmu daje `alarm` (klakson). Póki trwa alarm i Seki jest w strefie W-3, co 2,4 s gry gra jedno wycie `alarm-siren`. `AudioPort` zostaje jednometodowy, bez pętli w porcie.
+  - podniesienie alarmu daje `alarm` (klakson). Póki trwa alarm i Seki jest w strefie W-3, co 2,4 s gry gra jedno wycie `alarm-siren`. `AudioPort` zostaje bez zmian (`play` i `stopAll`), bez pętli w porcie: wycie to pojedyncze `play` co okres.
 - **Engine:**
   - `effects/explosion-state.ts` (czysty) i `effects/explosion-fx.ts`: trzy siatki z thin instances (ogień, dym, odłamki), wyłączone w spoczynku;
   - na High chmura cząsteczek (7 kul ognia, 10 kłębów dymu, 12 odłamków na wybuch), na low i medium jedna kula i jeden kłąb, bez siatki odłamków;
