@@ -14,7 +14,7 @@ import {
   takenFlag,
 } from "@seki/core";
 import { castViewOf } from "../content/cast";
-import { W3_CHARGES_CASE, W3_SHIFT_MANAGER, W3_STATION_SPOTS, W3_TECHNICIANS, W3_WAVE_AIRLOCKS, W3_WAVE_PICKUP, stationChargeAt } from "../content/tessen-w3";
+import { W3_CHARGES_CASE, W3_STATION_SPOTS, W3_TECHNICIANS, W3_WAVE_AIRLOCKS, W3_WAVE_PICKUP, stationChargeAt } from "../content/tessen-w3";
 import type { Entity } from "./components";
 import { type IdAllocator, actor, at, gangerEntity } from "./factory";
 import type { Template } from "./stream-catalog";
@@ -22,7 +22,7 @@ import type { Template } from "./stream-catalog";
 /**
  * The loud way's people and things of W-3's sabotage (ADR-0082 stage 3b), after the job's own
  * templates: the alarm's two waves, the charges' case, the line's stations, the charges planted
- * and the wrecks, the line's technicians; last, the shift manager on the mezzanine (G-929). Whether each is in the world follows the flags, so a
+ * and the wrecks, the line's technicians. Whether each is in the world follows the flags, so a
  * load brings back what was planted and blown.
  */
 
@@ -36,8 +36,6 @@ export const contractChargeKey = (contractId: string, s: W3StationId): string =>
 export const contractWreckKey = (contractId: string, s: W3StationId): string => `${contractId}-wreck-${s}`;
 export const contractTechnicianKey = (contractId: string, i: number): string => `${contractId}-tech${i}`;
 const waveKey = (contractId: string, i: number): string => `${contractId}-w${i}`;
-/** Key of the job's shift manager on the mezzanine, the hall's enforcer of disguises (G-929). */
-export const contractManagerKey = (contractId: string): string => `${contractId}-manager`;
 
 const block = (id: EntityId, key: string, chunk: string, p: Vec3, size: Vec3, material: "metal" | "asphalt"): Entity => ({
   id,
@@ -81,22 +79,7 @@ const waveEntity = (id: EntityId, key: string, chunk: string, tag: string, spawn
   return g;
 };
 
-/**
- * The shift manager (ADR-0082 §1 p. 2, G-929): a Tessen guard of the job's crew who sees through
- * disguises, as the pass office's shift boss does (ADR-0033), walking his round of the mezzanine.
- */
-const managerEntity = (id: EntityId, key: string, chunk: string, tag: string): Entity => {
-  const post = W3_SHIFT_MANAGER;
-  const spawn = { key, position: post.at, yaw: post.yaw, enforcer: true };
-  const g = gangerEntity(id, spawn, tag, ENEMY_TYPES[post.type].hp, chunk, undefined, post.type);
-  if (g.ai && post.route) g.ai = { ...g.ai, route: { points: post.route, phase: 0 } };
-  return g;
-};
-
-/**
- * The sabotage's loud-way templates, ids reserved in this order: waves, case, stations, charges,
- * wrecks, technicians; then the shift manager, after them all (G-929), so the others' ids stay.
- */
+/** The sabotage's loud-way templates, ids reserved in this order: waves, case, stations, charges, wrecks, technicians. */
 export const sabotageTemplates = (ids: IdAllocator, chunk: string, contract: Contract): Template[] => {
   const tag = contractTag(contract.id);
   const alarm = contractAlarmFlag(contract.id);
@@ -129,7 +112,5 @@ export const sabotageTemplates = (ids: IdAllocator, chunk: string, contract: Con
     const key = contractTechnicianKey(contract.id, i);
     add(key, (id) => technicianEntity(id, key, chunk, t));
   });
-  const manager = contractManagerKey(contract.id);
-  add(manager, (id) => managerEntity(id, manager, chunk, tag));
   return out;
 };
