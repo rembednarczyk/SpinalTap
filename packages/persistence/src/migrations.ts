@@ -415,6 +415,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v44 -> v45 (ADR-0089 stage 3): a gunner's burst and sidestep, optional. A v44 save has none:
   // its gunners start a burst whole and stand a moment before their first sidestep.
   44: (old) => ({ ...old, version: 45 }),
+  // v45 -> v46 (ADR-0089 stage 4): a gunner's attack token, optional. A v45 save has none: its
+  // gunners take the tokens again in the first step after the load.
+  45: (old) => ({ ...old, version: 46 }),
 };
 
 export class MigrationError extends Error {}

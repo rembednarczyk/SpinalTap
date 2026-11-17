@@ -1,4 +1,4 @@
-import { MOST_STRIDE, type Vec3 } from "@seki/core";
+import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SimContext } from "../../world/context";
 import type { Entity, GunTactic } from "../../world/components";
@@ -13,10 +13,11 @@ import { BACK_SPEED, type GangerBinding, type GangerWalk } from "./ganger-walk";
 
 /** A sidestep goes at the pace of a step back. */
 export const SIDE_SPEED = BACK_SPEED;
-/** A sidestep is 1.5 to `MOST_STRIDE` metres long. */
+/** A sidestep is 1.5 to 3 metres long. */
 const STRIDE_MIN = 1.5;
+const STRIDE_MAX = 3;
 /** After a sidestep it stands 0.7-1.3 s: no more than two turns of its way in 3 s. */
-const REST_MIN = 0.7;
+export const REST_MIN = 0.7;
 const REST_SPAN = 0.6;
 /** After a burst it holds its fire 0.6-1.2 s more than its weapon's interval: the player's window. */
 export const PAUSE_MIN = 0.6;
@@ -25,14 +26,14 @@ const PAUSE_SPAN = 0.6;
 /** Ways the sidesteps of a world have tried (`straightWalk` each), for the budget's test. */
 const probes = new WeakMap<World<Entity>, { n: number }>();
 export const sidestepProbes = (world: World<Entity>): number => probes.get(world)?.n ?? 0;
-const probed = (world: World<Entity>): void => {
+export const probed = (world: World<Entity>): void => {
   const p = probes.get(world);
   if (p) p.n += 1;
   else probes.set(world, { n: 1 });
 };
 
 /** Its burst and sidestep, made the first time it is asked for: a whole burst, a moment's stand. */
-const tacticOf = (ctx: SimContext, self: Entity): GunTactic | null => {
+export const tacticOf = (ctx: SimContext, self: Entity): GunTactic | null => {
   const ai = self.ai;
   if (!ai?.burst) return null;
   ai.tactic ??= { shots: ai.burst, side: 1, stride: 0, rest: REST_MIN + ctx.rng.next() * REST_SPAN };
@@ -50,7 +51,7 @@ export const burstShot = (ctx: SimContext, self: Entity): void => {
 };
 
 /** The point `len` metres aside of `self` round the player at `from`, on `side`. */
-const aside = (self: Entity, from: Vec3, side: 1 | -1, len: number): Vec3 => {
+export const aside = (self: Entity, from: Vec3, side: 1 | -1, len: number): Vec3 => {
   const dx = self.position.x - from.x;
   const dz = self.position.z - from.z;
   const d = Math.hypot(dx, dz) || 1;
@@ -72,7 +73,7 @@ export const sidestep = (at: GangerBinding, walk: GangerWalk, from: Vec3): void 
     t.rest -= dt;
     if (t.rest > 0) return;
     t.rest = REST_MIN + ctx.rng.next() * REST_SPAN;
-    const len = STRIDE_MIN + ctx.rng.next() * (MOST_STRIDE - STRIDE_MIN);
+    const len = STRIDE_MIN + ctx.rng.next() * (STRIDE_MAX - STRIDE_MIN);
     const sides: readonly (1 | -1)[] = ctx.rng.next() < 0.5 ? [1, -1] : [-1, 1];
     const side = sides.find((s) => {
       probed(ctx.world);
