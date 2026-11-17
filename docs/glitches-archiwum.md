@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-920 Cel ucieczki W-3 mówi „za płot”, a płotu 2,7 m nie da się przeskoczyć
+- Ważność: S4 · Zasięg: cel sabotageEscape W-3 (en, pl)
+- Opis: Znalezione przy G-906 (17.11): contract.objective.sabotageEscape mówi „over the fence” / „za płot”, a według ADR-0082 płot W-3 ma 2,7 m i jest nie do przejścia; wyjście przez furtkę, bramę albo metro. Rozwiązanie: tekst wskazujący wyjścia (oba katalogi).
+- Status: naprawione (17.11, #666 scalony); wcześniej: w PR #666 (17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: tekst celu ucieczki nie wspomina płotu
+
 ### G-917 Hebi Enforcer strzela shotgunem poza zasięgiem 12 m i stoi na 15 m: elita nie zadaje obrażeń
 - Ważność: S3 · Zasięg: wariant armored zleceń Hebi (od 5. zlecenia), dowódca zleceniowy
 - Opis: Łowca 17.11 (origin/main e2f6330, sonda sim, Plac Litewski, ziarna 1-3, 30 s): hebi_enforcer alerted; na 12,5, 13 i 15 m 18-19 strzałów, 0 trafień; na 11 i 12 m 46-77 obrażeń. Wróg się nie zbliża. Przyczyna: attackRange w world/factory.ts:173 = meleeAttackRange(...) ?? 15 niezależnie od broni, raijin12 ma npc.range 12; GANGER_TREE strzela w attackRange i nie podchodzi do weapon.range. Inne typy mają zapas (Hebi SMG 18 przy 15, Tessen AR-5 30 przy 20). Rozwiązanie: attackRange = min(15, 0,9 × npc.range) albo pościg do npc.range.
