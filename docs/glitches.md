@@ -2468,13 +2468,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 - Łowca: lastThreat (combat-system.ts:128 threaten) nie wchodzi do SaveSnapshot, a calmForSave go nie zeruje. Po wczytaniu strzał gracza <3 s po strzale wroga, gdy w 30 m nie ma zaangażowanego AI (np. strzelec zabity), daje offend(gunfire): incidents 1 zamiast 0, ziarna 4, 1, 7 (scena streetSim, zapis jak SaveController.snapshot). Czytają go też scanner-system.ts:162 i hud-sync.ts:36 (isCalm), niezmierzone.
 
-### G-902 Goła łata między chodnikiem w793299545 a trawnikiem w804709930 (Ruska, Podzamcze)
-- Ważność: S4 · Zasięg: podzamcze-2-1 x 1066-1070, z 479,5-488
-- Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
-- Status: w PR #657; wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import
-- Klin 1068,485.5-488 (ścieżka w227713090/chodnik, otwarty na zieleń parku) i obszar 1060-1064,476-484 między chodnikami w856618317 i w793299545 zostają gołe. Kontrola walk-lawn-bare: 14565 próbek w mieście, sufit 14600; największe: podzamcze (998,337) 180 m², (803,317) 113 m², (1077,345) 78 m² (szerokie pasy ponad 20 m²).
-
 ### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
 - Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
 - Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.
