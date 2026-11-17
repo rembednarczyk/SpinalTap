@@ -11,7 +11,9 @@ import {
   contractTag,
   gameDayOf,
   stationDownFlag,
+  tessenHuntFlag,
   tessenHuntUntil,
+  tessenSquadDue,
 } from "@seki/core";
 import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash } from "@seki/sim";
 import { translateText } from "@seki/ui";
@@ -22,8 +24,8 @@ import type { GameSession } from "../src/game-session";
  * W-3's sabotage, the loud way, in a session, headless (ADR-0082 stage 3b): the charges' case in
  * armoury S raises the alarm and the toast of the way cut off, three charges on the line, the
  * blast out of the hall as sparks over the wrecked stations, out of the zone Genzō pays the loud
- * rate and Tessen hunts her; the alarm during the upload turns the job loud; a save with the fuse
- * running loads to the same state.
+ * rate and Tessen hunts her, a toast before each squad; the alarm during the upload turns the job
+ * loud; a save with the fuse running loads to the same state.
  */
 
 type Ui = ReturnType<typeof setup>["ui"];
@@ -188,5 +190,25 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(session.sim.domain.contracts.active).toMatchObject({ route: "loud" });
     expect(session.sim.domain.contracts.active?.charges).toBeUndefined();
     expectPlace(session, u, /^Server room cut off\..*: the case by hall W-3's south corridor$/, /^Serwerownia odcięta\..*: skrzynia przy korytarzu południowym hali W-3$/);
+  });
+
+  it("Tessen's hunt warns her on the HUD 20-40 s before the squad comes in (G-911)", () => {
+    const { session, ui: u } = start();
+    const day = gameDayOf(session.sim.domain.clock);
+    setDomain(session, (d) => ({ ...d, flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)], reputation: { ...d.reputation, tessen: -60 } }));
+    const squad = () => [...session.sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    const warned = () => toasts(u).filter((t) => /Tessen is on your trail|Tessen na twoim tropie/.test(t)).length;
+    teleport(session, 600, 30, 0);
+    steps(session, 2 * SIM_HZ);
+    const due = tessenSquadDue(session.sim.domain.flags);
+    expect(due).not.toBeNull();
+    expect(warned()).toBe(1);
+    expect(squad()).toEqual([]);
+    expect(due!.tick - session.sim.tick).toBeGreaterThanOrEqual((TESSEN_HUNT.delayMinSeconds - 2) * SIM_HZ);
+    steps(session, due!.tick - session.sim.tick - SIM_HZ);
+    expect(squad()).toEqual([]);
+    steps(session, 2 * SIM_HZ);
+    expect(squad().length).toBeGreaterThanOrEqual(TESSEN_HUNT.squadMin);
+    expect(warned()).toBe(1);
   });
 });

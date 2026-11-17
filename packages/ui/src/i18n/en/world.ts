@@ -384,6 +384,8 @@ export const enWorld = {
   "heat.chaseText": "District security is looking for you",
   "heat.reported": "{channel}: {crime}",
   "heat.reportedText": "Reported to security",
+  "heat.tessenHunt": "Tessen is on your trail",
+  "heat.tessenHuntText": "A Tessen squad is on its way to you",
   "heat.channel.civilian": "A witness called it in",
   "heat.channel.camera": "A camera caught it",
   "heat.channel.patrol": "A patrol saw it",
