@@ -252,6 +252,26 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     expect(smoker(sim)).toBeUndefined();
   });
 
+  it("the smoker knocked out says nothing and his body stays past 23:00; come to, he goes (G-929)", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + 22.9 * 3600 } }));
+    outside(sim);
+    run(sim, 2);
+    const s = byKey(sim, `${c.id}-smoker`)!;
+    sim.world.addComponent(s, "unconscious", true);
+    // By him, within earshot: no hook from a man knocked out.
+    teleportPlayer(sim, { ...W3_SMOKER.at, x: W3_SMOKER.at.x - 1.5 }, Math.PI / 2);
+    run(sim, 10 * SIM_HZ);
+    expect(sim.domain.clock.seconds % 86400).toBeGreaterThan(23 * 3600);
+    expect(byKey(sim, `${c.id}-smoker`)).toBe(s);
+    expect(sim.domain.contracts.hooks).not.toContain("hook_sabotage_2");
+    expect(hash(reload(sim))).toBe(hash(sim));
+    sim.world.removeComponent(s, "unconscious");
+    run(sim, 2);
+    expect(byKey(sim, `${c.id}-smoker`)).toBeUndefined();
+  });
+
   it("the shift manager keeps to the mezzanine (G-929): a lead in the hall below he looks towards from his round, one on the gallery he walks to", () => {
     for (const [lead, below] of [
       [w3(2529, 0, 418), true],

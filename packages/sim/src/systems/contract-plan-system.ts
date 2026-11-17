@@ -4,6 +4,7 @@ import { W3_SMOKER } from "../content/tessen-w3";
 import type { SimContext, System } from "../world/context";
 import { ambushFlag, dayFlag, offPostFlag, smokeFlag } from "../world/contract-plan";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
+import { contractSmokerKey } from "../world/quiet-way-templates";
 
 /** A `night_only` target is out from 20:00 to 05:00 (the night of the day clock). */
 export const NIGHT_FROM = 20 * 60;
@@ -19,12 +20,19 @@ const crewAlerted = (ctx: SimContext, c: Contract): boolean => {
   return ctx.world.with("ai").entities.some((e) => e.tag === tag && e.ai.alerted);
 };
 
+/** W-3's smoker lies knocked out or dead in the world (a body of a takedown, ADR-0065). */
+const smokerDown = (ctx: SimContext, c: Contract): boolean => {
+  const key = contractSmokerKey(c.id);
+  return ctx.world.with("health").entities.some((e) => e.key === key && (!!e.unconscious || !!e.downed));
+};
+
 const followClock = (ctx: SimContext, c: Contract): void => {
   const minute = minuteOfDay(ctx.state.domain.clock);
   const fighting = crewAlerted(ctx, c);
   if (hasModifier(c, "night_only")) setFlag(ctx, dayFlag(c.id), !fighting && !inHours(minute, NIGHT_FROM, NIGHT_TO));
-  // W-3's smoker by the service gate in his hours (G-929), whatever goes on in the hall.
-  if (contractKind(c) === "sabotage") setFlag(ctx, smokeFlag(c.id), inHours(minute, W3_SMOKER.fromHour * 60, W3_SMOKER.toHour * 60));
+  // W-3's smoker by the service gate in his hours (G-929), whatever goes on in the hall; knocked
+  // out, carried, hidden or killed in a takedown, his body stays past them.
+  if (contractKind(c) === "sabotage") setFlag(ctx, smokeFlag(c.id), inHours(minute, W3_SMOKER.fromHour * 60, W3_SMOKER.toHour * 60) || smokerDown(ctx, c));
   for (const h of hooksOfKind(contractKind(c))) {
     const r = h.reveal;
     if (r.kind !== "rotation_gap") continue;
