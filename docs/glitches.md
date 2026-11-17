@@ -2497,7 +2497,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
 - Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
 - Opis: Odtworzenie 17.11 (łowca, sesja bez renderera, origin/main e2f6330): W-3 głośna, ładunki wzięte w (2555, 402) podnoszą alarm:c1, załoga zabita bronią, 3 ładunki, wyjście (2527, 384), wypłata; debrief: badges [no_alarm, clean, swift], ranga A. Przyczyna: core/contracts/scoring.ts badgeHolds sprawdza tally.alarm, ustawiany tylko przez noteAlarm z crime-system.report; contract-system.raiseAlarm stawia tylko flagę alarm:<id> (celowo dla doków, komentarz). ghost alarm też nie wyklucza (raiseAlarm nie woła noteDetected); komentarz core/test/w3-sabotage-loud.test.ts:43 'never ghost' kod nie wymusza. Do decyzji przy poprawce: czy flaga alarmu zlecenia liczy się do no_alarm tylko w W-3 (sabotage), czy też w dokach; czy alarm odbiera ghost.
-- Status: zgłoszone
+- Status: w PR #673 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: sesja W-3 głośna: po wzięciu ładunków debrief nie zawiera no_alarm
 
