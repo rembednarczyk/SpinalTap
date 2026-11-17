@@ -20,7 +20,19 @@ import type { SimContext, System } from "../world/context";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { enemyScalingIn } from "../world/enemy-scaling";
 import { reinforcementEntity } from "../world/reinforcements";
-import { TESSEN_SQUAD_BACK_PREFIX, tessenHuntStretch, tessenSquadBack, tessenSquadBackFlag, tessenSquadComing, tessenSquadOut } from "../world/tessen-squad";
+import {
+  TESSEN_HUNT_TRIES,
+  TESSEN_SQUAD_BACK_PREFIX,
+  isTessenHuntLeftFlag,
+  tessenHuntLeftFlag,
+  tessenHuntStretch,
+  tessenHuntTries,
+  tessenHuntTryFlag,
+  tessenSquadBack,
+  tessenSquadBackFlag,
+  tessenSquadComing,
+  tessenSquadOut,
+} from "../world/tessen-squad";
 import { worldTimeScale } from "./ability-system";
 import { inPlayerView } from "./crime-system";
 import { TRACK_GRACE } from "./ai/ganger-perception";
@@ -39,7 +51,8 @@ import { heightApart } from "../world/ground";
  * only puts the squad on its way, as a flag the HUD warns of; it comes in 20-40 s later (G-911).
  * One that finds no way to her from its entry goes back and waits for her where one leads (G-922),
  * in the stretch it went back in; one on its way waits for an entry as long as waiting is refused
- * past its tick (#682). Then it is gone, and the next roll warns her as any does (G-934).
+ * past its tick (#682). Then it is gone, and the next roll warns her as any does (G-934): the
+ * roll's next try in the stretch, up to `TESSEN_HUNT_TRIES`, each with a draw of its own (G-937).
  */
 
 /** The squad stands this far apart at its entry. */
@@ -224,15 +237,22 @@ const keepTrail = (ctx: SimContext): void => {
  * The flags of a squad that did not come in when it should (G-934): gone back, past the stretch of
  * the day it went back in, with the entries it found no way from (a save of v44 keeps no stretch:
  * of one past); on its way, once it is no longer coming (past its tick and the lateness waiting is
- * refused for, #682). The next roll, of the stretch or the district she is in once its own was
- * spent, puts the next one on its way, with its warning (the user's decision of 17.11).
+ * refused for, #682), and its roll is left with it: its next try (G-937), or the next roll, of the
+ * stretch or the district she is in once its own was spent, puts the next one on its way, with its
+ * warning (the user's decision of 17.11).
  */
 const dropStale = (ctx: SimContext): void => {
   const { flags, clock } = ctx.state.domain;
   const stretch = tessenHuntStretch(clock);
   const due = tessenSquadDue(flags);
   const back = tessenSquadBack(flags);
-  if (due && !tessenSquadComing(flags, ctx.tick)) lowerFlag(ctx, due.flag);
+  if (due && !tessenSquadComing(flags, ctx.tick)) {
+    lowerFlag(ctx, due.flag);
+    for (const f of flags.filter((f) => isTessenHuntRollFlag(f) && !isTessenHuntLeftFlag(f))) {
+      lowerFlag(ctx, f);
+      raiseFlag(ctx, tessenHuntLeftFlag(f));
+    }
+  }
   if (back && back.stretch !== stretch) lowerFlag(ctx, back.flag);
   for (const w of waylessOf(flags)) if (w.stretch !== stretch) lowerFlag(ctx, w.flag);
 };
@@ -272,8 +292,11 @@ export const tessenHuntSystem: System = {
       sendSquad(ctx, player, at, back?.size ?? due?.size ?? TESSEN_HUNT.squadMin);
       return;
     }
-    const roll = tessenHuntRollFlag(district, clock);
-    if (now.includes(roll)) return;
+    const key = tessenHuntRollFlag(district, clock);
+    const tries = tessenHuntTries(now, key);
+    // A try is spent until it is left (G-937); left as often as it may be tried, the stretch's roll is spent.
+    if (tries && (!tries.left || tries.spent >= TESSEN_HUNT_TRIES)) return;
+    const roll = tessenHuntTryFlag(key, tries?.spent ?? 0);
     // One squad at a time: the roll goes by while one is out.
     const at = tessenSquadOut(ctx.world) ? null : huntEntry(ctx, player);
     if (!tessenSquadOut(ctx.world) && !at) return;

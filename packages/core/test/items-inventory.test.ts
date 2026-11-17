@@ -9,6 +9,7 @@ import {
   STACKABLE_CATALOG,
   addAmmo,
   addKeyItem,
+  keyItemName,
   addInstance,
   addStack,
   ammoCount,
@@ -297,5 +298,6 @@ describe("story items (keyItems, G-907)", () => {
     expect(addKeyItem(one, "w3_virus")).toBe(one);
     expect(removeKeyItem(one, "w3_virus").keyItems).toEqual([]);
     expect(removeKeyItem(EMPTY_INVENTORY, "w3_virus")).toBe(EMPTY_INVENTORY);
+    expect(keyItemName("w3_virus")).toBe("item.w3_virus.name");
   });
 });

@@ -60,6 +60,7 @@ export const enTrade = {
   "inventory.section.character": "Character",
   "inventory.section.bag": "Bag",
   "inventory.section.details": "Details",
+  "inventory.keyItems": "Key items",
   "inventory.closeDetails": "Close details",
   "inventory.empty": "empty",
   "inventory.preview": "Character preview. Drag to turn it, double-tap to bring it back to the front.",

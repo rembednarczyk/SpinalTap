@@ -1,7 +1,7 @@
-import { type Equipment, type InventoryState, bagCells, findItem, usedCells } from "@seki/core";
+import { type Equipment, type InventoryState, bagCells, findItem, keyItemName, usedCells } from "@seki/core";
 import { useMemo, useState } from "react";
 import { useLocale } from "../i18n/number";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import type { CharacterIntents } from "../intents";
 import type { CharacterStatsVm } from "../store/ui-store";
 import { useCharacterIntents, useUi } from "../use-ui";
@@ -39,7 +39,24 @@ const PaperDoll = ({ inventory, equipment, sel, stats }: PanelProps & { readonly
   );
 };
 
-/** Middle: the bag with its filters, the grid, the cell count and the sort button. */
+/** The story items she carries (a job's pendrive, G-931): they take no cell, so they stand under the grid. */
+const KeyItems = ({ ids }: { ids: readonly string[] }) => {
+  const t = useT();
+  const tx = useText();
+  if (ids.length === 0) return null;
+  return (
+    <div className="inv__keys" data-testid="key-items">
+      <span className="inv__keys-label">{t("inventory.keyItems")}</span>
+      <ul className="inv__keys-list">
+        {ids.map((id) => (
+          <li key={id}>{tx(keyItemName(id))}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+/** Middle: the bag with its filters, the grid, the story items, the cell count and the sort button. */
 const BagPanel = ({ inventory, equipment, sel }: PanelProps) => {
   const t = useT();
   const locale = useLocale();
@@ -57,6 +74,7 @@ const BagPanel = ({ inventory, equipment, sel }: PanelProps) => {
         selectedIndex={sel.gridIndex}
         handlers={{ onSelect: sel.select, onDefault: sel.runDefault, onDetails: sel.select }}
       />
+      <KeyItems ids={inventory.keyItems} />
       <footer className="inv__foot">
         <span className={`inv__count${used >= inventory.capacity ? " inv__count--full" : ""}`} data-testid="inventory-count">
           {used} / {inventory.capacity}

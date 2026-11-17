@@ -9,6 +9,8 @@ export const enDomain = {
   // Consumables and junk.
   "item.medkit.name": "Medkit",
   "item.medkit.desc": "Biogel injector. Restores 40 HP.",
+  // Story items (keyItems, G-931).
+  "item.w3_virus.name": "Genzō's virus pendrive",
   "item.bandage.name": "Bandage",
   "item.bandage.desc": "Dressing with haemostatic gel. Restores 15 HP.",
   "item.ramen.name": "Bowl of ramen",
