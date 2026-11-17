@@ -2551,6 +2551,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis po końcu pościgu z żywym oddziałem: ten sam hash krok po kroku po wczytaniu
+- 17.11 (orkiestrator): odtwarza się na main także z calmForSave i krokiem przed zapisem (sonda L1 weryfikatora G-922 r3, 11 odcinków, scratchpad/g933-sonda-L1.test.ts.txt, log g933-l1.log). Snapshot tuż po wczytaniu identyczny; różnica już w pierwszym kroku: strażnik posiłków security:1 w grze oryginalnej widzi Seki (lost 0, lastKnown na nią), we wczytanej nie (lost 1/60). Różnice encji po wczytaniu: inne id (1644/1645 kontra 1637/1638), inna kolejność w świecie (wczytane posiłki na początku), prevYaw, player.lastHitBy, combatant.engaged/melee.stunned/ai.sees undefined zamiast false. Kandydat: kolejność encji albo id posiłków odtworzonych z reinforcementsSnapshot zmienia wynik percepcji lub ruchu przy kilku strażnikach tuż przy Seki. Prosta sonda (oddział 2 przy Rynku, koniec pościgu, zapis) nie odtwarza. Do dalszej pracy, nie drobiazg.
 
 ### G-935 Patrol z trasą po tropie na innym poziomie nie wraca na trasę
 - Ważność: S3 · Zasięg: patrole z ai.route na piętrach (W-3: P2 i kierownik zmiany na antresoli)
@@ -2559,13 +2560,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
-
-### G-936 Ogłuszony strażnik dalej podaje bark-hak
-- Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
-- Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
-- Status: w PR #693 (gałąź ccr-ec2c4269-ilh8k8-g936); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

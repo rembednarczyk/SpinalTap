@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-936 Ogłuszony strażnik dalej podaje bark-hak
+- Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
+- Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
+- Status: naprawione (17.11, #693 scalony); wcześniej: w PR #693 (gałąź ccr-ec2c4269-ilh8k8-g936); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
+
 ### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
 - Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
 - Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
