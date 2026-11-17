@@ -13,3 +13,5 @@ data/osm/cache/
 __pycache__/
 # vitest blob reports of the CI shards (G-376)
 .vitest/
+# tryb nieobecności użytkownika (tools/session-mode)
+.claude/asleep
