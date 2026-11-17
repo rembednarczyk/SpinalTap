@@ -21,6 +21,7 @@ import { autosaveView } from "../presenters/autosave";
 import { AutosaveController } from "./autosave-controller";
 import { SaveController } from "./save-controller";
 import { SettingsController } from "./settings-controller";
+import { StartSaveController } from "./start-save-controller";
 import { GraphicsEffectsController } from "./graphics-effects-controller";
 import { SiteTextsController } from "./site-texts-controller";
 import { type Focus, type SimRef, focusOf, pushToastTimed } from "./shared";
@@ -41,7 +42,8 @@ export interface SessionHooks {
   setScreen(screen: Screen): void;
   /** Violence cut a conversation, the shop or a bag short. */
   interrupt(): void;
-  restore(snapshot: SaveSnapshot): void;
+  /** Replaces the running game with a loaded snapshot; `play` runs once it is on screen. */
+  restore(snapshot: SaveSnapshot, play?: () => void): void;
 }
 
 /** The controllers of one game session (ADR-0031). */
@@ -59,6 +61,8 @@ export interface Controllers {
   readonly phone: PhoneController;
   readonly hack: HackController;
   readonly saves: SaveController;
+  /** The start saves of the new game's setup (ADR-0082: W-3's slice). */
+  readonly starts: StartSaveController;
   readonly autosave: AutosaveController;
   readonly wave1: Wave1Hud;
   readonly hud: HudSync;
@@ -187,6 +191,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     return p !== undefined && (p.fall !== undefined || p.mantle !== undefined);
   };
   const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, airborne, restore: s.restore, ...(deps.download ? { download: deps.download } : {}) });
+  const starts = new StartSaveController({ persistence: deps.persistence, ui, seed: deps.seed, now: deps.now, load: (slot, play) => saves.loadAsync(slot, play) });
   const autosave = new AutosaveController({
     bus,
     sim,
@@ -206,5 +211,5 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   const facts = () => ({ fighting: hud.inCombat, airborne: airborne() });
   const canOpenWait = () => free() && !character.isOpen && !hack.breachOpen && !phone.isOpen;
   const wait: WaitController = new WaitController({ sim, ui, audio, focus, screen: s.screen, setScreen: s.setScreen, canOpen: canOpenWait, facts, syncHud: () => hud.frame() });
-  return { focus, hints, dialogue, shop, loot, character, settings, graphics, siteTexts, phone, hack, saves, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
+  return { focus, hints, dialogue, shop, loot, character, settings, graphics, siteTexts, phone, hack, saves, starts, autosave, wave1, hud, wave2, takedown, carry, difficulty, progression, wait, ...travel };
 };

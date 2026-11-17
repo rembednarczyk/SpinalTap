@@ -25,6 +25,10 @@ export const enDifficulty = {
   "difficulty.slot": "Difficulty: {preset}",
   "newGame.heading": "New Game",
   "newGame.start": "Start",
+  // W-3's start save (ADR-0082): the slice at level 12, by Genzō.
+  "newGame.w3Slice": "Start at W-3 (level 12)",
+  "newGame.w3Place": "Nabrzeże · W-3",
+  "newGame.w3Intro": "Level 12, the AR-5 loaded in hand and your points to spend. Genzō waits by the KAIUN container at the metro: ask him about the drone batch.",
   "pause.difficulty": "Difficulty",
 } as const satisfies Readonly<Record<string, Message>>;
 
