@@ -20,6 +20,7 @@ import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { IndoorFade } from "./indoor-fade";
+import { aimShot } from "./aim-point";
 import { type CharacterRig, raiseWeapon, setWeaponDrawn, startReload, startStagger, startSwing } from "./characters";
 import type { FarCity } from "./far-city";
 import { Lasers } from "./lasers";
@@ -226,7 +227,10 @@ export class ScreenFx {
    */
   private shot(shooterId: EntityId, from: Vec3, to: Vec3): void {
     const shooter = this.deps.actors.rigOf(shooterId);
-    if (shooter) raiseWeapon(shooter);
+    if (shooter) {
+      raiseWeapon(shooter);
+      aimShot(shooter, from, to);
+    }
     const at = this.muzzleAt.set(from.x, from.y, from.z);
     const dir = this.muzzleDir.set(to.x - from.x, to.y - from.y, to.z - from.z).normalize();
     const kind = this.muzzleSource.place(shooterId, at, dir);

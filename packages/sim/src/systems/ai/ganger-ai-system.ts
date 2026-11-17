@@ -8,6 +8,7 @@ import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
 import { LEVEL_GAP } from "../../world/nav";
 import { worldTimeScale } from "../ability-system";
+import { SIM_HZ } from "../../step-rate";
 import { knockbackVelocity } from "../../world/knockback";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { GANGER_TREE } from "./ganger-tree";
@@ -37,6 +38,10 @@ import { footstepNoise, hearNoise } from "./ganger-hearing";
 export { GANGER_SPEED, MELEE_CHASE_SPEED, STUCK_TIME } from "./ganger-walk";
 export { MELEE_REST } from "./ganger-fight";
 
+/** A gunner's call is heard this far from her (m), and one gunner calls at most once in `BARK_GAP` seconds (ADR-0089 stage 6). */
+export const BARK_RANGE = 25;
+export const BARK_GAP = 6;
+
 /** A melee fighter reaches no higher or lower than this (a brawler under the footbridge cannot hit it). */
 const MELEE_REACH_Y = 1.2;
 /** A guard on watch sweeps this far either side of its post's facing, once per `WATCH_PERIOD` seconds. */
@@ -63,6 +68,20 @@ class GangerAgent {
   readonly walk = new GangerWalk(this);
   /** Presentation memory: the awareness last reported (AwarenessChanged with hysteresis). */
   reported: { state: AwarenessState; level: number } = { state: "unaware", level: 0 };
+  /** Presentation memory (ADR-0089 stage 6): it was reloading last step, and the tick of its last call. */
+  wasReloading = false;
+  barkAt = -Infinity;
+
+  /**
+   * A gunner's call in a fight (ADR-0089 stage 6: reloading, moving round her), heard within
+   * `BARK_RANGE` of her and no more often than `BARK_GAP` from one gunner. Presentation only.
+   */
+  private bark(reaction: "reload" | "flank"): void {
+    const { ctx, self, seen } = this;
+    if (!ctx || !self || seen.distance > BARK_RANGE || ctx.tick - this.barkAt < BARK_GAP * SIM_HZ) return;
+    this.barkAt = ctx.tick;
+    ctx.bus.emit("NpcReacted", { entityId: self.id, faction: self.faction ?? "hebi", reaction });
+  }
 
   HasLead = (): boolean => !!this.self?.ai.lastKnown;
 
@@ -123,9 +142,16 @@ class GangerAgent {
     const state = attack(this, seen.player, fires);
     if (gunner && self && this.ctx && keepOff !== undefined) {
       if ((self.combatant?.loaded ?? 0) < loaded) burstShot(this.ctx, self);
+      const reloading = (self.combatant?.reloading ?? 0) > 0;
+      if (reloading && !this.wasReloading) this.bark("reload");
+      this.wasReloading = reloading;
+      const strode = self.ai.tactic?.stride ?? 0;
       if (seen.distance < keepOff) this.walk.backOff(seen.player.position);
       else if (fires) sidestep(this, this.walk, seen.player.position);
-      else spreadOut(this, this.walk, seen.player.position);
+      else {
+        spreadOut(this, this.walk, seen.player.position);
+        if (strode <= 0 && (self.ai.tactic?.stride ?? 0) > 0) this.bark("flank");
+      }
     }
     return state;
   };
