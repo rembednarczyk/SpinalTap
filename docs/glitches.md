@@ -2475,12 +2475,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, W-3)
 
-### G-906 Cele drogi głośnej W-3 z miejscem rdzenia serwerowni
-- Ważność: S3 · Zasięg: wszystkie cele drogi głośnej (weź ładunki, podłóż, uciekaj)
-- Opis: Playtest 17.11: cel "Plant the charges…" kończy się "the calibration core in server room N of hall W-3", choć stanowiska są w hali. Odtworzenie: pobrać ładunki ze skrzynki w zbrojowni S (2555; 400,8), przypiąć kontrakt. Rozwiązanie: miejsce zależne od route i etapu.
-- Status: w PR #664 (17.11); wcześniej: zgłoszone
-- Pakiet właściciela: packages/app
-
 ### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
 - Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
 - Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.
