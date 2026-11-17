@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, createDomainState } from "@seki/core";
+import { type Contract, type ContractKind, type DomainState, createDomainState } from "@seki/core";
 import { Simulation } from "@seki/sim";
+import { mapFocus } from "../src/controllers/hud-sync";
 import { buildJournal, createJournalCache } from "../src/journal";
 import { describeObjective, shownEntryId } from "../src/objective";
 
@@ -68,5 +69,24 @@ describe("tracking a journal entry on the HUD", () => {
     sim.enqueue({ type: "track-quest", questId: null });
     sim.step();
     expect(sim.domain.preferences).toEqual({ cameraMode: sim.domain.preferences.cameraMode });
+  });
+
+  it("puts W-3 over the main thread at every stage of the job, and only W-3 (G-905)", () => {
+    const job = (kind: ContractKind, more: Partial<Contract> = {}): DomainState => ({
+      ...busy(),
+      contracts: { active: { id: "c5", kind, siteId: "w3_hall", targets: 4, reward: 1800, status: "active", deadlineTick: 9000, ...more }, completed: 4 },
+    });
+    for (const stage of [{}, { route: "quiet", progress: 40 }, { route: "loud", charges: ["S1"] }, { route: "loud", fuseTick: 600 }, { status: "cleared" }] as Partial<Contract>[]) {
+      const d = job("sabotage", stage);
+      expect(shownEntryId(d)).toBe("contract-c5");
+      expect(describeObjective(d, "en", 0).title).toBe("Contract 5 · Genzō");
+      expect(mapFocus(d)).toBe("contract");
+      expect(buildJournal(d, "en").quests.find((q) => q.id === "contract-c5")).toMatchObject({ tracked: true, pinned: false });
+    }
+    expect(describeObjective(pin(job("sabotage"), "m0_first_contract"), "en").title).toBe("First job");
+    for (const kind of ["eliminate", "delivery", "retrieve", "protect", "escort", "infiltrate", "hack"] as const) {
+      expect(shownEntryId(job(kind))).toBe("m0_first_contract");
+      expect(mapFocus(job(kind))).toBe("story");
+    }
   });
 });
