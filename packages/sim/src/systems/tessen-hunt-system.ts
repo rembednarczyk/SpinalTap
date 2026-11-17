@@ -20,6 +20,7 @@ import type { SimContext, System } from "../world/context";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { enemyScalingIn } from "../world/enemy-scaling";
 import { reinforcementEntity } from "../world/reinforcements";
+import { TESSEN_SQUAD_BACK_PREFIX, tessenSquadBack, tessenSquadBackFlag, tessenSquadOut } from "../world/tessen-squad";
 import { worldTimeScale } from "./ability-system";
 import { inPlayerView } from "./crime-system";
 import { TRACK_GRACE } from "./ai/ganger-perception";
@@ -69,19 +70,8 @@ const SET_OFF = 8;
 const mayWalk = (ctx: SimContext, from: Vec3, to: Vec3): boolean =>
   heightApart(ctx.world, to, from) <= SAME_FLOOR && (!outsideWindow(PLANNED, from, to) || straightWalk(ctx.world, from, to));
 
-/**
- * A squad gone back from where no way led to her (G-922): it comes in where one does, with no new
- * warning, as the one on its way (it was, and she was told). A flag, so a load keeps it waiting.
- */
-const BACK_PREFIX = "tessen-hunt-back:";
 /** An entry no way led from to her at a lead (G-922): `<entry>@<x>,<y>,<z>`, the entry's index in `SECURITY_ENTRIES`. */
 const WAYLESS_PREFIX = "tessen-hunt-wayless:";
-
-/** The squad gone back, from the flags; null without one. */
-const tessenSquadBack = (flags: readonly string[]): { flag: string; size: number } | null => {
-  const flag = flags.find((f) => f.startsWith(BACK_PREFIX));
-  return flag ? { flag, size: Number(flag.slice(BACK_PREFIX.length)) } : null;
-};
 
 const waylessFlag = (entry: number, lead: Vec3): string => `${WAYLESS_PREFIX}${entry}@${[lead.x, lead.y, lead.z].map((v) => Math.round(v * 10) / 10).join(",")}`;
 
@@ -116,10 +106,6 @@ const entriesFor = (ctx: SimContext, player: Entity): Vec3[] => {
     (p) => !wayless.has(SECURITY_ENTRIES.indexOf(p)) && Math.hypot(p.x - CLINIC_WAKE_SPOT.x, p.z - CLINIC_WAKE_SPOT.z) >= TESSEN_HUNT.clinicClear && !inPlayerView(ctx, player, p),
   );
 };
-
-/** A squad of the hunt still on its feet in the world? */
-const squadOut = (ctx: SimContext): boolean =>
-  ctx.world.with("security").entities.some((e) => !!e.ai && !e.downed && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
 
 /** The nearest street entry far enough from her and the clinic, out of her view, that a chase may walk to her from. */
 const huntEntry = (ctx: SimContext, player: Entity): Vec3 | null => entriesFor(ctx, player).find((p) => mayWalk(ctx, p, player.position)) ?? null;
@@ -194,7 +180,7 @@ const reroute = (ctx: SimContext, player: Entity): void => {
   const none = entries.flatMap((p) => (judged(spotAt(p, 0, squad.length)) ? [SECURITY_ENTRIES.indexOf(p)] : []));
   for (const i of new Set([own, ...none])) if (i >= 0) raiseFlag(ctx, waylessFlag(i, lead));
   for (const g of squad) ctx.world.remove(g);
-  raiseFlag(ctx, `${BACK_PREFIX}${squad.length}`);
+  raiseFlag(ctx, tessenSquadBackFlag(squad.length, ctx.state.domain.clock));
 };
 
 /**
@@ -235,7 +221,7 @@ export const tessenHuntSystem: System = {
     if (until === null) return;
     if (!tessenHuntActive(flags, clock)) {
       lowerFlag(ctx, tessenHuntFlag(until));
-      const hunt = (f: string) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f) || f.startsWith(BACK_PREFIX) || f.startsWith(WAYLESS_PREFIX);
+      const hunt = (f: string) => isTessenHuntRollFlag(f) || isTessenSquadFlag(f) || f.startsWith(TESSEN_SQUAD_BACK_PREFIX) || f.startsWith(WAYLESS_PREFIX);
       for (const f of flags.filter(hunt)) lowerFlag(ctx, f);
       return;
     }
@@ -254,7 +240,7 @@ export const tessenHuntSystem: System = {
     const due = tessenSquadDue(now);
     const back = tessenSquadBack(now);
     if (due || back) {
-      const at = !squadOut(ctx) && (back || (due && ctx.tick >= due.tick)) ? huntEntry(ctx, player) : null;
+      const at = !tessenSquadOut(ctx.world) && (back || (due && ctx.tick >= due.tick)) ? huntEntry(ctx, player) : null;
       if (!at) return;
       for (const f of [due?.flag, back?.flag]) if (f) lowerFlag(ctx, f);
       sendSquad(ctx, player, at, back?.size ?? due?.size ?? TESSEN_HUNT.squadMin);
@@ -263,8 +249,8 @@ export const tessenHuntSystem: System = {
     const roll = tessenHuntRollFlag(district, clock);
     if (now.includes(roll)) return;
     // One squad at a time: the roll goes by while one is out.
-    const at = squadOut(ctx) ? null : huntEntry(ctx, player);
-    if (!squadOut(ctx) && !at) return;
+    const at = tessenSquadOut(ctx.world) ? null : huntEntry(ctx, player);
+    if (!tessenSquadOut(ctx.world) && !at) return;
     for (const f of now.filter(isTessenHuntRollFlag)) lowerFlag(ctx, f);
     raiseFlag(ctx, roll);
     if (!at) return;

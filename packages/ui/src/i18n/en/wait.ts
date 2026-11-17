@@ -19,6 +19,7 @@ export const enWait = {
   "wait.blocked.combat": "Not in a fight.",
   "wait.blocked.alarm": "Not with the alarm raised.",
   "wait.blocked.wanted": "Not while you are hunted.",
+  "wait.blocked.hunt": "Not with a Tessen squad on your trail.",
   "wait.blocked.busy": "Not now.",
 } as const satisfies Readonly<Record<string, Message>>;
 
