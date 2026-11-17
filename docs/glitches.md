@@ -2500,13 +2500,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/narrative
 - Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
 
-### G-913 Zapis na drabinie włazu W-3: yaw gracza rozjeżdża się po wczytaniu
-- Ważność: S4 · Zasięg: drabina w3-hatch (2564; 439,3), inne drabiny niesprawdzone
-- Opis: Playtest 17.11: zapis i wczytanie na drabinie; po 600 tickach hash różni się tylko w yaw gracza (2,43 kontra 0): bez zapisu kierunek zostaje, po wczytaniu przypina się do osi drabiny. Uwaga z lekcji: sonda zapisu musi iść przez SaveController.snapshot() i calmForSave; do potwierdzenia, że tak było.
-- Status: w PR #668 (17.11, zapis v44); wcześniej: przyjęte (17.11, potwierdzone przez łowcę, mały koszt); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Łowca 17.11 (origin/main e2f6330, sesja bez renderera, snapshot przez saves.snapshot()/calmForSave, identyczne wejścia): POTWIERDZONE w węższym zakresie. Rozjazd tylko, gdy gracz obrócił widok (lookYaw) na drabinie: oryginał zachowuje yaw (1,000 po 600 krokach), wczytana gra przypina do osi drabiny (0,000); y i climb zgodne (w3-hatch y -28,05; w3-pipe y -26,65, ten sam wynik). Przyczyna: sim/systems/ladder-system.ts hangOn() bez settle ustawia e.yaw = l.yaw (gałąź 'game saved on a ladder' w ladderSystem.run, komentarz mówi 'where it was'); w grze yaw na drabinie jest swobodny (player-control-system.ts:289). Ogólne dla drabin. Skutek: po wczytaniu kamera zawraca, kierunek ruchu po zejściu inny niż bez zapisu. Poprawka: nie nadpisywać yaw w hangOn bez settle; test: zapis po lookYaw na drabinie, 600 kroków, yaw równy.
-
 ### G-914 Debrief W-3 przyznaje no_alarm mimo alarmu zlecenia
 - Ważność: S3 · Zasięg: W-3, droga głośna i alarm z zauważenia
 - Opis: Odtworzenie 17.11 (łowca, sesja bez renderera, origin/main e2f6330): W-3 głośna, ładunki wzięte w (2555, 402) podnoszą alarm:c1, załoga zabita bronią, 3 ładunki, wyjście (2527, 384), wypłata; debrief: badges [no_alarm, clean, swift], ranga A. Przyczyna: core/contracts/scoring.ts badgeHolds sprawdza tally.alarm, ustawiany tylko przez noteAlarm z crime-system.report; contract-system.raiseAlarm stawia tylko flagę alarm:<id> (celowo dla doków, komentarz). ghost alarm też nie wyklucza (raiseAlarm nie woła noteDetected); komentarz core/test/w3-sabotage-loud.test.ts:43 'never ghost' kod nie wymusza. Do decyzji przy poprawce: czy flaga alarmu zlecenia liczy się do no_alarm tylko w W-3 (sabotage), czy też w dokach; czy alarm odbiera ghost.
@@ -2546,6 +2539,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
+- Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
 
 ### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
 - Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
