@@ -2489,13 +2489,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/narrative
 - Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
 
-### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
-- Ważność: S4 · Zasięg: każda walka z łupem
-- Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
-- Status: w PR #688 (gałąź ccr-ec2c4269-ilh8k8-g915); wcześniej: zgłoszone
-- Pakiet właściciela: packages/app
-- Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
-
 ### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
 - Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
 - Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
@@ -2515,13 +2508,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
 - Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
-
-### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
-- Ważność: S4 · Zasięg: tylko uszkodzony zapis
-- Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
-- Status: w PR #689 (sam test: naprawione przez #686); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
 
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
 - Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
@@ -2571,7 +2557,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
 - Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
 - Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
-- Status: zgłoszone
+- Status: w PR #691 (gałąź ccr-ec2c4269-ilh8k8-g931); wcześniej: zgłoszone
 - Pakiet właściciela: packages/ui
 - Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
 
@@ -2606,7 +2592,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
 - Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
 - Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
-- Status: zgłoszone
+- Status: w PR #692 (gałąź ccr-ec2c4269-ilh8k8-g937, 3ae283c), diff przejrzany przez orkiestratora; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oddział porzucony po 20 s: następne losowanie w tym samym odcinku z nowym toastem 20-40 s przed wejściem
 

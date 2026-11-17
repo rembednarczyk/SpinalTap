@@ -2,6 +2,20 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
+- Ważność: S4 · Zasięg: tylko uszkodzony zapis
+- Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
+- Status: naprawione (17.11, #689 scalony); wcześniej: w PR #689 (sam test: naprawione przez #686); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
+
+### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
+- Ważność: S4 · Zasięg: każda walka z łupem
+- Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
+- Status: naprawione (17.11, #688 scalony); wcześniej: w PR #688 (gałąź ccr-ec2c4269-ilh8k8-g915); wcześniej: zgłoszone
+- Pakiet właściciela: packages/app
+- Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
+
 ### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
 - Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
 - Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
