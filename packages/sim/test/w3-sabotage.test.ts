@@ -12,7 +12,9 @@ import {
   QUICKHACKS,
   type Vec3,
 } from "@seki/core";
-import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
+import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_SMOKER, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
+import { giveLead } from "../src/systems/ai/ganger-perception";
+import { freshDowned } from "../src/world/bodies";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -73,14 +75,17 @@ const active = (sim: Simulation) => sim.domain.contracts.active;
 const upload = SABOTAGE.uploadSeconds * SIM_HZ;
 
 describe("W-3's sabotage (ADR-0082 stage 3)", () => {
-  it("brings the hall's four guards, the patrols on their routes, the core's terminal and the server room's camera", () => {
+  it("brings the hall's four guards and the shift manager, the patrols on their routes, the core's terminal and the server room's camera", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
     expect(c).toMatchObject({ siteId: "w3_hall", targets: 4, status: "active" });
     expect(c.variation).toBeUndefined();
     const guards = crew(sim, c);
-    expect(guards).toHaveLength(4);
-    expect(guards.filter((g) => g.ai?.route)).toHaveLength(2);
+    // The four posts of the crew and, after them, the manager on the mezzanine (G-929): the only enforcer.
+    expect(guards).toHaveLength(5);
+    expect(guards.filter((g) => g.ai?.route)).toHaveLength(3);
+    expect(guards.filter((g) => g.ai?.enforcer).map((g) => g.key)).toEqual([`${c.id}-manager`]);
+    expect(byKey(sim, `${c.id}-manager`)?.ai?.route?.points).toBe(W3_PATROL_MANAGER);
     expect(byKey(sim, contractVirusKey(c.id))?.interactable).toMatchObject({ kind: "terminal", prompt: "prompt.upload-virus" });
     expect(byKey(sim, "dev:w3-server-cam")?.device?.restricted?.during).toBe("sabotage");
   });
@@ -223,6 +228,153 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     run(restored, 300);
     expect(hash(restored)).toBe(hash(sim));
     expect(active(restored)?.progress).toBe(active(sim)?.progress);
+  });
+
+  it("the smoker stands by the service gate only from 19:00 to 23:00 (G-929), and a save keeps him there", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    outside(sim);
+    const smoker = (s: Simulation) => byKey(s, `${c.id}-smoker`);
+    const at = (hour: number) => {
+      setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + hour * 3600 } }));
+      run(sim, 2);
+    };
+    at(18.9);
+    expect(smoker(sim)).toBeUndefined();
+    at(19);
+    expect(smoker(sim)?.position).toEqual(W3_SMOKER.at);
+    expect(smoker(sim)?.staff).toBeUndefined();
+    const restored = reload(sim);
+    expect(smoker(restored)?.position).toEqual(W3_SMOKER.at);
+    expect(hash(restored)).toBe(hash(sim));
+    at(22.9);
+    expect(smoker(sim)).toBeDefined();
+    at(23);
+    expect(smoker(sim)).toBeUndefined();
+  });
+
+  it("the smoker knocked out says nothing and his body stays past 23:00; come to, he goes (G-929)", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + 22.9 * 3600 } }));
+    outside(sim);
+    run(sim, 2);
+    const s = byKey(sim, `${c.id}-smoker`)!;
+    sim.world.addComponent(s, "unconscious", true);
+    // By him, within earshot: no hook from a man knocked out.
+    teleportPlayer(sim, { ...W3_SMOKER.at, x: W3_SMOKER.at.x - 1.5 }, Math.PI / 2);
+    run(sim, 10 * SIM_HZ);
+    expect(sim.domain.clock.seconds % 86400).toBeGreaterThan(23 * 3600);
+    expect(byKey(sim, `${c.id}-smoker`)).toBe(s);
+    expect(sim.domain.contracts.hooks).not.toContain("hook_sabotage_2");
+    expect(hash(reload(sim))).toBe(hash(sim));
+    sim.world.removeComponent(s, "unconscious");
+    run(sim, 2);
+    expect(byKey(sim, `${c.id}-smoker`)).toBeUndefined();
+  });
+
+  it("the smoker killed in a takedown leaves his corpse past 23:00 (G-929)", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + 22.9 * 3600 } }));
+    outside(sim);
+    run(sim, 2);
+    const s = byKey(sim, `${c.id}-smoker`)!;
+    // Knocked out, then killed while down: the death system leaves a corpse (`corpseOf`), no health.
+    sim.world.addComponent(s, "unconscious", true);
+    sim.world.addComponent(s, "downed", freshDowned(s.position, false));
+    s.health = { current: 0, max: s.health!.max };
+    run(sim, 2);
+    const corpse = byKey(sim, `${c.id}-smoker`)!;
+    expect(corpse.health).toBeUndefined();
+    expect(corpse.downed?.dead).toBe(true);
+    teleportPlayer(sim, { ...W3_SMOKER.at, x: W3_SMOKER.at.x - 30 }, Math.PI / 2);
+    run(sim, 10 * SIM_HZ);
+    expect(sim.domain.clock.seconds % 86400).toBeGreaterThan(23 * 3600);
+    expect(byKey(sim, `${c.id}-smoker`)).toBe(corpse);
+    expect(hash(reload(sim))).toBe(hash(sim));
+  });
+
+  it("the shift manager seeing a body in the hall below from his window calls it in and goes back to his round (G-929)", () => {
+    // P1 knocked out in the aisle (the verifier's case); a corpse goes the same way (`lookedAt`).
+    for (const [x, z, dead] of [[2547, 416, false]] as const) {
+      const sim = Simulation.create({ seed: 3 });
+      const c = accept(sim);
+      outside(sim);
+      run(sim, 2);
+      const m = byKey(sim, `${c.id}-manager`)!;
+      // P1 down in the aisle under the window, the rest of the hall as it is.
+      const p1 = [...sim.world.with("ai")].find((e) => e.ai.route?.points === W3_PATROL_HALL)!;
+      const at = w3(x, 0, z);
+      p1.position = { ...at };
+      p1.prevPosition = { ...at };
+      p1.velocity = { x: 0, y: 0, z: 0 };
+      sim.world.addComponent(p1, "unconscious", true);
+      sim.world.addComponent(p1, "downed", freshDowned(at, false, dead));
+      const offRound = () => {
+        const pose = routePose(m.ai!.route!, sim.tick / SIM_HZ).position;
+        return Math.hypot(m.position.x - pose.x, m.position.z - pose.z);
+      };
+      // Stepped until he has seen it from his window and is back on his round, at most 50 s.
+      let lowest = Infinity;
+      let lookedFromAbove = false;
+      for (let i = 0; i < 50 * SIM_HZ; i++) {
+        sim.step();
+        lowest = Math.min(lowest, m.position.y);
+        if (p1.downed?.lookedBy.includes(m.id)) lookedFromAbove = true;
+        if (lookedFromAbove && !m.ai?.lastKnown && offRound() < 1.5) break;
+      }
+      expect(lookedFromAbove, `(${x}; ${z}) seen from the window`).toBe(true);
+      expect(p1.downed?.finder ?? null).not.toBe(m.id);
+      expect(lowest).toBeCloseTo(W3_PATROL_MANAGER[0].y, 1);
+      expect(m.ai?.lastKnown ?? null).toBeNull();
+      expect(offRound(), `(${x}; ${z}) back on his round`).toBeLessThan(1.5);
+    }
+  });
+
+  it("the shift manager keeps to the mezzanine (G-929): a lead in the hall below he looks towards from his round, one on the gallery he walks to", () => {
+    for (const [lead, below] of [
+      [w3(2529, 0, 418), true],
+      [{ ...w3(2520, 0, 431.5), y: W3_PATROL_MANAGER[0].y }, false],
+    ] as const) {
+      const sim = Simulation.create({ seed: 3 });
+      const c = accept(sim);
+      outside(sim);
+      run(sim, 2);
+      const m = byKey(sim, `${c.id}-manager`)!;
+      giveLead(m, lead);
+      let lowest = Infinity;
+      let nearest = Infinity;
+      for (let i = 0; i < 40 * SIM_HZ; i++) {
+        sim.step();
+        lowest = Math.min(lowest, m.position.y);
+        nearest = Math.min(nearest, Math.hypot(m.position.x - lead.x, m.position.z - lead.z));
+      }
+      expect(lowest, `below ${below}`).toBeCloseTo(W3_PATROL_MANAGER[0].y, 1);
+      if (below) expect(nearest).toBeGreaterThan(10);
+      else expect(nearest).toBeLessThan(1.5);
+      // The lead looked into, he is back on his round.
+      expect(m.ai?.lastKnown ?? null).toBeNull();
+      const pose = routePose(m.ai!.route!, sim.tick / SIM_HZ).position;
+      expect(Math.hypot(m.position.x - pose.x, m.position.z - pose.z)).toBeLessThan(1.5);
+    }
+  });
+
+  it("a save of the running job from before the shift manager (v44, G-929) loads with him on his round", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    run(sim, 2 * SIM_HZ);
+    const key = `${c.id}-manager`;
+    const saved = roundTrip(sim.snapshot(null, "mid", ""));
+    expect(saved.entities.some((e) => e.key === key)).toBe(true);
+    // Without his entry, as a save made before him: the job's templates bring him in fresh at his post.
+    const restored = Simulation.fromSnapshot({ ...saved, entities: saved.entities.filter((e) => e.key !== key) });
+    const m = byKey(restored, key)!;
+    expect(m.ai?.enforcer).toBe(true);
+    expect(crew(restored, c)).toHaveLength(5);
+    run(restored, 20 * SIM_HZ);
+    const pose = routePose(m.ai!.route!, restored.tick / SIM_HZ);
+    expect(Math.hypot(m.position.x - pose.position.x, m.position.z - pose.position.z)).toBeLessThan(1.5);
   });
 
   // P1's loop is ~199 s (phase 0): halted at the aisle's east end at 30 s, up the east door to corridor N

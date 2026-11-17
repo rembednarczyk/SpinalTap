@@ -95,6 +95,13 @@ export interface GangerAi {
    */
   readonly boss?: true;
   /**
+   * Keeps to its floor (W-3's shift manager on the mezzanine, G-929): a lead off it (a trace, a
+   * call of the security, a noise in the hall below) does not take it down or up; it looks that
+   * way from where it stands and goes on with its round. Fighting, it goes anywhere as any guard.
+   * Fixed at spawn, so it needs no saving.
+   */
+  readonly keepsFloor?: true;
+  /**
    * A street patrol on its own ground (ADR-0048): Hebi walking the Old Town among the people
    * who live there. Neutral to the player, it keeps an eye on her instead of attacking; a hostile
    * standing, the heat's hunt, a blown disguise of its faction or a provocation alert it like

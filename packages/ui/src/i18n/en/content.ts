@@ -83,6 +83,7 @@ export const enContent = {
   "hook.sabotage_1": "The hall patrol checks server room N only every other lap",
   "hook.sabotage_culvert": "The culvert under the quay leads into the stores' basement; staff overalls in the locker room",
   "hook.sabotage_pipes": "The pipes over the river lead onto row N's roof; a hatch drops into server room N",
+  "hook.sabotage_2": "Locker 14 in the basement's locker room is nobody's; its lock is broken",
   "hook.hack_2": "Under the tower's stair the sniper on the roof can't see you",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Camera",
@@ -104,6 +105,7 @@ export const enContent = {
   "speaker.kiku": "Kiku the fortune teller",
   "speaker.poborca": "Hebi collector",
   "speaker.straznik": "Tessen guard",
+  "speaker.technik": "Tessen technician",
   "speaker.glos": "Voice from the container",
   "speaker.glosnik": "Loudspeaker",
   "speaker.pasazer": "Passenger",

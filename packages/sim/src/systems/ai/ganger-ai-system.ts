@@ -6,6 +6,7 @@ import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
+import { LEVEL_GAP } from "../../world/nav";
 import { worldTimeScale } from "../ability-system";
 import { knockbackVelocity } from "../../world/knockback";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -19,6 +20,7 @@ import {
   AWARENESS_STEP,
   type Ganger,
   NO_VICTIM,
+  SEARCH_SECONDS,
   type Perception,
   TRACK_GRACE,
   type VictimPerception,
@@ -67,6 +69,8 @@ class GangerAgent {
     const { self, ctx } = this;
     const lead = self?.ai.lastKnown;
     if (!self || !ctx || !lead) return State.FAILED;
+    // One that keeps to its floor (G-929) looks round towards a lead off it where it stands, and no further.
+    if (self.ai.keepsFloor && !(self.ai.search ?? 0) && Math.abs(lead.y - self.position.y) >= LEVEL_GAP) self.ai.search = SEARCH_SECONDS;
     if ((self.ai.search ?? 0) > 0) {
       self.velocity = { x: 0, y: 0, z: 0 };
       // Looks around, centred on the way it came (from its post towards the lead).

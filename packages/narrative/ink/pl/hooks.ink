@@ -69,3 +69,7 @@ STRAZNIK: Z dachu magazynu nic nie widać pod wysięgnikiem dźwigu. Jak ktoś s
 === hook_sabotage_1 ===
 STRAZNIK: Obchód hali schodzi korytarzem północnym do serwerowni co drugie okrążenie. Poza tym tylko mija drzwi.
 -> END
+
+=== hook_sabotage_2 ===
+TECHNIK: Nowa na nocce? Weź szafkę czternaście w piwnicy, jest niczyja. Zamek nie działa od wiosny.
+-> END
