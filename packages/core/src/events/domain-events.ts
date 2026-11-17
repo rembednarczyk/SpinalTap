@@ -281,6 +281,7 @@ export type ItemSource = "loot" | "shop" | "quest" | "clinic";
 export type DialogueInterruptReason = "damage" | "gunfire";
 
 /** "warn": a friendly ganger sizes the player up instead of shooting. "flee": a civilian runs away. */
-export type NpcReaction = "warn" | "flee";
+/** A neutral ganger's warning, a bystander's flight, a gunner's call in a fight (reloading, moving round her; ADR-0089 stage 6). */
+export type NpcReaction = "warn" | "flee" | "reload" | "flank";
 
 export type DomainEventType = keyof DomainEvents;

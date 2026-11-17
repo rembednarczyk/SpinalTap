@@ -1,3 +1,5 @@
+import { Quaternion, Vector3 } from "../babylon";
+import { bodyAimTurn } from "./aim-point";
 import type { CharacterRig } from "./character-rig";
 
 /** Seconds to draw or holster the pistol (matches the simulation's DRAW_TIME). */
@@ -98,4 +100,25 @@ export const applyStagger = (rig: CharacterRig, dt: number): void => {
   rig.armL.rotation.z += 0.5 * k;
   rig.armR.rotation.x += 0.4 * k;
   rig.armL.rotation.x += 0.3 * k;
+};
+
+/** The aimed pose holds the pistol's barrel 5.8° below level (measured, with and without a dressed model): this lifts it. */
+const PISTOL_LEVEL = Quaternion.RotationAxis(new Vector3(1, 0, 0), -Math.atan2(0.1006, 0.9949));
+
+/**
+ * The pistol raised to aim points at the aim point (`aim-point.ts`): the gun arm turns about the
+ * shoulder from straight ahead to it, as far as it is aimed, and the supporting left arm with it.
+ * Call once the arms are posed and the lean is out of them.
+ */
+export const pointPistol = (rig: CharacterRig): void => {
+  if (!rig.aiming || rig.melee || rig.drawn < 0.5) return;
+  const k = smooth(Math.min(1, Math.max(0, rig.aim)));
+  const turn = k > 0 ? bodyAimTurn(rig, PISTOL_LEVEL) : null;
+  if (!turn) return;
+  const q = Quaternion.Slerp(Quaternion.Identity(), turn, k);
+  const arms = rig.leftHold ? [rig.armR] : [rig.armR, rig.armL];
+  for (const arm of arms) {
+    const own = Quaternion.FromEulerAngles(arm.rotation.x, arm.rotation.y, arm.rotation.z);
+    arm.rotation.copyFrom(q.multiply(own).toEulerAngles());
+  }
 };
