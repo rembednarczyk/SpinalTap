@@ -185,13 +185,14 @@ describe("W-3's sabotage, the loud way (ADR-0082 stage 3b)", () => {
     expect(hurt.some((h) => h.targetId === sim.player()!.id)).toBe(false);
     expect(contractObjective(active(sim)!, null).key).toBe("contract.objective.sabotageEscape");
     const before = sim.domain.wallet.eddies;
-    const phone = collect<{ from: string }>(sim, "PhoneMessage");
+    const phone = collect<{ from: string; knot: string }>(sim, "PhoneMessage");
     teleportPlayer(sim, ground(2527, 384), 0);
     sim.step();
     expect(active(sim)).toBeNull();
     expect(sim.domain.contracts.completed).toBe(1);
     expect(sim.domain.wallet.eddies - before).toBeGreaterThanOrEqual(sabotagePay({ ...c, route: "loud" }));
-    expect(phone.some((m) => m.from === "genzo")).toBe(true);
+    // Genzō's text of the loud way, not the quiet one's "nobody saw a thing" (G-912).
+    expect(phone.filter((m) => m.from === "genzo").map((m) => m.knot)).toEqual(["phone_genzo_paid_loud"]);
     expect(sim.domain.reputation.tessen).toBeLessThanOrEqual(-60);
     expect(tessenHuntUntil(sim.domain.flags)).toBe(gameDayOf(sim.domain.clock) + TESSEN_HUNT.days);
   });

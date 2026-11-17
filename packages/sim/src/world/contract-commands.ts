@@ -116,7 +116,7 @@ export const completeContract = (ctx: SimContext): void => {
   applyReputationCause(ctx, { type: "contract-completed", kind, clean: !tally.alarm && tally.extraKills === 0 });
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
   ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card, ...(contract.variation ? { variation: contract.variation } : {}) });
-  phoneFromFixer(ctx, giverOfContract(contract), "paid");
+  phoneFromFixer(ctx, giverOfContract(contract), contract.route === "loud" ? "paid_loud" : "paid");
   // Experience by difficulty and the job's level (ADR-0059: its district's for her level now, which
   // the contract does not keep), and a stealth bonus when nobody noticed the player.
   const level = contractLevelOf(domain.progression.level, contract.siteId, kind);

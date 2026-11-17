@@ -103,15 +103,19 @@ export const isContractTarget = (ctx: SimContext, e: Entity): boolean => {
   return !!c && !!e.tag && e.tag === contractTag(c.id) && contractKind(c) !== "delivery";
 };
 
-/** Situations a fixer texts about (ADR-0029). */
-export type PhoneSituation = "offer" | "paid" | "failed";
+/**
+ * Situations a fixer texts about (ADR-0029). W-3's sabotage has two of its own (G-912): paid after
+ * the loud way (the line blown up, Tessen after her), and failed by the batch shipped at 06:00
+ * with no alarm raised (Tessen never knew who it was).
+ */
+export type PhoneSituation = "offer" | "paid" | "failed" | "paid_loud" | "failed_shipped";
 
 /** Knot of a phone message, `phone_<fixer>_<situation>` (ADR-0029). */
 export const phoneKnot = (giver: ContractGiverId, situation: PhoneSituation): string => `phone_${giver}_${situation}`;
 
 /** A text from a fixer about a contract; `from` is the giver's id. The app renders `knot` from ink. */
 export const phoneFromFixer = (ctx: SimContext, giver: ContractGiverId, situation: PhoneSituation): void =>
-  ctx.bus.emit("PhoneMessage", { from: giver, kind: "text", knot: phoneKnot(giver, situation), priority: situation === "failed" ? "info" : "contract" });
+  ctx.bus.emit("PhoneMessage", { from: giver, kind: "text", knot: phoneKnot(giver, situation), priority: situation === "failed" || situation === "failed_shipped" ? "info" : "contract" });
 
 export const giverOfContract = (c: Contract): ContractGiverId => CONTRACT_KINDS[contractKind(c)].giver;
 
