@@ -17,7 +17,19 @@ import {
   tessenHuntUntil,
   tessenSquadDue,
 } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_STATION_SPOTS, W3_VIRUS_TERMINAL, W3_Y, stateHash, stationChargeAt, tessenSquadBack } from "@seki/sim";
+import {
+  CLINIC_WAKE_SPOT,
+  GENZO_SPOT,
+  SIM_HZ,
+  TESSEN_SQUAD_LATE_SECONDS,
+  W3_CORE_BLIND_SPOT,
+  W3_STATION_SPOTS,
+  W3_VIRUS_TERMINAL,
+  W3_Y,
+  stateHash,
+  stationChargeAt,
+  tessenSquadBack,
+} from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, objective, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
@@ -294,5 +306,50 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(back()).toBeNull();
     expect(warned()).toBe(2);
     expect(came).toBeGreaterThanOrEqual(TESSEN_HUNT.delayMinSeconds - 2);
+  });
+
+  it("in the clinic the squad on its way finds no entry: no warning again while she stays, a new one once she is out (G-937)", () => {
+    const { session, ui: u } = start();
+    const day = gameDayOf(session.sim.domain.clock);
+    const stretch = TESSEN_HUNT.everyHours * SECONDS_PER_HOUR;
+    // A game minute into the next stretch, so its tries fit in it.
+    setDomain(session, (d) => ({
+      ...d,
+      flags: [...d.flags, tessenHuntFlag(day + TESSEN_HUNT.days)],
+      reputation: { ...d.reputation, tessen: -60 },
+      clock: { ...d.clock, seconds: d.clock.seconds - (d.clock.seconds % stretch) + stretch + 60 },
+    }));
+    const squad = () => [...session.sim.world].filter((e) => e.security && e.enemy?.type === "tessen_guard" && (e.health?.current ?? 0) > 0);
+    const pushes = new Map<number, number>();
+    const warned = () => {
+      for (const t of u.getState().toasts) if (/Tessen is on your trail/.test(`${t.title} | ${t.text}`)) pushes.set(t.id, Math.max(pushes.get(t.id) ?? 0, t.count ?? 1));
+      return [...pushes.values()].reduce((a, b) => a + b, 0);
+    };
+    const due = () => tessenSquadDue(session.sim.domain.flags);
+    const second = (n = 1) => {
+      steps(session, n * SIM_HZ);
+      warned();
+    };
+    const startStretch = Math.floor(session.sim.domain.clock.seconds / stretch);
+    // By the Rynek a squad is put on its way; in the clinic no entry is near for it (60 m).
+    teleport(session, 575, -38, 0);
+    for (let s = 0; s < 3 && !due(); s++) second();
+    const first = due();
+    expect(first).not.toBeNull();
+    teleport(session, CLINIC_WAKE_SPOT.x, CLINIC_WAKE_SPOT.z, 0, 0, CLINIC_WAKE_SPOT.y);
+    while (due()) second();
+    expect(session.sim.tick).toBeGreaterThanOrEqual(first!.tick + TESSEN_SQUAD_LATE_SECONDS * SIM_HZ);
+    // Gone, and she stays: no try comes, none of the entries near is for it.
+    second(5);
+    expect(due()).toBeNull();
+    expect(warned()).toBe(1);
+    // Out of it, the roll's next try warns her anew.
+    teleport(session, 575, -38, 0);
+    second();
+    expect(due()).not.toBeNull();
+    expect(due()!.flag).not.toBe(first!.flag);
+    expect(warned()).toBe(2);
+    expect(squad()).toEqual([]);
+    expect(Math.floor(session.sim.domain.clock.seconds / stretch)).toBe(startStretch);
   });
 });
