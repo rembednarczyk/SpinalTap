@@ -22,6 +22,9 @@ import {
   tessenHuntFlag,
   tessenHuntRollFlag,
   tessenHuntUntil,
+  tessenSquadDelaySeconds,
+  tessenSquadDue,
+  tessenSquadFlag,
   tessenSquadSize,
 } from "../src";
 import { sequenceRng } from "./helpers";
@@ -91,5 +94,13 @@ describe("the loud way of W-3's sabotage (ADR-0082 stage 3b)", () => {
     expect(tessenHuntRollFlag("stare-miasto", at(12))).not.toBe(tessenHuntRollFlag("stare-miasto", at(11.9)));
     expect(tessenHuntRollFlag("krakowskie", at(7))).not.toBe(tessenHuntRollFlag("stare-miasto", at(7)));
     expect([0, 0.49, 0.5, 0.99].map(tessenSquadSize)).toEqual([2, 2, 3, 3]);
+  });
+
+  it("the squad comes in 20-40 s after the roll (G-911), on its way as a flag with its size and tick", () => {
+    expect([0, 0.5, 0.999].map(tessenSquadDelaySeconds)).toEqual([20, 30, 40]);
+    const flags = [tessenHuntFlag(6), tessenSquadFlag(3, 1380)];
+    expect(tessenSquadDue(flags)).toEqual({ flag: tessenSquadFlag(3, 1380), size: 3, tick: 1380 });
+    expect(tessenHuntUntil(flags)).toBe(6);
+    expect(tessenSquadDue([tessenHuntFlag(6)])).toBeNull();
   });
 });

@@ -382,6 +382,8 @@ export const plWorld = {
   "heat.chaseText": "Ochrona dystryktu cię szuka",
   "heat.reported": "{channel}: {crime}",
   "heat.reportedText": "Zgłoszone ochronie",
+  "heat.tessenHunt": "Tessen na twoim tropie",
+  "heat.tessenHuntText": "Oddział Tessen jest w drodze po ciebie",
   "heat.channel.civilian": "Świadek zadzwonił",
   "heat.channel.camera": "Kamera nagrała",
   "heat.channel.patrol": "Patrol widział",
