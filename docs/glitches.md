@@ -2381,9 +2381,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-889 joinLoose dołącza do frontu deptaka wąskie pasy dowolnie daleko od osi (pas zieleni za Karmelicką 12–37 m)
 - Ważność: S4 · Zasięg: Karmelicka: pas ścieżka–parking (344..351; 58..88), ok. 47 m² kostki na zieleni
 - Opis: Przegląd kuratora #595: zoneFronts/joinLoose (bare-fronts.ts) dołącza do frontu każdy wolny region o średniej szerokości <3 m stykający się z frontem, bez limitu odległości od osi; pas zarośli dostaje kostkę (ortofoto 2024-06). Propozycja: dołączać tylko komórki w reach+zoneMargin+FRONT.strip od osi; kontrola skanu front-far.
-- Status: zgłoszone
+- Status: odłożone (17.11, pierwsze podejście za szerokie, wariant b w notatce); wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pas (344..351; 58..88): brak komórek frontu dalej niż 14 m od osi Karmelickiej; kostka na pasie poniżej 5 m²
+- 17.11 noc (agent, gałąź ccr-ec2c4269-ilh8k8-g889, 65ab11b, nie do scalenia): odcięcie joinLoose na reach+zoneMargin+FRONT.strip (14 m) naprawia pas (kostka 28,75 → 4,5 m²), ale w mieście zabiera ok. 2017 m² kostki, z czego 993 m² potwierdza ortofoto, i daje 41 nowych kluczy skanu (landuse-bare +12, ground-strip-gap +19, bare-on-cover +5, kerb-gap-bare +3, fill-on-green +1, metro-exit-bare +1), walk-lawn-bare 14 954 > 14 600. Następne podejście (wariant b): za 14 m nie kłaść kostki domyślnej (korony, cień, komórki bez klasy), zostawić to, co ortofoto pokazuje samo; front-far wtedy z bazą. Pole frontu bez osi deptaka w krakowskie-1-0 (130..160; −160..−100) to ten sam mechanizm.
 
 ### G-890 Plamka zieleni pokrycia przy krawężniku w kostce zostaje trawnikiem (T-285) i migocze z kostką
 - Ważność: S4 · Zasięg: pierwszy przebieg reguły gołej ziemi, całe miasto
