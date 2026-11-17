@@ -24,6 +24,8 @@ export interface Cell {
   ground: Mesh | null;
   water: Mesh | null;
   lod: CellLod;
+  /** The names its plaques took a row of the names atlas for (G-916), given back when it is built again or goes. */
+  names: string[];
 }
 
 /** The meshes a cell has built, in the order they are listed everywhere. */
@@ -50,7 +52,7 @@ export class MapCells {
   cellOf(key: string): Cell {
     let c = this.all.get(key);
     if (!c) {
-      c = { key, bounds: cellBounds(key), buildings: new Set(), grounds: new Set(), dirty: true, frames: [], spans: [], near: null, nearDirty: true, far: null, signs: null, ground: null, water: null, lod: "off" };
+      c = { key, bounds: cellBounds(key), buildings: new Set(), grounds: new Set(), dirty: true, frames: [], spans: [], near: null, nearDirty: true, far: null, signs: null, ground: null, water: null, lod: "off", names: [] };
       this.all.set(key, c);
     }
     return c;
