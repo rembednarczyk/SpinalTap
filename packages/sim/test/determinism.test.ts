@@ -54,7 +54,7 @@ describe("determinism on the test floor", () => {
     // floor-ganger }; without the field and at version 42 it hashes to fc3fc982, the golden of before.
     // v44 (G-913, the step onto a ladder's rungs in the save, no ladder on the floor) changes only
     // the version: with SAVE_SCHEMA_VERSION at 43 the run hashes to 936bb239, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"d201d612"`);
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"4c1e290c"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {

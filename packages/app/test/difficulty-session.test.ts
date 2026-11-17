@@ -82,6 +82,38 @@ describe("difficulty in the session (ADR-0066)", () => {
     expect(ui.getState().difficulty).toEqual({ profile: hard, pending: null });
   });
 
+  it("on Story one gunner fires at her at once, on Hard three (ADR-0089 stage 5, the pressure)", () => {
+    for (const [profile, most] of [
+      [story, 1],
+      [hard, 3],
+    ] as const) {
+      const { session } = setup();
+      session.intents.newGame(profile);
+      // In the alley off Krakowskie where the street's guard fights her in the simulation's tests.
+      const me = session.sim.player()!;
+      me.position = { x: 392.5, y: -0.17, z: -40.5 };
+      me.prevPosition = me.position;
+      me.yaw = 0;
+      const guards = [-3, -1, 1, 3].map((dx, i) => {
+        const at = { x: 392.5 + dx, y: -0.25, z: -27.5 - i };
+        const g = gangerEntity(90020 + i, { key: `press-${i}`, position: at, yaw: Math.PI }, null, 1e6, session.sim.streamer.chunkIdAt(at), undefined, "tessen_guard");
+        g.ai!.alerted = true;
+        session.sim.world.add(g);
+        return g;
+      });
+      let seen = 0;
+      for (let i = 0; i < 6 * 60; i++) {
+        session.sim.player()!.health = { ...session.sim.player()!.health!, current: session.sim.player()!.health!.max };
+        session.step(EMPTY_INPUT);
+        const tick = session.sim.tick;
+        const firing = guards.filter((g) => (g.ai?.tactic?.token?.last ?? -1e9) >= tick - 30).length;
+        expect(firing, `${profile.npcPressure}, step ${i}`).toBeLessThanOrEqual(most);
+        seen = Math.max(seen, firing);
+      }
+      expect(seen, `${profile.npcPressure}`).toBe(most);
+    }
+  });
+
   it("asking back for the profile in force in a fight is no waiting change", () => {
     const { session, ui } = setup();
     session.newGame();

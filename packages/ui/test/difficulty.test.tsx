@@ -45,6 +45,8 @@ describe("new game setup", () => {
     fireEvent.click(radio("Custom"));
     expect(slider("Damage taken").value).toBe("1.4");
     expect(slider("Sniper warning").value).toBe("0.8");
+    // The enemies' pressure (ADR-0089 stage 5): Hard's 1.5.
+    expect(slider("Enemy pressure").value).toBe("1.5");
     expect(screen.getByText("1.40×")).toBeTruthy();
     fireEvent.click(radio("Story"));
     expect(screen.queryByTestId("difficulty-custom")).toBeNull();
@@ -63,6 +65,16 @@ describe("new game setup", () => {
     expect(screen.getByTestId("difficulty-desc").textContent).toBe("Your own mix of the multipliers below.");
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
     expect(i.newGame).toHaveBeenCalledWith({ ...DIFFICULTY_PRESETS.hard, npcHealth: 2.05 });
+  });
+
+  it("the enemies' pressure is a slider of its own: moved, it starts on that pressure (ADR-0089 stage 5)", () => {
+    const { i } = mount();
+    openSetup();
+    fireEvent.click(radio("Custom"));
+    fireEvent.change(slider("Enemy pressure"), { target: { value: "2" } });
+    expect(radio("Custom").getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(i.newGame).toHaveBeenCalledWith({ ...DIFFICULTY_PRESETS.normal, npcPressure: 2 });
   });
 
   it("starts W-3's start save on the chosen difficulty instead of a new game (ADR-0082)", () => {
@@ -84,6 +96,7 @@ describe("new game setup", () => {
     expect(screen.getByTestId("difficulty-desc").textContent).toContain("ostrzejsze liczby");
     fireEvent.click(radio("Własny"));
     expect(slider("Otrzymywane obrażenia").value).toBe("1.4");
+    expect(slider("Presja wrogów").value).toBe("1.5");
     expect(screen.getByText("1,40×")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Rozpocznij" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Zacznij w W-3 (poziom 12)" })).toBeTruthy();

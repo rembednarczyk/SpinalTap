@@ -24,7 +24,9 @@ describe("the difficulty in the save (v17 to v18, ADR-0066)", () => {
     expect(loaded.domain.difficulty).toEqual(NORMAL_DIFFICULTY);
     expect(findSchemaError(loaded as unknown as Record<string, unknown>)).toBeNull();
     // A broken one does not throw.
-    expect(MIGRATIONS[17]!({ version: 17 })).toEqual({ version: 18, domain: { difficulty: NORMAL_DIFFICULTY } });
+    // v18's profile had six multipliers; v47 adds the pressure (ADR-0089).
+    const { npcPressure: _p, ...six } = NORMAL_DIFFICULTY;
+    expect(MIGRATIONS[17]!({ version: 17 })).toEqual({ version: 18, domain: { difficulty: six } });
   });
 
   it("keeps the profile of a save through encoding; an edited one does not load", () => {

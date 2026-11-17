@@ -1,6 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SimContext } from "../../world/context";
+import { difficultyOf } from "../../world/difficulty";
 import type { Entity, GunTactic } from "../../world/components";
 import { straightWalk } from "./steering";
 import { BACK_SPEED, type GangerBinding, type GangerWalk } from "./ganger-walk";
@@ -47,7 +48,8 @@ export const burstShot = (ctx: SimContext, self: Entity): void => {
   t.shots -= 1;
   if (t.shots > 0) return;
   t.shots = self.ai?.burst ?? 1;
-  self.combatant.cooldown += PAUSE_MIN + ctx.rng.next() * PAUSE_SPAN;
+  // Shorter under more pressure (ADR-0089 stage 5).
+  self.combatant.cooldown += (PAUSE_MIN + ctx.rng.next() * PAUSE_SPAN) / difficultyOf(ctx).npcPressure;
 };
 
 /** The point `len` metres aside of `self` round the player at `from`, on `side`. */
@@ -72,7 +74,8 @@ export const sidestep = (at: GangerBinding, walk: GangerWalk, from: Vec3): void 
   if (t.stride <= 0) {
     t.rest -= dt;
     if (t.rest > 0) return;
-    t.rest = REST_MIN + ctx.rng.next() * REST_SPAN;
+    // More often under more pressure (ADR-0089 stage 5).
+    t.rest = (REST_MIN + ctx.rng.next() * REST_SPAN) / difficultyOf(ctx).npcPressure;
     const len = STRIDE_MIN + ctx.rng.next() * (STRIDE_MAX - STRIDE_MIN);
     const sides: readonly (1 | -1)[] = ctx.rng.next() < 0.5 ? [1, -1] : [-1, 1];
     const side = sides.find((s) => {

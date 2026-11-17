@@ -1,4 +1,5 @@
-import { MOST_STRIDE, type Vec3 } from "@seki/core";
+import { MOST_STRIDE, type Vec3, attackTokensFor } from "@seki/core";
+import { difficultyOf } from "../../world/difficulty";
 import type { World } from "miniplex";
 import type { SimContext } from "../../world/context";
 import { SIM_HZ } from "../../step-rate";
@@ -15,8 +16,8 @@ import { aside, probed, tacticOf } from "./ganger-tactic";
  * to the sides instead of firing from one line.
  */
 
-/** Gunners firing at her at once on Normal; stage 5 takes it from the difficulty's `npcPressure`. */
-export const ATTACK_TOKENS = 2;
+/** Gunners firing at her at once on Normal; the difficulty's `npcPressure` sets it (stage 5: Story 1, Hard 3). */
+export const ATTACK_TOKENS = attackTokensFor(1);
 /** A token is held this long before a nearer gunner may take it over (s). */
 export const TOKEN_HOLD = 2;
 /** A gunner without a token stands at least this far round her from the nearest holder (radians, 35°). */
@@ -58,7 +59,7 @@ export const takeToken = (ctx: SimContext, self: Entity, her: Vec3): boolean => 
   }
   delete t.token;
   const others = holders(ctx.world, ctx.tick, self);
-  if (others.length >= ATTACK_TOKENS) {
+  if (others.length >= attackTokensFor(difficultyOf(ctx).npcPressure)) {
     const mine = flat(self.position, her);
     const held = Math.round(TOKEN_HOLD / ctx.dt);
     const yields = others

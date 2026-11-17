@@ -111,13 +111,13 @@ describe("item level in play (ADR-0059, stage 4)", () => {
         loot: { ...now.domain.loot, containers: now.domain.loot.containers.map((c) => ({ ...c, lines: c.lines.map(strip) })) },
       },
     };
-    // Through v29 to v46, today (ADR-0063 stage 6 and ADR-0074 stages 1 to 4: the market's moves change nothing of a
+    // Through v29 to v47, today (ADR-0063 stage 6 and ADR-0074 stages 1 to 4: the market's moves change nothing of a
     // save made elsewhere; ADR-0059 stage 6: a run with no fight has an empty style and no bad luck, as the
     // migration gives; the cyberdeck's grades after stage 6: a run without a deck has none; G-625 and G-643: no chase;
     // ADR-0082 stage 1: the docks rebuilt as W-3 change nothing of a save made off them; stage 3: no sabotage running;
     // G-883: the migration to v41 changes only the version; stage 3b: no loud way, v42; G-901: no threat saved, v43;
-    // G-913: no step onto a ladder's rungs, v44; ADR-0089 stage 3: no gunner's burst, v45; stage 4: no attack token, v46).
-    const through = [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
+    // G-913: no step onto a ladder's rungs, v44; ADR-0089 stage 3: no gunner's burst, v45; stage 4: no attack token, v46; stage 5: the Normal profile's pressure 1, v47).
+    const through = [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
     expect(JSON.stringify(through)).toBe(JSON.stringify(now));
   });
 });
