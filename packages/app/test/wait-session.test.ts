@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, TESSEN_HUNT, formatClock, gameDayOf, tessenHuntFlag, tessenSquadFlag, textRef } from "@seki/core";
+import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, START_HOUR, TESSEN_HUNT, formatClock, gameDayOf, tessenHuntFlag, tessenSquadFlag, textRef } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { TESSEN_SQUAD_BACK_PREFIX, gangerEntity } from "@seki/sim";
+import { TESSEN_SQUAD_BACK_PREFIX, gangerEntity, tessenSquadBackFlag } from "@seki/sim";
 import { createUiStore, translateText } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -111,13 +111,15 @@ describe("waiting in the session", () => {
     expect(ui.getState().wait).toBeNull();
   });
 
-  /** Tessen's hunt on (ADR-0082 §3.7) with `flags` of it besides, `days` on from its start. */
-  const hunted = (session: GameSession, flags: readonly string[], days = 0) => {
+  /** Tessen's hunt on (ADR-0082 §3.7) with `flags` of it besides, `seconds` on from its start. */
+  const hunted = (session: GameSession, flags: readonly string[], seconds = 0) => {
     const snap = session.saves.snapshot();
     const day = gameDayOf(snap.domain.clock);
-    const clock = { ...snap.domain.clock, seconds: snap.domain.clock.seconds + days * 24 * SECONDS_PER_HOUR };
+    const clock = { ...snap.domain.clock, seconds: snap.domain.clock.seconds + seconds };
     session.restore({ ...snap, domain: { ...snap.domain, clock, flags: [...snap.domain.flags, tessenHuntFlag(day + TESSEN_HUNT.days), ...flags] } }, false);
   };
+  /** A new game's clock: 21:00 of day 0. */
+  const NEW_GAME_CLOCK = { seconds: START_HOUR * SECONDS_PER_HOUR };
   /** The refusal's toast and the pause menu's reason, the clock standing; the toast's text in both languages. */
   const refusedForHunt = (session: GameSession, ui: ReturnType<typeof createUiStore>) => {
     const start = session.sim.clock.seconds;
@@ -136,11 +138,40 @@ describe("waiting in the session", () => {
   };
 
   it("with Tessen's squad on its way, or gone back to wait for her, it is refused (ADR-0082, 17.11)", () => {
-    for (const flag of [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7), `${TESSEN_SQUAD_BACK_PREFIX}${TESSEN_HUNT.squadMin}`]) {
+    for (const flag of [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7), tessenSquadBackFlag(TESSEN_HUNT.squadMin, NEW_GAME_CLOCK)]) {
       const { session, ui } = setup();
       hunted(session, [flag]);
       refusedForHunt(session, ui);
     }
+  });
+
+  /*
+   * Gone back (G-922), the squad refuses it to the end of the stretch of the day it went back in
+   * (the user's decision of 17.11, round 2): a new game starts at 21:00 of day 0, in the stretch to
+   * midnight. A wait cannot start in it, so none runs from it across its end (the clock stands while
+   * the window is up, and Wait asks again); from midnight one does, across the next stretch's end too.
+   */
+  it("with Tessen's squad gone back it is refused to the end of its stretch of the day; from the next she waits across it", () => {
+    const back = tessenSquadBackFlag(TESSEN_HUNT.squadMin, NEW_GAME_CLOCK);
+    const last = setup();
+    hunted(last.session, [back], 3 * SECONDS_PER_HOUR - 1);
+    refusedForHunt(last.session, last.ui);
+    const { session, ui } = setup();
+    hunted(session, [back], 3 * SECONDS_PER_HOUR);
+    session.pause();
+    expect(ui.getState().waitBlocked).toBeNull();
+    session.intents.openWait();
+    expect(ui.getState().wait).not.toBeNull();
+    const start = session.sim.clock.seconds;
+    session.intents.waitHours(8);
+    expect(session.sim.clock.seconds - start).toBe(8 * SECONDS_PER_HOUR);
+    // The squad still waits for her where a way leads, with no new warning (G-934, its own fix).
+    expect(session.sim.domain.flags).toContain(back);
+    // A save of v44 kept the squad's size alone: it does not refuse it.
+    const old = setup();
+    hunted(old.session, [`${TESSEN_SQUAD_BACK_PREFIX}${TESSEN_HUNT.squadMin}`]);
+    old.session.intents.openWait();
+    expect(old.ui.getState().wait).not.toBeNull();
   });
 
   it("with Tessen's squad in the city, far off, it is refused; the hunt alone, or over, lets her wait", () => {
@@ -158,7 +189,7 @@ describe("waiting in the session", () => {
     refusedForHunt(session, ui);
     // Three days on the hunt is over: its squad no longer keeps her from waiting.
     const over = setup();
-    hunted(over.session, [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7)], TESSEN_HUNT.days);
+    hunted(over.session, [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7)], TESSEN_HUNT.days * 24 * SECONDS_PER_HOUR);
     over.session.intents.openWait();
     expect(over.ui.getState().wait).not.toBeNull();
   });

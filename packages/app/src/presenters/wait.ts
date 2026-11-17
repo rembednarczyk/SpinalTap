@@ -24,8 +24,8 @@ const alertedNear = (sim: Simulation): boolean => {
  * Why the hours cannot pass now, null when they can. The `wait` command itself refuses nothing
  * (ADR-0017: a cut, the world placed on its schedules), so the window is where the rules live:
  * no waiting out a fight, a contract's raised alarm, a pursuit or Tessen's squad after her (on its
- * way, waiting for her, or in the city: ADR-0082, 17.11), nor in a takedown, a conversation, on the
- * metro or in the air.
+ * way, in the city, or gone back in the stretch of the day it went back in: ADR-0082, 17.11), nor in
+ * a takedown, a conversation, on the metro or in the air.
  */
 export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null => {
   const { domain, session } = sim;

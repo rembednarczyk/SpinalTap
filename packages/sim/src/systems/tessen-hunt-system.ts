@@ -20,7 +20,7 @@ import type { SimContext, System } from "../world/context";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { enemyScalingIn } from "../world/enemy-scaling";
 import { reinforcementEntity } from "../world/reinforcements";
-import { TESSEN_SQUAD_BACK_PREFIX, tessenSquadBack, tessenSquadOut } from "../world/tessen-squad";
+import { TESSEN_SQUAD_BACK_PREFIX, tessenSquadBack, tessenSquadBackFlag, tessenSquadOut } from "../world/tessen-squad";
 import { worldTimeScale } from "./ability-system";
 import { inPlayerView } from "./crime-system";
 import { TRACK_GRACE } from "./ai/ganger-perception";
@@ -180,7 +180,7 @@ const reroute = (ctx: SimContext, player: Entity): void => {
   const none = entries.flatMap((p) => (judged(spotAt(p, 0, squad.length)) ? [SECURITY_ENTRIES.indexOf(p)] : []));
   for (const i of new Set([own, ...none])) if (i >= 0) raiseFlag(ctx, waylessFlag(i, lead));
   for (const g of squad) ctx.world.remove(g);
-  raiseFlag(ctx, `${TESSEN_SQUAD_BACK_PREFIX}${squad.length}`);
+  raiseFlag(ctx, tessenSquadBackFlag(squad.length, ctx.state.domain.clock));
 };
 
 /**
