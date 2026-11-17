@@ -184,6 +184,11 @@ export const plWorld = {
   "world.hebiLetPass": "Gangerzy cię przepuszczają",
   "world.fleeing": "Przechodnie uciekają",
   "world.afraid": "{faction} boją się ciebie",
+  // A gunner's call in a fight (ADR-0089 stage 6).
+  "world.bark.reload.hebi": "„Pusto! Osłaniaj, ładuję!”",
+  "world.bark.reload.drill": "„Przeładowuję. Osłona.”",
+  "world.bark.flank.hebi": "„Zajdź ją z boku, jazda!”",
+  "world.bark.flank.drill": "„Zachodzę z flanki.”",
   "world.timeSkipped": "Mija czas: {clock}",
   "world.later": "{hours} h {minutes} min później",
   // The scanner.

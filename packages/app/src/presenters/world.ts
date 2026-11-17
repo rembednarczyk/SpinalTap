@@ -13,6 +13,12 @@ const LANDING_SOUND_DROP = 0.5;
 const REACTION_GAP = 30;
 
 /** The world around the player: interactions, death, movement sounds, the camera, NPC reactions and time. */
+/** The catalog line of a gunner's call (ADR-0089 stage 6): Hebi's street talk, everyone else's drill. */
+const BARKS = {
+  reload: { hebi: "world.bark.reload.hebi", drill: "world.bark.reload.drill" },
+  flank: { hebi: "world.bark.flank.hebi", drill: "world.bark.flank.drill" },
+} as const;
+
 export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, isPlayer }) => {
   // A toast is written in the language of the moment it appears (ADR-0056).
   const t: Translate = (key, params) => translate(ui.getState().settings.locale, key, params);
@@ -53,7 +59,9 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     bus.on("NpcReacted", (e) => {
       const key = `${e.reaction}:${e.faction}`;
       if (e.reaction === "warn") reactionToast(key, t("world.hebiWarn"), t("world.hebiLetPass"));
-      else reactionToast(key, t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
+      else if (e.reaction === "flee") reactionToast(key, t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
+      // A gunner's call (ADR-0089 stage 6): Hebi's street talk, everyone else's drill.
+      else reactionToast(key, t(FACTIONS[e.faction]), t(BARKS[e.reaction][e.faction === "hebi" ? "hebi" : "drill"]));
     }),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     // A car held up by the player sounds its horn (ADR-0050).
