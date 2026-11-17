@@ -140,3 +140,10 @@ Wszystko bez renderera (ADR-0046): `freeze` + `step`, czekanie na stan gry, nie 
 7. Czy zwykli wrogowie mają widoczny znak przed serią (krótkie celowanie, jak laser snajpera, ale słabszy)? To zmiana `ViewDescriptor` i praca w rendererze.
 8. Odzywki przy przeładowaniu i rozstawieniu: w tym ADR-ze (etap 6), czy razem z reakcją grupową, którą ADR-0069 odłożył?
 9. Jeśli C: osłony najpierw tylko w W-3 i scenach zleceń (rekomendacja), czy od razu w całym mieście z generatora?
+
+## Decyzje użytkownika (17.11, po przyjęciu wariantu B)
+- **Pytanie 2:** cele tempa walki z tabeli zostają. Dłuższy czas zabicia ma wynikać tylko z ruchu wroga (pasmo broni, krok w bok, przerwy). Zdrowie wrogów zostaje bez zmian.
+- **Pytanie 5:** na Normalnym strzela naraz 2 wrogów, na Opowieści 1, na Trudnym 3.
+- **Pytanie 6:** świat zostaje mocniejszy. Poziom wroga trzyma się pasma (ADR-0059), a gracz poniżej pasma ma w wycinku zapis startowy (G-909).
+- **Pytanie 7:** znak przed serią będzie, ale jako osobny etap po ruchu i żetonach (po etapach 3-4), kiedy pomiar pokaże, czy walka jest czytelna bez niego.
+- Otwarte przed etapem 5: pytania 3 (krzywa w paśmie), 4 (pole `npcPressure` jako suwak) i 8 (odzywki).
