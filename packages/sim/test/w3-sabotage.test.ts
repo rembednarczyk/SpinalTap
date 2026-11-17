@@ -13,6 +13,7 @@ import {
   type Vec3,
 } from "@seki/core";
 import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_SMOKER, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
+import { giveLead } from "../src/systems/ai/ganger-perception";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -249,6 +250,34 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     expect(smoker(sim)).toBeDefined();
     at(23);
     expect(smoker(sim)).toBeUndefined();
+  });
+
+  it("the shift manager keeps to the mezzanine (G-929): a lead in the hall below he looks towards from his round, one on the gallery he walks to", () => {
+    for (const [lead, below] of [
+      [w3(2529, 0, 418), true],
+      [{ ...w3(2520, 0, 431.5), y: W3_PATROL_MANAGER[0].y }, false],
+    ] as const) {
+      const sim = Simulation.create({ seed: 3 });
+      const c = accept(sim);
+      outside(sim);
+      run(sim, 2);
+      const m = byKey(sim, `${c.id}-manager`)!;
+      giveLead(m, lead);
+      let lowest = Infinity;
+      let nearest = Infinity;
+      for (let i = 0; i < 40 * SIM_HZ; i++) {
+        sim.step();
+        lowest = Math.min(lowest, m.position.y);
+        nearest = Math.min(nearest, Math.hypot(m.position.x - lead.x, m.position.z - lead.z));
+      }
+      expect(lowest, `below ${below}`).toBeCloseTo(W3_PATROL_MANAGER[0].y, 1);
+      if (below) expect(nearest).toBeGreaterThan(10);
+      else expect(nearest).toBeLessThan(1.5);
+      // The lead looked into, he is back on his round.
+      expect(m.ai?.lastKnown ?? null).toBeNull();
+      const pose = routePose(m.ai!.route!, sim.tick / SIM_HZ).position;
+      expect(Math.hypot(m.position.x - pose.x, m.position.z - pose.z)).toBeLessThan(1.5);
+    }
   });
 
   it("a save of the running job from before the shift manager (v44, G-929) loads with him on his round", () => {

@@ -27,7 +27,8 @@ const managerEntity = (id: EntityId, key: string, chunk: string, tag: string): E
   const post = W3_SHIFT_MANAGER;
   const spawn = { key, position: post.at, yaw: post.yaw, enforcer: true };
   const g = gangerEntity(id, spawn, tag, ENEMY_TYPES[post.type].hp, chunk, undefined, post.type);
-  if (g.ai && post.route) g.ai = { ...g.ai, route: { points: post.route, phase: 0 } };
+  // He keeps to the mezzanine (G-929): a lead in the hall below does not take him down to it.
+  if (g.ai && post.route) g.ai = { ...g.ai, route: { points: post.route, phase: 0 }, keepsFloor: true };
   return g;
 };
 
