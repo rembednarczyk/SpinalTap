@@ -55,6 +55,7 @@ Format: OGG Vorbis, 44,1 kHz. Pliki Kenney i deszcz są skopiowane bez zmian (ju
 | `loot-pickup-000.ogg`, `loot-pickup-001.ogg` | Impact Sounds, `impactSoft_medium_000-001.ogg` | `loot-pickup` (podniesienie łupu z torby) |
 | `sell-tin-000.ogg`, `sell-tin-001.ogg` | Impact Sounds, `impactTin_medium_000-001.ogg` | `sell` (sprzedaż, z syntezą monet) |
 | `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
+| `blast-crunch-003.ogg`, `blast-crunch-004.ogg` | Sci-fi Sounds, `explosionCrunch_003.ogg`, `explosionCrunch_004.ogg` (bez zmian; paczka pobrana 17.11 z mirroru OGA https://opengameart.org/content/sci-fi-sounds, `sci-fi_sounds.zip`, License.txt: CC0) | `explosion` (wybuch ładunków W-3, z syntezą niskiego huku) |
 | `rain-loop.ogg` | Rain (loopable), `1.ogg` (27 s, stereo) | pętla deszczu na szynie `ambience` (synteza pod spodem na 30%) |
 
 Łącznie ok. 1,2 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).

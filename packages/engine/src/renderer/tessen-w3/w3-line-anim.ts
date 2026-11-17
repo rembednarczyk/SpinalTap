@@ -1,4 +1,4 @@
-import type { LineScreens } from "@seki/core";
+import { type LineScreens, W3_STATIONS, type W3StationId } from "@seki/core";
 import { W3_CRANE_BRIDGE, W3_LAYOUT, W3_Y } from "@seki/sim";
 
 /**
@@ -27,13 +27,21 @@ export interface ArmPose {
   readonly beacon: boolean;
 }
 
-/** What the job has done to the line (ADR-0082 stage 3): the alarm on its beacons, its screens. */
+/** What the job has done to the line (ADR-0082 stage 3): the alarm on its beacons, its screens, the stations blown (3c). */
 export interface LineMission {
   readonly alarm: boolean;
   readonly screens: LineScreens;
+  readonly wrecks: readonly W3StationId[];
 }
 
-export const LINE_IDLE: LineMission = { alarm: false, screens: "idle" };
+export const LINE_IDLE: LineMission = { alarm: false, screens: "idle", wrecks: [] };
+
+/** An arm this near a wrecked station on its belt hangs dead (m along the belt). */
+const WRECK_REACH = 5.5;
+
+/** Is the arm at `x` on `side` by a wrecked station? S1 and S2 stand by belt L1, S3 and S4 by L2. */
+const byWreck = (x: number, side: 1 | -1, wrecks: readonly W3StationId[]): boolean =>
+  wrecks.some((s) => (s === "S1" || s === "S2" ? 1 : -1) === side && Math.abs(W3_LAYOUT.STATIONS[s].x - x) < WRECK_REACH);
 
 export interface LinePose {
   readonly arms: readonly ArmPose[];
@@ -46,6 +54,8 @@ export interface LinePose {
   readonly bodies: readonly { readonly x: number; readonly z: number }[];
   /** The crane's bridge: world x of its middle. */
   readonly bridgeX: number;
+  /** The stations blown for good (ADR-0082 stage 3c), in the line's order. */
+  readonly wrecks: readonly W3StationId[];
 }
 
 /** A small deterministic generator (mulberry32) of numbers in [0, 1). */
@@ -96,6 +106,8 @@ export const linePose = (t: number, seed = W3_LINE_SEED, still = false, mission:
     const p = frac(time / ARM_CYCLE + phase);
     // Reach out over the belt and back, with a hold at the weld in the middle of the cycle.
     const reach = still ? 0.35 : 0.5 - 0.5 * Math.cos(TAU * p);
+    // By a wrecked station the arm hangs dead over its base, its beacon out.
+    if (byWreck(b.x, b.side, mission.wrecks)) return { x: b.x, z: b.z, side: b.side, yaw: 0.35 * b.side, shoulder: -0.3, elbow: 0.55, beacon: false };
     return {
       x: b.x,
       z: b.z,
@@ -122,8 +134,8 @@ export const linePose = (t: number, seed = W3_LINE_SEED, still = false, mission:
   const bridgePhase = rnd();
   const bridgeX = still ? b.x : (b.minX + b.maxX) / 2 + ((b.maxX - b.minX) / 2) * Math.sin(TAU * (time / BRIDGE_CYCLE + bridgePhase));
   const screenBlink = still || mission.screens === "idle" || frac(t * SCREEN_RATE) < 0.5;
-  return { arms, alarm: mission.alarm, screens: mission.screens, screenBlink, bodies, bridgeX };
-
+  const wrecks = W3_STATIONS.filter((s) => mission.wrecks.includes(s));
+  return { arms, alarm: mission.alarm, screens: mission.screens, screenBlink, bodies, bridgeX, wrecks };
 };
 
 /** World y of the halls' floor, for the geometry. */

@@ -6,6 +6,7 @@ import { Effects } from "../effects/effects";
 import { FlashLimiter } from "../effects/flash-limiter";
 import { GameplayFxState } from "../effects/gameplay-fx";
 import { GameplayPost } from "../effects/gameplay-post";
+import { ExplosionFx } from "../effects/explosion-fx";
 import { MuzzleFx } from "../effects/muzzle-fx";
 import { createRain } from "../effects/rain";
 import { TrailMeshes } from "../effects/trail-meshes";
@@ -79,7 +80,21 @@ const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z
 /** The camera's local axes, for the smoke's billboards. */
 const AXES = { right: Vector3.Right(), up: Vector3.Up(), forward: Vector3.Forward() } as const;
 
-type ActorEffect = Extract<EffectDescriptor, { kind: "weapon" | "talk" | "reload" | "melee" | "stagger" | "block" | "flinch" }>;
+/** How hard a blast at `at` shakes a camera at `eye`: 0 from three of its radii away, at most 1 (ADR-0082 stage 3c). */
+const blastShake = (eye: Vec3, at: Vec3, radius: number): number => Math.min(1, 1.2 * Math.max(0, 1 - Math.hypot(eye.x - at.x, eye.y - at.y, eye.z - at.z) / (radius * 3)));
+
+/**
+ * The flash light of a frame: a blast's while it lasts, else a muzzle's (`life` left of its 0.07 s);
+ * off once when both are over (`wasLit`: a blast lit the last frame). Returns whether a blast lights this one.
+ */
+const lightFlash = (materials: ToonMaterials, blast: { readonly at: Vec3; readonly intensity: number } | null, muzzle: { x: number; y: number; z: number; life: number } | null, wasLit: boolean): boolean => {
+  if (blast) materials.setFlash(blast.at.x, blast.at.y, blast.at.z, blast.intensity);
+  else if (muzzle) materials.setFlash(muzzle.x, muzzle.y, muzzle.z, Math.max(0, Math.min(1, muzzle.life / 0.07)));
+  else if (wasLit) materials.setFlash(0, 0, 0, 0);
+  return blast !== null;
+};
+
+type ActorEffect =Extract<EffectDescriptor, { kind: "weapon" | "talk" | "reload" | "melee" | "stagger" | "block" | "flinch" }>;
 
 /**
  * Everything over the frame (ADR-0030): one-shot effects and lasers, rain, splashes and steam,
@@ -95,6 +110,10 @@ export class ScreenFx {
   private readonly effects: Effects;
   /** Flames at the muzzles and their smoke. */
   private readonly muzzle: MuzzleFx;
+  /** Blasts (ADR-0082 stage 3c): fire, smoke and, on High, debris; off at rest. */
+  private readonly blasts: ExplosionFx;
+  /** A blast's flash is on the materials (switched off once when it is over). */
+  private blastLit = false;
   /** Where a shot leaves the gun: the viewmodel's muzzle in FPP, the hand's otherwise. */
   private readonly muzzleSource: MuzzleSource;
   /** Scratch for the muzzle's place and the camera's axes, so a shot or a frame makes no vectors. */
@@ -133,6 +152,7 @@ export class ScreenFx {
     this.applyLook();
     this.effects = new Effects(scene, stage.glow);
     this.muzzle = new MuzzleFx(scene);
+    this.blasts = new ExplosionFx(scene, (stage.options.quality ?? "high") === "high");
     this.muzzleSource = new MuzzleSource(camera, deps.actors, (id) => this.isCameraTarget(id));
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
@@ -159,6 +179,13 @@ export class ScreenFx {
       case "hit-spark":
         this.effects.hitSpark(v3(effect.at), effect.critical);
         return;
+      case "explosion": {
+        // Fire, smoke and debris (ADR-0082 stage 3c), the place lit within the flash budget, the camera shaken near it.
+        this.blasts.add(effect.at, effect.radius, !this.reduceFlashes && this.limiter.tryFlash());
+        const shake = blastShake(this.deps.camera.camera.position, effect.at, effect.radius);
+        if (shake > 0) this.deps.camera.shake(shake);
+        return;
+      }
       case "memory-glitch":
         this.grading.glitch();
         return;
@@ -178,12 +205,14 @@ export class ScreenFx {
         // The app sends this only when the light level moves a step, so re-applying is cheap.
         this.daylight = effect.daylight;
         this.muzzle.setDaylight(effect.daylight);
+        this.blasts.setDaylight(effect.daylight);
         this.applyLook();
         materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         return;
       // W-3's line (ADR-0082): the renderer hands these to its view, not to the screen.
       case "alarm-light":
       case "line-screens":
+      case "line-wrecks":
         return;
       default:
         this.playActor(effect);
@@ -295,6 +324,7 @@ export class ScreenFx {
   setReduceFlashes(on: boolean): void {
     this.reduceFlashes = on;
     this.muzzle.setReduced(on);
+    this.blasts.setReduced(on);
     this.fx.setReduceFlashes(on);
     this.grading.setReduceFlashes(on);
     this.deps.signage.setReduceFlashes(on);
@@ -396,12 +426,9 @@ export class ScreenFx {
     this.lasers.update(dt, (id) => this.deps.actors.transformOf(id));
     this.trails.update(dt, (id) => this.deps.actors.transformOf(id)?.position ?? null);
     this.trailMeshes.update(this.trails.trails);
-    if (this.flash) {
-      this.flash.life -= dt;
-      const intensity = Math.max(0, Math.min(1, this.flash.life / 0.07));
-      materials.setFlash(this.flash.x, this.flash.y, this.flash.z, intensity);
-      if (this.flash.life <= 0) this.flash = null;
-    }
+    if (this.flash) this.flash.life -= dt;
+    this.blastLit = lightFlash(materials, this.blasts.state.flash(), this.flash, this.blastLit);
+    if (this.flash && this.flash.life <= 0) this.flash = null;
     this.deps.atmosphere.update(dt, reference);
     this.deps.farCity.update(dt, camera.camera.position, reference);
     this.deps.signage.update(dt, reference);
@@ -426,12 +453,14 @@ export class ScreenFx {
     cam.getDirectionToRef(AXES.up, up);
     cam.getDirectionToRef(AXES.forward, forward);
     this.muzzle.update(dt, (id, at, dir) => void this.muzzleSource.place(id, at, dir), this.view);
+    this.blasts.update(dt, this.view);
   }
 
   /** A new game or a load lands anywhere: lasers off, the next district's colours at once, no heat. */
   clear(): void {
     this.lasers.clear();
     this.trails.clear();
+    this.blasts.clear();
     this.snapPalette = true;
     this.scanHighlight.release();
     this.fx.setHeat(0, false);

@@ -242,6 +242,36 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sawtooth", freq: 196, dur: 0.5, gain: 0.05, attack: 0.02, filter: 900, filterType: "lowpass" },
     ],
   },
+  // W-3 (ADR-0082 stage 3c). The blast: a crack, a low boom falling away and a rumble in the hall's
+  // tail (the recorded crunch of the app's manifest goes over it).
+  explosion: {
+    send: 0.85,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.18, gain: 0.6, filter: 6000, filterTo: 1200, attack: 0.001 },
+      { type: "sine", freq: 62, to: 26, dur: 1.3, gain: 0.6, attack: 0.004 },
+      { type: "noise", freq: 0, start: 0.04, dur: 1.6, gain: 0.4, filter: 1400, filterTo: 120, filterType: "lowpass", attack: 0.01 },
+      { type: "sawtooth", freq: 44, to: 24, start: 0.05, dur: 1.4, gain: 0.12, filter: 260, filterType: "lowpass", attack: 0.03 },
+    ],
+  },
+  // The alarm raised: three blasts of a klaxon, two square tones a semitone apart through a horn's band.
+  alarm: {
+    send: 0.6,
+    voices: [0, 0.32, 0.64].flatMap((start) => [
+      { type: "square" as const, freq: 330, start, dur: 0.24, gain: 0.08, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
+      { type: "square" as const, freq: 349, start, dur: 0.24, gain: 0.07, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
+    ]),
+  },
+  // One wail of the siren (the app repeats it while the alarm lasts): up a fifth and back down.
+  "alarm-siren": {
+    send: 0.7,
+    priority: PRIORITY.ambience,
+    voices: [
+      { type: "sawtooth", freq: 420, to: 640, dur: 1.1, gain: 0.05, attack: 0.15, filter: 1800, filterType: "lowpass" },
+      { type: "sawtooth", freq: 640, to: 420, start: 1.1, dur: 1.1, gain: 0.05, attack: 0.05, filter: 1800, filterType: "lowpass" },
+      { type: "sine", freq: 840, to: 1280, dur: 1.1, gain: 0.03, attack: 0.15 },
+      { type: "sine", freq: 1280, to: 840, start: 1.1, dur: 1.1, gain: 0.03, attack: 0.05 },
+    ],
+  },
   "land-hard": {
     send: 0.25,
     voices: [
