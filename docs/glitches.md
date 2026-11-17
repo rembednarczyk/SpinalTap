@@ -2525,7 +2525,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
 - Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
 - Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
-- Status: w naprawie, runda 2 (PR #674 odrzucony przez weryfikatora: wejście bez drogi na innym piętrze); wcześniej: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
+- Status: w PR #674 runda 2 (6b8f9ac), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #674 odrzucony przez weryfikatora: wejście bez drogi na innym piętrze); wcześniej: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
 - Weryfikator #671 (17.11): to samo na main (ziarna 3, 7, 42: oddział 134-139 m od gracza stoi i znika po ok. 20 s), nie regresja #671; lastKnown ustawiane przy wejściu oddziału. Do naprawy osobno.
@@ -2564,11 +2564,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: walka 40 s bez kroku ponad budżet
+- Przy G-928 nie odtworzył się (pościg Tessen 520,-60, ziarno 3, bez tłumu): to raczej inna przyczyna niż objazdy ucieczki.
 
 ### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
 - Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
 - Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
-- Status: zgłoszone
+- Status: w PR #677 (gałąź ccr-ec2c4269-ilh8k8-g928, f26847a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
 
@@ -2578,6 +2579,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
+- Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
 
 ### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
 - Ważność: S4 · Zasięg: wylot kolektora W-3
