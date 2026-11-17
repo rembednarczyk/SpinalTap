@@ -1,5 +1,5 @@
 import { COMBAT_RADIUS, contractAlarmFlag } from "@seki/core";
-import type { Simulation } from "@seki/sim";
+import { type Simulation, tessenSquadAfterHer } from "@seki/sim";
 import type { WaitBlock } from "@seki/ui";
 
 /** What the app knows besides the simulation: the HUD's fight and a jump or a fall under way. */
@@ -23,8 +23,9 @@ const alertedNear = (sim: Simulation): boolean => {
 /**
  * Why the hours cannot pass now, null when they can. The `wait` command itself refuses nothing
  * (ADR-0017: a cut, the world placed on its schedules), so the window is where the rules live:
- * no waiting out a fight, a contract's raised alarm or a pursuit, nor in a takedown, a
- * conversation, on the metro or in the air.
+ * no waiting out a fight, a contract's raised alarm, a pursuit or Tessen's squad after her (on its
+ * way, waiting for her, or in the city: ADR-0082, 17.11), nor in a takedown, a conversation, on the
+ * metro or in the air.
  */
 export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null => {
   const { domain, session } = sim;
@@ -34,6 +35,7 @@ export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null =
   const contract = domain.contracts.active;
   if (contract && domain.flags.includes(contractAlarmFlag(contract.id))) return "alarm";
   if (domain.heat.level > 0) return "wanted";
+  if (tessenSquadAfterHer(sim.world, domain)) return "hunt";
   if (session.takedown || session.dialogueActive || session.passenger || domain.metro.ride || facts.airborne) return "busy";
   return null;
 };

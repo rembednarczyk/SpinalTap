@@ -24,7 +24,8 @@ const MINUTES_PER_HOUR = 60;
 /**
  * Waiting: the window that lets game hours pass in one jump, through the `wait` command
  * (ADR-0017). It opens from the pause menu or by its key, the clock standing while it is up; in
- * a fight, an alarm, a pursuit or a takedown it stays shut and says why.
+ * a fight, an alarm, a pursuit, with Tessen's squad after her or in a takedown it stays shut and
+ * says why.
  */
 export class WaitController implements WaitIntents {
   private open = false;

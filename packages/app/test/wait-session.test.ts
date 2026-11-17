@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, formatClock, textRef } from "@seki/core";
+import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, TESSEN_HUNT, formatClock, gameDayOf, tessenHuntFlag, tessenSquadFlag, textRef } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { gangerEntity } from "@seki/sim";
-import { createUiStore } from "@seki/ui";
+import { TESSEN_SQUAD_BACK_PREFIX, gangerEntity } from "@seki/sim";
+import { createUiStore, translateText } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
 /** Waiting, headless: the window from play and from the pause menu, the `wait` command, and where it is refused. */
@@ -109,6 +109,58 @@ describe("waiting in the session", () => {
     expect(ui.getState().waitBlocked).toBe("wanted");
     session.intents.openWait();
     expect(ui.getState().wait).toBeNull();
+  });
+
+  /** Tessen's hunt on (ADR-0082 §3.7) with `flags` of it besides, `days` on from its start. */
+  const hunted = (session: GameSession, flags: readonly string[], days = 0) => {
+    const snap = session.saves.snapshot();
+    const day = gameDayOf(snap.domain.clock);
+    const clock = { ...snap.domain.clock, seconds: snap.domain.clock.seconds + days * 24 * SECONDS_PER_HOUR };
+    session.restore({ ...snap, domain: { ...snap.domain, clock, flags: [...snap.domain.flags, tessenHuntFlag(day + TESSEN_HUNT.days), ...flags] } }, false);
+  };
+  /** The refusal's toast and the pause menu's reason, the clock standing; the toast's text in both languages. */
+  const refusedForHunt = (session: GameSession, ui: ReturnType<typeof createUiStore>) => {
+    const start = session.sim.clock.seconds;
+    session.intents.openWait();
+    expect(ui.getState().wait).toBeNull();
+    const toast = ui.getState().toasts.at(-1)!;
+    expect(toast).toMatchObject({ kind: "system", title: textRef("wait.blockedTitle"), text: textRef("wait.blocked.hunt") });
+    expect(translateText("en", toast.text)).toBe("Not with a Tessen squad on your trail.");
+    expect(translateText("pl", toast.text)).toBe("Nie, gdy oddział Tessen jest na twoim tropie.");
+    session.pause();
+    expect(ui.getState().waitBlocked).toBe("hunt");
+    session.intents.openWait();
+    session.intents.waitHours(3);
+    expect(session.sim.clock.seconds).toBe(start);
+    session.resume();
+  };
+
+  it("with Tessen's squad on its way, or gone back to wait for her, it is refused (ADR-0082, 17.11)", () => {
+    for (const flag of [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7), `${TESSEN_SQUAD_BACK_PREFIX}${TESSEN_HUNT.squadMin}`]) {
+      const { session, ui } = setup();
+      hunted(session, [flag]);
+      refusedForHunt(session, ui);
+    }
+  });
+
+  it("with Tessen's squad in the city, far off, it is refused; the hunt alone, or over, lets her wait", () => {
+    const { session, ui } = setup();
+    hunted(session, []);
+    session.pause();
+    expect(ui.getState().waitBlocked).toBeNull();
+    session.resume();
+    const p = session.sim.player()!.position;
+    const g = gangerEntity(90011, { key: "", position: { ...p, x: p.x - 90 }, yaw: 0 }, null, 100, "", undefined, "tessen_guard");
+    delete g.key;
+    g.security = { n: 1, since: session.sim.tick };
+    g.ai!.alerted = true;
+    session.sim.world.add(g);
+    refusedForHunt(session, ui);
+    // Three days on the hunt is over: its squad no longer keeps her from waiting.
+    const over = setup();
+    hunted(over.session, [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7)], TESSEN_HUNT.days);
+    over.session.intents.openWait();
+    expect(over.ui.getState().wait).not.toBeNull();
   });
 
   it("not over another panel: the phone open keeps it shut", () => {
