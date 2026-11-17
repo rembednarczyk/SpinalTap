@@ -2478,7 +2478,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-906 Cele drogi głośnej W-3 z miejscem rdzenia serwerowni
 - Ważność: S3 · Zasięg: wszystkie cele drogi głośnej (weź ładunki, podłóż, uciekaj)
 - Opis: Playtest 17.11: cel "Plant the charges…" kończy się "the calibration core in server room N of hall W-3", choć stanowiska są w hali. Odtworzenie: pobrać ładunki ze skrzynki w zbrojowni S (2555; 400,8), przypiąć kontrakt. Rozwiązanie: miejsce zależne od route i etapu.
-- Status: zgłoszone
+- Status: w PR #664 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/app
 
 ### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
@@ -2565,6 +2565,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/ui
 - Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
+
+### G-920 Cel ucieczki W-3 mówi „za płot”, a płotu 2,7 m nie da się przeskoczyć
+- Ważność: S4 · Zasięg: cel sabotageEscape W-3 (en, pl)
+- Opis: Znalezione przy G-906 (17.11): contract.objective.sabotageEscape mówi „over the fence” / „za płot”, a według ADR-0082 płot W-3 ma 2,7 m i jest nie do przejścia; wyjście przez furtkę, bramę albo metro. Rozwiązanie: tekst wskazujący wyjścia (oba katalogi).
+- Status: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: tekst celu ucieczki nie wspomina płotu
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
