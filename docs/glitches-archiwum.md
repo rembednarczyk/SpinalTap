@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-905 HUD nie pokazuje celu W-3 przy aktywnym wątku głównym
+- Ważność: S3 · Zasięg: każde zlecenie Genzō (W-3) przy aktywnym wątku głównym
+- Opis: Playtest 17.11: po przyjęciu zlecenia W-3 HUD dalej pokazuje cel głównego wątku (Talk to Kaito, Ask Grandma Ume) z linią bonusu W-3 pod spodem; cele drogi cichej i głośnej, licznik ładunków, zapalnik i termin 06:00 widać dopiero po przypięciu w dzienniku. Odtworzenie: nowa gra lub po akcie I, Genzō, Co to za partia dronów, brak przypięcia. Przyczyna: shownEntryId w app/src/objective.ts przepuszcza kontrakt tylko dla CONTRACT_STEPS. Rozwiązanie: autoprzypięcie kontraktu W-3.
+- Status: naprawione (17.11, #662 scalony); wcześniej: w PR #662 (17.11); wcześniej: w PR #660; wcześniej: zgłoszone
+- Pakiet właściciela: packages/app
+
 ### G-902 Goła łata między chodnikiem w793299545 a trawnikiem w804709930 (Ruska, Podzamcze)
 - Ważność: S4 · Zasięg: podzamcze-2-1 x 1066-1070, z 479,5-488
 - Opis: Ortofoto pokazuje płyty; reguła gołej ziemi nie kładzie tam nic, bo pas jest dalej niż 5 m od asfaltu (kerbStrips). Po G-897 (#654) granica cofa się o 0,5 m (pas 2,25 x 0,5 m). Żaden rodzaj skanu tego nie liczy: kandydat na nową kontrolę (goła ziemia na płytach ortofoto przy chodniku).
