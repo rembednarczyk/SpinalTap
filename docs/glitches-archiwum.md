@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
+- Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
+- Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
+- Status: naprawione (17.11, #674 scalony); wcześniej: w PR #674 runda 3 (464e37d), w weryfikacji; wcześniej: w naprawie, runda 3 (nowy agent; r2 odrzucona: pętla powrotu przy wejściu bez drogi, dwie flagi oddziału naraz); wcześniej: w PR #674 runda 2 (6b8f9ac), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #674 odrzucony przez weryfikatora: wejście bez drogi na innym piętrze); wcześniej: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
+- Weryfikator #671 (17.11): to samo na main (ziarna 3, 7, 42: oddział 134-139 m od gracza stoi i znika po ok. 20 s), nie regresja #671; lastKnown ustawiane przy wejściu oddziału. Do naprawy osobno.
+
 ### G-907 Droga cicha W-3 bez haków i przebrania: halą nie da się przejść
 - Ważność: S3 · Zasięg: misja W-3, droga cicha przez kolektor i halę
 - Opis: Playtest 17.11: Genzō nie daje pendrive (keyItems puste) ani haków (contractHooks puste); tessen_overalls to tylko losowy łup, brak szafki 14 i enc_w3_smoker; wylot kolektora bez podpowiedzi prompt.culvert. Bez przebrania technik zgłasza gracza w alei hali po 3,0 s ((2529; 418), broń schowana, kucanie). W jednym przejściu alarm padł po wejściu z korytarza S w drzwi hali (2546; 406), tick ok. 5145; sprawca nieustalony (podejrzenie: patrol P1). Rozwiązanie: przebranie i haki zgodnie z ADR-0082 §1 albo przejście N-S poza aleją.

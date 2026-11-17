@@ -2523,14 +2523,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
 - Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
 
-### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
-- Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
-- Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
-- Status: w PR #674 runda 3 (464e37d), w weryfikacji; wcześniej: w naprawie, runda 3 (nowy agent; r2 odrzucona: pętla powrotu przy wejściu bez drogi, dwie flagi oddziału naraz); wcześniej: w PR #674 runda 2 (6b8f9ac), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #674 odrzucony przez weryfikatora: wejście bez drogi na innym piętrze); wcześniej: w PR #674 (gałąź ccr-ec2c4269-ilh8k8-g922, 19a59cf), w weryfikacji; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
-- Weryfikator #671 (17.11): to samo na main (ziarna 3, 7, 42: oddział 134-139 m od gracza stoi i znika po ok. 20 s), nie regresja #671; lastKnown ustawiane przy wejściu oddziału. Do naprawy osobno.
-
 ### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
 - Ważność: S4 · Zasięg: tylko uszkodzony zapis
 - Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
@@ -2602,6 +2594,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: technik uciekający z zachodniego końca hali: zacięcie <= 2 s, skoki yaw < 5, ucieczka >= 10 m
+
+### G-933 Zapis po końcu pościgu Tessen z żywym zaalarmowanym oddziałem rozjeżdża się po wczytaniu
+- Ważność: S3 · Zasięg: zapis w dniu 3+ pościgu Tessen, posiłki ochrony
+- Opis: Znalezione przy weryfikacji G-922 r3, także na main przed G-922 (91deba6): po wczytaniu hash inny, różnią się pole reinforcements i pozycje oddziału. Sondy: scratchpad/v-g922r3/.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zapis po końcu pościgu z żywym oddziałem: ten sam hash krok po kroku po wczytaniu
+
+### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
+- Ważność: S4 · Zasięg: pościg Tessen
+- Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
