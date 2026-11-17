@@ -354,7 +354,7 @@ export const contractObjective = (c: Contract, secondsLeft: number | null = null
  * upload (its own clock), out of the zone unseen once the clock has run down.
  */
 const sabotageObjective = (c: Contract, site: TextRef, secondsLeft: number | null): TextRef => {
-  if (c.route === "loud") return loudObjective(c, site, secondsLeft);
+  if (c.route === "loud") return loudObjective(c, secondsLeft);
   const step = c.progress === undefined ? "sabotage" : "sabotageUpload";
   if (c.progress !== undefined && secondsLeft === 0) return textRef("contract.objective.sabotageLeave");
   if (secondsLeft === null) return textRef(`contract.objective.${step}`, { site });
@@ -363,14 +363,17 @@ const sabotageObjective = (c: Contract, site: TextRef, secondsLeft: number | nul
 
 /**
  * The loud way's step (ADR-0082 stage 3b): the server rooms cut off, the charges from the armoury,
- * planted on the line (so many of three), the fuse's clock, away from W-3 after the blast.
+ * planted on the line (so many of three), the fuse's clock, away from W-3 after the blast. The
+ * contract's site is the quiet way's core in server room N, so each step names its own place
+ * (G-906): the charges' case in armoury S, then the line's stations in the hall.
  */
-const loudObjective = (c: Contract, site: TextRef, secondsLeft: number | null): TextRef => {
+const loudObjective = (c: Contract, secondsLeft: number | null): TextRef => {
   if (c.detonated) return textRef("contract.objective.sabotageEscape");
   if (c.fuseTick !== undefined) return textRef("contract.objective.sabotageFuse", { time: clock(secondsLeft ?? 0) });
   const timed: Readonly<Record<string, string>> = secondsLeft === null ? {} : { time: clock(secondsLeft) };
   const suffix = secondsLeft === null ? "" : "Timed";
-  if (!c.charges) return textRef(`contract.objective.sabotageCutOff${suffix}`, { site, ...timed });
+  if (!c.charges) return textRef(`contract.objective.sabotageCutOff${suffix}`, { site: textRef("contract.site.w3_armoury"), ...timed });
+  const site = textRef("contract.site.w3_stations");
   return textRef(`contract.objective.sabotagePlant${suffix}`, { site, planted: SABOTAGE_LOUD.charges - chargesLeft(c), needed: SABOTAGE_LOUD.charges, ...timed });
 };
 

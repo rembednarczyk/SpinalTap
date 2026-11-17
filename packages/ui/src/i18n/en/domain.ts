@@ -217,6 +217,9 @@ export const enDomain = {
   "contract.site.tessen_office": "the pass office in the Tessen control tower on Nabrzeże Bystrzycy",
   "contract.site.quay_terminal": "the Tessen terminal on the quay by the pier",
   "contract.site.w3_hall": "the calibration core in server room N of hall W-3",
+  // The loud way's places on W-3's objective (G-906): the charges' case, then the line.
+  "contract.site.w3_armoury": "the case in armoury S, off hall W-3's south corridor",
+  "contract.site.w3_stations": "stations S1–S4 on hall W-3's assembly line",
   // The giver as "go back to … for your pay" names them.
   "contract.giver.kaito": "Kaito",
   "contract.giver.hana": "Hana",
