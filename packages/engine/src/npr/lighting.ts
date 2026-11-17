@@ -59,17 +59,19 @@ export const DAY_RIG: LightingRig = {
 
 /**
  * Under a roof lit by its own lamps (W-3's hall, ADR-0082 §4): neither moon nor sun (a hard band of
- * it fell through the hall's walls, a patch on server room N's wall), the fluorescent strips' flat
- * ambient, the shade side barely cooler, a thin haze. The same by day and by night.
+ * it fell through the hall's walls, a patch on server room N's wall). Tessen's insides are dark
+ * (the user's concept art, 17.11): a near-black ambient, so the light is the lamps' pools, the
+ * strips and the screens, a cold shade side and a dense dark haze. The fill keeps people readable.
+ * The same by day and by night.
  */
 export const INDOOR_RIG: LightingRig = {
   sunDir: NIGHT_RIG.sunDir,
   sunColor: "#000000",
-  ambient: "#666c7c",
-  fogColor: "#1c2128",
-  fogDensity: 0.004,
-  shadeTint: "#dcdeea",
-  fillColor: "#c8d0e0",
+  ambient: "#1a1c23",
+  fogColor: "#0b0e12",
+  fogDensity: 0.018,
+  shadeTint: "#7a8098",
+  fillColor: "#9aa6bc",
 };
 
 const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
