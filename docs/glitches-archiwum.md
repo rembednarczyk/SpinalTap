@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
+- Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
+- Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
+- Status: naprawione (17.11, #694 scalony); wcześniej: w PR #694 (gałąź ccr-ec2c4269-ilh8k8-g921); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
+- Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
+
 ### G-936 Ogłuszony strażnik dalej podaje bark-hak
 - Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
 - Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
