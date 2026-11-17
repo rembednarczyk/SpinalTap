@@ -2,22 +2,21 @@ import { applyDamage } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import { bodyHeightOf } from "../world/hitboxes";
-import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
+import { type GroundField, groundOf } from "../world/ground";
 import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut, rayCollider } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { solidIndexOf } from "../world/solid-index";
 import { worldTimeScale } from "./ability-system";
 import { NOISE_LANDING, hearNoise } from "./ai/ganger-hearing";
+import { offTheBank } from "./bank";
+import { SNAP_DOWN, STEP_HEIGHT } from "./step";
 
 const ITERATIONS = 2;
 /** How far around a mover's step its colliders are gathered, beyond its radius, metres. */
 const REACH_MARGIN = 3;
 
-/** Highest ledge a character walks up without noticing (a stair, a kerb), metres. */
-export const STEP_HEIGHT = 0.45;
-/** Drops up to this follow the ground (walking down stairs); deeper ones are falls. */
-export const SNAP_DOWN = 0.35;
+export { SNAP_DOWN, STEP_HEIGHT } from "./step";
 export const GRAVITY = 20;
 /** How far past an edge the centre may hang before the character drops. */
 const EDGE_MARGIN = 0.05;
@@ -246,37 +245,6 @@ const land = (ctx: SimContext, e: Entity, ground: number): void => {
   ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });
   // The player's landing is heard around (ADR-0069), from a jump or a drop past a step down.
   if (e.player && drop > SNAP_DOWN) hearNoise(ctx, at, NOISE_LANDING);
-};
-
-const slope = { x: 0, z: 0 };
-
-/** Rises by less than this per step do not count as climbing (rounding on the contour). */
-const RISE_EPS = 1e-3;
-
-/**
- * A step up terrain steeper than MAX_WALK_SLOPE is a wall (ADR-0043): the uphill part of the
- * move is dropped, so the character slides along the bank's contour; when even that climbs
- * steeply, it stays. Feet above the terrain there (a jump, a roof) are not stopped.
- */
-export const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: number, feet: number): { x: number; z: number } => {
-  // A bridge's deck high overhead is no bank for feet under it (G-062).
-  const reach = feet + STEP_HEIGHT;
-  const climb = field.heightAt(x, z, reach) - feet;
-  if (climb <= RISE_EPS || !field.steepAt(x, z, reach)) return { x, z };
-  // A bridge's deck a step or less over feet on the ground is a step up onto it, as onto a kerb
-  // (G-898): by its edge the slope over half a metre is the bank's beside it, on a strip narrower
-  // than the raster's cell, whose ways take the deck's height there. Not for feet falling off it.
-  if (climb <= STEP_HEIGHT && field.heightAt(from.x, from.z, reach) >= feet - RISE_EPS && field.onLowDeck(x, z, reach) && !field.onFlight(x, z)) return { x, z };
-  const g = field.gradientAt(x, z, slope, reach);
-  const len = Math.hypot(g.x, g.z);
-  const dx = x - from.x;
-  const dz = z - from.z;
-  const up = (dx * g.x + dz * g.z) / len;
-  const sx = from.x + dx - (g.x / len) * Math.max(0, up);
-  const sz = from.z + dz - (g.z / len) * Math.max(0, up);
-  const rise = field.heightAt(sx, sz, reach) - feet;
-  if (rise <= RISE_EPS || rise <= MAX_WALK_SLOPE * Math.hypot(sx - from.x, sz - from.z) || !field.steepAt(sx, sz, reach)) return { x: sx, z: sz };
-  return { x: from.x, z: from.z };
 };
 
 type Body = Entity & { body: NonNullable<Entity["body"]> };
