@@ -2490,7 +2490,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-911 Pościg Tessen: oddział w 0,2 s po wejściu w dzielnicę, bez znaku na HUD
 - Ważność: S3 · Zasięg: dzielnice w ciągu 3 dni po drodze głośnej W-3
 - Opis: Playtest 17.11: z flagą tessen-hunt oddział 2 strażników pojawił się 13 ticków po wejściu w Bramę Krakowską, 50 m od gracza, zaalarmowany (lastKnown = pozycja gracza). HUD nic nie pokazuje (heat 0, brak toastu). Bierny gracz ginie w ok. 30 s. Rozwiązanie: ostrzeżenie na HUD i zwłoka na pierwsze losowanie.
-- Status: zgłoszone
+- Status: w PR #671 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
@@ -2546,6 +2546,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
+
+### G-922 Oddział pościgu Tessen stoi przy wejściu i znika po ok. 20 s
+- Ważność: S3 · Zasięg: pościg Tessen po drodze głośnej W-3 (tessen-hunt)
+- Opis: Znalezione przy G-911 (17.11, sondy ziarna 1, 9, 42): oddział wchodzi 120-137 m od gracza, stoi prawie w miejscu i po ok. 20 s znika (wraca do domu, gdy zgubi Seki). W playteście (ten sam dzień) oddział z 50 m zabił biernego gracza w 30 s. Do ustalenia: czy trop (lastKnown) prowadzi oddział do gracza na każdej odległości z ADR-0082 (45-140 m), czy nawigacja/odległość wejścia gubi pościg; sprawdzić po scaleniu #671.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział pościgu z wejścia 45-140 m dochodzi do stojącego gracza w rozsądnym czasie (ziarna 1-5)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
