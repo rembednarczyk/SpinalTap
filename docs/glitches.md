@@ -2549,7 +2549,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-917 Hebi Enforcer strzela shotgunem poza zasięgiem 12 m i stoi na 15 m: elita nie zadaje obrażeń
 - Ważność: S3 · Zasięg: wariant armored zleceń Hebi (od 5. zlecenia), dowódca zleceniowy
 - Opis: Łowca 17.11 (origin/main e2f6330, sonda sim, Plac Litewski, ziarna 1-3, 30 s): hebi_enforcer alerted; na 12,5, 13 i 15 m 18-19 strzałów, 0 trafień; na 11 i 12 m 46-77 obrażeń. Wróg się nie zbliża. Przyczyna: attackRange w world/factory.ts:173 = meleeAttackRange(...) ?? 15 niezależnie od broni, raijin12 ma npc.range 12; GANGER_TREE strzela w attackRange i nie podchodzi do weapon.range. Inne typy mają zapas (Hebi SMG 18 przy 15, Tessen AR-5 30 przy 20). Rozwiązanie: attackRange = min(15, 0,9 × npc.range) albo pościg do npc.range.
-- Status: zgłoszone
+- Status: w PR #665 (17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: Enforcer na 13 m przy stojącym graczu zadaje obrażenia w 30 s (dziś 0 z 3 ziaren)
 
