@@ -1,10 +1,11 @@
-import { type Contract, type EntityId, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
+import { type Contract, type EntityId, contractAlarmFlag, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
 import { sabotageGoal, useSabotage } from "./sabotage-system";
+import { plantableStation } from "./sabotage-loud";
 
 import { callElevator } from "./elevator-system";
 import { forceDoor } from "./door-system";
@@ -29,8 +30,8 @@ const hackTerminal = (ctx: SimContext, terminal: Entity): Contract | null => {
 
 /**
  * Would the key do the running job's work with this now (G-910): take its crate, start its hack or
- * open the breach, the sabotage's steps? Such a goal in reach goes before a bag, a takedown or a
- * body nearer, so the dead of a fight by it do not take the key from the job.
+ * open the breach, the sabotage's steps? Such a goal, the nearest thing in reach besides bags, goes
+ * before the bags, so the dead of a fight by it do not take the key from the job.
  */
 const jobGoal = (ctx: SimContext, e: Entity): boolean => {
   const hack = hackTerminal(ctx, e);
@@ -96,22 +97,32 @@ const bodyAction = (session: SimContext["session"], bestDist: number): { id: Ent
   return pickingUp ? { id: body.id, prompt: CARRY_PROMPT } : null;
 };
 
+/**
+ * Does the job's goal go before a takedown or a body nearer too (G-910)? Only where the fight is on:
+ * a station of the loud way, or any goal once the job's alarm is up. Elsewhere, at the core's
+ * terminal of the silent way (3 m of reach to their 1.6 m), Seki must still grab a guard from
+ * behind or pick up a body by it, so the nearer of the two takes the key as before.
+ */
+const goalFirst = (ctx: SimContext, goal: Entity): boolean => {
+  const contract = ctx.state.domain.contracts.active;
+  return plantableStation(ctx, goal) !== null || (!!contract && ctx.state.domain.flags.includes(contractAlarmFlag(contract.id)));
+};
+
 /** Vertical reach of the interact key, metres between feet (or the button's base). */
 const INTERACT_REACH_Y = 1.6;
 
 type Interactable = Entity & { interactable: NonNullable<Entity["interactable"]> };
 
 /**
- * The nearest interactable in reach and the distance a takedown or a body must beat. With the
- * job's goal in reach the bags step aside, and when the goal is the nearest of the rest it beats
- * a takedown or a body too (G-910): the dead of a fight by a station do not take the key from it.
+ * The interactable chosen in reach and the distance a takedown or a body must beat. When the
+ * nearest of all but the bags is the job's goal, it is chosen and the bags step aside (G-910); a
+ * door or a man nearer than the goal leaves the nearest of all chosen, bags with it.
  */
 const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; bestDist: number } => {
   let best: Interactable | null = null;
   let bestDist = Infinity;
   let near: Interactable | null = null;
   let nearDist = Infinity;
-  let goal = false;
   for (const e of ctx.world.with("interactable")) {
     // On a ladder the only way off is up, down or a jump. Nobody talks to someone knocked out.
     if ((e.interactable.kind === "ladder" && player.climb) || e.unconscious) continue;
@@ -126,10 +137,9 @@ const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; 
       near = e;
       nearDist = d;
     }
-    goal ||= jobGoal(ctx, e);
   }
-  if (!goal || !near) return { best, bestDist };
-  return { best: near, bestDist: jobGoal(ctx, near) ? -Infinity : nearDist };
+  if (!near || !jobGoal(ctx, near)) return { best, bestDist };
+  return { best: near, bestDist: goalFirst(ctx, near) ? -Infinity : nearDist };
 };
 
 /**
@@ -137,7 +147,7 @@ const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; 
  * pickup is taken on the spot instead. A shop opens on any standing: a hostile owner charges
  * more and sells only the basics (ADR-0070). What an NPC on a daily plan offers can change with the hour
  * (see the schedule system). A takedown or a body (ADR-0065) nearer than anything else takes the
- * prompt, unless the job's goal is the nearest thing besides bags (G-910), and a carried body always does; the app answers its interact key with the `takedown`,
+ * prompt, unless the job's goal goes first (G-910), and a carried body always does; the app answers its interact key with the `takedown`,
  * `carry-body` or `drop-body` command, so the key does nothing here.
  */
 export const interactionSystem: System = {
