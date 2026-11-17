@@ -23,8 +23,9 @@ const entrance = (station: string, label: "A" | "B") => METRO_ENTRANCES.find((e)
  * Seconds an alerted brawler (or `kind`) at `from` takes to get within 2.5 m (and a metre of
  * height) of the player at `to`, or to hurt her (a gunner shoots from where it sees her), or null.
  * How far it went from `from` by then, and how much of it toward the player, is written into `track`.
+ * `stand` holds a gunner's sidestep off (ADR-0089 stage 3): it fires from where it stands.
  */
-const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi_brawler" | "hebi_ganger" = "hebi_brawler", seed = 3, track = { moved: 0, closer: 0 }): number | null => {
+const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi_brawler" | "hebi_ganger" = "hebi_brawler", seed = 3, track = { moved: 0, closer: 0 }, stand = false): number | null => {
   const sim = Simulation.create({ seed });
   teleportPlayer(sim, to);
   sim.step();
@@ -34,6 +35,7 @@ const chase = (from: Vec3, to: Vec3, chunk: string, seconds: number, kind: "hebi
   const health = p.health!.current;
   const g = gangerEntity(9001, { key: "g368-chaser", position: { ...from }, yaw: 0 }, null, 200, chunk, undefined, kind);
   g.ai!.alerted = true;
+  if (stand && g.ai!.burst) g.ai!.tactic = { shots: g.ai!.burst, side: 1, stride: 0, rest: Infinity };
   sim.world.add(g);
   for (let i = 0; i < 60 * seconds; i++) {
     sim.step();
@@ -80,13 +82,14 @@ describe("chasing the player through a metro entrance (G-368)", () => {
   // hit the street's old surface under the pavilion: a gunner half a metre out of the opening at
   // Alchemia did not see the player in the hall, and went in to the landing or waited for a shot.
   // Since ADR-0089 stage 2 a gunner closer than its band backs off a step while it shoots, so
-  // the test asks that it went no nearer the player, not that it stood still.
+  // the test asks that it went no nearer the player, not that it stood still; its sidestep
+  // (stage 3), which takes it off the opening's axis, is held off.
   it("a gunner half a metre out of the opening shoots the player in the hall from where it stands", () => {
     for (const e of [ALCHEMIA_B, entrance("shinsekai", "A")]) {
       for (const seed of [3, 5, 11]) {
         const track = { moved: 0, closer: 0 };
         const label = `${e.station} ${e.label} seed ${seed}`;
-        expect(chase(outside(e), e.hallSpot, e.chunk, 3, "hebi_ganger", seed, track), label).not.toBeNull();
+        expect(chase(outside(e), e.hallSpot, e.chunk, 3, "hebi_ganger", seed, track, true), label).not.toBeNull();
         expect(track.closer, label).toBeLessThan(0.2);
       }
     }

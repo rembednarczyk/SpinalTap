@@ -75,6 +75,8 @@ describe("loot fitted to the player's style in play (ADR-0059, stage 6)", () => 
   it("a player who shot down her enemy with the SMG finds more SMGs in the bags than one with no style", async () => {
     const shooter = await armed();
     const target = enemyAhead(shooter, 5, "first", "hebi_ganger");
+    // A target, not a fighter: it would step aside out of her line of fire (ADR-0089).
+    shooter.sim.world.removeComponent(target, "ai");
     for (let i = 0; i < 60 && shooter.sim.world.has(target); i++) shooter.step(frame({ fire: true }));
     expect(shooter.sim.world.has(target)).toBe(false);
     expect(shooter.sim.domain.progression.style).toEqual(["smg"]);

@@ -122,6 +122,12 @@ export const npcBand = (id: WeaponId): { readonly min: number; readonly max: num
   return def.npc?.band ?? null;
 };
 
+/** Shots of an NPC's burst with the weapon before it pauses (ADR-0089 stage 3), one without a burst. */
+export const npcBurst = (id: WeaponId): number => {
+  const def: WeaponDefinition = WEAPON_CATALOG[id];
+  return def.npc?.burst ?? 1;
+};
+
 /** Mods mounted on a weapon instance, as catalog ids. */
 export const mountedMods = (inv: InventoryState, uid: string): ModId[] => {
   const ids: ModId[] = [];

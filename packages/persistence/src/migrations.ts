@@ -412,6 +412,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v43 -> v44 (G-913): the player's step onto a ladder's rungs under way, optional. A v43 save
   // made in it loads hanging where she was, as before.
   43: (old) => ({ ...old, version: 44 }),
+  // v44 -> v45 (ADR-0089 stage 3): a gunner's burst and sidestep, optional. A v44 save has none:
+  // its gunners start a burst whole and stand a moment before their first sidestep.
+  44: (old) => ({ ...old, version: 45 }),
 };
 
 export class MigrationError extends Error {}

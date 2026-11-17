@@ -18,6 +18,7 @@ import {
   installMod,
   mountedMods,
   npcBand,
+  npcBurst,
   npcWeapon,
   outfitDefense,
   reloadPlan,
@@ -90,6 +91,11 @@ describe("effective weapon", () => {
     expect(npcBand("tessen_ar5")).toEqual({ min: 14, max: 24 });
     expect(npcBand("kagero_dmr")).toBeNull();
     expect(npcBand("oni44")).toBeNull();
+  });
+
+  it("an NPC gun fires in the bursts of ADR-0089 stage 3; a weapon without one fires single shots", () => {
+    expect([npcBurst("unity9"), npcBurst("hebi_smg"), npcBurst("raijin12"), npcBurst("tessen_ar5")]).toEqual([2, 4, 2, 3]);
+    expect(npcBurst("kagero_dmr")).toBe(1);
   });
 
   it("holsters in half the draw time; melee has no ammo", () => {

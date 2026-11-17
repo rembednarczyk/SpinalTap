@@ -47,10 +47,12 @@ describe("save and load with reinforcements stuck on each other (G-208)", () => 
   }
 
   it("a reinforcement getting unstuck is saved so, with its repath", () => {
-    // Since ADR-0069 they see her in a cone and after a moment: they jam each other later, on seed 5.
-    const sim = withReinforcements(5, 3, 700);
+    // Since ADR-0089 stage 3 those fighting her step aside round her and no longer jam: blinded
+    // as they come in (a quickhack, saved since v40), they walk to where she was seen and jam there.
+    const sim = withReinforcements(5, 3, 0);
     let snap: SaveSnapshot | null = null;
-    for (let i = 0; i < 10 * SIM_HZ && !snap; i++) {
+    for (let i = 0; i < 20 * SIM_HZ && !snap; i++) {
+      for (const e of sim.world.with("security")) if (!e.hackFx) sim.world.addComponent(e, "hackFx", { pinged: 0, blind: 1e5, crippled: 0 });
       sim.step();
       const s = sim.snapshot(null, "t", "");
       if (s.reinforcements?.people.some((p) => p.state.walk?.plan && p.state.walk.unstickUntil > s.tick)) snap = roundTrip(s);

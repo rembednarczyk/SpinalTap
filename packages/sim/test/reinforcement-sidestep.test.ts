@@ -16,7 +16,7 @@ const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s
 /** The snapshot as v40 wrote it, before G-883: the entities and reinforcements without their velocity, melee and stance. */
 const beforeV41 = (s: SaveSnapshot): SaveSnapshot => {
   const strip = (e: SaveSnapshot["entities"][number]) => {
-    const { velocity: _v, melee: _m, stance: _s, ...rest } = e;
+    const { velocity: _v, melee: _m, stance: _s, tactic: _t, ...rest } = e;
     return rest;
   };
   const r = s.reinforcements;
@@ -85,9 +85,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // Re-recorded for v43 (G-901, the last threat saved, none in these runs): only the version;
   // as v42 the runs hash to 3bb52ee5 and 107bf337. Re-recorded for v44 (G-913, the step onto a
   // ladder's rungs saved, none in these runs): only the version; as v43, 3a38e0b2 and dbf1b948.
+  // Re-recorded for v45 (ADR-0089 stage 3, a gunner's burst and sidestep saved; nobody fights in
+  // these runs): only the version; as v44, 9084e513 and c933ac09.
   for (const [seed, level, golden, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "9084e513", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
-    [5, 3, "c933ac09", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
+    [21, 2, "bd370660", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
+    [5, 3, "b5dbc2c2", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
