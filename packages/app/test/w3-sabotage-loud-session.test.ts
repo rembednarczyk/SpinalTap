@@ -127,10 +127,11 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(last(effects, "alarm-light").at(-1)?.active).toBe(true);
     expect(count("alarm")).toBe(1);
     knockOut(session, job.id);
-    // The siren wails while the alarm lasts and she is in the zone, a wail a period.
+    // The siren wails while the alarm lasts and she is in the zone, a wail a period: two in two,
+    // a frame drawn every step as in the game (the wail goes out with the HUD's frame).
     const wails = count("alarm-siren");
-    steps(session, Math.round(2 * SIREN_PERIOD * SIM_HZ) + 1);
-    expect(count("alarm-siren") - wails).toBeGreaterThanOrEqual(1);
+    for (let i = 0; i < 2 * Math.round(SIREN_PERIOD * SIM_HZ); i++) steps(session, 1);
+    expect(count("alarm-siren") - wails).toBe(2);
     expect(step(session)).toContain("Podłóż ładunki na stanowiskach linii (0/3");
     plant(session, job.id, "S1");
     expect(step(session)).toContain("(1/3");
