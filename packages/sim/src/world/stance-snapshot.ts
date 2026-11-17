@@ -1,10 +1,11 @@
-import type { EntitySnapshot, MeleeSnapshot, StanceSnapshot, Vec3 } from "@seki/core";
-import type { Entity, MeleeState } from "./components";
+import type { EntitySnapshot, LadderSettleSnapshot, MeleeSnapshot, StanceSnapshot, Vec3 } from "@seki/core";
+import type { Entity, LadderSettle, MeleeState } from "./components";
 
 /*
  * What a fight leaves between two steps (G-883, v41): velocities, blows in progress and the
- * player's posture, gun, time in the air and dash. A game saved mid-fight goes on as the one
- * saved from; at rest nothing of it is saved, so a calm save is as before.
+ * player's posture, gun, time in the air and dash, and her step onto a ladder's rungs (G-913,
+ * v44). A game saved mid-fight goes on as the one saved from; at rest nothing of it is saved, so
+ * a calm save is as before.
  */
 
 const moving = (v: Vec3 | undefined): v is Vec3 => !!v && (v.x !== 0 || v.y !== 0 || v.z !== 0);
@@ -28,6 +29,17 @@ const meleeSnapshotOf = (m: MeleeState): MeleeSnapshot => ({
   knock: m.knock.time === 0 ? { x: 0, z: 0, time: 0 } : { ...m.knock },
 });
 
+// Field by field: the save's order, whichever way the step onto the rungs was made.
+const ladderSettleOf = (ladder: string, s: LadderSettle): LadderSettleSnapshot => ({
+  ladder,
+  from: { ...s.from },
+  fromYaw: s.fromYaw,
+  y: s.y,
+  over: s.over,
+  duration: s.duration,
+  t: s.t,
+});
+
 /** The player's stance, or null for anyone else. */
 const stanceOf = (e: Entity): StanceSnapshot | null => {
   const { posture: p, combatant: c } = e;
@@ -46,6 +58,7 @@ const stanceOf = (e: Entity): StanceSnapshot | null => {
     ...(e.airPeak !== undefined ? { airPeak: e.airPeak } : {}),
     ...(e.landing !== undefined ? { landing: e.landing } : {}),
     ...(e.jump ? { jump: { ...e.jump } } : {}),
+    ...(e.climb?.settle ? { ladderSettle: ladderSettleOf(e.climb.ladder, e.climb.settle) } : {}),
   };
   return e.perks ? { ...s, perks: { ...e.perks, dashDir: { ...e.perks.dashDir } } } : s;
 };
@@ -72,4 +85,7 @@ export const applyMotion = (e: Entity, s: EntitySnapshot): void => {
   if (st.landing !== undefined) e.landing = st.landing;
   if (st.jump) e.jump = { ...st.jump };
   if (st.perks) e.perks = { ...st.perks, dashDir: { ...st.perks.dashDir } };
+  // The step onto the rungs goes on (G-913); a climb without it is taken up by the ladder system.
+  const ls = st.ladderSettle;
+  if (ls) e.climb = { ladder: ls.ladder, speed: 0, settle: { from: { ...ls.from }, fromYaw: ls.fromYaw, y: ls.y, over: ls.over, duration: ls.duration, t: ls.t } };
 };
