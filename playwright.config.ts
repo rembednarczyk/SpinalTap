@@ -5,14 +5,17 @@ const PORT = Number(process.env.E2E_PORT ?? 4173);
 
 /**
  * CI runs the specs in three groups of about equal time (ADR-0046; the job limit is 25 min).
- * Playwright's own `--shard` splits by test count, which put every slow spec in one shard. Two
- * groups were not enough on 15.11: with the FPP hands spec in group 1 it took 24.7 min (npr-perf,
- * smoke, gpu-queue, models, fpp-hands) against 14.7 in group 2, and the job ran out of time.
- * Group 1: npr-perf 9.0, gpu-queue 2.9, models 1.2 min. Group 2: smoke 5.6, fpp-hands 4.3-5.0 min.
- * Group 3 takes everything else (14.7 min), so a new spec always runs. Unset: all specs (local).
+ * Playwright's own `--shard` splits by test count, which put every slow spec in one shard.
+ * Six green runs of main on 17.11 (minutes, fastest-slowest runner; runners differ up to 1.8x):
+ * group 1 npr-perf 9.2-12.7, gpu-queue 2.2-3.4, models 0.9-1.5, together 12.4-17.6; group 2
+ * smoke 4.2-7.7, fpp-hands 3.3-6.0, together 7.5-13.6; group 3 13.8-23.5, and 24.5 on #663, where
+ * the job ran out of time: touch-layout 3.5-6.7, ui-scale 3.4-4.7, graphics-toggles 1.9-3.8,
+ * wait-window 1.4-2.8, touch 1.5-2.6, dialogue-fit 0.9-1.8, hud-layout 0.6-0.9. Since 17.11
+ * ui-scale runs in group 2: the slowest runner then takes 17.6, 18.4 and 18.8 min, a median one
+ * about 15. Group 3 takes everything else, so a new spec always runs. Unset: all specs (local).
  */
 const GROUP_ONE = /(npr-perf|gpu-queue|models)\.spec\.ts$/;
-const GROUP_TWO = /(smoke|fpp-hands)\.spec\.ts$/;
+const GROUP_TWO = /(smoke|fpp-hands|ui-scale)\.spec\.ts$/;
 const group = process.env.E2E_GROUP;
 const groups = group === "1" ? { testMatch: GROUP_ONE } : group === "2" ? { testMatch: GROUP_TWO } : group === "3" ? { testIgnore: [GROUP_ONE, GROUP_TWO] } : {};
 
