@@ -2482,13 +2482,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 
-### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
-- Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
-- Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
-- Status: w PR #695 (gałąź ccr-ec2c4269-ilh8k8-g912); wcześniej: zgłoszone
-- Pakiet właściciela: packages/narrative
-- Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
-
 ### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
 - Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
 - Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
@@ -2498,7 +2491,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
 - Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
 - Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
-- Status: zgłoszone
+- Status: w naprawie (orkiestrator): decyzja użytkownika 17.11, łup z nieprzytomnego; torba ogłuszonego 0,8 m za ciałem, bez drugiej przy śmierci; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją

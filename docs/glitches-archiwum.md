@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
+- Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
+- Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
+- Status: naprawione (17.11, #695 scalony); wcześniej: w PR #695 (gałąź ccr-ec2c4269-ilh8k8-g912); wcześniej: zgłoszone
+- Pakiet właściciela: packages/narrative
+- Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
+
 ### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
 - Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
 - Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
