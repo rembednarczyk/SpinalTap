@@ -2596,15 +2596,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: zapis po końcu pościgu z żywym oddziałem: ten sam hash krok po kroku po wczytaniu
 
-### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
-- Ważność: S4 · Zasięg: pościg Tessen
-- Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
-- Status: w PR #686 (gałąź ccr-ec2c4269-ilh8k8-g934, a813f9b), w weryfikacji; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g934); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
-- 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
-- 17.11 weryfikacja #682: to samo dotyczy flagi w drodze tessen-hunt-squad: gdy Seki jest tam, gdzie nie ma wejścia (np. klinika, wejścia bliżej niż 60 m wykluczone), gałąź due wraca bez zdjęcia flagi i flaga wisi do wyjścia albo końca pościgu. #682 ogranicza tylko blokadę czekania (do ticku przyjścia + zapas), reguła sim zostaje do tej poprawki.
-
 ### G-935 Patrol z trasą po tropie na innym poziomie nie wraca na trasę
 - Ważność: S3 · Zasięg: patrole z ai.route na piętrach (W-3: P2 i kierownik zmiany na antresoli)
 - Opis: Znalezione przy weryfikacji G-929: HoldPosition wraca przez walk.walkTo(pose.position) (ganger-ai-system.ts:163), a walkTo (ganger-walk.ts:165) chodzi tylko po swoim poziomie. P2 po tropie do (2522; 416) ląduje na parterze pod galerią (2547,3; 433,5) i tam zostaje. Także: trop na antresoli nad halą (nieosiągalny) zostawia P2 przy oknie galerii (z 430,7).
@@ -2618,6 +2609,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
+
+### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
+- Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
+- Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział porzucony po 20 s: następne losowanie w tym samym odcinku z nowym toastem 20-40 s przed wejściem
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

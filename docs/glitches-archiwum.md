@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
+- Ważność: S4 · Zasięg: pościg Tessen
+- Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
+- Status: naprawione (17.11, #686 scalony); wcześniej: w PR #686 (gałąź ccr-ec2c4269-ilh8k8-g934, a813f9b), w weryfikacji; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g934); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
+- 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
+- 17.11 weryfikacja #682: to samo dotyczy flagi w drodze tessen-hunt-squad: gdy Seki jest tam, gdzie nie ma wejścia (np. klinika, wejścia bliżej niż 60 m wykluczone), gałąź due wraca bez zdjęcia flagi i flaga wisi do wyjścia albo końca pościgu. #682 ogranicza tylko blokadę czekania (do ticku przyjścia + zapas), reguła sim zostaje do tej poprawki.
+
 ### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
 - Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
 - Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
