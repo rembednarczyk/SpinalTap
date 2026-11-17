@@ -135,6 +135,7 @@ export class HudSync implements ContractIntents {
       alias: sim.domain.character.alias,
       questTitle: title,
       objective,
+      objectiveKind: mapFocus(sim.domain),
       cameraMode: sim.domain.preferences.cameraMode,
       memories: sim.domain.character.memories,
       medkits: sim.domain.inventory.stacks.medkit ?? 0,

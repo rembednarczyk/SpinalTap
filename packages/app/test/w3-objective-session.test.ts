@@ -38,6 +38,7 @@ const expectJobOnHud = (session: GameSession, ui: Ui, id: string) => {
   expect(objective(ui)).toBe(jobLine(session));
   expect(objective(ui)).toContain("calibration core");
   expect(ui.getState().contractBonus?.label).toBe("contract.bonus.sabotage");
+  expect(ui.getState().objectiveKind).toBe("contract");
 };
 
 describe("W-3 on the HUD while the main thread runs (G-905)", () => {
@@ -65,6 +66,8 @@ describe("W-3 on the HUD while the main thread runs (G-905)", () => {
     session.sim.enqueue({ type: "track-quest", questId: main.quest.id });
     steps(session, 1);
     expect(ui.getState().questTitle).toBe(mainTitle);
+    // The job's bonus does not stand under the main thread's step (G-919).
+    expect(ui.getState().objectiveKind).toBe("story");
     session.sim.enqueue({ type: "track-quest", questId: null });
     steps(session, 1);
     expectJobOnHud(session, ui, job.id);

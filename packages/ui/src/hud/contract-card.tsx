@@ -131,13 +131,17 @@ export const DebriefCard = () => {
   );
 };
 
-/** The condition bonus next to the objective: kept (✓) or lost for good (✗, struck through). */
+/**
+ * The condition bonus next to the objective: kept (✓) or lost for good (✗, struck through). Only
+ * under the contract's own step, not under a story entry the HUD shows meanwhile (G-919).
+ */
 export const BonusIndicator = () => {
   const bonus = useUi((s) => s.contractBonus);
+  const kind = useUi((s) => s.objectiveKind);
   const t = useT();
   const tx = useText();
   const locale = useLocale();
-  if (!bonus) return null;
+  if (!bonus || kind === "story") return null;
   return (
     <div className={`hud__bonus${bonus.kept ? "" : " hud__bonus--lost"}`} data-testid="contract-bonus" aria-label={t(bonus.kept ? "debrief.bonusKept" : "debrief.bonusLost")}>
       <BadgeIcon badge={bonus.badge} />
