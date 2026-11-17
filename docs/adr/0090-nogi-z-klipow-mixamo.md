@@ -1,6 +1,6 @@
 # ADR-0090: Nogi z klipów Mixamo (chód, bieg i kucanie we wszystkie strony)
 
-Status: Proponowany (17.11), do akceptacji wyglądu przez użytkownika. Dotyczy ADR-0076 (modele postaci i `HumanoidRetarget`), ADR-0089 (krok w bok strzelców), pozycji backlogu „Animacje ruchu” (12.11) i listy `docs/animacje-mixamo.md`.
+Status: Przyjęty (17.11, wygląd zaakceptowany przez użytkownika na zrzutach). Dotyczy ADR-0076 (modele postaci i `HumanoidRetarget`), ADR-0089 (krok w bok strzelców), pozycji backlogu „Animacje ruchu” (12.11) i listy `docs/animacje-mixamo.md`.
 
 ## Kontekst
 - Ruch postaci liczy proceduralny rig (`character-animation.ts`): biodra i kolana kołyszą się w przód i w tył, bez względu na kierunek ruchu. Wróg z ADR-0089, który idzie bokiem wokół gracza, i gracz idący w bok przesuwają się więc z nogami chodzącymi przodem („ślizg”), a w kucki postać prawie nie przestawia nóg (zgłoszenie użytkownika 12.11).
