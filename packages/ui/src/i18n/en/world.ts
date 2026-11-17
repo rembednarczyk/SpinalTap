@@ -186,6 +186,11 @@ export const enWorld = {
   "world.hebiLetPass": "The gangers let you pass",
   "world.fleeing": "Passers-by run away",
   "world.afraid": "{faction} are afraid of you",
+  // A gunner's call in a fight (ADR-0089 stage 6).
+  "world.bark.reload.hebi": "“Empty! Cover me, I'm loading!”",
+  "world.bark.reload.drill": "“Reloading. Cover.”",
+  "world.bark.flank.hebi": "“Get round her, go!”",
+  "world.bark.flank.drill": "“Moving to flank.”",
   "world.timeSkipped": "Time passes: {clock}",
   "world.later": "{hours} h {minutes} min later",
   // The scanner.
