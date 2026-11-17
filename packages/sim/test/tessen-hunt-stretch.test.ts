@@ -143,3 +143,17 @@ describe("the hunt's flags of a squad are its stretch's (G-934)", () => {
     expect(stateHash(loaded.snapshot(null, "t", ""))).toBe(stateHash(sim.snapshot(null, "t", "")));
   });
 });
+
+describe("a squad's flag that does not read (G-923)", () => {
+  it("one of a broken save (no tick) holds no roll back: it goes, and the next roll warns her", () => {
+    const sim = hunted(7, "tessen-hunt-squad:2@abc");
+    expect(tessenSquadDue(sim.domain.flags)?.tick).toBeNaN();
+    teleportPlayer(sim, RYNEK, 0);
+    run(sim, 2 * SIM_HZ);
+    expect(sim.domain.flags).not.toContain("tessen-hunt-squad:2@abc");
+    // The roll of the stretch comes as without it: a squad on its way, with its tick.
+    const due = tessenSquadDue(sim.domain.flags);
+    expect(sim.domain.flags.some(isTessenHuntRollFlag)).toBe(true);
+    expect(Number.isFinite(due?.tick ?? Number.NaN)).toBe(true);
+  });
+});
