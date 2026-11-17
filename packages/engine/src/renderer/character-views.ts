@@ -1,3 +1,4 @@
+import { poseLegsFromClips } from "./clips/leg-pose";
 import type { AbstractMesh, Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
@@ -265,6 +266,8 @@ export class CharacterViews implements FxActors {
       const climb = t.climb !== undefined ? { climb: t.climb, rungs: this.deps.rungs?.(t.position.x, t.position.y, t.position.z) ?? null } : {};
       const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...climb, clock };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
+      // The legs from the locomotion clips, by the way it moves against its facing (ADR-0090).
+      poseLegsFromClips(v.rig, t.position, t.speed, dt, t.crouch ?? 0);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
       animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
       animateGrab(v.rig, dt, t, id === followed ? "holder" : "held");

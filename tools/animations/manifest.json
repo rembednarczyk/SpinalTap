@@ -1,0 +1,24 @@
+{
+  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others.",
+  "clips": {
+    "walk": "Female Locomotion Pack/walking.fbx",
+    "walkLeft": "Female Locomotion Pack/left strafe walk.fbx",
+    "walkRight": "Female Locomotion Pack/right strafe walk.fbx",
+    "walkBack": "Basic Shooter Pack/walking backwards.fbx",
+    "run": "Female Locomotion Pack/running.fbx",
+    "runLeft": "Female Locomotion Pack/left strafe.fbx",
+    "runRight": "Female Locomotion Pack/right strafe.fbx",
+    "runBack": "Pistol_Handgun Locomotion Pack/pistol run backward.fbx",
+    "crouch": "rifle/Walk Crouching Forward.fbx",
+    "crouchRight": "rifle/Walk Crouching Right.fbx",
+    "crouchLeft": {
+      "file": "rifle/Walk Crouching Right.fbx",
+      "mirror": true
+    },
+    "crouchBackRight": "rifle/Walk Crouching Backward Right.fbx",
+    "crouchBackLeft": {
+      "file": "rifle/Walk Crouching Backward Right.fbx",
+      "mirror": true
+    }
+  }
+}
