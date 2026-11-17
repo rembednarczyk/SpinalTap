@@ -2473,8 +2473,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
 - Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
 - Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.
-- Status: zgłoszone
+- Status: nie potwierdzone (artefakt sondy, 17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, W-3)
+- 17.11 (orkiestrator, tryb bez agentów): w grze się nie odtwarza. Skok jest tylko wtedy, gdy gracz zostaje postawiony na stojąco w kolektorze przy x 2474-2476 (teleport sondy; tam nad stropem leży pokład 5 z BRIDGE_DECKS nabrzeze-0-1). Gra tego nie daje: do kolektora wchodzi się w kucki (W3_CULVERT_ENTRY), pod stropem nie da się wstać (puszczone kucanie zostawia crouched), chód w kucki i na stojąco przez x 2481-2468 przy z 406,6/407,2/407,8 trzyma podłogę −30,2 (u wylotu −30,05), a zapis i wczytanie w x 2472,5-2477 zostawiają ją na −30,2 w kucki. Sondy: g904.test.ts, g904b, g904c (usunięte po pomiarze).
 
 ### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
 - Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
