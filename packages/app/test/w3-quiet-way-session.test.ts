@@ -188,15 +188,24 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     walkTo(session, [{ x: 2518, z: MOUTH.z }, { x: W3_LOCKER_14.x, z: W3_LOCKER_14.z - 0.6 }]);
     changeAtLocker(session, ui);
     const route = ["w3-cellar-mid", "w3-cellar-w", "w3-cellar-a", "w3-stair-a-top", "w3-parts-line-door"];
-    walkTo(session, route.map(node));
+    // The cellar and stair A walked once (the first case); timed into his halt she starts at the door (ADR-0083).
+    if (seen) {
+      const door = node("w3-parts-line-door");
+      teleport(session, door.x, door.z, 0, 0, door.y);
+      steps(session, 2);
+    } else walkTo(session, route.map(node));
     waitForManager(session, job, stop);
     steps(session, wait * SIM_HZ);
     const blownBy: number[] = [];
     session.bus.on("DisguiseBlown", (e) => blownBy.push(e.observerId));
-    walkTo(session, [`w3-cs-${W3_LAYOUT.DOORS_S.line}`, `w3-cs-${W3_LAYOUT.HALL_DOORS[0]}`, "w3-hall-sw", "w3-aisle-w", "w3-aisle-mid", "w3-aisle-e", "w3-hall-ne"].map(node));
-    walkTo(session, [node(`w3-cn-${W3_LAYOUT.HALL_DOORS[1]}`)]);
-    expect(session.sim.player()!.position.z).toBeGreaterThan(430);
+    const hall = [`w3-cs-${W3_LAYOUT.DOORS_S.line}`, `w3-cs-${W3_LAYOUT.HALL_DOORS[0]}`, "w3-hall-sw", "w3-aisle-w", "w3-aisle-mid", "w3-aisle-e"];
+    walkTo(session, hall.map(node));
     const manager = managerOf(session, job);
+    // Timed into his halt she is known by the aisle's east end; the rest of the way is not walked.
+    if (!seen) {
+      walkTo(session, ["w3-hall-ne", `w3-cn-${W3_LAYOUT.HALL_DOORS[1]}`].map(node));
+      expect(session.sim.player()!.position.z).toBeGreaterThan(430);
+    }
     if (seen) {
       expect(blownBy).toEqual([manager.id]);
       expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: true });
@@ -309,7 +318,7 @@ describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises
     expect(alarmWithin(session, job, 3)).not.toBeNull();
   });
 
-  it("a lead in the hall below does not take him down: Tessen sent to (2522; 416), he is on his round 60 s on, and the aisle holds", () => {
+  it("a lead in the hall below does not take him down: Tessen sent to (2522; 416), he is back on his round, and the aisle holds", () => {
     const { session, job } = disguised();
     const m = managerOf(session, job);
     // As the security sent to a reported body (`sendSecurity`): every calm Tessen within 50 m gets the lead.
@@ -317,10 +326,19 @@ describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises
     for (const g of session.sim.world.with("ai")) {
       if (g.faction === "tessen" && !g.ai.alerted && Math.hypot(g.position.x - lead.x, g.position.z - lead.z) <= 50) Object.assign(g.ai, { lastKnown: { ...lead }, search: 0 });
     }
-    steps(session, 60 * SIM_HZ);
-    expect(m.position.y).toBeCloseTo(GALLERY.y, 1);
-    const pose = routePose(m.ai!.route!, session.sim.tick / SIM_HZ).position;
-    expect(Math.hypot(m.position.x - pose.x, m.position.z - pose.z)).toBeLessThan(1.5);
+    // Stepped until he is back on his round with no lead (at most 60 s; the look round is 6 s).
+    const offRound = () => {
+      const pose = routePose(m.ai!.route!, session.sim.tick / SIM_HZ).position;
+      return Math.hypot(m.position.x - pose.x, m.position.z - pose.z);
+    };
+    let lowest = Infinity;
+    for (let i = 0; i < 60 * SIM_HZ && (i < SIM_HZ || m.ai?.lastKnown || offRound() >= 1.5); i++) {
+      session.step(frame());
+      lowest = Math.min(lowest, m.position.y);
+    }
+    expect(lowest).toBeCloseTo(GALLERY.y, 1);
+    expect(m.ai?.lastKnown ?? null).toBeNull();
+    expect(offRound()).toBeLessThan(1.5);
     // Off his window's halt she stands in the aisle by the lead's spot as long as she likes.
     waitForManager(session, job, AWAY_FROM_WINDOW);
     const aisle = node("w3-aisle-mid");
