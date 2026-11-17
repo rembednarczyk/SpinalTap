@@ -21,7 +21,7 @@ import { completeContract } from "../world/contract-commands";
 import { BREACH_DAEMONS } from "../world/street";
 import { raiseAlarm } from "./contract-system";
 import { lockdown } from "./door-system";
-import { chooseLoud, runLoud, startPlanting, takeCharges } from "./sabotage-loud";
+import { chargesToTake, chooseLoud, plantableStation, runLoud, startPlanting, takeCharges } from "./sabotage-loud";
 import { watchStaff } from "./sabotage-witness";
 
 /**
@@ -135,13 +135,30 @@ export const runSabotage = (ctx: SimContext, contract: Contract): void => {
   if (p && !ctx.session.gameOver && !inW3Zone(p.position.x, p.position.z)) leave(ctx, now);
 };
 
+/** The running sabotage when this is its core's terminal, open to the virus: no lockdown, the loud way not chosen. */
+const openCore = (ctx: SimContext, terminal: Entity): Contract | null => {
+  const contract = ctx.state.domain.contracts.active;
+  if (contract?.status !== "active" || contractKind(contract) !== "sabotage" || terminal.key !== contractVirusKey(contract.id) || lockdown(ctx) || contract.route === "loud") return null;
+  return contract;
+};
+
+/**
+ * Would the key do the sabotage's work here now (G-910): start the upload or open its breach, take
+ * the charges, plant one? A terminal or a spot with nothing left to do is no goal.
+ */
+export const sabotageGoal = (ctx: SimContext, e: Entity): boolean => {
+  const core = openCore(ctx, e);
+  if (core) return core.progress === undefined || (!core.breach && !virusUploaded(core, Math.round(1 / ctx.dt)));
+  return chargesToTake(ctx, e) || plantableStation(ctx, e) !== null;
+};
+
 /**
  * The core's terminal of the running sabotage: the key starts the upload (the silent way, ADR-0082)
  * and opens Breach Protocol until one lands (ICEpick shortens the upload). Refused in a lockdown.
  */
 const startUpload = (ctx: SimContext, terminal: Entity): void => {
-  const contract = ctx.state.domain.contracts.active;
-  if (contract?.status !== "active" || contractKind(contract) !== "sabotage" || terminal.key !== contractVirusKey(contract.id) || lockdown(ctx) || contract.route === "loud") return;
+  const contract = openCore(ctx, terminal);
+  if (!contract || !terminal.key) return;
   if (!contract.breach && !virusUploaded(contract, Math.round(1 / ctx.dt))) ctx.bus.emit("BreachStarted", { terminalKey: terminal.key, daemons: BREACH_DAEMONS });
   if (contract.progress !== undefined) return;
   const quiet: Contract = { ...contract, route: "quiet", progress: 0 };
