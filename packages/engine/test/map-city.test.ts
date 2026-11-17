@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { ViewDescriptor } from "@seki/core";
-import { LUBLIN_CHUNKS, buildingView, groundView, terrainView } from "@seki/sim/lublin";
+import { LUBLIN_CHUNKS, type LublinChunkData, buildingView, groundView, terrainView } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -189,10 +189,16 @@ describe("map city batches (ADR-0044)", () => {
     expect(city.meshes.some((m) => m.name.startsWith("map-ground"))).toBe(true);
   });
 
-  it("builds the whole generated Lublin with near detail around Plac Litewski and far blocks beyond", () => {
+  // The generated Lublin in two parts, each a test of its own: the whole city in one test took
+  // 15-16 s of the 20 s limit on slow CI runners (ADR-0083), 95% of it the ground of every cell.
+  // One part is Krakowskie Przedmieście round Plac Litewski with Nabrzeże (1.7 km east, touching no
+  // other district), the other Stare Miasto with Podzamcze: about 50% and 37% of the whole city's time.
+  const firstPart = (c: LublinChunkData) => c.district === "shinsekai-7" || c.district === "doki";
+  const resident = new Map<string, number>();
+  const buildPart = (part: string, chunks: readonly LublinChunkData[]) => {
     const city = makeCity();
     let id = 1;
-    for (const c of LUBLIN_CHUNKS) {
+    for (const c of chunks) {
       city.spawn(id++, terrainView(c) as MapView, { x: 0, y: 0, z: 0 });
       for (const b of c.buildings) city.spawn(id++, buildingView(b) as MapView, { x: b.x, y: b.y, z: b.z });
       for (const g of c.ground) city.spawn(id++, groundView(g) as MapView, { x: 0, y: 0, z: 0 });
@@ -200,12 +206,31 @@ describe("map city batches (ADR-0044)", () => {
     city.flush();
     for (let k = 0; k < 20; k++) city.update(1 / 60, { x: 0, y: 2, z: 0 }, false);
     const s = city.stats;
-    expect(s.buildings).toBe(LUBLIN_CHUNKS.reduce((n, c) => n + c.buildings.length, 0));
-    expect(city.lodAt(0, 0)).toBe("near");
-    expect(s.near).toBeGreaterThan(0);
+    expect(s.buildings).toBe(chunks.reduce((n, c) => n + c.buildings.length, 0));
     expect(s.far).toBeGreaterThan(0);
-    // Everything resident at once stays under the target device's budget (ADR-0079: 2.5 million).
-    expect(s.vertices).toBeLessThan(2_500_000);
+    // Everything resident at once stays under the target device's budget (ADR-0079: 2.5 million),
+    // checked by whichever part is built second. The parts' sum is an upper bound of the whole city's
+    // (17.11: 1 107 751 against 1 107 367, compared cell by cell): built apart, each part has the 32
+    // rows of the names atlas to itself and draws plaques the whole city has no room for (+360), and
+    // keeps the walls a building of the other part hides along their seam at x 460 (+24); the ground
+    // on both sides of that seam comes out the same. Cut between Stare Miasto and Podzamcze, the
+    // ground there drew less (-47: its pieces read the other part's roads and surfaces), so that
+    // seam stays inside one part.
+    resident.set(part, s.vertices);
+    if (resident.size === 2) expect([...resident.values()].reduce((a, b) => a + b, 0)).toBeLessThan(2_500_000);
+    return city;
+  };
+
+  it("builds Krakowskie Przedmieście and Nabrzeże of the generated Lublin with near detail around Plac Litewski and far blocks beyond", () => {
+    const city = buildPart("first", LUBLIN_CHUNKS.filter(firstPart));
+    expect(city.lodAt(0, 0)).toBe("near");
+    expect(city.stats.near).toBeGreaterThan(0);
+  });
+
+  it("builds the rest of the generated Lublin (Stare Miasto, Podzamcze) as far blocks", () => {
+    const rest = LUBLIN_CHUNKS.filter((c) => !firstPart(c));
+    expect(rest.length).toBeGreaterThan(0);
+    buildPart("rest", rest);
   });
 
   it("takes a church's towers away while a part from the map stands on it, in whatever cell (G-057)", () => {
