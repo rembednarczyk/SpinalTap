@@ -9,7 +9,7 @@ import { inCreationOrder } from "../world/ordering";
 import { solidIndexOf } from "../world/solid-index";
 import { worldTimeScale } from "./ability-system";
 import { NOISE_LANDING, hearNoise } from "./ai/ganger-hearing";
-import { offTheBank } from "./bank";
+import { offTheBank, ontoDeckSide } from "./bank";
 import { SNAP_DOWN, STEP_HEIGHT } from "./step";
 
 const ITERATIONS = 2;
@@ -348,8 +348,11 @@ const moveAcross = (
         return null;
       }
     }
+    const [bx, bz] = [x, z];
     ({ x, z } = pushOut(solids, field, bodies, e, x, z, feet, reach));
     if (Number.isNaN(x)) return FAR;
+    // Pushed out of a solid onto a bridge's deck more than a step up, past its side (G-903): she stays.
+    if (field.hasTerrain && (x !== bx || z !== bz) && ontoDeckSide(field, e.position, x, z, feet)) [x, z] = [e.position.x, e.position.z];
   }
   // The edge of the world is a wall: a jump over a parapet or an outer wall never lands
   // outside every district (the street plane y = 0 runs on beyond them).
