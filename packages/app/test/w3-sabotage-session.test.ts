@@ -13,7 +13,7 @@ import type { GameSession } from "../src/game-session";
  */
 
 const ui = (u: ReturnType<typeof setup>["ui"]) => u.getState();
-/** The running job's step as the HUD writes it in Polish (the main thread holds the HUD's line here). */
+/** The running job's step as the HUD writes it in Polish. */
 const step = (session: GameSession): string => {
   const c = session.sim.domain.contracts.active;
   return c ? translateText("pl", contractObjective(c, contractSecondsLeft(c, session.sim.tick, SIM_HZ))) : "";
