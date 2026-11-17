@@ -287,6 +287,4 @@ export const plTrade = {
   "loot.toast": "Łup",
   "loot.full": "Plecak pełny",
   "loot.fullText": "Zrób miejsce, zanim weźmiesz więcej.",
-  "loot.expired": "Torba przepadła",
-  "loot.expiredText": "Ktoś był szybszy.",
 } as const satisfies Readonly<Record<TradeKey, Message>>;
