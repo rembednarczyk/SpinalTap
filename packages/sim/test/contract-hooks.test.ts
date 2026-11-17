@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTRACT_KIND_IDS, type Contract, type SaveSnapshot, type Vec3, SECONDS_PER_HOUR } from "@seki/core";
-import { CONTRACT_HOOKS, Simulation, ground, hooksOfKind, stateHash } from "../src";
+import { CONTRACT_HOOKS, SIM_HZ, Simulation, ground, hooksOfKind, stateHash } from "../src";
 import { hookTerminalKey, offPostFlag } from "../src/world/contract-plan";
 import { lineOfSight } from "../src/world/hitscan";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
@@ -65,6 +65,22 @@ describe("finding hooks (ADR-0034)", () => {
     const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
     expect(loaded.domain.contracts.hooks).toEqual(["hook_retrieve_1"]);
     expect(stateHash(loaded.snapshot(null, "t", ""))).toBe(stateHash(sim.snapshot(null, "t", "")));
+  });
+
+  it("a guard knocked out says nothing: no bark, no hook, by him as close (G-936)", () => {
+    const sim = withJob(stash, ground(438, 70));
+    const barks = collect<{ knot: string }>(sim, "GuardBark");
+    run(sim, 5);
+    const g0 = byKey(sim, "c3-g0")!;
+    sim.world.addComponent(g0, "unconscious", true);
+    teleportPlayer(sim, { x: g0.position.x - 3, y: g0.position.y, z: g0.position.z });
+    run(sim, 3 * SIM_HZ);
+    expect(barks).toEqual([]);
+    expect(sim.domain.contracts.hooks ?? []).not.toContain("hook_retrieve_1");
+    // Come to, he talks again.
+    sim.world.removeComponent(g0, "unconscious");
+    run(sim, 3);
+    expect(barks.map((b) => b.knot)).toEqual(["hook_retrieve_1"]);
   });
 
   it("the rotation gap takes the guard off his post in its window", () => {
