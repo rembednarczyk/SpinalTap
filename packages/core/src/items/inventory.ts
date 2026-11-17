@@ -92,6 +92,9 @@ export const stackCount = (inv: InventoryState, id: StackableId): number => inv.
 /** A story item into the bag (it takes no cell), once. */
 export const addKeyItem = (inv: InventoryState, id: string): InventoryState => (inv.keyItems.includes(id) ? inv : { ...inv, keyItems: [...inv.keyItems, id] });
 
+/** The catalog key of a story item's name (ADR-0056: core holds the key, the app's catalog the words). */
+export const keyItemName = (id: string): string => `item.${id}.name`;
+
 /** A story item out of the bag, if it is there. */
 export const removeKeyItem = (inv: InventoryState, id: string): InventoryState => (inv.keyItems.includes(id) ? { ...inv, keyItems: inv.keyItems.filter((k) => k !== id) } : inv);
 
