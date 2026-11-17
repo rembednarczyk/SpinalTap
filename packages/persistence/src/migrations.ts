@@ -418,6 +418,27 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v45 -> v46 (ADR-0089 stage 4): a gunner's attack token, optional. A v45 save has none: its
   // gunners take the tokens again in the first step after the load.
   45: (old) => ({ ...old, version: 46 }),
+  // v46 -> v47 (ADR-0089 stage 5): the difficulty's `npcPressure`. A profile that is one of the
+  // presets gets its preset's (Story 0.6, Hard 1.5: a Hard game stays Hard), any other 1, the
+  // pressure every game had before; the profile waiting for a fight's end too.
+  46: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const pending = isObject(old.pendingDifficulty) ? { pendingDifficulty: withPressure(old.pendingDifficulty) } : {};
+    const difficulty = isObject(domain.difficulty) ? { difficulty: withPressure(domain.difficulty) } : {};
+    return { ...old, version: 47, ...pending, domain: { ...domain, ...difficulty } };
+  },
+};
+
+/** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */
+const V46_PRESSURES: readonly (readonly [Readonly<Record<string, number>>, number])[] = [
+  [{ damageTaken: 0.5, npcAccuracy: 0.6, awareness: 0.6, reinforce: 0.5, npcHealth: 0.8, snipeTell: 1.6 }, 0.6],
+  [{ damageTaken: 1.4, npcAccuracy: 1.25, awareness: 1.3, reinforce: 1.5, npcHealth: 1.2, snipeTell: 0.8 }, 1.5],
+];
+
+/** A v46 difficulty profile with its v47 `npcPressure`: its preset's, else 1. */
+const withPressure = (p: Json): Json => {
+  const preset = V46_PRESSURES.find(([fields]) => Object.entries(fields).every(([k, v]) => p[k] === v));
+  return { ...p, npcPressure: preset?.[1] ?? 1 };
 };
 
 export class MigrationError extends Error {}

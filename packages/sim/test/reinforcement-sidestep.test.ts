@@ -21,7 +21,9 @@ const beforeV41 = (s: SaveSnapshot): SaveSnapshot => {
   };
   const r = s.reinforcements;
   const reinforcements = r ? { reinforcements: { ...r, people: r.people.map((p) => ({ ...p, state: strip(p.state) })) } } : {};
-  return { ...s, entities: s.entities.map(strip), ...reinforcements } as unknown as SaveSnapshot;
+  // The difficulty's pressure came with v47 (ADR-0089 stage 5).
+  const { npcPressure: _p, ...difficulty } = s.domain.difficulty;
+  return { ...s, entities: s.entities.map(strip), ...reinforcements, domain: { ...s.domain, difficulty } } as unknown as SaveSnapshot;
 };
 
 /** The snapshot as v30 wrote it, before the style and bad luck (ADR-0059, stage 6): the progression without them. */
@@ -88,9 +90,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // Re-recorded for v45 (ADR-0089 stage 3, a gunner's burst and sidestep saved; nobody fights in
   // these runs): only the version; as v44, 9084e513 and c933ac09. Re-recorded for v46 (ADR-0089
   // stage 4, the attack token saved; nobody fights here): only the version; as v45, bd370660 and b5dbc2c2.
+  // Re-recorded for v47 (ADR-0089 stage 5): the version and the difficulty's pressure (1 on
+  // Normal) in the profile; the older versions' hashes, without it, stay as they were.
   for (const [seed, level, golden, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "3a470981", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
-    [5, 3, "11e285ab", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
+    [21, 2, "ad8de249", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
+    [5, 3, "693cdbab", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);

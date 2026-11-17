@@ -16,19 +16,24 @@ export interface DifficultyProfile {
   readonly npcHealth: number;
   /** How long a sniper's laser warns before the shot. */
   readonly snipeTell: number;
+  /**
+   * How hard enemies press a fight (ADR-0089 stage 5): how many fire at once, how short their
+   * pauses after a burst and how often they step aside.
+   */
+  readonly npcPressure: number;
 }
 
 export type DifficultyField = keyof DifficultyProfile;
 
-export const DIFFICULTY_FIELDS: readonly DifficultyField[] = ["damageTaken", "npcAccuracy", "awareness", "reinforce", "npcHealth", "snipeTell"];
+export const DIFFICULTY_FIELDS: readonly DifficultyField[] = ["damageTaken", "npcAccuracy", "awareness", "reinforce", "npcHealth", "snipeTell", "npcPressure"];
 
 export type DifficultyPresetId = "story" | "normal" | "hard";
 
 /** The presets of ADR-0066; starting values, tuned by stage 8 of ADR-0059. */
 export const DIFFICULTY_PRESETS: Readonly<Record<DifficultyPresetId, DifficultyProfile>> = {
-  story: { damageTaken: 0.5, npcAccuracy: 0.6, awareness: 0.6, reinforce: 0.5, npcHealth: 0.8, snipeTell: 1.6 },
-  normal: { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1 },
-  hard: { damageTaken: 1.4, npcAccuracy: 1.25, awareness: 1.3, reinforce: 1.5, npcHealth: 1.2, snipeTell: 0.8 },
+  story: { damageTaken: 0.5, npcAccuracy: 0.6, awareness: 0.6, reinforce: 0.5, npcHealth: 0.8, snipeTell: 1.6, npcPressure: 0.6 },
+  normal: { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1, npcPressure: 1 },
+  hard: { damageTaken: 1.4, npcAccuracy: 1.25, awareness: 1.3, reinforce: 1.5, npcHealth: 1.2, snipeTell: 0.8, npcPressure: 1.5 },
 };
 
 /** The default, and the only level the balance of ADR-0059 is measured on. */
@@ -57,7 +62,7 @@ export const presetOf = (p: DifficultyProfile): DifficultyPresetId | "custom" =>
   return "custom";
 };
 
-/** Only the six multipliers, as a fresh object (a command or a save may carry more). */
+/** Only the seven multipliers, as a fresh object (a command or a save may carry more). */
 export const difficultyProfile = (p: DifficultyProfile): DifficultyProfile => ({
   damageTaken: p.damageTaken,
   npcAccuracy: p.npcAccuracy,
@@ -65,4 +70,8 @@ export const difficultyProfile = (p: DifficultyProfile): DifficultyProfile => ({
   reinforce: p.reinforce,
   npcHealth: p.npcHealth,
   snipeTell: p.snipeTell,
+  npcPressure: p.npcPressure,
 });
+
+/** Gunners firing at the player at once (ADR-0089 stage 4) for a pressure: Story 1, Normal 2, Hard 3, at most 4. */
+export const attackTokensFor = (npcPressure: number): number => Math.min(4, Math.max(1, Math.round(2 * npcPressure)));

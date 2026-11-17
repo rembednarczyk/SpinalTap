@@ -4,6 +4,7 @@ import { type Entity, SIM_HZ, Simulation, gangerEntity } from "../src";
 import { ATTACK_TOKENS, SPREAD, TOKEN_HOLD, holdsToken, spreadOf } from "../src/systems/ai/ganger-tokens";
 import { FLOOR, floorAt } from "./fixtures/determinism-floor";
 import { collect, teleportPlayer } from "./helpers";
+import { setProfile } from "./difficulty-scenes";
 
 /*
  * ADR-0089 stage 4: attack tokens. Of six alerted Tessen guards no more than `ATTACK_TOKENS` fire
@@ -18,11 +19,14 @@ const AT = floorAt(0, -45);
 const flat = (x: number, z: number) => ({ x, y: AT.y, z });
 
 /** The player standing at `AT` (kept alive), guards of `type` at the given bearings and distances round her. */
-const ring = (spots: readonly (readonly [number, number])[], type: EnemyTypeId = "tessen_guard") => {
+/** `npcPressure` is set before they come: in a fight a new profile waits for its end (G-171). */
+const ring = (spots: readonly (readonly [number, number])[], type: EnemyTypeId = "tessen_guard", npcPressure = 1) => {
   const sim = Simulation.create({ seed: 2, chunks: FLOOR });
   teleportPlayer(sim, AT);
   sim.step();
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
+  if (npcPressure !== 1) setProfile(sim, { npcPressure });
+  expect(sim.domain.difficulty.npcPressure).toBe(npcPressure);
   const guards = spots.map(([deg, d], i) => {
     const a = (deg * Math.PI) / 180;
     const at = flat(AT.x + Math.sin(a) * d, AT.z + Math.cos(a) * d);
@@ -44,6 +48,30 @@ const holds = (sim: Simulation, g: Entity): boolean => holdsToken(g, sim.tick);
 const dist = (sim: Simulation, g: Entity): number => Math.hypot(g.position.x - sim.player()!.position.x, g.position.z - sim.player()!.position.z);
 
 describe("attack tokens (ADR-0089 stage 4)", () => {
+  // Stage 5: the difficulty's pressure sets how many fire at once, Story 1, Normal 2, Hard 3.
+  it.each([
+    [0.6, 1],
+    [1, 2],
+    [1.5, 3],
+  ])("under a pressure of %f no more than %i of six guards fire at once, and that many do", (npcPressure, most) => {
+    const { sim, guards } = ring([
+      [-25, 18],
+      [-15, 20],
+      [-5, 17],
+      [5, 21],
+      [15, 19],
+      [25, 18],
+    ], "tessen_guard", npcPressure);
+    let seen = 0;
+    for (let i = 0; i < 8 * SIM_HZ; i++) {
+      step(sim);
+      const holding = guards.filter((g) => holds(sim, g)).length;
+      expect(holding, `step ${i}`).toBeLessThanOrEqual(most);
+      seen = Math.max(seen, holding);
+    }
+    expect(seen).toBe(most);
+  });
+
   it("of six Tessen guards no more than two fire in a step, and the rest part round her to 35° or more", () => {
     // Six in a 50° arc in front of her, 17-21 m off: one line of fire.
     const { sim, guards } = ring([
