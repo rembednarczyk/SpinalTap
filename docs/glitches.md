@@ -2599,7 +2599,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
 - Ważność: S4 · Zasięg: pościg Tessen
 - Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
-- Status: zgłoszone
+- Status: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g934); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
 - 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
