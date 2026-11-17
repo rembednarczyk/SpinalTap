@@ -9,8 +9,8 @@ import { spotNear } from "./lublin/places";
  * shard's contents under `knot`; `text` is the catalog key of the tracker's line once found
  * (`hook.<kind>_<n>`, ADR-0056): the app writes it in the player's language.
  *
- * - `bark`: a guard (the job's guard `post`, or a world character `key`) says it when the
- *   player comes within earshot.
+ * - `bark`: a guard (the job's guard `post`), a world character `key` or one of the job's own
+ *   people `ofJob` says it when the player comes within earshot.
  * - `terminal`: a mail on a terminal standing `at`, read with the interact key.
  * - `shard`: a datachip in the bag of the job's guard `post` once that guard is down.
  * - `brief`: the giver (`key`) tells it when the job is taken (ADR-0082: Genzō's ways in to W-3);
@@ -26,7 +26,8 @@ export type HookReveal =
   | { readonly kind: "code" }
   | { readonly kind: "intel" };
 
-export type HookCarrier = { readonly post: number } | { readonly key: string } | { readonly at: Vec3 };
+/** Who or what carries a hook: a guard post of the job, a world character, a spot, or a character of the job's own (keyed `<contract>-<ofJob>`). */
+export type HookCarrier = { readonly post: number } | { readonly key: string } | { readonly at: Vec3 } | { readonly ofJob: string };
 
 export interface SimHookDef extends ContractHookDef {
   readonly carrier: HookCarrier;
@@ -193,6 +194,16 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     knot: "genzo",
     text: "hook.sabotage_pipes",
     carrier: { key: "genzo" },
+    reveal: { kind: "intel" },
+  },
+  // The technician smoking by the service gate in the evening (ADR-0082 §1 p. 2, G-929): locker 14.
+  {
+    id: "hook_sabotage_2",
+    kind: "sabotage",
+    source: "bark",
+    knot: "hook_sabotage_2",
+    text: "hook.sabotage_2",
+    carrier: { ofJob: "smoker" },
     reveal: { kind: "intel" },
   },
 ];

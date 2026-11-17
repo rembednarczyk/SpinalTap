@@ -78,6 +78,13 @@ export const W3_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readonly
  */
 export const W3_SHIFT_MANAGER: ContractPost = { ...patrol(W3_PATROL_MANAGER), enforcer: true };
 
+/**
+ * The technician on a cigarette by the service gate (ADR-0082 §1 p. 2, `enc_w3_smoker`), out on
+ * the public strip east of it, facing the gate, from 19:00 to 23:00 while the sabotage runs: within
+ * earshot he tells of locker 14 (the hook `hook_sabotage_2`).
+ */
+export const W3_SMOKER = { at: ground(2552.3, 390.4), yaw: -Math.PI / 2, fromHour: 19, toHour: 23 } as const;
+
 /** Mika's way from Genzō's container down the riverside path to the river's bench under the terrace. */
 export const ESCORT_ROUTE: readonly [Vec3, ...Vec3[]] = [ground(2489.4, 386.6), ground(2482, 385.5), ground(2475, 386.5), ground(2469, 390), ground(2463.5, 396), ground(2461.5, 405)];
 

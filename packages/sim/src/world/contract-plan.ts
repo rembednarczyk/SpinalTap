@@ -24,6 +24,8 @@ import { gangerEntity } from "./factory";
 export const dayFlag = (contractId: string): string => `plan:day:${contractId}`;
 /** Raised while guard `post` of the job is off its post (a rotation gap). */
 export const offPostFlag = (contractId: string, post: number): string => `plan:off:${contractId}:${post}`;
+/** Raised while W-3's smoker stands by the service gate during the sabotage (19:00-23:00, G-929). */
+export const smokeFlag = (contractId: string): string => `plan:smoke:${contractId}`;
 /** Raised once the job is done and the crew by the way out moves in. */
 export const ambushFlag = (contractId: string): string => `plan:ambush:${contractId}`;
 /** Tag of the look-alike: not a target, so killing it is an extra kill. */

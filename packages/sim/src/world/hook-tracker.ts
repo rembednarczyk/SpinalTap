@@ -25,6 +25,7 @@ const shardFlag = (contractId: string, hookId: string): string => `plan:shard:${
 const carrierKey = (c: Contract, h: SimHookDef): string | null => {
   const carrier = h.carrier;
   if ("post" in carrier) return carrier.post < c.targets ? `${c.id}-g${carrier.post}` : null;
+  if ("ofJob" in carrier) return `${c.id}-${carrier.ofJob}`;
   return "key" in carrier ? carrier.key : null;
 };
 

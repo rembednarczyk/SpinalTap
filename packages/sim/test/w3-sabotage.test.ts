@@ -12,7 +12,7 @@ import {
   QUICKHACKS,
   type Vec3,
 } from "@seki/core";
-import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
+import { SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, W3_PATROL_HALL, W3_PATROL_MANAGER, W3_SMOKER, W3_VIRUS_TERMINAL, ground, inW3Zone, routePose, stateHash, w3 } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -226,6 +226,29 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     run(restored, 300);
     expect(hash(restored)).toBe(hash(sim));
     expect(active(restored)?.progress).toBe(active(sim)?.progress);
+  });
+
+  it("the smoker stands by the service gate only from 19:00 to 23:00 (G-929), and a save keeps him there", () => {
+    const sim = Simulation.create({ seed: 3 });
+    const c = accept(sim);
+    outside(sim);
+    const smoker = (s: Simulation) => byKey(s, `${c.id}-smoker`);
+    const at = (hour: number) => {
+      setDomain(sim, (d) => ({ ...d, clock: { seconds: (Math.floor(d.clock.seconds / 86400) + 1) * 86400 + hour * 3600 } }));
+      run(sim, 2);
+    };
+    at(18.9);
+    expect(smoker(sim)).toBeUndefined();
+    at(19);
+    expect(smoker(sim)?.position).toEqual(W3_SMOKER.at);
+    expect(smoker(sim)?.staff).toBeUndefined();
+    const restored = reload(sim);
+    expect(smoker(restored)?.position).toEqual(W3_SMOKER.at);
+    expect(hash(restored)).toBe(hash(sim));
+    at(22.9);
+    expect(smoker(sim)).toBeDefined();
+    at(23);
+    expect(smoker(sim)).toBeUndefined();
   });
 
   it("a save of the running job from before the shift manager (v44, G-929) loads with him on his round", () => {

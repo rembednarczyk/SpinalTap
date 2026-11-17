@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, W3_VIRUS_ITEM, contractAlarmFlag, lockerKey } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_LAYOUT, W3_LOCKER_14, W3_NAV, W3_TECHNICIANS, W3_Y } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_LAYOUT, W3_LOCKER_14, W3_NAV, W3_SMOKER, W3_TECHNICIANS, W3_Y } from "@seki/sim";
 import { translate } from "@seki/ui";
 import { contentText } from "../src/content-text";
 import { allText, frame, setup, steps, teleport } from "./story-helpers";
@@ -281,5 +281,28 @@ describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises
     }
     expect(m.position.y).toBeCloseTo(GALLERY.y, 1);
     expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: false });
+  });
+});
+
+describe("W-3's smoker by the service gate (ADR-0082 §1 p. 2, G-929)", () => {
+  it("in his evening hours he tells of locker 14 within earshot, into the tracker, and says it as a subtitle", () => {
+    const { session, ui } = start();
+    const job = acceptSabotage(session, ui);
+    const hour = Math.floor(session.sim.domain.clock.seconds / 3600) % 24;
+    expect(hour >= W3_SMOKER.fromHour && hour < W3_SMOKER.toHour, `${hour}:00`).toBe(true);
+    // On the strip 8 m west of him: he is there, out of earshot.
+    const s = W3_SMOKER.at;
+    teleport(session, s.x - 8, s.z, Math.PI / 2, 0, s.y);
+    steps(session, 2);
+    expect([...session.sim.world].find((e) => e.key === `${job.id}-smoker`)?.position).toEqual(s);
+    expect(session.sim.domain.contracts.hooks).not.toContain("hook_sabotage_2");
+    // Outside the service gate, 2.4 m off him.
+    walkTo(session, [node("w3-wicket-out")]);
+    steps(session, 1);
+    expect(session.sim.domain.contracts.hooks).toContain("hook_sabotage_2");
+    const locale = ui.getState().settings.locale;
+    expect(ui.getState().contractHooks.map((h) => h.text)).toContain(contentText(locale, "hook.sabotage_2"));
+    const said = ui.getState().toasts.find((t) => t.title === contentText(locale, "speaker.technik"));
+    expect(said?.text).toMatch(/szafkę czternaście|locker fourteen/);
   });
 });

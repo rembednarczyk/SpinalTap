@@ -69,3 +69,7 @@ STRAZNIK: From the warehouse roof you can't see a thing under the crane's boom. 
 === hook_sabotage_1 ===
 STRAZNIK: The hall round only goes down the north corridor to the server room every other lap. The rest of the time it just walks past the door.
 -> END
+
+=== hook_sabotage_2 ===
+TECHNIK: New on nights? Take locker fourteen in the basement, it's nobody's. The lock's been broken since spring.
+-> END
