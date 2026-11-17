@@ -51,22 +51,26 @@ export const W3_PATROL_HALL: readonly [Vec3, ...Vec3[]] = [
 export const W3_PATROL_MEZZANINE: readonly [Vec3, ...Vec3[]] = [w3(2503.5, MEZZANINE, 433.5), w3(2557, MEZZANINE, 433.5)];
 
 /**
- * The shift manager (ADR-0082 §1 p. 2, G-929), the hall's enforcer of disguises: from beside the
- * desk in his office on the mezzanine to its door, out onto the gallery and east along it over the
- * calibration room, then back the same way. The gallery's leg keeps 5 m back from the windows over
- * the line (their sill 1 m over the gallery's floor), so from it he sees nothing of the hall's floor
- * nearer than his sight: the aisle and the strips by the long walls stay out of his eyes, and he
- * sees through her only up there, on the gallery or in his office.
+ * The shift manager (ADR-0082 §1 p. 2, G-929), the hall's enforcer of disguises: from his desk in
+ * his office on the mezzanine out of its door onto the gallery, across it to the window over the
+ * line by x 2540, back from the window and along the gallery to his door. Away from the window he
+ * keeps 4 m back from it (its sill 1 m over the gallery's floor), so he sees nothing of the hall's
+ * floor; at the window (user's decision of 17.11) he halts once a lap looking down over the line,
+ * then a step back turns his back to it. The aisle is crossed by timing that halt.
  */
 const [, OFFICE_DOOR] = MEZZANINE_DOORS as [number, number, number];
 const GALLERY_BACK = 435;
+/** The window's halt: a body's radius off the hall's wall (its face at z 430.3), over station S2's end of the line. */
+export const W3_MANAGER_WINDOW = { x: 2540, look: 430.95, back: 430.72 } as const;
 export const W3_PATROL_MANAGER: readonly [Vec3, ...Vec3[]] = [
-  w3(2533.4, MEZZANINE, 437.6),
-  w3(OFFICE_DOOR, MEZZANINE, 436.9),
+  // In front of his desk (x 2528.5..2531.5 from z 437.6), facing his door.
+  w3(OFFICE_DOOR, MEZZANINE, 437.15),
   w3(OFFICE_DOOR, MEZZANINE, GALLERY_BACK),
-  w3(2542, MEZZANINE, GALLERY_BACK),
+  // At the window he faces the next point, the hall's way; on the step back, the gallery's.
+  w3(W3_MANAGER_WINDOW.x, MEZZANINE, W3_MANAGER_WINDOW.look),
+  w3(W3_MANAGER_WINDOW.x, MEZZANINE, W3_MANAGER_WINDOW.back),
+  w3(W3_MANAGER_WINDOW.x, MEZZANINE, GALLERY_BACK),
   w3(OFFICE_DOOR, MEZZANINE, GALLERY_BACK),
-  w3(OFFICE_DOOR, MEZZANINE, 436.9),
 ];
 
 /** The wagon airlock's guard, inside it, looking east down the aisle. */

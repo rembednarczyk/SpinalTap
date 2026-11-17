@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, W3_VIRUS_ITEM, contractAlarmFlag, lockerKey } from "@seki/core";
-import { GENZO_SPOT, SIM_HZ, W3_LAYOUT, W3_LOCKER_14, W3_NAV, W3_SMOKER, W3_TECHNICIANS, W3_Y } from "@seki/sim";
+import { GENZO_SPOT, SIM_HZ, W3_LAYOUT, W3_LOCKER_14, W3_MANAGER_WINDOW, W3_NAV, W3_PATROL_MANAGER, W3_SMOKER, W3_TECHNICIANS, W3_Y, routeLapSeconds, routePose } from "@seki/sim";
 import { translate } from "@seki/ui";
 import { contentText } from "../src/content-text";
 import { allText, frame, setup, steps, teleport } from "./story-helpers";
@@ -173,7 +173,12 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     }
   });
 
-  it("crawls the culvert, changes at locker 14 and crosses the hall to corridor N without the alarm", () => {
+  // The walk from the parts line's door to corridor N takes 18 s. Set off 6.5-11 s into the shift
+  // manager's lap, it passes under his window in his halt there (16-21 s) and he knows her (G-929).
+  it.each([
+    ["once the shift manager has left his window", AWAY_FROM_WINDOW, 0, false],
+    ["timed into his halt at the window", 0, 8.5, true],
+  ] as const)("crawls the culvert, changes at locker 14 and crosses the hall to corridor N: %s", (_when, stop, wait, seen) => {
     const { session, ui } = start();
     const job = acceptSabotage(session, ui);
     holster(session);
@@ -184,13 +189,24 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     changeAtLocker(session, ui);
     const route = ["w3-cellar-mid", "w3-cellar-w", "w3-cellar-a", "w3-stair-a-top", "w3-parts-line-door"];
     walkTo(session, route.map(node));
+    waitForManager(session, job, stop);
+    steps(session, wait * SIM_HZ);
+    const blownBy: number[] = [];
+    session.bus.on("DisguiseBlown", (e) => blownBy.push(e.observerId));
     walkTo(session, [`w3-cs-${W3_LAYOUT.DOORS_S.line}`, `w3-cs-${W3_LAYOUT.HALL_DOORS[0]}`, "w3-hall-sw", "w3-aisle-w", "w3-aisle-mid", "w3-aisle-e", "w3-hall-ne"].map(node));
     walkTo(session, [node(`w3-cn-${W3_LAYOUT.HALL_DOORS[1]}`)]);
     expect(session.sim.player()!.position.z).toBeGreaterThan(430);
+    const manager = managerOf(session, job);
+    if (seen) {
+      expect(blownBy).toEqual([manager.id]);
+      expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: true });
+      expect(session.sim.domain.flags).toContain(contractAlarmFlag(job.id));
+      return;
+    }
     expect(alarmWithin(session, job, 5)).toBeNull();
     expect(session.sim.domain.disguise).toEqual({ role: "tessen_staff", blown: false });
-    // The shift manager was on the mezzanine all the while and never saw her (G-929).
-    expect(managerOf(session, job).ai?.suspicion ?? 0).toBe(0);
+    // The shift manager was on the mezzanine all the while and never saw her.
+    expect(manager.ai?.suspicion ?? 0).toBe(0);
   });
 });
 
@@ -231,10 +247,22 @@ const blownWithin = (session: GameSession, seconds: number, each = () => {}): { 
   }
 };
 
-/** One lap of the manager's round: 35.5 m at 1.4 m/s and six halts of 4 s. */
-const MANAGER_LAP = 50;
+/** One lap of the manager's round: 29.8 m at 1.4 m/s and six halts of 4 s, 45 s. */
+const MANAGER_LAP = Math.ceil(routeLapSeconds(W3_PATROL_MANAGER));
+/** His round's stops: walking to the window (1), then back on the gallery after the step back from it (4). */
+const TO_WINDOW = 1;
+const AWAY_FROM_WINDOW = 4;
+
+/** Steps standing still till the manager's round is at `stop` (its halt or the walk after it). */
+const waitForManager = (session: GameSession, job: Contract, stop: number) => {
+  const route = managerOf(session, job).ai!.route!;
+  for (let i = 0; i < MANAGER_LAP * SIM_HZ && routePose(route, session.sim.tick / SIM_HZ).stop !== stop; i++) session.step(frame());
+  expect(routePose(route, session.sim.tick / SIM_HZ).stop).toBe(stop);
+};
 /** On the gallery between his office's door and its east end, a metre off his way and P2's. */
 const GALLERY = { x: 2536, y: W3_Y + W3_LAYOUT.MEZZANINE, z: 434.1 };
+/** In the aisle's south half under his window, 14 m off it: in his sight from the window only. */
+const UNDER_WINDOW = { x: W3_MANAGER_WINDOW.x, y: W3_Y, z: 417 };
 
 describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises (ADR-0082 §1 p. 2, G-929)", () => {
   it("sees through the overalls up close on the gallery; without him P2 walks past her there and they hold", () => {
@@ -267,10 +295,44 @@ describe("W-3's shift manager on the mezzanine, the hall's enforcer of disguises
     }
   });
 
-  it("never sees her on the hall's floor: a whole lap of his round standing in the aisle and under the gallery", () => {
+  it("from his window's halt he knows her standing under it in the aisle, and the job's alarm goes up", () => {
     const { session, job } = disguised();
     const m = managerOf(session, job);
-    for (const at of ["w3-aisle-mid", "w3-hall-ne"].map(node)) {
+    waitForManager(session, job, TO_WINDOW);
+    teleport(session, UNDER_WINDOW.x, UNDER_WINDOW.z, 0, 0, UNDER_WINDOW.y);
+    const blown = blownWithin(session, MANAGER_LAP);
+    expect(blown?.by).toBe(m.id);
+    // At the window or the step back from it, up on the mezzanine, 13-14 m off her.
+    expect(m.position.z).toBeLessThan(W3_MANAGER_WINDOW.look + 0.3);
+    expect(m.position.y).toBeCloseTo(GALLERY.y, 1);
+    expect(Math.hypot(m.position.x - UNDER_WINDOW.x, m.position.z - UNDER_WINDOW.z)).toBeGreaterThan(12);
+    expect(alarmWithin(session, job, 3)).not.toBeNull();
+  });
+
+  it("a lead in the hall below does not take him down: Tessen sent to (2522; 416), he is on his round 60 s on, and the aisle holds", () => {
+    const { session, job } = disguised();
+    const m = managerOf(session, job);
+    // As the security sent to a reported body (`sendSecurity`): every calm Tessen within 50 m gets the lead.
+    const lead = { x: 2522, y: W3_Y, z: 416 };
+    for (const g of session.sim.world.with("ai")) {
+      if (g.faction === "tessen" && !g.ai.alerted && Math.hypot(g.position.x - lead.x, g.position.z - lead.z) <= 50) Object.assign(g.ai, { lastKnown: { ...lead }, search: 0 });
+    }
+    steps(session, 60 * SIM_HZ);
+    expect(m.position.y).toBeCloseTo(GALLERY.y, 1);
+    const pose = routePose(m.ai!.route!, session.sim.tick / SIM_HZ).position;
+    expect(Math.hypot(m.position.x - pose.x, m.position.z - pose.z)).toBeLessThan(1.5);
+    // Off his window's halt she stands in the aisle by the lead's spot as long as she likes.
+    waitForManager(session, job, AWAY_FROM_WINDOW);
+    const aisle = node("w3-aisle-mid");
+    teleport(session, aisle.x, aisle.z, 0, 0, aisle.y);
+    expect(blownWithin(session, 20)).toBeNull();
+    expect(alarmWithin(session, job, 1)).toBeNull();
+  });
+
+  it("from anywhere else on his round he never sees her on the hall's floor: a whole lap in the aisle's north half and under the gallery", () => {
+    const { session, job } = disguised();
+    const m = managerOf(session, job);
+    for (const at of [{ ...UNDER_WINDOW, z: 422 }, node("w3-hall-ne")]) {
       teleport(session, at.x, at.z, 0, 0, at.y);
       let suspicion = 0;
       for (let i = 0; i < MANAGER_LAP * SIM_HZ; i++) {
