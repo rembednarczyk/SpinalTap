@@ -124,5 +124,7 @@ export const failContract = (ctx: SimContext, reason: ContractFailure): void => 
   takeBackJobItems(ctx, contractKind(contract));
   applyReputationCause(ctx, { type: "contract-failed", kind: contractKind(contract) });
   ctx.bus.emit("ContractFailed", { contract, reason });
-  phoneFromFixer(ctx, giverOfContract(contract), "failed");
+  // The batch gone at 06:00 with no alarm up (G-912): Tessen does not know it was her.
+  const unnoticed = reason === "batch-shipped" && contract.alarmTick === undefined;
+  phoneFromFixer(ctx, giverOfContract(contract), unnoticed ? "failed_shipped" : "failed");
 };

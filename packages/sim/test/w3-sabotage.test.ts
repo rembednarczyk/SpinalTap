@@ -201,9 +201,12 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
     const failed = collect<{ reason: string }>(sim, "ContractFailed");
+    const phone = collect<{ from: string; knot: string }>(sim, "PhoneMessage");
     setDomain(sim, (d) => ({ ...d, contracts: { ...d.contracts, active: { ...c, deadlineTick: sim.tick + 2 } } }));
     run(sim, 3);
     expect(failed.map((f) => f.reason)).toEqual(["batch-shipped"]);
+    // No alarm was raised: Tessen does not know it was her, and Genzō says so (G-912).
+    expect(phone.filter((m) => m.from === "genzo").map((m) => m.knot)).toEqual(["phone_genzo_failed_shipped"]);
     expect(sim.domain.flags).toContain(contractFailedFlag(c.id));
 
     const late = Simulation.create({ seed: 3 });
