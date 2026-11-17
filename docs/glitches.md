@@ -2508,13 +2508,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim
 
-### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
-- Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
-- Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
-- Status: w PR #687 (gałąź ccr-ec2c4269-ilh8k8-g919); wcześniej: zgłoszone
-- Pakiet właściciela: packages/ui
-- Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
-
 ### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
 - Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
 - Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
@@ -2526,7 +2519,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
 - Ważność: S4 · Zasięg: tylko uszkodzony zapis
 - Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
-- Status: zgłoszone
+- Status: w PR #689 (sam test: naprawione przez #686); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
 
@@ -2562,7 +2555,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
 - Ważność: S3 · Zasięg: droga cicha W-3
 - Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
-- Status: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Status: w PR #683 runda 3 (ff4eb7b, orkiestrator): zwłoki palacza zostają, kierownik nie zostaje w oknie przy ciele, testy skrócone; bez weryfikatora (tryb bez agentów); wcześniej: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
 - Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
@@ -2571,7 +2564,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
 - Ważność: S4 · Zasięg: wylot kolektora W-3
 - Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
-- Status: zgłoszone
+- Status: w PR #690 (gałąź ccr-ec2c4269-ilh8k8-g930); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: podpowiedź tylko z dna wylotu
 

@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
+- Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
+- Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
+- Status: naprawione (17.11, #687 scalony); wcześniej: w PR #687 (gałąź ccr-ec2c4269-ilh8k8-g919); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
+
 ### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
 - Ważność: S4 · Zasięg: pościg Tessen
 - Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
