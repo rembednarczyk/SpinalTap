@@ -4,7 +4,8 @@ import type { Entity } from "../../world/components";
 import { DECK_HEADROOM } from "../../world/deck";
 import { type GroundField, groundOf } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
-import { SNAP_DOWN, STEP_HEIGHT, offTheBank } from "../movement-system";
+import { offTheBank } from "../bank";
+import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
 import { LEDGE, NAV_CELL, ON_LEDGE, type Raster, cellIndex, pastLedgeOnWay } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 
