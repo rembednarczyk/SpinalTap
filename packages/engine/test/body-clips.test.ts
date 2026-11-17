@@ -122,4 +122,34 @@ describe("the body clips (ADR-0090 stage 2)", () => {
     plain(twin, 2);
     expect(differs(joints(r), joints(twin))).toBeLessThan(1e-3);
   });
+
+  it("on a ladder the feet climb as in the clip, ahead of the hips, the left high while the right hand reaches", () => {
+    const r = buildHeroine(scene, materials, "ladder");
+    const step = (y: number) => {
+      r.root.position.y = y;
+      animateRig(r, 0, DT, 0, {}, { climb: 0.5 });
+      poseBodyFromClips(r, 0, DT, 0);
+    };
+    for (let i = 0; i < 60; i++) step(0);
+    expect(r.climbBlend).toBeGreaterThan(0.99);
+    // Up one loop of the hands (two rungs), sampling the left ankle against the hips.
+    const ankle = (knee: CharacterRig["kneeL"]) => {
+      r.root.computeWorldMatrix(true);
+      const a = Vector3.TransformCoordinates(new Vector3(0, -0.42, 0), knee.computeWorldMatrix(true));
+      const hip = r.legL.getAbsolutePosition();
+      return { y: a.y - hip.y, z: a.z - hip.z };
+    };
+    const rows: { q: number; y: number; z: number }[] = [];
+    for (let i = 0; i < 48; i++) {
+      step(i * 0.025);
+      const q = (((r.climbPhase / (2 * Math.PI)) % 1) + 1) % 1;
+      rows.push({ q, ...ankle(r.kneeL) });
+    }
+    const ys = rows.map((x) => x.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.15);
+    for (const x of rows) expect(x.z).toBeGreaterThan(0.05);
+    const top = rows.reduce((a, b) => (b.y > a.y ? b : a));
+    expect(top.q).toBeGreaterThan(0.35);
+    expect(top.q).toBeLessThan(0.75);
+  });
 });
