@@ -2559,13 +2559,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: walka 40 s bez kroku ponad budżet
 - Przy G-928 nie odtworzył się (pościg Tessen 520,-60, ziarno 3, bez tłumu): to raczej inna przyczyna niż objazdy ucieczki.
 
-### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
-- Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
-- Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
-- Status: w PR #677 runda 2 (be0a92a), w weryfikacji; wcześniej: w naprawie, runda 2 (łowca: okno ucieczki 40 m daje zacięcia i kołysanie przy Bystrzycy i w hali W-3); wcześniej: w PR #677, przyjęte przez weryfikatora z uwagą (okno 40 m zmienia drogi ucieczki przy długich objazdach); przed scaleniem łowca sprawdza zacięcia i kołysanie, a main potrzebuje #679; wcześniej: w PR #677 (gałąź ccr-ec2c4269-ilh8k8-g928, f26847a), w weryfikacji; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: korytarz S 18 s z pokryciem poniżej 5 s lokalnie
-
 ### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
 - Ważność: S3 · Zasięg: droga cicha W-3
 - Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
