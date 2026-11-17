@@ -2,6 +2,7 @@ import { CIVILIAN_SIGHT, type Vec3 } from "@seki/core";
 import type { DownedBody, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { eyeOf, clearSight } from "../../world/hitscan";
+import { LEVEL_GAP } from "../../world/nav";
 import { inCreationOrder } from "../../world/ordering";
 import { disturb } from "../../world/street";
 import { incapacitated } from "../../world/takedown";
@@ -158,6 +159,12 @@ const lookedAt = (ctx: SimContext, b: Body, finder: Entity): void => {
 
 /** The finder walks to the body (back to it after any other lead) and wakes it after `WAKE_TIME`. */
 const tend = (ctx: SimContext, b: Body, finder: Entity, dt: number): void => {
+  // One that keeps to its floor (W-3's shift manager, G-929) does not go down to a body off it: it
+  // has called it in, looks from where it stands and leaves the body to the next one, as at a corpse.
+  if (finder.ai?.keepsFloor && Math.abs(b.position.y - finder.position.y) >= LEVEL_GAP) {
+    lookedAt(ctx, b, finder);
+    return;
+  }
   if (finder.ai && !finder.ai.lastKnown) giveLead(finder, b.position);
   if (!near(finder, b)) return;
   if (b.downed.dead) {

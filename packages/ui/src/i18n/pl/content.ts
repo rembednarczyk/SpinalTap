@@ -80,6 +80,7 @@ export const plContent = {
   "hook.sabotage_1": "Obchód hali zagląda do serwerowni N co drugie okrążenie",
   "hook.sabotage_culvert": "Kolektor spod nabrzeża prowadzi do piwnicy magazynów; w szatni są kombinezony techników",
   "hook.sabotage_pipes": "Rurociąg nad rzeką prowadzi na dach rzędu N; właz schodzi do serwerowni N",
+  "hook.sabotage_2": "Szafka 14 w szatni piwnicy jest niczyja; ma zepsuty zamek",
   "hook.hack_2": "Pod schodami wieży snajper z dachu cię nie widzi",
   // What the scanner calls a thing (ScanFocusChanged.name).
   "scan.name.camera": "Kamera",
@@ -101,6 +102,7 @@ export const plContent = {
   "speaker.kiku": "Wróżka Kiku",
   "speaker.poborca": "Poborca Hebi",
   "speaker.straznik": "Strażnik Tessen",
+  "speaker.technik": "Technik Tessen",
   "speaker.glos": "Głos z kontenera",
   "speaker.glosnik": "Głośnik",
   "speaker.pasazer": "Pasażer",

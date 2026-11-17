@@ -20,6 +20,7 @@ import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } fr
 import type { Entity } from "./components";
 import { GANGER_MAX_HP, type IdAllocator, escortEntity, gangerEntity, pickupEntity, sniperEntity, terminalEntity, virusTerminalEntity } from "./factory";
 
+import { quietWayTemplates } from "./quiet-way-templates";
 import { sabotageTemplates } from "./sabotage-templates";
 import type { Template } from "./stream-catalog";
 
@@ -131,7 +132,8 @@ const extraTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], chunk: st
 
 /**
  * Templates of a newly accepted (or loaded) contract's people and objects. Ids are reserved in a
- * fixed order: the targets by index, then the objects, then the variation's extras.
+ * fixed order: the targets by index, then the objects, then the variation's extras, then the
+ * sabotage's loud way and its quiet way.
  */
 export const contractTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[], contract: Contract): Template[] => {
   const chunk = siteChunk(contract, chunks);
@@ -139,6 +141,9 @@ export const contractTemplates = (ids: IdAllocator, chunks: readonly ChunkDef[],
   const objects = objectTemplates(ids, chunk, contract);
   const extras = extraTemplates(ids, chunks, chunk, contract);
   // W-3's loud way (ADR-0082 stage 3b) after everything else, so the other jobs' ids stay put.
-  const loud = contractKind(contract) === "sabotage" ? sabotageTemplates(ids, chunk, contract) : [];
-  return [...targets, ...objects, ...extras, ...loud];
+  const sabotage = contractKind(contract) === "sabotage";
+  const loud = sabotage ? sabotageTemplates(ids, chunk, contract) : [];
+  // Its quiet way's shift manager and smoker last of all (G-929), so the loud way's ids stay put too.
+  const quiet = sabotage ? quietWayTemplates(ids, chunk, contract) : [];
+  return [...targets, ...objects, ...extras, ...loud, ...quiet];
 };
