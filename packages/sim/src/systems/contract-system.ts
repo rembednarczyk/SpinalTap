@@ -13,7 +13,7 @@ import type { SimContext, System } from "../world/context";
 import { clearContract, failContract, raiseFlag } from "../world/domain-ops";
 import { deadFlag } from "./death-system";
 import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
-import { disturb } from "../world/street";
+import { disturb, noteAlarm } from "../world/street";
 
 /** A raised alarm is heard this far (ADR-0029). */
 export const ALARM_NOISE = 25;
@@ -24,14 +24,17 @@ export const ESCORT_ARRIVE = 1.2;
 export const HACK_RANGE = 4;
 const HACK_REACH_Y = 1.6;
 
-/** Raises a docks job's alarm once and wakes whoever was waiting for it (ADR-0024). */
+/** Raises a docks or W-3 job's alarm once and wakes whoever was waiting for it (ADR-0024, ADR-0082). */
 export const raiseAlarm = (ctx: SimContext, contract: Contract): void => {
   const flag = contractAlarmFlag(contract.id);
   if (ctx.state.domain.flags.includes(flag)) return;
   raiseFlag(ctx, flag);
   ctx.streamer.spawnWaiting(ctx.world, ctx.state.domain.flags);
   ctx.bus.emit("ContractAlarm", { contract });
-  // The job's own second phase: the street hears it, the debrief does not count it as an alarm.
+  // A docks job's alarm is its own second phase, so the debrief does not count it; the sabotage's
+  // is her being found out (the charges' sensor, a guard, the camera, a technician), so it does (G-914).
+  if (contractKind(contract) === "sabotage") noteAlarm(ctx);
+  // The street hears it either way.
   const site = CONTRACT_SITE_SPAWNS[contract.siteId][0];
   if (site) disturb(ctx, "alarm", site, ALARM_NOISE, ctx.world.with("player").first?.id ?? 0);
 };
