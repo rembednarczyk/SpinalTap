@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SimContext } from "../../world/context";
 import { difficultyOf } from "../../world/difficulty";
+import { enemyRankOf } from "../../world/enemy-grade";
 import type { Entity, GunTactic } from "../../world/components";
 import { straightWalk } from "./steering";
 import { BACK_SPEED, type GangerBinding, type GangerWalk } from "./ganger-walk";
@@ -20,6 +21,20 @@ const STRIDE_MAX = 3;
 /** After a sidestep it stands 0.7-1.3 s: no more than two turns of its way in 3 s. */
 export const REST_MIN = 0.7;
 const REST_SPAN = 0.6;
+/**
+ * A Hebi regular in the lower half of its district's band (ADR-0089 stage 5, the user's decision of
+ * 17.11): a novice holds its weapon's band and pauses long, but neither steps aside nor spreads out
+ * round her. In the upper half, and Tessen and elites throughout, the full set. Ungraded (no band),
+ * the full set too.
+ */
+export const novice = (e: Entity): boolean => {
+  const g = e.enemy;
+  if (!g || e.faction !== "hebi" || enemyRankOf(e) !== "regular" || g.level === undefined || !g.band) return false;
+  return g.level < (g.band.min + g.band.max) / 2;
+};
+/** A novice's pause after a burst is this much longer. */
+export const NOVICE_PAUSE = 1.5;
+
 /** After a burst it holds its fire 0.6-1.2 s more than its weapon's interval: the player's window. */
 export const PAUSE_MIN = 0.6;
 const PAUSE_SPAN = 0.6;
@@ -49,7 +64,7 @@ export const burstShot = (ctx: SimContext, self: Entity): void => {
   if (t.shots > 0) return;
   t.shots = self.ai?.burst ?? 1;
   // Shorter under more pressure (ADR-0089 stage 5).
-  self.combatant.cooldown += (PAUSE_MIN + ctx.rng.next() * PAUSE_SPAN) / difficultyOf(ctx).npcPressure;
+  self.combatant.cooldown += ((PAUSE_MIN + ctx.rng.next() * PAUSE_SPAN) * (novice(self) ? NOVICE_PAUSE : 1)) / difficultyOf(ctx).npcPressure;
 };
 
 /** The point `len` metres aside of `self` round the player at `from`, on `side`. */
@@ -69,7 +84,7 @@ export const sidestep = (at: GangerBinding, walk: GangerWalk, from: Vec3): void 
   const { ctx, self, timeScale } = at;
   if (!ctx || !self) return;
   const t = tacticOf(ctx, self);
-  if (!t) return;
+  if (!t || novice(self)) return;
   const dt = ctx.dt * timeScale;
   if (t.stride <= 0) {
     t.rest -= dt;
