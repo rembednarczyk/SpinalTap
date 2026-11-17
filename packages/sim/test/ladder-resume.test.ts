@@ -147,7 +147,9 @@ describe("loading a game saved by a ladder's top (G-313)", () => {
       down.step(input({ interact: true }));
       expect(down.player()!.climb?.ladder).toBe(key);
       for (let k = 0; k < 40; k++) {
-        const { sim, saved, fell } = loadAndRun(down, 10);
+        // The swing goes on after loading (G-913, v44), as in the game saved from: it ends in 0.6 s
+        // (36 steps), and she is on the rungs.
+        const { sim, saved, fell } = loadAndRun(down, 40);
         expect(fell, `swing ${k}: fell`).toBe(false);
         settled(sim, l, saved, `swing ${k}`);
         down.step(input());

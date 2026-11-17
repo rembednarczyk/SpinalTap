@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v44: the player's step onto a ladder's rungs in progress (G-913), optional (`stance.ladderSettle`):
+ * an older save made in it loads hanging where she was, as before.
  * v43: the last shot at the player (G-901), optional: its tick and the key of who fired it. The
  * street takes her shot in the 3 s after it for self-defence; an older save loads with none, as before.
  * v42: W-3's loud way (ADR-0082 stage 3b): the contract's `charges`, `planting`, `fuseTick`,
@@ -87,7 +89,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 43;
+export const SAVE_SCHEMA_VERSION = 44;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -194,6 +196,23 @@ export interface StanceSnapshot {
   readonly jump?: { readonly coyote: number; readonly buffer: number };
   /** The dash and the deflection (ADR-0033). */
   readonly perks?: PerkSnapshot;
+  /** Her step onto a ladder's rungs, under way (G-913, v44). Absent on the rungs and off them. */
+  readonly ladderSettle?: LadderSettleSnapshot;
+}
+
+/**
+ * The 0.3-0.6 s of a grab of a ladder (ADR-0021, G-913): from where she stood (`from`, facing
+ * `fromYaw`) to her hold at feet height `y`, swinging over the edge first (`over`, from the top),
+ * `t` of `duration` seconds gone. Loaded, she goes on with it as the game saved from.
+ */
+export interface LadderSettleSnapshot {
+  readonly ladder: string;
+  readonly from: Vec3;
+  readonly fromYaw: number;
+  readonly y: number;
+  readonly over: boolean;
+  readonly duration: number;
+  readonly t: number;
 }
 
 /** The dash, its cooldown, the stamina and the second heart's wait (ADR-0033). */
