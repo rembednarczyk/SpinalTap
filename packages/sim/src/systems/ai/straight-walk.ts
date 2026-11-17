@@ -100,7 +100,6 @@ export const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   // Cell to cell, the feet's own included: on a tread the feet lie off their cell's height.
   const start = cellIndex(r, a.x, a.z);
   let last = r.base && start >= 0 ? (r.base[start] ?? a.y) : a.y;
-  if (wallOnWay(r, a, b, SAMPLE) || pastLedgeOnWay(r, a, b, SAMPLE)) return false;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
@@ -113,6 +112,9 @@ export const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
     }
     if (t * len >= NEAR_SKIP && !r.open[c]) return false;
   }
+  // After the cells (G-928): the string-pulling asks dozens of lines a step, most of them through a
+  // closed cell round the corner, and the walls between cells cost a walk down the whole line.
+  if (wallOnWay(r, a, b, SAMPLE) || pastLedgeOnWay(r, a, b, SAMPLE)) return false;
   return !r.base || !bankNear(r.ground, a, b);
 };
 

@@ -11,7 +11,7 @@ import { STEP_HEIGHT } from "../movement-system";
 import { CIVILIAN_TREE } from "./civilian-tree";
 import { type Walker, holdLanePlace, laneSpot } from "./crowd-walk";
 import { walkRoutine } from "./passerby-walk";
-import { detourStep, steerPoint, straightWalk } from "./steering";
+import { fleeDetourStep, steerPoint, straightWalk } from "./steering";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 
@@ -50,7 +50,7 @@ export const COWER_RADIUS = 6;
 export const COWER_SECONDS = 4;
 export const FLEE_SECONDS = 8;
 export const ALARMED_SECONDS = 5;
-/** The running bystander heads for a point this far ahead, away from the danger, round obstacles. */
+/** The running bystander heads for a point this far ahead, away from the danger, round obstacles (`fleeDetourStep`, G-928). */
 const FLEE_LOOKAHEAD = 6;
 /**
  * Turns tried, in order, when the way straight away is blocked; the probe is this long. None
@@ -112,7 +112,7 @@ const bodyWalk = (ctx: SimContext, from: Vec3, heading: number, reach: number, r
 
 /** The heading of the walk along `heading`, round its obstacle as `steerPoint` takes it. */
 const walkHeading = (ctx: SimContext, from: Vec3, heading: number): number => {
-  const p = steerPoint(ctx.world, from, { x: from.x + Math.sin(heading) * FLEE_LOOKAHEAD, y: from.y, z: from.z + Math.cos(heading) * FLEE_LOOKAHEAD });
+  const p = steerPoint(ctx.world, from, { x: from.x + Math.sin(heading) * FLEE_LOOKAHEAD, y: from.y, z: from.z + Math.cos(heading) * FLEE_LOOKAHEAD }, false, fleeDetourStep);
   return Math.atan2(p.x - from.x, p.z - from.z);
 };
 
@@ -179,9 +179,9 @@ const offHeading = (from: Vec3, to: Vec3, heading: number): number => {
  * line opened and closed every step, and the heading swung by 0.42 rad 25 times.
  */
 const fleeStep = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, running: boolean): Vec3 => {
-  if (!straightWalk(ctx.world, from, ahead)) return steerPoint(ctx.world, from, ahead, true);
+  if (!straightWalk(ctx.world, from, ahead)) return steerPoint(ctx.world, from, ahead, true, fleeDetourStep);
   if (!running || offHeading(from, ahead, heading) <= FLEE_HELD_STEP) return ahead;
-  const round = detourStep(ctx.world, from, ahead);
+  const round = fleeDetourStep(ctx.world, from, ahead);
   return round && offHeading(from, round, heading) <= FLEE_HELD_STEP ? round : ahead;
 };
 
