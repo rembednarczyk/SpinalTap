@@ -20,7 +20,7 @@ import { CLEARANCE, type Field, LEDGE, NAV_CELL, ON_LEDGE, type Raster, STEPS, t
  * close to each other share a raster), `cells` a side; `rasters` and `fields` its memo's sizes
  * per world (a few goals at a time: the player, a victim, homes).
  */
-interface Window {
+export interface Window {
   readonly name: string;
   readonly half: number;
   readonly snap: number;
@@ -33,6 +33,14 @@ const windowOf = (name: string, half: number, snap: number, rasters: number, fie
 
 /** The window every walk plans in. */
 export const NEAR_WINDOW = windowOf("near", 40, 8, 8, 16);
+/**
+ * The window a running civilian's way round is planned in (G-928): to a point `FLEE_LOOKAHEAD`
+ * (6 m) ahead that moves with it, so a new field for every half metre it runs and a new raster
+ * every `snap`. In the near window, 80 m a side, that was most of a fight's step (W-3's line
+ * technicians running from the shots: 2-8 ms); 40 m a side still leads round a stall, a car or a
+ * row of racks, and the runner is always in it (6 m from a goal at most 6 m from its centre).
+ */
+export const FLEE_WINDOW = windowOf("flee", 20, 8, 8, 16);
 /**
  * A ganger cut off from its target in `NEAR_WINDOW` (a long fence or a wall of a yard, G-625)
  * looks again in this one, 192 m a side (`chaseDetour`): a raster costs some 37 ms and a field
@@ -240,6 +248,8 @@ export const fieldFor = (world: World<Entity>, win: Window, floor: number, reach
 export const wideBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number; readonly units: number } => ({ ...memoOf(world, WIDE_WINDOW).built });
 /** The same of the near window (G-644: a raster pushed out of its memo is made again). */
 export const nearBuilds = (world: World<Entity>): { readonly rasters: number; readonly fields: number; readonly units: number } => ({ ...memoOf(world, NEAR_WINDOW).built });
+/** The units of work of every window's rasters and fields in a world so far (G-928: what its steps paid for the steering). */
+export const steeringWork = (world: World<Entity>): number => [...(memos.get(world)?.values() ?? [])].reduce((sum, m) => sum + m.built.units, 0);
 
 /** A way round obstacles to one goal: the distance field the walker follows. */
 export interface Detour {

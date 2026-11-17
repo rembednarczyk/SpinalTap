@@ -3,13 +3,13 @@ import type { World } from "miniplex";
 import type { Entity } from "../../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { STEP_HEIGHT } from "../movement-system";
-import { type Detour, FAR, type Field, NEAR_WINDOW, downhill, fieldFor, grow, nearest, outsideWindow } from "./nav-field";
+import { type Detour, FAR, type Field, NEAR_WINDOW, type Window, downhill, fieldFor, grow, nearest, outsideWindow } from "./nav-field";
 import { CLEARANCE, NAV_CELL, ON_FLIGHT, type Raster, byLedge, cellCentre, cellIndex, cellRange, pastLedgeOnWay } from "./nav-raster";
 import { wallOnWay } from "./nav-walls";
 import { SAME_FLOOR, SAMPLE, bankNear, deckReach, floorOf, straightWalk, walkable } from "./straight-walk";
 
 export { NAV_CELL } from "./nav-raster";
-export { type Detour, nearBuilds, wideBuilds } from "./nav-field";
+export { type Detour, FLEE_WINDOW, nearBuilds, steeringWork, wideBuilds } from "./nav-field";
 export { KNEE_HEIGHT, SAME_FLOOR, floorOf, straightWalk } from "./straight-walk";
 export { advanceChaseDetours, chaseDetour, chaseWork, sameChaseKey, sameWideWindow, startChaseDetour } from "./chase-detour";
 
@@ -97,10 +97,10 @@ const startOf = (field: Field, from: Vec3): number => {
  * graph or on a straight line). With `avoid`, other characters count as obstacles too: a fresh
  * field, not memoised, for a walker that got stuck behind its own people.
  */
-export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = []): Detour | null => {
+export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = [], win: Window = NEAR_WINDOW): Detour | null => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return null;
   const ground = groundOf(world);
-  const field = fieldFor(world, NEAR_WINDOW, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
+  const field = fieldFor(world, win, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
   if (!field) return null;
   return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
 };
@@ -226,9 +226,9 @@ const aboveLevel = (r: Raster, n: number, from: Vec3, at: Vec3): boolean =>
  * barrier on their wide ways, each asking for its goal's near raster every step to find itself
  * off it, pushed the near rasters out of the memo and made three of them again every step.
  */
-export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3): Vec3 | null => {
-  if (outsideWindow(NEAR_WINDOW, from, goal)) return null;
-  const d = planDetour(world, from, goal);
+export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3, win: Window = NEAR_WINDOW): Vec3 | null => {
+  if (outsideWindow(win, from, goal)) return null;
+  const d = planDetour(world, from, goal, [], win);
   return d ? followDetour(d, from) : null;
 };
 
@@ -237,8 +237,8 @@ export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3): Vec3 |
  * on another floor), around the obstacle otherwise. `forceDetour` (a walker that made no
  * progress for a while) takes the way around even when the knee-high line looks free.
  */
-export const steerPoint = (world: World<Entity>, from: Vec3, goal: Vec3, forceDetour = false): Vec3 => {
+export const steerPoint = (world: World<Entity>, from: Vec3, goal: Vec3, forceDetour = false, win: Window = NEAR_WINDOW): Vec3 => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return goal;
   if (!forceDetour && straightWalk(world, from, goal)) return goal;
-  return detourStep(world, from, goal) ?? goal;
+  return detourStep(world, from, goal, win) ?? goal;
 };
