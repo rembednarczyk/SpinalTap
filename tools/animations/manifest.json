@@ -1,5 +1,5 @@
 {
-  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely.",
+  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely. A clip with \"turn\": true faces the other way in its file (Mixamo's ladder climbs towards -Z) and is turned round first.",
   "clips": {
     "walk": "Female Locomotion Pack/walking.fbx",
     "walkLeft": "Female Locomotion Pack/left strafe walk.fbx",
@@ -30,6 +30,11 @@
     "hit": {
       "file": "Basic Shooter Pack/hit reaction.fbx",
       "mode": "delta"
+    },
+    "ladder": {
+      "file": "broadside/Climbing Ladder.fbx",
+      "mode": "pose",
+      "turn": true
     }
   }
 }

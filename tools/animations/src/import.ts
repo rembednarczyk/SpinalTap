@@ -44,7 +44,7 @@ interface Sampled {
   readonly bind: ReadonlyMap<string, readonly number[]>;
 }
 
-const sample = (file: string, fps: number): Sampled => {
+const sample = (file: string, fps: number, turned = false): Sampled => {
   const buf = readFileSync(file);
   const group = new FBXLoader().parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), "");
   const clip = group.animations[0];
@@ -73,13 +73,20 @@ const sample = (file: string, fps: number): Sampled => {
     mixer.setTime(t);
     group.updateMatrixWorld(true);
   };
+  // Turned round, x and z both change sign: with the mirror, only z.
   const where = (k: string): [number, number, number] => {
     node(k).getWorldPosition(v);
-    return [-v.x, v.y, v.z];
+    return turned ? [v.x, v.y, -v.z] : [-v.x, v.y, v.z];
   };
-  const bindAt = new Map<string, readonly number[]>(Object.keys(POINTS).map((k) => [k, where(k)]));
+  // The bind pose faces +Z in every file: it is not turned.
+  const bindAt = new Map<string, readonly number[]>(Object.keys(POINTS).map((k) => {
+    node(k).getWorldPosition(v);
+    return [k, [-v.x, v.y, v.z]];
+  }));
   const turn = (k: keyof typeof TURNS): Quat => {
     node(k).getWorldQuaternion(q).multiply(bind[k]);
+    // Turned round: half a turn about +Y before (y, w) = (w, -y) and the rest likewise.
+    if (turned) q.premultiply(new THREE.Quaternion(0, 1, 0, 0));
     return [q.x, -q.y, -q.z, q.w];
   };
   for (let f = 0; f < frames; f++) {
@@ -96,7 +103,7 @@ const pick = <K extends string>(s: Sampled, keys: readonly K[]): Record<K, reado
 const dir = process.argv[2];
 if (!dir) throw new Error("usage: node tools/animations/src/import.ts <dir with the unzipped packs>");
 type Source = string | { readonly file: string; readonly mirror: boolean };
-type BodySource = { readonly file: string; readonly mode: BodyMode; readonly fps?: number };
+type BodySource = { readonly file: string; readonly mode: BodyMode; readonly fps?: number; readonly turn?: boolean };
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8")) as { clips: Record<string, Source>; body: Record<string, BodySource> };
 
 const legs: Record<string, LegClip> = {};
@@ -112,7 +119,7 @@ for (const [name, src] of Object.entries(manifest.clips)) {
 const body: Record<string, BodyClip> = {};
 const bodySources: Record<string, string> = {};
 for (const [name, src] of Object.entries(manifest.body)) {
-  const s = sample(join(dir, src.file), src.fps ?? 30);
+  const s = sample(join(dir, src.file), src.fps ?? 30, src.turn ?? false);
   const bind = { hips: s.bind.get("hips")!, neck: s.bind.get("neck")!, shoulderL: s.bind.get("shoulderL")!, shoulderR: s.bind.get("shoulderR")! };
   const raw = { cycle: s.cycle, frames: s.frames, hips: s.paths.get("hips")!, neck: s.paths.get("neck")!, bind, head: s.turns.head, arms: pick(s, ARM_POINTS), legs: pick(s, LEG_JOINTS) };
   body[name] = toBodyClip(raw, src.mode);

@@ -11,7 +11,8 @@ import { RIG_LEG, poseLeg, swing, turnTowards } from "./leg-pose";
  * bullet, a blocked blow) plays the hit reaction over whatever it does: the chest and the head
  * jolt back and the hips drop, as hard as the hit. The procedural rig stays underneath; walking,
  * crouched, in the air, on a ladder, knocked out, dying or busy with an activity the idle eases out,
- * and arms holding a weapon, a guard or a grip keep theirs.
+ * and arms holding a weapon, a guard or a grip keep theirs. On a ladder the legs climb as in the
+ * ladder clip.
  */
 
 /** Below this many m/s it stands (the leg clips take over from here, `leg-pose.ts`). */
@@ -170,7 +171,47 @@ const poseHit = (rig: CharacterRig, s: BodyState, dt: number): number => {
   return x;
 };
 
-/** Lays the body clips over the rig after `animateRig` and the leg clips: the idle standing, the hit reaction on a flinch. */
+/** How far ahead of the hips the ladder clip's toes go at most, in leg lengths. */
+const LADDER_TOES = (() => {
+  const { legs, frames } = BODY_CLIPS.ladder;
+  let most = 0;
+  for (let f = 0; f < frames; f++) for (const at of [11, 23]) most = Math.max(most, legs[f * 24 + at]!);
+  return most;
+})();
+/** The toes stop this far short of the rungs' line (m). */
+const TOE_CLEAR = 0.05;
+
+/** How far ahead of her the rungs are, in leg lengths (from the ladder she climbs; far off without one). */
+const ladderReach = (rig: CharacterRig): number => {
+  const l = rig.ladder;
+  if (!l) return LADDER_TOES;
+  const ahead = Math.sin(l.yaw) * (l.x - rig.root.position.x) + Math.cos(l.yaw) * (l.z - rig.root.position.z);
+  return (ahead - TOE_CLEAR) / (RIG_LEG * (Math.abs(rig.root.scaling.y) || 1));
+};
+
+/**
+ * On a ladder the legs and the head climb as in the ladder clip: foot over foot, the left with the
+ * right hand's reach, looking up. Its phase is the hands' (`reachForRungs`: the height on the
+ * ladder, one loop per two rungs; the clip's left hand reaches over the same part of its loop), so
+ * the feet keep time with the hands up or down and stop when she hangs still. The torso stays the
+ * procedural pose's: the hands are solved onto the rungs from it.
+ */
+const poseLadder = (rig: CharacterRig): void => {
+  const w = rig.climbBlend;
+  if (w < 1e-3) return;
+  const clip = BODY_CLIPS.ladder;
+  const f = sampleBody(clip, (rig.climbPhase / (2 * Math.PI)) * clip.cycle, true);
+  // The game holds her nearer the ladder than Mixamo's figure stands to its own: the legs reach
+  // as far ahead as the rungs are, not through them.
+  const k = Math.min(1, Math.max(0.3, ladderReach(rig) / LADDER_TOES));
+  const legs = f.legs.map((v, i) => (i % 3 === 2 ? v * k : v));
+  const unlean = Quaternion.Inverse(rotationOf(rig.body));
+  poseLeg(rig.legL, rig.kneeL, legs, 0, w, unlean, 1);
+  poseLeg(rig.legR, rig.kneeR, legs, 12, w, unlean, 1);
+  turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
+};
+
+/** Lays the body clips over the rig after `animateRig` and the leg clips: the idle standing, the hit reaction on a flinch, the ladder. */
 export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, crouch: number): void => {
   const target = idleTarget(rig, speed, crouch);
   const s = stateOf(rig, target);
@@ -186,6 +227,7 @@ export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, 
     s.hit = null;
   }
   const shift = alive ? poseIdle(rig, s, target, dt) + poseHit(rig, s, dt) : 0;
+  if (alive) poseLadder(rig);
   rig.body.position.x += shift - s.shift;
   s.shift = shift;
 };
