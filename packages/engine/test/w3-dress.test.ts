@@ -1,13 +1,19 @@
 // @ts-expect-error The engine is typed for the browser; the test reads the kit off disk.
 import { readFileSync } from "node:fs";
+import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
 import { W3_GATE, W3_INSIDE_BLOCKS, WORLD_CHUNKS, w3 } from "@seki/sim";
+import { Scene } from "../src/babylon";
+import { ToonMaterials } from "../src/npr/toon-material";
 import { neonText } from "../src/renderer/alchemia/neon-letters";
+import { CityKit } from "../src/renderer/city-kit";
 import { GeometrySink, parseCityKit, swatchUv } from "../src/renderer/city-kit-data";
 import { W3_CABIN, W3_NEON, w3Dress } from "../src/renderer/tessen-w3/w3-dress";
 import { W3_CHAMBER_DRONES, W3_DRONE, W3_DRONE_BOXES, W3_ROOF_PADS, W3_TEST_DRONE } from "../src/renderer/tessen-w3/w3-drones";
+import { W3_FLOOD_PREFIX, W3Fx, w3FxPlan, w3SparkPoints } from "../src/renderer/tessen-w3/w3-fx";
 import { w3InsideGeometry } from "../src/renderer/tessen-w3/w3-inside-geometry";
 import { W3_WORDS, letteringRects, letteringWidth, paintable } from "../src/renderer/tessen-w3/w3-lettering";
+import { W3View } from "../src/renderer/tessen-w3/w3-view";
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -35,7 +41,7 @@ const onSwatch = (s: GeometrySink, swatch: string): { x: number; y: number; z: n
 /**
  * Tessen's 2077 layer on W-3 (ADR-0082 stage 4): baked into the hall's two meshes within the
  * triangles of ADR-0082 §4, the neon TESSEN over the gate, the cabin lit red round the
- * simulation's glass, the drones clear of the solids.
+ * simulation's glass, the drones clear of the solids, the steam and the sparks on High only.
  */
 describe("W-3's 2077 layer (ADR-0082 stage 4)", () => {
   it("adds no mesh: the dress goes into the inside and outer sinks within the triangles of ADR-0082 §4", () => {
@@ -127,5 +133,45 @@ describe("W-3's 2077 layer (ADR-0082 stage 4)", () => {
     expect(Math.min(...rects.map((r) => r.x0))).toBeCloseTo(-letteringWidth(W3_WORDS.plant, 0.36) / 2, 6);
     // On the airlocks' wall between the gate's frame and row N (z 423.1..430).
     expect(letteringWidth(W3_WORDS.plant, 0.36)).toBeLessThan(430 - 423.1);
+  });
+
+  it("makes steam and sparks on High only: sparks by the line's moving arms, none by a blown station", () => {
+    const low = { particles: false, inRange: true, near: true, interior: true, moving: true };
+    expect(w3FxPlan(low)).toEqual({ steam: null, sparks: false, lights: false });
+    expect(w3FxPlan({ ...low, particles: true })).toEqual({ steam: "inside", sparks: true, lights: false });
+    expect(w3FxPlan({ ...low, particles: true, interior: false, near: false })).toEqual({ steam: "outside", sparks: false, lights: true });
+    expect(w3FxPlan({ ...low, particles: true, inRange: false, near: false, interior: false })).toEqual({ steam: null, sparks: false, lights: false });
+    expect(w3SparkPoints()).toHaveLength(8);
+    expect(w3SparkPoints(["S2"]).every((p) => !(p.z < 418 && Math.abs(p.x - 2537) < 5.5))).toBe(true);
+    expect(w3SparkPoints(["S2"]).length).toBeLessThan(8);
+  });
+
+  it("starts its particle systems on High near the hall, none on low, and the floodlights only outside", () => {
+    const scene = new Scene(new NullEngine());
+    const materials = new ToonMaterials(scene);
+    const kit = new CityKit(scene, materials, null, kitData, { labels: false });
+    const eye = { ...w3(2462, 3.5, 421) };
+    const view = (particles: boolean) => new W3View({ scene, materials, kit: () => kit, city: () => true, eye: () => eye, still: !particles, particles });
+    const flood = () => materials.light(`${W3_FLOOD_PREFIX}neon`) !== undefined;
+    const lowView = view(false);
+    lowView.update(1 / 60, false);
+    expect(lowView.fx.systems).toHaveLength(0);
+    expect(flood()).toBe(true);
+    Object.assign(eye, w3(2520, 1.6, 418));
+    for (let i = 0; i < 3; i++) lowView.update(1 / 60, false);
+    expect(lowView.fx.systems).toHaveLength(0);
+    expect(lowView.interior).toBe(true);
+    expect(flood()).toBe(false);
+    const high = new W3Fx(scene, materials, true);
+    high.update(1 / 60, { inRange: true, near: true, interior: true, moving: true, wrecks: [] });
+    expect(high.systems.map((s) => s.name).sort()).toEqual(["w3-sparks", "w3-steam"]);
+    expect(high.emitting).toEqual(["w3-sparks", "w3-steam"]);
+    // Out of the hall onto the yard: the steam goes on outside, the sparks stop; far off, nothing.
+    high.update(1 / 60, { inRange: true, near: false, interior: false, moving: true, wrecks: [] });
+    expect(high.emitting).toEqual(["w3-steam"]);
+    expect(high.plan.steam).toBe("outside");
+    high.update(1 / 60, { inRange: false, near: false, interior: false, moving: true, wrecks: [] });
+    expect(high.emitting).toEqual([]);
+    high.dispose();
   });
 });

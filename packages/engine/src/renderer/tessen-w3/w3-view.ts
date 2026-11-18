@@ -6,6 +6,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { w3Dress } from "./w3-dress";
+import { W3Fx, W3_FX_RANGE } from "./w3-fx";
 import { w3InsideGeometry } from "./w3-inside-geometry";
 import { W3_INTERIOR_RANGE, w3InteriorDistance } from "./w3-interior-cull";
 import { type W3Lamp, W3_LAMP_PREFIX, w3LampsFor } from "./w3-lights";
@@ -42,6 +43,8 @@ export interface W3ViewDeps {
   readonly eye: () => Vec3;
   /** The arms stand still (low quality, ADR-0082 §4). */
   readonly still: boolean;
+  /** Steam and welding sparks as particles (High only, ADR-0082 stage 4); none without. */
+  readonly particles?: boolean;
 }
 
 /**
@@ -49,7 +52,8 @@ export interface W3ViewDeps {
  * line and furniture baked from the simulation's blocks in one mesh drawn near it, the shut leaves
  * in its facades and the culvert's mouth in a second one drawn from afar, the line's moving parts
  * in a third (still on low quality), and its two nearest lamps. No moon shadow (ADR-0082 §4).
- * Tessen's 2077 layer (stage 4, `w3-dress.ts`) is baked into the first two.
+ * Tessen's 2077 layer (stage 4, `w3-dress.ts`) is baked into the first two; its steam, sparks and
+ * floodlights are `W3Fx`'s.
  * `interior` says the eye is in its rooms: the renderer's interior mode.
  */
 export class W3View {
@@ -66,13 +70,17 @@ export class W3View {
   private missionShown = true;
   /** The eye is in the hall's or the basement's rooms. */
   interior = false;
+  /** Steam, sparks and floodlights (ADR-0082 stage 4). */
+  readonly fx: W3Fx;
 
   /** The lights that take a slot (`ToonMaterials.setLightFocus`): the hall's lamps alone in its rooms, every light outside. */
   get lightScope(): string | null {
     return this.interior ? W3_LAMP_PREFIX : null;
   }
 
-  constructor(private readonly deps: W3ViewDeps) {}
+  constructor(private readonly deps: W3ViewDeps) {
+    this.fx = new W3Fx(deps.scene, deps.materials, deps.particles ?? false);
+  }
 
   /** The meshes on and their triangles (debug, tests). */
   get stats(): { readonly meshes: number; readonly insideTriangles: number; readonly lineTriangles: number } {
@@ -97,6 +105,7 @@ export class W3View {
     if (!kit || !this.deps.city()) {
       this.interior = false;
       this.show(false, false, 0);
+      this.fx.update(dt, { inRange: false, near: false, interior: false, moving: false, wrecks: this.mission.wrecks });
       return;
     }
     const eye = this.deps.eye();
@@ -110,6 +119,7 @@ export class W3View {
     if (!frozen) this.time += dt;
     this.lineAge += frozen ? 0 : dt;
     if (near && (!this.missionShown || (!this.deps.still && this.lineAge >= LINE_STEP))) this.moveLine(kit);
+    this.fx.update(frozen ? 0 : dt, { inRange: d < W3_FX_RANGE, near, interior: this.interior, moving: !this.deps.still && !frozen, wrecks: this.mission.wrecks });
   }
 
   /**
