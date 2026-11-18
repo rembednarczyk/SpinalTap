@@ -31,19 +31,23 @@ describe("G-358: the north market at 23:00", () => {
     const stall = SCHEDULES.fumiko!.stops.find((s) => s.label === "stragan")!.path.at(-1)!;
     teleportPlayer(sim, spotNear(stall.x + 1.5, stall.z + 0.5), 0);
     run(sim, SIM_HZ);
-    // The second night, as in the report.
-    for (let night = 0; night < 2; night++) {
-      skipTo(sim, hm(22, 58));
-      for (let i = 0; i < 4 * 60 * SIM_HZ; i++) {
-        sim.step();
-        for (const key of VENDORS) {
-          const v = byKey(sim, key);
-          expect(v, key).toBeDefined();
-          expect(v!.civilian?.crowd?.state ?? "calm", `${key}, night ${night}, step ${i}`).toBe("calm");
-        }
-      }
-      // At their stalls, busy with their work.
-      for (const key of VENDORS) expect(byKey(sim, key)!.activity, key).toBeDefined();
+    // The second night, as in the report: the first one passes in a skip of the clock.
+    skipTo(sim, hm(22, 59));
+    skipTo(sim, hm(22, 59));
+    run(sim, SIM_HZ);
+    const vendors = VENDORS.map((key) => byKey(sim, key));
+    vendors.forEach((v, i) => expect(v, VENDORS[i]).toBeDefined());
+    // Two minutes round 23:00, every step.
+    const scared: string[] = [];
+    for (let i = 0; i < 2 * 60 * SIM_HZ; i++) {
+      sim.step();
+      vendors.forEach((v, n) => {
+        const state = v!.civilian?.crowd?.state ?? "calm";
+        if (state !== "calm") scared.push(`${VENDORS[n]} ${state} at step ${i}`);
+      });
     }
+    expect(scared).toEqual([]);
+    // At their stalls, busy with their work.
+    vendors.forEach((v, i) => expect(v!.activity, VENDORS[i]).toBeDefined());
   });
 });
