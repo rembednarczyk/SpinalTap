@@ -48,9 +48,12 @@ export interface CharacterRig {
   /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
   aim: number;
   aimHold: number;
-  /** Seconds left of a reload, and its full length; 0 when not reloading. */
+  /** Seconds left of a reload step, and its full length; 0 when not reloading (`reload-motion.ts`). */
   reload: number;
   reloadTotal: number;
+  /** The step loads one round of a run, and how far that run holds the weapon down. */
+  reloadRound: boolean;
+  reloadHold: number;
   /** Holds a melee weapon (from the appearance): swings and guards instead of aiming (ADR-0019). */
   melee: boolean;
   /** The melee swing being played, or null. */

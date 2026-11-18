@@ -258,8 +258,8 @@ export class ScreenFx {
         if (rig) this.deps.actors.talk(effect.entityId, effect.seconds);
         return;
       case "reload":
-        if (rig) startReload(rig, effect.duration);
-        if (own) camera.startReload(effect.duration);
+        if (rig) startReload(rig, effect.duration, effect.perRound);
+        if (own) camera.startReload(effect.duration, effect.perRound);
         return;
       case "melee":
         if (rig) startSwing(rig, effect.strike, effect.windup, effect.recovery);
