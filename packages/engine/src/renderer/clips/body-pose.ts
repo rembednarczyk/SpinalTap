@@ -159,10 +159,17 @@ const poseLadder = (rig: CharacterRig): void => {
   turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
 };
 
+/**
+ * Of the clip's dip and knee bend, this share: Mixamo's figure brakes into a squat, the hips 23 cm
+ * down on the game's legs, which read as crouching; the user's call (18.11) was a dip on the brakes,
+ * about 7 cm. The lean back and the arms stay whole.
+ */
+export const STOP_DEPTH = 0.3;
+
 /** Braking from a run (`stop-clips.ts`): the body, the free arms and the hips' dip, without the clip's slide forward. */
 const poseStop = (rig: CharacterRig, speed: number, dt: number): number => {
   const st = stopFrame(rig, speed, dt);
-  return st ? layPose(rig, st.frame, st.w, freeArms(rig), false, { hips: "height" }) : 0;
+  return st ? layPose(rig, st.frame, st.w, freeArms(rig), false, { hips: "height", depth: STOP_DEPTH }) : 0;
 };
 
 /** Off the ground and after a hard landing (`air-clips.ts`); the arms that hold something keep it. */
