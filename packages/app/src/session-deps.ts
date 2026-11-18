@@ -4,6 +4,7 @@ import type { CrowdDensity, TrafficDensity } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { PreviewHost } from "./character-view";
 import type { HintsHost } from "./controllers/hint-sync";
+import type { Haptics } from "./haptics";
 import type { SettingsHost } from "./controllers/settings-controller";
 
 export type { HintsHost } from "./controllers/hint-sync";
@@ -32,6 +33,8 @@ export interface GameSessionDeps {
   readonly hints?: HintsHost;
   /** Touch controls on screen: hints use touch words instead of keys. */
   readonly touch?: boolean;
+  /** The phone's vibration (`webHaptics`); none on a desktop or in tests. */
+  readonly haptics?: Haptics | null;
   /** The crowd of residents (ADR-0041), as the graphics quality allows; none without. */
   readonly crowd?: CrowdDensity;
   /** The street's traffic (ADR-0050); the crowd's density without. */
