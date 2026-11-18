@@ -105,10 +105,10 @@ describe("Loadouts", () => {
     loadouts.set(rig, look({ melee: "baton" }), "hero");
     settle(rig, true);
     loadouts.update(rig);
-    expect(enabled(scene, "hipL")).toEqual(["hero-hipL-baton"]);
+    expect(enabled(scene, "stowedMelee")).toEqual(["hero-stowedMelee-baton"]);
     loadouts.set(rig, look({ melee: "baton", active: "melee" }), "hero");
     loadouts.update(rig);
-    expect(enabled(scene, "hipL")).toEqual([]);
+    expect(enabled(scene, "stowedMelee")).toEqual([]);
     expect(enabled(scene, "hand")).toEqual(["hero-hand-baton"]);
   });
 
