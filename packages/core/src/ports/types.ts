@@ -364,8 +364,11 @@ export type EffectDescriptor =
   | { readonly kind: "memory-glitch" }
   | { readonly kind: "overdrive"; readonly active: boolean }
   | { readonly kind: "heal" }
-  /** The entity was hit: short recoil of the body. */
-  | { readonly kind: "flinch"; readonly entityId: EntityId }
+  /**
+   * The entity was hit: short recoil of the body. `at` is where the hit landed and `head` whether
+   * it was the head: a fall that follows goes the way the hit came (ADR-0090).
+   */
+  | { readonly kind: "flinch"; readonly entityId: EntityId; readonly at?: Vec3; readonly head?: boolean }
   /** The entity holstered its weapon or started drawing it. */
   | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean; readonly slot?: WeaponSlot }
   /** The entity speaks a line: its mouth moves for about `seconds` (0 stops it). */
