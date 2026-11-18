@@ -39,6 +39,66 @@
     "fire": {
       "file": "Basic Shooter Pack/firing rifle.fbx",
       "mode": "delta"
+    },
+    "idleShift": {
+      "file": "Gestures Pack Basic/weight shift.fbx",
+      "mode": "pose",
+      "fps": 8
+    },
+    "smoke": {
+      "file": "zycie/Smoking.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "phoneTalk": {
+      "file": "zycie/Talking On Phone.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "phoneText": {
+      "file": "zycie/Texting While Standing.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "tablet": {
+      "file": "zycie/Standing Using Touchscreen Tablet.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "talkHappy": {
+      "file": "Gestures Pack Basic/happy hand gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkAck": {
+      "file": "Gestures Pack Basic/acknowledging.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkCocky": {
+      "file": "Gestures Pack Basic/being cocky.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkNod": {
+      "file": "Gestures Pack Basic/head nod yes.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkShake": {
+      "file": "Gestures Pack Basic/thoughtful head shake.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkDismiss": {
+      "file": "Gestures Pack Basic/dismissing gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkLook": {
+      "file": "Gestures Pack Basic/look away gesture.fbx",
+      "mode": "pose",
+      "fps": 10
     }
   }
 }

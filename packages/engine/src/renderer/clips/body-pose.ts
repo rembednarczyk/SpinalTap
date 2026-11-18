@@ -1,8 +1,10 @@
-import { Quaternion, Vector3 } from "../../babylon";
+import { Quaternion } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
+import type { BodyClip } from "./body-clip";
 import { BODY_CLIPS } from "./body-clips.generated";
 import { sampleBody } from "./body-sample";
-import { RIG_LEG, poseLeg, swing, turnTowards } from "./leg-pose";
+import { RIG_LEG, poseLeg, turnTowards } from "./leg-pose";
+import { figureSeed, layPose, rotationOf, turnAboutHips } from "./pose-lay";
 import { stepRecoil } from "./recoil";
 
 export { type BodyFrame, sampleBody } from "./body-sample";
@@ -25,6 +27,7 @@ const IDLE_EASE = 3;
 
 interface BodyState {
   idle: number;
+  /** Where in its idle loop the figure stands, 0..1 of it (`figureSeed`). */
   readonly offset: number;
   flinch: number;
   hit: number | null;
@@ -33,35 +36,14 @@ interface BodyState {
   shift: number;
 }
 const states = new WeakMap<CharacterRig, BodyState>();
-/** Where in the idle loop a figure stands, from its name: the same figure the same each time, a crowd spread out. */
-const offsetOf = (rig: CharacterRig): number => {
-  let h = 0;
-  for (const c of rig.root.name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return ((h % 997) / 997) * BODY_CLIPS.idle.cycle;
-};
 /** A figure first seen standing stands in the idle from the start (the reference still, G-030, is posed the same however long it took). */
 const stateOf = (rig: CharacterRig, idle: number): BodyState => {
   let s = states.get(rig);
   if (!s) {
-    s = { idle, offset: offsetOf(rig), flinch: rig.flinch, hit: null, hitAmount: 0, shift: 0 };
+    s = { idle, offset: figureSeed(rig), flinch: rig.flinch, hit: null, hitAmount: 0, shift: 0 };
     states.set(rig, s);
   }
   return s;
-};
-
-const rotationOf = (node: CharacterRig["body"]): Quaternion => node.rotationQuaternion ?? Quaternion.FromEulerAngles(node.rotation.x, node.rotation.y, node.rotation.z);
-const dir = (a: readonly number[], i: number): Vector3 => new Vector3(a[i]!, a[i + 1]!, a[i + 2]!);
-
-/** One arm along the clip's upper arm, forearm and hand (directions in the chest's frame), `w` of the way. */
-const poseArm = (arm: CharacterRig["armL"], elbow: CharacterRig["elbowL"], wrist: CharacterRig["wristL"], a: readonly number[], at: number, w: number): void => {
-  if (w <= 0) return;
-  const upper = swing(dir(a, at));
-  const toUpper = Quaternion.Inverse(upper);
-  const lower = swing(dir(a, at + 3).applyRotationQuaternion(toUpper));
-  const hand = swing(dir(a, at + 6).applyRotationQuaternion(toUpper).applyRotationQuaternion(Quaternion.Inverse(lower)));
-  turnTowards(arm, upper, w);
-  turnTowards(elbow, lower, w);
-  turnTowards(wrist, hand, w);
 };
 
 /**
@@ -83,41 +65,16 @@ const idleTarget = (rig: CharacterRig, speed: number, crouch: number): number =>
   return still * (1 - Math.min(1, Math.max(0, crouch))) * (1 - rig.airBlend) * (1 - rig.climbBlend) * (1 - rig.knockout);
 };
 
-/** Moves the hips by `by` (leg lengths): x on top of what was laid on before, y and z on the procedural rig's, set anew each frame. */
-/**
- * Turns the body `w` of the way to `q` about the hips (the body's origin is at the feet), and moves
- * the hips by `by` (leg lengths). Returns the sideways part, which the caller keeps track of.
- */
-const turnAboutHips = (rig: CharacterRig, q: Quaternion, w: number, by: Vector3): number => {
-  const b = rig.body;
-  const hip = new Vector3(0, rig.legL.position.y, 0);
-  const before = hip.applyRotationQuaternion(rotationOf(b));
-  turnTowards(b, q, w);
-  const after = hip.applyRotationQuaternion(rotationOf(b));
-  return shiftHips(b, by.add(before.subtract(after).scale(1 / RIG_LEG)));
-};
-
-const shiftHips = (b: CharacterRig["body"], by: Vector3): number => {
-  b.position.y += by.y * RIG_LEG;
-  b.position.z += by.z * RIG_LEG;
-  return by.x * RIG_LEG;
-};
+/** The idle each figure stands in, its own of two (Adventure's “idle (2)” bent Seki's bust through the ballistic vest, G-870). */
+const IDLES = [BODY_CLIPS.idle, BODY_CLIPS.idleShift] as const;
+export const idleClipOf = (rig: CharacterRig): BodyClip => IDLES[Math.floor(figureSeed(rig) * IDLES.length)]!;
 
 const poseIdle = (rig: CharacterRig, s: BodyState, target: number, dt: number): number => {
   s.idle += (target - s.idle) * Math.min(1, dt * IDLE_EASE);
   const w = s.idle;
   if (w < 1e-3) return 0;
-  const f = sampleBody(BODY_CLIPS.idle, rig.time + s.offset, true);
-  const b = rig.body;
-  const x = turnAboutHips(rig, f.chest.multiply(rotationOf(b)), w, f.hips.scale(w));
-  turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
-  const unlean = Quaternion.Inverse(rotationOf(b));
-  poseLeg(rig.legL, rig.kneeL, [...f.legs], 0, w, unlean, 1);
-  poseLeg(rig.legR, rig.kneeR, [...f.legs], 12, w, unlean, 1);
-  const [left, right] = freeArms(rig);
-  poseArm(rig.armL, rig.elbowL, rig.wristL, f.arms, 0, w * left);
-  poseArm(rig.armR, rig.elbowR, rig.wristR, f.arms, 9, w * right);
-  return x;
+  const clip = idleClipOf(rig);
+  return layPose(rig, sampleBody(clip, rig.time + s.offset * clip.cycle, true), w, freeArms(rig), true);
 };
 
 /** A flinch that jumped up since the last frame starts the hit reaction, as hard as the jump. */
