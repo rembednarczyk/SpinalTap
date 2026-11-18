@@ -1,0 +1,1 @@
+- Lista quickhacków w skanerze pokazuje koszt RAM ze zniżką ICEpick, tak jak pobiera go gra (G-374).

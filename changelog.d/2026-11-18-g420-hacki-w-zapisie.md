@@ -1,0 +1,1 @@
+- Test regresji G-420: efekty hacków na wrogu (oślepienie, spowolnienie, ping) przetrwają zapis i wczytanie.

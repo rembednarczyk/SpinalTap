@@ -21,7 +21,11 @@ const freshWorld = (node: TransformNode) => {
   return node.getWorldMatrix();
 };
 
-type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
+/**
+ * Where a weapon is mounted. `stowedMelee` is the melee weapon put away, wherever it hangs: a
+ * baton in the left holster, a blade across the back (G-355: it was `hipL`, which the blade is not on).
+ */
+type Place = "hand" | "hip" | "stowedMelee" | "back" | "model" | "long";
 
 /**
  * Where a one-handed gun's mount point (the front of its grip, under the trigger guard) sits on
@@ -222,7 +226,7 @@ export class Loadouts {
     this.show(s.mounted.hand, drawn && !dressed);
     this.show(s.mounted.model, drawn && dressed);
     this.show(s.mounted.hip, stowed("secondary"));
-    this.show(s.mounted.hipL, stowed("melee"));
+    this.show(s.mounted.stowedMelee, stowed("melee"));
     // On a ladder the long gun goes on the back, where the climbing hands leave it (G-282).
     const inHands = longGunInHands(rig);
     this.show(s.mounted.back, stowed("primary") || (rig.grip !== null && w.active === "primary" && !inHands));
@@ -325,7 +329,7 @@ export class Loadouts {
     this.place(s, "hand", long ? null : rig.gunHand, active);
     this.place(s, "long", long ? rig.gunHold : null, active);
     this.place(s, "hip", s.holsterR, w.secondary);
-    this.place(s, "hipL", w.melee === "blade" ? (s.back.parent as TransformNode) : s.holsterL, w.melee);
+    this.place(s, "stowedMelee", w.melee === "blade" ? (s.back.parent as TransformNode) : s.holsterL, w.melee);
     this.place(s, "back", s.back, w.primary);
     this.place(s, "model", long ? null : (s.model?.fist ?? null), active);
   }
@@ -343,7 +347,7 @@ export class Loadouts {
     if (!parent || !look) return;
     const holder = new TransformNode(`${s.name}-${place}-${look}`, this.scene);
     holder.parent = parent;
-    if (place === "hipL" && look === "blade") {
+    if (place === "stowedMelee" && look === "blade") {
       const turn = Quaternion.RotationAxis(new Vector3(0, 0, 1), BLADE_ON_BACK.turn);
       // Up its own line (the handle is +Y of a hand mount), then off the back.
       holder.position.copyFrom(new Vector3(0, BLADE_ON_BACK.lift, 0).applyRotationQuaternion(turn));

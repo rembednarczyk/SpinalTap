@@ -1,5 +1,5 @@
 import { type CSSProperties } from "react";
-import { QUICKHACKS, type QuickhackSlotInput, quickhacksFor } from "@seki/core";
+import { QUICKHACKS, type QuickhackSlotInput, hackCost, quickhacksFor } from "@seki/core";
 import { useT } from "../i18n/use-t";
 import type { RamVm } from "../store/hud-vm";
 import { useHackIntents, useUi } from "../use-ui";
@@ -85,14 +85,16 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
       <ol className="hacks" aria-label={t("scan.quickhacks")}>
         {hacks.map((id, i) => {
           const def = QUICKHACKS[id];
-          const short = ram.current < def.ram;
+          // What the simulation takes for it now: 1 RAM less with the breached network's ICEpick (G-374).
+          const cost = hackCost(id, ram.icepick ?? false);
+          const short = ram.current < cost;
           const slot = (i + 1) as Exclude<QuickhackSlotInput, 0>;
           const body = (
             <>
               <kbd className="hacks__key">{slot}</kbd>
               <span className="hacks__title">{t(`quickhack.${def.id}`)}</span>
               <span className="hacks__cat">{t(`scan.cat.${def.category}`)}</span>
-              <span className="hacks__ram">{def.ram} RAM</span>
+              <span className="hacks__ram">{cost} RAM</span>
             </>
           );
           return (
@@ -104,7 +106,7 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
                   disabled={short}
                   aria-label={t("scan.hackRam", {
                     hack: t(`quickhack.${def.id}`),
-                    ram: def.ram,
+                    ram: cost,
                   })}
                   onClick={() => intents.pickQuickhack(slot)}
                 >
