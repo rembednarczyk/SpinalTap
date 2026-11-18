@@ -14,6 +14,7 @@ import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel 
 import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
 import type { BuffId, ContractVariation, DisguiseRole, MetroStationId } from "../world/wave2";
 import type { MetroRefusal } from "../world/metro";
+import type { TerritoryId } from "../world/territories";
 import type { XpSource } from "../progression/xp-sources";
 
 export interface DomainEvents {
@@ -264,7 +265,16 @@ export interface DomainEvents {
   BodyFound: { body: EntityId; finder: EntityId };
   /** The player put `body` into the hiding place `spot` (a container, a dumpster, a locker): nobody finds it there. */
   BodyHidden: { body: EntityId; spot: EntityId };
+  /** A member of a tolerating group warns the player (ADR-0091): put the gun away or leave within the warning's seconds. */
+  TerritoryWarned: { territory: TerritoryId; entityId: EntityId };
+  /** The gang of `territory` is provoked in its district (ADR-0091): its groups stop tolerating the player. */
+  TerritoryProvoked: { territory: TerritoryId; cause: TerritoryProvocation };
+  /** The provocation ran out and the grudge is below the threshold: the gang's groups in the district tolerate the player again. */
+  TerritoryCalmed: { territory: TerritoryId };
 }
+
+/** What provoked a gang in its district (ADR-0091 §2). */
+export type TerritoryProvocation = "warning" | "aim" | "hit" | "gunfire" | "takedown" | "body" | "crime";
 
 /** Why a takedown did not finish (ADR-0065). */
 export type TakedownBreak = "damage" | "gone";

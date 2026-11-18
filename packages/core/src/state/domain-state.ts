@@ -17,6 +17,7 @@ import { type BuffList, NO_BUFFS } from "../abilities/buffs";
 import { type DisguiseState, NO_DISGUISE } from "../crime/disguise";
 import { type MetroState, NO_METRO } from "../world/metro";
 import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
+import { type GangStandings, NO_GANG_STANDINGS } from "../world/territories";
 import { INITIAL_PROGRESSION, type ProgressionState } from "../progression/progression";
 import { type DifficultyProfile, NORMAL_DIFFICULTY } from "../difficulty/difficulty";
 
@@ -63,6 +64,8 @@ export interface DomainState {
   readonly metro: MetroState;
   /** Street encounters already played (ADR-0034). */
   readonly encounters: EncounterLog;
+  /** The gangs' grudge and provocation per district (ADR-0091, save v48). */
+  readonly gangStandings: GangStandings;
   /** Experience, level, attributes and the points to spend (ADR-0059). */
   readonly progression: ProgressionState;
   /** The difficulty's multipliers (ADR-0066): an input of the simulation, like the seed. */
@@ -89,6 +92,7 @@ export const createDomainState = (): DomainState => ({
   disguise: NO_DISGUISE,
   metro: NO_METRO,
   encounters: NO_ENCOUNTERS,
+  gangStandings: NO_GANG_STANDINGS,
   progression: INITIAL_PROGRESSION,
   difficulty: NORMAL_DIFFICULTY,
 });
