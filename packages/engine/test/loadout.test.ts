@@ -202,14 +202,15 @@ describe("Loadouts", () => {
     expect(scene.transformNodes.filter((n) => n.name.startsWith("hero-hip") || n.name.startsWith("hero-holster") || n.name === "hero-back" || n.name === "hero-sling")).toEqual([]);
   });
 
-  it("shows optics and arm implants on the rig, then on the model's head and hand", () => {
+  it("shows optics and arm implants on the rig, then on the model's head and forearm", () => {
     const { scene, materials, loadouts, rig } = setup();
     loadouts.set(rig, { ...look(), implants: ["optics", "arms"] }, "hero");
     expect(parentOf(scene, "hero-optics1")).toBe(rig.head.name);
     expect(parentOf(scene, "hero-cyberarm0")).toBe(rig.elbowR.name);
     loadouts.setModel(rig, model(scene, materials, rig).dressed);
     expect(parentOf(scene, "hero-optics-1")).toBe("hero-bone-head");
-    expect(parentOf(scene, "hero-cyberarm1")).toBe("hero-bone-hand");
+    // On the model they sit at the wrist turned with the forearm, not the hand (the grip of a long gun turns it).
+    expect(parentOf(scene, "hero-cyberarm1")).toBe("hero-bone-forearm");
     loadouts.set(rig, look(), "hero");
     expect(scene.getMeshByName("hero-optics1")).toBeNull();
     expect(scene.getMeshByName("hero-cyberarm0")).toBeNull();
