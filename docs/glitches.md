@@ -514,12 +514,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (terrain), tools/osm-import
 - Po G-781 odsłonięte płaskie biegi Ratusza od Pl. Łokietka w1095048695/w1095048696 (step_count 9, ok. 1,4 m) w krakowskie-2-0 (411..421; -86..-90): szare płyty bez stopni 4 cm pod chodnikiem
 
-### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
-- Status: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
-- Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
-- Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
-- Pakiet właściciela: packages/sim (micro-events, streaming)
-
 ### G-234 Pasy schodów ucięte brzegiem chunka: klin rysowany w poprzek albo niewidoczny
 - Status: zgłoszone (2.11, naprawiacz G-213); stan sprzed G-213, bazy skanu 1 i 1
 - Klucze skanu: steps-across-run podzamcze-1-0 729,160; steps-band-hidden krakowskie-0-1 -200,125

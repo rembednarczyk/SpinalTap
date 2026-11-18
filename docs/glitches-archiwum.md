@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
+- Status: naprawione (18.11, #728 scalony); wcześniej: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
+- Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
+- Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
+- Pakiet właściciela: packages/sim (micro-events, streaming)
+
 ### G-295 Po alarmie licznik podejrzeń zostaje na 1 i pierwsze ok. 2 s przeszukania alarmuje w jednym kroku
 - Status: naprawione (18.11, #729 scalony); wcześniej: w PR #729 (18.11); wcześniej: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
 - Ważność: S4 · Zasięg: `ganger-perception.ts` (`track`)
