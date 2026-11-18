@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
+- Status: naprawione (18.11, #723 scalony); wcześniej: w PR #723 (18.11); wcześniej: zgłoszone (6.11, autor ADR-0059 etapu 3b)
+- Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
+- Pakiet właściciela: packages/ui, packages/app (przekazanie kosztu z sim)
+- Test przyjęcia: test komponentu: przy ICEpick koszt na liście równa się kosztowi pobieranemu w symulacji
+
 ### G-091 Długie przytrzymanie „Use” wybiera kwestię pod palcem w kole dialogu
 - Status: naprawione (18.11, #720 scalony); wcześniej: w PR #720 (18.11, osłona od podniesienia palca); wcześniej: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
 - Ważność: S3 (proponowana; przypadkowy wybór kwestii w rozmowie) · Zasięg: dotyk · Koszt: mały
