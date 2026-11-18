@@ -134,23 +134,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props) / packages/engine
 - Test przyjęcia: żaden rekwizyt pod pomostem nie sięga wyżej niż spód pomostu
 
-### G-071 Kule przelatują przez pomost
-- Status: w PR #622; wcześniej: zgłoszone (z weryfikacji G-062)
-- Ważność: S3 (proponowana; po G-062 da się stanąć pod mostem i strzelać przez pomost w obie strony) · Koszt: średni
-- Dowód: ADR-0053 traktuje pomost jako podłogę dla ruchu, nie jako przesłonę dla strzałów i widoczności
-- Pakiet właściciela: packages/sim (walka, linia widzenia)
-- Test przyjęcia: strzał z pomostu do celu pod nim (i odwrotnie) trafia w pomost; świadek pod mostem nie widzi gracza na pomoście
-- Przyczyna: GroundField.rayHit liczył tylko teren. Poprawka: rayDecks w deck.ts (płyta od powierzchni do spodu), w rayGeometry i lineOfSight. Test deck-cover.test.ts: 4/7 pada bez poprawki, 7/7 z nią. Hash determinism bez zmian.
-
-### G-072 Walczący na pomoście nie schodzi pod most do gracza stojącego pod nim
-- Status: naprawiony (main 16.11, #627); wcześniej: w PR #627; wcześniej: zgłoszone (z naprawy G-068)
-- Ważność: S4 (proponowana) · Zasięg: pomosty z przejściem pod spodem · Koszt: średni (nawigacja między poziomami)
-- Dowód: po G-062 `heightApart` daje 0 dla gracza pod mostem i walczącego na pomoście nad nim; walczący idzie do punktu nad graczem i stoi tam na pomoście, nie szuka zejścia
-- Dodatkowo (weryfikacja G-068): pod wiaduktem Zamkowej zaalarmowany walczący idący Podwalem z lewej strony osi (chunk `stare-miasto-1-1`, 12–20 m od osi) utyka w (749.5–750.6, 180.4–181.4), także przed G-068
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: zaalarmowany walczący na pomoście Mełgiewskiej dociera do gracza pod mostem przez zejście w < 20 s
-- Poprawka: zejście z pomostu przez landing (deck-landing.ts) + pastLedge/ontoDeck; deck-descent.test.ts i 3 przypadki w under-deck-ai.test.ts padają bez poprawki; hashe bez zmian. Część 'Dodatkowo' (Podwale 749.5–750.6, 180.4–181.4) niesprawdzona.
-
 ### G-073 Stare stragany pchlego targu na Placu Zamkowym wchodzą w drzewa i meble uliczne
 - Status: zgłoszone (z weryfikacji G-064)
 - Ważność: S4 (proponowana) · Zasięg: 8 straganów · Koszt: mały
@@ -2024,14 +2007,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - 15.11 kurator (G-825 r2): klin łącznicy Andersa przy Mełgiewskiej (2319-2334; 315-327), ok. 20 m²: na ortofoto asfalt do z 321,4 (x 2326) i 324,4 (x 2330); stan jak w main
 
-### G-840 Schody bez wspólnej normy stopnia: płytkie stopnie Placu Zamkowego z daleka jako czarna plama
-- Ważność: S3 · Zasięg: wszystkie biegi schodów z mapy (steps-plan.ts); najbardziej schody na Wzgórze Zamkowe z Placu Zamkowego
-- Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem: schody na Podzamczu są bardzo płytkie i z daleka widać je jako czarną plamę. steps-plan.ts tnie bieg na stopnie o stałej głębokości STEP_DEPTH 0,33 m, a wysokość wynika ze spadku wygładzonego NMT (od MIN_RISER 0,045 m w górę), więc wysokości są różne między biegami i często bardzo małe. Ciemne podstopnie (#4f4b46) co 0,33 m zlewają się z daleka w czarną plamę (aliasing). Propozycja użytkownika: jedna norma stopnia w całej grze, pilnowana skanem. Do zrobienia: (1) norma: podstopień 0,15 m (0,12–0,17), stopnica 0,32 m (2h+s 0,60–0,66), liczba stopni z całkowitej różnicy wysokości końców biegu (NMT/LOD2, nie z wygładzonego gruntu na każdej stopnicy), spoczniki co najwyżej co 10–12 stopni zamiast rozciągania stopnic; (2) z daleka (od ok. 40 m) bieg jako jedna pochylnia z uśrednionym kolorem, bez linii podstopni; (3) kontrola skanu steps-riser-norm (podstopień i stopnica poza normą, nierówne stopnie w biegu) z bazą. Referencja: schody Placu Zamkowego, dwa biegi ze spocznikiem, szerokie granitowe stopnie (zdjęcie użytkownika w scratchpadzie ref/, tylko jako referencja wizualna).
-- Status: w PR #593 (kurator r2 ZGODNE, d3097ea); wcześniej: naprawione w gałęzi (d3097ea), przegląd kuratora ZGODNE, PR; wcześniej: w naprawie, runda 2 (d3097ea), do przeglądu kuratora; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
-- Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan), tools/glitch-scan
-- Przegląd kuratora 15.11 @ 4f65035: NIEZGODNE (T-307). Do poprawy: (1) droga ze step_count dostaje tyle stopni, bez spoczników z maxRun (w1305889408: 40, w1305940836: 12, w1305940837: 13); (2) stopnica nie niżej niż 0,02 m pod terenem (15 biegów). Kontrole steps-count-osm, steps-landing-osm, steps-tread-sunk. Pochylnia od 35–45 m zaciera stopnie widoczne na zdjęciu z ok. 60 m: próg ok. 70 m. Kolor: G-850; podesty: G-849.
-- Przegląd kuratora r2 (15.11, @ d3097ea): ZGODNE. Bieg główny w1305889408: 40 podstopni × 0,131 m, stopnice 0,38 m (2h+s 0,64), bez spocznika; stopnica najwyżej 0,005 m pod osią terenu (bez LIFT); pochylnia z daleka 65–75 m. Nawierzchnia i teren 0, hashe zgodne. Wzrost steps-riser-norm 4 → 23 klucze (28 trafień) uzasadniony. 21 trafień (16 kluczy) to biegi z OSM step_count, pod którymi teren gry wznosi się mniej niż liczba × 0,12 m (podstopień 0,047–0,119 m; ADR-0042: liczba z mapy ma pierwszeństwo przed normą), w tym 7 zamkowych (G-849). 7 trafień to za strome lub za krótkie pasy (stride 0,48–0,60): stare 572,-70 i 753–755,-149/-150 oraz nowe 730,160 i 736,143. steps-count-osm 14 kluczy (NMT 0,07–0,6 m na 3–15 stopni), steps-landing-osm 0, steps-tread-sunk 0. Otwarte z r1: stopnice z bliska za ciemne (do trawy 1,39 wobec 1,67–1,92 na zdjęciu; kontrola steps-albedo-drift).
-
 ### G-842 Sygnalizatory na jezdni wewnątrz dużych skrzyżowań (square na asfalcie)
 - Ważność: S4 · Zasięg: Rondo Dmowskiego n1946478264 (1104,1;264,7), (1043,6;277,9); rondo Cybulskiego (2539,8;268,2), (2481,7;302,3); 3 Maja (-115,1;53,6)
 - Opis: offRoad wybiera square we wnętrzu skrzyżowania, który na ortofoto jest asfaltem; łuk prawoskrętu przy Rondzie Dmowskiego (1095-1110; 261-265,8) ma w grze square zamiast jezdni. Narusza T-031. Proponowana kontrola signal-in-junction
@@ -2100,27 +2075,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 porządki rejestru: G-868 to duplikat; pada też na czystym main e839d94 (en i pl, 844x390 i 800x370), w śladzie tylko karta dzielnicy, przyczyna nieustalona.
 - przyczyna: pomiar karty w trakcie animacji wejścia trzymanej przez brak klatek (toast-in +30 px = 16×74); test czeka na Animation.finished; dowód: wjazd 20 s pada bez/przechodzi z; 10/10 repeat
 
-### G-853 Pasy gołej ziemi między kostką deptaku Krakowskiego Przedmieścia a pierzejami
-- Ważność: S3 · Zasięg: deptak x −100..440: 2141 m² w 10 m od osi (2765 m² w 20 m); największe (222,5;−70,6) 620 m², (291,0;−69,9) 592 m², (364,6;−86,0) 200 m²
-- Opis: Zgłoszenie użytkownika 15.11. Import nie kładzie nawierzchni między krawędzią kostki (z ortofoto) a ścianami kamienic residential; goła ziemia w kolorze TERRAIN #514c45. Stan od pierwszego importu 29.10 (c0e87f3), malał (2472 → 2141 m²), nie regresja; bardziej widoczny po jaśniejszej kostce z ortofoto (13.11). Zrzuty scratchpad/g-deptak/cmp2/grid.png
-- Status: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: do przeglądu kuratora (e3175f7); wcześniej: w naprawie (WIP 7ff493d, runda 2: meble niezależne od wypełnień frontu, nowe klucze skanu, grass-on-light-paving); wcześniej: nowy
-- Pakiet właściciela: tools/osm-import
-- Przegląd kuratora r2 (e3175f7): NIEZGODNE z jedną poprawką (cover-fixes wpis 2, plac budowy Zielona 5A); fronty i wpis 1 przyjęte (wpisy T); bs-291-pn: przyciemnienie nieodtwarzalne (148 na e3175f7); plamę trawnika użytkownik przyjął; e3175f7 to pusty commit
-- r3 (aed9fb4): cover-fixes wpis 2 usunięty, front omija place budowy, fill-on-construction 3059→0, map-ground-golden e520204b; drzwi i graffiti: wysokość z kostki frontu (+0,08 m), zamierzone
-- r3 (aed9fb4) przegląd kuratora: ZGODNE; place budowy wracają do stanu main (Zielona 5A 1464 m² gołej ziemi, ortofoto 2025-04 budowa); klucze 330,50 (T-314) i 0,90/0,100 (wykop muzeum 2025-04) uzasadnione; drzwi/figury +0,08 m tylko na froncie
-
-### G-854 Plamy gołej ziemi przy Bramie Krakowskiej i wschodnich ulicach Starego Miasta
-- Ważność: S4 · Zasięg: (503,0;−69,3) 90 m², (663,5;−38,0) 226 m², (664,8;−119,4) 86 m²; Stare Miasto ≤6 m od ulic 948 m²
-- Opis: Ta sama przyczyna co deptak (brak nawierzchni przed pierzeją). Rynek wokół Trybunału bez dużych plam (szczeliny kilka dm)
-- Status: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: nowy
-- Pakiet właściciela: tools/osm-import
-
-### G-855 Skan nie liczy gołej ziemi przy ulicach pieszych z kamienicami residential: brak kontroli frontage-bare
-- Ważność: S4 · Zasięg: deptak 54 kwadraty 10 m (1546 m²) poza bazami, Stare Miasto 75 kwadratów (708 m²)
-- Opis: landuse-bare liczy tylko commercial/civic, kerb-gap-bare ≤3 m od jezdni, ground-strip-gap ≤1,25 m; z 109 kwadratów deptaku 24 w bazach
-- Status: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: nowy
-- Pakiet właściciela: tools/glitch-scan
-
 ### G-856 Dołek między końcem muru nabrzeża W-3 a pokładem mostu Lutosławskiego
 - Ważność: S4 · Zasięg: Nabrzeże, W-3, x 2477,5..2480, z 416,6..418,5
 - Opis: Mur nabrzeża (bryła z wierzchem W3_Y) kończy się na z 418,5, a krawędź pokładu biegnie ukośnie (z 418,4 przy x 2477, 416,6 przy x 2480). W trójkącie ok. 2 m² teren ławy leży 0,2–0,8 m pod posadzką (groundY −28,8..−29,4); z nabrzeża widać go jako brązową dziurę przy końcu barierki (kadr w3r2-nabrzeze-sciana). Do wody się nie wyjdzie (szczelina przy x 2477 ma mniej niż 0,2 m). Oczekiwane: mur albo pad nabrzeża do krawędzi pokładu (wielokąt, nie prostokąt), wierzch W3_Y ±0,05. T-002
@@ -2172,34 +2126,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: duplikat G-858 (to samo zgłoszenie z G-853 r2); prowadzone w G-858; wcześniej: nowy
 - Pakiet właściciela: tools/osm-import
 
-### G-864 ground-strip-gap liczy szczeliny pod budynkami
-- Ważność: S4 · Zasięg: cały skan; 16 kluczy z G-853 r2 w całości pod budynkami
-- Opis: Kontrola skanu ground-strip-gap nie odrzuca szczelin przykrytych budynkiem, więc baza rośnie o fałszywe alarmy.
-- Status: naprawiony (main 16.11); wcześniej: w PR #609 (8840dbc); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-scan-false-alarms, 8840dbc); wcześniej: nowy
-- Pakiet właściciela: tools/glitch-scan
-- 8840dbc: ground-strip-gap pomija komórki w obrysach budynków (inBuilding); -53 klucze (1270->1217), 0 nowych
-
 ### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
 - Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
 - Opis: Zgłoszone przez naprawiacza G-853 r2: test:rerun kilku pakietów naraz kończy się brakiem pamięci w tym pliku; sam przechodzi.
 - Status: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, 69b355a); wcześniej: nowy
 - Pakiet właściciela: packages/engine
 - przyczyna: NullEngine bez dispose w EngineStore, worker isolate:false (150 silników, 1722 MB po GC, OOM); setupFiles free-engines.ts; engine 1 worker: OOM -> 151/151; test:rerun engine ui app OK
-
-### G-866 cover-fixes: plac budowy Zielona 5A opisany jako ogródek kawiarni, front kładzie na nim trawę i kostkę
-- Ważność: S4 · Zasięg: Krakowskie (249–256; 1–7), 48 próbek pokrycia, ok. 40 m² frontu
-- Opis: Przegląd kuratora G-853 r2: drugi wpis COVER_FIXES opiera się na złym odczycie ortofoto (2025-04 budowa, 2024-06 działka, 2023-09 korony; OSM building=construction w1382552286, landuse=construction w770678456). Usunąć wpis i wyłączyć landuse=construction z frontów jak trawniki OSM. Proponowana kontrola fill-on-construction (baza co najmniej 1). Naprawa w ramach G-853 r3.
-- Status: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: do przeglądu kuratora (aed9fb4); wcześniej: w naprawie
-- Pakiet właściciela: tools/orto, tools/osm-import
-- r3 (aed9fb4): wpis cover-fixes 2 usunięty, front omija landuse/building=construction, fill-on-construction 3059 -> 0; przegląd kuratora ZGODNE
-
-### G-867 glitch-shots: ta sama treść daje raz klatkę w cieniu (jasność 49), raz w słońcu (148)
-- Ważność: S4 · Zasięg: bs-291-pn (291; −78), przebieg naprawiacza G-853 r2 na e04c860 wobec dwóch przebiegów kuratora na e3175f7 (to samo drzewo)
-- Opis: Przyczyna nieustalona: oświetlenie albo cień w przebiegu zrzutów, nie geometria. Zrzuty: scratchpad/g853/shots2 i scratchpad/topo-g853r2/shots2
-- Status: naprawiony (main 16.11); wcześniej: w PR #618; wcześniej: nowy
-- Pakiet właściciela: packages/engine
-- odtworzone na e3175f7 (2/6 stron, 54,1/46,4 wobec 147,2); main 9/9 = 107,3; różnica w treści statycznej mapy cienia księżyca (+335..407 tys. tekseli) przy tych samych rzucających, macierzach i stanie GL; nie zegar, paleta, losowość; kandydaci: shareDepth, kolejność wobec sondy mokrego asfaltu, SwiftShader; capture() po view() zwraca poprzednią klatkę (inna sprawa); bez poprawki
-- przyczyna: getIndices() bez kopii w rebuildStaticProxy + MergeMeshes wydłuża indeksy pierwszego klonu w miejscu, nowe proxy indeksuje poza wierzchołki; bez poprawki 6/33 stron inna mapa, z poprawką 12/12; test moon-shadow-proxy.test.ts
 
 ### G-868 touch-layout:503 flaky: karta dzielnicy zakrywa minimapę o 16×74 px
 - Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts:503, 844x390 i 800x370, en i pl
@@ -2219,26 +2151,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Front ulicy pieszej przechodzi przez barrier=wall OSM (inSight zatrzymują tylko ściany budynków) i kładzie kostkę na podwórzu z wjazdem w503177990; uwaga kuratora G-853 r2
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
-
-### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
-- Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
-- Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
-- Status: naprawiony (main 16.11); wcześniej: w PR #631 (9 kluczy przyjętych decyzją użytkownika 16.11); wcześniej: wstrzymane do rana: decyzja użytkownika o 17 kluczach skanu (podniesienie bazy) i scalenie po #599; gałąź 2514e3b; wcześniej: w naprawie, runda 2 (przedpole: landuse=construction w1261814241); wcześniej: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
-- Pakiet właściciela: tools/osm-import
-- builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
-- przegląd kuratora (cfec849): bryła zgodna; 30 kluczy przedpola NIE do bazy: 26 w landuse=construction w1261814241 (nieaktualna budowa). Ortofoto: wsch./pn./pas przy ścianie zach. i NW -> grass, pd. nieutwardzony parking -> square. r2: landuse=construction z budynkiem z builtSites jak zakończona budowa + klasy other/cień z innych nalotów; cel +15/+10/+5 -> 0. Proponowana kontrola construction-landuse-built (baza 1).
-- r2 2514e3b: działka w1261814241 zakończona (withBuiltSites), classifySite na działce; zostaje 16 kluczy + fill-on-green 1 (5 na linii ściany, 3 asfalt poza działką, 3 szczeliny); kolizja z #599 (krakowskie.cover.png, build.ts, generate.ts).
-- 16.11 decyzja użytkownika: przyjąć 17 kluczy skanu z uzasadnieniem; PR po scaleniu #599.
-- 16.11 decyzja użytkownika: po #599 przyjąć 9 kluczy w krakowskie-2-1 (3 z uzgodnienia, 5 fill-gap, 1 ground-strip-gap) i zmianę skanu: place budowy jak w imporcie
-
-### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
-- Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
-- Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
-- Status: naprawiony (main 16.11); wcześniej: w PR #609 (066b575); wcześniej: nowy
-- Pakiet właściciela: tools/glitch-scan
-- Łatka gotowa (scratchpad/g875-fix.patch: próbka w obrysie z mapy i <=0,1 m od ściany tablicy): landuse-bare -36, bare-on-cover -47, ale +1 kerb-gap-bare krakowskie-0-0 -60,-170 (ta sama prawdziwa goła szczelina przy krawężniku przechodzi z landuse-bare do kerb-gap-bare przez landuseBareAt); czeka na decyzję użytkownika: accept 1 klucza (bilans -82) albo zmiana landuseBareAt na próbki 0,25 m
-- 16.11 decyzja użytkownika: przyjąć 1 klucz kerb-gap-bare krakowskie-0-0 -60,-170 (bilans −82); łatka na gałęzi #609.
-- 066b575: próbka w obrysie z mapy i najwyżej 0,1 m od ściany tablicy zakryta; landuse-bare -36, bare-on-cover -47, kerb-gap-bare +1 (accept, krakowskie-0-0 -60,-170, przesunięcie rodzaju, decyzja użytkownika 16.11); bilans -82
 
 ### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
 - Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
@@ -2284,27 +2196,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Znalezisko z W-3 etap 3: hackFx (np. blind z reboot_optics) nie jest zapisywany, więc wczytanie gry przywraca wzrok kamerze.
 - Status: naprawiony (main 16.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim, packages/persistence
-
-### G-883 Zapis w trakcie walki rozjeżdża się po wczytaniu: przechodzień zawraca, yaw gracza i RNG walki inne
-- Ważność: S3 · Zasięg: podłoga determinizmu, ziarno 1234, zapis w krokach 200–1000 floorScript(); pierwszy krok po wczytaniu
-- Opis: przechodzień (bystander) zmienia yaw o ok. pi; przy pałce yaw gracza o 0,1 rad; ok. ticku 1000 inne rngState i HP gangera; stan mózgu cywila i walki nie jest w zapisie (znalezisko z gałęzi determinism-floor)
-- Status: naprawiony (main 16.11); wcześniej: w PR #632 (zapis v41); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim/src/systems/ai, packages/sim/src/world
-- Druga przyczyna: przeładowanie gracza w toku nie jest w zapisie (gunOf w world/factory.ts:336 pomija gracza); zapis w trakcie przeładowania daje strzał w pierwszym kroku po wczytaniu, także bez tłumu i ruchu; it.todo w packages/sim/test/traffic-panic.test.ts (PR luki determinizmu)
-
-### G-884 Przypięty strażnik liczy co krok linię wzroku i marsz po całym odcinku do dalekiego gracza (2,4 km)
-- Ważność: S3 · Zasięg: strażnicy przypięci do gracza (G-188, G-201), cała gra
-- Opis: W pinned-far-sleep 64% czasu to straightWalk, lineOfSight i bankBetween liczone co krok po całym odcinku do gracza 2,4 km dalej. Koszt CPU w grze (telefon) i w testach; do ograniczenia zasięgu albo częstotliwości (profil z partii 2 testów na podłogach).
-- Status: naprawiony (main 16.11, #629); wcześniej: w PR #629; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Przyczyna: lineOfSight brał wszystkie bryły prostokąta odcinka (2300/krok); teraz tylko komórki, które odcinek przecina (5/krok), wynik identyczny, hash bez zmian; pinned-far-sleep −21,5%
-
-### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
-- Ważność: S4 · Zasięg: pościg strażnika za graczem w zasięgu
-- Opis: pinned-far-sleep calmWest (cel 2670,300): 9544 pełnych bankBetween po 400 próbek steepAt, ok. 2,8 s pliku; znalezione przy G-884
-- Status: naprawiony (main 16.11); wcześniej: w PR #630; wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim/src/systems/ai
-- GentleBlocks: bankBetween pyta o spadek tylko poza łagodnymi blokami terenu; pościg 200 m 1190 -> 94 steepAt, pinned-far-sleep (6 s) -44%, hashe bez zmian; to samo do nav-raster.ts:209 i walkable
 
 ### G-887 Szczeliny fill-gap wzdłuż północnej ściany bryły Karmelickiej 7
 - Ważność: S4 · Zasięg: krakowskie-2-1, 327..333,98..100
