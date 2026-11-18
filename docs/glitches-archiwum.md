@@ -2,6 +2,390 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
+- Status: naprawione (18.11, #728 scalony); wcześniej: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
+- Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
+- Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
+- Pakiet właściciela: packages/sim (micro-events, streaming)
+
+### G-295 Po alarmie licznik podejrzeń zostaje na 1 i pierwsze ok. 2 s przeszukania alarmuje w jednym kroku
+- Status: naprawione (18.11, #729 scalony); wcześniej: w PR #729 (18.11); wcześniej: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
+- Ważność: S4 · Zasięg: `ganger-perception.ts` (`track`)
+- Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-355 Nazwa slotu `hipL` myli: broń biała wisi po innej stronie albo w innym miejscu
+- Status: naprawione (18.11, #727 scalony); wcześniej: w PR #727 (18.11, nazwa stowedMelee); wcześniej: zgłoszone (5.11, weryfikator PR #297)
+- Ważność: S4 (kod) · Zasięg: nazwa slotu montażu nie odpowiada położeniu · Koszt: mały
+- Pakiet właściciela: packages/engine
+
+### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
+- Status: naprawione (18.11, #725 scalony); wcześniej: w PR #725 (18.11); wcześniej: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
+- Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków
+- Pakiet właściciela: packages/ui (mapa miasta)
+
+### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
+- Status: naprawione (18.11, #726 scalony); wcześniej: w PR #726 (18.11, trzy mutacje giną); wcześniej: zgłoszone (5.11, weryfikator PR #267)
+- Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
+- Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
+
+### G-322 Panel kiosku metra i karta są półprzezroczyste: przez nie widać napisy HUD
+- Status: naprawione (18.11, #724 scalony); wcześniej: w PR #724 (18.11, pełne tło kiosku); wcześniej: zgłoszone (5.11, weryfikator PR #270)
+- Ważność: S4 · Zasięg: powiadomienie dzielnicy, cel i podpowiedź dotyku prześwitują przez panel (`shots/metro1-v2/phone-kiosk-kanal-target.png`)
+- Pakiet właściciela: packages/ui (metro)
+
+### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
+- Status: naprawione (18.11, #723 scalony); wcześniej: w PR #723 (18.11); wcześniej: zgłoszone (6.11, autor ADR-0059 etapu 3b)
+- Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
+- Pakiet właściciela: packages/ui, packages/app (przekazanie kosztu z sim)
+- Test przyjęcia: test komponentu: przy ICEpick koszt na liście równa się kosztowi pobieranemu w symulacji
+
+### G-091 Długie przytrzymanie „Use” wybiera kwestię pod palcem w kole dialogu
+- Status: naprawione (18.11, #720 scalony); wcześniej: w PR #720 (18.11, osłona od podniesienia palca); wcześniej: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
+- Ważność: S3 (proponowana; przypadkowy wybór kwestii w rozmowie) · Zasięg: dotyk · Koszt: mały
+- Dowód: sonda e2e (`scratchpad/g058-probe.spec.ts`): przytrzymanie „Use” ok. 1,0–1,3 s, aż dialog się otworzy, potem `pointerup` i `click` na `BUTTON.wheel__opt`; dialog idzie dalej. `touchend` trafia w odpięty przycisk pada, więc nie jest anulowany, a osłona z G-048 już wygasła (700 ms). Niepewne, czy prawdziwy telefon wysyła kliknięcie po długim przytrzymaniu (CDP może się różnić)
+- Pakiet właściciela: packages/ui (`touch/ghost-click.ts`)
+- Test przyjęcia: test komponentu: kliknięcie z dotyku, który zaczął się przed otwarciem koła, nie wybiera kwestii
+
+### G-420 Efekty hacków na wrogu (`hackFx`: oślepienie, spowolnienie, ping) nie trafiają do zapisu
+- Status: naprawione (18.11, #722 scalony); wcześniej: w PR #722 (18.11, test regresji; naprawione wcześniej przez zapis hackFx z G-882, #628/#633); wcześniej: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
+- Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
+- Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
+
+### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
+- Status: naprawione (18.11, #721 scalony); wcześniej: w PR #721 (18.11, test przyjęcia; nie odtwarza się na main); wcześniej: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
+- Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
+- Pakiet właściciela: packages/sim (`systems/ai`, tłum)
+- Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
+
+### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
+- Ważność: S4 · Zasięg: pościg strażnika za graczem w zasięgu
+- Opis: pinned-far-sleep calmWest (cel 2670,300): 9544 pełnych bankBetween po 400 próbek steepAt, ok. 2,8 s pliku; znalezione przy G-884
+- Status: naprawione (18.11, #630 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #630; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- GentleBlocks: bankBetween pyta o spadek tylko poza łagodnymi blokami terenu; pościg 200 m 1190 -> 94 steepAt, pinned-far-sleep (6 s) -44%, hashe bez zmian; to samo do nav-raster.ts:209 i walkable
+
+### G-884 Przypięty strażnik liczy co krok linię wzroku i marsz po całym odcinku do dalekiego gracza (2,4 km)
+- Ważność: S3 · Zasięg: strażnicy przypięci do gracza (G-188, G-201), cała gra
+- Opis: W pinned-far-sleep 64% czasu to straightWalk, lineOfSight i bankBetween liczone co krok po całym odcinku do gracza 2,4 km dalej. Koszt CPU w grze (telefon) i w testach; do ograniczenia zasięgu albo częstotliwości (profil z partii 2 testów na podłogach).
+- Status: naprawione (18.11, #629 scalony); wcześniej: naprawiony (main 16.11, #629); wcześniej: w PR #629; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Przyczyna: lineOfSight brał wszystkie bryły prostokąta odcinka (2300/krok); teraz tylko komórki, które odcinek przecina (5/krok), wynik identyczny, hash bez zmian; pinned-far-sleep −21,5%
+
+### G-883 Zapis w trakcie walki rozjeżdża się po wczytaniu: przechodzień zawraca, yaw gracza i RNG walki inne
+- Ważność: S3 · Zasięg: podłoga determinizmu, ziarno 1234, zapis w krokach 200–1000 floorScript(); pierwszy krok po wczytaniu
+- Opis: przechodzień (bystander) zmienia yaw o ok. pi; przy pałce yaw gracza o 0,1 rad; ok. ticku 1000 inne rngState i HP gangera; stan mózgu cywila i walki nie jest w zapisie (znalezisko z gałęzi determinism-floor)
+- Status: naprawione (18.11, #632 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #632 (zapis v41); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai, packages/sim/src/world
+- Druga przyczyna: przeładowanie gracza w toku nie jest w zapisie (gunOf w world/factory.ts:336 pomija gracza); zapis w trakcie przeładowania daje strzał w pierwszym kroku po wczytaniu, także bez tłumu i ruchu; it.todo w packages/sim/test/traffic-panic.test.ts (PR luki determinizmu)
+
+### G-875 Skan: próbka na linii ukośnej ściany liczona jako goła (zaokrąglony obrys 0,1 m)
+- Ważność: S4 · Zasięg: tools/glitch-scan landuse-bare, bare-on-cover; krakowskie-2-1 Karmelicka 7
+- Opis: Ściana o nachyleniu 2:1 przechodzi przez siatkę 0,25/0,75 o 2-3 mm od obrysu tabeli; import uznaje próbkę za wnętrze, skan za ziemię (G-872 r2: 5 kluczy).
+- Status: naprawione (18.11, #609 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #609 (066b575); wcześniej: nowy
+- Pakiet właściciela: tools/glitch-scan
+- Łatka gotowa (scratchpad/g875-fix.patch: próbka w obrysie z mapy i <=0,1 m od ściany tablicy): landuse-bare -36, bare-on-cover -47, ale +1 kerb-gap-bare krakowskie-0-0 -60,-170 (ta sama prawdziwa goła szczelina przy krawężniku przechodzi z landuse-bare do kerb-gap-bare przez landuseBareAt); czeka na decyzję użytkownika: accept 1 klucza (bilans -82) albo zmiana landuseBareAt na próbki 0,25 m
+- 16.11 decyzja użytkownika: przyjąć 1 klucz kerb-gap-bare krakowskie-0-0 -60,-170 (bilans −82); łatka na gałęzi #609.
+- 066b575: próbka w obrysie z mapy i najwyżej 0,1 m od ściany tablicy zakryta; landuse-bare -36, bare-on-cover -47, kerb-gap-bare +1 (accept, krakowskie-0-0 -60,-170, przesunięcie rodzaju, decyzja użytkownika 16.11); bilans -82
+
+### G-872 Karmelicka 7: stojący budynek z building=construction pominięty przez SKIP_BUILDING
+- Ważność: S3 · Zasięg: w1134342880 (311..335; 56..98), Krakowskie
+- Opis: Ortofoto 2023-09, 2024-06 i 2025-04 pokazuje dach budynku; OSM building=construction, construction=commercial; w grze goła ziemia bez bryły (SKIP_BUILDING w generate.ts). Znalezione w przeglądzie kuratora G-853 r3. Test: bryła Karmelicka 7 z wysokością z LoD1/NMPT; proponowana kontrola osm-construction-built 1 -> 0.
+- Status: naprawione (18.11, #631 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #631 (9 kluczy przyjętych decyzją użytkownika 16.11); wcześniej: wstrzymane do rana: decyzja użytkownika o 17 kluczach skanu (podniesienie bazy) i scalenie po #599; gałąź 2514e3b; wcześniej: w naprawie, runda 2 (przedpole: landuse=construction w1261814241); wcześniej: do przeglądu kuratora (6bbd199), skan czerwony: +15/+10/+5 kluczy przy bryle; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g872); wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+- builtSites (cfec849, 6bbd199): building=construction pod LoD1 2024 (IoU>=0,7) jako budynek, bryła 19,7 m commercial; osm-construction-built 1->0; przy bryle +15 landuse-bare, +10 bare-on-cover, +5 ground-strip-gap (goła ziemia sprzed poprawki, teraz przedpole sklepu); baza nie podniesiona, czeka na przegląd kuratora i decyzję
+- przegląd kuratora (cfec849): bryła zgodna; 30 kluczy przedpola NIE do bazy: 26 w landuse=construction w1261814241 (nieaktualna budowa). Ortofoto: wsch./pn./pas przy ścianie zach. i NW -> grass, pd. nieutwardzony parking -> square. r2: landuse=construction z budynkiem z builtSites jak zakończona budowa + klasy other/cień z innych nalotów; cel +15/+10/+5 -> 0. Proponowana kontrola construction-landuse-built (baza 1).
+- r2 2514e3b: działka w1261814241 zakończona (withBuiltSites), classifySite na działce; zostaje 16 kluczy + fill-on-green 1 (5 na linii ściany, 3 asfalt poza działką, 3 szczeliny); kolizja z #599 (krakowskie.cover.png, build.ts, generate.ts).
+- 16.11 decyzja użytkownika: przyjąć 17 kluczy skanu z uzasadnieniem; PR po scaleniu #599.
+- 16.11 decyzja użytkownika: po #599 przyjąć 9 kluczy w krakowskie-2-1 (3 z uzgodnienia, 5 fill-gap, 1 ground-strip-gap) i zmianę skanu: place budowy jak w imporcie
+
+### G-867 glitch-shots: ta sama treść daje raz klatkę w cieniu (jasność 49), raz w słońcu (148)
+- Ważność: S4 · Zasięg: bs-291-pn (291; −78), przebieg naprawiacza G-853 r2 na e04c860 wobec dwóch przebiegów kuratora na e3175f7 (to samo drzewo)
+- Opis: Przyczyna nieustalona: oświetlenie albo cień w przebiegu zrzutów, nie geometria. Zrzuty: scratchpad/g853/shots2 i scratchpad/topo-g853r2/shots2
+- Status: naprawione (18.11, #618 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #618; wcześniej: nowy
+- Pakiet właściciela: packages/engine
+- odtworzone na e3175f7 (2/6 stron, 54,1/46,4 wobec 147,2); main 9/9 = 107,3; różnica w treści statycznej mapy cienia księżyca (+335..407 tys. tekseli) przy tych samych rzucających, macierzach i stanie GL; nie zegar, paleta, losowość; kandydaci: shareDepth, kolejność wobec sondy mokrego asfaltu, SwiftShader; capture() po view() zwraca poprzednią klatkę (inna sprawa); bez poprawki
+- przyczyna: getIndices() bez kopii w rebuildStaticProxy + MergeMeshes wydłuża indeksy pierwszego klonu w miejscu, nowe proxy indeksuje poza wierzchołki; bez poprawki 6/33 stron inna mapa, z poprawką 12/12; test moon-shadow-proxy.test.ts
+
+### G-866 cover-fixes: plac budowy Zielona 5A opisany jako ogródek kawiarni, front kładzie na nim trawę i kostkę
+- Ważność: S4 · Zasięg: Krakowskie (249–256; 1–7), 48 próbek pokrycia, ok. 40 m² frontu
+- Opis: Przegląd kuratora G-853 r2: drugi wpis COVER_FIXES opiera się na złym odczycie ortofoto (2025-04 budowa, 2024-06 działka, 2023-09 korony; OSM building=construction w1382552286, landuse=construction w770678456). Usunąć wpis i wyłączyć landuse=construction z frontów jak trawniki OSM. Proponowana kontrola fill-on-construction (baza co najmniej 1). Naprawa w ramach G-853 r3.
+- Status: naprawione (18.11, #599 scalony); wcześniej: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: do przeglądu kuratora (aed9fb4); wcześniej: w naprawie
+- Pakiet właściciela: tools/orto, tools/osm-import
+- r3 (aed9fb4): wpis cover-fixes 2 usunięty, front omija landuse/building=construction, fill-on-construction 3059 -> 0; przegląd kuratora ZGODNE
+
+### G-864 ground-strip-gap liczy szczeliny pod budynkami
+- Ważność: S4 · Zasięg: cały skan; 16 kluczy z G-853 r2 w całości pod budynkami
+- Opis: Kontrola skanu ground-strip-gap nie odrzuca szczelin przykrytych budynkiem, więc baza rośnie o fałszywe alarmy.
+- Status: naprawione (18.11, #609 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR #609 (8840dbc); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-scan-false-alarms, 8840dbc); wcześniej: nowy
+- Pakiet właściciela: tools/glitch-scan
+- 8840dbc: ground-strip-gap pomija komórki w obrysach budynków (inBuilding); -53 klucze (1270->1217), 0 nowych
+
+### G-855 Skan nie liczy gołej ziemi przy ulicach pieszych z kamienicami residential: brak kontroli frontage-bare
+- Ważność: S4 · Zasięg: deptak 54 kwadraty 10 m (1546 m²) poza bazami, Stare Miasto 75 kwadratów (708 m²)
+- Opis: landuse-bare liczy tylko commercial/civic, kerb-gap-bare ≤3 m od jezdni, ground-strip-gap ≤1,25 m; z 109 kwadratów deptaku 24 w bazach
+- Status: naprawione (18.11, #599 scalony); wcześniej: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: nowy
+- Pakiet właściciela: tools/glitch-scan
+
+### G-854 Plamy gołej ziemi przy Bramie Krakowskiej i wschodnich ulicach Starego Miasta
+- Ważność: S4 · Zasięg: (503,0;−69,3) 90 m², (663,5;−38,0) 226 m², (664,8;−119,4) 86 m²; Stare Miasto ≤6 m od ulic 948 m²
+- Opis: Ta sama przyczyna co deptak (brak nawierzchni przed pierzeją). Rynek wokół Trybunału bez dużych plam (szczeliny kilka dm)
+- Status: naprawione (18.11, #599 scalony); wcześniej: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-853 Pasy gołej ziemi między kostką deptaku Krakowskiego Przedmieścia a pierzejami
+- Ważność: S3 · Zasięg: deptak x −100..440: 2141 m² w 10 m od osi (2765 m² w 20 m); największe (222,5;−70,6) 620 m², (291,0;−69,9) 592 m², (364,6;−86,0) 200 m²
+- Opis: Zgłoszenie użytkownika 15.11. Import nie kładzie nawierzchni między krawędzią kostki (z ortofoto) a ścianami kamienic residential; goła ziemia w kolorze TERRAIN #514c45. Stan od pierwszego importu 29.10 (c0e87f3), malał (2472 → 2141 m²), nie regresja; bardziej widoczny po jaśniejszej kostce z ortofoto (13.11). Zrzuty scratchpad/g-deptak/cmp2/grid.png
+- Status: naprawione (18.11, #599 scalony); wcześniej: w PR #599 (kurator r3 ZGODNE, aed9fb4); wcześniej: do przeglądu kuratora (e3175f7); wcześniej: w naprawie (WIP 7ff493d, runda 2: meble niezależne od wypełnień frontu, nowe klucze skanu, grass-on-light-paving); wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+- Przegląd kuratora r2 (e3175f7): NIEZGODNE z jedną poprawką (cover-fixes wpis 2, plac budowy Zielona 5A); fronty i wpis 1 przyjęte (wpisy T); bs-291-pn: przyciemnienie nieodtwarzalne (148 na e3175f7); plamę trawnika użytkownik przyjął; e3175f7 to pusty commit
+- r3 (aed9fb4): cover-fixes wpis 2 usunięty, front omija place budowy, fill-on-construction 3059→0, map-ground-golden e520204b; drzwi i graffiti: wysokość z kostki frontu (+0,08 m), zamierzone
+- r3 (aed9fb4) przegląd kuratora: ZGODNE; place budowy wracają do stanu main (Zielona 5A 1464 m² gołej ziemi, ortofoto 2025-04 budowa); klucze 330,50 (T-314) i 0,90/0,100 (wykop muzeum 2025-04) uzasadnione; drzwi/figury +0,08 m tylko na froncie
+
+### G-840 Schody bez wspólnej normy stopnia: płytkie stopnie Placu Zamkowego z daleka jako czarna plama
+- Ważność: S3 · Zasięg: wszystkie biegi schodów z mapy (steps-plan.ts); najbardziej schody na Wzgórze Zamkowe z Placu Zamkowego
+- Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem: schody na Podzamczu są bardzo płytkie i z daleka widać je jako czarną plamę. steps-plan.ts tnie bieg na stopnie o stałej głębokości STEP_DEPTH 0,33 m, a wysokość wynika ze spadku wygładzonego NMT (od MIN_RISER 0,045 m w górę), więc wysokości są różne między biegami i często bardzo małe. Ciemne podstopnie (#4f4b46) co 0,33 m zlewają się z daleka w czarną plamę (aliasing). Propozycja użytkownika: jedna norma stopnia w całej grze, pilnowana skanem. Do zrobienia: (1) norma: podstopień 0,15 m (0,12–0,17), stopnica 0,32 m (2h+s 0,60–0,66), liczba stopni z całkowitej różnicy wysokości końców biegu (NMT/LOD2, nie z wygładzonego gruntu na każdej stopnicy), spoczniki co najwyżej co 10–12 stopni zamiast rozciągania stopnic; (2) z daleka (od ok. 40 m) bieg jako jedna pochylnia z uśrednionym kolorem, bez linii podstopni; (3) kontrola skanu steps-riser-norm (podstopień i stopnica poza normą, nierówne stopnie w biegu) z bazą. Referencja: schody Placu Zamkowego, dwa biegi ze spocznikiem, szerokie granitowe stopnie (zdjęcie użytkownika w scratchpadzie ref/, tylko jako referencja wizualna).
+- Status: naprawione (18.11, #593 scalony); wcześniej: w PR #593 (kurator r2 ZGODNE, d3097ea); wcześniej: naprawione w gałęzi (d3097ea), przegląd kuratora ZGODNE, PR; wcześniej: w naprawie, runda 2 (d3097ea), do przeglądu kuratora; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g840, 4f65035), do przeglądu kuratora; wcześniej: nowy
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (steps-plan), tools/glitch-scan
+- Przegląd kuratora 15.11 @ 4f65035: NIEZGODNE (T-307). Do poprawy: (1) droga ze step_count dostaje tyle stopni, bez spoczników z maxRun (w1305889408: 40, w1305940836: 12, w1305940837: 13); (2) stopnica nie niżej niż 0,02 m pod terenem (15 biegów). Kontrole steps-count-osm, steps-landing-osm, steps-tread-sunk. Pochylnia od 35–45 m zaciera stopnie widoczne na zdjęciu z ok. 60 m: próg ok. 70 m. Kolor: G-850; podesty: G-849.
+- Przegląd kuratora r2 (15.11, @ d3097ea): ZGODNE. Bieg główny w1305889408: 40 podstopni × 0,131 m, stopnice 0,38 m (2h+s 0,64), bez spocznika; stopnica najwyżej 0,005 m pod osią terenu (bez LIFT); pochylnia z daleka 65–75 m. Nawierzchnia i teren 0, hashe zgodne. Wzrost steps-riser-norm 4 → 23 klucze (28 trafień) uzasadniony. 21 trafień (16 kluczy) to biegi z OSM step_count, pod którymi teren gry wznosi się mniej niż liczba × 0,12 m (podstopień 0,047–0,119 m; ADR-0042: liczba z mapy ma pierwszeństwo przed normą), w tym 7 zamkowych (G-849). 7 trafień to za strome lub za krótkie pasy (stride 0,48–0,60): stare 572,-70 i 753–755,-149/-150 oraz nowe 730,160 i 736,143. steps-count-osm 14 kluczy (NMT 0,07–0,6 m na 3–15 stopni), steps-landing-osm 0, steps-tread-sunk 0. Otwarte z r1: stopnice z bliska za ciemne (do trawy 1,39 wobec 1,67–1,92 na zdjęciu; kontrola steps-albedo-drift).
+
+### G-072 Walczący na pomoście nie schodzi pod most do gracza stojącego pod nim
+- Status: naprawione (18.11, #627 scalony); wcześniej: naprawiony (main 16.11, #627); wcześniej: w PR #627; wcześniej: zgłoszone (z naprawy G-068)
+- Ważność: S4 (proponowana) · Zasięg: pomosty z przejściem pod spodem · Koszt: średni (nawigacja między poziomami)
+- Dowód: po G-062 `heightApart` daje 0 dla gracza pod mostem i walczącego na pomoście nad nim; walczący idzie do punktu nad graczem i stoi tam na pomoście, nie szuka zejścia
+- Dodatkowo (weryfikacja G-068): pod wiaduktem Zamkowej zaalarmowany walczący idący Podwalem z lewej strony osi (chunk `stare-miasto-1-1`, 12–20 m od osi) utyka w (749.5–750.6, 180.4–181.4), także przed G-068
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: zaalarmowany walczący na pomoście Mełgiewskiej dociera do gracza pod mostem przez zejście w < 20 s
+- Poprawka: zejście z pomostu przez landing (deck-landing.ts) + pastLedge/ontoDeck; deck-descent.test.ts i 3 przypadki w under-deck-ai.test.ts padają bez poprawki; hashe bez zmian. Część 'Dodatkowo' (Podwale 749.5–750.6, 180.4–181.4) niesprawdzona.
+
+### G-071 Kule przelatują przez pomost
+- Status: naprawione (18.11, #622 scalony); wcześniej: w PR #622; wcześniej: zgłoszone (z weryfikacji G-062)
+- Ważność: S3 (proponowana; po G-062 da się stanąć pod mostem i strzelać przez pomost w obie strony) · Koszt: średni
+- Dowód: ADR-0053 traktuje pomost jako podłogę dla ruchu, nie jako przesłonę dla strzałów i widoczności
+- Pakiet właściciela: packages/sim (walka, linia widzenia)
+- Test przyjęcia: strzał z pomostu do celu pod nim (i odwrotnie) trafia w pomost; świadek pod mostem nie widzi gracza na pomoście
+- Przyczyna: GroundField.rayHit liczył tylko teren. Poprawka: rayDecks w deck.ts (płyta od powierzchni do spodu), w rayGeometry i lineOfSight. Test deck-cover.test.ts: 4/7 pada bez poprawki, 7/7 z nią. Hash determinism bez zmian.
+
+### G-901 Próg samoobrony (session.lastThreat) poza zapisem: strzał gracza tuż po strzale wroga po wczytaniu liczy się jako przestępstwo
+- Ważność: S4 · Zasięg: zapis i wczytanie do 3 s po strzale wroga
+- Opis: Znalezione przy G-900 (czytanie kodu, bez pomiaru): session.lastThreat (próg 3 s, playerEngaged w world/street.ts) nie trafia do zapisu. Po wczytaniu strzał gracza w ciągu 3 s po strzale wroga liczy się jako przestępstwo, w grze żywej nie. Do potwierdzenia przez łowcę; sonda musi zapisywać przez calmForSave (jak SaveController.snapshot).
+- Status: naprawione (18.11, #653 scalony); wcześniej: naprawione (PR #653); wcześniej: w PR #653; wcześniej: potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
+- Pakiet właściciela: packages/sim
+- Łowca: lastThreat (combat-system.ts:128 threaten) nie wchodzi do SaveSnapshot, a calmForSave go nie zeruje. Po wczytaniu strzał gracza <3 s po strzale wroga, gdy w 30 m nie ma zaangażowanego AI (np. strzelec zabity), daje offend(gunfire): incidents 1 zamiast 0, ziarna 4, 1, 7 (scena streetSim, zapis jak SaveController.snapshot). Czytają go też scanner-system.ts:162 i hud-sync.ts:36 (isCalm), niezmierzone.
+
+### G-898 Walczący w pasie 10 cm poniżej jezdni przy dolnym moście Mełgiewskiej nie wychodzi do gracza na pomoście
+- Ważność: S4 · Zasięg: dolny most Mełgiewskiej, (2454,9; 297,05), gracz na nabrzeze-0-1[1] t=0,4
+- Opis: Strome krawędzie terenu poniżej STEP_HEIGHT zatrzymują ruch (offTheBank), a raster ich nie widzi; odchylenie ±31° nie wyprowadza na wschód. Przed i po G-896 (#647). Źródło w imporcie terenu albo w regule offTheBank. Sondy: scratchpad g896-probe.test.ts.
+- Status: naprawione (18.11, #655 scalony); wcześniej: naprawione (PR #655); wcześniej: w PR #655; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, teren)
+
+### G-896 Walczący przy końcu pomostu na poziomie jezdni nie idzie po pomoście do gracza
+- Ważność: S4 · Zasięg: końce mostów z pomostem (Mełgiewska, wiadukt Zamkowej)
+- Opis: Brawler z (2454.9, 297.0) do gracza na pomoście nabrzeze-0-1[1] w t=0,2 i z (758.0, 188.5) do gracza na wiadukcie Zamkowej (748.9, 173.4) stoi 20 s, deckLanding zwraca null; tak samo na main i z poprawką G-885. Znalezione przy G-885 (sondy: scratchpad g885-probe*.test.ts).
+- Status: naprawione (18.11, #647 scalony); wcześniej: naprawione (PR #647); wcześniej: w PR #647; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Weryfikator #646: wiadukt Zamkowej, brawler z Podwala (745, 169.8) do gracza na pomoście (748.9, 173.4) wchodzi na pomost, ok. 25 s stoi w (758.0, 188.5), schodzi pod wiadukt i staje w (745.1, 170.0); w 60 s nie dociera. Do (755, 180) dociera w 8 s.
+
+### G-895 Szybkie użycie apteczki pomija atut Field Medic
+- Ważność: S4 · Zasięg: klawisz szybkiego użycia apteczki z atutem Field Medic
+- Opis: item-system woła useConsumable bez healScale(perks); komenda use-item go stosuje, więc atut działa tylko przy komendzie. Znalezione przy G-892.
+- Status: naprawione (18.11, #645 scalony); wcześniej: naprawione (PR #645); wcześniej: w PR #645; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-894 Dźwig 66 m przed fasadą Pałacu Lubomirskich od Placu Litewskiego (plac budowy Muzeum Ziem Wschodnich)
+- Ważność: S4 · Zasięg: plac budowy w1362895448, widok z Placu Litewskiego
+- Opis: Generator dźwigu (construction-crane.ts, ADR-0087 etap 2, gałąź place-budowy-2) stawia maszt w (41; 78) w południowej wnęce Pałacu Lubomirskich w67508859 (historic=castle), między fasadą a Placem Litewskim; 27,1 m, wysięgnik 66 m nad dachem zabytku. Ortofoto 2025-04: budowa trwa (wykop na pn. podwórzu, kontenery), żurawia wieżowego brak; 2024-06 we wnęce trawnik. Miejsce wynika tylko z minimalnego zasięgu do najdalszego narożnika obrysu, który obejmuje cały pałac. Proponowana reguła: na placu, którego obrys obejmuje budynek historic/heritage, maszt nie stoi między fasadą zabytku a placem lub ulicą frontową (preferuj podwórze z wykopem), inaczej bez dźwigu albo wysięgnik do 50 m; kontrola skanu site-crane-heritage z wyjątkiem w1236055101 (żuraw na ortofoto 2025-04).
+- Status: naprawione (18.11, #649 scalony); wcześniej: naprawione (PR #649); wcześniej: w PR #649; wcześniej: nowe
+- Pakiet właściciela: tools/osm-import, engine mapcity/construction
+- Test przyjęcia: construction-site.test.ts: dźwig w1362895448 nie stoi przed fasadą w67508859; skan site-crane-heritage 1 -> 0
+- Topografia: T-322.
+
+### G-893 Rusztowanie placu Zielona 5A zasłania szyld lokalu na ścianie w67499313
+- Ważność: S4 · Zasięg: jedno miejsce, Zielona 5A
+- Opis: Rusztowanie z banerem z etapu 2 placów budowy (gałąź place-budowy-2) stoi przy ścianie w67499313 i zasłania szyld FRYZURA Z PRZYTUPEM; rusztowanie powinno omijać ściany z szyldem lokalu albo szyld przenieść.
+- Status: naprawione (18.11, #649 scalony); wcześniej: naprawione (PR #649); wcześniej: w PR #649; wcześniej: nowy
+- Pakiet właściciela: osm-import
+- Poprawka identyfikatora (kurator 16.11): rusztowanie stoi 0,25 m od szczytowej ściany w69915878 (Zielona 5), nie w67499313; szyld FRYZURA Z PRZYTUPEM sprawdzić na tej ścianie.
+
+### G-892 Maksimum zdrowia po awansie albo implancie spóźnia się o krok: apteczka zaraz potem leczy do starego
+- Ważność: S4 · Zasięg: krok awansu lub założenia implantu
+- Opis: playerStatsOf().maxHp trafia do health.max dopiero w player-control; item-system i komenda use-item idą przed nim (systems/index.ts:134-135). Deterministyczne, nie rozjeżdża zapisu. Znalezione przy G-888.
+- Status: naprawione (18.11, #643 scalony); wcześniej: naprawione (PR #643); wcześniej: w PR #643; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-885 Walczący pod mostem nie wchodzi na pomost do gracza stojącego na nim
+- Ważność: S4 · Zasięg: mosty z pomostem (Mełgiewska)
+- Opis: Brawler z (2445.9, 302.2) pod pomostem do gracza na (2444.9, 307.5) oscyluje przy krawędzi cienia pomostu (2449.6, 298.9), 30 s bez dotarcia; znalezione przy G-072
+- Status: naprawione (18.11, #646 scalony); wcześniej: naprawione (PR #646); wcześniej: w PR #646; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-874 Zamek Lubelski: skrzydło pn. x 904-942 o 2,6-3,0 m za daleko na północ (uskok obrysu OSM), bryła na asfalcie drogi za zamkiem
+- Ważność: S3 · Zasięg: Podzamcze, w48500136, (903,9..941,5; 253,8..261,6)
+- Opis: Węzły (903,9;261,6) i (941,5;256,8) tworzą uskok, którego nie ma w NMPT (krawędź x 910/925/940: z 257,75/256,3/254,0) ani na ortofoto 2023-09..2025-04; ściany zach. i pd. zgodne do 0,4 m. Poprawka: obrys pn. prosto (903,6;258,6)->(941,0;253,8) w korekcie importu. Przegląd kuratora G-841 r3. Proponowana kontrola landmark-outline-nmpt (baza 1).
+- Status: naprawione (18.11, #616 scalony); wcześniej: naprawione (PR #616); wcześniej: przegląd kuratora ZGODNE (890681a), w PR; wcześniej: naprawione na gałęzi ccr-ec2c4269-ilh8k8-g874 (890681a), do przeglądu kuratora; wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: krawędź obrysu pn. w48500136 w 0,5 m od krawędzi dachu NMPT przy x 910, 925, 940
+- 16.11: drop węzłów uskoku w korekcie importu; ściana x 910/925/940 z 257,75/255,77/253,79 (odchyłka do 0,53 m przy x 925, wewnątrz dachu); kontrola landmark-outline-nmpt 1->0; 2 klucze przyjęte przez agenta (landuse-bare podzamcze-1-0 910,250; bare-on-cover podzamcze-2-0 930,250: goły pas odsłonięty spod bryły, G-699) — do potwierdzenia użytkownika; kolizja z #602: łatka g874-x602-resolution.patch
+- 16.11 użytkownik zatwierdził 2 przyjęte klucze (pas spod bryły, G-699).
+- 16.11 przegląd kuratora 890681a: ZGODNE (odchyłka jednostronna, ściana 0,2-0,5 m w głąb krawędzi dachu NMPT = okap; próg 0,55 akceptowalny; zniknięcie narożnika 941,0;253,8 słuszne)
+
+### G-841 Zamek Lubelski bez przepisu zabytku: fasada od Placu Zamkowego jak zwykły gmach
+- Ważność: S3 · Zasięg: Zamek Lubelski, front od Placu Zamkowego i schodów
+- Opis: Zgłoszenie użytkownika 15.11 ze zdjęciem frontu (Street View, tylko referencja wizualna, scratchpad ref/zamek-plac-zamkowy-sv.jpg). LANDMARK_RECIPES ma tylko Bramę Krakowską, Bramę Grodzką i Nowy Ratusz. Wygląd do odtworzenia: neogotycka fasada w kolorze kremowym, dwie wieżyczki po bokach bramy z krenelażem i masztami flag, między nimi blankowana attyka; dwa okrągłe okna-rozety nad ostrołukową bramą z napisem MUZEUM; ostrołukowe okna w rzędzie, długie skrzydła z krenelażem po bokach; po lewej w głębi wieża kaplicy (smukła iglica); u stóp schody ze spocznikiem, latarnie i zieleń na skarpie. Wymiary z LOD2/NMPT i OSM, jak przy G-119 (Nowy Ratusz).
+- Status: naprawione (18.11, #602 scalony); wcześniej: naprawione (PR #602); wcześniej: w PR #602; wcześniej: kurator r3 ZGODNE, do PR (6eea580); wcześniej: do przeglądu kuratora (r3, 6eea580); wcześniej: w naprawie (runda 3 po przeglądzie kuratora r2); wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (0c22d9d), runda 2 do przeglądu topography-curator; wcześniej: w gałęzi ccr-ec2c4269-ilh8k8-g841 (e84492c), do przeglądu topography-curator; wcześniej: nowy
+- Pakiet właściciela: packages/engine/src/renderer/mapcity/landmarks
+- 15.11: przepis zamek-lubelski (attyka do y 7,5 z blankami, wieżyczki do y 10 z flagami, parapet z blankami trójkątnymi, 2 rozety, portal ostrołukowy, lancety, szyld MUZEUM); korekta importu: okap y 3,3, korona y 7,5 z NMPT; test landmark-zamek.test.ts; skan 3900->3900, hashe bez zmian, perf w budżetach
+- Przegląd kuratora 15.11 (e84492c): NIEZGODNE. NMPT 0,5 m: wieżyczki do y 12,2 (rise 2,5 -> ok. 4,7), szczyty blanków trójkątnych ryzalitu y 10,0-10,4 (parapet.rise 0,5 -> ok. 1,6), maszty do ok. y 15,5 (mast ok. 5,5 m) jako ciemne metalowe iglice z chorągiewką zamiast flag biało-czerwonych (zdjęcie z placu, plan Z2). Skrzydła fasady zachodniej: jeden rząd lancetów w parterze, wyżej lizeny, okienka okrągłe co ok. 4,7 m i fryz ostrołukowy pod koroną zamiast rzędów 2 i 3. Opcjonalnie: rozety r ok. 1,7 m, rozstaw ok. 3,4 m; środki wieżyczek ok. 0,9 m do wnętrza (NMPT (837,1; 245,9) i (835,8; 231,0)). Sondy topo-g841-dsm*.py w scratchpadzie.
+- 15.11 runda 2 (0c22d9d): wg NMPT kuratora: wieżyczki y 12,2, iglice do y 15,5 z chorągiewką, parapet ryzalitu do y 10,3, skrzydła: lancety w parterze, lizeny, okienka okrągłe 10 m, fryz arkadowy; rozety r 1,7; sterczyny; środki wieżyczek bez zmian (brak reguły z obrysu). Skan 3900->3900, hashe bez zmian, perf w budżetach
+- Przegląd kuratora r2 (0c22d9d): NIEZGODNE. Przyjęte: wieżyczki y 12,2, iglice do 15,5, parapet 10,3, rozety, skrzydła zachodnie, środki wieżyczek (wspólne przesunięcie OSM/NMPT ok. +0,7 m w z, rozstaw 14,9 vs 14,95). Do poprawy: (1) korona skrzydła pn. od x ok. 855 i ściany wsch. (945..948, 237..257) wg NMPT y 5,4-5,8 zamiast 7,5 (regresja wobec main 6,4), okap pn. od dziedzińca ok. 4,5; (2) sterczyny tylko na NW (842,1;266,1) do y 10,3, SW (836,1;210,9) do 9,4, SE (943,6;197,9) do 10,9, ośmiobok o średnicy ok. 1,3 m z ostrym hełmem; bez sterczyn na narożach pd. (883;201), (897;200) i NE. Opcjonalnie portal i rozety 1-2 m wyżej. Elewacja pd. przepalona w słońcu (12,7%). Proponowana kontrola landmark-crown-nmpt. Sondy i zrzuty: scratchpad topo-g841-r2-*
+- Runda 3 (6eea580): korona wg stref NMPT (pn. za x 855 i wsch. y 5,6, okap dziedzińca pn. 4,5), sterczyny tylko NW/SW/SE z hełmami, rozety +2 m, kontrola skanu landmark-crown-nmpt 1->0; do przeglądu topography-curator
+- r3 (6eea580) przegląd kuratora: ZGODNE (korona 5,6/okap 4,5, 3 sterczyny, rozety); wysokości w przepisie jako T celowe; uskok OSM pn. skrzydła osobno (G-874)
+
+### G-836 Zebry z węzłów: kąt do jezdni, koniec poza krawężnikiem, paski i poświata na chodniku
+- Ważność: S3 · Zasięg: crossing-shape: skew 19, overhang 26, glow 54, kerb 55; Podzamcze, Krakowskie, Nabrzeże, Stare Miasto
+- Opis: crossingBand (ground.ts) i stretchZebras (kerb-fill.ts) kładą prostokąt o stałych wymiarach wokół węzła z osią najbliższego segmentu OSM, niedopasowany do poszerzonej jezdni (kerbFills, widened). Kontrole w PR #581; zrzuty scratchpad/jag/final/f1–f6
+- Status: naprawione (18.11, #597 scalony); wcześniej: naprawione (PR #597); wcześniej: w PR #597; wcześniej: w PR #597 (kurator r3 ZGODNE, 748ef6c); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, e181e1b, runda 2, do przeglądu kuratora); wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g836, c52dde6, do przeglądu kuratora); wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+- 15.11: skew 19->5, overhang 26->9, glow 54->5, kerb 55->44; reszta: wyloty skrzyżowań, brzeg mapy, oś pasma vs ROAD_CHAINS; droga przejścia jako footway pod zebrą; zmieniony test G-811 (chodnik pod zebrą)
+- Przegląd kuratora 15.11 @ c52dde6: NIEZGODNE. P1 (2361,432) n4087364975 zebra obrócona o 35° (regresja), oś wzdłuż w406693442 N–S, ok. 10 m; P2 (927,468) w1054556913 zebra 6,5 m, asfalt gry dalej o 6,2/≥11,9 m, na ortofoto ok. 22 m (regresja); P3 (913,345) n4586176953 zebra ok. 50° skośnie, ma biec W–E przez w739432830, ok. 11 m. Reguła: zebra węzła na skrzyżowaniu wzdłuż drogi pieszej OSM przez węzeł; zasięg po asfalcie gry do krawężnika. Kontrole: crossing-off-path (baza 9), crossing-short-of-asphalt (baza 16). Klucz lamp-on-orto-carriageway (−128,−65) przyjąć z powodem: cień budynku na chodniku, krawężnik z ≈ −64,4. Runda 2.
+- 15.11 r2: P1–P3 poprawione; crossing-off-path 11->10, crossing-short-of-asphalt 16->8; zebry skrzyżowań wzdłuż ścieżki OSM (f4 12,5° od prostopadłej), zasięg po asfalcie gry z area:highway; P1 6,2 m (asfalt gry węższy), środek P3 3,6 m od punktu kuratora
+- Przegląd kuratora r2 (15.11, @48a15ce): NIEZGODNE. P1–P3 kierunek zgodny. Regresja f4 (621,−218) w305027462: 12,1° od prostopadłej do Podwala, na ortofoto zebra prostopadła (azymut ok. 152°). Oczekiwane: kąt gry 24 ± 5, środek ok. (620,6; −220,5); wyjątek wzdłuż ścieżki tylko dla węzłów, nie dla dróg footway=crossing; usunąć klucz skew (621,−218). Runda 3 nowym agentem.
+- r3 @ 748ef6c: f4 prostopadła do Podwala (24,3°), footway=crossing zawsze prostopadła, service nie tworzy skrzyżowania; koniec przy chodniku boku (G-837 Kapucyńska); skew 7->4, kerb 42->46 przyjęte przez accept (konflikt z kerb-jag), czeka na decyzję użytkownika
+- Przegląd kuratora r3 (15.11, @748ef6c): ZGODNE. f4 (621,−218) prostopadła do Podwala, środek (620,5; −217,2), 5,55 m; od ortofoto 1,28 m wzdłuż ulicy (węzeł OSM 817070507, przyjęte) i 3,0 m w poprzek (T-063). Reguła footway=crossing zmieniła tylko f4 (12,2°) i (1061,455) (2,9°, T-312). Koniec boku: 25 zebr przesuniętych o 0,03–1,7 m, bez obrotów. Teren i pomosty 0, hashe zgodne. Klucze ze scalenia: bollard-blocks-mouth 278,−166 (słupek G-820 +0,4 m, 10→10) przyjęty; kerb −122,50, 185,75, 1090,255 do G-869
+
+### G-825 Jezdnia importu węższa od prawdziwej przy łącznicach, kieszeniach skrętu i placement=left_of; pas wypełnia bruk z pokrycia
+- Ważność: S3 · Zasięg: Mełgiewska/łącznica Andersa w40051729, Al. Solidarności w215609082 (kieszenie skrętu), Lwowska (placement=left_of:3)
+- Opis: Znalezione przy G-821: import nie czyta placement i nie poszerza jezdni o łącznice i pasy skrętu; pas do prawdziwego krawężnika wypełnia bruk z pokrycia ortofoto, więc latarnie i meble przy krawężniku mapy stoją na prawdziwym asfalcie.
+- Status: naprawione (18.11, #595 scalony); wcześniej: naprawione (PR #595); wcześniej: w PR #595 (kurator r5 ZGODNE, e3133eb); wcześniej: w naprawie (runda 2 po przeglądzie kuratora, gałąź ccr-ec2c4269-ilh8k8-g825); wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import, tools/orto
+- 15.11 przegląd kuratora (41ddd97): NIEZGODNE. Placement zgodne z ortofoto; zwężenie przy węźle kładzie pół pasa łącznicy za krawężnik: Ruska w216655518 (1071..1074; 428..437) jezdnia na trawie ok. 12 m², Andersa w40051729 (2316..2322; 312..321) jezdnia i chodnik na trawie ok. 12 m², Solidarności w215609082 s 0-6 krawędź 7,7 m wobec 6,3 (ok. 5 m² na szpicu trawnika). kerb-fill-wide-estimated (1113,353) to fałszywy alarm (kostka dojścia do przejścia). Runda 2 naprawiacza.
+- 15.11 runda 2: 4f9cf2f + merge ed53299; skan 3842 → 3833, nowa kontrola lane-place-on-green (baza 0); do ponownego przeglądu kuratora, w tym 5 sygnalizatorów przestawionych przy remisach
+- Przegląd kuratora r2 (15.11, ed53299): NIEZGODNE. Ruska, Andersa (trawa), Solidarności i szwy zgodne. Do poprawy: pas trawnika z kerbFills na bruku i asfalcie (1088,9-1091,5; 456-472) +21,8 m² i (1110,5-1119; 274,35-276) +13,1 m²; reguła remisu sygnalizatorów pogarsza (-104,3;121) i (-104,1;49,7); n1946478264 (1104,1;264,7) 3,6 m w jezdni łuku (krawężnik placu z≈261,0, 2024-06). Runda 3 nowym agentem. Szczegóły: scratchpad/topo-g825-r2-raport.md
+- 15.11 r3 7bfd370: pas do trawnika tylko przy szczelinie ≤ 0,6 m albo przy zieleni na ortofoto, szerszy jako square; reguła remisu sygnalizatorów wycofana (17 z 18 jak na main); kontrola lawn-strip-on-paving, baza 0. n1946478264 zostaje na klinie (1094,5; 279) jak w r1: obie pozycje docelowe wymagają nowej reguły, decyzja orkiestratora: sprawa G-842. Czeka na przegląd kuratora (Lwowska z 397–439 plamista, grządka 1110–1119; 514–522 jako square).
+- Przegląd kuratora r3 (15.11, @ 7bfd370): NIEZGODNE, 1 poprawka. Zgodne: A (trawa od x 1090,9 / 1090,1 / 1090,2 / 1091,5 przy z 458 / 462 / 465 / 469; zdjęcie 1091,0 / 1090,0 / 1090,3 / 1091,5), B (square z 274,3–274,8 do 275,9–276,7, bez trawy przy z < 275,9), grządka square jak main i zdjęcie, 5 sygnalizatorów co do 0,0 m jak na main, lawn-strip-on-paving 0, teren 0, hashe zgodne. Do poprawy: pas przy przesuniętej krawędzi zmienia nawierzchnię co 1–3 m (square albo trawa do jezdni): Lwowska, zach. krawędź z 397,5–420,2 (7 przebiegów po 1,5–3 m) i z 337,8–365 (6 przebiegów po 1–5,8 m), A z 462,5–464,4 (2 m trawy do jezdni między pasami square). Zdjęcie 2023-09: na całych odcinkach ciągły trawnik i jasny krawężnik 0,5–1 m. Oczekiwane: jedna nawierzchnia na odcinek krawędzi, bez przebiegów krótszych niż 5 m między przebiegami drugiej (np. square z 392–442 i z 337,8–365). Kontrola: kerb-fill-flicker.
+- 15.11 r4 d00cf52: pas do trawnika jedną nawierzchnią na odcinek (lawnStretches), kontrola kerb-fill-flicker (baza 63, wszystkie z main); do kuratora: łącznica Ruskiej (1068–1073; 432–447) square 1–1,5 m częściowo na zieleni ortofoto
+- 15.11 kurator r4 d00cf52: NIEZGODNE. Lwowska z 337–365 i 390–441, A z 453–474, Solidarności zgodne z ortofoto. Łącznica Ruskiej w216655518 (1064–1074; 432–444): square 1,0–1,8 m na trawniku (+10,2 m² na zieleni), ortofoto 2023-09/2024-06/2025-04: trawnik od krawędzi jezdni. Przyczyna: weto jednej twardej próbki w lawnStretches (5 z 37). Oczekiwane: trawa z 432–444, square tylko przy zebrze z 444–447,5. Drobne: Andersa (2355,6–2356,6; 357–358) trawa zamiast square 0,3–0,8 m.
+- r5 e3133eb: odcinek trawnikiem przy zielonych >1/2 i twardych <=1/5, twardy koniec przy zebrze square; Ruska trawa od krawężnika; scalenie main aa247de (konflikt z G-837)
+- 15.11 kurator r5 e3133eb: ZGODNE. Ruska trawa od krawężnika z 431,8–444,5 (17 z 18,6 m² na zieleni ortofoto), square przy zebrze; Lwowska, A, Solidarności, Andersa bez zmian; G-837 zachowane (kerb-jag-places zielony, krakowskie i stare-miasto jak main); hashe zgodne, skan = baza; klucze bazy uzasadnione (kerb-jag 1050,440 = G-860). Resztki S4 w osobnym zgłoszeniu.
+- Kurator 16.11 (a29a7d4): ZGODNE; evenKerbs przybliża do ortofoto, 4 próbki trawy 0–0,5 m poza parkingiem w granicy dokładności OSM
+
+### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
+- Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
+- Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
+- Status: naprawione (18.11, #654 scalony); wcześniej: naprawione (PR #654); wcześniej: w PR #654; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import
+- Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
+
+### G-731 NPC stoją w pozie z rękami do góry
+- Status: naprawione (18.11, #711 scalony); wcześniej: w PR #711; wcześniej: do potwierdzenia przez użytkownika (18.11: nie odtworzone); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
+- Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
+- Pakiet właściciela: packages/engine (renderer: modele postaci, retarget)
+- Test przyjęcia: test renderera, że żadna postać z modelem nie ma w żadnej klatce kąta ramion T-/A-pozy (poza zamierzonymi pozami); zrzut tłumu przed/po
+- 18.11: nie odtworzone na main z ADR-0090 (#706-#709). Sonda w silniku na modelach z manifestu gry (10 cywilów, 4 gangerów, 3 korporacyjnych): stanie, chód, każda czynność ADR-0040, oddalenie poza zasięg rysowania i powrót, model z puli po zniknięciu, nokaut, śmierć: żaden model nie ma ramienia T/A-pozy (poza zamierzonymi: palacz 58°, nokaut z ręką nad głową, upadek). Na żywej grze (e2e, scena gry przez Engine.Instances) przy NPC z Neon Koi i dokach: 20 ramion modeli, wszystkie w dół; podniesione tylko ręce widoku FPP. Tłum (ADR-0041) to kukiełki bez modeli. Do użytkownika: gdzie i kiedy to widać (miejsce, pora, zrzut).
+- 18.11 (po zrzucie użytkownika z targu w Alchemii): przyczyna znaleziona. To nie T-poza ani ładowanie, tylko proceduralne pozy czynności na modelach VRM: lean zgina obie ręce przy głowie (wygląda jak ręce do góry), phone podnosi też wolną rękę do twarzy, smoke podobnie. Zrzut przed/po na main i z #711 (hana, sachiko, 1629-1631, goro, fumiko). Poprawka w #711: klipy Mixamo dla smoke, phone, talk, terminal i lean (lean: weight shift, w paczkach nie ma oparcia o ścianę). Test activity-hands-model: bez poprawki lewa dłoń nad barkiem przy lean, z poprawką obie poniżej. Zostają proceduralne: sweep, cook, eat, drink, sit, sleep, guard.
+
+### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
+- Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
+- Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
+- Status: naprawione (17.11, #701 scalony); wcześniej: w PR #701; wcześniej: zgłoszone; wcześniej: zgłoszone
+- Pakiet właściciela: packages/engine
+- 17.11 (orkiestrator, tryb bez agentów): glitch, nie znany limit. 126 nazw budynków w mieście na 32 wiersze, jeden fragment mapy do 17 nazw; wiersz był trzymany do końca sesji, więc po kilku dzielnicach tabliczki następnych znikały. Poprawka w #701: komórka oddaje wiersze swoich nazw, gdy znika albo jest budowana od nowa; napisy zabytków przypięte. Test map-names-atlas.
+
+### G-918 Ogłuszenie z tyłu bez XP i bez łupu, zabicie daje +60 XP i torbę
+- Ważność: S4 · Zasięg: każdy takedown nieletalny (ADR-0065, ADR-0075)
+- Opis: Łowca 17.11 (sonda sim, poz. 1, Hebi ganger z tyłu w kucaniu, bez świadków): ogłuszenie 0 XP, bez torby (łup przy śmierci), znalezione ciało budzi wroga po 6 s z alerted; zabicie takedownem +60 XP, torba, rep Hebi -4. Poza XP stylu stealth brak powodu ogłuszać. Do rozstrzygnięcia z ADR-0075/0059: XP z ogłuszenia albo łup z nieprzytomnego. Pewność średnia (zamierzenie nieczytelne).
+- Status: naprawione (17.11, #696 scalony); wcześniej: w PR #696 (gałąź ccr-ec2c4269-ilh8k8-g918), decyzja użytkownika 17.11: łup z nieprzytomnego; wcześniej: w naprawie (orkiestrator): decyzja użytkownika 17.11, łup z nieprzytomnego; torba ogłuszonego 0,8 m za ciałem, bez drugiej przy śmierci; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-912 Teksty Genzō po drodze głośnej i po 06:00 nie pasują do wyniku
+- Ważność: S4 · Zasięg: wypłata drogi głośnej i porażka batch-shipped
+- Opis: Playtest 17.11: po głośnej "Nikt nic nie widział, nikt nic nie słyszał" (phone_genzo_paid). Po porażce o 06:00 bez alarmu: "Tessen już wie…", a Tessen zostaje 0. Do sprawdzenia przy okazji: toast "Bag gone / Someone was faster." o 03:20 (możliwy wyciek z kuriera M0). Rozwiązanie: osobne telefony phone_genzo_w3_paid_loud i batch-shipped.
+- Status: naprawione (17.11, #695 scalony); wcześniej: w PR #695 (gałąź ccr-ec2c4269-ilh8k8-g912); wcześniej: zgłoszone
+- Pakiet właściciela: packages/narrative
+- Łowca 17.11: toast 'Bag gone' to ogólne wygasanie toreb po 300 s (osobny wpis), nie kurier M0.
+
+### G-926 Punkt (600; 30) testu pościgu W-3 leży w bryle
+- Ważność: S4 · Zasięg: test w3-sabotage-loud, sondy
+- Opis: Pole do (600; 30) jest null z każdej strony; oddział tam nie dojdzie.
+- Status: naprawione (17.11, #674 scalony); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: punkt testu w otwartej, połączonej komórce
+
+### G-921 Wczytanie na drabinie gubi jeden krok wspinaczki i jump.coyote
+- Ważność: S4 · Zasięg: każda drabina, zapis w trakcie wspinaczki
+- Opis: Znalezione przy G-913 (17.11): po wczytaniu gry zapisanej na drabinie pierwszy krok idzie na ponowne zawieszenie (continue po hangOn w ladder-system.ts), więc wczytana gra traci jeden krok wspinaczki; różni się też jump.coyote (0,12 kontra 0). Gdy gracz dalej się wspina, schodzi i idzie pod kątem, hash rozjeżdża się o kilka cm pozycji (w3-pipe, targ-escape-2/3). Przyczyna wspólna: stan wspinaczki (climb, settle) nie trafia do zapisu.
+- Status: naprawione (17.11, #694 scalony); wcześniej: w PR #694 (gałąź ccr-ec2c4269-ilh8k8-g921); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: zapis na drabinie w trakcie wspinaczki, wczytanie, 600 kroków z tymi samymi wejściami: hash równy
+- Weryfikator #668 (17.11): potwierdzone na main tymi samymi wartościami (krok wspinaczki, jump.coyote 0,12 kontra 0); na pawilonie przy zeskoku skokiem daje dy -4,6 m. Sonda: scratchpad v-g913-sonda2.test.ts. Uwaga poboczna: przy chodzeniu w stronę szczytu w3-hatch drabina nie łapie gracza (main i gałąź), może celowo (właz).
+
+### G-936 Ogłuszony strażnik dalej podaje bark-hak
+- Ważność: S4 · Zasięg: haki z barków (hook-tracker), strażnicy zleceń
+- Opis: Znalezione przy weryfikacji G-929: bark w hook-tracker.ts:85 nie sprawdza obezwładnienia; dla palacza W-3 (ofJob) poprawione w #683, dla pozostałych nosicieli nie.
+- Status: naprawione (17.11, #693 scalony); wcześniej: w PR #693 (gałąź ccr-ec2c4269-ilh8k8-g936); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: ogłuszony nosiciel haka nie podaje haka
+
+### G-937 Ostrzeżenie o pościgu Tessen bez oddziału do końca odcinka dnia
+- Ważność: S3 · Zasięg: pościg Tessen, klinika, kadr wejścia
+- Opis: Po G-934 (#686): gdy oddział nie wejdzie w 20 s po ticku (Seki w kadrze jedynego wejścia, klinika), flaga w drodze znika, a losowanie odcinka jest zużyte; toast był, oddział nie przychodzi do końca odcinka (sonda S4 weryfikatora: następny po 167 s, najgorzej ok. 6 min). Decyzja użytkownika 17.11: razem z flagą w drodze znika losowanie odcinka, więc po chwili wypada nowe losowanie z nowym ostrzeżeniem.
+- Status: naprawione (17.11, #692 scalony); wcześniej: w PR #692 (gałąź ccr-ec2c4269-ilh8k8-g937, 3ae283c), diff przejrzany przez orkiestratora; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział porzucony po 20 s: następne losowanie w tym samym odcinku z nowym toastem 20-40 s przed wejściem
+
+### G-931 Pendrive w3_virus niewidoczny dla gracza (keyItems bez UI i nazwy)
+- Ważność: S4 · Zasięg: ekwipunek, droga cicha W-3
+- Opis: Znalezione przy weryfikacji G-907: keyItems nie ma widoku w ekwipunku ani klucza nazwy w katalogach i18n.
+- Status: naprawione (17.11, #691 scalony); wcześniej: w PR #691 (gałąź ccr-ec2c4269-ilh8k8-g931); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: ekwipunek pokazuje przedmioty kluczowe z nazwą en i pl
+
+### G-930 Podpowiedź kolektora W-3 widoczna ze szczytu ścian skrzydłowych wylotu
+- Ważność: S4 · Zasięg: wylot kolektora W-3
+- Opis: Znalezione przy weryfikacji G-907: z (406,0) i (408,4) na ok. -0,1 m widać prompt.culvert, klawisz przenosi 1,4 m niżej do kolektora.
+- Status: naprawione (17.11, #690 scalony); wcześniej: w PR #690 (gałąź ccr-ec2c4269-ilh8k8-g930); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: podpowiedź tylko z dna wylotu
+
+### G-929 Hala W-3 bez egzekutora przebrań: kombinezon technika całkiem bezpieczny
+- Ważność: S3 · Zasięg: droga cicha W-3
+- Opis: Po #675 (G-907) c1-g0..g3 mają enforcer=false; ADR-0082 §1 p. 2 daje tę rolę kierownikowi zmiany, którego w hali nie ma (propozycja: biuro antresoli). Pytanie do użytkownika.
+- Status: naprawione (17.11, #683 scalony); wcześniej: w PR #683 runda 3 (ff4eb7b, orkiestrator): zwłoki palacza zostają, kierownik nie zostaje w oknie przy ciele, testy skrócone; bez weryfikatora (tryb bez agentów); wcześniej: w naprawie, runda 3 (orkiestrator w trybie bez agentów; r2 odrzucona: palacz zabity znika o 23:00, kierownik po ciele w alei stoi w oknie na stałe, test tropu w app 6,4 s z pokryciem); wcześniej: w PR #683 runda 2 (decb31a), w weryfikacji; wcześniej: w naprawie, runda 2 (PR #683: kierownik po tropie schodzi do hali i nie wraca; postój przy oknie); wcześniej: w PR #683 (gałąź ccr-ec2c4269-ilh8k8-g929, a03c66a), w weryfikacji; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: w przebraniu kierownik zmiany rozpoznaje Seki z bliska
+- Decyzja użytkownika 17.11: etap 2 drogi cichej to kierownik zmiany w biurze antresoli jako egzekutor przebrań; palacz enc_w3_smoker tylko wskazuje szafkę 14; furtka zostaje otwarta (hak rurociągu zamiast kodu). Wgranie wirusa nie wymaga pendrive'a.
+- Decyzje użytkownika 17.11 po etapie 2: kierownik zmiany dostaje jeden krótki postój (ok. 4 s) przy oknie galerii nad linią na okrążenie (ok. 50 s), osobny mały PR po #683; palaczowi wystarczy kwestia z hakiem, bez pełnego spotkania enc_w3_smoker.
+
+### G-923 Uszkodzona flaga oddziału pościgu Tessen blokuje losowania do końca pościgu
+- Ważność: S4 · Zasięg: tylko uszkodzony zapis
+- Opis: Weryfikator #671 (17.11): tessenSquadDue przy fladze tessen-hunt-squad:abc daje tick NaN, oddział nigdy nie wchodzi, a flaga blokuje kolejne losowania do końca pościgu. Rozwiązanie: odrzucić albo zdjąć niepoprawną flagę (walidacja przy wczytaniu albo w systemie).
+- Status: naprawione (17.11, #689 scalony); wcześniej: w PR #689 (sam test: naprawione przez #686); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: flaga tessen-hunt-squad:abc nie blokuje losowania
+
+### G-915 Toast 'Bag gone / Someone was faster' dla każdej wygasłej torby, także dalekiej
+- Ważność: S4 · Zasięg: każda walka z łupem
+- Opis: Łowca 17.11: LootExpired (loot-system.syncBags po 300 s, addContainer przy limicie 12) presenters/loot.ts zawsze pokazuje jako 'Someone was faster', choć nikt torby nie wziął; także dla toreb w niezaładowanych chunkach i wypartych limitem. W W-3 głośnej 7 toreb załogi wygasa 305-333 s po zabiciu, 1 toast (scalany). Nie wyciek z kuriera M0. Do rozstrzygnięcia: toast tylko dla toreb w pobliżu gracza albo inny tekst (i18n en/pl).
+- Status: naprawione (17.11, #688 scalony); wcześniej: w PR #688 (gałąź ccr-ec2c4269-ilh8k8-g915); wcześniej: zgłoszone
+- Pakiet właściciela: packages/app
+- Test przyjęcia: presenter nie pokazuje 'Someone was faster' dla torby, której nikt nie wziął
+
+### G-919 Linia bonusu kontraktu stoi pod celem, który HUD akurat pokazuje, także cudzym
+- Ważność: S4 · Zasięg: każdy rodzaj kontraktu przy przypiętym albo pierwszym wątku głównym
+- Opis: Znalezione przy G-905 (17.11): BonusIndicator pokazuje bonus aktywnego kontraktu zawsze, nie patrzy na shownEntryId; przy przypiętym wątku głównym w trakcie W-3 albo przy kontrakcie, który ustępuje wątkowi (eliminate, delivery…), bonus wisi pod celem wątku. Rozwiązanie: pokazywać bonus tylko, gdy HUD pokazuje kontrakt.
+- Status: naprawione (17.11, #687 scalony); wcześniej: w PR #687 (gałąź ccr-ec2c4269-ilh8k8-g919); wcześniej: zgłoszone
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: przypięty wątek główny w trakcie kontraktu: brak linii bonusu pod jego celem
+
+### G-934 Oddział pościgu z flagą powrotu wchodzi bez ostrzeżenia wiele godzin po toaście
+- Ważność: S4 · Zasięg: pościg Tessen
+- Opis: Znalezione przy weryfikacji G-922 r3: flaga tessen-hunt-back przechodzi przez odcinki dnia, więc oddział może wejść bez toastu długo po ostrzeżeniu. Do rozważenia toast przy ponownym wejściu po zmianie odcinka.
+- Status: naprawione (17.11, #686 scalony); wcześniej: w PR #686 (gałąź ccr-ec2c4269-ilh8k8-g934, a813f9b), w weryfikacji; wcześniej: w naprawie (gałąź ccr-ec2c4269-ilh8k8-g934); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oddział z tessen-hunt-back po zmianie odcinka dnia: toast przed wejściem
+- 17.11 przy blokadzie czekania (#682): po końcu odcinka flaga tessen-hunt-back wisi (czekanie 10 h), system wychodzi przed losowaniem, a gdy Seki stanie tam, dokąd prowadzi droga, oddział wchodzi w 1 s bez flagi w drodze i bez toastu; losowanie bieżącego odcinka przepada. Naprawa: po końcu odcinka z flagi (od #682 niesie @dzień:odcinek) zdjąć flagę powrotu i wayless, żeby kolejne losowanie szło zwykłą drogą z ostrzeżeniem.
+- 17.11 weryfikacja #682: to samo dotyczy flagi w drodze tessen-hunt-squad: gdy Seki jest tam, gdzie nie ma wejścia (np. klinika, wejścia bliżej niż 60 m wykluczone), gałąź due wraca bez zdjęcia flagi i flaga wisi do wyjścia albo końca pościgu. #682 ogranicza tylko blokadę czekania (do ticku przyjścia + zapas), reguła sim zostaje do tej poprawki.
+
 ### G-928 Walka w korytarzu S W-3 kosztuje 2-8 ms na krok (uciekający cywile i objazdy przeszkód)
 - Ważność: S3 · Zasięg: walki z falami W-3, testy sesji walk (bramka czasu na main)
 - Opis: Profil testu w3-start-save-session (korytarz S, 18 s): civilian-ai FleeFromDanger ok. 1 s z 2,2 s symulacji, world-barriers piecesOf/barrierBlocked 1,3 s (detourStep), rastry nav-raster finish 0,9 s. Testy korytarza 11,8 i 13,4 s z pokryciem na CI (próg nowego testu 10 s), main czerwony na bramce czasu od #672.
