@@ -1,4 +1,5 @@
 import { Matrix } from "../babylon";
+import { FootfallCount } from "./footfalls";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
@@ -119,6 +120,8 @@ export class BabylonRenderer implements RenderPort {
    */
   wallRay: CameraOccluder | null = null;
   private readonly characters: CharacterViews;
+  /** The followed figure's footfalls, taken once a frame for the footsteps' sound (user notes of 18.11). */
+  readonly footfalls = new FootfallCount();
   /** What the characters do where they stand (ADR-0040). */
   private readonly activities: CharacterActivities;
   private readonly props: PropViews;
@@ -192,6 +195,7 @@ export class BabylonRenderer implements RenderPort {
     };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({
+      footfalls: this.footfalls,
       scene,
       materials: this.materials,
       shadow: this.shadow,
