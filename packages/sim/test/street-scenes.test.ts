@@ -86,7 +86,7 @@ describe("micro-events (ADR-0034)", () => {
     // One shot down, the other taken down from behind: its body stays in the world. The Rynek's
     // Hebi patrol, 11 m off, would see the takedown and fire at her, and a hit breaks it: blinded
     // by a quickhack (kept in the save, G-882), the scene is the mugging's alone.
-    for (const e of sim.world.with("ai")) if (e.ai.patrol) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
+    for (const e of sim.world.with("ai")) if (e.ai.territory) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
     for (const e of [...sim.world]) if (e.id === m1) e.health = { current: 0, max: 80 };
     sim.step();
     const a = [...sim.world].find((e) => e.id === m0)!;

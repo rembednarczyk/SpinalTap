@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, type EffectDescriptor, SABOTAGE, W3_VIRUS_FLAG, W3_VIRUS_ITEM, contractAlarmFlag, contractObjective, contractSecondsLeft, contractTag } from "@seki/core";
+import { type AudioCue, type DomainState, type EffectDescriptor, SABOTAGE, W3_VIRUS_FLAG, W3_VIRUS_ITEM, contractAlarmFlag, contractObjective, contractSecondsLeft, contractTag } from "@seki/core";
 import { GENZO_SPOT, SIM_HZ, W3_CORE_BLIND_SPOT, W3_VIRUS_TERMINAL, stateHash } from "@seki/sim";
 import { translateText } from "@seki/ui";
 import { frame, setup, steps, teleport } from "./story-helpers";
@@ -9,7 +9,8 @@ import type { GameSession } from "../src/game-session";
  * W-3's sabotage in a session, headless (ADR-0082 stage 3): Genzō offers it once, the virus goes
  * into the core in server room N from the camera's dead angle, the line's screens and beacons
  * follow the job through the renderer's port, out of the zone unseen the job is paid by phone; a
- * save during the upload loads to the same state; 06:00 without the virus ships the batch.
+ * save during the upload loads to the same state; 06:00 without the virus ships the batch. The
+ * virus in the core has its sound (stage 4), once, as it goes in.
  */
 
 const ui = (u: ReturnType<typeof setup>["ui"]) => u.getState();
@@ -20,7 +21,8 @@ const step = (session: GameSession): string => {
 };
 
 const start = () => {
-  const s = setup();
+  const cues: AudioCue[] = [];
+  const s = setup(undefined, { play: (c) => cues.push(c), stopAll() {} });
   const effects: EffectDescriptor[] = [];
   const play = s.render.playEffect.bind(s.render);
   s.render.playEffect = (e: EffectDescriptor) => {
@@ -29,7 +31,7 @@ const start = () => {
   };
   s.session.newGame();
   steps(s.session, 2);
-  return { ...s, effects };
+  return { ...s, effects, cues };
 };
 
 const offer = (session: GameSession, u: ReturnType<typeof setup>["ui"]) => {
@@ -68,7 +70,7 @@ const setDomain = (session: GameSession, change: (d: DomainState) => DomainState
 
 describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
   it("quiet: the virus in by the core, the screens and the way out unseen paid by phone, Tessen as it was", () => {
-    const { session, ui: u, effects } = start();
+    const { session, ui: u, effects, cues } = start();
     const tessen = session.sim.domain.reputation.tessen;
     const job = acceptSabotage(session, u);
     expect(step(session)).toContain("rdzenia kalibracji");
@@ -87,8 +89,12 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     expect(session.sim.domain.contracts.active).toMatchObject({ route: "quiet" });
     expect(last(effects, "line-screens")?.state).toBe("upload");
     expect(step(session)).toContain("aż wirus się wgra");
-    steps(session, SABOTAGE.uploadSeconds * SIM_HZ);
+    const done = () => cues.filter((c) => c === "upload-done").length;
+    steps(session, SABOTAGE.uploadSeconds * SIM_HZ - 2 * SIM_HZ);
+    expect(done()).toBe(0);
+    steps(session, 2 * SIM_HZ);
     expect(session.sim.domain.flags).toContain(W3_VIRUS_FLAG);
+    expect(done()).toBe(1);
     // Genzō's pendrive stays in the core (G-907).
     expect(session.sim.domain.inventory.keyItems).not.toContain(W3_VIRUS_ITEM);
     expect(last(effects, "line-screens")?.state).toBe("infected");

@@ -1,4 +1,4 @@
-import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
+import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, TerritoryId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DoorLock, HideKind, Interactable, LadderDef } from "../world/components";
 import type { PrismDef } from "../world/prism";
 
@@ -93,8 +93,8 @@ export type ActorDef =
       readonly when?: Presence;
       /** Enemy type and its health; without it a Hebi ganger with the default health. */
       readonly enemy?: EnemyTypeId;
-      /** A street patrol (ADR-0048): watches a neutral player instead of attacking her. */
-      readonly patrol?: true;
+      /** A member of a gang's territory (ADR-0091; the street patrols of ADR-0048 are the Rynek's): watches a player its gang tolerates in the district. */
+      readonly territory?: TerritoryId;
     };
 
 /** Axis-aligned rectangle on the XZ plane. */

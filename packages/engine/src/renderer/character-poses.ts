@@ -2,6 +2,7 @@ import { Quaternion, Vector3 } from "../babylon";
 import { bodyAimTurn } from "./aim-point";
 import { recoilBack } from "./clips/recoil";
 import type { CharacterRig } from "./character-rig";
+import { reloadDown, tickReload } from "./reload-motion";
 
 /** Seconds to draw or holster the pistol (matches the simulation's DRAW_TIME). */
 export const DRAW_SECONDS = 0.4;
@@ -21,9 +22,6 @@ export const mixPose = (a: ArmPose, b: ArmPose, t: number): ArmPose => ({
 });
 
 export const smooth = (t: number): number => t * t * (3 - 2 * t);
-
-/** 0..1..0 over a reload: how far the weapon is down and the left hand away fetching a magazine. */
-export const reloadPhase = (rig: CharacterRig): number => (rig.reloadTotal > 0 && rig.reload > 0 ? Math.sin(Math.PI * (1 - rig.reload / rig.reloadTotal)) : 0);
 
 /**
  * Draws or holsters towards the weapon's state; on a ladder or pulling up onto a ledge (the
@@ -59,8 +57,8 @@ export const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number,
   const lowReady: ArmPose = { armX: -0.32 + swing * (0.22 + 0.12 * run) - 0.1 * run, armZ: -0.06 - 0.12 * run, elbowX: -0.62 + sway * 0.12 - 0.55 * run };
   const aimed: ArmPose = { armX: -1.42 + Math.abs(sway) * 0.05, armZ: 0, elbowX: -0.05 };
   // Reloading: pistol down to the chest, tipped in, while the left hand fetches a magazine.
-  rig.reload = Math.max(0, rig.reload - dt);
-  const reloading = reloadPhase(rig);
+  tickReload(rig, dt);
+  const reloading = reloadDown(rig);
   if (reloading > 0) rig.aim *= 1 - reloading;
   const chest: ArmPose = { armX: -0.55, armZ: -0.18, elbowX: -1.35 };
   const ready = mixPose(mixPose(lowReady, aimed, smooth(rig.aim)), chest, reloading);

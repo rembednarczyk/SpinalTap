@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, type GarmentId, HEAT_SEARCH_SECONDS, type ItemInstance, NO_HEAT, type SaveSnapshot, type Vec3, hm } from "@seki/core";
+import { type DomainState, GANG_RULES, type GarmentId, HEAT_SEARCH_SECONDS, type ItemInstance, NO_HEAT, type SaveSnapshot, type Vec3, hm } from "@seki/core";
 import {
   KANAL_NIGHT,
   KANAL_PATROL_ACTORS,
@@ -71,7 +71,7 @@ describe("Hebi patrols in Stare Miasto (ADR-0048)", () => {
       const chunk = WORLD_CHUNKS.find((c) => c.actors.some((a) => a.spawn.key === key));
       expect(chunk?.district, key).toBe("kanal");
       const def = chunk!.actors.find((a) => a.spawn.key === key)!;
-      expect(def.kind === "ganger" && def.patrol).toBe(true);
+      expect(def.kind === "ganger" && def.territory).toBe("rynek");
       expect(KANAL_PATROL_SCHEDULES[key]).toBeDefined();
     }
   });
@@ -122,7 +122,7 @@ const PLAIN = ["patrol-a", "patrol-b", "patrol-c", "patrol-d"].find((k) => !isEn
 const hebi = (sim: Simulation, patrol: boolean): Entity => {
   const p = sim.player()!;
   const e = gangerEntity(5000 + sim.world.entities.length, { key: PLAIN, position: { x: p.position.x, y: p.position.y, z: p.position.z + 7 }, yaw: Math.PI }, null, 500, p.chunk ?? "");
-  if (patrol && e.ai) e.ai = { ...e.ai, patrol: true };
+  if (patrol && e.ai) e.ai = { ...e.ai, territory: "rynek" };
   return sim.world.add(e);
 };
 
@@ -141,12 +141,23 @@ describe("how a Hebi patrol takes the player (ADR-0048, as any ganger after ADR-
     expect(alertedAfter(other, hebi(other, false))).toBe(true);
   });
 
-  it("goes for her when Hebi hunt her (the heat) or hate her", () => {
+  it("goes for her when Hebi hunt her (the heat), bear her a grudge on the Stare Miasto or are provoked there", () => {
     // A hunt with its clock (as a report starts it): the patrol needs a moment to make her out (ADR-0069).
     const hunted = street(null, (d) => ({ ...d, heat: { ...NO_HEAT, level: 1, faction: "hebi", searchLeft: HEAT_SEARCH_SECONDS[1] } }));
     expect(alertedAfter(hunted, hebi(hunted, true))).toBe(true);
+    const grudge = street(null, (d) => ({ ...d, gangStandings: { "hebi:kanal": { grudge: GANG_RULES.hostileGrudge, provokedUntil: null } } }));
+    expect(alertedAfter(grudge, hebi(grudge, true))).toBe(true);
+    const provoked = street(null, (d) => ({ ...d, gangStandings: { "hebi:kanal": { grudge: 0, provokedUntil: d.clock.seconds + 3600 } } }));
+    expect(alertedAfter(provoked, hebi(provoked, true))).toBe(true);
+  });
+
+  it("lets her be on the Rynek though Hebi hate her in the city, with no grudge here (ADR-0091)", () => {
+    // Before ADR-0091 the city-wide standing decided: after the prologue (Hebi −19) every patrol fought her.
     const hated = street(null, (d) => ({ ...d, reputation: { ...d.reputation, hebi: -40 } }));
-    expect(alertedAfter(hated, hebi(hated, true))).toBe(true);
+    expect(alertedAfter(hated, hebi(hated, true))).toBe(false);
+    // A grudge on the Podzamcze is not the Rynek's.
+    const elsewhere = street(null, (d) => ({ ...d, gangStandings: { "hebi:targ": { grudge: 100, provokedUntil: null } } }));
+    expect(alertedAfter(elsewhere, hebi(elsewhere, true))).toBe(false);
   });
 
   it("takes a Hebi jacket for one of its own, and goes for her once the disguise is blown", () => {
