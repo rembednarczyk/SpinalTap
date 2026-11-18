@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
+- Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
+- Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
+- Status: naprawione (18.11, #736 scalony); wcześniej: w PR #736; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Kamery dachu N, obserwator w kabinie, strefa z polem floor. Otwarte: obserwator po alarmie na tor suwnicy (ADR §1 p. 4), kwestia Genzō w m4-doki.ink.
+
 ### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
 - Status: naprawione (18.11, #728 scalony); wcześniej: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
 - Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
