@@ -15,6 +15,7 @@ import { W3_LAMP_PREFIX, w3LampsFor } from "../src/renderer/tessen-w3/w3-lights"
 import { linePose } from "../src/renderer/tessen-w3/w3-line-anim";
 import { LINE_BOXES, lineGeometry } from "../src/renderer/tessen-w3/w3-line-geometry";
 import { W3View, eyeInW3 } from "../src/renderer/tessen-w3/w3-view";
+import { W3_FLOOD_LIGHTS } from "../src/renderer/tessen-w3/w3-fx";
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -147,12 +148,13 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     expect(v.interior).toBe(true);
     expect(v.lampsOn.map((l) => l.key)).toEqual([`${W3_LAMP_PREFIX}hall-w`, `${W3_LAMP_PREFIX}hall-e`]);
     expect(materials.lightCount).toBe(2);
-    // Out through the wagon gate onto the yard: the street's lamp is back, the hall's fade with the distance.
+    // Out through the wagon gate onto the yard: the street's lamp is back, the hall's fade with the
+    // distance, and the yard's two floodlights are on again (stage 4, `W3Fx`).
     Object.assign(eye, w3(2490, 1.6, 418));
     v.update(1 / 60, false);
     materials.setLightFocus(eye.x, eye.z, v.lightScope);
     expect(v.interior).toBe(false);
-    expect(materials.lightCount).toBe(3);
+    expect(materials.lightCount).toBe(3 + W3_FLOOD_LIGHTS.length);
   });
 
   it("moves the line's vertices on High, holds them on low and in a frozen frame", () => {
