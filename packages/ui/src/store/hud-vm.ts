@@ -133,6 +133,8 @@ export interface ScanTargetVm {
 export interface RamVm {
   readonly current: number;
   readonly max: number;
+  /** The breached network's ICEpick runs (ADR-0029): every quickhack costs 1 RAM less (G-374). */
+  readonly icepick?: boolean;
 }
 
 export interface UploadVm {

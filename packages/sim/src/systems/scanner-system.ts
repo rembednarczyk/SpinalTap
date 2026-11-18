@@ -14,7 +14,7 @@ import {
   type Vec3,
   applyDamage,
   chainRadius,
-  contractKind,
+  icepickRunning,
   directionFromAngles,
   factionStance,
   hackCost,
@@ -152,10 +152,7 @@ const reportRam = (ctx: SimContext): void => {
 };
 
 /** The breached network's ICEpick (ADR-0029): hacks cost 1 RAM less while the hack job runs. */
-const icepick = (ctx: SimContext): boolean => {
-  const c = ctx.state.domain.contracts.active;
-  return !!c && contractKind(c) === "hack" && (c.breach ?? []).includes("icepick");
-};
+const icepick = (ctx: SimContext): boolean => icepickRunning(ctx.state.domain.contracts.active);
 
 /** Is the player fighting (RAM does not come back)? */
 const inCombat = (ctx: SimContext, player: Entity): boolean => {
