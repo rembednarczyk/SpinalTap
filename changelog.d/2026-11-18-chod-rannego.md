@@ -1,0 +1,1 @@
+- Ranna postać (poniżej połowy zdrowia) kuleje, biegnie, trzymając się za bok, i stoi pochylona (klipy Male Injured Pack).

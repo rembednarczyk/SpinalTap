@@ -85,6 +85,8 @@ const waitForObserver = (sim: Simulation, c: Contract): void => {
 const BRIDGE_END = { x: 2500.3, z: 438.65 };
 /** Along the hall's wall: in the west camera's dead angle, and past 20 m of the observer once at its east end. */
 const WALL_STRIP = [{ x: 2512, z: 431 }, { x: 2550, z: 431 }];
+/** On the strip by the hall's wall, 33 m off the cabin, where the observer's look falls after he turns. */
+const STOP_IN_VIEW = { x: 2531, z: 431 };
 /** Behind the east camera, west of it, north of the hall's wall: where she reboots it from. */
 const BEHIND_EAST = { x: 2550, z: 437.5 };
 /** The hatch's ladder top, by the hatch's curb. */
@@ -161,7 +163,7 @@ describe("W-3's pipes and roof way: the roof's cameras and the cabin's observer 
 
   it.each([
     ["crouched past the observer, along the hall's wall, the east camera rebooted: quiet", { stand: false, wall: true, reboot: true }, null],
-    ["standing up past the observer: he sees her", { stand: true, wall: true, reboot: true }, "observer"],
+    ["standing up past the observer, stopping in his view: he sees her", { stand: true, wall: true, reboot: true }, "observer"],
     ["along the cooling units: the west camera sees her", { stand: false, wall: false, reboot: true }, CAM_W],
     ["down the hatch without rebooting the east camera: it sees her", { stand: false, wall: true, reboot: false }, CAM_E],
   ] as const)("from the pipes' ladder over the roof to the hatch, %s", (_name, way, seenBy) => {
@@ -178,6 +180,12 @@ describe("W-3's pipes and roof way: the roof's cameras and the cabin's observer 
     expect(alarmUp(sim, c)).toBe(false);
     waitForObserver(sim, c);
     // Past the observer by the hall's wall, then on by the wall or up along the cooling units' south side.
+    // Standing, she stops a few seconds where his look falls (the meter fills gradually, ADR-0069 of 18.11: a glance
+    // from 33 m as she walks on leaves him only wondering).
+    if (way.stand) {
+      walk(sim, c, [WALL_STRIP[0]!, STOP_IN_VIEW]);
+      alarmWithin(sim, c, 8);
+    }
     walk(sim, c, way.wall ? WALL_STRIP : [WALL_STRIP[0]!, { x: 2522, z: 436 }, { x: 2550, z: 436 }], !way.stand);
     walk(sim, c, [BEHIND_EAST], true);
     if (way.reboot && !alarmUp(sim, c)) {

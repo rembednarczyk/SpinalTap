@@ -20,14 +20,18 @@ export interface SightProfile {
   readonly crouchSight: number;
   /** Metres within which it sees a standing player whatever its facing. */
   readonly near: number;
-  /** Suspicion per second at the edge of sight, before `awareness` and the distance term. */
+  /**
+   * Suspicion per second with the player close by, standing, before `awareness`: some 1.5 s to the
+   * alarm for a Hebi, slower for the trained (ADR-0069 after the 17.11 audit, as in Cyberpunk 2077).
+   * It falls off to 45% of that at the far end of sight, and a crouching player fills it half as fast.
+   */
   readonly suspicionRate: number;
 }
 
-/** Start values of ADR-0069; stage 8 of ADR-0059 tunes them. */
-const HEBI_SIGHT: SightProfile = { sight: 17, cone: 1.2, crouchSight: 0.5, near: 2, suspicionRate: 2 };
-const TRAINED_SIGHT: SightProfile = { sight: 17, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 1.6 };
-const GUARD_SIGHT: SightProfile = { sight: 18, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 1.4 };
+/** Values of ADR-0069, the meter slowed after the 17.11 audit (18.11); stage 8 of ADR-0059 tunes them. */
+const HEBI_SIGHT: SightProfile = { sight: 17, cone: 1.2, crouchSight: 0.5, near: 2, suspicionRate: 0.67 };
+const TRAINED_SIGHT: SightProfile = { sight: 17, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 0.53 };
+const GUARD_SIGHT: SightProfile = { sight: 18, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 0.47 };
 /** W-3's observer in the tower's cabin (ADR-0082 §2): a guard's eyes that reach 40 m. */
 const SNIPER_SIGHT: SightProfile = { ...GUARD_SIGHT, sight: 40 };
 

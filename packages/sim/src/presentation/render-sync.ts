@@ -37,6 +37,19 @@ const grabPhaseOf = (run: GrabView): GrabPhase => (run.phase === "grab" ? "hold"
  * pushes interpolated transforms for moving entities. Entities listed in `streamedOut`
  * (asleep in an unloaded chunk) are despawned as "unloaded", everything else as "removed".
  */
+/** Health share below which a character starts to limp, and the share at which it limps fully (ADR-0090 point 14). */
+export const HURT_FROM = 0.5;
+export const HURT_FULL = 0.15;
+
+/** How hurt `e` is for the picture, 0..1 from its health; nothing while it is unhurt, dead or knocked out. */
+const hurtOf = (e: Entity): { hurt?: number } => {
+  const h = e.health;
+  if (!h || h.max <= 0 || h.current <= 0 || e.unconscious) return {};
+  const share = h.current / h.max;
+  if (share >= HURT_FROM) return {};
+  return { hurt: Math.min(1, (HURT_FROM - share) / (HURT_FROM - HURT_FULL)) };
+};
+
 export class RenderSync {
   private readonly spawned = new Set<EntityId>();
   private cameraTarget: EntityId | null = null;
@@ -98,6 +111,8 @@ export class RenderSync {
         ...(e.mantle ? { climb: 1.5 } : {}),
         // Knocked out by a takedown (ADR-0065): the renderer's knockout poses (G-449).
         ...(e.unconscious ? { unconscious: true } : {}),
+        // Hurt (ADR-0090 point 14): the renderer's injured walk and stance, from the health left.
+        ...hurtOf(e),
         // In a takedown's grab (ADR-0075 stage 2): the renderer's grab clips.
         ...(grab ? { grab } : {}),
       };
