@@ -1,0 +1,1 @@
+- Wrogowie wykrywają gracza stopniowo (ok. 1,5-2 s z bliska, ok. 4 s z daleka), a kucanie spowalnia wykrycie o połowę, wzorem Cyberpunk 2077.

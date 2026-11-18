@@ -156,7 +156,8 @@ describe("quickhacks (ADR-0028, ADR-0029)", () => {
 
   it("reboot optics: an alerted guard in front of the player stops seeing them and loses the trail", () => {
     const { sim, g } = yard({ guardAt: at(10, 96), guardYaw: Math.PI / 2 });
-    for (let i = 0; i < 2 * SIM_HZ && !g.ai!.alerted; i++) sim.step();
+    // Its meter fills in a few seconds (ADR-0069, 18.11).
+    for (let i = 0; i < 6 * SIM_HZ && !g.ai!.alerted; i++) sim.step();
     expect(g.ai!.alerted).toBe(true);
     lookAt(sim, chest(g));
     hack(sim, 2, QUICKHACKS.reboot_optics.upload);

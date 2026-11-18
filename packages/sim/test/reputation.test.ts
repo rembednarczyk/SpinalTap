@@ -159,16 +159,16 @@ describe("gangers and Hebi's stance", () => {
     expect(effectiveAggroRange(17, "friendly")).toBe(17);
     // 21 m from the guard, straight out over Plac Łokietka: beyond the base range, within the hostile one.
     const at = ground(POST.x, POST.z + 21);
-    // He looks out at her; it takes him a moment to make her out (ADR-0069), so both get two seconds.
+    // He looks out at her; it takes him a few seconds to make her out that far (ADR-0069, 18.11), so both get six.
     const neutral = simWith({});
     guardFacing(neutral, at);
     teleportPlayer(neutral, at);
-    run(neutral, 100);
+    run(neutral, 180);
     expect(byKey(neutral, "guard")?.ai?.alerted).toBe(false);
     const hostile = simWith({ hebi: -40 });
     guardFacing(hostile, at);
     teleportPlayer(hostile, at);
-    run(hostile, 100);
+    run(hostile, 180);
     expect(byKey(hostile, "guard")?.ai?.alerted).toBe(true);
   });
 });

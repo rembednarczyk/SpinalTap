@@ -21,7 +21,11 @@
       "mirror": true
     },
     "walkM": "Action Adventure Pack/walking.fbx",
-    "runM": "Action Adventure Pack/running.fbx"
+    "runM": "Action Adventure Pack/running.fbx",
+    "walkHurt": "Male Injured Pack/injured walk.fbx",
+    "walkBackHurt": "Male Injured Pack/injured walk backwards.fbx",
+    "runHurt": "Male Injured Pack/injured run.fbx",
+    "runBackHurt": "Male Injured Pack/injured run backwards.fbx"
   },
   "body": {
     "idle": {
@@ -200,6 +204,16 @@
     },
     "idleM": {
       "file": "Action Adventure Pack/idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "idleHurt": {
+      "file": "Male Injured Pack/injured idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "idleHurt2": {
+      "file": "Male Injured Pack/injured hurting idle.fbx",
       "mode": "pose",
       "fps": 10
     }

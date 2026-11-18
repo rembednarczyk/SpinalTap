@@ -115,6 +115,10 @@ const placeBody = (v: CharacterView, dt: number, carried: boolean, holder: Chara
  * after the simulation removed one), the knockout parts (`knockout-pose`, `knockout-carry`,
  * `body-lay`) and the takedown grab's (`grab-clip`, ADR-0075).
  */
+/** How fast the injured walk eases in and out, per second. */
+const HURT_EASE = 2;
+const easeHurt = (now: number, to: number, dt: number): number => (Math.abs(to - now) < 1e-3 ? to : now + Math.max(-HURT_EASE * dt, Math.min(HURT_EASE * dt, to - now)));
+
 export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
   /** Weapons, loadouts and the weapon in hand per character. */
@@ -270,6 +274,8 @@ export class CharacterViews implements FxActors {
       // The gun points where the crosshair is (the player's look) or where the last shot went.
       if (id === followed) aimLook(v.rig, t.position, t.yaw, t.pitch, t.crouch ?? 0);
       updateAimTurn(v.rig);
+      // Hurt (ADR-0090 point 14): it eases into the limp over half a second, out of it as slowly.
+      v.rig.hurt = easeHurt(v.rig.hurt ?? 0, t.hurt ?? 0, dt);
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       // The legs from the locomotion clips, by the way it moves against its facing (ADR-0090).
       poseLegsFromClips(v.rig, t.position, t.speed, dt, t.crouch ?? 0);

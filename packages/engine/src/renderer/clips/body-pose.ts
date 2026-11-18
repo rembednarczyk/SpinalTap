@@ -77,6 +77,10 @@ export const idleClipOf = (rig: CharacterRig): BodyClip => {
   return idles[Math.floor(figureSeed(rig) * idles.length)]!;
 };
 
+/** Hurt (ADR-0090 point 14), it stands bent over the wound, its own of two. */
+const IDLES_HURT = [BODY_CLIPS.idleHurt, BODY_CLIPS.idleHurt2] as const;
+const hurtIdleOf = (rig: CharacterRig): BodyClip => IDLES_HURT[Math.floor(figureSeed(rig) * IDLES_HURT.length)]!;
+
 const poseIdle = (rig: CharacterRig, s: BodyState, target: number, dt: number): number => {
   s.idle += (target - s.idle) * Math.min(1, dt * IDLE_EASE);
   const w = s.idle;
@@ -84,7 +88,13 @@ const poseIdle = (rig: CharacterRig, s: BodyState, target: number, dt: number): 
   const turn = turnFrame(rig, dt, w);
   if (w < 1e-3) return 0;
   const clip = idleClipOf(rig);
-  const x = layPose(rig, sampleBody(clip, rig.time + s.offset * clip.cycle, true), w, freeArms(rig), true);
+  let x = layPose(rig, sampleBody(clip, rig.time + s.offset * clip.cycle, true), w, freeArms(rig), true);
+  // Hurt, the injured stance over it as far as it is hurt; the hips' shift is the two mixed.
+  const h = rig.hurt ?? 0;
+  if (h > 1e-3) {
+    const hurt = hurtIdleOf(rig);
+    x = x * (1 - h) + layPose(rig, sampleBody(hurt, rig.time + s.offset * hurt.cycle, true), w * h, freeArms(rig), true);
+  }
   return turn ? x + layPose(rig, turn.frame, turn.w, freeArms(rig), true) : x;
 };
 
