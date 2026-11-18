@@ -85,7 +85,7 @@ export const sampleLegs = (mix: readonly [LegClip, number][], phase: number): nu
 const DOWN = new Vector3(0, -1, 0);
 
 /** The swing turning a limb that hangs down to point along `dir`. */
-const swing = (dir: Vector3): Quaternion => {
+export const swing = (dir: Vector3): Quaternion => {
   const q = new Quaternion();
   Quaternion.FromUnitVectorsToRef(DOWN, dir.normalizeToNew(), q);
   return q;
@@ -97,6 +97,14 @@ interface LegState {
   at: { x: number; z: number } | null;
 }
 const states = new WeakMap<CharacterRig, LegState>();
+
+/** `node`'s rotation mixed `w` of the way towards `q`. */
+export const turnTowards = (node: CharacterRig["body"], q: Quaternion, w: number): void => {
+  const own = node.rotationQuaternion ?? Quaternion.FromEulerAngles(node.rotation.x, node.rotation.y, node.rotation.z);
+  const mixed = Quaternion.Slerp(own, q, w);
+  if (node.rotationQuaternion) node.rotationQuaternion.copyFrom(mixed);
+  else node.rotation.copyFrom(mixed.toEulerAngles());
+};
 
 /** Its facing about +Y (0: +Z), whether the root turns by a quaternion or by angles. */
 const yawOf = (rig: CharacterRig): number => rig.root.rotationQuaternion?.toEulerAngles().y ?? rig.root.rotation.y;
@@ -119,7 +127,7 @@ export const clipShare = (rig: CharacterRig, speed: number): number => {
  * pose by `w`. The clip's frame is the facing's; the thigh hangs from the body, which leans (a run,
  * a crouch): `body` takes that lean back out.
  */
-const poseLeg = (thigh: CharacterRig["legL"], knee: CharacterRig["kneeL"], j: number[], at: number, w: number, body: Quaternion, pace: number): void => {
+export const poseLeg = (thigh: CharacterRig["legL"], knee: CharacterRig["kneeL"], j: number[], at: number, w: number, body: Quaternion, pace: number): void => {
   const inBody = (i: number) => new Vector3(j[i]!, j[i + 1]!, j[i + 2]!).applyRotationQuaternion(body);
   const hip = inBody(at);
   const kn = inBody(at + 3);
@@ -130,14 +138,8 @@ const poseLeg = (thigh: CharacterRig["legL"], knee: CharacterRig["kneeL"], j: nu
   // A shorter stride swings less far from standing.
   const upper = Quaternion.Slerp(Quaternion.Identity(), clipUpper, pace);
   const lower = Quaternion.Slerp(Quaternion.Identity(), clipLower, pace);
-  for (const [node, q] of [
-    [thigh, upper],
-    [knee, lower],
-  ] as const) {
-    const own = Quaternion.FromEulerAngles(node.rotation.x, node.rotation.y, node.rotation.z);
-    const mixed = Quaternion.Slerp(own, q, w);
-    node.rotation.copyFrom(mixed.toEulerAngles());
-  }
+  turnTowards(thigh, upper, w);
+  turnTowards(knee, lower, w);
 };
 
 /**
@@ -145,6 +147,8 @@ const poseLeg = (thigh: CharacterRig["legL"], knee: CharacterRig["kneeL"], j: nu
  * world) and its speed. Keeps the phase and the heading per rig.
  */
 export const poseLegsFromClips = (rig: CharacterRig, at: { x: number; z: number }, speed: number, dt: number, crouch: number): void => {
+  // The procedural rig bends the knees about x only: the clips' twist of the last frame goes.
+  for (const k of [rig.kneeL, rig.kneeR]) k.rotation.y = k.rotation.z = 0;
   let s = states.get(rig);
   if (!s) {
     s = { phase: 0, heading: 0, at: null };

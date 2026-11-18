@@ -274,7 +274,7 @@ const applyAirPose = (rig: CharacterRig, air: number | undefined): void => {
   }
 };
 
-/** Drop and lean with the feet planted, bob, breathing and hit flinch; the head keeps looking ahead. */
+/** Drop and lean with the feet planted, bob and breathing; the head keeps looking ahead. */
 const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait, dt: number): void => {
   const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean, CROUCH_SPREAD * c) : { y: 0, z: 0 };
   const breathe = Math.sin(rig.time * 1.7) * 0.006;
@@ -283,10 +283,11 @@ const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait
   rig.body.position.y = bob + breathe + offset.y;
   rig.body.position.z = offset.z;
   rig.body.rotation.x = rig.stoop + lean;
+  // A hit's jolt is the hit reaction clip's, laid on after (`clips/body-pose.ts`); here it only fades.
   rig.flinch = Math.max(0, rig.flinch - dt * 5);
-  rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
+  rig.body.rotation.z = 0;
   // The head keeps looking ahead over the lean.
-  rig.head.rotation.x = -0.25 * rig.flinch - lean * 0.8;
+  rig.head.rotation.x = -lean * 0.8;
   // With a long gun the body stands bladed; the head looks ahead past it and the legs keep
   // stepping the way the character goes (they turn back under the hips).
   const blade = bladeOf(rig, holdWeight(rig));
