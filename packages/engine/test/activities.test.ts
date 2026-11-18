@@ -1,13 +1,12 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { ACTIVITY_IDS } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import { Scene } from "../src/babylon";
+import { Quaternion, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import {
   ACTIVITY_BLEND_SECONDS,
   activityJoints,
   blendJoints,
-  emberGlow,
   freshBlend,
   isSeated,
   propsOf,
@@ -40,9 +39,6 @@ describe("activity poses (ADR-0040)", () => {
     const down = activityJoints("smoke", 3);
     expect(atMouth.elbowR).toBeLessThan(-2.2);
     expect(down.elbowR).toBeGreaterThan(-1.2);
-    expect(emberGlow(1.3)).toBeGreaterThan(0.9);
-    expect(emberGlow(5)).toBeCloseTo(0.35);
-    for (let t = 0; t < 12; t += 0.1) expect(emberGlow(t)).toBeGreaterThanOrEqual(0.35);
   });
 
   it("the phone is held at the ear, the guard looks around, sitting and sleeping bend the legs", () => {
@@ -182,7 +178,9 @@ describe("CharacterActivities", () => {
     }
     expect(acts.activityOf(7)).toBe("smoke");
     expect(scene.meshes.length).toBe(meshes + 2);
-    expect(rig.elbowR.rotation.x).toBeLessThan(-0.9);
+    // The smoking clip (ADR-0090) holds the cigarette hand bent at the elbow all through (0.32 rad and more).
+    const bend = Quaternion.FromEulerAngles(rig.elbowR.rotation.x, rig.elbowR.rotation.y, rig.elbowR.rotation.z);
+    expect(2 * Math.acos(Math.min(1, Math.abs(bend.w)))).toBeGreaterThan(0.3);
     acts.set(7, null);
     for (let i = 0; i < 30; i++) {
       animateRig(rig, 0, DT);

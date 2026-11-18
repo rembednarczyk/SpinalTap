@@ -190,18 +190,32 @@ export interface MapName {
   readonly angle: number;
 }
 
+/** A district name's half width and height on the map tab, in metres (the panel's text measure). */
+const districtHalf = (l: MapName, size: number): number => (l.text.length * 0.8 * size) / 2;
+
 /**
  * The district names of the map tab moved north off the metro's stations (ADR-0071): a ring with
  * its name over and under it takes about 21 icon units each way, and a district's name in the
  * middle of its chunks can fall right on it (Plac Litewski under "Krakowskie Przedmieście").
+ * Zoomed out the names grow past each other (G-321: "Krakowskie Przedmieście" and "Stare Miasto"
+ * 15 m apart under 77 m letters): one that would cross a name already placed goes a row further north.
  */
-export const liftDistricts = <L extends MapName>(labels: readonly L[], stations: readonly { readonly x: number; readonly z: number; readonly name: string }[], k: number, size: number): L[] =>
-  labels.map((l) => {
+export const liftDistricts = <L extends MapName>(labels: readonly L[], stations: readonly { readonly x: number; readonly z: number; readonly name: string }[], k: number, size: number): L[] => {
+  const placed: { x: number; z: number; half: number }[] = [];
+  return labels.map((l) => {
     if (l.kind !== "district") return l;
-    const half = (l.text.length * 0.8 * size) / 2;
+    const half = districtHalf(l, size);
     const hit = stations.find((s) => {
       const reach = Math.max(STATION_REACH * k, (s.name.length * LETTER * 11 * k) / 2 + k);
       return Math.abs(s.x - l.x) < half + reach && Math.abs(s.z - l.z) < size / 2 + STATION_REACH * k;
     });
-    return hit ? { ...l, z: hit.z + STATION_REACH * k + size / 2 + GAP * k } : l;
+    let z = hit ? hit.z + STATION_REACH * k + size / 2 + GAP * k : l.z;
+    for (let tries = 0; tries < placed.length; tries++) {
+      const cross = placed.find((p) => Math.abs(p.x - l.x) < p.half + half && Math.abs(p.z - z) < size + GAP * k);
+      if (!cross) break;
+      z = cross.z + size + GAP * k;
+    }
+    placed.push({ x: l.x, z, half });
+    return z === l.z ? l : { ...l, z };
   });
+};

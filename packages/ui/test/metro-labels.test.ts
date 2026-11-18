@@ -55,6 +55,30 @@ describe("the names of the metro layer", () => {
   });
 });
 
+describe("G-321: the district names of the map tab, zoomed out", () => {
+  // Where the map puts them (app `buildCityMap`, 18.11).
+  const DISTRICTS = [
+    { kind: "district", text: "Krakowskie Przedmieście", x: 130, z: -55, angle: 0 },
+    { kind: "district", text: "Stare Miasto", x: 610, z: -40, angle: 0 },
+    { kind: "district", text: "Podzamcze", x: 820, z: 370, angle: 0 },
+    { kind: "district", text: "Nabrzeże Bystrzycy", x: 2500, z: 270, angle: 0 },
+  ];
+  /** The panel's sizes for a view `span` metres wide (`city-map-panel.tsx`). */
+  const at = (span: number) => ({ k: span / 420, size: (span / 75) * 2.4 });
+  const box = (l: { text: string; x: number; z: number }, size: number) => ({ half: (l.text.length * 0.8 * size) / 2, x: l.x, z: l.z });
+
+  it.each([420, 1200, 2400])("no two of them overlap at a %i m view", (span) => {
+    const { k, size } = at(span);
+    const out = liftDistricts(DISTRICTS, METRO_LAYER.stations, k, size).map((l) => box(l, size));
+    for (let i = 0; i < out.length; i++)
+      for (let j = i + 1; j < out.length; j++) {
+        const [a, b] = [out[i]!, out[j]!];
+        const apart = Math.abs(a.x - b.x) >= a.half + b.half || Math.abs(a.z - b.z) >= size;
+        expect(apart, `${DISTRICTS[i]!.text} / ${DISTRICTS[j]!.text}`).toBe(true);
+      }
+  });
+});
+
 describe("the kiosk's map", () => {
   const inside = (box: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number) => x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ;
 

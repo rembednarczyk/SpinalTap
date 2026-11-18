@@ -29,6 +29,8 @@ export interface CharacterRig {
   /** How far the fingers of the left and the right hand close, 0 open .. 1 a fist (imported models). */
   readonly fist: [number, number];
   readonly meshes: Mesh[];
+  /** A man's build, the procedural one's or the dressed model's: the walk and the idle are a man's (ADR-0090). */
+  masculine?: boolean;
   /** Carries a pistol: holster at the right hip, drawn into the right hand. */
   readonly aiming: boolean;
   /** Pistol in the hand and in the holster; the one not in use is scaled to zero. */

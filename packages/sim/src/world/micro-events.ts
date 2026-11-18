@@ -27,8 +27,8 @@ export const MICRO_LEAVE_DISTANCE = 45;
 const VICTIM_HP = 60;
 const MUGGERS = 2;
 
-/** Keys of a micro-event's people start with this. */
-export const isMicroKey = (key: string): boolean => key.startsWith("micro:");
+/** Keys of a micro-event's people start with this (`micro-key.ts`). */
+export { isMicroKey } from "./micro-key";
 
 const flat = (a: Vec3, b: Vec3): number => Math.hypot(a.x - b.x, a.z - b.z);
 

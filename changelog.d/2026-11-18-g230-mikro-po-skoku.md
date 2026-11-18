@@ -1,0 +1,1 @@
+- Po dalekim skoku (metro, teleport) ludzie przerwanego mikrozdarzenia nie zostają uśpieni do końca sesji (G-230).

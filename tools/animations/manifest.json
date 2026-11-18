@@ -1,0 +1,207 @@
+{
+  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely. A clip with \"turn\": true faces the other way in its file (Mixamo's ladder climbs towards -Z) and is turned round first. \"hipsFrom\": \"last\" or \"first\" measures a pose clip's hips from its last frame (a landing that ends standing) or its first (a fall that starts standing) instead of their mean. \"inPlace\": true takes a turn on the spot out of a clip (the game turns the figure) and keeps how far it turns in a loop as \"turn\".",
+  "clips": {
+    "walk": "Female Locomotion Pack/walking.fbx",
+    "walkLeft": "Female Locomotion Pack/left strafe walk.fbx",
+    "walkRight": "Female Locomotion Pack/right strafe walk.fbx",
+    "walkBack": "Basic Shooter Pack/walking backwards.fbx",
+    "run": "Female Locomotion Pack/running.fbx",
+    "runLeft": "Female Locomotion Pack/left strafe.fbx",
+    "runRight": "Female Locomotion Pack/right strafe.fbx",
+    "runBack": "Pistol_Handgun Locomotion Pack/pistol run backward.fbx",
+    "crouch": "rifle/Walk Crouching Forward.fbx",
+    "crouchRight": "rifle/Walk Crouching Right.fbx",
+    "crouchLeft": {
+      "file": "rifle/Walk Crouching Right.fbx",
+      "mirror": true
+    },
+    "crouchBackRight": "rifle/Walk Crouching Backward Right.fbx",
+    "crouchBackLeft": {
+      "file": "rifle/Walk Crouching Backward Right.fbx",
+      "mirror": true
+    },
+    "walkM": "Action Adventure Pack/walking.fbx",
+    "runM": "Action Adventure Pack/running.fbx"
+  },
+  "body": {
+    "idle": {
+      "file": "Female Locomotion Pack/idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "hit": {
+      "file": "Basic Shooter Pack/hit reaction.fbx",
+      "mode": "delta"
+    },
+    "ladder": {
+      "file": "broadside/Climbing Ladder.fbx",
+      "mode": "pose",
+      "turn": true
+    },
+    "fire": {
+      "file": "Basic Shooter Pack/firing rifle.fbx",
+      "mode": "delta"
+    },
+    "idleShift": {
+      "file": "Gestures Pack Basic/weight shift.fbx",
+      "mode": "pose",
+      "fps": 8
+    },
+    "smoke": {
+      "file": "zycie/Smoking.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "phoneTalk": {
+      "file": "zycie/Talking On Phone.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "phoneText": {
+      "file": "zycie/Texting While Standing.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "tablet": {
+      "file": "zycie/Standing Using Touchscreen Tablet.fbx",
+      "mode": "pose",
+      "fps": 6
+    },
+    "talkHappy": {
+      "file": "Gestures Pack Basic/happy hand gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkAck": {
+      "file": "Gestures Pack Basic/acknowledging.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkCocky": {
+      "file": "Gestures Pack Basic/being cocky.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkNod": {
+      "file": "Gestures Pack Basic/head nod yes.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkShake": {
+      "file": "Gestures Pack Basic/thoughtful head shake.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkDismiss": {
+      "file": "Gestures Pack Basic/dismissing gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkLook": {
+      "file": "Gestures Pack Basic/look away gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "jumpUp": {
+      "file": "Action Adventure Pack/jumping up.fbx",
+      "mode": "pose"
+    },
+    "fall": {
+      "file": "Action Adventure Pack/falling idle.fbx",
+      "mode": "pose",
+      "fps": 15
+    },
+    "hardLanding": {
+      "file": "Action Adventure Pack/hard landing.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "last"
+    },
+    "deathFront": {
+      "file": "zycie/Death.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
+    },
+    "deathBack": {
+      "file": "zycie/Death From The Back.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
+    },
+    "deathHead": {
+      "file": "zycie/Death From Front Headshot.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
+    },
+    "talkAngry": {
+      "file": "Gestures Pack Basic/angry gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkAnnoyed": {
+      "file": "Gestures Pack Basic/annoyed head shake.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkSarcastic": {
+      "file": "Gestures Pack Basic/sarcastic head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkSigh": {
+      "file": "Gestures Pack Basic/relieved sigh.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkNo": {
+      "file": "Gestures Pack Basic/shaking head no.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkHardNod": {
+      "file": "Gestures Pack Basic/hard head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkLongNod": {
+      "file": "Gestures Pack Basic/lengthy head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "drunkIdle": {
+      "file": "Male Drunk Pack/drunk idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "drunkIdle2": {
+      "file": "Male Drunk Pack/drunk idle variation.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "turnLeft": {
+      "file": "Female Locomotion Pack/left turn.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "inPlace": true
+    },
+    "turnRight": {
+      "file": "Female Locomotion Pack/right turn.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "inPlace": true
+    },
+    "runStop": {
+      "file": "Action Adventure Pack/run to stop.fbx",
+      "mode": "pose",
+      "fps": 20,
+      "hipsFrom": "last"
+    },
+    "idleM": {
+      "file": "Action Adventure Pack/idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    }
+  }
+}

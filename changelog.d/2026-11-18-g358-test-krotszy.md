@@ -1,0 +1,1 @@
+- Test G-358 (targ o 23:00) krótszy: mieści się w bramce czasu testów.

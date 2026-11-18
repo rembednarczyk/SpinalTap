@@ -134,6 +134,9 @@ export const EMPTY_CONTRACTS: ContractLog = { active: null, completed: 0 };
 
 export const contractKind = (c: Contract): ContractKind => c.kind ?? "eliminate";
 
+/** The breached network's ICEpick (ADR-0029): while the hack job runs, every quickhack costs 1 RAM less (`hackCost`). */
+export const icepickRunning = (c: Contract | null | undefined): boolean => !!c && contractKind(c) === "hack" && (c.breach ?? []).includes("icepick");
+
 export const contractGiver = (c: Contract): (typeof CONTRACT_GIVERS)[ContractGiverId] => CONTRACT_GIVERS[CONTRACT_KINDS[contractKind(c)].giver];
 
 /** Tag carried by every ganger of a contract; EntityKilled reports it. */

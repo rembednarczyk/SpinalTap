@@ -1,6 +1,6 @@
 import { Color3, type Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, Vector3 } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
-import { type ActivityProp, emberGlow } from "./activity-poses";
+import type { ActivityProp } from "./activity-poses";
 import type { CharacterRig } from "./character-rig";
 import type { HumanoidRetarget } from "./model-rig";
 
@@ -81,13 +81,13 @@ export class ActivityProps {
     return retarget.holdInRightHand(node, new Vector3(0, -0.05, 0));
   }
 
-  /** Each frame: the stool under the hips, the cigarette's glow. */
-  update(rig: CharacterRig, stool: TransformNode | null, tip: Mesh | null, time: number): void {
+  /** Each frame: the stool under the hips, the cigarette's glow (0.35 at rest .. 1 at the height of a drag). */
+  update(rig: CharacterRig, stool: TransformNode | null, tip: Mesh | null, glow: number): void {
     if (stool) {
       const seat = Math.max(0.2, rig.legL.position.y + rig.body.position.y - 0.1);
       stool.position.set(0, seat / 2, rig.body.position.z);
       stool.scaling.set(0.42, seat, 0.4);
     }
-    if (tip) tip.scaling.setAll(0.7 + 0.6 * emberGlow(time));
+    if (tip) tip.scaling.setAll(0.7 + 0.6 * glow);
   }
 }

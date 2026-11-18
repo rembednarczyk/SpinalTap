@@ -158,7 +158,11 @@ describe("character models in the background (ADR-0076 stage 4a)", () => {
     expect(views.modelCounts.dressed).toBe(1);
     expect(rig.meshes.some((m) => m.isEnabled(false))).toBe(false);
     const bones = findHumanoidBones(scene.transformNodes.filter((n) => n.name.startsWith("e3-m-")) as TransformNode[], "e3-m-");
-    const along = (from: TransformNode, to: TransformNode) => to.getAbsolutePosition().subtract(from.getAbsolutePosition()).normalize();
+    // World positions worked out afresh: a stale rig thigh hung straight down, and matched only while the walk did not swing it far (ADR-0090).
+    const along = (from: TransformNode, to: TransformNode) => {
+      for (let n: TransformNode | null = to; n; n = n.parent as TransformNode | null) n.computeWorldMatrix(true);
+      return to.getAbsolutePosition().subtract(from.getAbsolutePosition()).normalize();
+    };
     // Before any frame after the swap: the arms hang (VRoid files are in T-pose) and the thighs swing as the rig's.
     for (const side of ["L", "R"] as const) expect(along(bones[`upperArm${side}`]!, bones[`lowerArm${side}`]!).y).toBeLessThan(-0.8);
     rig.root.computeWorldMatrix(true);

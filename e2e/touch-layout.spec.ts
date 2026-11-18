@@ -443,6 +443,8 @@ test.describe("phone 800x370 metro kiosk", () => {
     expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= 800.5 && b.y + b.height <= 370.5, "ticket on screen").toBe(true);
     const panel = (await kiosk.boundingBox())!;
     expect(panel.x >= 0 && panel.x + panel.width <= 800.5).toBe(true);
+    // G-322: the HUD's text under the panel (the district, the objective) does not show through it.
+    expect(await kiosk.evaluate((e) => getComputedStyle(e).backgroundColor), "opaque panel").toMatch(/^rgb\(/);
     await expect(buy).toBeEnabled();
   });
 });

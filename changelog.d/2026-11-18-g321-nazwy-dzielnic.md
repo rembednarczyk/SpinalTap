@@ -1,0 +1,1 @@
+- Nazwy dzielnic na mapie miasta nie nakładają się przy dużym oddaleniu (np. Krakowskie Przedmieście i Stare Miasto) (G-321).

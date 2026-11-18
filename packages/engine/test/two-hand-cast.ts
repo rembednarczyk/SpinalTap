@@ -89,7 +89,7 @@ export const cast = async (who: CharacterModelKey | null): Promise<Cast> => {
 
 /** The drawn gun in the character's hands (whatever node it hangs from). */
 export const heldGun = (c: Cast, kind: WeaponLook): AbstractMesh | undefined =>
-  c.scene.meshes.find((m) => m.getTotalVertices() > 0 && m.isEnabled() && m.name.startsWith("c-") && m.name.includes(`-${kind}-`) && !/-(back|hip|hipL)-/.test(m.name));
+  c.scene.meshes.find((m) => m.getTotalVertices() > 0 && m.isEnabled() && m.name.startsWith("c-") && m.name.includes(`-${kind}-`) && !/-(back|hip|stowedMelee)-/.test(m.name));
 
 export const arm = async (c: Cast, kind: WeaponLook): Promise<void> => {
   c.loadouts.set(c.rig, look(kind), "c");

@@ -29,24 +29,29 @@ describe("death fall on raised ground (G-457)", () => {
       expect(standing).toBeCloseTo(ground + LIFT, 3);
       views.despawn(7, true);
       for (let i = 0; i < 10; i++) views.update(0.1);
-      // Fully fallen and lying still: the root rests 0.12 m above the ground it stood on.
-      expect(rig.root.position.y).toBeCloseTo(standing + 0.12, 5);
+      // Fully fallen and lying still: the root rests on the ground it stood on (the death clip,
+      // ADR-0090, turns the body down with the root upright: no lift for a tipped root).
+      expect(rig.root.position.y).toBeCloseTo(standing, 5);
     }
   });
 });
 
 describe("death fall from a crouch (G-512)", () => {
   it("brings the knees in from the crouch's spread, lying like a body that died standing", () => {
-    for (const crouch of [1, 0.5]) {
+    /** The knees' distance apart once fallen, after dying in `crouch`. */
+    const kneesApart = (crouch: number): number => {
       const views = viewsOn(new Scene(new NullEngine()));
       views.spawn(7, { kind: "enemy", preset: "ganger" }, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch });
       for (let i = 0; i < 30; i++) views.update(0.1);
       const rig = views.rigOf(7)!;
-      expect(Math.abs(rig.legL.rotation.z)).toBeGreaterThan(0.05);
+      if (crouch > 0) expect(Math.abs(rig.legL.rotation.z)).toBeGreaterThan(0.05);
       views.despawn(7, true);
-      for (let i = 0; i < 10; i++) views.update(0.1);
-      expect(rig.legL.rotation.z).toBeCloseTo(0, 5);
-      expect(rig.legR.rotation.z).toBeCloseTo(0, 5);
-    }
+      for (let i = 0; i < 30; i++) views.update(0.1);
+      const at = (n: typeof rig.kneeL) => n.computeWorldMatrix(true).getTranslation().clone();
+      rig.root.computeWorldMatrix(true);
+      return Vector3.Distance(at(rig.kneeL), at(rig.kneeR));
+    };
+    const standing = kneesApart(0);
+    for (const crouch of [1, 0.5]) expect(Math.abs(kneesApart(crouch) - standing), `crouch ${crouch}`).toBeLessThan(0.02);
   });
 });

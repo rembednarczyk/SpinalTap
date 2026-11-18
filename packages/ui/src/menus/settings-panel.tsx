@@ -110,6 +110,7 @@ const Accessibility = ({ settings, set }: SectionProps) => {
       <Toggle label="settings.legibleFont" on={settings.legibleFont} onChange={(legibleFont) => set({ legibleFont })} />
       <Toggle label="settings.reduceFlashes" on={settings.reduceFlashes} onChange={(reduceFlashes) => set({ reduceFlashes })} />
       <Toggle label="settings.cameraMotion" on={settings.cameraMotion} onChange={(cameraMotion) => set({ cameraMotion })} />
+      <Toggle label="settings.haptics" on={settings.haptics} onChange={(haptics) => set({ haptics })} />
       <Toggle label="settings.untimedBreach" on={settings.untimedBreach} onChange={(untimedBreach) => set({ untimedBreach })} />
       <Choice label="settings.colorblind" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
       <TokenLegend />

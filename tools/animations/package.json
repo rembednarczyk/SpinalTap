@@ -1,0 +1,15 @@
+{
+  "name": "@seki/animations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mixamo locomotion clips (ADR-0090) turned into the legs' table of the engine: joint paths in place, per leg length, with each cycle's stride. The FBX files stay out of the repository.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@types/three": "0.169.0",
+    "three": "0.169.0",
+    "typescript": "5.9.3"
+  }
+}
