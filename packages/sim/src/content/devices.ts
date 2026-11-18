@@ -1,7 +1,7 @@
 import type { ContractKind, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DeviceKind } from "../world/components";
 import { type Rect, v } from "./builders";
-import { W3_OFFICE, W3_SERVER_CAMERA, W3_SERVER_N, w3 } from "./tessen-w3";
+import { W3_OFFICE, W3_ROOF_CAMERAS, W3_ROOF_N, W3_SERVER_CAMERA, W3_SERVER_N, w3 } from "./tessen-w3";
 
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
@@ -25,8 +25,8 @@ export interface DeviceDef {
   readonly yaw: number;
   readonly network: string;
   readonly faction: FactionId;
-  /** A camera watching a no-go zone; with `during`, only while a contract of that kind runs. */
-  readonly restricted?: Rect & { readonly during?: ContractKind };
+  /** A camera watching a no-go zone; with `during`, only while a contract of that kind runs; with `floor`, only over it. */
+  readonly restricted?: Rect & { readonly during?: ContractKind; readonly floor?: number };
 }
 
 const VIEWS: Readonly<Record<DeviceKind, ViewDescriptor>> = {
@@ -89,6 +89,10 @@ export const DEVICES: readonly DeviceDef[] = [
   },
   { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: byArkady(arkadySpanMid(2), 0.1, 4.4), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
   { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: byArkady(arkadySpanMid(3), 0.25, 3.0), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
+  // Row N roof's cameras over the pipes' way into server room N (ADR-0082 §2, G-908); last, so the ids above stay.
+  ...W3_ROOF_CAMERAS.map(
+    (c): DeviceDef => ({ ...c, chunk: HALL_CHUNK, kind: "camera", network: "tessen-yard", faction: "tessen", restricted: { ...W3_ROOF_N, during: "sabotage" } }),
+  ),
 ];
 
 /**

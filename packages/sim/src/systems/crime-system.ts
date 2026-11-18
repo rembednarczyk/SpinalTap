@@ -34,7 +34,7 @@ import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
 import { applyReputationCause } from "../world/domain-ops";
 import { incapacitated } from "../world/takedown";
-import { coveredFrom } from "../world/disguise";
+import { coveredFrom, inZone } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
 import { detectionPaceOf } from "../world/progression-ops";
 import { worldTimeScale } from "./ability-system";
@@ -328,15 +328,7 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
     d.cooldown = Math.max(0, d.cooldown - dt);
     const zone = d.restricted;
     // The office staff's overalls belong in the office (ADR-0033): the camera takes her for staff.
-    const inside =
-      !!player &&
-      !!zone &&
-      zoneActive(ctx, zone) &&
-      !staffPass(ctx, d.faction) &&
-      player.position.x >= zone.minX &&
-      player.position.x <= zone.maxX &&
-      player.position.z >= zone.minZ &&
-      player.position.z <= zone.maxZ;
+    const inside = !!player && !!zone && zoneActive(ctx, zone) && !staffPass(ctx, d.faction) && inZone(zone, player.position);
     const sees = inside && !!player && cameraSees(ctx, cam, player);
     // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow and Ghost Signal (ADR-0059); it drains as ever.
     d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * detectionPaceOf(ctx) * cameraSpotScale(ctx.state.domain.progression.perks) : -dt * 0.5)));

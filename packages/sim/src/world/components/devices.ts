@@ -14,8 +14,11 @@ export interface Device {
   readonly network: string;
   /** Whose security it reports to. */
   readonly faction: FactionId;
-  /** A no-go zone the camera watches; with `during`, only while a contract of that kind runs. */
-  readonly restricted?: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number; readonly during?: ContractKind };
+  /**
+   * A no-go zone the camera watches; with `during`, only while a contract of that kind runs; with
+   * `floor`, only over that height (world y of the feet): a roof, not the rooms under it.
+   */
+  readonly restricted?: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number; readonly during?: ContractKind; readonly floor?: number };
   /** Camera: 0..1 how sure it is the player is where they should not be. */
   spot: number;
   /** Seconds before the camera reports the trespass again. */

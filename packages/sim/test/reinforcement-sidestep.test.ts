@@ -92,9 +92,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // stage 4, the attack token saved; nobody fights here): only the version; as v45, bd370660 and b5dbc2c2.
   // Re-recorded for v47 (ADR-0089 stage 5): the version and the difficulty's pressure (1 on
   // Normal) in the profile; the older versions' hashes, without it, stay as they were.
+  // Re-recorded for G-908, the content: row N roof's two cameras in the hall's chunk are two
+  // entities more; without them the runs hash to the goldens of before (ad8de249, 693cdbab).
   for (const [seed, level, golden, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "ad8de249", "fb93d42a", "1b5a4ad7", "39aed1b6", "818e2c0f", "f6ea310d", "62a908f2"],
-    [5, 3, "693cdbab", "c1f5a11d", "2daf589e", "1a0717d1", "19b5ce9c", "0cc55bf6", "15a39e2f"],
+    [21, 2, "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
+    [5, 3, "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
