@@ -12,7 +12,8 @@ import { figureSeed, layPose } from "./pose-lay";
  * cigarette in the right hand, shifts and looks about; someone on the phone holds it to the right
  * ear and talks, or types on it with both thumbs (half of them); at a terminal the hands work a
  * screen; in a talk the hands and the head go through gestures one after another, each figure in
- * its own order; leaning, it stands at ease. The procedural poses of these put the hands up by the
+ * its own order; leaning, it stands at ease; drinking, it sways drunk while the procedural arm
+ * lifts the can. The procedural poses of these put the hands up by the
  * head on the imported models (G-731: the phone's free hand, the lean's both). Each figure at its own point of its clip. The props stay in the hands they were
  * in, so they go where the clip's hands go.
  */
@@ -28,7 +29,24 @@ const CLIPS: Partial<Readonly<Record<ActivityId, readonly BodyClip[]>>> = {
 };
 
 /** A talk's gestures, played one after another in the figure's own order. */
-const GESTURES: readonly BodyClip[] = [BODY_CLIPS.talkHappy, BODY_CLIPS.talkAck, BODY_CLIPS.talkCocky, BODY_CLIPS.talkNod, BODY_CLIPS.talkShake, BODY_CLIPS.talkDismiss, BODY_CLIPS.talkLook];
+const GESTURES: readonly BodyClip[] = [
+  BODY_CLIPS.talkHappy,
+  BODY_CLIPS.talkAck,
+  BODY_CLIPS.talkCocky,
+  BODY_CLIPS.talkNod,
+  BODY_CLIPS.talkShake,
+  BODY_CLIPS.talkDismiss,
+  BODY_CLIPS.talkLook,
+  BODY_CLIPS.talkAngry,
+  BODY_CLIPS.talkAnnoyed,
+  BODY_CLIPS.talkSarcastic,
+  BODY_CLIPS.talkSigh,
+  BODY_CLIPS.talkNo,
+  BODY_CLIPS.talkHardNod,
+  BODY_CLIPS.talkLongNod,
+];
+/** A drinker sways as the Male Drunk pack's idles do; its arms keep the procedural pose, which lifts the can. */
+const DRUNK: readonly BodyClip[] = [BODY_CLIPS.drunkIdle, BODY_CLIPS.drunkIdle2];
 /** Seconds one gesture eases into the next. */
 const GESTURE_EASE = 0.3;
 
@@ -59,6 +77,10 @@ const talkFrame = (seed: number, t: number): BodyFrame => {
 export const activityFrame = (rig: CharacterRig, activity: ActivityId, t: number): BodyFrame | null => {
   const seed = figureSeed(rig);
   if (activity === "talk") return talkFrame(seed, t);
+  if (activity === "drink") {
+    const clip = DRUNK[Math.floor(seed * DRUNK.length)]!;
+    return sampleBody(clip, t + seed * clip.cycle, true);
+  }
   const choices = CLIPS[activity];
   if (!choices) return null;
   const clip = choices[Math.floor(seed * choices.length)]!;
@@ -74,7 +96,8 @@ export const layActivityClip = (rig: CharacterRig, activity: ActivityId | null, 
   if (activity === null || w <= 1e-3 || rig.dying !== null) return;
   const f = activityFrame(rig, activity, t);
   if (!f) return;
-  const arms = rig.handsBusy ? 0 : 1;
+  // Drinking, the procedural arm lifts the can; the clip sways the rest.
+  const arms = rig.handsBusy || activity === "drink" ? 0 : 1;
   layPose(rig, f, w, [arms, arms], false);
 };
 
