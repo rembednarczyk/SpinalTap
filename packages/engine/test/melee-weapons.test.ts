@@ -31,7 +31,7 @@ const armed = async (kind: MeleeKind, active: "melee" | "secondary" = "melee") =
   rig.melee = active === "melee";
   loadouts.set(rig, look(kind, active), "hero");
   setWeaponDrawn(rig, active === "melee");
-  const holder = scene.getTransformNodeByName(`hero-${active === "melee" ? "hand" : "hipL"}-${kind}`)!;
+  const holder = scene.getTransformNodeByName(`hero-${active === "melee" ? "hand" : "stowedMelee"}-${kind}`)!;
   const model = (): AbstractMesh | undefined => holder.getChildMeshes(false).find((m) => m.getTotalVertices() > 0);
   await vi.waitFor(() => expect(model()).toBeDefined());
   const mesh = model()!;
