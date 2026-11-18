@@ -31,6 +31,8 @@ export interface CharacterRig {
   readonly meshes: Mesh[];
   /** A man's build, the procedural one's or the dressed model's: the walk and the idle are a man's (ADR-0090). */
   masculine?: boolean;
+  /** How hurt it is, 0..1, eased from the transform's `hurt` (ADR-0090 point 14): the injured walk and stance. */
+  hurt?: number;
   /** Carries a pistol: holster at the right hip, drawn into the right hand. */
   readonly aiming: boolean;
   /** Pistol in the hand and in the holster; the one not in use is scaled to zero. */

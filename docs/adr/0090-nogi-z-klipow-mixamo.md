@@ -29,6 +29,8 @@ Status: Przyjęty (17.11, wygląd zaakceptowany przez użytkownika na zrzutach).
 
 13. **Męski chód i postój (18.11).** Wszyscy chodzili klipami z paczki kobiecej. Postać o męskiej budowie chodzi i biega na wprost klipami „walking” i „running” z Action Adventure i stoi w jego „idle” (albo przenosi ciężar). Budowa idzie za modelem: `HumanoidRetarget.masculine` z barków do bioder (męskie modele gry 1,74, kobiece 1,41, próg 1,58), a bez modelu z budowy proceduralnej (`rig.masculine`).
 
+14. **Chód rannego (18.11).** Pliki Male Injured Pack w FBX 7.4 (ponowny eksport użytkownika). Postać ranna kuleje na wprost i w tył („injured walk”, „injured walk backwards”), biegnie, trzymając się za bok („injured run”, „injured run backwards”), i stoi pochylona („injured idle” albo „injured hurting idle”, po jednym na postać). W bok kroczy jak zdrowa, bo paczka nie ma kroków w bok. Jak bardzo jest ranna, mówi nowe, opcjonalne pole `Transform.hurt` (0..1, kontrakt `RenderPort`, bez zmiany granic): symulacja wylicza je w `render-sync` ze zdrowia, od zera przy połowie zdrowia do 1 przy 15%, i nie wysyła go dla martwych ani ogłuszonych. Reguł symulacji to nie zmienia (hash bez zmian). Renderer wygasza wejście i wyjście w ciągu ok. pół sekundy (`rig.hurt`) i miesza klipy rannego z pozostałymi w tej proporcji.
+
 ## Konsekwencje
 - Ruch w bok, w tył i w kucki ma kroki w swoją stronę; widać to u gracza w TPP i u wrogów z ADR-0089.
 - Tablica ma ok. 50 KB w kodzie (13 pętli po 16-42 klatki), bez nowych plików do pobrania.

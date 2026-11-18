@@ -45,6 +45,12 @@ export interface Transform {
    */
   readonly unconscious?: boolean;
   /**
+   * How badly the character is hurt, 0..1 from its health (ADR-0090 point 14): it limps, runs
+   * holding its side and stands bent with the injured clips as far as this. Absent means unhurt.
+   * Only the picture reads it.
+   */
+  readonly hurt?: number;
+  /**
    * The phase of a takedown grab (ADR-0075 stage 2), on both the player and the target: `hold`
    * while the grab waits for the choice, `choke` through the knock-out, `kill` through the kill.
    * The renderer plays the grab's clips from it; the events only cue the sound. Absent outside a grab.
