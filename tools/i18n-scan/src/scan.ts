@@ -83,6 +83,7 @@ export const EXCEPTIONS: readonly (readonly [path: string, why: string])[] = [
   ["packages/sim/src/content/metro.ts", "Metro station names, named after the districts they stand in."],
   ["packages/engine/src/renderer/mapcity/skyline.ts", "Names of the Lublin districts the far towers stand in (Czechów, al. Kraśnicka)."],
   ["packages/engine/src/renderer/mapcity/canyon-signs.ts", "In-world ads and neon signs; ADR-0056 keeps the city's own signs Polish."],
+  ["packages/engine/src/renderer/tessen-w3/w3-lettering.ts", "Tessen's stencilled words on W-3's walls (ADR-0082 stage 4), painted geometry; ADR-0056 keeps the city's own signs Polish."],
 ];
 
 const excepted = (file: string): boolean => EXCEPTIONS.some(([p]) => (p.endsWith("/") ? file.startsWith(p) : file === p));
