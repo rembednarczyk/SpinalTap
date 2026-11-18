@@ -65,20 +65,22 @@ describe("walking to a lead (ADR-0069, stage 3)", () => {
     const g = enemyAt(sim, "hebi_ganger", 8);
     run(sim, 3, SPRINT);
     expect(g.ai!.lastKnown).toBeTruthy();
-    expect(secondsToAlarm(sim, g)).toBeLessThan(1.5);
+    // Turning round, then its meter filling some 8 m off (ADR-0069, 18.11: 1.5 s close by and slower farther).
+    expect(secondsToAlarm(sim, g)).toBeLessThan(2.5);
   });
 });
 
 describe("sight of a sprint in front (ADR-0069, stage 3)", () => {
   const trained: readonly EnemyTypeId[] = ["kagami_cleaner", "tessen_guard"];
   for (const type of trained) {
-    it(`${type}: sees her sprint at it from 10 m in 0.6 to 0.7 s, the noise of a sprint it sees adding nothing`, () => {
+    it(`${type}: sees her sprint at it from 10 m in 1.9 to 2.6 s, the noise of a sprint it sees adding nothing`, () => {
       const sim = emptySquare(false);
       const g = enemyAt(sim, type, 10, true);
       const s = secondsToAlarm(sim, g, SPRINT);
       expect(s).not.toBeNull();
-      expect(s!).toBeGreaterThanOrEqual(0.6);
-      expect(s!).toBeLessThanOrEqual(0.7);
+      // The meter of ADR-0069 after 18.11, filling faster as she closes in (2.1 s and 2.3 s).
+      expect(s!).toBeGreaterThanOrEqual(1.9);
+      expect(s!).toBeLessThanOrEqual(2.6);
     });
   }
 

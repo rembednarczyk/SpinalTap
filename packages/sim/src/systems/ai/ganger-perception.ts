@@ -46,10 +46,19 @@ export const enemySees = (g: Entity, player: Entity, distance: number, inSight: 
   return Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, player.position.x, player.position.z)) <= v.cone;
 };
 
+/** How much of the close-by pace is left at the far end of sight (ADR-0069, 18.11). */
+const FAR_SHARE = 0.45;
+/** A crouching player fills the meter this much as fast, beyond `near` (as in Cyberpunk 2077: under its nose crouching helps little). */
+const CROUCH_PACE = 0.5;
+
 /** Fills or drains the suspicion of `g` for this step; returns whether it believes its eyes (full). */
-const suspect = (ctx: SimContext, g: Ganger, sees: boolean, distance: number, sight: number, timeScale: number): boolean => {
-  // It fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow (ADR-0059), and drains as ever.
-  const rate = sees ? visionOf(g).suspicionRate * detectionPaceOf(ctx) * (1.5 - Math.min(1, distance / sight)) : -SUSPICION_DECAY;
+const suspect = (ctx: SimContext, g: Ganger, sees: boolean, distance: number, sight: number, timeScale: number, crouched: boolean): boolean => {
+  // It fills at the difficulty's pace (`awareness`, ADR-0066), slowed by Shadow (ADR-0059) and by
+  // crouching, less the farther she is, and drains as ever.
+  const far = 1 - (1 - FAR_SHARE) * Math.min(1, distance / sight);
+  const v = visionOf(g);
+  const low = crouched && distance > v.near ? CROUCH_PACE : 1;
+  const rate = sees ? v.suspicionRate * detectionPaceOf(ctx) * far * low : -SUSPICION_DECAY;
   g.ai.suspicion = Math.max(0, Math.min(1, (g.ai.suspicion ?? 0) + rate * ctx.dt * timeScale));
   return g.ai.suspicion >= 1;
 };
@@ -242,7 +251,7 @@ export const perceivePlayer = (
       // It only watches her: no meter to fill, and what was in it drains away.
       g.ai.suspicion = Math.max(0, (g.ai.suspicion ?? 0) - SUSPICION_DECAY * ctx.dt * timeScale);
       visible = sees;
-    } else visible = suspect(ctx, g, sees, distance, aggro, timeScale);
+    } else visible = suspect(ctx, g, sees, distance, aggro, timeScale, (player.posture?.amount ?? 0) > 0.5);
   }
   if (visible && !lenient) g.ai.alerted = true;
   g.ai.sees = visible;

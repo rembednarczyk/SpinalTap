@@ -10,7 +10,7 @@ import {
   endingFlag,
   recalledFlag,
 } from "@seki/core";
-import { KUROSAWA_SPOT, REN_SPOT, Simulation, stateHash } from "../src";
+import { KUROSAWA_SPOT, REN_SPOT, SIM_HZ, Simulation, stateHash } from "../src";
 import { collect, run } from "./helpers";
 
 /** Act II at `stepIndex`, after the "aya" ending, built the way a load would build it. */
@@ -102,8 +102,8 @@ describe("act II in the simulation (ADR-0023)", () => {
     // for a level 1 player, 40% tougher.
     const max = Math.round(110 * (1 + 0.04 * 10));
     expect(cleaners.every((e) => e.faction === "kagami" && e.enemy?.type === "kagami_cleaner" && e.enemy.level === 11 && e.health?.max === max)).toBe(true);
-    // Neutral Kagami attacks on sight, like Hebi.
-    run(sim, 120);
+    // Neutral Kagami attacks on sight, like Hebi, once its meter fills (ADR-0069, 18.11: a few seconds).
+    for (let i = 0; i < 10 * SIM_HZ && !cleaners.some((e) => e.ai?.alerted); i++) sim.step();
     expect(cleaners.some((e) => e.ai?.alerted)).toBe(true);
 
     // The dead stay dead across a reload; the rest come back where they stood.
