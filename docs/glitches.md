@@ -1072,7 +1072,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app, packages/ui
 
 ### G-420 Efekty hacków na wrogu (`hackFx`: oślepienie, spowolnienie, ping) nie trafiają do zapisu
-- Status: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
+- Status: w PR #722 (18.11, test regresji; naprawione wcześniej przez zapis hackFx z G-882, #628/#633); wcześniej: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
 - Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
 - Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
