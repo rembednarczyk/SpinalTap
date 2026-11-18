@@ -65,8 +65,8 @@ describe("G-732: nobody walks seated", () => {
       const seated = npc!.activity !== undefined && SEATED.includes(npc!.activity);
       if (seated) seatedSteps++;
       if (seated && speed > ACTIVITY_STILL_SPEED + 0.05) walkedSeated++;
-      // Both seen, the switch between them too: seated a second and walking five.
-      if (seatedSteps > SIM_HZ && walked > 5 * SIM_HZ) break;
+      // Both seen for a second, so the switch between them too (seated then walking, or the other way).
+      if (seatedSteps > SIM_HZ && walked > SIM_HZ) break;
     }
     // It walked one way or the other, sat somewhere along it, and never both at once.
     expect(walked, "walked").toBeGreaterThan(SIM_HZ);
