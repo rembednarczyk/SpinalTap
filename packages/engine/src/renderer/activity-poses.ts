@@ -77,14 +77,6 @@ export const pulse = (t: number, period: number, rise: number, hold: number): nu
 /** Hand at the mouth for a drag: every 6 s, up in 0.45 s, held 0.9 s. */
 export const smokeDrag = (t: number): number => pulse(t, 6, 0.45, 0.9);
 
-/** How bright the cigarette's tip glows, 0.35 at rest .. 1 at the height of a drag. */
-export const emberGlow = (t: number): number => {
-  const p = ((t % 6) + 6) % 6;
-  // The draw brightens the tip while the hand is at the lips, and it dims slowly after.
-  const draw = p >= 0.45 && p < 1.35 ? smooth((p - 0.45) / 0.9) : p >= 1.35 ? Math.max(0, 1 - (p - 1.35) / 2.5) : 0;
-  return 0.35 + 0.65 * draw;
-};
-
 const SEATED = { legLX: -1.45, legRX: -1.45, kneeL: 1.45, kneeR: 1.45 } as const;
 
 type PoseFn = (t: number) => Partial<ActivityJoints>;

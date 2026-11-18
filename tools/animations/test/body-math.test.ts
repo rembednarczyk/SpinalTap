@@ -34,7 +34,7 @@ describe("a Mixamo clip's upper body for the engine (ADR-0090 stage 2)", () => {
     expect(up[2]).toBeCloseTo(Math.sin(0.3), 2);
     // An arm hanging straight down in the world points as far ahead of the leaning torso's down.
     expect(c.arms.slice(0, 3)).toEqual([0, -1, 0]);
-    expect(c.arms.slice(18, 21)).toEqual([0, -Math.round(Math.cos(0.3) * 1000) / 1000, Math.round(Math.sin(0.3) * 1000) / 1000]);
+    expect(c.arms.slice(18, 21)).toEqual([0, -Math.round(Math.cos(0.3) * 100) / 100, Math.round(Math.sin(0.3) * 100) / 100]);
     expect(c.legs).toHaveLength(2 * 24);
   });
 

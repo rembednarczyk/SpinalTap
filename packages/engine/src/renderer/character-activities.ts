@@ -4,8 +4,11 @@ import type { ToonMaterials } from "../npr/toon-material";
 import { type ActivityBlend, type ActivityProp, blendJoints, blendWeight, freshBlend, propsOf, setBlendTarget, stepBlend } from "./activity-poses";
 import { ActivityProps, PROP_DRAW_DISTANCE } from "./activity-props";
 import { applyActivityPose } from "./activity-rig";
+import { handAtLips, layActivityClip } from "./clips/activity-clips";
 import type { CharacterRig } from "./character-rig";
 import type { HumanoidRetarget } from "./model-rig";
+
+const smoothstep = (t: number): number => t * t * (3 - 2 * t);
 
 /** Walking faster than this (m/s) holds an activity's pose out. */
 const MOVING = 0.6;
@@ -97,6 +100,8 @@ export class CharacterActivities {
     const showing = stepBlend(d.blend, dt, speed > MOVING, clock);
     const joints = blendJoints(d.blend);
     applyActivityPose(rig, joints ?? zeroJoints, showing && joints ? blendWeight(d.blend) : 0);
+    // The activity's Mixamo clip over its pose (ADR-0090), as it blends in from the walk or the one before.
+    if (showing) layActivityClip(rig, d.blend.current, d.blend.time, blendWeight(d.blend) * smoothstep(d.blend.cross));
     rig.doing = showing ? doingOf(d.blend) : [];
     if (!showing) {
       this.forget(id);
@@ -120,7 +125,8 @@ export class CharacterActivities {
     for (const h of d.props) {
       if (h.node.isEnabled() !== near) h.node.setEnabled(near);
       if (retarget && h.hand === "right" && h.onModel !== retarget && this.props.holdOnModel(h.node, retarget)) h.onModel = retarget;
-      this.props.update(rig, h.kind === "stool" ? h.node : null, h.tip, b.time);
+      // The cigarette glows as the hand brings it to the lips (the smoking clip's drags).
+      this.props.update(rig, h.kind === "stool" ? h.node : null, h.tip, h.tip ? 0.35 + 0.65 * handAtLips(rig) : 0);
     }
   }
 

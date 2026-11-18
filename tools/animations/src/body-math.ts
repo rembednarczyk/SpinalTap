@@ -62,6 +62,8 @@ export interface BodyClip {
 const at = (a: readonly number[], f: number): [number, number, number] => [a[f * 3]!, a[f * 3 + 1]!, a[f * 3 + 2]!];
 const quat = (a: readonly number[], f: number): Quat => [a[f * 4]!, a[f * 4 + 1]!, a[f * 4 + 2]!, a[f * 4 + 3]!];
 const round = (v: number): number => Math.round(v * 1000) / 1000;
+/** Directions and the legs' joints to 0.01 (under a centimetre, about half a degree): the long pose clips stay small. */
+const round2 = (v: number): number => Math.round(v * 100) / 100;
 
 export const mul = (a: Quat, b: Quat): Quat => {
   const [ax, ay, az, aw] = a;
@@ -173,10 +175,10 @@ export const toBodyClip = (raw: RawBody, mode: BodyMode): BodyClip => {
         ["elbow", "wrist"],
         ["wrist", "finger"],
       ] as const)
-        arms.push(...unit(rotate(back, sub(p(b), p(a)))).map(round));
+        arms.push(...unit(rotate(back, sub(p(b), p(a)))).map(round2));
     }
     const hip = at(raw.hips, f);
-    for (const j of LEG_JOINTS) legs.push(...sub(at(raw.legs[j], f), hip).map((v) => round(v / u)));
+    for (const j of LEG_JOINTS) legs.push(...sub(at(raw.legs[j], f), hip).map((v) => round2(v / u)));
   }
   return { cycle: round(raw.cycle), frames: n, hips, chest, head, arms, legs, gun };
 };
