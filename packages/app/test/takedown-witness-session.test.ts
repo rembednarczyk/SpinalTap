@@ -83,7 +83,7 @@ describe("takedown witnesses and bodies in the session (ADR-0065)", () => {
     const p = session.sim.player()!;
     const at = { x: guard.position.x - 1.2, y: guard.position.y, z: guard.position.z };
     const g = gangerEntity(9100, { key: "test-patrol", position: at, yaw: Math.PI / 2 }, null, 80, p.chunk ?? "");
-    g.ai = { ...g.ai!, patrol: true };
+    g.ai = { ...g.ai!, territory: "rynek" };
     const finder = session.sim.world.add(g);
     steps(session, 1, CROUCH);
     expect(found).toEqual([{ body: guard.id, finder: finder.id }]);

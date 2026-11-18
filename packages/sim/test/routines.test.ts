@@ -90,7 +90,7 @@ describe("activities from the daily plan", () => {
     expect(flat(hideo.position, SAKE)).toBeLessThan(0.1);
     expect(hideo.activity).toBe("drink");
     // Hebi walk the Rynek at night and answer a shot there (ADR-0048); this is Hideo's routine.
-    for (const g of [...sim.world.with("ai")]) if (g.ai.patrol) sim.world.remove(g);
+    for (const g of [...sim.world.with("ai")]) if (g.ai.territory) sim.world.remove(g);
     fireUp(sim);
     run(sim, 2);
     expect(hideo.civilian?.crowd?.state).not.toBe("calm");

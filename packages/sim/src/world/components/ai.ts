@@ -1,4 +1,4 @@
-import type { CrimeKind, CrowdState, EntityId, Vec3 } from "@seki/core";
+import type { CrimeKind, CrowdState, EntityId, TerritoryId, Vec3 } from "@seki/core";
 import type { CharacterBody } from "./body";
 
 /**
@@ -108,12 +108,12 @@ export interface GangerAi {
    */
   readonly keepsFloor?: true;
   /**
-   * A street patrol on its own ground (ADR-0048): Hebi walking the Old Town among the people
-   * who live there. Neutral to the player, it keeps an eye on her instead of attacking; a hostile
-   * standing, the heat's hunt, a blown disguise of its faction or a provocation alert it like
-   * any ganger. Fixed by content, so it needs no saving.
+   * A member of a gang's territory (ADR-0091; the street patrols of ADR-0048 hold the Rynek's):
+   * while its gang tolerates the player in the district (no heat, no provocation, the grudge below
+   * the threshold, no disguise of its seen through) it keeps an eye on her instead of attacking.
+   * Fixed by content, so it needs no saving.
    */
-  readonly patrol?: true;
+  readonly territory?: TerritoryId;
 }
 
 /** A gunner's fight between two steps (ADR-0089 stage 3), as `TacticSnapshot`. */

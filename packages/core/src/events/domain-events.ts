@@ -274,7 +274,7 @@ export interface DomainEvents {
 }
 
 /** What provoked a gang in its district (ADR-0091 §2). */
-export type TerritoryProvocation = "warning" | "aim" | "hit" | "gunfire" | "takedown" | "body" | "crime";
+export type TerritoryProvocation = "warning" | "alarm" | "kill" | "takedown";
 
 /** Why a takedown did not finish (ADR-0065). */
 export type TakedownBreak = "damage" | "gone";
