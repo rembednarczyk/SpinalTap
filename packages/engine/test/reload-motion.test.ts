@@ -98,12 +98,14 @@ describe("the figure reloading a shotgun", () => {
     const r = rig();
     let lo = Infinity;
     let hi = -Infinity;
+    let aimed = 0;
     run(
       (t) => {
         animateRig(r, 0, DT, 0, { aim: 1 });
         if (t > 0.3 && t < ROUNDS * ROUND) {
           lo = Math.min(lo, r.elbowR.rotation.x);
           hi = Math.max(hi, r.elbowR.rotation.x);
+          aimed = Math.max(aimed, r.aim);
         }
       },
       (perRound) => startReload(r, ROUND, perRound),
@@ -112,6 +114,8 @@ describe("the figure reloading a shotgun", () => {
     );
     // Before: the right elbow swung between the aim and the chest every 0.5 s, by more than a radian.
     expect(hi - lo, "right elbow swing over the run").toBeLessThan(0.1);
+    // A long gun has no chest pose: it is down by the aim it gives up, which came back between rounds.
+    expect(aimed, "aim between rounds").toBeLessThan(0.05);
     expect(r.aim, "aiming again once loaded").toBeGreaterThan(0.5);
   });
 
