@@ -36,9 +36,10 @@ const SOUNDS = {
     // Weapons, loot and trade (E12).
     // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
     reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
-    // Louder than the first cut (0.5): one shell was lost under the street (user notes of 18.11). The slide's rack after
-    // the last one, "shotgun-pump", stays synthesized: no recording of it here.
+    // Louder than the first cut (0.5): one shell was lost under the street (user notes of 18.11).
     "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.85, pitch: 0.05, send: 0.12 },
+    // The slide racked after the last shell: a latch back, a click forward (RPG sounds, 18.11).
+    "shotgun-pump": { urls: ["shotgun-pump-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.18 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.
@@ -46,6 +47,20 @@ const SOUNDS = {
     repair: { urls: range("repair-hammer-", ["000", "001"]), gain: 0.45, pitch: 0.05, send: 0.2 },
     // W-3's charges (ADR-0082 stage 3c): the recorded crunch over the synth's low boom and rumble.
     explosion: { urls: range("blast-crunch-", ["003", "004"]), gain: 0.75, pitch: 0.04, send: 0.8, layerSynth: true },
+    // Recorded in place of the synth (user's request of 18.11: no procedural sounds where a recording fits).
+    // Melee (ADR-0019): a blade's swish, the knock of a blow, a pan's clang on a guard; a parry keeps the synth's ring.
+    "impact-melee": { urls: ["impact-melee-000.ogg"], gain: 0.5, pitch: 0.08, send: 0.15 },
+    swing: { urls: range("swing-", ["000", "001"]), gain: 0.35, pitch: 0.08, send: 0.1 },
+    block: { urls: ["block-000.ogg"], gain: 0.45, pitch: 0.06, send: 0.3 },
+    parry: { urls: ["parry-000.ogg"], gain: 0.45, pitch: 0.04, send: 0.45, layerSynth: true },
+    // Jumps and landings (ADR-0021): cloth on take-off, a step and a bag's drop over the synth's low thud.
+    jump: { urls: range("jump-cloth-", ["000", "001"]), gain: 0.3, pitch: 0.08, send: 0.05 },
+    land: { urls: range("land-step-", ["000", "001"]), gain: 0.4, pitch: 0.08, send: 0.1, layerSynth: true },
+    "land-hard": { urls: ["land-hard-000.ogg"], gain: 0.6, pitch: 0.05, send: 0.25, layerSynth: true },
+    // W-3 (ADR-0082): the charge's clamp over the synth's arming beeps, the alarm's two-tone klaxon, one wail of the siren.
+    "charge-plant": { urls: ["charge-clamp-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.35, layerSynth: true },
+    alarm: { urls: ["alarm-klaxon-000.ogg"], gain: 0.35, pitch: 0, send: 0.6 },
+    "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },
