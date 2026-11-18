@@ -73,6 +73,15 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sine", freq: 120, to: 60, dur: 0.15, gain: 0.25 },
     ],
   },
+  // A blade or a baton landing: heavier, with the knock of the blow.
+  "impact-melee": {
+    send: 0.15,
+    voices: [
+      { type: "sine", freq: 120, to: 55, dur: 0.14, gain: 0.38 },
+      { type: "noise", freq: 0, dur: 0.08, gain: 0.22, filter: 900, filterTo: 250, attack: 0.001 },
+      { type: "triangle", freq: 420, to: 260, dur: 0.05, gain: 0.08, attack: 0.001 },
+    ],
+  },
   hurt: {
     voices: [
       { type: "sawtooth", freq: 110, to: 70, dur: 0.18, gain: 0.25, filter: 900 },
@@ -158,12 +167,24 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "square", freq: 640, to: 380, start: 0.22, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
     ],
   },
-  // One shell into the tube: the first click of the magazine change, alone.
+  // One shell into the tube: the brass sliding in, then the click of the follower (the first
+  // version, one 0.04 s click, was lost under the street: user notes of 18.11).
   "reload-round": {
     send: 0.12,
     voices: [
-      { type: "noise", freq: 0, dur: 0.04, gain: 0.16, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
-      { type: "square", freq: 640, to: 380, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
+      { type: "noise", freq: 0, dur: 0.09, gain: 0.2, filter: 1200, filterTo: 2600, filterType: "bandpass", q: 2, attack: 0.005 },
+      { type: "noise", freq: 0, start: 0.09, dur: 0.04, gain: 0.26, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
+      { type: "square", freq: 640, to: 380, start: 0.09, dur: 0.05, gain: 0.09, filter: 2400, attack: 0.001 },
+    ],
+  },
+  // The slide racked back and forth: two heavy clacks.
+  "shotgun-pump": {
+    send: 0.18,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.06, gain: 0.3, filter: 1400, filterType: "bandpass", q: 2, attack: 0.001 },
+      { type: "square", freq: 300, to: 180, dur: 0.06, gain: 0.1, filter: 1800, attack: 0.001 },
+      { type: "noise", freq: 0, start: 0.16, dur: 0.07, gain: 0.34, filter: 1100, filterType: "bandpass", q: 2, attack: 0.001 },
+      { type: "square", freq: 260, to: 150, start: 0.16, dur: 0.07, gain: 0.12, filter: 1600, attack: 0.001 },
     ],
   },
   "weapon-switch": {

@@ -108,6 +108,6 @@ export const fillMagazine = (ctx: SimContext, e: Entity): boolean => {
   const next = Math.min(stats.magazine, loaded + reserve);
   setRounds(ctx, e, next, reserve - (next - loaded));
   c.reloading = 0;
-  ctx.bus.emit("ReloadFinished", { entityId: e.id, loaded: next });
+  ctx.bus.emit("ReloadFinished", { entityId: e.id, loaded: next, ready: true, perRound: false });
   return true;
 };

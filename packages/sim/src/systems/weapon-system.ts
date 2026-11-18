@@ -34,8 +34,9 @@ const finishReload = (ctx: SimContext, e: Armed): void => {
   const plan = reloadPlan(c.stats, loadedOf(ctx, e), reserveOf(ctx, e));
   if (!plan) return;
   setRounds(ctx, e, plan.loaded, plan.reserve);
-  ctx.bus.emit("ReloadFinished", { entityId: e.id, loaded: plan.loaded });
-  if (c.stats.reloadMode === "per-round") startReload(ctx, e);
+  // A run of rounds goes on with the next one; the last of it (or a magazine) leaves the weapon ready.
+  const more = c.stats.reloadMode === "per-round" && startReload(ctx, e);
+  ctx.bus.emit("ReloadFinished", { entityId: e.id, loaded: plan.loaded, ready: !more, perRound: c.stats.reloadMode === "per-round" });
 };
 
 /** Ticks draw, cooldown, bloom and reload timers of everyone; `dt` is local time. */

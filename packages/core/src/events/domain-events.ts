@@ -108,7 +108,8 @@ export interface DomainEvents {
   WeaponSwitched: { entityId: EntityId; slot: WeaponSlot; weapon: WeaponId };
   /** `perRound`: one round into a tube (shotgun), not a whole magazine. */
   ReloadStarted: { entityId: EntityId; duration: number; perRound: boolean };
-  ReloadFinished: { entityId: EntityId; loaded: number };
+  /** `ready`: the reload is over (a magazine in, or the last round of a run); `perRound` for a shotgun's run of rounds. */
+  ReloadFinished: { entityId: EntityId; loaded: number; ready: boolean; perRound: boolean };
   // Melee (ADR-0019).
   /** A swing started; it lands after `windup` seconds and is followed by `recovery`. */
   MeleeSwing: { entityId: EntityId; strike: number; windup: number; recovery: number };

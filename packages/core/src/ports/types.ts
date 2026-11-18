@@ -457,6 +457,10 @@ export type AudioCue =
   | "reload"
   // One round into a tube (shotgun, per-round reload): a short click, not the full magazine change.
   | "reload-round"
+  // The shotgun's slide racked once its run of rounds is in (ADR-0091 user notes of 18.11).
+  | "shotgun-pump"
+  // A melee blow landing: the knock under the hit's punch (user notes of 18.11).
+  | "impact-melee"
   | "weapon-switch"
   | "loot-pickup"
   | "sell"
