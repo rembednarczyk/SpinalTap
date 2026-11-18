@@ -155,6 +155,7 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     subtitleBackground: bool(r.subtitleBackground, defaults.subtitleBackground),
     legibleFont: bool(r.legibleFont, defaults.legibleFont),
     reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
+    haptics: bool(r.haptics, defaults.haptics),
     cameraMotion: bool(r.cameraMotion, defaults.cameraMotion),
     untimedBreach: bool(r.untimedBreach, defaults.untimedBreach),
     colorblind: isColorblind(r.colorblind) ? r.colorblind : defaults.colorblind,

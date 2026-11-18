@@ -2,6 +2,7 @@ import { type DomainEvents, type EventBus, type SaveSnapshot, formatClock } from
 import type { NarrativeRuntime } from "@seki/narrative";
 import { SIM_HZ } from "@seki/sim";
 import type { RadioStationId, Screen } from "@seki/ui";
+import { bindHaptics } from "../haptics";
 import { bindEventPresenter } from "../event-presenter";
 import { stationOfDistrict } from "../metro";
 import { type KnotLines, type KnotPool, createKnotLines, createKnotPool, createKnotRenderer } from "../phone";
@@ -145,6 +146,8 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     onDialogueInterrupted: () => s.interrupt(),
     onLoot: (key) => loot.open(key),
   });
+  // The phone buzzes for the player's shots, hits, kills, hard landings and death (setting "haptics").
+  if (deps.haptics) bindHaptics(bus, deps.haptics, () => sim().player()?.id ?? null, () => ui.getState().settings.haptics);
   const lines = createKnotLines(deps.story, () => ui.getState().settings.locale);
   const hudHooks = {
     playerId: () => sim().player()?.id ?? null,

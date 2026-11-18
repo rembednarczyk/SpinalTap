@@ -341,6 +341,8 @@ export interface SettingsVm {
   readonly legibleFont: boolean;
   /** No aberration, glitch or blinking; the engine reads it too. */
   readonly reduceFlashes: boolean;
+  /** The phone buzzes in a fight (shots, hits, kills, hard landings). */
+  readonly haptics: boolean;
   /** Walking bob, hit shake and sprint widening of the camera; the engine reads it. */
   readonly cameraMotion: boolean;
   /** The breach minigame has no timer. */
@@ -405,6 +407,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   subtitleBackground: false,
   legibleFont: false,
   reduceFlashes: false,
+  haptics: true,
   cameraMotion: true,
   untimedBreach: false,
   colorblind: "off",
