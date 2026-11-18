@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CONTRACT_SITE_IDS, INITIAL_PROGRESSION, type SaveSnapshot, contractPay, contractTag, enemyScale, npcWeapon, xpForLevel } from "@seki/core";
 import {
   ALCHEMIA_MARKET_ACTORS,
+  TERRITORY_ACTORS,
   BAND_AREAS,
   CONTRACT_SITE_BANDS,
   CONTRACT_SITE_SPAWNS,
@@ -40,7 +41,8 @@ describe("enemy level by district band (ADR-0059, stage 5)", () => {
 
   it("the market's plot in Alchemia holds the market's band, on Krakowskie's ground, and nothing else of Krakowskie's", () => {
     const sim = Simulation.create({ seed: 1 });
-    const market = new Set(ALCHEMIA_MARKET_ACTORS.map((a) => a.spawn.key));
+    // The Arkady's group (ADR-0091 stage 4) stands by the market's lookout: the market's too.
+    const market = new Set([...ALCHEMIA_MARKET_ACTORS, ...TERRITORY_ACTORS.filter((a) => a.kind === "ganger" && a.territory === "alchemia-arcades")].map((a) => a.spawn.key));
     const points = [...ALCHEMIA_MARKET_ACTORS.map((a) => a.spawn.position), ...Object.values(TARG_CONTRACT_SITE_SPAWNS).flat(), TARG_ROOF_STASH.at, TARG_OVERPASS_STASH.at];
     for (const p of points) {
       expect(sim.streamer.districtAt(p)).toBe("shinsekai-7");

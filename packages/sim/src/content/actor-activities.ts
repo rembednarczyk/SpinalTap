@@ -1,4 +1,5 @@
 import type { ActivityPlan } from "../world/activity-types";
+import { TERRITORY_ACTIVITIES } from "./territory-groups";
 
 /**
  * What the characters without a daily plan do where they stand (ADR-0040), by key. The ones
@@ -24,4 +25,6 @@ export const ACTOR_ACTIVITIES: Readonly<Record<string, ActivityPlan>> = {
   // Ren sleeps rough on the roof.
   ren: "sleep",
   kurosawa: "smoke",
+  // The gangs' groups (ADR-0091 stage 4).
+  ...TERRITORY_ACTIVITIES,
 };

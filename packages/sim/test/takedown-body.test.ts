@@ -181,7 +181,8 @@ describe("waking on a quiet street (ADR-0065)", () => {
     takeDown(sim);
     walkAway(sim);
     run(sim, 5, CROUCH);
-    expect(sim.world.with("ai").entities.filter((g) => g !== guard)).toEqual([]);
+    // The gangs' groups (ADR-0091 stage 4) of the chunks streamed in on the way stand far off, at their cores.
+    expect(sim.world.with("ai").entities.filter((g) => g !== guard && !g.ai.territory)).toEqual([]);
     const walker = sim.world.with("passerby").entities.find((e) => !e.vehicle && e.civilian);
     expect(walker).toBeDefined();
     const at = { ...guard.position, x: guard.position.x + 1 };
