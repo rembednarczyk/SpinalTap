@@ -36,7 +36,9 @@ const SOUNDS = {
     // Weapons, loot and trade (E12).
     // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
     reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
-    "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.12 },
+    // Louder than the first cut (0.5): one shell was lost under the street (user notes of 18.11). The slide's rack after
+    // the last one, "shotgun-pump", stays synthesized: no recording of it here.
+    "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.85, pitch: 0.05, send: 0.12 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.
