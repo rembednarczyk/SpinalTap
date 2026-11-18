@@ -74,9 +74,9 @@ describe("W-3's sabotage in a session (ADR-0082 stage 3)", () => {
     expect(step(session)).toContain("rdzenia kalibracji");
     expect(last(effects, "line-screens")?.state).toBe("idle");
     expect(last(effects, "alarm-light")?.active).toBe(false);
-    // The four posts and the shift manager on the mezzanine (G-929).
+    // The four posts, the shift manager on the mezzanine (G-929) and the observer in the tower's cabin (G-908).
     const crew = [...session.sim.world].filter((e) => e.tag === contractTag(job.id));
-    expect(crew).toHaveLength(5);
+    expect(crew).toHaveLength(6);
     for (const g of crew) g.health = { current: 0, max: g.health!.max };
     atCore(session);
     expect(ui(u).prompt ?? "").toMatch(/Upload the virus|Wgraj wirusa/);

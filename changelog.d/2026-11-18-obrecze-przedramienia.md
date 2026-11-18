@@ -1,0 +1,1 @@
+- Miedziane obręcze wszczepu na prawym przedramieniu Seki trzymają się przedramienia przy każdym chwycie, także przy karabinie i strzelbie.

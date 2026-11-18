@@ -1,4 +1,4 @@
-import { DASH_FORBIDDEN_WEIGHT, DISGUISE_FACTION, ZONE_ACCESS, contractKind, disguiseHolds, type EntityId, type FactionId } from "@seki/core";
+import { DASH_FORBIDDEN_WEIGHT, DISGUISE_FACTION, ZONE_ACCESS, contractKind, disguiseHolds, type EntityId, type FactionId, type Vec3 } from "@seki/core";
 
 export { isEnforcer } from "./enforcer";
 import type { Device, Entity } from "./components";
@@ -17,13 +17,16 @@ export const zoneActive = (ctx: SimContext, zone: NonNullable<Device["restricted
   return c?.status === "active" && contractKind(c) === zone.during;
 };
 
+/** Does a no-go zone take in this point: inside its rectangle and over its floor, if it has one? */
+export const inZone = (zone: NonNullable<Device["restricted"]>, p: Vec3): boolean =>
+  p.x >= zone.minX && p.x <= zone.maxX && p.z >= zone.minZ && p.z <= zone.maxZ && (zone.floor === undefined || p.y >= zone.floor);
+
 /** Is the player inside a no-go zone of `faction` that is in force? */
 export const inNoGoZone = (ctx: SimContext, player: Entity, faction: FactionId): boolean => {
-  const { x, z } = player.position;
   for (const cam of ctx.world.with("device")) {
     const zone = cam.device.restricted;
     if (!zone || cam.device.faction !== faction || !zoneActive(ctx, zone)) continue;
-    if (x >= zone.minX && x <= zone.maxX && z >= zone.minZ && z <= zone.maxZ) return true;
+    if (inZone(zone, player.position)) return true;
   }
   return false;
 };
