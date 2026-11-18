@@ -749,11 +749,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0; od PR #279 też odcinek Plac Litewski (88; −60) → (240; −66) pod w67504389 i w67504391 (34 m), punkty w T-163
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
-### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
-- Status: w PR #725 (18.11); wcześniej: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
-- Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków
-- Pakiet właściciela: packages/ui (mapa miasta)
-
 ### G-324 Chunk terenu z siatką 4 m nie zgadza się z siatką drapowania bruku 2,5 m
 - Status: zgłoszone (5.11, weryfikator PR #275)
 - Ważność: S4 · Zasięg: chunk x 240..460, z −20..160; po #275 328 próbek bruku pod terenem, najgłębiej 0,35 m; także nieciągłość `h` na progu `DECK_HEADROOM` (G-062) daje „namiot” trawy pod końcami pomostów Mełgiewskiej (np. (2483,6; 416,1) 1,00 m) i kropkowane obrysy na spodzie pomostu
