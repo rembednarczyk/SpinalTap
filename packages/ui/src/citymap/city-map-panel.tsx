@@ -71,8 +71,8 @@ export const CityMapPanel = () => {
   const size = useMemo(() => sizeAt(view.span), [view.span]);
   // Icons keep their size on screen: 1 at a 420 m view.
   const k = view.span / 420;
-  // With the metro on, the district names make room for its stations.
-  const named = useMemo(() => (metro ? { ...city, labels: liftDistricts(city.labels, metro.stations, k, size("district")) } : city), [city, metro, k, size]);
+  // With the metro on, the district names make room for its stations; zoomed out, for each other (G-321).
+  const named = useMemo(() => ({ ...city, labels: liftDistricts(city.labels, metro?.stations ?? [], k, size("district")) }), [city, metro, k, size]);
   if (!map) return <p className="sheet__empty">{t("map.none")}</p>;
   return (
     <div className="citymap" data-testid="city-map">
