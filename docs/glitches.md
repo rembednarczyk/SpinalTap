@@ -887,7 +887,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w tych przypadkach skoki w drugiej połowie ≤ 4, bez biegu w miejscu
 
 ### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
-- Status: zgłoszone (6.11, autor ADR-0059 etapu 3b)
+- Status: w PR #723 (18.11); wcześniej: zgłoszone (6.11, autor ADR-0059 etapu 3b)
 - Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
 - Pakiet właściciela: packages/ui, packages/app (przekazanie kosztu z sim)
 - Test przyjęcia: test komponentu: przy ICEpick koszt na liście równa się kosztowi pobieranemu w symulacji
