@@ -125,4 +125,8 @@ export const CREDITS: readonly Credit[] = [
   // The game's own work (ADR-0063, 15.11): the app icon, cut from a shot of the game (#131).
   { id: "seki-senshi-app-icon", section: "app", title: "Seki Senshi", author: "Seki Senshi", license: "own", files: ["icons/icon-192.png", "icons/icon-512.png"], changed: false },
   { id: "ylmir-rain-loopable", section: "audio", title: "Rain (loopable)", author: "Ylmir", url: "https://opengameart.org/content/rain-loopable", license: "CC0-1.0", files: ["audio/rain-loop.ogg"], changed: false },
+  // In place of synthesized cues (user's request of 18.11): trimmed, mono, normalized (audio README).
+  { id: "kenney-rpg-sounds", section: "audio", title: "RPG Sound Pack", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/50-rpg-sound-effects", license: "CC0-1.0", files: [...ogg("shotgun-pump", 0), ...ogg("impact-melee", 0), ...ogg("swing", 0, 1), ...ogg("block", 0), ...ogg("parry", 0), ...ogg("jump-cloth", 0, 1), ...ogg("land-step", 0, 1), ...ogg("land-hard", 0), ...ogg("charge-clamp", 0)], changed: true },
+  { id: "ezduzziteh-alarm", section: "audio", title: "Alarm", author: "ezduzziteh", url: "https://opengameart.org/content/alarm-1", license: "CC0-1.0", files: ["audio/alarm-klaxon-000.ogg"], changed: true },
+  { id: "aquinn-sirens", section: "audio", title: "Sirens and Alarm Noise", author: "aquinn", url: "https://opengameart.org/content/sirens-and-alarm-noise", license: "CC0-1.0", files: ["audio/alarm-siren-000.ogg"], changed: true },
 ];
