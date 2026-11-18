@@ -19,12 +19,12 @@ describe("one sight for every enemy (ADR-0069)", () => {
         }
       });
 
-      it("raises the alarm within 0.6 s at a player standing 5 m in front of it, not in the first step", () => {
+      it("raises the alarm in 1.5 to 3 s at a player standing 5 m in front of it: a meter that fills, not a blink (ADR-0069, 18.11)", () => {
         const sim = emptySquare(false);
         const s = secondsToAlarm(sim, enemyAt(sim, type, 5, true));
         expect(s).not.toBeNull();
-        expect(s!).toBeGreaterThan(0.2);
-        expect(s!).toBeLessThanOrEqual(0.6 + 1e-9);
+        expect(s!).toBeGreaterThan(1.5);
+        expect(s!).toBeLessThanOrEqual(3);
       });
 
       it("raises the alarm at a player crouching 5 m in front of it", () => {

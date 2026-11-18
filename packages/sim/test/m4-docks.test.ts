@@ -245,7 +245,7 @@ describe("infiltration (data from the Tessen office)", () => {
     expect(sim.domain.reputation).toMatchObject({ fixers: 3, tessen: -1 });
   });
 
-  it("standing in front of a guard gets Seki seen within a second or two, and the job fails", () => {
+  it("standing in front of a guard gets Seki seen within a few seconds, and the job fails", () => {
     const sim = Simulation.create({ seed: 8 });
     toGenzo(sim);
     const failed = collect<{ reason: string }>(sim, "ContractFailed");
@@ -256,7 +256,8 @@ describe("infiltration (data from the Tessen office)", () => {
     sim.step();
     expect(door.ai!.alerted).toBe(false);
     expect(door.ai!.suspicion).toBeGreaterThan(0);
-    run(sim, 2 * SIM_HZ);
+    // Its meter fills in some 3 s at 8 m (ADR-0069, 18.11).
+    run(sim, 4 * SIM_HZ);
     expect(failed.map((f) => f.reason)).toEqual(["detected"]);
     expect(sim.domain.reputation).toMatchObject({ fixers: -3, tessen: -5 });
   });

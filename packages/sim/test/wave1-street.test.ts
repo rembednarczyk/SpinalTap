@@ -48,7 +48,8 @@ describe("last known position (ADR-0029)", () => {
     sim.world.add(g);
     const seen = collect<DomainEvents["AwarenessChanged"]>(sim, "AwarenessChanged");
     teleportPlayer(sim, at(292, -91), Math.PI);
-    for (let i = 0; i < 60 && !g.ai!.alerted; i++) sim.step();
+    // 7 m off, its meter fills in about 2 s (ADR-0069, 18.11).
+    for (let i = 0; i < 4 * SIM_HZ && !g.ai!.alerted; i++) sim.step();
     expect(g.ai!.alerted).toBe(true);
     // Into the passage behind the houses, out of its sight, long enough for the trail to go cold.
     const hide = spotNear(283, -108);

@@ -155,7 +155,7 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
     }
   });
 
-  it("in the overalls the hall's patrol walks past her in the aisle (2529; 418) for 15 s; without them it raises the alarm", () => {
+  it("in the overalls the hall's patrol walks past her in the aisle (2529; 418) for 18 s; without them it raises the alarm", () => {
     for (const overalls of [false, true]) {
       const { session, ui } = start();
       const job = acceptSabotage(session, ui);
@@ -170,7 +170,8 @@ describe("W-3's quiet way through the culvert and the hall (ADR-0082 §1, G-907)
       let nearest = Infinity;
       const alarm = contractAlarmFlag(job.id);
       let at: number | null = null;
-      for (let i = 0; i < 15 * SIM_HZ && at === null; i++) {
+      // Crouching 9 m from where P1 halts, its meter fills in some 5 s (ADR-0069, 18.11): the alarm comes at about 15.3 s.
+      for (let i = 0; i < 18 * SIM_HZ && at === null; i++) {
         session.step(frame({ crouch: true }));
         const p = session.sim.player()!.position;
         nearest = Math.min(nearest, Math.hypot(p1.position.x - p.x, p1.position.z - p.z));

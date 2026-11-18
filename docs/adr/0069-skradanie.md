@@ -57,3 +57,13 @@ Zaakceptowana przez użytkownika 4.11 w całości (wzrok i kucanie dla wszystkic
 - Walka w zleceniach eliminacji zaczyna się później i mniej naraz, więc testy sesji i e2e z walką mogą wymagać pozycji gracza w polu widzenia wroga (krokowanie do alarmu zamiast założenia alarmu w pierwszym kroku).
 - Rośnie liczba stanów AI do testów (podejrzliwy po hałasie, odwrócony). Każdy etap ma testy `sim` z `freeze` + `step` (ADR-0046).
 - Bez zmiany kontraktów `core/src/{ports,events,commands}`: `AwarenessChanged` i HUD czujności (`heat-hud.ts`) już niosą stan „suspicious” z poziomem.
+
+## Zmiana 18.11: tempo wykrywania wzorem Cyberpunk 2077
+
+Audyt skradania i walki z 17.11 (backlog, punkt 3 planu rozgrywki) pokazał wykrywanie prawie binarne: alarm po 0,38–1,0 s w zasięgu, a kucanie skracało tylko zasięg. Użytkownik poprosił o decyzję na wzór Cyberpunk 2077. Tam licznik nad wrogiem rośnie przez kilka sekund i alarm przychodzi dopiero przy pełnym, a kucanie wyraźnie wydłuża wykrycie. Światła nie ma w rachunku.
+
+- `suspicionRate` w `SightProfile` (`core/src/items/enemies.ts`) to teraz tempo z bliska, na stojąco: Hebi 0,67/s (ok. 1,5 s do alarmu), wyszkoleni 0,53/s, strażnicy Tessen 0,47/s (ok. 2,1 s). Wcześniej było to 2, 1,6 i 1,4 z czynnikiem odległości 1,5..0,5.
+- Odległość zmniejsza tempo liniowo do 45% na skraju zasięgu (`FAR_SHARE`, `ganger-perception.ts`). Strażnik na 15 m potrzebuje ok. 4 s.
+- Gracz w kucaniu napełnia licznik w połowie tempa (`CROUCH_PACE`), ale tylko dalej niż `near`. Tuż pod nosem wroga kucanie niewiele daje, jak w CP2077, a wróg z tropem nie gubi kucającej. Dochodzi to do dotychczasowego skrócenia zasięgu w kucaniu (`crouchSight`).
+- Trudność (`awareness`, ADR-0066) i atut Shadow (ADR-0059) mnożą tempo jak dotąd. Opróżnianie bez zmian. Światło i pora dnia dalej się nie liczą.
+- Test: `packages/sim/test/detection-pace.test.ts` (strażnik Tessen: 3 m na stojąco 1,5–3 s, 15 m 3–5,5 s, kucanie co najmniej 1,8 raza dłużej). Złoty hash `determinism.test.ts` się nie zmienia (jego przebieg nie ma wykrywania), za to 16 testów skradania i walki dostało nowe okna czasu.
