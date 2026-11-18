@@ -799,7 +799,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w TPP z modelem VRM ze spódnicą schowana broń nie wchodzi w siatkę spódnicy (zrzut przed/po)
 
 ### G-355 Nazwa slotu `hipL` myli: broń biała wisi po innej stronie albo w innym miejscu
-- Status: zgłoszone (5.11, weryfikator PR #297)
+- Status: w PR #727 (18.11, nazwa stowedMelee); wcześniej: zgłoszone (5.11, weryfikator PR #297)
 - Ważność: S4 (kod) · Zasięg: nazwa slotu montażu nie odpowiada położeniu · Koszt: mały
 - Pakiet właściciela: packages/engine
 
