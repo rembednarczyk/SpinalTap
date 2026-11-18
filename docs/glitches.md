@@ -1751,10 +1751,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
 
 ### G-731 NPC stoją w pozie z rękami do góry
-- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
+- Status: do potwierdzenia przez użytkownika (18.11: nie odtworzone); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
 - Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
 - Pakiet właściciela: packages/engine (renderer: modele postaci, retarget)
 - Test przyjęcia: test renderera, że żadna postać z modelem nie ma w żadnej klatce kąta ramion T-/A-pozy (poza zamierzonymi pozami); zrzut tłumu przed/po
+- 18.11: nie odtworzone na main z ADR-0090 (#706-#709). Sonda w silniku na modelach z manifestu gry (10 cywilów, 4 gangerów, 3 korporacyjnych): stanie, chód, każda czynność ADR-0040, oddalenie poza zasięg rysowania i powrót, model z puli po zniknięciu, nokaut, śmierć: żaden model nie ma ramienia T/A-pozy (poza zamierzonymi: palacz 58°, nokaut z ręką nad głową, upadek). Na żywej grze (e2e, scena gry przez Engine.Instances) przy NPC z Neon Koi i dokach: 20 ramion modeli, wszystkie w dół; podniesione tylko ręce widoku FPP. Tłum (ADR-0041) to kukiełki bez modeli. Do użytkownika: gdzie i kiedy to widać (miejsce, pora, zrzut).
 
 ### G-732 NPC w pozie siedzącej idzie, nogi niewidoczne
 - Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
