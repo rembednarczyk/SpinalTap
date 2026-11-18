@@ -745,7 +745,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (ruch, drabiny)
 
 ### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
-- Status: zgłoszone (5.11, weryfikator PR #267)
+- Status: w PR #726 (18.11, trzy mutacje giną); wcześniej: zgłoszone (5.11, weryfikator PR #267)
 - Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
