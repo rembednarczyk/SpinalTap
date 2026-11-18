@@ -14,9 +14,8 @@ describe("sight profiles of the enemies (ADR-0069)", () => {
     expect(sightOf("tessen_guard")).toEqual({ sight: 18, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 1.4 });
   });
 
-  it("leave the sniper its own sight, and anything untyped sees as a Hebi ganger", () => {
-    expect("vision" in ENEMY_TYPES.tessen_sniper).toBe(false);
+  it("give the sniper a guard's eyes out to 40 m (W-3's observer, ADR-0082), and anything untyped sees as a Hebi ganger", () => {
+    expect(ENEMY_TYPES.tessen_sniper.vision).toEqual({ ...sightOf("tessen_guard"), sight: 40 });
     expect(sightOf(undefined)).toBe(sightOf("hebi_ganger"));
-    expect(sightOf("tessen_sniper")).toEqual(sightOf("hebi_ganger"));
   });
 });
