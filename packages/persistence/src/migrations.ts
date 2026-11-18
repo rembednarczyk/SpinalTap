@@ -1,4 +1,4 @@
-import { SAVE_SCHEMA_VERSION, progressionFromXp } from "@seki/core";
+import { SAVE_SCHEMA_VERSION, START_CLOCK, progressionFromXp, streetCrimesAt } from "@seki/core";
 import { moveMarketToAlchemia } from "./market-move";
 import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
 import { digAlchemiaParking } from "./alchemia-parking";
@@ -430,6 +430,13 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v47 -> v48 (ADR-0091 stage 2): the gangs' standings per district. A v47 save has none: every
   // gang is calm everywhere, with no grudge, as the city was before.
   47: (old) => ({ ...old, version: 48, domain: { ...(isObject(old.domain) ? old.domain : {}), gangStandings: {} } }),
+  // v48 -> v49 (ADR-0091 stage 5): the street's crimes. A v48 save gets the board of its clock with
+  // nothing done, the day's count at 0 and nothing followed.
+  48: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const clock = isObject(domain.clock) && typeof domain.clock.seconds === "number" ? { seconds: domain.clock.seconds } : START_CLOCK;
+    return { ...old, version: 49, domain: { ...domain, streetCrimes: streetCrimesAt(clock) } };
+  },
 };
 
 /** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */

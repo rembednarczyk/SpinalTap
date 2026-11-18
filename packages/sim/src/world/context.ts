@@ -1,5 +1,6 @@
 import type { TrafficDensity } from "../content/traffic";
-import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
+import type { BoardCrime } from "./street-crime-types";
+import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
@@ -90,7 +91,9 @@ export interface StreetScenes {
 /** A micro-event in progress: who is in it, where, and what ends it. Transient, not saved. */
 export interface MicroEventRun {
   readonly id: string;
-  readonly kind: "mugging" | "aid";
+  readonly kind: MicroEventKind;
+  /** The board's crime it is (ADR-0091 stage 5); none for a micro-event rolled on entering a district. */
+  readonly crime?: BoardCrime;
   readonly at: Vec3;
   /** The passer-by (the one robbed, or the one to help). */
   readonly victim: EntityId;

@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v49: the street's crimes in progress (ADR-0091 stage 5), `domain.streetCrimes`; an older save
+ * gets the board of its clock with nothing done.
  * v48: the gangs' grudge and provocation per district (ADR-0091 stage 2), `domain.gangStandings`;
  * an older save gets none: every gang calm everywhere.
  * v44: the player's step onto a ladder's rungs in progress (G-913), optional (`stance.ladderSettle`):
@@ -91,7 +93,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 48;
+export const SAVE_SCHEMA_VERSION = 49;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

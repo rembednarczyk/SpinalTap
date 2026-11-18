@@ -53,3 +53,10 @@ export const findGangStandingsError = (g: unknown): string | null => {
   }
   return null;
 };
+
+/** The street's crimes (ADR-0091 stage 5): the board's slot, the ids done, the day and its paid count, the followed one. */
+export const findStreetCrimesError = (c: unknown): string | null => {
+  if (!isObject(c) || !Number.isInteger(c.slot) || !isStringList(c.done) || !Number.isInteger(c.day)) return "street crimes";
+  if (!Number.isInteger(c.paidToday) || (c.paidToday as number) < 0) return "street crimes";
+  return c.tracked === null || typeof c.tracked === "string" ? null : "street crimes";
+};

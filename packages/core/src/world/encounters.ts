@@ -35,7 +35,7 @@ export const markEncounter = (log: EncounterLog, def: EncounterDef, clock: GameC
  * Micro-events in the style of Scanner Hustles (ADR-0034): a single beat on entering a
  * district, rolled rarely. A mugging is a fight (the gang on a passer-by), an aid a short help.
  */
-export type MicroEventKind = "mugging" | "aid";
+export type MicroEventKind = "mugging" | "aid" | "extortion";
 
 /** Chance per district entry that a micro-event starts. */
 export const MICRO_EVENT_CHANCE = 0.12;
@@ -57,4 +57,6 @@ export const microEventChance = (civilians: number): number =>
 export const MICRO_EVENT_REWARD: Readonly<Record<MicroEventKind, { readonly eddies: number; readonly civilians: number }>> = {
   mugging: { eddies: 70, civilians: 3 },
   aid: { eddies: 25, civilians: 3 },
+  // A gang squeezing a stall or a shop (ADR-0091 stage 5): three of them, so more.
+  extortion: { eddies: 90, civilians: 3 },
 };

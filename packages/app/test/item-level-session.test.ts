@@ -116,8 +116,8 @@ describe("item level in play (ADR-0059, stage 4)", () => {
     // migration gives; the cyberdeck's grades after stage 6: a run without a deck has none; G-625 and G-643: no chase;
     // ADR-0082 stage 1: the docks rebuilt as W-3 change nothing of a save made off them; stage 3: no sabotage running;
     // G-883: the migration to v41 changes only the version; stage 3b: no loud way, v42; G-901: no threat saved, v43;
-    // G-913: no step onto a ladder's rungs, v44; ADR-0089 stage 3: no gunner's burst, v45; stage 4: no attack token, v46; stage 5: the Normal profile's pressure 1, v47; ADR-0091 stage 2: every gang calm, v48).
-    const through = [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
+    // G-913: no step onto a ladder's rungs, v44; ADR-0089 stage 3: no gunner's burst, v45; stage 4: no attack token, v46; stage 5: the Normal profile's pressure 1, v47; ADR-0091 stage 2: every gang calm, v48; stage 5: the street's board of the clock with nothing done, v49).
+    const through = [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48].reduce((save, v) => MIGRATIONS[v]!(save), JSON.parse(JSON.stringify(v28)) as Record<string, unknown>);
     expect(JSON.stringify(through)).toBe(JSON.stringify(now));
   });
 });

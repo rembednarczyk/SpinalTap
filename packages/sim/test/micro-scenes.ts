@@ -1,5 +1,5 @@
-import { MICRO_EVENT_CHANCE, SECONDS_PER_HOUR } from "@seki/core";
-import { Simulation, deriveRandom, ground } from "../src";
+import { MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, crimeSlot, streetCrimesAt } from "@seki/core";
+import { Simulation, crimeBoard, deriveRandom, ground } from "../src";
 import { collect, run, teleportPlayer } from "./helpers";
 
 /** Scenes of the micro-event tests (ADR-0034): a mugging or an aid by Brama Krakowska. */
@@ -8,7 +8,11 @@ import { collect, run, teleportPlayer } from "./helpers";
 export const street = (hour: number, seed = 6, civilians = 0): Simulation => {
   const snap = Simulation.create({ seed }).snapshot(null, "t", "");
   const reputation = { ...snap.domain.reputation, civilians };
-  const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation, flags: ["met_fixer"], clock: { seconds: hour * SECONDS_PER_HOUR } } });
+  const clock = { seconds: hour * SECONDS_PER_HOUR };
+  // The street's board (ADR-0091 stage 5) done for the day: these scenes are the entry rolls' and the encounters' alone.
+  const done = Array.from({ length: 6 }, (_, k) => crimeBoard(seed, crimeSlot(clock) + k).map((c) => c.id)).flat().sort();
+  const streetCrimes = { ...streetCrimesAt(clock), done };
+  const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation, flags: ["met_fixer"], clock, streetCrimes } });
   run(sim, 1);
   return sim;
 };

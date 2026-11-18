@@ -47,3 +47,25 @@ describe("the gangs' standings in the save (v47 to v48, ADR-0091 stage 2)", () =
     expect(findSchemaError({ ...s, domain: { ...s.domain, gangStandings } } as unknown as Record<string, unknown>)).toBe("gang standings");
   });
 });
+
+describe("the street's crimes in the save (v48 to v49, ADR-0091 stage 5)", () => {
+  it("an old save gets the board of its clock with nothing done", () => {
+    const s = snapshot();
+    const { streetCrimes: _c, ...domain } = s.domain;
+    const loaded = decodeSave("v48", wrap({ ...s, version: 48, domain }));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.streetCrimes).toEqual({ slot: Math.floor(s.domain.clock.seconds / 14_400), done: [], day: Math.floor(s.domain.clock.seconds / 86_400) + 1, paidToday: 0, tracked: null });
+    expect(findSchemaError(loaded as unknown as Record<string, unknown>)).toBeNull();
+    expect((MIGRATIONS[48]!({ version: 48 }) as { domain: { streetCrimes: { slot: number } } }).domain.streetCrimes.slot).toBe(5);
+  });
+
+  it.each([
+    ["no slot", { done: [], day: 1, paidToday: 0, tracked: null }],
+    ["done that is no list", { slot: 1, done: "a", day: 1, paidToday: 0, tracked: null }],
+    ["a negative count", { slot: 1, done: [], day: 1, paidToday: -1, tracked: null }],
+    ["a follow that is no id", { slot: 1, done: [], day: 1, paidToday: 0, tracked: 3 }],
+  ])("refuses %s", (_name, streetCrimes) => {
+    const s = snapshot();
+    expect(findSchemaError({ ...s, domain: { ...s.domain, streetCrimes } } as unknown as Record<string, unknown>)).toBe("street crimes");
+  });
+});

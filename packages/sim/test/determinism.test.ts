@@ -56,7 +56,9 @@ describe("determinism on the test floor", () => {
     // the version: with SAVE_SCHEMA_VERSION at 43 the run hashes to 936bb239, the golden of before.
     // v48 (ADR-0091 stage 2, the gangs' standings per district; nobody's grudge on the floor, an
     // empty map): without `domain.gangStandings` and at version 47 the run hashes to 9040c483, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"ce128c9e"`);
+    // v49 (ADR-0091 stage 5, the street's board: slot 5 of day 1, nothing done, the floor in no
+    // district): without `domain.streetCrimes` and at version 48 the run hashes to ce128c9e, the golden of before.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"5c7c3abb"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {
