@@ -5,6 +5,7 @@ import { type AbstractMesh, type Mesh, MeshClass, type Scene, VertexBuffer } fro
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
+import { w3Dress } from "./w3-dress";
 import { w3InsideGeometry } from "./w3-inside-geometry";
 import { W3_INTERIOR_RANGE, w3InteriorDistance } from "./w3-interior-cull";
 import { type W3Lamp, W3_LAMP_PREFIX, w3LampsFor } from "./w3-lights";
@@ -48,6 +49,7 @@ export interface W3ViewDeps {
  * line and furniture baked from the simulation's blocks in one mesh drawn near it, the shut leaves
  * in its facades and the culvert's mouth in a second one drawn from afar, the line's moving parts
  * in a third (still on low quality), and its two nearest lamps. No moon shadow (ADR-0082 §4).
+ * Tessen's 2077 layer (stage 4, `w3-dress.ts`) is baked into the first two.
  * `interior` says the eye is in its rooms: the renderer's interior mode.
  */
 export class W3View {
@@ -128,6 +130,7 @@ export class W3View {
   private build(kit: CityKit): void {
     this.kitSeen = kit;
     const { inside, outer } = w3InsideGeometry(kit.data);
+    w3Dress(kit.data, { inside, outer });
     this.inside = this.fill(this.inside, "w3-inside", inside, kit, false);
     this.outer = this.fill(this.outer, "w3-outer", outer, kit, false);
     // Updatable on low quality too: the job's beacons and screens change it there.

@@ -49,6 +49,18 @@ export class KitPainter {
     this.sink.box({ x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: (z0 + z1) / 2 }, [X, Y, Z], [(x1 - x0) / 2, (y1 - y0) / 2, (z1 - z0) / 2], this.uv(swatch), tint);
   }
 
+  /** A box turned `yaw` about the vertical (0: its z half along north), centred on `c`. */
+  turned(c: Vec3, yaw: number, hx: number, hy: number, hz: number, swatch: string, tint: Tint = W3_PAINT.white): void {
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+    this.sink.box(c, [{ x: cos, y: 0, z: -sin }, Y, { x: sin, y: 0, z: cos }], [hx, hy, hz], this.uv(swatch), tint);
+  }
+
+  /** A flat quad of four corners in order round it, facing `n`. */
+  quad(a: Vec3, b: Vec3, c: Vec3, d: Vec3, n: Vec3, swatch: string, tint: Tint = W3_PAINT.white): void {
+    this.sink.quad(a, b, c, d, n, this.uv(swatch), tint);
+  }
+
   /** A beam of square section `thick` from `a` to `b`. */
   beam(a: Vec3, b: Vec3, thick: number, swatch: string, tint: Tint = W3_PAINT.white): void {
     const d = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
