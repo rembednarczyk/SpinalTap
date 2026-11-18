@@ -64,6 +64,11 @@ export const TRACK_GRACE = 1.5;
 export const LEAD_ARRIVE = 1.5;
 export const GIVE_UP = 20;
 export const SEARCH_SECONDS = 6;
+/**
+ * The suspicion an AI searches with once it gives up a chase (G-295): half full, as the HUD shows
+ * a search. Left full from the alarm, the first glimpse of the player alerted it again in one step.
+ */
+export const SEARCH_SUSPICION = 0.5;
 /** AwarenessChanged goes out when the state changes or the level moves this much. */
 export const AWARENESS_STEP = 0.25;
 
@@ -137,6 +142,7 @@ export const track = (ctx: SimContext, g: Ganger, player: Entity | null, visible
       ai.alerted = false;
       ai.lost = 0;
       ai.search = SEARCH_SECONDS;
+      ai.suspicion = Math.min(ai.suspicion ?? 0, SEARCH_SUSPICION);
     }
     return;
   }

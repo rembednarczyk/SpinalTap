@@ -1,0 +1,1 @@
+- Strażnik, który przestał gonić i szuka, nie podnosi alarmu w jednym kroku po pierwszym dostrzeżeniu gracza (G-295).
