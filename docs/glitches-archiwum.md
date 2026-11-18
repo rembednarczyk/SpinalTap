@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-091 Długie przytrzymanie „Use” wybiera kwestię pod palcem w kole dialogu
+- Status: naprawione (18.11, #720 scalony); wcześniej: w PR #720 (18.11, osłona od podniesienia palca); wcześniej: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
+- Ważność: S3 (proponowana; przypadkowy wybór kwestii w rozmowie) · Zasięg: dotyk · Koszt: mały
+- Dowód: sonda e2e (`scratchpad/g058-probe.spec.ts`): przytrzymanie „Use” ok. 1,0–1,3 s, aż dialog się otworzy, potem `pointerup` i `click` na `BUTTON.wheel__opt`; dialog idzie dalej. `touchend` trafia w odpięty przycisk pada, więc nie jest anulowany, a osłona z G-048 już wygasła (700 ms). Niepewne, czy prawdziwy telefon wysyła kliknięcie po długim przytrzymaniu (CDP może się różnić)
+- Pakiet właściciela: packages/ui (`touch/ghost-click.ts`)
+- Test przyjęcia: test komponentu: kliknięcie z dotyku, który zaczął się przed otwarciem koła, nie wybiera kwestii
+
 ### G-420 Efekty hacków na wrogu (`hackFx`: oślepienie, spowolnienie, ping) nie trafiają do zapisu
 - Status: naprawione (18.11, #722 scalony); wcześniej: w PR #722 (18.11, test regresji; naprawione wcześniej przez zapis hackFx z G-882, #628/#633); wcześniej: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
 - Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
