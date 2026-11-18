@@ -762,7 +762,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/metro.ts`), tools/glitch-scan
 
 ### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
-- Status: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
+- Status: w PR #725 (18.11); wcześniej: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
 - Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków
 - Pakiet właściciela: packages/ui (mapa miasta)
 
