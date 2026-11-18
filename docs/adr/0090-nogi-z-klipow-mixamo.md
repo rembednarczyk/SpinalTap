@@ -23,6 +23,8 @@ Status: Przyjęty (17.11, wygląd zaakceptowany przez użytkownika na zrzutach).
 9. **Skok, spadanie i twarde lądowanie (18.11).** W powietrzu „jumping up” od odbicia i pętla „falling idle”, mieszane według prędkości wznoszenia; od 7 m/s w dół „hard landing” (przysiad z dłonią przy ziemi, 2 s, wygaszany, gdy postać rusza), lżejsze lądowanie zostaje przy proceduralnym przysiadzie. Narzędzie liczy biodra klipu od pierwszej albo ostatniej klatki (`hipsFrom`).
 10. **Śmierci z klipów (18.11).** Zamiast proceduralnego upadku na plecy: trafienie z przodu daje „Death” (na plecy), w plecy „Death From The Back” (na twarz), w głowę „Death From Front Headshot” (na plecy i w bok). Kierunek z ostatniego trafienia: efekt `flinch` niesie teraz opcjonalnie `at` (miejsce trafienia) i `head` (kontrakt `EffectDescriptor`, pola opcjonalne, bez zmiany granic). Korzeń zostaje pionowo, klip obraca tułów wokół bioder i przenosi biodra jak w klipie; proceduralny upadek dalej ustawia wysokość korzenia i znikanie pod ziemią na końcu.
 
+11. **Obrót w miejscu (18.11).** Klipy „left turn” i „right turn” z paczki kobiecej obracają postać o 90° na pętlę; narzędzie zdejmuje z nich obrót bioder klatka po klatce (`inPlace`, pole `turn` w tablicy), bo postać obraca gra. Stojąca postać, która obraca się szybciej niż 0,5 rad/s, przestawia nogi jak w klipie; faza biegnie z kątem obrotu (pętla na ćwierć obrotu), więc stopy nie ślizgają się przy żadnym tempie i stają, gdy obrót ustaje.
+
 ## Konsekwencje
 - Ruch w bok, w tył i w kucki ma kroki w swoją stronę; widać to u gracza w TPP i u wrogów z ADR-0089.
 - Tablica ma ok. 50 KB w kodzie (13 pętli po 16-42 klatki), bez nowych plików do pobrania.
