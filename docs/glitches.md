@@ -704,11 +704,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: (2457,9; 311,4), stok terenu plus krawędź w zasięgu próbek dają „za stromo”; pościg (738,3; 182,8) → (756,7; 158,3) pod wiaduktem Zamkowej nie dochodzi także na main
 - Pakiet właściciela: packages/sim/src/systems/ai (steering)
 
-### G-295 Po alarmie licznik podejrzeń zostaje na 1 i pierwsze ok. 2 s przeszukania alarmuje w jednym kroku
-- Status: w PR #729 (18.11); wcześniej: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
-- Ważność: S4 · Zasięg: `ganger-perception.ts` (`track`)
-- Pakiet właściciela: packages/sim/src/systems/ai
-
 ### G-296 Pomost kładki podzamcze-2-0 kończy się na szwie z = 160 bez ciągu w chunku obok
 - Status: zgłoszone (5.11, naprawiacz G-278)
 - Ważność: S4 · Zasięg: kładka x 1073,8–1082,2, z 160–162,1; krawędź 0,03–1,9 m nad terenem; brak w danych importu
