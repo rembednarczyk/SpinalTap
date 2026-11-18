@@ -97,7 +97,9 @@ const words = (k: KitPainter): void => {
  */
 const cabin = (k: KitPainter): void => {
   const c = W3_CABIN;
-  const out = 0.04;
+  // 15 cm out: at 4 cm the panes fought the glass's faces for depth from the river (70 m), one
+  // triangle of each pane lost.
+  const out = 0.15;
   const y = (h: number) => W3_Y + h;
   const faces = [
     { n: { x: 0, z: -1 }, fixed: c.minZ - out, from: c.minX, to: c.maxX },
@@ -112,17 +114,17 @@ const cabin = (k: KitPainter): void => {
       if (along) k.box(a0, a1, y0, y1, d0, d1, swatch);
       else k.box(d0, d1, y0, y1, a0, a1, swatch);
     };
-    slab(f.from - out, f.to + out, y(c.bottom), y(c.bottom + 0.5), 0.12, "trim");
-    slab(f.from - out, f.to + out, y(c.top - 0.35), y(c.top), 0.12, "trim");
+    slab(f.from - out, f.to + out, y(c.bottom), y(c.bottom + 0.5), 0.16, "trim");
+    slab(f.from - out, f.to + out, y(c.top - 0.35), y(c.top), 0.16, "trim");
     const panes = 4;
     const w = (f.to - f.from) / panes;
     for (let i = 0; i < panes; i++) {
       const a0 = f.from + i * w + 0.1;
       const a1 = f.from + (i + 1) * w - 0.1;
-      slab(a0, a1, y(c.bottom + 0.5), y(c.bottom + 1.3), 0.02, "glass-dark");
-      slab(a0, a1, y(c.bottom + 1.3), y(c.top - 0.35), 0.02, "taillight");
+      slab(a0, a1, y(c.bottom + 0.5), y(c.bottom + 1.3), 0.03, "glass-dark");
+      slab(a0, a1, y(c.bottom + 1.3), y(c.top - 0.35), 0.03, "taillight");
     }
-    for (let i = 0; i <= panes; i++) slab(f.from + i * w - 0.1, f.from + i * w + 0.1, y(c.bottom + 0.5), y(c.top - 0.35), 0.08, "dark");
+    for (let i = 0; i <= panes; i++) slab(f.from + i * w - 0.1, f.from + i * w + 0.1, y(c.bottom + 0.5), y(c.top - 0.35), 0.1, "dark");
   }
 };
 

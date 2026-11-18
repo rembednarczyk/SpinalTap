@@ -112,15 +112,15 @@ export interface Lettering {
   readonly height: number;
   readonly swatch: string;
   readonly tint?: Tint;
-  /** How far off the wall (m): a centimetre for paint, more for a plate before a drawn facade. */
+  /** How far off the wall (m): 3 cm unless told (no fight for depth from afar), more for a plate before a drawn facade. */
   readonly off?: number;
 }
 
-/** Paints a text flat on a wall, `off` it (a centimetre unless told), read from in front of it. */
+/** Paints a text flat on a wall, `off` it, read from in front of it. */
 export const paintLettering = (k: KitPainter, l: Lettering): void => {
   // A reader facing the wall has its right along the normal turned a quarter right (x east, z north).
   const right = { x: -l.normal.z, y: 0, z: l.normal.x };
-  const off = l.off ?? 0.012;
+  const off = l.off ?? 0.03;
   const p = (u: number, v: number): Vec3 => ({ x: l.at.x + right.x * u + l.normal.x * off, y: l.at.y + v, z: l.at.z + right.z * u + l.normal.z * off });
   for (const r of letteringRects(l.text, l.height)) k.quad(p(r.x0, r.y0), p(r.x1, r.y0), p(r.x1, r.y1), p(r.x0, r.y1), l.normal, l.swatch, l.tint);
 };
