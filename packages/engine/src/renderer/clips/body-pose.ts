@@ -2,6 +2,7 @@ import { Quaternion } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
 import type { BodyClip } from "./body-clip";
 import { airFrame } from "./air-clips";
+import { stopFrame } from "./stop-clips";
 import { turnFrame } from "./turn-clips";
 import { BODY_CLIPS } from "./body-clips.generated";
 import { sampleBody } from "./body-sample";
@@ -143,6 +144,12 @@ const poseLadder = (rig: CharacterRig): void => {
   turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
 };
 
+/** Braking from a run (`stop-clips.ts`): the body, the free arms and the hips' dip, without the clip's slide forward. */
+const poseStop = (rig: CharacterRig, speed: number, dt: number): number => {
+  const st = stopFrame(rig, speed, dt);
+  return st ? layPose(rig, st.frame, st.w, freeArms(rig), false, { hips: "height" }) : 0;
+};
+
 /** Off the ground and after a hard landing (`air-clips.ts`); the arms that hold something keep it. */
 const poseAir = (rig: CharacterRig, speed: number, dt: number): number => {
   const a = airFrame(rig, dt, (speed - STANDING) / 1.5);
@@ -174,7 +181,7 @@ export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, 
     s.idle = 0;
     s.hit = null;
   }
-  const shift = alive ? poseIdle(rig, s, target, dt) + poseAir(rig, speed, dt) + poseHit(rig, s, dt) + poseRecoil(rig, dt) : 0;
+  const shift = alive ? poseIdle(rig, s, target, dt) + poseStop(rig, speed, dt) + poseAir(rig, speed, dt) + poseHit(rig, s, dt) + poseRecoil(rig, dt) : 0;
   if (alive) poseLadder(rig);
   rig.body.position.x += shift - s.shift;
   s.shift = shift;
