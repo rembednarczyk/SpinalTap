@@ -744,11 +744,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: każda drabina; do decyzji, jaki kąt i zasięg mają łapać
 - Pakiet właściciela: packages/sim (ruch, drabiny)
 
-### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
-- Status: w PR #726 (18.11, trzy mutacje giną); wcześniej: zgłoszone (5.11, weryfikator PR #267)
-- Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
-- Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
-
 ### G-319 Łamane linii metra na mapie przechodzą pod zwykłymi budynkami, a skan nie widzi zabytków poza importem
 - Status: zgłoszone (5.11, kurator, ponowny przegląd PR #270)
 - Ważność: S4 · Zasięg: róg Kozia/Bernardyńska ścina narożnik przez w67498752 (ok. 17 m; wierne punkty (390; −144), (362; −149), (368; −172)); w luce T-022 odcinek (1580; 232) → (1738; 386) pod 5 budynkami, a (1738; 386) → (2084; 384) ok. 19 m na północ od łuku ulicy (lepiej (1803; 377), (1891; 368), (1962; 367), (2044; 378)); odcinek (506; −389) → (590; −1840) 5 m od Pałacu Sobieskich w181283749 (wierniej Bernardyńską (583; −528), (639; −627) i Zamojską (662; −728)). Kontrola `metro-line-protected` poza prostokątami importu widzi tylko `PROTECTED_AREAS`: dodać listę zabytków poza importem (punkt i promień, m.in. kościół św. Agnieszki w171014937, Pałac Sobieskich), baza 0; od PR #279 też odcinek Plac Litewski (88; −60) → (240; −66) pod w67504389 i w67504391 (34 m), punkty w T-163

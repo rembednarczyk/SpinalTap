@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
+- Status: naprawione (18.11, #726 scalony); wcześniej: w PR #726 (18.11, trzy mutacje giną); wcześniej: zgłoszone (5.11, weryfikator PR #267)
+- Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
+- Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
+
 ### G-322 Panel kiosku metra i karta są półprzezroczyste: przez nie widać napisy HUD
 - Status: naprawione (18.11, #724 scalony); wcześniej: w PR #724 (18.11, pełne tło kiosku); wcześniej: zgłoszone (5.11, weryfikator PR #270)
 - Ważność: S4 · Zasięg: powiadomienie dzielnicy, cel i podpowiedź dotyku prześwitują przez panel (`shots/metro1-v2/phone-kiosk-kanal-target.png`)
