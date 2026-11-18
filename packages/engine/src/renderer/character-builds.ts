@@ -39,7 +39,7 @@ const finish = (
   sk: Joints,
   opts: { aiming: boolean; armSpread: number; leftHold?: [number, number]; gun?: Pistol },
 ): CharacterRig => {
-  const { s: _s, ...joints } = sk;
+  const { s: _s, female, ...joints } = sk;
   const gunHold = b.node("gunHold", joints.body);
   const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.wristL, joints.armR, joints.elbowR, joints.wristR];
   if (opts.gun) order.push(opts.gun.hand, opts.gun.hip, ...opts.gun.boxes);
@@ -69,6 +69,7 @@ const finish = (
     stagger: 0,
     staggerTotal: 0,
     aiming: opts.aiming,
+    masculine: !female,
     armSpread: opts.armSpread,
     leftHold: opts.leftHold ?? null,
     phase: 0,

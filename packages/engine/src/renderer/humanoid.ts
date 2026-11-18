@@ -40,6 +40,8 @@ export interface Joints {
   wristR: TransformNode;
   /** Scale factor relative to the 1.74 m reference build. */
   s: number;
+  /** A woman's build. */
+  female: boolean;
 }
 
 
@@ -198,5 +200,5 @@ export const humanoid = (b: RigBuilder, root: TransformNode, build: Build, look:
   buildTorso(b, body, build, look, s);
   const head = buildHead(b, body, look, s);
   const [al, ar] = buildArms(b, body, build, look, s) as [Arm, Arm];
-  return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, wristL: al.wrist, wristR: ar.wrist, s };
+  return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, wristL: al.wrist, wristR: ar.wrist, s, female: build.female };
 };
