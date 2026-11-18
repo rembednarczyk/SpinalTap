@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-355 Nazwa slotu `hipL` myli: broń biała wisi po innej stronie albo w innym miejscu
+- Status: naprawione (18.11, #727 scalony); wcześniej: w PR #727 (18.11, nazwa stowedMelee); wcześniej: zgłoszone (5.11, weryfikator PR #297)
+- Ważność: S4 (kod) · Zasięg: nazwa slotu montażu nie odpowiada położeniu · Koszt: mały
+- Pakiet właściciela: packages/engine
+
 ### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
 - Status: naprawione (18.11, #725 scalony); wcześniej: w PR #725 (18.11); wcześniej: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
 - Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków

@@ -798,11 +798,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`weapon-mount`)
 - Test przyjęcia: w TPP z modelem VRM ze spódnicą schowana broń nie wchodzi w siatkę spódnicy (zrzut przed/po)
 
-### G-355 Nazwa slotu `hipL` myli: broń biała wisi po innej stronie albo w innym miejscu
-- Status: w PR #727 (18.11, nazwa stowedMelee); wcześniej: zgłoszone (5.11, weryfikator PR #297)
-- Ważność: S4 (kod) · Zasięg: nazwa slotu montażu nie odpowiada położeniu · Koszt: mały
-- Pakiet właściciela: packages/engine
-
 ### G-356 `__seki.capture()` zwraca klatkę spóźnioną o jedną
 - Status: zgłoszone (5.11, weryfikator PR #297)
 - Ważność: S4 (narzędzia testowe) · Zasięg: zrzuty w e2e i w skryptach zrzutów pokazują stan sprzed ostatniego kroku · Koszt: mały
