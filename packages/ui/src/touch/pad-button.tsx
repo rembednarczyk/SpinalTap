@@ -34,8 +34,8 @@ export const useLookDrag = (pad: TouchPadSink) => {
  * The press may open a panel under the thumb (a talk, a shop, the line map); the browser's
  * compatibility click after it must not pick anything there (see `swallowNextClick`).
  */
-export const swallowGhostClick = (e: { pointerType: string }): void => {
-  if (e.pointerType === "touch" || e.pointerType === "pen") swallowNextClick();
+export const swallowGhostClick = (e: { pointerType: string; pointerId?: number }): void => {
+  if (e.pointerType === "touch" || e.pointerType === "pen") swallowNextClick(window, undefined, undefined, e.pointerId ?? null);
 };
 
 /** Swallows the long-press menu and the compatibility click of a touch button. */

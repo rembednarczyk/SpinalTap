@@ -55,6 +55,42 @@ describe("the click a lifted finger leaves behind (mobile dialogue bug)", () => 
     expect(choose).toHaveBeenCalledWith(1);
   });
 
+  it("G-091: a long hold on E opens the talk and the click as the finger comes up does not pick a choice", () => {
+    vi.useFakeTimers();
+    const store = createUiStore({ screen: "playing", prompt: "Kaito" });
+    const choose = vi.fn();
+    const intents = new Proxy({} as UiIntents, { get: (_t, k) => (k === "choose" ? choose : vi.fn()) });
+    const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() };
+    render(<GameUi store={store} intents={intents} touch={pad} />);
+    fireEvent.pointerDown(screen.getByLabelText(/^Interact/), { pointerId: 1, pointerType: "touch" });
+    // Held past the guard's 700 ms, until the talk opens a second later.
+    act(() => vi.advanceTimersByTime(1000));
+    act(() => patchUi(store, { dialogue, prompt: null }));
+    act(() => vi.advanceTimersByTime(300));
+    // The finger comes up over a choice; the browser's click lands on it.
+    const option = screen.getByRole("button", { name: /Nic, na razie/ });
+    fireEvent.pointerUp(option, { pointerId: 1, pointerType: "touch" });
+    fireEvent.click(option);
+    expect(choose).not.toHaveBeenCalled();
+    // A real tap a moment later works.
+    act(() => vi.advanceTimersByTime(800));
+    fireEvent.click(option);
+    expect(choose).toHaveBeenCalledWith(1);
+  });
+
+  it("G-091: after the finger is up, the next tap (even with the same pointer id) is never eaten", () => {
+    let t = 0;
+    const seen = vi.fn();
+    window.addEventListener("click", seen);
+    swallowNextClick(window, () => t, 700, 5);
+    t = 2000;
+    fireEvent.pointerUp(document.body, { pointerId: 5 });
+    fireEvent.pointerDown(document.body, { pointerId: 5 });
+    document.body.click();
+    expect(seen).toHaveBeenCalledTimes(1);
+    window.removeEventListener("click", seen);
+  });
+
   it("a real tap on a choice right after the talk opens still picks it (touch.spec flake)", () => {
     vi.useFakeTimers();
     const store = createUiStore({ screen: "playing", prompt: "Kaito" });
