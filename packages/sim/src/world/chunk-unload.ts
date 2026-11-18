@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity, GangerAi } from "./components";
 import { entitySnapshotOf } from "./factory";
+import { isMicroKey } from "./micro-key";
 import { inCreationOrder } from "./ordering";
 import type { StreamState } from "./actor-spawner";
 
@@ -21,7 +22,9 @@ const putToSleep = (world: World<Entity>, state: StreamState, e: Entity, forgott
   // with their gun at rest and loaded and a sniper idle (G-185 saves the fight, not the sleep),
   // on a new stretch of their walk (G-208), standing and with no blow under way (G-883), with a
   // whole burst and no sidestep (ADR-0089).
-  if (e.key && !forgotten.has(e.key)) {
+  // A micro-event's people (never saved) leave nothing behind either: a jump far off puts their
+  // chunk to sleep before the event is left (G-230), and nothing would ever wake them.
+  if (e.key && !forgotten.has(e.key) && !isMicroKey(e.key)) {
     const { gun: _gun, sniper: _sniper, walk: _walk, velocity: _velocity, melee: _melee, tactic: _tactic, ...asleep } = entitySnapshotOf({ ...e, key: e.key });
     state.dormant.set(e.key, asleep);
   }
