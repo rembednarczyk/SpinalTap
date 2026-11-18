@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AudioListenerPose } from "@seki/core";
 import { W3_GATE, W3_LAYOUT, W3_Y } from "@seki/sim";
-import { SynthAudio } from "../src/audio/synth-audio";
+import { CUES, SynthAudio } from "../src/audio/synth-audio";
 import { W3_LAYER_LEVEL } from "../src/audio/w3-scape";
 import { W3_STREET_LEVEL, type W3Layer, type W3Mix, w3Heard, w3Mix } from "../src/audio/w3-sound-map";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -98,6 +98,15 @@ const run = (ctx: FakeAudioContext, audio: SynthAudio, seconds: number, dt = 0.0
 /** The sources made since `from`: with a pool of no voices, the sector's loops alone. */
 const loopSources = (ctx: FakeAudioContext, from: number) =>
   ctx.created.slice(from).filter((n): n is FakeNode & { stopped: number | null } => (n.kind === "oscillator" || n.kind === "buffer-source") && "stopped" in n);
+
+describe("W-3's sabotage cues", () => {
+  it("the alarm brings the lockdown's bolts under its klaxon; a charge clamps and beeps; the upload chirps through the crusher", () => {
+    expect(CUES.alarm.voices.some((v) => v.type === "noise" && (v.filter ?? 0) < 1500)).toBe(true);
+    expect(CUES.alarm.voices.filter((v) => v.type === "square")).toHaveLength(6);
+    expect(CUES["charge-plant"].voices.filter((v) => v.type === "square" && v.freq > 1500)).toHaveLength(2);
+    expect(CUES["upload-done"].crush).toBe(true);
+  });
+});
 
 describe("W-3's soundscape in the synth", () => {
   it("is not built far from the sector, is built near it and follows her from the hall out to the quay", () => {

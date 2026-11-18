@@ -253,13 +253,42 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sawtooth", freq: 44, to: 24, start: 0.05, dur: 1.4, gain: 0.12, filter: 260, filterType: "lowpass", attack: 0.03 },
     ],
   },
-  // The alarm raised: three blasts of a klaxon, two square tones a semitone apart through a horn's band.
+  // The alarm raised: three blasts of a klaxon, two square tones a semitone apart through a horn's band;
+  // under the first, the lockdown's bolts shooting into the server rooms' doors (stage 4: the lockdown's sound).
   alarm: {
     send: 0.6,
-    voices: [0, 0.32, 0.64].flatMap((start) => [
-      { type: "square" as const, freq: 330, start, dur: 0.24, gain: 0.08, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
-      { type: "square" as const, freq: 349, start, dur: 0.24, gain: 0.07, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
-    ]),
+    voices: [
+      ...[0, 0.32, 0.64].flatMap((start) => [
+        { type: "square" as const, freq: 330, start, dur: 0.24, gain: 0.08, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
+        { type: "square" as const, freq: 349, start, dur: 0.24, gain: 0.07, attack: 0.01, filter: 1500, filterType: "bandpass" as const, q: 1.2 },
+      ]),
+      ...[0.05, 0.16].flatMap((start) => [
+        { type: "noise" as const, freq: 0, start, dur: 0.12, gain: 0.22, attack: 0.002, filter: 900, filterTo: 300, filterType: "lowpass" as const },
+        { type: "sine" as const, freq: 95, to: 45, start, dur: 0.2, gain: 0.2, attack: 0.002 },
+      ]),
+    ],
+  },
+  // A charge on a station (ADR-0082 stage 4): its magnets clamping on with a clunk, then two beeps as it arms.
+  "charge-plant": {
+    send: 0.35,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.08, gain: 0.26, attack: 0.002, filter: 1200, filterTo: 400, filterType: "lowpass" },
+      { type: "sine", freq: 150, to: 70, dur: 0.14, gain: 0.22, attack: 0.002 },
+      { type: "square", freq: 1960, start: 0.2, dur: 0.06, gain: 0.04, attack: 0.002, filter: 4000, filterType: "lowpass" },
+      { type: "square", freq: 1960, start: 0.32, dur: 0.06, gain: 0.04, attack: 0.002, filter: 4000, filterType: "lowpass" },
+    ],
+  },
+  // The virus in the core: a terminal's rising chirps and a low tone of confirmation, a little crushed.
+  "upload-done": {
+    send: 0.3,
+    crush: true,
+    voices: [
+      { type: "square", freq: 880, dur: 0.07, gain: 0.05, attack: 0.002, filter: 3200, filterType: "lowpass" },
+      { type: "square", freq: 1175, start: 0.08, dur: 0.07, gain: 0.05, attack: 0.002, filter: 3200, filterType: "lowpass" },
+      { type: "square", freq: 1760, start: 0.16, dur: 0.12, gain: 0.05, attack: 0.002, filter: 3200, filterType: "lowpass" },
+      { type: "triangle", freq: 440, start: 0.3, dur: 0.4, gain: 0.12, attack: 0.01 },
+      { type: "sine", freq: 220, start: 0.3, dur: 0.45, gain: 0.1, attack: 0.01 },
+    ],
   },
   // One wail of the siren (the app repeats it while the alarm lasts): up a fifth and back down.
   "alarm-siren": {

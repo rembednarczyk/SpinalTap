@@ -19,6 +19,8 @@ export interface W3MissionVm {
   readonly alarm: boolean;
   readonly screens: LineScreens;
   readonly blown: readonly W3StationId[];
+  /** Charges planted on the line so far (the loud way, 3b). */
+  readonly planted: number;
 }
 
 /**
@@ -32,7 +34,7 @@ export const w3MissionOf = (domain: DomainState): W3MissionVm => {
   const alarm = !!sabotage && domain.flags.includes(contractAlarmFlag(sabotage.id));
   const screens: LineScreens = domain.flags.includes(W3_VIRUS_FLAG) ? "infected" : sabotage?.progress !== undefined && sabotage.route !== "loud" ? "upload" : "idle";
   const blown = W3_STATIONS.filter((s) => domain.flags.includes(stationDownFlag(s)));
-  return { alarm, screens, blown };
+  return { alarm, screens, blown, planted: sabotage?.charges?.length ?? 0 };
 };
 
 /** One wail of the siren (the `alarm-siren` cue) lasts this long; it starts again while the alarm lasts (s). */
@@ -43,7 +45,8 @@ export const SIREN_PERIOD = 2.4;
  * `line-wrecks`), only when it changes, and again after the views were cleared (a new game, a
  * load): the wrecks come back from the stations' flags. What happens now plays only when it
  * happens, not again after a load (ADR-0082 stage 3c): a station's blast as an `explosion` and
- * its sound, the alarm's klaxon; the siren wails while the alarm lasts and Seki is in W-3's zone.
+ * its sound, the alarm's klaxon and the lockdown's bolts; the siren wails while the alarm lasts and
+ * Seki is in W-3's zone. A charge planted and the virus in the core have their sounds (stage 4).
  */
 export class W3MissionSync {
   private sent: W3MissionVm | null = null;
@@ -71,6 +74,8 @@ export class W3MissionSync {
     const fresh = last ? next.blown.filter((s) => !last.blown.includes(s)) : [];
     for (const s of fresh) this.render.playEffect({ kind: "explosion", at: stationChargeAt(s), radius: SABOTAGE_LOUD.blastRadius });
     if (fresh.length > 0) this.audio.play("explosion");
+    if (last && next.planted > last.planted) this.audio.play("charge-plant");
+    if (last?.screens === "upload" && next.screens === "infected") this.audio.play("upload-done");
     this.siren(next.alarm && seki !== null && inW3Zone(seki.x, seki.z), tick);
     this.sent = next;
   }
