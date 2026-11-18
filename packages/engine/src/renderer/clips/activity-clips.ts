@@ -12,7 +12,8 @@ import { figureSeed, layPose } from "./pose-lay";
  * cigarette in the right hand, shifts and looks about; someone on the phone holds it to the right
  * ear and talks, or types on it with both thumbs (half of them); at a terminal the hands work a
  * screen; in a talk the hands and the head go through gestures one after another, each figure in
- * its own order. Each figure at its own point of its clip. The props stay in the hands they were
+ * its own order; leaning, it stands at ease. The procedural poses of these put the hands up by the
+ * head on the imported models (G-731: the phone's free hand, the lean's both). Each figure at its own point of its clip. The props stay in the hands they were
  * in, so they go where the clip's hands go.
  */
 
@@ -21,6 +22,9 @@ const CLIPS: Partial<Readonly<Record<ActivityId, readonly BodyClip[]>>> = {
   smoke: [BODY_CLIPS.smoke],
   phone: [BODY_CLIPS.phoneTalk, BODY_CLIPS.phoneText],
   terminal: [BODY_CLIPS.tablet],
+  // No lean against a wall in the packs: standing at ease with the weight shifting. The procedural
+  // lean bent the arms up by the head on the models, as if the hands were up (G-731).
+  lean: [BODY_CLIPS.idleShift],
 };
 
 /** A talk's gestures, played one after another in the figure's own order. */
