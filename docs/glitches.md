@@ -890,6 +890,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: otwór (722; 286) wychodzi na rabatę z 289,6–292,6; według T-158 otwór miał dostać stronę parkingu albo pawilon miał się przesunąć · Koszt: mały; `metro-exit-bare` 27 (cała baza miasta) to próbki tej rabaty (przegląd podzamcze-1-0, 12.11); test przyjęcia: `metro-exit-bare` 27 → 0 bez brukowania rabaty
 - Pakiet właściciela: packages/sim (`content/metro.ts`); przegląd kuratora
 - Test przyjęcia: wyjście pawilonu na nawierzchni `square`/`sidewalk`, nie na rabacie
+- 18.11 (przesiew): klucz metro-exit-bare zniknął z bazy w #599 (kostka do ścian przy ulicach pieszych); test przyjęcia mówił „bez brukowania rabaty”, więc do przeglądu kuratora: czy wyjście prowadzi na bruk, czy rabatę zabrukowano.
 
 ### G-367 Jasna „piła” pod stropem przejścia z hali na peron metra
 - Status: zgłoszone (6.11, autor ADR-0071 etap 4, do potwierdzenia)
@@ -2429,13 +2430,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: naprawione (PR #647); wcześniej: w PR #647; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Weryfikator #646: wiadukt Zamkowej, brawler z Podwala (745, 169.8) do gracza na pomoście (748.9, 173.4) wchodzi na pomost, ok. 25 s stoi w (758.0, 188.5), schodzi pod wiadukt i staje w (745.1, 170.0); w 60 s nie dociera. Do (755, 180) dociera w 8 s.
-
-### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
-- Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
-- Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
-- Status: naprawione (PR #654); wcześniej: w PR #654; wcześniej: zgłoszone
-- Pakiet właściciela: tools/osm-import
-- Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
 
 ### G-898 Walczący w pasie 10 cm poniżej jezdni przy dolnym moście Mełgiewskiej nie wychodzi do gracza na pomoście
 - Ważność: S4 · Zasięg: dolny most Mełgiewskiej, (2454,9; 297,05), gracz na nabrzeze-0-1[1] t=0,4

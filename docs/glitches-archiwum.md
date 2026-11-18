@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-897 Migotanie trawa/plac przy końcu zebry (podzamcze-2-1)
+- Ważność: S4 · Zasięg: podzamcze-2-1 1060,470, koniec zebry między placami
+- Opis: Po G-836 (zebry przy placach, #597) 1 m trawy między placami przy końcu zebry migocze z placem (kerb-fill-flicker). Klucz przyjęty w bazie decyzją użytkownika 16.11, do naprawy w imporcie (kerb-fill.ts).
+- Status: naprawione (18.11, #654 scalony); wcześniej: naprawione (PR #654); wcześniej: w PR #654; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import
+- Klucze skanu: kerb-fill-flicker podzamcze-2-1 1060,470
+
 ### G-731 NPC stoją w pozie z rękami do góry
 - Status: naprawione (18.11, #711 scalony); wcześniej: w PR #711; wcześniej: do potwierdzenia przez użytkownika (18.11: nie odtworzone); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
 - Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
