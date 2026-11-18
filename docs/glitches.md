@@ -1751,10 +1751,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
 
 ### G-732 NPC w pozie siedzącej idzie, nogi niewidoczne
-- Status: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
+- Status: w PR #719 (18.11, testy regresji; nie odtwarza się na main po #711, czeka na potwierdzenie użytkownika w grze); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
 - Ważność: S3 · Zasięg: część NPC z modelami przesuwa się w pozie siedzenia (ADR-0040 aktywności, ADR-0058 etap 8 pozy przy ławkach), a nogi nie są widoczne; przypuszczalnie poza aktywności `sit` zostaje po wyjściu z miejsca siedzenia albo ukrycie nóg pod siedziskiem nie jest zdejmowane przy ruchu; to błąd przełączania stanu (siedzi albo idzie), nie brak klipu
 - Pakiet właściciela: packages/engine (`activity-poses.ts`, modele postaci), ewentualnie packages/sim (stan aktywności)
 - Test przyjęcia: test sesji, że postać w ruchu (prędkość > 0) nigdy nie ma pozy `sit` ani ukrytych nóg; przejście siad → wstawanie → chód w kolejności; zrzut przed/po
+- 18.11 (pod nieobecność): test symulacji (14 przejść siad ↔ chód z planów dnia) i testy renderera (rig i model VRM) przechodzą bez zmian w kodzie; mutacja, w której renderer ignoruje koniec aktywności, wywraca testy renderera. Jeśli użytkownik nadal widzi błąd, potrzebne miejsce i godzina w grze.
 
 ### G-733 Ścieżki z `surface` asfalt, żwir lub grunt rysowane jako jasna kostka (T-282)
 - Status: zgłoszone (12.11, kurator, przegląd G-721)
