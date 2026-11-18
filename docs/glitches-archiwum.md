@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-420 Efekty hacków na wrogu (`hackFx`: oślepienie, spowolnienie, ping) nie trafiają do zapisu
+- Status: naprawione (18.11, #722 scalony); wcześniej: w PR #722 (18.11, test regresji; naprawione wcześniej przez zapis hackFx z G-882, #628/#633); wcześniej: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
+- Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
+- Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
+
+### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
+- Status: naprawione (18.11, #721 scalony); wcześniej: w PR #721 (18.11, test przyjęcia; nie odtwarza się na main); wcześniej: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
+- Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
+- Pakiet właściciela: packages/sim (`systems/ai`, tłum)
+- Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
+
 ### G-886 Pościg 200 m: bankBetween próbkuje cały odcinek co krok
 - Ważność: S4 · Zasięg: pościg strażnika za graczem w zasięgu
 - Opis: pinned-far-sleep calmWest (cel 2670,300): 9544 pełnych bankBetween po 400 próbek steepAt, ok. 2,8 s pliku; znalezione przy G-884

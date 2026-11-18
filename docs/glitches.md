@@ -831,12 +831,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app (debug API), e2e
 - Test przyjęcia: zrzut po `step` pokazuje stan po tym kroku
 
-### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
-- Status: w PR #721 (18.11, test przyjęcia; nie odtwarza się na main); wcześniej: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
-- Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
-- Pakiet właściciela: packages/sim (`systems/ai`, tłum)
-- Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
-
 ### G-360 Nawigacja AI przepuszcza krawędź pomostu ze stopniem 0,25–0,45 m, a ruch postaci na niej staje
 - Status: zgłoszone (5.11, naprawiacz G-349)
 - Ważność: S3 · Zasięg: rampa na wschodnim końcu Zamkowej psuła pościgi (`flight-chase`, `under-deck-ai`); pozostałe stopnie przyczółków z `deck-abutment-step` (wiadukt Zamkowej 9, kładka podzamcze-2-0 3) · Koszt: średni
@@ -1054,11 +1048,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (6.11, weryfikator PR #340)
 - Ważność: S4 · Zasięg: `icon: WEAPON_ICONS[weapon]` w `packages/app/src/weapon-hud.ts:33` bez testu sesji; `ICON_BACKGROUNDS.hud` zakłada tło #c8c8c8 (rzadka 3,04:1, przy bieli 2,4:1); na 800/844 etykiety „2 SECONDARY” i „3 MELEE” nachodzą (było przed #340); ikony `magazine` i hełmu Tessen mało czytelne w 31 px; skróty nazw bez kluczy `item.*.short` ucinane na desktopie
 - Pakiet właściciela: packages/app, packages/ui
-
-### G-420 Efekty hacków na wrogu (`hackFx`: oślepienie, spowolnienie, ping) nie trafiają do zapisu
-- Status: w PR #722 (18.11, test regresji; naprawione wcześniej przez zapis hackFx z G-882, #628/#633); wcześniej: zgłoszone (6.11, naprawiacz rundy 3 PR #337)
-- Ważność: S3 · Zasięg: po wczytaniu oślepiony wróg od razu widzi gracza, przebieg rozjeżdża się z zapisanym (hash po wczytaniu inny niż w ciągłej grze); dotyczy każdego zapisu w trakcie walki z hackami
-- Pakiet właściciela: packages/sim, packages/core (save-snapshot), packages/persistence
 
 ### G-424 Zapis v30 z ogłuszonym wrogiem: migracja 30→31 nie stawia `fought` na ciałach
 - Status: zgłoszone (6.11, weryfikator PR #337)
@@ -1735,7 +1724,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: brak rekwizytów w strefie wejść Trybunału i innych zabytków Rynku (kontrola skanu dla stref wejść, baza obniżona); zrzut dzienny przed/po
 
 ### G-732 NPC w pozie siedzącej idzie, nogi niewidoczne
-- Status: w PR #719 (18.11, testy regresji; nie odtwarza się na main po #711, czeka na potwierdzenie użytkownika w grze); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
+- Status: testy regresji w main (#719, 18.11); nie odtwarza się, czeka na potwierdzenie użytkownika w grze; wcześniej: w PR #719 (18.11, testy regresji; nie odtwarza się na main po #711, czeka na potwierdzenie użytkownika w grze); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu”
 - Ważność: S3 · Zasięg: część NPC z modelami przesuwa się w pozie siedzenia (ADR-0040 aktywności, ADR-0058 etap 8 pozy przy ławkach), a nogi nie są widoczne; przypuszczalnie poza aktywności `sit` zostaje po wyjściu z miejsca siedzenia albo ukrycie nóg pod siedziskiem nie jest zdejmowane przy ruchu; to błąd przełączania stanu (siedzi albo idzie), nie brak klipu
 - Pakiet właściciela: packages/engine (`activity-poses.ts`, modele postaci), ewentualnie packages/sim (stan aktywności)
 - Test przyjęcia: test sesji, że postać w ruchu (prędkość > 0) nigdy nie ma pozy `sit` ani ukrytych nóg; przejście siad → wstawanie → chód w kolejności; zrzut przed/po
