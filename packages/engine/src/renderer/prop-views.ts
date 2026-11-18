@@ -11,6 +11,7 @@ import type { ScanVisitor } from "./screen-fx";
 import type { Stage } from "./stage";
 import { InteriorBatches } from "./interior-batch";
 import { W3InteriorCull } from "./tessen-w3/w3-interior-cull";
+import { W3PropBake, w3Bakeable } from "./tessen-w3/w3-prop-bake";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
 export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" | "crowd" }>;
@@ -91,8 +92,11 @@ export class PropViews {
 
   /** Plain interior blocks, merged (ADR-0038). */
   private readonly interiors: InteriorBatches;
+  /** W-3's hall's doors, stairs and ladders, baked while they stand still (ADR-0082 §4). */
+  private readonly w3Bake: W3PropBake;
 
   constructor(private readonly deps: PropViewsDeps) {
+    this.w3Bake = new W3PropBake(deps.stage.scene);
     this.interiors = new InteriorBatches(deps.stage.scene, deps.materials, (old, next) => {
       if (old) this.blockers.delete(old);
       if (next) this.blockers.add(next);
@@ -114,6 +118,7 @@ export class PropViews {
   /** Rebuilds the merged interior meshes that changed. Call once per frame before rendering. */
   flush(): void {
     this.interiors.flush();
+    this.w3Bake.flush();
   }
 
   isBlocker(mesh: AbstractMesh): boolean {
@@ -181,6 +186,8 @@ export class PropViews {
     if (prop.light && lightKey) materials.addLight(lightKey, prop.light);
     this.props.set(id, { prop, lightKey, decor, at: glowCentre(prop, at), shown: true });
     this.w3.track(id, prop.root, at);
+    const own = prop.root.getChildMeshes(true)[0] as Mesh | undefined;
+    if (view.kind === "block" && own && w3Bakeable(view, at)) this.w3Bake.add(id, own, at);
     this.glowEye = null;
     if (ground === null && this.deps.groundAt) this.unsettled.set(id, { name, view, at });
     if (view.kind === "block") this.addBlock(id, view, at, prop);
@@ -212,7 +219,7 @@ export class PropViews {
 
   /** Shows W-3's hall's doors, stairs and ladders near it and hides them from afar (its blocks are baked, `W3View`). */
   updateInteriors(eye: Vector3): void {
-    this.w3.update(eye);
+    if (this.w3.update(eye)) this.w3Bake.setShown(this.w3.shown);
   }
 
   /** Where the glow was last judged from; null: judge again. */
@@ -264,6 +271,7 @@ export class PropViews {
     if (root.position.x === t.position.x && root.position.y === t.position.y && root.position.z === t.position.z) return true;
     for (const m of root.getChildMeshes(false)) if (m.isWorldMatrixFrozen) m.unfreezeWorldMatrix();
     root.position.set(t.position.x, t.position.y, t.position.z);
+    this.w3Bake.moved(id, t.position);
     return true;
   }
 
@@ -280,6 +288,7 @@ export class PropViews {
     this.props.delete(id);
     this.unsettled.delete(id);
     this.w3.untrack(id);
+    this.w3Bake.remove(id);
     const { materials, atmosphere } = this.deps;
     this.deps.cityKit.remove(id);
     this.deps.dressing.remove(id);
@@ -296,7 +305,12 @@ export class PropViews {
 
   /** Props have no scan class of their own; the focused one is still outlined. */
   scanTargets(visit: ScanVisitor): void {
-    for (const [id, e] of this.props) visit(id, null, () => e.prop.root.getChildMeshes(false));
+    // A focused prop of W-3's hall leaves its bake: the outline is drawn on its own mesh.
+    for (const [id, e] of this.props)
+      visit(id, null, () => {
+        this.w3Bake.release(id);
+        return e.prop.root.getChildMeshes(false);
+      });
   }
 
   /** Light shafts, wet-street reflections and flicker for lamps and neon signs. */
