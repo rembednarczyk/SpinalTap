@@ -82,6 +82,8 @@ describe("activities from Mixamo clips (ADR-0090)", () => {
     const seeds = Array.from({ length: 20 }, (_, i) => figureSeed(buildCivilian(scene, materials, `npc-${i}`)));
     expect(Math.max(...seeds) - Math.min(...seeds)).toBeGreaterThan(0.6);
     expect(new Set(seeds.map((x) => Math.floor(x * 2))).size).toBe(2);
+    // The lean is a clip too: its procedural pose put the hands up by the head on the models (G-731).
+    expect(activityFrame(rig, "lean", 1)).not.toBeNull();
     // An activity without a clip keeps its procedural pose.
     expect(activityFrame(rig, "sweep", 1)).toBeNull();
   });
