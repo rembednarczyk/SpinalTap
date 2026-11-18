@@ -1,0 +1,1 @@
+Przechodnie palą, rozmawiają przez telefon albo piszą SMS-y, gestykulują w rozmowie i obsługują terminal z klipów Mixamo; postacie z modelem przy oparciu o ścianę nie trzymają już rąk przy głowie (ADR-0090, G-731).

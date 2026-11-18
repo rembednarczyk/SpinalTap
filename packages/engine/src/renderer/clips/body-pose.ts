@@ -1,6 +1,7 @@
 import { Quaternion } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
 import type { BodyClip } from "./body-clip";
+import { airFrame } from "./air-clips";
 import { BODY_CLIPS } from "./body-clips.generated";
 import { sampleBody } from "./body-sample";
 import { RIG_LEG, poseLeg, turnTowards } from "./leg-pose";
@@ -138,6 +139,12 @@ const poseLadder = (rig: CharacterRig): void => {
   turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
 };
 
+/** Off the ground and after a hard landing (`air-clips.ts`); the arms that hold something keep it. */
+const poseAir = (rig: CharacterRig, speed: number, dt: number): number => {
+  const a = airFrame(rig, dt, (speed - STANDING) / 1.5);
+  return a ? layPose(rig, a.frame, a.w, freeArms(rig), true) : 0;
+};
+
 /** A shot's kick (`recoil.ts`): the torso and the head jolt back about the hips. */
 const poseRecoil = (rig: CharacterRig, dt: number): number => {
   const kick = stepRecoil(rig, dt);
@@ -163,7 +170,7 @@ export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, 
     s.idle = 0;
     s.hit = null;
   }
-  const shift = alive ? poseIdle(rig, s, target, dt) + poseHit(rig, s, dt) + poseRecoil(rig, dt) : 0;
+  const shift = alive ? poseIdle(rig, s, target, dt) + poseAir(rig, speed, dt) + poseHit(rig, s, dt) + poseRecoil(rig, dt) : 0;
   if (alive) poseLadder(rig);
   rig.body.position.x += shift - s.shift;
   s.shift = shift;

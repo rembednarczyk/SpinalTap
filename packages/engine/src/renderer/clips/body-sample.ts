@@ -37,3 +37,13 @@ export const sampleBody = (clip: BodyClip, t: number, loop: boolean): BodyFrame 
     gun: clip.gun.length ? mixRows(clip.gun, f0, f1, k, 1)[0]! : 0,
   };
 };
+
+/** Two frames mixed: `k` of the way from `a` to `b`. */
+export const mixFrames = (a: BodyFrame, b: BodyFrame, k: number): BodyFrame => ({
+  hips: Vector3.Lerp(a.hips, b.hips, k),
+  chest: Quaternion.Slerp(a.chest, b.chest, k),
+  head: Quaternion.Slerp(a.head, b.head, k),
+  arms: a.arms.map((v, i) => v + (b.arms[i]! - v) * k),
+  legs: a.legs.map((v, i) => v + (b.legs[i]! - v) * k),
+  gun: a.gun + (b.gun - a.gun) * k,
+});

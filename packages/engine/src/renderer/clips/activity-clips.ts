@@ -1,9 +1,9 @@
 import type { ActivityId } from "@seki/core";
-import { Quaternion, Vector3 } from "../../babylon";
+import { Vector3 } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
 import type { BodyClip } from "./body-clip";
 import { BODY_CLIPS } from "./body-clips.generated";
-import { type BodyFrame, sampleBody } from "./body-sample";
+import { type BodyFrame, mixFrames, sampleBody } from "./body-sample";
 import { figureSeed, layPose } from "./pose-lay";
 
 /*
@@ -32,15 +32,6 @@ const GESTURES: readonly BodyClip[] = [BODY_CLIPS.talkHappy, BODY_CLIPS.talkAck,
 /** Seconds one gesture eases into the next. */
 const GESTURE_EASE = 0.3;
 
-/** Two frames mixed: `k` of the way from `a` to `b`. */
-const mixFrames = (a: BodyFrame, b: BodyFrame, k: number): BodyFrame => ({
-  hips: Vector3.Lerp(a.hips, b.hips, k),
-  chest: Quaternion.Slerp(a.chest, b.chest, k),
-  head: Quaternion.Slerp(a.head, b.head, k),
-  arms: a.arms.map((v, i) => v + (b.arms[i]! - v) * k),
-  legs: a.legs.map((v, i) => v + (b.legs[i]! - v) * k),
-  gun: 0,
-});
 
 /** The figure's order of the gestures: a turn of the list by its seed, every other one backwards. */
 const gestureOrder = (seed: number): BodyClip[] => {

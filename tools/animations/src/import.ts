@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import { ARM_POINTS, type ArmPoint, type BodyClip, type BodyMode, type Quat, bodyClipsModule, toBodyClip } from "./body-math.ts";
+import { ARM_POINTS, type ArmPoint, type BodyClip, type BodyMode, type HipsFrom, type Quat, bodyClipsModule, toBodyClip } from "./body-math.ts";
 import { LEG_JOINTS, type LegClip, type LegJoint, legClipsModule, mirrored, toLegClip } from "./clip-math.ts";
 
 /*
@@ -103,7 +103,7 @@ const pick = <K extends string>(s: Sampled, keys: readonly K[]): Record<K, reado
 const dir = process.argv[2];
 if (!dir) throw new Error("usage: node tools/animations/src/import.ts <dir with the unzipped packs>");
 type Source = string | { readonly file: string; readonly mirror: boolean };
-type BodySource = { readonly file: string; readonly mode: BodyMode; readonly fps?: number; readonly turn?: boolean };
+type BodySource = { readonly file: string; readonly mode: BodyMode; readonly fps?: number; readonly turn?: boolean; readonly hipsFrom?: HipsFrom };
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8")) as { clips: Record<string, Source>; body: Record<string, BodySource> };
 
 const legs: Record<string, LegClip> = {};
@@ -122,7 +122,7 @@ for (const [name, src] of Object.entries(manifest.body)) {
   const s = sample(join(dir, src.file), src.fps ?? 30, src.turn ?? false);
   const bind = { hips: s.bind.get("hips")!, neck: s.bind.get("neck")!, shoulderL: s.bind.get("shoulderL")!, shoulderR: s.bind.get("shoulderR")! };
   const raw = { cycle: s.cycle, frames: s.frames, hips: s.paths.get("hips")!, neck: s.paths.get("neck")!, bind, head: s.turns.head, arms: pick(s, ARM_POINTS), legs: pick(s, LEG_JOINTS) };
-  body[name] = toBodyClip(raw, src.mode);
+  body[name] = toBodyClip(raw, src.mode, src.hipsFrom);
   bodySources[name] = src.file;
 }
 const out = (f: string) => new URL(`../../../packages/engine/src/renderer/clips/${f}`, import.meta.url);
