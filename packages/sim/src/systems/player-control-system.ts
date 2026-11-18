@@ -1,4 +1,5 @@
 import {
+  woundedGait,
   PARRY_COOLDOWN,
   STAGGER_MOVE,
   clamp,
@@ -234,8 +235,10 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
   const weapon = p.combatant?.stats ?? null;
   const guarding = p.melee?.guard ?? false;
   const staggered = (p.melee?.stagger ?? 0) > 0;
-  // No sprint while aiming down sights, guarding or off balance.
-  const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
+  // Wounds slow her, and badly hurt she cannot run (user notes of 18.11).
+  const wounds = woundedGait(p.health ? p.health.current / p.health.max : 1);
+  // No sprint while aiming down sights, guarding, off balance or badly hurt.
+  const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered && wounds.sprint;
   if (posture) posture.sprinting = sprinting;
   // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
   const crouchSlow = 1 + (gait.crouch - 1) * (posture?.amount ?? 0);
@@ -246,7 +249,8 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
     (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) *
     (staggered ? STAGGER_MOVE : 1) *
     (landingSlow ? LANDING_SLOW_MULTIPLIER : 1) *
-    gait.carry;
+    gait.carry *
+    wounds.pace;
   const sin = Math.sin(p.yaw);
   const cos = Math.cos(p.yaw);
   // Forward = (sin, cos); right = (cos, -sin).
