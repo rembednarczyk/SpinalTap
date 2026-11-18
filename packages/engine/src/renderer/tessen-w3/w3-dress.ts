@@ -84,8 +84,10 @@ const words = (k: KitPainter): void => {
   paintLettering(k, { text: W3_WORDS.secret, at: { x: x - 0.25, y: W3_Y + 2.3, z: GATE_MID + 1 }, normal: WEST, height: 0.4, swatch: "paint", tint: W3_PAINT.red });
   const south = (W3_AIRLOCKS.minZ + W3_LAYOUT.AIRLOCK_S_DOOR + 0.8) / 2 + 0.6;
   paintLettering(k, { text: W3_WORDS.secret, at: { x, y: W3_Y + 3.1, z: south }, normal: WEST, height: 0.3, swatch: "paint", tint: W3_PAINT.red });
+  // On the tower's west face south of the pipeline's trestle (x 2484, z 442.2..443.8), which hides
+  // what is north of it from the river.
   const t = W3_TOWER;
-  paintLettering(k, { text: W3_WORDS.tower, at: { x: t.minX, y: W3_Y + 5.4, z: (t.minZ + t.maxZ) / 2 }, normal: WEST, height: 2.4, swatch: "paint", tint: W3_PAINT.white });
+  paintLettering(k, { text: W3_WORDS.tower, at: { x: t.minX, y: W3_Y + 5.6, z: t.minZ + 3.3 }, normal: WEST, height: 2, swatch: "paint", tint: W3_PAINT.white });
 };
 
 /**
