@@ -2202,8 +2202,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
 - Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
 - Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
-- Status: zgłoszone
+- Status: w PR #736; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim
+- Kamery dachu N, obserwator w kabinie, strefa z polem floor. Otwarte: obserwator po alarmie na tor suwnicy (ADR §1 p. 4), kwestia Genzō w m4-doki.ink.
 
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
 - Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście
