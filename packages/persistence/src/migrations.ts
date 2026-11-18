@@ -427,6 +427,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const difficulty = isObject(domain.difficulty) ? { difficulty: withPressure(domain.difficulty) } : {};
     return { ...old, version: 47, ...pending, domain: { ...domain, ...difficulty } };
   },
+  // v47 -> v48 (ADR-0091 stage 2): the gangs' standings per district. A v47 save has none: every
+  // gang is calm everywhere, with no grudge, as the city was before.
+  47: (old) => ({ ...old, version: 48, domain: { ...(isObject(old.domain) ? old.domain : {}), gangStandings: {} } }),
 };
 
 /** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */

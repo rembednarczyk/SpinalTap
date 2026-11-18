@@ -1,4 +1,4 @@
-import { isMetroStationId } from "@seki/core";
+import { CITY_DISTRICT_IDS, GANG_RULES, isFactionId, isMetroStationId } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -38,5 +38,17 @@ export const findVariationError = (contract: Json): string | null => {
   if (typeof v.security !== "string" || !SECURITY.includes(v.security)) return "contract variation";
   if (v.trait !== undefined && (typeof v.trait !== "string" || !TRAITS.includes(v.trait))) return "contract variation";
   if (v.twist !== undefined && (typeof v.twist !== "string" || !TWISTS.includes(v.twist))) return "contract variation";
+  return null;
+};
+
+/** The gangs' standings per district (ADR-0091): `<faction>:<district>` keys, a grudge 0..100 and the end of a provocation or null. */
+export const findGangStandingsError = (g: unknown): string | null => {
+  if (!isObject(g)) return "gang standings";
+  for (const [key, s] of Object.entries(g)) {
+    const [faction, district, ...rest] = key.split(":");
+    if (rest.length > 0 || faction === undefined || !isFactionId(faction) || !(CITY_DISTRICT_IDS as readonly string[]).includes(district ?? "")) return "gang standings";
+    if (!isObject(s) || typeof s.grudge !== "number" || !Number.isFinite(s.grudge) || s.grudge < 0 || s.grudge > GANG_RULES.maxGrudge) return "gang standings";
+    if (!(s.provokedUntil === null || (typeof s.provokedUntil === "number" && Number.isFinite(s.provokedUntil)))) return "gang standings";
+  }
   return null;
 };
