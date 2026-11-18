@@ -19,7 +19,9 @@
     "crouchBackLeft": {
       "file": "rifle/Walk Crouching Backward Right.fbx",
       "mirror": true
-    }
+    },
+    "walkM": "Action Adventure Pack/walking.fbx",
+    "runM": "Action Adventure Pack/running.fbx"
   },
   "body": {
     "idle": {
@@ -195,6 +197,11 @@
       "mode": "pose",
       "fps": 20,
       "hipsFrom": "last"
+    },
+    "idleM": {
+      "file": "Action Adventure Pack/idle.fbx",
+      "mode": "pose",
+      "fps": 10
     }
   }
 }

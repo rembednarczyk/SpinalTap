@@ -27,6 +27,8 @@ Status: Przyjęty (17.11, wygląd zaakceptowany przez użytkownika na zrzutach).
 
 12. **Hamowanie z biegu (18.11).** Spadek prędkości z co najmniej 4 m/s poniżej 1,2 m/s odtwarza „run to stop” z Adventure (0,9 s, wygaszany w ostatniej piątej części, przerwany, gdy postać znów rusza): oparcie stopy, odchylenie, przysiad bioder. Gra już zatrzymała postać, więc z bioder klipu idzie tylko wysokość (`layPose`, `hips: "height"`).
 
+13. **Męski chód i postój (18.11).** Wszyscy chodzili klipami z paczki kobiecej. Postać o męskiej budowie chodzi i biega na wprost klipami „walking” i „running” z Action Adventure i stoi w jego „idle” (albo przenosi ciężar). Budowa idzie za modelem: `HumanoidRetarget.masculine` z barków do bioder (męskie modele gry 1,74, kobiece 1,41, próg 1,58), a bez modelu z budowy proceduralnej (`rig.masculine`).
+
 ## Konsekwencje
 - Ruch w bok, w tył i w kucki ma kroki w swoją stronę; widać to u gracza w TPP i u wrogów z ADR-0089.
 - Tablica ma ok. 50 KB w kodzie (13 pętli po 16-42 klatki), bez nowych plików do pobrania.

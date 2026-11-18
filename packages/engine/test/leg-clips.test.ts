@@ -45,11 +45,13 @@ const walk = (r: CharacterRig, dx: number, dz: number, speed: number, seconds: n
 };
 
 describe("legs from the locomotion clips (ADR-0090)", () => {
-  it("are made of the thirteen clips, each a loop with its stride the way it goes", () => {
-    expect(Object.keys(LEG_CLIPS).sort()).toEqual(["crouch", "crouchBackLeft", "crouchBackRight", "crouchLeft", "crouchRight", "run", "runBack", "runLeft", "runRight", "walk", "walkBack", "walkLeft", "walkRight"]);
+  it("are made of the fifteen clips (two of them a man's walk and run ahead), each a loop with its stride the way it goes", () => {
+    expect(Object.keys(LEG_CLIPS).sort()).toEqual(["crouch", "crouchBackLeft", "crouchBackRight", "crouchLeft", "crouchRight", "run", "runBack", "runLeft", "runM", "runRight", "walk", "walkBack", "walkLeft", "walkM", "walkRight"]);
     // The left ones crouched are the right ones mirrored.
     expect(LEG_CLIPS.crouchLeft.stride.x).toBeCloseTo(-LEG_CLIPS.crouchRight.stride.x, 9);
     expect(LEG_CLIPS.walk.stride.z).toBeGreaterThan(1);
+    expect(LEG_CLIPS.walkM.stride.z).toBeGreaterThan(1);
+    expect(LEG_CLIPS.runM.stride.z).toBeGreaterThan(LEG_CLIPS.walkM.stride.z);
     expect(LEG_CLIPS.walkBack.stride.z).toBeLessThan(-1);
     expect(LEG_CLIPS.walkLeft.stride.x).toBeLessThan(-1);
     expect(LEG_CLIPS.walkRight.stride.x).toBeGreaterThan(1);

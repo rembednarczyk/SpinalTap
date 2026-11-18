@@ -70,7 +70,12 @@ const idleTarget = (rig: CharacterRig, speed: number, crouch: number): number =>
 
 /** The idle each figure stands in, its own of two (Adventure's “idle (2)” bent Seki's bust through the ballistic vest, G-870). */
 const IDLES = [BODY_CLIPS.idle, BODY_CLIPS.idleShift] as const;
-export const idleClipOf = (rig: CharacterRig): BodyClip => IDLES[Math.floor(figureSeed(rig) * IDLES.length)]!;
+/** A man's build stands as the Action Adventure pack's idle or shifts its weight. */
+const IDLES_M = [BODY_CLIPS.idleM, BODY_CLIPS.idleShift] as const;
+export const idleClipOf = (rig: CharacterRig): BodyClip => {
+  const idles = rig.masculine ? IDLES_M : IDLES;
+  return idles[Math.floor(figureSeed(rig) * idles.length)]!;
+};
 
 const poseIdle = (rig: CharacterRig, s: BodyState, target: number, dt: number): number => {
   s.idle += (target - s.idle) * Math.min(1, dt * IDLE_EASE);

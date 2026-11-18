@@ -83,6 +83,8 @@ export interface CharacterModelsDeps {
 export class CharacterModels {
   private manifest: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
+  /** The procedural build's gait of each dressed rig, given back with the model. */
+  private readonly builtMasculine = new WeakMap<CharacterRig, boolean | undefined>();
   /** Rigs whose model is still loading, with its file, so a manifest arriving meanwhile does not dress them twice. */
   private readonly loading = new Map<CharacterRig, string>();
   /** Rigs whose model failed to load, until they are dressed or gone (G-807). */
@@ -208,6 +210,7 @@ export class CharacterModels {
     this.dressed.delete(rig);
     this.retries.delete(rig);
     rig.reach = null;
+    if (this.builtMasculine.has(rig)) rig.masculine = this.builtMasculine.get(rig);
   }
 
   /** Follows the rigs: retargeted bones, springs and faces of the models on screen; lets go of files nobody wears. */
@@ -306,6 +309,9 @@ export class CharacterModels {
     this.dressed.set(rig, { model, url: at.url, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });
     // The rig solves a two-handed hold for the model's arms, which it no longer shows itself.
     rig.reach = retarget.reach;
+    // The model's build decides the gait (a woman on a man's file walks as a man, and the other way).
+    this.builtMasculine.set(rig, rig.masculine);
+    rig.masculine = retarget.masculine;
     // The gun in the model's hand and the garment add-ons on its bones.
     this.deps.loadouts.setModel(rig, { retarget, meshes: model.meshes });
   }

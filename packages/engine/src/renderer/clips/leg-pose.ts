@@ -6,7 +6,7 @@ import { LEG_CLIPS } from "./leg-clips.generated";
 /*
  * The legs from Mixamo's locomotion clips (ADR-0090). A clip is mixed in by the way the character
  * moves against the way it faces (forward, back, to either side, and between) and by its speed
- * (walk to run). Its phase runs with the ground covered, one loop per the mixed clip's stride, so
+ * (walk to run); a man's build walks and runs ahead as a man does (`rig.masculine`). Its phase runs with the ground covered, one loop per the mixed clip's stride, so
  * the feet do not slide; crouched, the crouching walks (the user's ask of 17.11). The joints'
  * paths turn into the rig's thigh and knee rotations (each limb's swing from hanging down), on top
  * of which the dressed model is posed as before (`HumanoidRetarget`). An older figure's shorter
@@ -29,6 +29,9 @@ const TURN = 10;
 type Dir = "fwd" | "back" | "left" | "right";
 const WALKS: Readonly<Record<Dir, LegClip>> = { fwd: LEG_CLIPS.walk, back: LEG_CLIPS.walkBack, left: LEG_CLIPS.walkLeft, right: LEG_CLIPS.walkRight };
 const RUNS: Readonly<Record<Dir, LegClip>> = { fwd: LEG_CLIPS.run, back: LEG_CLIPS.runBack, left: LEG_CLIPS.runLeft, right: LEG_CLIPS.runRight };
+/** A man walks and runs ahead as in the Action Adventure pack (the rest is the same for all). */
+const WALKS_M: Readonly<Record<Dir, LegClip>> = { ...WALKS, fwd: LEG_CLIPS.walkM };
+const RUNS_M: Readonly<Record<Dir, LegClip>> = { ...RUNS, fwd: LEG_CLIPS.runM };
 /** Crouched: the back is a diagonal one to the side it leans to (Mixamo's rifle pack walks back only so). */
 const crouches = (side: number): Readonly<Record<Dir, LegClip>> => ({
   fwd: LEG_CLIPS.crouch,
@@ -43,7 +46,7 @@ const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
  * The clips and their weights (summing to 1) for a heading (radians: 0 the way it faces, +π/2 to
  * its right), a share of running and one of crouching, each 0..1. Crouched, it walks.
  */
-export const legWeights = (heading: number, run: number, crouch = 0): [LegClip, number][] => {
+export const legWeights = (heading: number, run: number, crouch = 0, masculine = false): [LegClip, number][] => {
   const c = Math.cos(heading);
   const s = Math.sin(heading);
   const sum = Math.abs(c) + Math.abs(s) || 1;
@@ -56,10 +59,12 @@ export const legWeights = (heading: number, run: number, crouch = 0): [LegClip, 
   const k = clamp01(crouch);
   const r = clamp01(run) * (1 - k);
   const low = crouches(s);
+  const walks = masculine ? WALKS_M : WALKS;
+  const runs = masculine ? RUNS_M : RUNS;
   return dirs.flatMap(([d, w]): [LegClip, number][] =>
     [
-      [WALKS[d], w * (1 - r) * (1 - k)] as [LegClip, number],
-      [RUNS[d], w * r] as [LegClip, number],
+      [walks[d], w * (1 - r) * (1 - k)] as [LegClip, number],
+      [runs[d], w * r] as [LegClip, number],
       [low[d], w * k] as [LegClip, number],
     ].filter(([, x]) => x > 1e-6),
   );
@@ -163,7 +168,7 @@ export const poseLegsFromClips = (rig: CharacterRig, at: { x: number; z: number 
   }
   const w = clipShare(rig, speed);
   if (w <= 0) return;
-  const mix = legWeights(s.heading, (speed - WALK) / (RUN - WALK), crouch);
+  const mix = legWeights(s.heading, (speed - WALK) / (RUN - WALK), crouch, rig.masculine ?? false);
   const scale = Math.abs(rig.root.scaling.y) || 1;
   const pace = rig.pace ?? 1;
   s.phase += (speed * dt) / (Math.max(0.5, strideOf(mix) * pace) * RIG_LEG * scale);
