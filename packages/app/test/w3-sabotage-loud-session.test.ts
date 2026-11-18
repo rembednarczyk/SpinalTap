@@ -133,10 +133,14 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     for (let i = 0; i < 2 * Math.round(SIREN_PERIOD * SIM_HZ); i++) steps(session, 1);
     expect(count("alarm-siren") - wails).toBe(2);
     expect(step(session)).toContain("Podłóż ładunki na stanowiskach linii (0/3");
+    // Each charge clamps on with its sound once it is planted (stage 4), not while it is being planted.
+    expect(count("charge-plant")).toBe(0);
     plant(session, job.id, "S1");
     expect(step(session)).toContain("(1/3");
+    expect(count("charge-plant")).toBe(1);
     plant(session, job.id, "S2");
     plant(session, job.id, "S4");
+    expect(count("charge-plant")).toBe(3);
     expect(step(session)).toMatch(/Wyjdź z hali, zanim ładunki wybuchną \((1:00|0:5\d)\)/);
     // A save with the fuse running loads to the same state.
     const hash = stateHash(session.sim.snapshot(null, "t", ""));
@@ -147,6 +151,7 @@ describe("W-3's sabotage, the loud way, in a session (ADR-0082 stage 3b)", () =>
     expect(last(effects, "line-wrecks").at(-1)?.stations).toEqual([]);
     expect(last(effects, "explosion")).toHaveLength(0);
     expect(count("explosion")).toBe(0);
+    expect(count("charge-plant")).toBe(3);
     // Out of the hall, in the east yard: the line goes off.
     teleport(session, 2585, 415, 0, 0, W3_Y);
     steps(session, 2);

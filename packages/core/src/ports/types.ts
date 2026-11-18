@@ -474,4 +474,7 @@ export type AudioCue =
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
   | "explosion"
   | "alarm"
-  | "alarm-siren";
+  | "alarm-siren"
+  // W-3 (ADR-0082 stage 4): a charge clamped onto a station and armed, the virus in the core.
+  | "charge-plant"
+  | "upload-done";
