@@ -515,7 +515,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Po G-781 odsłonięte płaskie biegi Ratusza od Pl. Łokietka w1095048695/w1095048696 (step_count 9, ok. 1,4 m) w krakowskie-2-0 (411..421; -86..-90): szare płyty bez stopni 4 cm pod chodnikiem
 
 ### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
-- Status: zgłoszone (2.11, weryfikator G-219)
+- Status: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
 - Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
 - Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
 - Pakiet właściciela: packages/sim (micro-events, streaming)
