@@ -29,8 +29,8 @@ const seatedLegs = Object.entries(SCHEDULES).flatMap(([key, def]) =>
     // Leaving the seat and coming back to it, a few minutes before each (a game minute is a second).
     const seat = stop.path[stop.path.length - 1]!;
     return [
-      { key, label: `${stop.label} → ${next.label}`, at: next.at, seat },
-      { key, label: `→ ${stop.label}`, at: stop.at, seat },
+      { key, label: `${stop.label} → ${next.label}`, at: next.at, seat, arriving: false },
+      { key, label: `→ ${stop.label}`, at: stop.at, seat, arriving: true },
     ];
   }),
 );
@@ -40,7 +40,7 @@ describe("G-732: nobody walks seated", () => {
     expect(seatedLegs.length).toBeGreaterThanOrEqual(4);
   });
 
-  it.each(seatedLegs)("$key, $label: seated only while standing still", ({ key, at, seat }) => {
+  it.each(seatedLegs)("$key, $label: seated only while standing still", ({ key, at, seat, arriving }) => {
     const sim = Simulation.create({ seed: 7 });
     // By the seat, so its chunk is loaded with the figure in it.
     teleportPlayer(sim, spotNear(seat.x + 3, seat.z + 3), 0);
@@ -49,6 +49,11 @@ describe("G-732: nobody walks seated", () => {
     run(sim, SIM_HZ);
     const npc = byKey(sim, key);
     expect(npc, key).toBeDefined();
+    // Coming back from far off (Hideo from the Rynek), the clock goes on a minute at a time until it is a short walk away.
+    for (let m = 0; m < 30 && arriving && Math.hypot(npc!.position.x - seat.x, npc!.position.z - seat.z) > 20; m++) {
+      sim.enqueue({ type: "wait", minutes: 1 });
+      sim.step();
+    }
     let seatedSteps = 0;
     let walkedSeated = 0;
     let walked = 0;
@@ -60,6 +65,8 @@ describe("G-732: nobody walks seated", () => {
       const seated = npc!.activity !== undefined && SEATED.includes(npc!.activity);
       if (seated) seatedSteps++;
       if (seated && speed > ACTIVITY_STILL_SPEED + 0.05) walkedSeated++;
+      // Both seen, the switch between them too: seated a second and walking five.
+      if (seatedSteps > SIM_HZ && walked > 5 * SIM_HZ) break;
     }
     // It walked one way or the other, sat somewhere along it, and never both at once.
     expect(walked, "walked").toBeGreaterThan(SIM_HZ);
