@@ -155,6 +155,10 @@ describe("W-3's 2077 layer (ADR-0082 stage 4)", () => {
     const flood = () => materials.light(`${W3_FLOOD_PREFIX}neon`) !== undefined;
     const lowView = view(false);
     lowView.update(1 / 60, false);
+    // The view bakes the dress into its inside mesh (and its outer one) when it builds them.
+    const baked = w3InsideGeometry(kitData);
+    w3Dress(kitData, baked);
+    expect(lowView.stats.insideTriangles).toBe(tris(baked.inside));
     expect(lowView.fx.systems).toHaveLength(0);
     expect(flood()).toBe(true);
     Object.assign(eye, w3(2520, 1.6, 418));
