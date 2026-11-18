@@ -18,6 +18,7 @@ describe("the chance of a micro-event (ADR-0070)", () => {
 
   it("12% and 25%; an aid +3, a mugging +3 as before", () => {
     expect([MICRO_EVENT_CHANCE, MICRO_EVENT_CHANCE_DISTRUSTED]).toEqual([0.12, 0.25]);
-    expect(MICRO_EVENT_REWARD).toEqual({ mugging: { eddies: 70, civilians: 3 }, aid: { eddies: 25, civilians: 3 } });
+    // The extortion of the street's board came with ADR-0091 stage 5.
+    expect(MICRO_EVENT_REWARD).toEqual({ mugging: { eddies: 70, civilians: 3 }, aid: { eddies: 25, civilians: 3 }, extortion: { eddies: 90, civilians: 3 } });
   });
 });

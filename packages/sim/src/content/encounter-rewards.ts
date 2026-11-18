@@ -38,9 +38,11 @@ export const ENCOUNTER_REWARDS: Readonly<Record<string, EncounterReward>> = {
  */
 export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
   "shinsekai-7": [spotNear(290, -84), spotNear(352, -92), spotNear(205, -63)],
-  kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(688, 110)],
-  // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia by the bus station.
-  targ: [spotNear(740, 306), spotNear(778, 372), spotNear(806, 360)],
+  // The third off Zaułek Panasa to the square east of the Trybunał: 40 m and more off the gangs' cores (ADR-0091, decision 9).
+  kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(640, -10)],
+  // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia, the two by the bus
+  // station moved off its gang's core (ADR-0091, decision 9).
+  targ: [spotNear(740, 306), spotNear(760, 330), spotNear(845, 360)],
   // The public strip by W-3's fence (ADR-0082): past the metro, east of it, by the bridge's path.
   doki: [ground(2540, 387), ground(2570, 386.5), ground(2478, 390.5)],
 };

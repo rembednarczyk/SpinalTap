@@ -9,6 +9,7 @@ import { lowerFlag } from "./domain-ops";
 import { GANGER_MAX_HP, gangerEntity, toughen } from "./factory";
 import { enemyScalingIn } from "./enemy-scaling";
 import { passerBy, streetOpen, thankedByStreet } from "./street-scenes";
+import { type BoardCrime, CRIME_LEAVE, closeCrime } from "./street-crimes";
 
 /**
  * Micro-events in the style of Scanner Hustles (ADR-0034): rarely, on entering a district, a
@@ -25,7 +26,8 @@ export const MICRO_MAX_DISTANCE = 40;
 /** Farther than this from the spot the player has walked away. */
 export const MICRO_LEAVE_DISTANCE = 45;
 const VICTIM_HP = 60;
-const MUGGERS = 2;
+/** How many of the gang rob a passer-by, and how many squeeze a stall (ADR-0091 stage 5). */
+const ATTACKERS: Readonly<Record<MicroEventKind, number>> = { mugging: 2, extortion: 3, aid: 0 };
 
 /** Keys of a micro-event's people start with this (`micro-key.ts`). */
 export { isMicroKey } from "./micro-key";
@@ -45,11 +47,11 @@ const spawn = (ctx: SimContext, kind: MicroEventKind, at: Vec3): MicroEventRun =
   const id = `micro:${kind}:${ctx.tick}`;
   const victimKey = `${id}:victim`;
   // Only the robbed one needs a key (the muggers go for it by key).
-  const victim = passerBy(ctx, at, 0, VICTIM_HP, kind === "mugging" ? victimKey : undefined);
+  const victim = passerBy(ctx, at, 0, VICTIM_HP, ATTACKERS[kind] > 0 ? victimKey : undefined);
   const attackers: number[] = [];
-  if (kind === "mugging") {
-    for (let i = 0; i < MUGGERS; i++) {
-      const px = at.x + (i === 0 ? 1.4 : -1.4);
+  if (ATTACKERS[kind] > 0) {
+    for (let i = 0; i < ATTACKERS[kind]; i++) {
+      const px = at.x + [1.4, -1.4, 0][i]!;
       const position = { x: px, y: ctx.streamer.ground.heightAt(px, at.z + 1.2), z: at.z + 1.2 };
       const g = gangerEntity(ctx.streamer.takeId(), { key: `${id}:m${i}`, position, yaw: Math.PI }, null, GANGER_MAX_HP, victim.chunk ?? "", victimKey);
       ctx.world.add(toughen(g, enemyScalingIn(ctx)));
@@ -99,11 +101,10 @@ const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | 
       }
     }
   }
-  for (const key of [`${run.id}:victim`, `${run.id}:m0`, `${run.id}:m1`]) lowerFlag(ctx, deadFlag(key));
-  if (outcome === "won" || outcome === "helped") {
-    const r = MICRO_EVENT_REWARD[run.kind];
-    thankedByStreet(ctx, r.eddies, r.civilians);
-  }
+  for (const key of [`${run.id}:victim`, `${run.id}:m0`, `${run.id}:m1`, `${run.id}:m2`]) lowerFlag(ctx, deadFlag(key));
+  const crime = run.crime;
+  const eddies = crime ? closeCrime(ctx, { ...run, crime }, outcome) : MICRO_EVENT_REWARD[run.kind].eddies;
+  if (outcome === "won" || outcome === "helped") thankedByStreet(ctx, eddies, MICRO_EVENT_REWARD[run.kind].civilians);
   ctx.session.street2.micro = null;
   ctx.bus.emit("EncounterEnded", { encounterId: run.id, outcome });
 };
@@ -123,7 +124,7 @@ export const helpPasserBy = (ctx: SimContext, e: Entity): void => {
 export const runMicroEvent = (ctx: SimContext, player: Entity | null): void => {
   const run = ctx.session.street2.micro;
   if (!run) return;
-  if (!player || flat(player.position, run.at) > MICRO_LEAVE_DISTANCE) {
+  if (!player || flat(player.position, run.at) > (run.crime ? CRIME_LEAVE : MICRO_LEAVE_DISTANCE)) {
     close(ctx, run, "left");
     return;
   }
@@ -131,5 +132,10 @@ export const runMicroEvent = (ctx: SimContext, player: Entity | null): void => {
     close(ctx, run, "failed");
     return;
   }
-  if (run.kind === "mugging" && run.attackers.every((id) => out(ctx, id))) close(ctx, run, "won");
+  if (run.kind !== "aid" && run.attackers.every((id) => out(ctx, id))) close(ctx, run, "won");
+};
+
+/** A crime of the board within the player's reach starts (ADR-0091 stage 5). */
+export const startCrime = (ctx: SimContext, crime: BoardCrime): void => {
+  ctx.session.street2.micro = { ...spawn(ctx, crime.kind, crime.at), crime };
 };

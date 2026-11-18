@@ -79,6 +79,9 @@ const begin = (ctx: SimContext, def: EncounterDef): void => {
 export const STREET_OPEN_FLAG = "met_fixer";
 
 /** Scenes start only after the prologue, without a running job and with no heat on the player. */
+/** Has the street met her (Kaito's first word, `STREET_OPEN_FLAG`): its crimes are hers to see. */
+export const streetMet = (ctx: SimContext): boolean => hasFlag(ctx.state.domain.flags, STREET_OPEN_FLAG);
+
 export const streetOpen = (ctx: SimContext): boolean => {
   const d = ctx.state.domain;
   return hasFlag(d.flags, STREET_OPEN_FLAG) && d.contracts.active === null && d.heat.level === 0;
