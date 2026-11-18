@@ -2,7 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity, GangerAi } from "./components";
 import { entitySnapshotOf } from "./factory";
-import { isMicroKey } from "./micro-events";
+import { isMicroKey } from "./micro-key";
 import { inCreationOrder } from "./ordering";
 import type { StreamState } from "./actor-spawner";
 
