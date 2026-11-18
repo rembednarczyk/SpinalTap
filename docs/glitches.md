@@ -767,7 +767,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui (mapa miasta)
 
 ### G-322 Panel kiosku metra i karta są półprzezroczyste: przez nie widać napisy HUD
-- Status: zgłoszone (5.11, weryfikator PR #270)
+- Status: w PR #724 (18.11, pełne tło kiosku); wcześniej: zgłoszone (5.11, weryfikator PR #270)
 - Ważność: S4 · Zasięg: powiadomienie dzielnicy, cel i podpowiedź dotyku prześwitują przez panel (`shots/metro1-v2/phone-kiosk-kanal-target.png`)
 - Pakiet właściciela: packages/ui (metro)
 
