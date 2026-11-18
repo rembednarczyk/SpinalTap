@@ -70,4 +70,19 @@ describe("off the ground and landing, from the clips (ADR-0090)", () => {
       expect(Math.abs(world(r, r.head).y - stand), name).toBeLessThan(0.06);
     }
   });
+
+  it("stopping from a run, the figure dips and leans, then stands as before", () => {
+    const r = buildHeroine(scene, materials, "sprinter");
+    for (let i = 0; i < 30; i++) frame(r, undefined, 0);
+    const stand = world(r, r.head).y;
+    for (let i = 0; i < 30; i++) frame(r, undefined, 5);
+    let lowest = Infinity;
+    for (let i = 0; i < 0.5 / DT; i++) {
+      frame(r, undefined, 0);
+      lowest = Math.min(lowest, world(r, r.head).y);
+    }
+    expect(stand - lowest).toBeGreaterThan(0.1);
+    for (let i = 0; i < 1.5 / DT; i++) frame(r, undefined, 0);
+    expect(Math.abs(world(r, r.head).y - stand)).toBeLessThan(0.03);
+  });
 });

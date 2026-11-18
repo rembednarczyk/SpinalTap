@@ -189,6 +189,12 @@
       "mode": "pose",
       "fps": 15,
       "inPlace": true
+    },
+    "runStop": {
+      "file": "Action Adventure Pack/run to stop.fbx",
+      "mode": "pose",
+      "fps": 20,
+      "hipsFrom": "last"
     }
   }
 }

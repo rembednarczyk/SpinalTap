@@ -44,20 +44,29 @@ const shiftHips = (b: CharacterRig["body"], by: Vector3): number => {
   return by.x * RIG_LEG;
 };
 
+/** What of a frame `layPose` lays: the legs too (default), and of the hips' shift all of it (default) or only the height. */
+export interface LayOptions {
+  readonly legs?: boolean;
+  readonly hips?: "all" | "height";
+}
+
 /**
  * A pose clip's frame on the rig, `w` of the way, the arms `arms` (left, right) of that. With
  * `sideways` the hips' shift to the side is returned for the caller to track (the body's x is set
  * by nothing else); without, it is left out.
  */
-export const layPose = (rig: CharacterRig, f: BodyFrame, w: number, arms: readonly [number, number], sideways: boolean): number => {
+export const layPose = (rig: CharacterRig, f: BodyFrame, w: number, arms: readonly [number, number], sideways: boolean, options: LayOptions = {}): number => {
   const b = rig.body;
   const by = f.hips.scale(w);
-  if (!sideways) by.x = 0;
+  if (!sideways || options.hips === "height") by.x = 0;
+  if (options.hips === "height") by.z = 0;
   const x = turnAboutHips(rig, f.chest.multiply(rotationOf(b)), w, by);
   turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
-  const unlean = Quaternion.Inverse(rotationOf(b));
-  poseLeg(rig.legL, rig.kneeL, [...f.legs], 0, w, unlean, 1);
-  poseLeg(rig.legR, rig.kneeR, [...f.legs], 12, w, unlean, 1);
+  if (options.legs !== false) {
+    const unlean = Quaternion.Inverse(rotationOf(b));
+    poseLeg(rig.legL, rig.kneeL, [...f.legs], 0, w, unlean, 1);
+    poseLeg(rig.legR, rig.kneeR, [...f.legs], 12, w, unlean, 1);
+  }
   poseArm(rig.armL, rig.elbowL, rig.wristL, f.arms, 0, w * arms[0]);
   poseArm(rig.armR, rig.elbowR, rig.wristR, f.arms, 9, w * arms[1]);
   return x;

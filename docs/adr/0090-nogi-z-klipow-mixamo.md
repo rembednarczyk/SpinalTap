@@ -25,6 +25,8 @@ Status: Przyjęty (17.11, wygląd zaakceptowany przez użytkownika na zrzutach).
 
 11. **Obrót w miejscu (18.11).** Klipy „left turn” i „right turn” z paczki kobiecej obracają postać o 90° na pętlę; narzędzie zdejmuje z nich obrót bioder klatka po klatce (`inPlace`, pole `turn` w tablicy), bo postać obraca gra. Stojąca postać, która obraca się szybciej niż 0,5 rad/s, przestawia nogi jak w klipie; faza biegnie z kątem obrotu (pętla na ćwierć obrotu), więc stopy nie ślizgają się przy żadnym tempie i stają, gdy obrót ustaje.
 
+12. **Hamowanie z biegu (18.11).** Spadek prędkości z co najmniej 4 m/s poniżej 1,2 m/s odtwarza „run to stop” z Adventure (0,9 s, wygaszany w ostatniej piątej części, przerwany, gdy postać znów rusza): oparcie stopy, odchylenie, przysiad bioder. Gra już zatrzymała postać, więc z bioder klipu idzie tylko wysokość (`layPose`, `hips: "height"`).
+
 ## Konsekwencje
 - Ruch w bok, w tył i w kucki ma kroki w swoją stronę; widać to u gracza w TPP i u wrogów z ADR-0089.
 - Tablica ma ok. 50 KB w kodzie (13 pętli po 16-42 klatki), bez nowych plików do pobrania.
