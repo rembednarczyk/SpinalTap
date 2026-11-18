@@ -5,6 +5,7 @@ import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
 import { ChokeArms } from "./choke-arms";
+import { type ReloadMotion, beginReload, reloadDown, reloadReach, tickReload } from "../renderer/reload-motion";
 import { ViewMelee } from "./view-melee";
 import type { ViewArms, ViewArmsFrame } from "./view-arms";
 import { type ViewmodelPose, fitPose, viewmodelPose, viewmodelScale, viewmodelView } from "./viewmodel-poses";
@@ -243,18 +244,19 @@ export class CameraRig {
 
   kick(): void {
     this.recoil = 1;
+    // A shot cuts a reload short (a shotgun with a round in fires mid-reload).
+    this.reload.reload = 0;
   }
 
   private weaponDrawn = true;
   /** 0 holstered (viewmodel out of view) .. 1 drawn; eased towards `weaponDrawn`. */
   private draw = 1;
 
-  private reload = 0;
-  private reloadTotal = 0;
+  private readonly reload: ReloadMotion = { reload: 0, reloadTotal: 0, reloadRound: false, reloadHold: 0 };
 
   /** Plays the FPP reload: the weapon dips and rolls in for `seconds`. */
-  startReload(seconds: number): void {
-    this.reload = this.reloadTotal = Math.max(0.1, seconds);
+  startReload(seconds: number, perRound = false): void {
+    beginReload(this.reload, seconds, perRound);
   }
 
   /** Holster or draw the FPP weapon; the viewmodel drops out of view or comes back up. */
@@ -362,8 +364,9 @@ export class CameraRig {
     // (ADR-0021); so it does with a body on the shoulder or in a takedown grab (G-459).
     const held = this.weaponDrawn && target.climb === undefined && !this.handsBusy && target.grab === undefined ? 1 : 0;
     this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
-    this.reload = Math.max(0, this.reload - dt);
-    const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
+    tickReload(this.reload, dt);
+    // Down and rolled in; loading rounds, it stays there and nudges in with each shell.
+    const reloading = reloadDown(this.reload) * (this.reload.reloadRound ? 0.85 + 0.15 * reloadReach(this.reload) : 1);
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
     this.viewmodel.setEnabled(fpp && this.draw > 0.02);
     const { guard, offset: sw } = this.meleeView.step(target.guard ?? 0, dt);

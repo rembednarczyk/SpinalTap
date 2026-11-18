@@ -58,7 +58,7 @@ const freeArms = (rig: CharacterRig): [number, number] => {
   if (rig.grip || rig.handsBusy || rig.swing || rig.stagger > 0) return [0, 0];
   const free = 1 - rig.guard;
   if (!rig.aiming) return [rig.leftHold ? 0 : free, free];
-  const support = rig.reload > 0 ? 1 : Math.min(1, rig.aim * 2);
+  const support = rig.reload > 0 || rig.reloadHold > 0 ? 1 : Math.min(1, rig.aim * 2);
   return [rig.leftHold ? 0 : free * (1 - rig.drawn * support), free * (1 - rig.drawn)];
 };
 

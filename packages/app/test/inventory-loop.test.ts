@@ -57,7 +57,7 @@ describe("HUD weapon strip from the game", () => {
     expect(ui.getState().weapons).toBe(first);
     steps(session, Math.ceil(4 / SIM_DT), frame({ fire: true }));
     expect(ui.getState().weapons).toMatchObject({ loaded: 0, reloading: true });
-    expect(render.effects).toContainEqual({ kind: "reload", entityId: session.sim.player()!.id, duration: 1.4 });
+    expect(render.effects).toContainEqual({ kind: "reload", entityId: session.sim.player()!.id, duration: 1.4, perRound: false });
     steps(session, Math.ceil(1.5 / SIM_DT));
     expect(ui.getState().weapons).toMatchObject({ loaded: 12, reserve: 36, reloading: false });
   });
