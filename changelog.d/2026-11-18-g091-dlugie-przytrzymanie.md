@@ -1,0 +1,1 @@
+- Długie przytrzymanie przycisku Użyj na telefonie nie wybiera już kwestii w kole dialogu po podniesieniu palca (G-091).
