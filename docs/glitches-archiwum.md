@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-731 NPC stoją w pozie z rękami do góry
+- Status: naprawione (18.11, #711 scalony); wcześniej: w PR #711; wcześniej: do potwierdzenia przez użytkownika (18.11: nie odtworzone); wcześniej: zgłoszone (12.11, zgłoszenie użytkownika); do zrobienia razem z pozycją backlogu „Animacje ruchu” (po mapowaniu, pierwszy priorytet)
+- Ważność: S3 (widoczne na każdym kroku, wiele postaci) · Zasięg: domyślna poza części NPC z modelami VRM to ręce do góry, czyli T-/A-poza pliku modelu; przypuszczalnie przeniesienie pozy z riga (`HumanoidRetarget`, ADR-0076, decyzja „ramiona opuszczone zamiast T-pozy pliku”) nie działa albo działa za późno w części przypadków — możliwa regresja; do ustalenia: które postacie, kiedy (wczytanie, podmiana modelu, LOD, poza aktywności)
+- Pakiet właściciela: packages/engine (renderer: modele postaci, retarget)
+- Test przyjęcia: test renderera, że żadna postać z modelem nie ma w żadnej klatce kąta ramion T-/A-pozy (poza zamierzonymi pozami); zrzut tłumu przed/po
+- 18.11: nie odtworzone na main z ADR-0090 (#706-#709). Sonda w silniku na modelach z manifestu gry (10 cywilów, 4 gangerów, 3 korporacyjnych): stanie, chód, każda czynność ADR-0040, oddalenie poza zasięg rysowania i powrót, model z puli po zniknięciu, nokaut, śmierć: żaden model nie ma ramienia T/A-pozy (poza zamierzonymi: palacz 58°, nokaut z ręką nad głową, upadek). Na żywej grze (e2e, scena gry przez Engine.Instances) przy NPC z Neon Koi i dokach: 20 ramion modeli, wszystkie w dół; podniesione tylko ręce widoku FPP. Tłum (ADR-0041) to kukiełki bez modeli. Do użytkownika: gdzie i kiedy to widać (miejsce, pora, zrzut).
+- 18.11 (po zrzucie użytkownika z targu w Alchemii): przyczyna znaleziona. To nie T-poza ani ładowanie, tylko proceduralne pozy czynności na modelach VRM: lean zgina obie ręce przy głowie (wygląda jak ręce do góry), phone podnosi też wolną rękę do twarzy, smoke podobnie. Zrzut przed/po na main i z #711 (hana, sachiko, 1629-1631, goro, fumiko). Poprawka w #711: klipy Mixamo dla smoke, phone, talk, terminal i lean (lean: weight shift, w paczkach nie ma oparcia o ścianę). Test activity-hands-model: bez poprawki lewa dłoń nad barkiem przy lean, z poprawką obie poniżej. Zostają proceduralne: sweep, cook, eat, drink, sit, sleep, guard.
+
 ### G-916 Atlas nazw (32 miejsca) pełny w całym mieście: część tabliczek nazw nie jest rysowana
 - Ważność: S4 · Zasięg: całe miasto, tabliczki nazw w mapcity
 - Opis: Znalezione przy podziale testu map-city (#659, 17.11): zbudowane osobno części miasta rysują o 360 wierzchołków szyldów więcej niż całe miasto, bo NAME_SLOTS = 32 na całe miasto i w pełnym mieście brakuje miejsc. Do triage: znany limit czy glitch (które tabliczki znikają i gdzie; czy atlas powinien działać per komórka albo w zasięgu kamery).
