@@ -1,0 +1,1 @@
+- Testy martwej strefy ucieczki (G-316): leżący i siedzący mieszkaniec się nie obraca, przechodzień zatrzymany na trasie porzuca objazd.
