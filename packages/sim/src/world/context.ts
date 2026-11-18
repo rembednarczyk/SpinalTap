@@ -95,10 +95,16 @@ export interface MicroEventRun {
   /** The board's crime it is (ADR-0091 stage 5); none for a micro-event rolled on entering a district. */
   readonly crime?: BoardCrime;
   readonly at: Vec3;
-  /** The passer-by (the one robbed, or the one to help). */
-  readonly victim: EntityId;
-  /** The muggers of a mugging; empty for an aid. */
+  /** The passer-by (the one robbed, squeezed, kidnapped or to help); none at a deal or a drone. */
+  readonly victim: EntityId | null;
+  /** The gang of it (muggers, dealers, thieves, kidnappers); empty for an aid. */
   readonly attackers: readonly EntityId[];
+  /** Its thing of the street (ADR-0091 stage 5b: the crate, the drone, the van), gone with it. */
+  readonly props?: readonly EntityId[];
+  /** The tick it started: the drone's and the van's clock. */
+  readonly since?: number;
+  /** One of its gang was alerted: a deal no longer pays its quiet bonus. */
+  readonly alarmed?: boolean;
 }
 
 /** Something the street noticed this step (the payload of `Disturbance`). */

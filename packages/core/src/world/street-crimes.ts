@@ -19,6 +19,12 @@ export const LATE_SHARE = 0.25;
 /** Tessen does not pay a player it holds at or below this (§3a: the police pays nobody wanted). */
 export const TESSEN_PAYS_ABOVE = -50;
 
+/** A deal taken down with none of its dealers alerted pays this much more (§3, as organized crime in CP2077). */
+export const QUIET_DEAL_BONUS = 0.5;
+
+/** Seconds before a stolen drone flies off and a kidnappers' van drives away (§3). */
+export const CRIME_GETAWAY_SECONDS = { droneTheft: 60, kidnap: 45 } as const;
+
 /** Standing with Tessen for each crime foiled. */
 export const TESSEN_FOIL_STANDING = 3;
 
