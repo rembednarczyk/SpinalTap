@@ -247,6 +247,19 @@ export class HumanoidRetarget {
     return true;
   }
 
+  /**
+   * Puts a prop at the model's right wrist turned with the forearm only, not with the hand: the
+   * rig's forearm axes (-Y from the elbow to the fingers), whatever the wrist's grip does (a long
+   * gun's, G-282). The arm implant's rings sit here. Returns false if the model has no hand bone.
+   */
+  holdOnRightForearm(node: TransformNode): boolean {
+    if (!this.rightHand) return false;
+    node.parent = this.rightHand;
+    this.held.push({ node, hand: this.rightHand, joints: this.rightForearm.slice(0, 2), offset: Vector3.Zero() });
+    this.update();
+    return true;
+  }
+
   /** The model's shoulders and arm lengths in the rig body's frame, for a hold the rig solves for them (G-282). */
   get reach(): ArmReach {
     return this.armReach!;
