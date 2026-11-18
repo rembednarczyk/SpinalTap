@@ -147,7 +147,13 @@ const animateDeath = (rig: CharacterRig, dying: number): void => {
   rig.armR.rotation.z = -0.9 * ease;
   rig.armR.rotation.x = -0.4 * (1 - ease) - 0.2 * ease;
   const sink = Math.max(0, dying - DEATH_FALL - DEATH_LINGER);
-  rig.root.position.y = rig.deathGround + 0.12 * ease - sink * 0.5;
+  rig.root.position.y = rig.deathGround + deathLift(dying) - sink * 0.5;
+};
+
+/** How far the procedural fall lifts the root so the tipped body lies on the ground, not in it (m); the death clips take it off (ADR-0090). */
+export const deathLift = (dying: number): number => {
+  const t = Math.min(1, dying / DEATH_FALL);
+  return 0.12 * t * t * (3 - 2 * t);
 };
 
 /**

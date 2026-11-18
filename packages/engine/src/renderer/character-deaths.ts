@@ -1,4 +1,5 @@
 import { type CharacterRig, animateRig, deathFinished, startDeath } from "./characters";
+import { poseDeathFromClip } from "./clips/death-clips";
 
 /**
  * Characters playing their death fall after the simulation removed them, a part behind
@@ -25,6 +26,8 @@ export class CharacterDeaths {
       const rig = this.dying[i];
       if (!rig) continue;
       animateRig(rig, 0, dt);
+      // The death clip of the way the last hit came (ADR-0090).
+      poseDeathFromClip(rig);
       if (deathFinished(rig)) {
         this.dispose(rig);
         this.dying.splice(i, 1);

@@ -35,8 +35,8 @@ export interface RawBody {
 }
 
 export type BodyMode = "pose" | "delta";
-/** What a pose clip's hips are measured from: their mean, or the clip's last frame (one that ends standing, as a landing). */
-export type HipsFrom = "mean" | "last";
+/** What a pose clip's hips are measured from: their mean, the clip's first frame (one that starts standing, as a fall) or its last (one that ends standing, as a landing). */
+export type HipsFrom = "mean" | "first" | "last";
 
 export interface BodyClip {
   readonly cycle: number;
@@ -132,6 +132,7 @@ export const toBodyClip = (raw: RawBody, mode: BodyMode, hipsFrom: HipsFrom = "m
   const ref = (a: readonly number[]): [number, number, number] => {
     if (mode === "delta") return at(a, 0);
     if (hipsFrom === "last") return at(a, n - 1);
+    if (hipsFrom === "first") return at(a, 0);
     const m: [number, number, number] = [0, 0, 0];
     for (let f = 0; f < n; f++) for (let i = 0; i < 3; i++) m[i]! += a[f * 3 + i]! / n;
     return m;
