@@ -203,7 +203,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
 ### G-091 Długie przytrzymanie „Use” wybiera kwestię pod palcem w kole dialogu
-- Status: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
+- Status: w PR #720 (18.11, osłona od podniesienia palca); wcześniej: zgłoszone (z badania G-058; do potwierdzenia na prawdziwym telefonie przez glitch-huntera)
 - Ważność: S3 (proponowana; przypadkowy wybór kwestii w rozmowie) · Zasięg: dotyk · Koszt: mały
 - Dowód: sonda e2e (`scratchpad/g058-probe.spec.ts`): przytrzymanie „Use” ok. 1,0–1,3 s, aż dialog się otworzy, potem `pointerup` i `click` na `BUTTON.wheel__opt`; dialog idzie dalej. `touchend` trafia w odpięty przycisk pada, więc nie jest anulowany, a osłona z G-048 już wygasła (700 ms). Niepewne, czy prawdziwy telefon wysyła kliknięcie po długim przytrzymaniu (CDP może się różnić)
 - Pakiet właściciela: packages/ui (`touch/ghost-click.ts`)
@@ -849,7 +849,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: zrzut po `step` pokazuje stan po tym kroku
 
 ### G-358 O 23:00 sprzedawcy północnego targu uciekają na każdym progu reputacji
-- Status: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
+- Status: w PR #721 (18.11, test przyjęcia; nie odtwarza się na main); wcześniej: zgłoszone (5.11, weryfikator PR #299, do potwierdzenia)
 - Ważność: S3 · Zasięg: sonda sesji, druga doba 23:00, gracz 1,5 m od straganu Fumiko: Fumiko (sklep otwarty) i Kenta w stanie tłumu „fleeing”, Goro się przesuwa; tak samo przy reputacji 0, +50, −30, −60, −100. Możliwy niezidentyfikowany alarm na targu albo artefakt przeskoku zegara w sondzie · Koszt: nieznany
 - Pakiet właściciela: packages/sim (`systems/ai`, tłum)
 - Test przyjęcia: sesja bez renderera o 23:00 przy straganie Fumiko bez strzałów i walki: żaden sprzedawca nie ucieka
