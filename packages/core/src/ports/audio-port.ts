@@ -23,6 +23,11 @@ export interface AudioListenerPose {
   readonly yaw: number;
   /** Horizontal speed of the player in m/s; drives footsteps. */
   readonly speed: number;
+  /**
+   * Her feet coming down in the picture since the last pose (user notes of 18.11). Given, the
+   * footsteps go with them; absent (no figure drawn), the footsteps keep their own clock.
+   */
+  readonly footfalls?: number;
 }
 
 /**

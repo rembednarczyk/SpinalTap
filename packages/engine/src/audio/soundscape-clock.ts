@@ -35,6 +35,7 @@ export class SoundscapeClock {
   /** New listener pose; positional ambience follows at once when the graph exists. */
   setPose(pose: AudioListenerPose, g: Graph | null): void {
     this.pose = pose;
+    if (pose.footfalls !== undefined) this.steps.feel(pose.footfalls);
     this.parts.radio.updateListener(pose);
     if (!g) return;
     const now = g.ctx.currentTime;
@@ -72,7 +73,7 @@ export class SoundscapeClock {
     if (music.running) radio.schedule(g, now, mood);
     ambient.tick(g, now);
     if (music.running) this.parts.w3.tick(g, now);
-    const n = this.steps.advance(this.pose.speed, dt);
+    const n = this.steps.take(this.pose.speed, dt, now);
     for (let i = 0; i < n; i++) voices.footstep(g, now + 0.01 + i * 0.05, this.pose.speed, this.steps);
   }
 }
