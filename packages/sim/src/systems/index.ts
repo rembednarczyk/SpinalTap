@@ -1,4 +1,5 @@
 import type { System } from "../world/context";
+import { createTerritorySystem } from "./territory-system";
 import { bodyWatchSystem, createCivilianAiSystem, createGangerAiSystem, escortAiSystem, sniperAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
@@ -154,6 +155,8 @@ export const createSystems = (): readonly System[] => [
   takedownSystem,
   carrySystem,
   interactionSystem,
+  // Before the dead leave the world: a member the player killed is still there to count (ADR-0091).
+  createTerritorySystem(),
   deathSystem,
   createCrimeSystem(),
   bodyWatchSystem,

@@ -49,6 +49,7 @@ export const findGangStandingsError = (g: unknown): string | null => {
     if (rest.length > 0 || faction === undefined || !isFactionId(faction) || !(CITY_DISTRICT_IDS as readonly string[]).includes(district ?? "")) return "gang standings";
     if (!isObject(s) || typeof s.grudge !== "number" || !Number.isFinite(s.grudge) || s.grudge < 0 || s.grudge > GANG_RULES.maxGrudge) return "gang standings";
     if (!(s.provokedUntil === null || (typeof s.provokedUntil === "number" && Number.isFinite(s.provokedUntil)))) return "gang standings";
+    if (!(s.warnedUntil === undefined || (typeof s.warnedUntil === "number" && Number.isFinite(s.warnedUntil)))) return "gang standings";
   }
   return null;
 };

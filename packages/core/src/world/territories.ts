@@ -47,6 +47,8 @@ export const isTerritoryId = (id: string): id is TerritoryId => Object.hasOwn(TE
 export interface GangStanding {
   readonly grudge: number;
   readonly provokedUntil: number | null;
+  /** A warning running (decision 3 of 18.11): until when (clock seconds) the player may put the gun away or leave. */
+  readonly warnedUntil?: number;
 }
 
 /** No entry: calm, no grudge. */
@@ -109,10 +111,22 @@ export const grudgeAfter = (standings: GangStandings, faction: FactionId, distri
 /** The gang provoked in the district at `clock`: provoked for `provokedHours`, and its grudge up by `provoke`. */
 export const provokeGang = (standings: GangStandings, faction: FactionId, district: CityDistrictId, clock: GameClock): GangStandings => {
   const s = standingOf(standings, faction, district);
+  const { warnedUntil: _w, ...rest } = s;
   return withStanding(standings, faction, district, {
+    ...rest,
     grudge: clampGrudge(s.grudge + GRUDGE_STEP.provoke),
     provokedUntil: clock.seconds + GANG_RULES.provokedHours * SECONDS_PER_HOUR,
   });
+};
+
+/** The warning given in the district at `clock`, `seconds` of the world long (a game clock runs `clockRate` times faster). */
+export const warnGang = (standings: GangStandings, faction: FactionId, district: CityDistrictId, clock: GameClock, seconds: number, clockRate: number): GangStandings =>
+  withStanding(standings, faction, district, { ...standingOf(standings, faction, district), warnedUntil: clock.seconds + seconds * clockRate });
+
+/** The warning over: the gun put away or the player gone. */
+export const clearWarning = (standings: GangStandings, faction: FactionId, district: CityDistrictId): GangStandings => {
+  const { warnedUntil: _w, ...rest } = standingOf(standings, faction, district);
+  return withStanding(standings, faction, district, rest);
 };
 
 /** Is the gang provoked in the district at `clock`? */
@@ -143,8 +157,12 @@ export const dawnGrudge = (standings: GangStandings, from: GameClock, to: GameCl
   const relief = dawnsBetween(from, to) * GANG_RULES.dawnRelief;
   const out: Partial<Record<GangStandingKey, GangStanding>> = {};
   for (const [key, s] of Object.entries(standings) as [GangStandingKey, GangStanding][]) {
-    const next: GangStanding = { grudge: clampGrudge(s.grudge - relief), provokedUntil: s.provokedUntil !== null && to.seconds < s.provokedUntil ? s.provokedUntil : null };
-    if (next.grudge > 0 || next.provokedUntil !== null) out[key] = next;
+    const next: GangStanding = {
+      grudge: clampGrudge(s.grudge - relief),
+      provokedUntil: s.provokedUntil !== null && to.seconds < s.provokedUntil ? s.provokedUntil : null,
+      ...(s.warnedUntil === undefined ? {} : { warnedUntil: s.warnedUntil }),
+    };
+    if (next.grudge > 0 || next.provokedUntil !== null || next.warnedUntil !== undefined) out[key] = next;
   }
   return out;
 };

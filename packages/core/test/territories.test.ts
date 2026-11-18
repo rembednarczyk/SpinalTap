@@ -16,8 +16,10 @@ import {
   gangProvoked,
   gangStandingKey,
   gangTolerates,
+  clearWarning,
   gangWarning,
   grudgeAfter,
+  warnGang,
   isTerritoryId,
   provokeGang,
   standingOf,
@@ -110,5 +112,15 @@ describe("gang territories (ADR-0091 stage 2)", () => {
     expect(gangWarning(30)).toEqual({ range: 8, seconds: 3 });
     expect(gangWarning(-19)).toEqual({ range: 10, seconds: 3 });
     expect(gangWarning(-50)).toEqual({ range: 12, seconds: 2 });
+  });
+
+  it("keeps a warning in the standing: started with its seconds of the world, ended, dropped by a provocation, kept through a dawn", () => {
+    const warned = warnGang(NO_GANG_STANDINGS, "hebi", "kanal", at(10), 3, 60);
+    expect(standingOf(warned, "hebi", "kanal")).toEqual({ grudge: 0, provokedUntil: null, warnedUntil: 10 * SECONDS_PER_HOUR + 180 });
+    expect(standingOf(clearWarning(warned, "hebi", "kanal"), "hebi", "kanal")).toEqual(NO_GANG_STANDING);
+    expect(standingOf(provokeGang(warned, "hebi", "kanal", at(10)), "hebi", "kanal").warnedUntil).toBeUndefined();
+    expect(dawnGrudge(warnGang(NO_GANG_STANDINGS, "hebi", "kanal", at(4.9), 3, 60), at(4.9), at(5.1))).toEqual({
+      "hebi:kanal": { grudge: 0, provokedUntil: null, warnedUntil: 4.9 * SECONDS_PER_HOUR + 180 },
+    });
   });
 });
