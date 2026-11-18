@@ -1,4 +1,4 @@
-import type { EntityId, Locale } from "@seki/core";
+import { type EntityId, type Locale, icepickRunning } from "@seki/core";
 import { type MessageKey, type MessageParams, type ScanNoteVm, patchUi, translate } from "@seki/ui";
 import { scanTargetVm } from "../scan-view";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
@@ -22,7 +22,7 @@ export class HackingHud implements HudPart {
         this.focusId = e.targetId;
         if (e.targetId === null) patchUi(ui, { scanTarget: null });
       }),
-      bus.on("RamChanged", (e) => patchUi(ui, { ram: { current: e.current, max: e.max } })),
+      bus.on("RamChanged", (e) => patchUi(ui, { ram: { ...ui.getState().ram, current: e.current, max: e.max } })),
       bus.on("QuickhackStarted", (e) => patchUi(ui, { upload: { seq: ++this.uploadSeq, hackId: e.hackId, seconds: e.upload } })),
       bus.on("QuickhackApplied", (e) => {
         patchUi(ui, { upload: null });
@@ -62,6 +62,10 @@ export class HackingHud implements HudPart {
         this.cardLocale = locale;
       }
     }
+    // The breached network's ICEpick (ADR-0029): the list's costs come down with it (G-374).
+    const icepick = icepickRunning(this.ctx.hooks.domain().contracts.active);
+    const ram = ui.getState().ram;
+    if ((ram.icepick ?? false) !== icepick) out.ram = { ...ram, icepick };
     if (ui.getState().scanNote && f.tick - this.noteTick >= NOTE_SECONDS * this.ctx.hooks.ticksPerSecond) out.scanNote = null;
     return out;
   }
