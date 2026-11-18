@@ -705,7 +705,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai (steering)
 
 ### G-295 Po alarmie licznik podejrzeń zostaje na 1 i pierwsze ok. 2 s przeszukania alarmuje w jednym kroku
-- Status: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
+- Status: w PR #729 (18.11); wcześniej: zgłoszone (4.11, weryfikator ADR-0069 etap 1)
 - Ważność: S4 · Zasięg: `ganger-perception.ts` (`track`)
 - Pakiet właściciela: packages/sim/src/systems/ai
 
