@@ -1,4 +1,4 @@
-import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
+import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, WOUND_CRITICAL, WOUND_FROM, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
@@ -38,8 +38,8 @@ const grabPhaseOf = (run: GrabView): GrabPhase => (run.phase === "grab" ? "hold"
  * (asleep in an unloaded chunk) are despawned as "unloaded", everything else as "removed".
  */
 /** Health share below which a character starts to limp, and the share at which it limps fully (ADR-0090 point 14). */
-export const HURT_FROM = 0.5;
-export const HURT_FULL = 0.15;
+export const HURT_FROM = WOUND_FROM;
+export const HURT_FULL = WOUND_CRITICAL;
 
 /** How hurt `e` is for the picture, 0..1 from its health; nothing while it is unhurt, dead or knocked out. */
 const hurtOf = (e: Entity): { hurt?: number } => {
