@@ -114,26 +114,26 @@ describe("W-3's soundscape in the synth", () => {
     const { ctx, audio } = setup(0);
     audio.setListener(FAR);
     run(ctx, audio, 0.5);
-    expect(audio.sector.active).toBe(false);
+    expect(audio.positional.sector.active).toBe(false);
     const before = ctx.created.length;
     audio.setListener(HALL);
     run(ctx, audio, 0.5);
-    expect(audio.sector.active).toBe(true);
-    expect(audio.sector.mix.place).toBe("hall");
-    expect(audio.sector.street).toBe(W3_STREET_LEVEL.hall);
+    expect(audio.positional.sector.active).toBe(true);
+    expect(audio.positional.sector.mix.place).toBe("hall");
+    expect(audio.positional.sector.street).toBe(W3_STREET_LEVEL.hall);
     const loops = loopSources(ctx, before);
     expect(loops.length).toBeGreaterThan(10);
     expect(loops.length).toBeLessThanOrEqual(16);
     // The line's strip heads to its level in the hall.
-    const target = (w3Heard(audio.sector.mix, "line") / audio.sector.mix.hall.gain) * W3_LAYER_LEVEL.line;
+    const target = (w3Heard(audio.positional.sector.mix, "line") / audio.positional.sector.mix.hall.gain) * W3_LAYER_LEVEL.line;
     expect(ctx.created.some((n) => n.kind === "gain" && Math.abs((n.params.gain?.target ?? -1) - target) < 1e-9)).toBe(true);
     // Moving within the sector makes no nodes: only levels change.
     const n = ctx.created.length;
     audio.setListener(QUAY);
     run(ctx, audio, 0.5);
     expect(ctx.created.length).toBe(n);
-    expect(audio.sector.mix.place).toBe("outside");
-    expect(audio.sector.street).toBe(1);
+    expect(audio.positional.sector.mix.place).toBe("outside");
+    expect(audio.positional.sector.street).toBe(1);
   });
 
   it("falls silent and is torn down when she leaves W-3 (the metro), and comes back with her", () => {
@@ -145,15 +145,15 @@ describe("W-3's soundscape in the synth", () => {
     expect(loops.length).toBeGreaterThan(0);
     audio.setListener(FAR);
     run(ctx, audio, 0.5);
-    expect(audio.sector.active).toBe(false);
+    expect(audio.positional.sector.active).toBe(false);
     for (const s of loops) expect(s.stopped).not.toBeNull();
-    for (const l of LAYERS) expect(w3Heard(audio.sector.mix, l)).toBe(0);
+    for (const l of LAYERS) expect(w3Heard(audio.positional.sector.mix, l)).toBe(0);
     audio.setListener(GATE);
     run(ctx, audio, 0.2);
-    expect(audio.sector.active).toBe(true);
+    expect(audio.positional.sector.active).toBe(true);
     // stopAll tears it down with the rest of the soundscape.
     audio.stopAll();
-    expect(audio.sector.active).toBe(false);
+    expect(audio.positional.sector.active).toBe(false);
   });
 
   it("sets off the arms' servos in the hall, none on the quay", () => {

@@ -109,14 +109,12 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     return this.voices.size;
   }
 
-  /** Last positional mix of the neon hum and steam (debug overlay, tests). */
-  get positional(): { readonly hum: EmitterMix; readonly steam: EmitterMix } {
-    return this.ambient.positional;
-  }
-
-  /** W-3's soundscape (ADR-0082 stage 4): built or not, what the listener hears of it (debug, tests). */
-  get sector(): { readonly active: boolean; readonly mix: W3Mix; readonly street: number } {
-    return { active: this.w3.active, mix: this.w3.mix, street: this.ambient.streetLevel };
+  /**
+   * Last positional mix of the neon hum and steam, and W-3's soundscape (ADR-0082 stage 4): built
+   * or not, what the listener hears of it and how loud the street is under its roof (debug, tests).
+   */
+  get positional(): { readonly hum: EmitterMix; readonly steam: EmitterMix; readonly sector: { readonly active: boolean; readonly mix: W3Mix; readonly street: number } } {
+    return { ...this.ambient.positional, sector: { active: this.w3.active, mix: this.w3.mix, street: this.ambient.streetLevel } };
   }
 
   get currentMood(): MusicMood {
