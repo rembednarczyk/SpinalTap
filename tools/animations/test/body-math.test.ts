@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ARM_POINTS, type ArmPoint, fromAxes, rotate, toBodyClip, torsoAxes } from "../src/body-math.ts";
+import { ARM_POINTS, type ArmPoint, fromAxes, rotate, toBodyClip, torsoAxes, withoutTurn } from "../src/body-math.ts";
 import { LEG_JOINTS, type LegJoint } from "../src/clip-math.ts";
 
 /** A figure standing upright: hips at 1, neck at 1.5, shoulders 0.2 to each side; legs of 1 hanging straight; arms down. */
@@ -44,5 +44,24 @@ describe("a Mixamo clip's upper body for the engine (ADR-0090 stage 2)", () => {
     expect(c.hips.slice(0, 3)).toEqual([0, 0, 0]);
     expect(c.arms).toEqual([]);
     expect(c.legs).toEqual([]);
+  });
+});
+
+describe("a turn on the spot taken out of a clip (ADR-0090)", () => {
+  it("keeps the hips' line across where it was and says how far the clip turned", () => {
+    // Two frames: the second turned a quarter about the hips (x towards z).
+    const base = raw(0);
+    const turnPoint = (p: readonly number[], f: number): number[] => {
+      if (f === 0) return [...p];
+      const [x, y, z] = p as [number, number, number];
+      return [-z, y, x];
+    };
+    const twice = (a: readonly number[]): number[] => [...turnPoint(a.slice(0, 3), 0), ...turnPoint(a.slice(3, 6), 1)];
+    const map = <K extends string>(o: Record<K, readonly number[]>) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, twice(v as number[])])) as Record<K, number[]>;
+    const r = { ...base, hips: [0, 1, 0, 0, 1, 0], neck: twice(base.neck), arms: map(base.arms), legs: map(base.legs) };
+    const { raw: still, turn } = withoutTurn(r);
+    expect(turn).toBeCloseTo(Math.PI / 2 * 2, 5);
+    // The right hip of the second frame is back where the first frame's was.
+    expect(still.legs.hipR.slice(3, 6).map((v) => Math.round(v * 1000) / 1000)).toEqual(base.legs.hipR.slice(0, 3).map((v) => Math.round(v * 1000) / 1000));
   });
 });

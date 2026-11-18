@@ -2,6 +2,7 @@ import { Quaternion } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
 import type { BodyClip } from "./body-clip";
 import { airFrame } from "./air-clips";
+import { turnFrame } from "./turn-clips";
 import { BODY_CLIPS } from "./body-clips.generated";
 import { sampleBody } from "./body-sample";
 import { RIG_LEG, poseLeg, turnTowards } from "./leg-pose";
@@ -73,9 +74,12 @@ export const idleClipOf = (rig: CharacterRig): BodyClip => IDLES[Math.floor(figu
 const poseIdle = (rig: CharacterRig, s: BodyState, target: number, dt: number): number => {
   s.idle += (target - s.idle) * Math.min(1, dt * IDLE_EASE);
   const w = s.idle;
+  // Turning on the spot, the feet step round (`turn-clips.ts`); it follows the yaw every frame.
+  const turn = turnFrame(rig, dt, w);
   if (w < 1e-3) return 0;
   const clip = idleClipOf(rig);
-  return layPose(rig, sampleBody(clip, rig.time + s.offset * clip.cycle, true), w, freeArms(rig), true);
+  const x = layPose(rig, sampleBody(clip, rig.time + s.offset * clip.cycle, true), w, freeArms(rig), true);
+  return turn ? x + layPose(rig, turn.frame, turn.w, freeArms(rig), true) : x;
 };
 
 /** A flinch that jumped up since the last frame starts the hit reaction, as hard as the jump. */

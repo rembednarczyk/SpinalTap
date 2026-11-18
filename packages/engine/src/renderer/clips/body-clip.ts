@@ -22,4 +22,6 @@ export interface BodyClip {
   readonly legs: readonly number[];
   /** Per frame, how far the gun in both hands has gone back along its barrel, in leg lengths (delta clips; a shot's kick). */
   readonly gun: readonly number[];
+  /** Radians a turn on the spot turns about +Y in a loop (left positive), taken out of the clip: the game turns the figure. */
+  readonly turn?: number;
 }

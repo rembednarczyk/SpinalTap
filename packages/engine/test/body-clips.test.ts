@@ -152,4 +152,25 @@ describe("the body clips (ADR-0090 stage 2)", () => {
     expect(top.q).toBeGreaterThan(0.35);
     expect(top.q).toBeLessThan(0.75);
   });
+
+  it("turning on the spot the feet step round; standing still they stay down", () => {
+    const r = buildHeroine(scene, materials, "turner");
+    const ankles = () => {
+      r.root.computeWorldMatrix(true);
+      return [r.kneeL, r.kneeR].map((k) => Vector3.TransformCoordinates(new Vector3(0, -0.42, 0), k.computeWorldMatrix(true)).y);
+    };
+    let still = 0;
+    for (let i = 0; i < 60; i++) {
+      frame(r, 0);
+      if (i > 30) still = Math.max(still, ...ankles());
+    }
+    let lifted = 0;
+    for (let i = 0; i < 60; i++) {
+      r.root.rotation.y += 1.5 * DT;
+      frame(r, 0);
+      if (i > 10) lifted = Math.max(lifted, ...ankles());
+    }
+    // A shuffle of small steps, some 4 cm up, as in the clip.
+    expect(lifted - still).toBeGreaterThan(0.025);
+  });
 });

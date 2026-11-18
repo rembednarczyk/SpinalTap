@@ -59,6 +59,8 @@ export interface BodyClip {
    * (the right hand's way back along the line to the left), in leg lengths (delta only: a shot's kick).
    */
   readonly gun: readonly number[];
+  /** Radians the clip turns about +Y over one loop, taken out of it (`withoutTurn`): left positive; absent when not. */
+  readonly turn?: number;
 }
 
 const at = (a: readonly number[], f: number): [number, number, number] => [a[f * 3]!, a[f * 3 + 1]!, a[f * 3 + 2]!];
@@ -123,6 +125,48 @@ const legUnit = (raw: RawBody): number => {
   const d = (a: readonly number[], b: readonly number[]) => Math.hypot(...sub(at(a, 0), at(b, 0)));
   const leg = (s: "L" | "R") => d(raw.legs[`hip${s}`], raw.legs[`knee${s}`]) + d(raw.legs[`knee${s}`], raw.legs[`ankle${s}`]);
   return (leg("L") + leg("R")) / 2;
+};
+
+/** The hips' heading at frame `f`: the angle of the line from the left hip to the right in the ground plane (x towards z). */
+const headingAt = (raw: RawBody, f: number): number => {
+  const [lx, , lz] = at(raw.legs.hipL, f);
+  const [rx, , rz] = at(raw.legs.hipR, f);
+  return Math.atan2(rz - lz, rx - lx);
+};
+
+/**
+ * A clip that turns on the spot with its turn taken out (ADR-0090): every frame turned back about
+ * the hips by the heading gained since the first, the head's rotation too, so the figure keeps
+ * facing ahead and only the feet and the body step; `turn` says how far the clip turns in a loop
+ * (the game turns the figure itself). Positive turns from +X towards +Z, the figure's left.
+ */
+export const withoutTurn = (raw: RawBody): { readonly raw: RawBody; readonly turn: number } => {
+  const n = raw.frames;
+  const h0 = headingAt(raw, 0);
+  const unwrap = (d: number) => Math.atan2(Math.sin(d), Math.cos(d));
+  const back = Array.from({ length: n }, (_, f) => unwrap(headingAt(raw, f) - h0));
+  const turnPath = (a: readonly number[]): number[] => {
+    const out: number[] = [];
+    for (let f = 0; f < n; f++) {
+      const [hx, , hz] = at(raw.hips, f);
+      const [x, y, z] = at(a, f);
+      const c = Math.cos(-back[f]!);
+      const s = Math.sin(-back[f]!);
+      out.push(hx + (x - hx) * c - (z - hz) * s, y, hz + (x - hx) * s + (z - hz) * c);
+    }
+    return out;
+  };
+  const head: number[] = [];
+  for (let f = 0; f < n; f++) {
+    // Turning back by the gained heading, from x towards -z: a rotation about +Y by the gain.
+    const d = back[f]!;
+    head.push(...mul([0, Math.sin(d / 2), 0, Math.cos(d / 2)], quat(raw.head, f)));
+  }
+  const arms = Object.fromEntries(Object.entries(raw.arms).map(([k, a]) => [k, turnPath(a)])) as unknown as RawBody["arms"];
+  const legs = Object.fromEntries(Object.entries(raw.legs).map(([k, a]) => [k, turnPath(a)])) as unknown as RawBody["legs"];
+  // One loop's turn: the last frame's and one more frame's worth at the same rate.
+  const turn = n > 1 ? (back[n - 1]! * n) / (n - 1) : 0;
+  return { raw: { ...raw, neck: turnPath(raw.neck), head, arms, legs }, turn };
 };
 
 /** The clip in the engine's terms. */

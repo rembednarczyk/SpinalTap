@@ -107,7 +107,7 @@ export const turnTowards = (node: CharacterRig["body"], q: Quaternion, w: number
 };
 
 /** Its facing about +Y (0: +Z), whether the root turns by a quaternion or by angles. */
-const yawOf = (rig: CharacterRig): number => rig.root.rotationQuaternion?.toEulerAngles().y ?? rig.root.rotation.y;
+export const yawOf = (rig: CharacterRig): number => rig.root.rotationQuaternion?.toEulerAngles().y ?? rig.root.rotation.y;
 
 /** The heading of a step (dx, dz) in the world against a facing `yaw`: 0 ahead, +π/2 to the right. */
 export const headingOf = (dx: number, dz: number, yaw: number): number => {

@@ -1,5 +1,5 @@
 {
-  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely. A clip with \"turn\": true faces the other way in its file (Mixamo's ladder climbs towards -Z) and is turned round first. \"hipsFrom\": \"last\" or \"first\" measures a pose clip's hips from its last frame (a landing that ends standing) or its first (a fall that starts standing) instead of their mean.",
+  "about": "Mixamo locomotion clips the legs' table is made from (ADR-0090). The FBX files are the user's downloads, kept off the repository (Adobe's terms); only the table derived from them is committed. A clip given as {\"file\", \"mirror\": true} is the file turned left for right: x over, the legs swapped, half a loop on so the left foot leads as in the others. The body clips (stage 2) give the chest, the head, the arms and the legs: a \"pose\" clip as the figure stands in it (from the T-pose), a \"delta\" clip as it moves from its first frame; \"fps\" samples it more sparsely. A clip with \"turn\": true faces the other way in its file (Mixamo's ladder climbs towards -Z) and is turned round first. \"hipsFrom\": \"last\" or \"first\" measures a pose clip's hips from its last frame (a landing that ends standing) or its first (a fall that starts standing) instead of their mean. \"inPlace\": true takes a turn on the spot out of a clip (the game turns the figure) and keeps how far it turns in a loop as \"turn\".",
   "clips": {
     "walk": "Female Locomotion Pack/walking.fbx",
     "walkLeft": "Female Locomotion Pack/left strafe walk.fbx",
@@ -177,6 +177,18 @@
       "file": "Male Drunk Pack/drunk idle variation.fbx",
       "mode": "pose",
       "fps": 10
+    },
+    "turnLeft": {
+      "file": "Female Locomotion Pack/left turn.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "inPlace": true
+    },
+    "turnRight": {
+      "file": "Female Locomotion Pack/right turn.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "inPlace": true
     }
   }
 }
