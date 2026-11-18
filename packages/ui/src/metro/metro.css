@@ -33,6 +33,8 @@
 
 /* The kiosk: the map beside the list (under it on a phone), the card of the destination. */
 /* The head and the buttons stay put; only the part between them scrolls, so nothing runs under the buttons. */
+/* Opaque (G-322): the large panel covers the HUD, whose bright text showed through a 95% background. */
+.metro.metro--map { background: rgb(6, 10, 16); }
 .metro--map { box-sizing: border-box; display: flex; flex-direction: column; width: min(980px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: hidden; }
 .metro__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .metro__body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 14px; margin-top: 12px; }

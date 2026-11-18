@@ -1,0 +1,1 @@
+- Panel kiosku metra ma pełne tło: napisy HUD nie prześwitują już przez mapę i kartę (G-322).
