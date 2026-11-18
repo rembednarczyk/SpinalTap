@@ -52,6 +52,11 @@ export interface BodyClip {
   readonly arms: readonly number[];
   /** Per frame, the legs' joints relative to the hips, in leg lengths (pose only; as a leg clip's). */
   readonly legs: readonly number[];
+  /**
+   * Per frame, how far the gun in both hands has gone back along its barrel from the first frame
+   * (the right hand's way back along the line to the left), in leg lengths (delta only: a shot's kick).
+   */
+  readonly gun: readonly number[];
 }
 
 const at = (a: readonly number[], f: number): [number, number, number] => [a[f * 3]!, a[f * 3 + 1]!, a[f * 3 + 2]!];
@@ -137,6 +142,9 @@ export const toBodyClip = (raw: RawBody, mode: BodyMode): BodyClip => {
   const head: number[] = [];
   const arms: number[] = [];
   const legs: number[] = [];
+  const gun: number[] = [];
+  const rh0 = at(raw.arms.wristR, 0);
+  const along = unit(sub(at(raw.arms.wristL, 0), rh0));
   let prevC: Quat = [0, 0, 0, 1];
   let prevH: Quat = [0, 0, 0, 1];
   for (let f = 0; f < n; f++) {
@@ -152,7 +160,11 @@ export const toBodyClip = (raw: RawBody, mode: BodyMode): BodyClip => {
     prevH = hq;
     chest.push(...cq.map(round));
     head.push(...hq.map(round));
-    if (mode === "delta") continue;
+    if (mode === "delta") {
+      const d = sub(rh0, at(raw.arms.wristR, f));
+      gun.push(round((d[0] * along[0] + d[1] * along[1] + d[2] * along[2]) / u));
+      continue;
+    }
     const back = inv(c);
     for (const s of ["L", "R"] as const) {
       const p = (k: string) => at(raw.arms[`${k}${s}` as ArmPoint], f);
@@ -166,7 +178,7 @@ export const toBodyClip = (raw: RawBody, mode: BodyMode): BodyClip => {
     const hip = at(raw.hips, f);
     for (const j of LEG_JOINTS) legs.push(...sub(at(raw.legs[j], f), hip).map((v) => round(v / u)));
   }
-  return { cycle: round(raw.cycle), frames: n, hips, chest, head, arms, legs };
+  return { cycle: round(raw.cycle), frames: n, hips, chest, head, arms, legs, gun };
 };
 
 /** The generated module of the engine's body clips. */

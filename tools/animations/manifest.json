@@ -35,6 +35,10 @@
       "file": "broadside/Climbing Ladder.fbx",
       "mode": "pose",
       "turn": true
+    },
+    "fire": {
+      "file": "Basic Shooter Pack/firing rifle.fbx",
+      "mode": "delta"
     }
   }
 }

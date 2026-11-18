@@ -20,4 +20,6 @@ export interface BodyClip {
   readonly arms: readonly number[];
   /** Per frame hipL kneeL ankleL toeL hipR kneeR ankleR toeR relative to the hips, in leg lengths. */
   readonly legs: readonly number[];
+  /** Per frame, how far the gun in both hands has gone back along its barrel, in leg lengths (delta clips; a shot's kick). */
+  readonly gun: readonly number[];
 }

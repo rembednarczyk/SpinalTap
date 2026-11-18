@@ -1,8 +1,11 @@
 import { Quaternion, Vector3 } from "../../babylon";
 import type { CharacterRig } from "../character-rig";
-import type { BodyClip } from "./body-clip";
 import { BODY_CLIPS } from "./body-clips.generated";
+import { sampleBody } from "./body-sample";
 import { RIG_LEG, poseLeg, swing, turnTowards } from "./leg-pose";
+import { stepRecoil } from "./recoil";
+
+export { type BodyFrame, sampleBody } from "./body-sample";
 
 /*
  * The body from Mixamo clips (ADR-0090 stage 2). Standing, a figure stands as in the idle clip:
@@ -19,39 +22,6 @@ import { RIG_LEG, poseLeg, swing, turnTowards } from "./leg-pose";
 const STANDING = 0.3;
 /** How fast the idle eases in and out, per second. */
 const IDLE_EASE = 3;
-
-export interface BodyFrame {
-  readonly hips: Vector3;
-  readonly chest: Quaternion;
-  readonly head: Quaternion;
-  readonly arms: readonly number[];
-  readonly legs: readonly number[];
-}
-
-const mixRows = (a: readonly number[], f0: number, f1: number, k: number, width: number): number[] => {
-  const out = new Array<number>(width);
-  for (let i = 0; i < width; i++) out[i] = a[f0 * width + i]! * (1 - k) + a[f1 * width + i]! * k;
-  return out;
-};
-const quatAt = (a: readonly number[], f: number): Quaternion => new Quaternion(a[f * 4]!, a[f * 4 + 1]!, a[f * 4 + 2]!, a[f * 4 + 3]!);
-
-/** The clip at `t` seconds: looped, or held at its last frame. */
-export const sampleBody = (clip: BodyClip, t: number, loop: boolean): BodyFrame => {
-  const n = clip.frames;
-  let x = (t / clip.cycle) * n;
-  x = loop ? ((x % n) + n) % n : Math.max(0, Math.min(n - 1, x));
-  const f0 = Math.floor(x);
-  const f1 = loop ? (f0 + 1) % n : Math.min(n - 1, f0 + 1);
-  const k = x - f0;
-  const [hx, hy, hz] = mixRows(clip.hips, f0, f1, k, 3) as [number, number, number];
-  return {
-    hips: new Vector3(hx, hy, hz),
-    chest: Quaternion.Slerp(quatAt(clip.chest, f0), quatAt(clip.chest, f1), k),
-    head: Quaternion.Slerp(quatAt(clip.head, f0), quatAt(clip.head, f1), k),
-    arms: clip.arms.length ? mixRows(clip.arms, f0, f1, k, 18) : [],
-    legs: clip.legs.length ? mixRows(clip.legs, f0, f1, k, 24) : [],
-  };
-};
 
 interface BodyState {
   idle: number;
@@ -211,7 +181,17 @@ const poseLadder = (rig: CharacterRig): void => {
   turnTowards(rig.head, f.head.multiply(rotationOf(rig.head)), w);
 };
 
-/** Lays the body clips over the rig after `animateRig` and the leg clips: the idle standing, the hit reaction on a flinch, the ladder. */
+/** A shot's kick (`recoil.ts`): the torso and the head jolt back about the hips. */
+const poseRecoil = (rig: CharacterRig, dt: number): number => {
+  const kick = stepRecoil(rig, dt);
+  if (!kick) return 0;
+  const { frame: f, amount: k } = kick;
+  const x = turnAboutHips(rig, Quaternion.Slerp(Quaternion.Identity(), f.chest, k).multiply(rotationOf(rig.body)), 1, f.hips.scale(k));
+  turnTowards(rig.head, Quaternion.Slerp(Quaternion.Identity(), f.head, k).multiply(rotationOf(rig.head)), 1);
+  return x;
+};
+
+/** Lays the body clips over the rig after `animateRig` and the leg clips: the idle standing, the hit reaction on a flinch, a shot's kick, the ladder. */
 export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, crouch: number): void => {
   const target = idleTarget(rig, speed, crouch);
   const s = stateOf(rig, target);
@@ -226,7 +206,7 @@ export const poseBodyFromClips = (rig: CharacterRig, speed: number, dt: number, 
     s.idle = 0;
     s.hit = null;
   }
-  const shift = alive ? poseIdle(rig, s, target, dt) + poseHit(rig, s, dt) : 0;
+  const shift = alive ? poseIdle(rig, s, target, dt) + poseHit(rig, s, dt) + poseRecoil(rig, dt) : 0;
   if (alive) poseLadder(rig);
   rig.body.position.x += shift - s.shift;
   s.shift = shift;

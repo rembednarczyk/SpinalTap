@@ -1,5 +1,6 @@
 import { Quaternion, Vector3 } from "../babylon";
 import { aimTurnOf } from "./aim-point";
+import { recoilBack } from "./clips/recoil";
 import type { CharacterRig } from "./character-rig";
 import type { ArmReach, GunPoint, TwoHandGrip } from "./two-hand-grip";
 
@@ -113,7 +114,7 @@ export const gunPoint = (pose: GunPose, g: TwoHandGrip, p: GunPoint): Vector3 =>
  * and turned `blade` to the right: the butt at the chest or in the shoulder, the barrel level
  * ahead when aimed whatever the body does.
  */
-export const longGunPose = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1, turn: Quaternion | null = null): GunPose => {
+export const longGunPose = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1, turn: Quaternion | null = null, back = 0): GunPose => {
   const k = (reach.upper + reach.fore) / REF_ARM;
   const carry = g.shouldered ? CARRY.shouldered : CARRY.out;
   // Between the hip and the shoulder the butt swings out in front and in, clear of the upper arm.
@@ -125,7 +126,8 @@ export const longGunPose = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: 
   const barrel = intoBody(Vector3.Lerp(v3(carry.drawn.barrel).normalize(), to, out).normalize(), tilt, blade);
   const up = intoBody(Vector3.Up(), tilt, blade);
   const top = up.subtract(barrel.scale(Vector3.Dot(up, barrel))).normalize();
-  const origin = butt.subtract(barrel.scale(g.butt.x - g.grip.x)).subtract(top.scale(g.butt.y - g.grip.y));
+  // A shot's kick takes the gun back along its barrel, the hands with it (`clips/recoil.ts`).
+  const origin = butt.subtract(barrel.scale(g.butt.x - g.grip.x + back)).subtract(top.scale(g.butt.y - g.grip.y));
   return { origin, barrel, top };
 };
 
@@ -230,8 +232,8 @@ const leftHandAt = (pose: GunPose, g: TwoHandGrip, reach: ArmReach, reload: numb
   return Vector3.Lerp(mag, pouch, smoothstep((reload - 0.35) / 0.65));
 };
 
-export const twoHandTargets = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1, reload = 0, turn: Quaternion | null = null): TwoHandTargets => {
-  const pose = longGunPose(g, reach, aim, tilt, blade, out, turn);
+export const twoHandTargets = (g: TwoHandGrip, reach: ArmReach, aim: number, tilt: number, blade: number, out = 1, reload = 0, turn: Quaternion | null = null, back = 0): TwoHandTargets => {
+  const pose = longGunPose(g, reach, aim, tilt, blade, out, turn, back);
   const right = rightHand(pose, g);
   const left = leftHand(pose);
   return {
@@ -256,7 +258,7 @@ export const bladeOf = (rig: CharacterRig, w: number): number => (BLADE.hip + (B
  */
 export const holdLongGun = (rig: CharacterRig, g: TwoHandGrip, tilt: number, w: number, leftW: number, reload = 0): void => {
   const reach = rig.reach ?? rigReach(rig);
-  const t = twoHandTargets(g, reach, smoothstep(Math.min(1, Math.max(0, rig.aim))), tilt, bladeOf(rig, w), carried(rig), reload, aimTurnOf(rig));
+  const t = twoHandTargets(g, reach, smoothstep(Math.min(1, Math.max(0, rig.aim))), tilt, bladeOf(rig, w), carried(rig), reload, aimTurnOf(rig), recoilBack(rig));
   const hold = rig.gunHold;
   hold.position.copyFrom(t.pose.origin);
   // The mount's frame: barrel along -Y, top along +Z.
