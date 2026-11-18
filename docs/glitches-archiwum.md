@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-322 Panel kiosku metra i karta są półprzezroczyste: przez nie widać napisy HUD
+- Status: naprawione (18.11, #724 scalony); wcześniej: w PR #724 (18.11, pełne tło kiosku); wcześniej: zgłoszone (5.11, weryfikator PR #270)
+- Ważność: S4 · Zasięg: powiadomienie dzielnicy, cel i podpowiedź dotyku prześwitują przez panel (`shots/metro1-v2/phone-kiosk-kanal-target.png`)
+- Pakiet właściciela: packages/ui (metro)
+
 ### G-374 Lista quickhacków w HUD pokazuje koszt RAM bez zniżki ICEpick
 - Status: naprawione (18.11, #723 scalony); wcześniej: w PR #723 (18.11); wcześniej: zgłoszone (6.11, autor ADR-0059 etapu 3b)
 - Ważność: S4 (UI) · Zasięg: `ui/hud/scanner.tsx` bierze koszt z tabeli, a symulacja liczy ze zniżką · Koszt: mały
