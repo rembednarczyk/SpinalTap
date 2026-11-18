@@ -1,4 +1,5 @@
 import { FIGURE_HOSTS, FIGURE_REACH, SITE_CABIN, type StreetPropItem, figureLayout, siteCabinStacked, isSitting, seatAt, segmentDistance } from "@seki/core";
+import { TERRITORY_ACTORS } from "./territory-groups";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
@@ -22,7 +23,8 @@ const distanceToRect = (x: number, z: number, r: Rect): number => Math.hypot(Mat
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
 export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...W3_PROPS];
-export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS];
+// The gangs' groups (ADR-0091 stage 4) last, so the ids of the actors before them stay.
+export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS, ...TERRITORY_ACTORS];
 
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
