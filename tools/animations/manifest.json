@@ -132,6 +132,51 @@
       "mode": "pose",
       "fps": 15,
       "hipsFrom": "first"
+    },
+    "talkAngry": {
+      "file": "Gestures Pack Basic/angry gesture.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkAnnoyed": {
+      "file": "Gestures Pack Basic/annoyed head shake.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkSarcastic": {
+      "file": "Gestures Pack Basic/sarcastic head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkSigh": {
+      "file": "Gestures Pack Basic/relieved sigh.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkNo": {
+      "file": "Gestures Pack Basic/shaking head no.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkHardNod": {
+      "file": "Gestures Pack Basic/hard head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "talkLongNod": {
+      "file": "Gestures Pack Basic/lengthy head nod.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "drunkIdle": {
+      "file": "Male Drunk Pack/drunk idle.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "drunkIdle2": {
+      "file": "Male Drunk Pack/drunk idle variation.fbx",
+      "mode": "pose",
+      "fps": 10
     }
   }
 }
