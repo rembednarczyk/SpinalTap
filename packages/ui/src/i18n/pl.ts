@@ -180,6 +180,7 @@ export const pl = {
   "settings.subtitleBackground": "Pełne tło napisów",
   "settings.legibleFont": "Czytelna czcionka",
   "settings.reduceFlashes": "Ogranicz błyski i glitch",
+  "settings.haptics": "Wibracje",
   "settings.cameraMotion": "Kołysanie i wstrząsy kamery",
   "settings.untimedBreach": "Minigra bez limitu czasu",
   "settings.colorblind": "Tryb dla daltonistów",
