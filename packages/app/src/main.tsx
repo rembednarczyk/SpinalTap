@@ -22,6 +22,7 @@ import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
 import { type SettingsStorage, applyEffects, applyVolumes, defaultAimMode, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
+import { webHaptics } from "./haptics";
 
 declare global {
   interface Window {
@@ -129,6 +130,8 @@ const session = new GameSession({
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
   touch: touchDevice,
+  // A phone buzzes in a fight; a desktop has no motor.
+  haptics: touchDevice ? webHaptics() : null,
   // The crowd follows the graphics quality (ADR-0041); ?crowd=off|low|medium|high overrides it.
   crowd: crowdParam === "off" || crowdParam === "low" || crowdParam === "medium" || crowdParam === "high" ? crowdParam : quality,
   // The traffic follows the crowd (ADR-0050); ?traffic=off|low|medium|high overrides it.

@@ -183,6 +183,7 @@ export const en = {
   "settings.subtitleBackground": "Solid subtitle background",
   "settings.legibleFont": "Legible font",
   "settings.reduceFlashes": "Reduce flashes and glitch effects",
+  "settings.haptics": "Vibration",
   "settings.cameraMotion": "Camera bob and shake",
   "settings.untimedBreach": "Untimed breach minigame",
   "settings.colorblind": "Colorblind mode",
