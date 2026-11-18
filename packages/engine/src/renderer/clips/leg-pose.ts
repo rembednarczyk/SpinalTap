@@ -32,6 +32,9 @@ const RUNS: Readonly<Record<Dir, LegClip>> = { fwd: LEG_CLIPS.run, back: LEG_CLI
 /** A man walks and runs ahead as in the Action Adventure pack (the rest is the same for all). */
 const WALKS_M: Readonly<Record<Dir, LegClip>> = { ...WALKS, fwd: LEG_CLIPS.walkM };
 const RUNS_M: Readonly<Record<Dir, LegClip>> = { ...RUNS, fwd: LEG_CLIPS.runM };
+/** Hurt (ADR-0090 point 14): it limps ahead and back and runs holding its side; sideways it steps as ever. */
+const HURT_WALKS: Partial<Record<Dir, LegClip>> = { fwd: LEG_CLIPS.walkHurt, back: LEG_CLIPS.walkBackHurt };
+const HURT_RUNS: Partial<Record<Dir, LegClip>> = { fwd: LEG_CLIPS.runHurt, back: LEG_CLIPS.runBackHurt };
 /** Crouched: the back is a diagonal one to the side it leans to (Mixamo's rifle pack walks back only so). */
 const crouches = (side: number): Readonly<Record<Dir, LegClip>> => ({
   fwd: LEG_CLIPS.crouch,
@@ -46,7 +49,7 @@ const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
  * The clips and their weights (summing to 1) for a heading (radians: 0 the way it faces, +π/2 to
  * its right), a share of running and one of crouching, each 0..1. Crouched, it walks.
  */
-export const legWeights = (heading: number, run: number, crouch = 0, masculine = false): [LegClip, number][] => {
+export const legWeights = (heading: number, run: number, crouch = 0, masculine = false, hurt = 0): [LegClip, number][] => {
   const c = Math.cos(heading);
   const s = Math.sin(heading);
   const sum = Math.abs(c) + Math.abs(s) || 1;
@@ -61,10 +64,14 @@ export const legWeights = (heading: number, run: number, crouch = 0, masculine =
   const low = crouches(s);
   const walks = masculine ? WALKS_M : WALKS;
   const runs = masculine ? RUNS_M : RUNS;
+  const h = clamp01(hurt);
+  /** The direction's clip, `share` of it hurt where there is a hurt one. */
+  const split = (plain: LegClip, hurtClip: LegClip | undefined, x: number): [LegClip, number][] =>
+    hurtClip ? [[plain, x * (1 - h)], [hurtClip, x * h]] : [[plain, x]];
   return dirs.flatMap(([d, w]): [LegClip, number][] =>
     [
-      [walks[d], w * (1 - r) * (1 - k)] as [LegClip, number],
-      [runs[d], w * r] as [LegClip, number],
+      ...split(walks[d], HURT_WALKS[d], w * (1 - r) * (1 - k)),
+      ...split(runs[d], HURT_RUNS[d], w * r),
       [low[d], w * k] as [LegClip, number],
     ].filter(([, x]) => x > 1e-6),
   );
@@ -168,7 +175,7 @@ export const poseLegsFromClips = (rig: CharacterRig, at: { x: number; z: number 
   }
   const w = clipShare(rig, speed);
   if (w <= 0) return;
-  const mix = legWeights(s.heading, (speed - WALK) / (RUN - WALK), crouch, rig.masculine ?? false);
+  const mix = legWeights(s.heading, (speed - WALK) / (RUN - WALK), crouch, rig.masculine ?? false, rig.hurt ?? 0);
   const scale = Math.abs(rig.root.scaling.y) || 1;
   const pace = rig.pace ?? 1;
   s.phase += (speed * dt) / (Math.max(0.5, strideOf(mix) * pace) * RIG_LEG * scale);
