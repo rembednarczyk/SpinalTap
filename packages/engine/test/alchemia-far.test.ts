@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ARKADY, FOODHALL, FOODHALL_INNER, arkadyLocal, arkadyPoint } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ARKADY, FOODHALL, FOODHALL_INNER, arkadyLocal, arkadyPoint, ATRIUM, MALL_OVER } from "@seki/sim";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { alchemiaIn, arkadyIn, bakeAlchemiaStandIn, bakeArkadyStandIn } from "../src/renderer/alchemia/alchemia-far";
 import { ALCHEMIA_DRAW } from "../src/renderer/alchemia/alchemia-view";
@@ -34,14 +34,16 @@ describe("Alchemia's food hall from afar (ADR-0074 stage 1)", () => {
   it("closes the terrain's hole over the hall's whole outline with its roof, within a hand of the detailed one", () => {
     const s = new MeshSink();
     bakeAlchemiaStandIn(s);
-    // The hall's own cut, after its lift's shaft and its stairs' (P-1's trench and stair core come after it, stage 4).
-    const cut = ALCHEMIA_CUTS[2]!.bounds;
+    // The hall's own cut, after its lift's shaft, its stairs' and the gallery's cores' and escalators' (ADR-0093 O1).
+    const cut = ALCHEMIA_CUTS.find((c) => c.bounds.minX === FOODHALL.minX && c.bounds.maxZ === FOODHALL.maxZ)!.bounds;
     expect(cut).toEqual({ minX: FOODHALL.minX, maxX: FOODHALL.maxX, minZ: FOODHALL.minZ, maxZ: FOODHALL.maxZ });
     const misses: string[] = [];
     for (let x = cut.minX + 0.05; x < cut.maxX; x += 1) {
       for (let z = cut.minZ + 0.05; z < cut.maxZ; z += 1) {
         const y = hitDown(s, x, z);
-        if (y === null || y < FOODHALL.roof - 0.1) misses.push(`${x.toFixed(1)},${z.toFixed(1)}: ${y}`);
+        // Over the gallery's atrium, open to the sky, the hall's floor.
+        const atrium = x > ATRIUM.x0 && x < ATRIUM.x1 && z > ATRIUM.z0 && z < ATRIUM.z1;
+        if (y === null || y < (atrium ? FOODHALL.floor - 0.1 : FOODHALL.roof - 0.1)) misses.push(`${x.toFixed(1)},${z.toFixed(1)}: ${y}`);
       }
     }
     expect(misses).toEqual([]);
@@ -53,12 +55,12 @@ describe("Alchemia's food hall from afar (ADR-0074 stage 1)", () => {
     const ys = [];
     for (let i = 1; i < s.positions.length; i += 3) ys.push(s.positions[i]!);
     expect(Math.min(...ys)).toBeLessThan(FOODHALL.floor - 0.02);
-    // Every vertex within the hall's outline and the stair house's eaves (0,1 m over it).
+    // Every vertex within the hall's outline and the stair house's eaves (0,1 m over it), the gallery's slabs' overhang (ADR-0093 O1).
     for (let i = 0; i < s.positions.length; i += 3) {
-      expect(s.positions[i]!).toBeGreaterThan(FOODHALL.minX - 0.1);
-      expect(s.positions[i]!).toBeLessThan(FOODHALL.maxX);
+      expect(s.positions[i]!).toBeGreaterThan(FOODHALL.minX - MALL_OVER);
+      expect(s.positions[i]!).toBeLessThan(FOODHALL.maxX + MALL_OVER);
       expect(s.positions[i + 2]!).toBeGreaterThan(FOODHALL.minZ - 0.1);
-      expect(s.positions[i + 2]!).toBeLessThan(FOODHALL.maxZ);
+      expect(s.positions[i + 2]!).toBeLessThan(FOODHALL.maxZ + MALL_OVER);
     }
     expect(FOODHALL_INNER.maxZ).toBeLessThan(FOODHALL.maxZ);
   });

@@ -91,13 +91,16 @@ const BEAM = 0.32;
 const LED_HIGH = 0.14;
 const LED_OUT = 0.05;
 
-/** A rounded slab: its prism down to the beam's foot (the room's ceiling), the light along the beam. */
-export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string): void => {
+/**
+ * A rounded slab: its prism down to the beam's foot (the room's ceiling), the light along the beam;
+ * `dark` edges (a joint with the next piece of a ring of slabs, ADR-0093 O1) without it.
+ */
+export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark?: (i: number) => boolean): void => {
   const uv = swatchUv(data, swatch);
   band(sink, pts, y0 - BEAM, y1, uv);
   lid(sink, pts, y1, 1, uv);
   lid(sink, pts, y0 - BEAM, -1, uv);
-  band(sink, insetConvex(pts, -LED_OUT), y0 - BEAM + 0.05, y0 - BEAM + 0.05 + LED_HIGH, swatchUv(data, led));
+  band(sink, insetConvex(pts, -LED_OUT), y0 - BEAM + 0.05, y0 - BEAM + 0.05 + LED_HIGH, swatchUv(data, led), dark);
 };
 
 /** A plain prism of an outline (a soffit). */
@@ -192,5 +195,31 @@ export const railing = (sink: GeometrySink, data: CityKitData, quad: readonly P2
   for (let k = 0; k < posts; k++) {
     const s = (k + 0.5) * (len / posts);
     post(sink, { x: p.x + ux * s + nx, y: (y0 + y1) / 2, z: p.z + uz * s + nz }, ux, uz, [0.03, (y1 - y0) / 2, 0.03], uv, UPRIGHT);
+  }
+};
+
+/** A frame's pitch of mullions along the gallery's glass, its sill's and head's heights. */
+const PANE_MULLION_EVERY = 2.5;
+const PANE_SILL = 0.1;
+
+/**
+ * The gallery's glass (ADR-0093 O1) drawn as its frame only: the simulation's thin solid stays, but
+ * the eye sees through it into the real gallery behind. A piece of it is a quad whose first edge is
+ * its outer face: a sill and a head along it, a mullion at each end and every 2.5 m between.
+ */
+export const paneFrame = (sink: GeometrySink, data: CityKitData, quad: readonly P2[], y0: number, y1: number): void => {
+  const [p, q] = [quad[0]!, quad[1]!];
+  const len = Math.hypot(q.x - p.x, q.z - p.z);
+  if (len < 1e-6) return;
+  const [ux, uz] = [(q.x - p.x) / len, (q.z - p.z) / len];
+  const uv = swatchUv(data, "trim-light");
+  const [nx, nz] = [-uz * 0.06, ux * 0.06];
+  const mid = { x: (p.x + q.x) / 2 + nx, z: (p.z + q.z) / 2 + nz };
+  post(sink, { x: mid.x, y: y0 + PANE_SILL / 2, z: mid.z }, ux, uz, [len / 2, PANE_SILL / 2, 0.06], uv, RAIL_HIDDEN);
+  post(sink, { x: mid.x, y: y1 - TRANSOM / 2, z: mid.z }, ux, uz, [len / 2, TRANSOM / 2, 0.06], uv);
+  const n = Math.max(1, Math.round(len / PANE_MULLION_EVERY));
+  for (let k = 0; k <= n; k++) {
+    const s = (k / n) * len;
+    post(sink, { x: p.x + ux * s + nx, y: (y0 + y1) / 2, z: p.z + uz * s + nz }, ux, uz, [MULLION / 2, (y1 - y0) / 2, MULLION / 2], uv, UPRIGHT);
   }
 };

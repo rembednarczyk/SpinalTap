@@ -1,11 +1,12 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ARCADE_FRONT, FRONT_SIGN, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ARCADE_FRONT, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { LAWN, LEAF, band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { escalatorGeometry, onEscalator } from "./escalator-geometry";
 import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
@@ -58,6 +59,9 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   "led-green": "neon-green",
   water: "glass-blue",
   vitrine: "glass-blue",
+  // The gallery round the atrium (ADR-0093 O1): its glass drawn as a white frame, its escalators' steel.
+  pane: "trim-light",
+  escalator: "metal",
   // The house with arcades (C3): pale cream, the kit's paint tinted (`PLASTER`).
   plaster: "paint",
 };
@@ -179,11 +183,15 @@ const frontSignLetters = (sink: GeometrySink, data: CityKitData): void => {
   line("CENTRUM HANDLOWE", h * 0.2, b.y0 + h * 0.1, "neon-pink");
 };
 
-/** The ceiling's light strips over the tables and the aisles: warm (ADR-0074 §6). */
+/**
+ * The ceiling's light strips round the atrium (open to the sky over the tables since ADR-0093 O1),
+ * under the gallery's P1 over the aisles: warm (ADR-0074 §6).
+ */
 const ceilingLights = (sink: GeometrySink, data: CityKitData): void => {
-  const I = FOODHALL_INNER;
   const y = FOODHALL.ceiling - 0.04;
-  for (let z = 40; z < 50; z += 3) boxOf(sink, data, { x0: I.minX + 9, x1: I.maxX - 9, z0: z, z1: z + 0.25, y0: y - 0.06, y1: y }, "win-warm");
+  const [x0, x1, z0, z1] = [ATRIUM.x0 - 1.2, ATRIUM.x1 + 1.2, ATRIUM.z0 - 1.2, ATRIUM.z1 + 1.2];
+  for (const z of [z0, z1 - 0.25]) boxOf(sink, data, { x0, x1, z0: z, z1: z + 0.25, y0: y - 0.06, y1: y }, "win-warm");
+  for (const x of [x0, x1 - 0.25]) boxOf(sink, data, { x0: x, x1: x + 0.25, z0: z0 + 0.25, z1: z1 - 0.25, y0: y - 0.06, y1: y }, "win-warm");
 };
 
 export interface AlchemiaSinks {
@@ -229,12 +237,34 @@ const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: nu
   };
 };
 
+/** A piece of the gallery's slabs (ADR-0093 O1): within its outline and overhang. */
+const ofMall = (p: AlchemiaPiece): boolean =>
+  p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && p.box.x0 >= MALL.x0 - MALL_OVER - 0.01 && p.box.x1 <= MALL.x1 + MALL_OVER + 0.01 && p.box.z0 >= MALL.z0 - 0.01 && p.box.z1 <= MALL.z1 + MALL_OVER + 0.01;
+
+/**
+ * The gallery's slab edges without light (ADR-0093 O1): it runs only along the facade (the edge's
+ * outside off the body, but on the south, where the front stands against it) and round the atrium;
+ * not on the joints between a ring's pieces nor round the cores and the shafts.
+ */
+const darkEdges = (pts: readonly { x: number; z: number }[]) => (i: number): boolean => {
+  const a = pts[i]!;
+  const b = pts[(i + 1) % pts.length]!;
+  const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+  const x = (a.x + b.x) / 2 + ((b.z - a.z) / len) * 0.05;
+  const z = (a.z + b.z) / 2 - ((b.x - a.x) / len) * 0.05;
+  const inAtrium = x > ATRIUM.x0 && x < ATRIUM.x1 && z > ATRIUM.z0 && z < ATRIUM.z1;
+  const outside = x < MALL.x0 - MALL_OVER + 0.01 || x > MALL.x1 + MALL_OVER - 0.01 || z > MALL.z1 + MALL_OVER - 0.01;
+  return !(inAtrium || outside);
+};
+
 /** A piece of the storeys drawn from its outline (19.11, the board 1:1): false when it is not one. */
 const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): boolean => {
   const pts = p.outline;
   if (!pts) return false;
   const b = p.box;
-  if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led);
+  if (TIER_SET.has(p) && ofMall(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, darkEdges(pts));
+  else if (p.kind === "pane") paneFrame(sink, data, pts, b.y0, b.y1);
+  else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led);
   else if (p.kind === "glass") glassFacade(sink, data, pts, b.y0, b.y1, hiddenEdges(p, glass));
   else if (p.kind === "parapet") {
     // A roof's balustrade under the next storey up stands in its glass: not drawn.
@@ -264,6 +294,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     const b = p.box;
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
     if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
+    // The escalators' upright balustrades: drawn sloping (`escalator-geometry.ts`).
+    if (p.kind === "escalator") continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -302,8 +334,9 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     }
     // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
     const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
+    const steel = p.kind === "step" && p.inside && onEscalator(b);
     const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
-    boxOf(sink, data, b, leaf ? "paint" : swatchOf(p), hiddenFaces(p, steps), tint);
+    boxOf(sink, data, b, leaf ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
@@ -315,5 +348,6 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   arcadeFrontGeometry(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
+  escalatorGeometry(inside, data);
   return { outside, inside, tiers };
 };

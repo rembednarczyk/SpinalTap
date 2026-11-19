@@ -132,7 +132,7 @@ export const TARG_OVERPASS_STASH: RoofStash = {
 };
 
 /** Kurosawa of Kagami waits on the car park by the lift's kiosk; his cleaners come from across it. */
-const LIFT_DOOR: GroundPoint = ALCHEMIA_LIFT.doors[2];
+const LIFT_DOOR: GroundPoint = ALCHEMIA_LIFT.doors[2]!;
 export const KUROSAWA_SPOT: Vec3 = ground(LIFT_DOOR.x + 4.5, LIFT_DOOR.z - 2);
 const CLEANER_SPOTS: readonly Vec3[] = [ground(408, 26.5), ground(420.5, 24), ground(413, 22.5)];
 

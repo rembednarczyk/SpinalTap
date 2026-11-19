@@ -3,6 +3,7 @@ import { P1_NAV } from "./parking-nav";
 import { METRO_DOOR_NAV } from "./metro-door";
 import { P2_NAV } from "./p2-nav";
 import { SHELTER_NAV } from "./shelter-nav";
+import { MALL_NAV } from "./mall-nav";
 import { groundY } from "../lublin/terrain";
 import { STAIR, STAIR_HEAD_X, opening } from "./foodhall";
 import { HALL } from "./plan";
@@ -49,20 +50,17 @@ const NODES: readonly NavNode[] = [
   { id: "alchemia-fumiko-in", at: { x: mid("fumiko-door"), y: F, z: IN } },
   { id: "alchemia-entrance-in", at: { x: mid("entrance"), y: F, z: IN } },
   { id: "alchemia-hall-centre", at: { x: 418, y: F, z: 50 } },
-  { id: "alchemia-hall-aisle", at: { x: 418, y: F, z: 40.2 } },
+  // Since ADR-0093 O1 the escalators stand along the atrium's south edge: past the first one's head, under the P1 landing.
+  { id: "alchemia-hall-aisle", at: { x: 416.8, y: F, z: 42.0 } },
+  { id: "alchemia-hall-south", at: { x: 416.7, y: F, z: 39.2 } },
   { id: "alchemia-hall-back", at: { x: 411.3, y: F, z: 38.8 } },
   { id: "alchemia-oyaji-in", at: { x: mid("oyaji-door"), y: F, z: IN } },
   // Oyaji's back room, then his shop behind the armoured counter through the door at its east end.
   { id: "alchemia-oyaji-back", at: { x: (OYAJI_BACK_DOOR.minX + OYAJI_BACK_DOOR.maxX) / 2, y: F, z: OYAJI_BACK_ROOM.minZ + 0.9 } },
   { id: "alchemia-oyaji-shop", at: { x: (OYAJI_BACK_DOOR.minX + OYAJI_BACK_DOOR.maxX) / 2, y: F, z: OYAJI_BACK_ROOM.minZ - 1.2 } },
-  // The stairs and the roof.
+  // The stairs up to the stair house on the old roof, P1 of the gallery since ADR-0093 O1 (`mall-nav.ts`).
   { id: "alchemia-stair-foot", at: { x: STAIR.footX + OFF, y: F, z: (STAIR.minZ + STAIR.maxZ) / 2 } },
   { id: "alchemia-stair-head", at: { x: STAIR_HEAD_X - OFF, y: R, z: (STAIR.minZ + STAIR.maxZ) / 2 } },
-  { id: "alchemia-roof-south", at: { x: 420, y: R, z: HALL.minZ + 1.2 } },
-  // Past tier A (15.11) along the roof's east strip, between its glass and the parapet.
-  { id: "alchemia-roof-east-south", at: { x: 434.9, y: R, z: HALL.minZ + 2.6 } },
-  { id: "alchemia-roof-east-north", at: { x: 434.9, y: R, z: HALL.maxZ - 2.4 } },
-  { id: "alchemia-roof-north", at: { x: 419, y: R, z: HALL.maxZ - 2.4 } },
 ];
 
 const chain = (...ids: string[]): NavEdge[] => ids.slice(1).map((b, i) => ({ a: `alchemia-${ids[i]}`, b: `alchemia-${b}` }));
@@ -75,14 +73,15 @@ const EDGES: readonly NavEdge[] = [
   { a: "alchemia-t0-east", b: "alchemia-t1-east", via: { minX: EAST_RAMP.a.x - 3, maxX: EAST_RAMP.a.x + 3, minZ: EAST_RAMP.a.z, maxZ: EAST_RAMP.b.z } },
   // The doors in the front: Fumiko's bar on its own, the hall's way in, Oyaji's back door.
   ...chain("t1-fumiko", "fumiko-in"),
-  ...chain("t1-entrance", "entrance-in", "hall-centre", "hall-aisle", "hall-back", "stair-foot"),
+  ...chain("t1-entrance", "entrance-in", "hall-centre", "hall-aisle", "hall-south", "hall-back", "stair-foot"),
   ...chain("t1-oyaji", "oyaji-in", "oyaji-back", "oyaji-shop"),
   // The stairs up to the landing, out of the stair house onto the car park.
   { a: "alchemia-stair-foot", b: "alchemia-stair-head", via: { minX: STAIR_HEAD_X, maxX: STAIR.footX, minZ: STAIR.minZ, maxZ: STAIR.maxZ } },
   ...chain("stair-head", "t0-stair"),
-  // Onto the green roof from the car park.
-  ...chain("t0-roof", "roof-south", "roof-east-south", "roof-east-north", "roof-north"),
 ];
 
-/** The food hall's graph, P-1's under the car park (stage 4, `parking-nav.ts`), the passage from metro B (stage 10) and P-2 (stage 5a, `p2-nav.ts`). */
-export const ALCHEMIA_NAV: NavGraph = mergeNav({ nodes: NODES, edges: EDGES }, P1_NAV, METRO_DOOR_NAV, P2_NAV, SHELTER_NAV);
+/**
+ * The food hall's graph, P-1's under the car park (stage 4, `parking-nav.ts`), the passage from metro B
+ * (stage 10), P-2 (stage 5a, `p2-nav.ts`), the shelter (5d1) and the gallery over the hall (ADR-0093 O1, `mall-nav.ts`).
+ */
+export const ALCHEMIA_NAV: NavGraph = mergeNav({ nodes: NODES, edges: EDGES }, P1_NAV, METRO_DOOR_NAV, P2_NAV, SHELTER_NAV, MALL_NAV);

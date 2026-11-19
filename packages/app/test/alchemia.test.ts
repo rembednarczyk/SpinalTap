@@ -84,16 +84,17 @@ describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
     expect(session.sim.player()!.health!.current).toBe(hp);
   });
 
-  it("holds her up on the green roof, walked onto from the car park", () => {
+  it("holds her up on the old green roof, the gallery's P1 since ADR-0093 O1, walked in from the car park through its doors", () => {
     const { session } = start();
     teleport(session, 420, 28, 0);
     steps(session, 2);
-    // Past the green tiers (15.11) along the roof's east strip.
-    walkAt(session, { x: 434.9, z: 34 }, 600);
+    // In through the main doors from T0's strip, along the east side of P1.
+    walkAt(session, { x: 420, z: 35 }, 600);
+    walkAt(session, { x: 434.9, z: 35 }, 600);
     walkAt(session, { x: 434.9, z: 50 }, 600);
     expect(at(session).z).toBeGreaterThan(49);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
-    // The parapet over T1 keeps her on it.
+    // The glass over T1 keeps her in.
     walkAt(session, { x: 434.9, z: 66 }, 300);
     expect(at(session).z).toBeLessThan(FOODHALL.maxZ);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);

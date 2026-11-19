@@ -1,5 +1,5 @@
 import type { GroundPoint } from "@seki/core";
-import { type Piece, outlined } from "./plan";
+import { type Piece, type PieceKind, outlined } from "./plan";
 
 /*
  * Rounded corners of Alchemia's storeys (ADR-0074 B4, to the board 1:1 on 19.11): a slab, its glass
@@ -108,6 +108,7 @@ const outsideGaps = (p: GroundPoint, q: GroundPoint, gaps: readonly Rectangle[])
  * A balustrade along `b`'s rounded outline grown by `grow`, its pieces the outline's edges a rail
  * thick inwards (a quad each, convex), from `y` up `height`, open where it crosses a rectangle of
  * `gaps` (a stair's head, a way through). Solid where somebody walks; drawn as posts and rails.
+ * Of another `kind` it is any thin wall along the outline (ADR-0093 O1: the gallery's glass, `pane`).
  */
 export const balustrade = (
   b: Rectangle,
@@ -118,6 +119,7 @@ export const balustrade = (
   solid: boolean,
   gaps: readonly Rectangle[] = [],
   radius = cornerRadius(b),
+  kind: PieceKind = "parapet",
 ): Piece[] => {
   const pts = roundedOutline(b, grow, corners, RAIL_ARC, radius);
   const out: Piece[] = [];
@@ -131,7 +133,7 @@ export const balustrade = (
       if ((t1 - t0) * len < 0.05) continue;
       const p = { x: p0.x + (q0.x - p0.x) * t0, z: p0.z + (q0.z - p0.z) * t0 };
       const q = { x: p0.x + (q0.x - p0.x) * t1, z: p0.z + (q0.z - p0.z) * t1 };
-      out.push(outlined([p, q, { x: q.x + nx, z: q.z + nz }, { x: p.x + nx, z: p.z + nz }], y, y + height, "parapet", solid));
+      out.push(outlined([p, q, { x: q.x + nx, z: q.z + nz }, { x: p.x + nx, z: p.z + nz }], y, y + height, kind, solid));
     }
   });
   return out;

@@ -1,46 +1,13 @@
 import { P1_RAMP, p1RampY } from "./parking";
 import { type Piece, box, piece } from "./plan";
-import { FOUNTAIN, FRONT_KIOSKS, L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
+import { FOUNTAIN, FRONT_KIOSKS, L2_TOP, L3, L3_TOP } from "./front";
 import { groundY } from "../lublin/terrain";
 
 /*
- * The board's details on the front (ADR-0074 B4, decisions of 19.11): green hanging over the
- * storeys' edges, trees in planters on L2's terrace, umbrellas over tables on L3's roof, tall
+ * The board's details on the front (ADR-0074 B4, decisions of 19.11): umbrellas over tables on L3's roof, tall
  * screens on L3's sides and the ramp's portal lit green, as on the board. Drawn only: nobody climbs
  * to L2's terrace or L3's roof (no stairs lead there), and the ramp's lights are in its walls.
  */
-
-/** A slab's overhang past its glass (as `front.ts`). */
-const OVER = 0.3;
-const L2 = L2_SLABS[0]!;
-
-/**
- * Green hanging over L2's and L3's south edges, narrow strands with gaps, as on the board: on L2
- * clear of its screen, on L3 only by its corners, clear of the sign.
- */
-const vines = (): Piece[] => {
-  const out: Piece[] = [];
-  const strand = (x: number, z: number, top: number, drop: number) => out.push(piece(box(x, x + 1.2, z - 0.2, z, top - drop, top + 0.4), "green", false, false));
-  for (let x = L2.minX + 11; x < L2.maxX - 2; x += 4.5) strand(x, L2.minZ - OVER - 0.02, L2_TOP, 1.8);
-  for (const x of [L3.minX + 0.6, L3.minX + 2.6, L3.maxX - 1.8, L3.maxX - 3.8]) strand(x, L3.minZ - OVER - 0.02, L3_TOP, 1.4);
-  return out;
-};
-
-/**
- * Trees in planters along L2's south terrace, between L3's front and L2's edge: west of L3's sign
- * (stage 8: in front of it their crowns hid CENTRUM HANDLOWE from the street and from the air);
- * before the sign, the planters only.
- */
-const PLANTERS = [L2.minX + 13, L2.maxX - 6] as const;
-const trees = (): Piece[] => [
-  ...PLANTERS.map((x) => piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP, L2_TOP + 0.7), "green", false, false)),
-  ...[L2.minX + 2.2, L2.minX + 6.2].flatMap((x) => [
-    piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP, L2_TOP + 0.7), "green", false, false),
-    piece(box(x - 0.12, x + 0.12, 7.88, 8.12, L2_TOP + 0.7, L2_TOP + 2.6), "frame", false, false),
-    piece(box(x - 1.3, x + 1.3, 6.7, 9.3, L2_TOP + 2.2, L2_TOP + 3.4), "green", false, false),
-    piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP + 3.4, L2_TOP + 4.0), "green", false, false),
-  ]),
-];
 
 /** Umbrellas over tables on L3's roof, towards its south edge: the board's top terrace. */
 const umbrellas = (): Piece[] =>
@@ -124,4 +91,4 @@ const kiosks = (): Piece[] =>
   });
 
 /** Every detail of B4 on the front. */
-export const frontDressPieces = (): Piece[] => [...vines(), ...trees(), ...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain(), ...kiosks()];
+export const frontDressPieces = (): Piece[] => [...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain(), ...kiosks()];

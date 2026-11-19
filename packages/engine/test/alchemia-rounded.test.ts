@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_TIER_PIECES } from "@seki/sim";
+import { ALCHEMIA_TIER_PIECES, MALL } from "@seki/sim";
 import { GeometrySink } from "../src/renderer/city-kit-data";
 import { ledOfSlab } from "../src/renderer/alchemia/rounded-slab";
 import { glassFacade, insetConvex } from "../src/renderer/alchemia/storey-facade";
@@ -11,7 +11,8 @@ import { readFileSync } from "node:fs";
 describe("Alchemia's rounded storeys in the drawing", () => {
   const bytes = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/city/city-kit.glb", import.meta.url));
   const data = parseCityKit(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
-  const slabs = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30);
+  // The front's storeys' slabs; the gallery's (ADR-0093 O1) have no straight strips of their own to drop.
+  const slabs = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30 && p.box.z0 < MALL.z0 - 0.01);
 
   it("drops only the straight strips of light along the slabs, the green steps' ones stay", () => {
     const leds = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "led");

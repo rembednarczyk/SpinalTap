@@ -1,8 +1,8 @@
 import type { GroundPoint } from "@seki/core";
 import type { GroundCut } from "../../world/ground";
 import type { StaticProp } from "../builders";
-import { FOODHALL_CUT, FOODHALL_STAIR_CUT, ROOF_PLANTERS, shellPieces } from "./foodhall";
-import { ALCHEMIA_LIFT_MECHANISM, LIFT_SHAFT_CUT, liftPieces } from "./lift";
+import { FOODHALL_CUT, FOODHALL_STAIR_CUT, shellPieces } from "./foodhall";
+import { ALCHEMIA_LIFT_MECHANISM, ALCHEMIA_LIFT_NE, ALCHEMIA_LIFT_NE_MECHANISM, LIFT_SHAFT_CUT, liftPieces } from "./lift";
 import { HALL, type Piece, box, piece, solidProp } from "./plan";
 import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
@@ -18,7 +18,7 @@ import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
 import { unitPieces } from "./units";
-import { tierPieces } from "./tiers";
+import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "./mall";
 import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
 import { frontGreenPieces } from "./front-green";
@@ -39,7 +39,11 @@ export * from "./p2-store";
 export * from "./shelter";
 export * from "./car-lift";
 export { PARAPET_BEDS } from "./square";
-export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
+export * from "./mall-plan";
+export { ATRIUM_COLUMN, MALL_HOLES, P1_DOORS, mallGlass, mallInsidePieces, mallOutsidePieces, mallSlabs, rectsMinus } from "./mall";
+export { CORE_GOING, coreLanes, coreRisers, coreSpan, corePieces, coreStoreys } from "./mall-cores";
+export { escalatorFlight, escalatorPieces, escalatorTread } from "./escalators";
+export { slabOf as storeySlabOf } from "./storey";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
 export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
@@ -56,16 +60,17 @@ export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_
  * ids from `ROOM_ID_BASE` (outside the allocator).
  */
 
-/** The shared tables in the middle of the hall, either side of its aisle, with their benches. */
+/**
+ * The shared tables in the middle of the hall, either side of its aisle, with their benches; 1.6 m
+ * north of where they stood until ADR-0093 O1, off the escalators along the atrium's south edge.
+ */
 const TABLES: readonly Piece[] = [410.5, 419.5].flatMap((x) =>
-  [42, 46].flatMap((z) => [
+  [43.6, 47.6].flatMap((z) => [
     piece(box(x, x + 6, z, z + 1, HALL.floor - 0.05, HALL.floor + 0.75), "table", true),
     piece(box(x, x + 6, z - 0.85, z - 0.45, HALL.floor - 0.05, HALL.floor + 0.45), "bench", true),
     piece(box(x, x + 6, z + 1.45, z + 1.85, HALL.floor - 0.05, HALL.floor + 0.45), "bench", true),
   ]),
 );
-
-const PLANTERS: readonly Piece[] = ROOF_PLANTERS.map((b) => piece(b, "green", false));
 
 const SHELL = shellPieces();
 const UNITS = unitPieces();
@@ -73,13 +78,19 @@ const LIFT = liftPieces();
 
 const PLAZA = plazaPieces();
 const SQUARE = squarePieces();
-const TIERS = tierPieces();
+const LIFT_NE = liftPieces(ALCHEMIA_LIFT_NE);
+/** The gallery round the atrium (ADR-0093 O1): its body drawn from afar, its galleries' balustrades, escalators and cores near. */
+const MALL_OUT = mallOutsidePieces();
+const MALL_IN = mallInsidePieces();
 const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces()];
-/** The green tiers' pieces (15.11) and the front's storeys over P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
-export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...TIERS, ...FRONT];
+/**
+ * The gallery's body (ADR-0093 O1; the green tiers of 15.11 until then) and the front's storeys over
+ * P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own.
+ */
+export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS, ...FRONT];
+export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...MALL_OUT, ...FRONT, ...MALL_IN, ...LIFT_NE];
 
 /**
  * P-2's solids (stage 5a), the last of Alchemia's: its store's shell with the earth beside it, its
@@ -98,11 +109,18 @@ export const SHELTER_PROPS: readonly StaticProp[] = [solidProp(SHELTER_PIECES), 
 /** The car lift's solids (stage 5e): its railing at P-2, its platform and the car riding it by the clock. */
 export const CAR_LIFT_PROPS: readonly StaticProp[] = [solidProp(CAR_LIFT_PIECES), ...CAR_LIFT_RIDERS];
 
+/**
+ * The gallery's solids (ADR-0093 O1), the last of Alchemia's: its body (slabs, glass, the roof's
+ * balustrades), its galleries' balustrades and the cores' walls and the north-east lift's shaft a prop
+ * per tile, each escalator's flight and each core storey's flights a prop (`mallSolidProps`); then the
+ * lift's moving parts.
+ */
+export const MALL_PROPS: readonly StaticProp[] = [...mallSolidProps(MALL_OUT, LIFT_NE), ...ALCHEMIA_LIFT_NE_MECHANISM];
+
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(SHELL.filter((p) => p.kind !== "step")),
   solidProp(SHELL.filter((p) => p.kind === "step")),
-  solidProp(PLANTERS),
   solidProp(UNITS.filter((p) => p.box.z0 >= HALL.maxZ - 8.5)),
   solidProp(UNITS.filter((p) => p.box.z0 < HALL.maxZ - 8.5)),
   solidProp(TABLES),
@@ -120,10 +138,7 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...P1_RAMP_PROPS,
   // Stage 7 after stage 4's: T0's square, its pergolas' posts and the beds along the trench.
   solidProp(SQUARE),
-  // The green tiers of 15.11 after stage 7's: their glass, slabs, parapets and planters, then their stairs.
-  solidProp(TIERS.filter((p) => p.kind !== "step")),
-  solidProp(TIERS.filter((p) => p.kind === "step")),
-  // Stage 10 after the tiers: the passage from metro B's hall down to P-1.
+  // Stage 10 after stage 7's (the green tiers between them went with ADR-0093 O1): the passage from metro B's hall down to P-1.
   solidProp(METRO_DOOR_PIECES),
   // Stage 5a after stage 10's: P-2's shell with its portal and cutting, the flight down from P-1, the store's fittings.
   ...P2_PROPS,
@@ -135,11 +150,14 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...SHELTER_PROPS,
   // Stage 5e after 5d1's: the car lift from P-1's north cabin down to P-2's lane.
   ...CAR_LIFT_PROPS,
+  // The gallery round the atrium (ADR-0093 O1) last.
+  ...MALL_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */
 // The lift's shaft (stage 5c) before the hall's cut it lies in, as the hall's stairs: the first cut over a point is its floor.
-export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT, SHELTER_HATCH_CUT];
+// The gallery's cores and escalators (ADR-0093 O1) as the hall's stairs, before the hall's cut.
+export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, ...MALL_CUTS, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT, SHELTER_HATCH_CUT];
 
 /** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor; stage 5d1: the shelter and its way to the gate). */
 export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT, ...SHELTER_VAULTS];

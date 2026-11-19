@@ -1,7 +1,8 @@
 import type { GroundCut } from "../../world/ground";
 import type { Rect } from "../builders";
 import { P1_HALL_DOOR } from "./parking";
-import { type Box, HALL, HALL_INNER, PARAPET, type Piece, SINK, box, piece } from "./plan";
+import { ATRIUM } from "./mall-plan";
+import { HALL, HALL_INNER, type Piece, SINK, box, piece } from "./plan";
 
 /**
  * The food hall of Alchemia under the upper terrace (ADR-0074 §1, stage 1): a box of 36 × 26 m dug
@@ -62,10 +63,22 @@ export const STAIR_HEAD_X = STAIR.footX - (STAIR.risers - 1) * STAIR.going;
 export const BACK_DOOR = { minX: STAIR.footX - 9 * STAIR.going, maxX: 412.3 } as const;
 
 /** The stair house over the upper flight and the landing, its door south onto the car park. */
-export const STAIR_HOUSE = { minX: HALL.minX, maxX: 407.8, minZ: HALL.minZ, maxZ: 34.8, height: 2.6, door: { x0: 401.0, x1: 402.6, top: 2.3 } } as const;
+export const STAIR_HOUSE = {
+  minX: HALL.minX,
+  maxX: 407.8,
+  minZ: HALL.minZ,
+  maxZ: 34.8,
+  height: 2.6,
+  door: { x0: 401.0, x1: 402.6, top: 2.3 },
+  // Since ADR-0093 O1: north into the gallery's south-west core, west onto the ramp's top.
+  north: { x0: 400.5, x1: 402.0, top: 2.1 },
+  west: { z0: 32.4, z1: 33.9, top: 2.1 },
+} as const;
 /** The roof's hole over the stair and the one over the lift's shaft (`lift.ts`). */
 const STAIR_HOLE: Rect = { minX: I.minX, maxX: STAIR_HOUSE.maxX - 0.2, minZ: I.minZ, maxZ: STAIR.maxZ };
 export const LIFT_HOLE: Rect = { minX: 412.3, maxX: 414.7, minZ: I.minZ, maxZ: 34.8 };
+/** The gallery's atrium over the hall's middle (ADR-0093 O1): open from the hall's floor to the sky. */
+const ATRIUM_HOLE: Rect = { minX: ATRIUM.x0, maxX: ATRIUM.x1, minZ: ATRIUM.z0, maxZ: ATRIUM.z1 };
 
 /** The cut under the hall: its outline dug to its floor. */
 export const FOODHALL_CUT: GroundCut = { bounds: { minX: HALL.minX, maxX: HALL.maxX, minZ: HALL.minZ, maxZ: HALL.maxZ }, floor: F };
@@ -104,22 +117,27 @@ const walls = (): Piece[] => [
   piece(box(HALL.maxX - W, HALL.maxX, HALL.minZ + W, HALL.maxZ - W, F - SINK, C), "wall", false),
 ];
 
-/** The roof slab round its two holes, the parapet on its west, north and east edges. */
-const roof = (): Piece[] => {
-  const s = (x0: number, x1: number, z0: number, z1: number): Piece => piece(box(x0, x1, z0, z1, C, R), "roof", false);
-  const top = R + PARAPET;
-  return [
-    s(HALL.minX, HALL.maxX, LIFT_HOLE.maxZ, HALL.maxZ),
-    s(HALL.minX, HALL.maxX, HALL.minZ, I.minZ),
-    s(HALL.minX, I.minX, I.minZ, LIFT_HOLE.maxZ),
-    s(I.minX, STAIR_HOLE.maxX, STAIR_HOLE.maxZ, LIFT_HOLE.maxZ),
-    s(STAIR_HOLE.maxX, LIFT_HOLE.minX, I.minZ, LIFT_HOLE.maxZ),
-    s(LIFT_HOLE.maxX, HALL.maxX, I.minZ, LIFT_HOLE.maxZ),
-    piece(box(HALL.minX, HALL.minX + 0.25, STAIR_HOUSE.maxZ, HALL.maxZ, R, top), "parapet", false),
-    piece(box(HALL.minX + 0.25, HALL.maxX - 0.25, HALL.maxZ - 0.25, HALL.maxZ, R, top), "parapet", false),
-    piece(box(HALL.maxX - 0.25, HALL.maxX, HALL.minZ, HALL.maxZ, R, top), "parapet", false),
-  ];
-};
+/**
+ * The roof slab round its holes (the stair's, the lift's, the gallery's atrium since ADR-0093 O1): the
+ * gallery's P1 floor, under its glass (`mall.ts`), so no parapet round it any more.
+ */
+const roof = (): Piece[] =>
+  [STAIR_HOLE, LIFT_HOLE, ATRIUM_HOLE]
+    .reduce<Rect[]>(
+      (parts, h) =>
+        parts.flatMap((r): Rect[] => {
+          if (h.maxX <= r.minX || h.minX >= r.maxX || h.maxZ <= r.minZ || h.minZ >= r.maxZ) return [r];
+          const out: Rect[] = [];
+          if (h.minZ > r.minZ) out.push({ ...r, maxZ: h.minZ });
+          if (h.maxZ < r.maxZ) out.push({ ...r, minZ: h.maxZ });
+          const [z0, z1] = [Math.max(r.minZ, h.minZ), Math.min(r.maxZ, h.maxZ)];
+          if (h.minX > r.minX) out.push({ minX: r.minX, maxX: h.minX, minZ: z0, maxZ: z1 });
+          if (h.maxX < r.maxX) out.push({ minX: h.maxX, maxX: r.maxX, minZ: z0, maxZ: z1 });
+          return out;
+        }),
+      [{ minX: HALL.minX, maxX: HALL.maxX, minZ: HALL.minZ, maxZ: HALL.maxZ }],
+    )
+    .map((r) => piece(box(r.minX, r.maxX, r.minZ, r.maxZ, C, R), "roof", false));
 
 /** The flight's treads (solid from the floor), the landing, the partition between it and the hall. */
 const stairs = (): Piece[] => {
@@ -133,14 +151,20 @@ const stairs = (): Piece[] => {
   return out;
 };
 
-/** The stair house on the roof: its walls round the hole, the door in its south one, its roof. */
+/** The stair house on the roof (P1 inside the gallery since ADR-0093 O1): its walls round the hole with its doors, its roof. */
 const stairHouse = (): Piece[] => {
   const h = STAIR_HOUSE;
   const [y0, y1] = [R, R + h.height];
   const d = h.door;
+  const n = h.north;
+  const w = h.west;
   return [
-    piece(box(h.minX, h.minX + W, h.minZ, h.maxZ, y0, y1), "wall", false),
-    piece(box(h.minX + W, h.maxX, h.maxZ - 0.2, h.maxZ, y0, y1), "wall", false),
+    piece(box(h.minX, h.minX + W, h.minZ, w.z0, y0, y1), "wall", false),
+    piece(box(h.minX, h.minX + W, w.z1, h.maxZ, y0, y1), "wall", false),
+    piece(box(h.minX, h.minX + W, w.z0, w.z1, R + w.top, y1), "wall", false),
+    piece(box(h.minX + W, n.x0, h.maxZ - 0.2, h.maxZ, y0, y1), "wall", false),
+    piece(box(n.x1, h.maxX, h.maxZ - 0.2, h.maxZ, y0, y1), "wall", false),
+    piece(box(n.x0, n.x1, h.maxZ - 0.2, h.maxZ, R + n.top, y1), "wall", false),
     piece(box(h.maxX - 0.2, h.maxX, h.minZ, h.maxZ - 0.2, y0, y1), "wall", false),
     piece(box(h.minX + W, d.x0, h.minZ, h.minZ + W, y0, y1), "wall", false),
     piece(box(d.x1, h.maxX - 0.2, h.minZ, h.minZ + W, y0, y1), "wall", false),
@@ -149,8 +173,5 @@ const stairHouse = (): Piece[] => {
   ];
 };
 
-/** The hall's shell: walls, front, roof and parapets (drawn from outside), the stairs (inside). */
+/** The hall's shell: walls, front, roof (drawn from outside), the stairs (inside). */
 export const shellPieces = (): Piece[] => [...walls(), ...front(), ...roof(), ...stairHouse(), ...stairs()];
-
-/** The planters of the green roof (T0) along its north parapet: knee high, solid. */
-export const ROOF_PLANTERS: readonly Box[] = [404, 412, 422, 430].map((x) => box(x, x + 4, HALL.maxZ - 1.45, HALL.maxZ - 0.25, R, R + 0.5));

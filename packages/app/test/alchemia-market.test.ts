@@ -32,7 +32,9 @@ const walkAt = (session: GameSession, to: { x: number; z: number }, n: number, n
 const wayTo = (key: Keeper): { x: number; z: number }[] => {
   const before = beforeKeeper(key);
   if (key === "fumiko") return [before];
-  if (key === "sachiko") return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, { x: 418, z: 40.2 }, before];
+  // Round the first escalator's head, under the gallery's P1 landing (ADR-0093 O1: it stands along the atrium's south edge),
+  // along the back aisle and up to her counter from the south.
+  if (key === "sachiko") return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, { x: 416.8, z: 42 }, { x: 416.7, z: 39.2 }, { x: 413, z: 38.9 }, { x: 409, z: 34.9 }, before];
   if (key === "oyaji") return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, { x: 428, z: 48.5 }, before];
   return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, before];
 };

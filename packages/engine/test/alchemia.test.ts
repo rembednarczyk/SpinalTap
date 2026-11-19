@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, FOODHALL_INNER, P1, P2_CUTTING, arkadyLocal } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, FOODHALL_INNER, MALL_LEVELS, P1, P2_CUTTING, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { pointLightOn } from "../src/npr/toon-point-lights";
@@ -72,8 +72,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const screenUvs = new Set<string>();
     for (let i = 0; i < screen.uvs.length; i += 2) screenUvs.add(`${screen.uvs[i]},${screen.uvs[i + 1]}`);
     for (const c of ["glass-dark", "win-teal", "neon-pink"]) expect(screenUvs.has(swatchUv(kitData, c).join(",")), c).toBe(true);
-    // The tiers' lawns in the board's fresh green since C2 (19.11): the kit's paint, tinted.
-    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "paint")]);
+    // The tiers' lawns went with them (ADR-0093 O1); the green roof's come with stage O4.
     const slab = kind("roof").filter((p) => (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) > 100);
     expect(uvOf(slab)).toEqual([...swatchUv(kitData, "trim-light")]);
   });
@@ -141,15 +140,17 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     }
   });
 
-  it("stops the rain in the hall, its stair house and the lift's kiosk, not on its roof or on T1", () => {
-    // Under the green roof: by the counters, at the foot of the stairs, under the ceiling.
-    for (const [x, z] of [[418, 45], [430, 55], [402, 40], [411, 34]] as const) expect(builtRoofOver(x, ALCHEMIA_T1 + 1.5, z), `${x},${z}`).toBe(true);
-    expect(builtRoofOver(418, FOODHALL.ceiling - 0.1, 45)).toBe(true);
-    // On the roof, in the stair house and in the lift's kiosk.
+  it("stops the rain in the hall and the gallery over it, its stair house and the lift's kiosk, not in the atrium, on the roof or on T1", () => {
+    // Under the gallery's floors (ADR-0093 O1): by the counters, at the foot of the stairs, under the ceiling.
+    for (const [x, z] of [[418, 38.5], [430, 55], [402, 40], [411, 34]] as const) expect(builtRoofOver(x, ALCHEMIA_T1 + 1.5, z), `${x},${z}`).toBe(true);
+    expect(builtRoofOver(430, FOODHALL.ceiling - 0.1, 45)).toBe(true);
+    // In the stair house, the lift's kiosk and on the gallery's P1 over the old roof.
     expect(builtRoofOver(404, ALCHEMIA_T0 + 1.5, 33.5)).toBe(true);
     expect(builtRoofOver(413.5, ALCHEMIA_T0 + 1.5, 33.5)).toBe(true);
-    // Rain on the roof and on T1 before the front, as on the car park over P-1; P-1 stays dry.
-    expect(builtRoofOver(420, ALCHEMIA_T0 + 1, 45)).toBe(false);
+    expect(builtRoofOver(430, ALCHEMIA_T0 + 1, 45)).toBe(true);
+    // Rain into the atrium down to the hall's floor, on the gallery's roof and on T1 before the front, as on the car park over P-1; P-1 stays dry.
+    expect(builtRoofOver(418, ALCHEMIA_T1 + 1.5, 45)).toBe(false);
+    expect(builtRoofOver(420, MALL_LEVELS.roof + 1, 52)).toBe(false);
     expect(builtRoofOver(420, ALCHEMIA_T1 + 1.5, 65)).toBe(false);
     expect(builtRoofOver(402, ALCHEMIA_T0 + 1, 15)).toBe(false);
     expect(builtRoofOver(402, P1.floor + 1.5, 15)).toBe(true);

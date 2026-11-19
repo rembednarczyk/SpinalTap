@@ -1,9 +1,9 @@
 import { type Piece, box, piece } from "./plan";
-import { TIER_A, TIER_B } from "./tiers";
+import { MALL_LEVELS } from "./mall-plan";
 
-/** L1's and L2's roofs (as `front.ts`: the tiers' levels). */
-const L1_TOP = TIER_A.top;
-const L2_TOP = TIER_B.top;
+/** L1's and L2's roofs: the gallery's P2 and P3 (ADR-0093). */
+const L1_TOP = MALL_LEVELS.p2;
+const L2_TOP = MALL_LEVELS.p3;
 
 /*
  * The pale house with arcades in the front's axis (C3 of the board 1:1, decision of the user of

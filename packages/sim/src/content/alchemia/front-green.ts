@@ -1,8 +1,9 @@
 import { type GroundPoint, type StreetPropItem, measuredTreeVariant } from "@seki/core";
 import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces } from "./front";
 import { type Piece, outlined } from "./plan";
-import { type Corners, type Rectangle, ALL_CORNERS, outerCorners, roundedOutline } from "./rounded";
-import { B_RADIUS, TIER_A, TIER_B, slabOf } from "./tiers";
+import { type Corners, type Rectangle, outerCorners, roundedOutline } from "./rounded";
+import { FRONT_OVERHANG, MALL, MALL_CORNERS, MALL_LEVELS, MALL_RADIUS } from "./mall-plan";
+import { slabOf } from "./storey";
 import { ARCADE_FRONT } from "./arcade-front";
 import type { Rect } from "../builders";
 
@@ -23,21 +24,30 @@ interface Storey {
   readonly radius?: number;
   /** The front's roofs, nobody on them: shrubs along their balustrades. */
   readonly shrubs: boolean;
+  /** No curtains on its south face (the gallery's: the front stands against it, its doors under it). */
+  readonly southShut?: true;
   /** No curtains over its edges (the house with arcades: its windows and letters under its cornice). */
   readonly bare?: boolean;
 }
 
 const rect = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
+const GALLERY_RECT: Rect = { minX: MALL.x0, maxX: MALL.x1, minZ: MALL.z0, maxZ: MALL.z1 };
+/** The gallery as the front's neighbour: L2's and L3's corners against its face are square (`front.ts`). */
+const GALLERY_FACE: Rectangle = { ...MALL, z0: MALL.z0 - FRONT_OVERHANG };
 const SLAB = 0.3;
 /** The slab's edge beam under it (the engine draws it, `storey-facade.ts`). */
 const BEAM = 0.32;
 
 const STOREYS: readonly Storey[] = [
   ...L1_LEVEL.map((r): Storey => ({ r, bottom: -3, top: L1_TOP, corners: outerCorners(rect(r), L1_LEVEL.map(rect)), shrubs: true })),
-  ...L2_SLABS.map((r): Storey => ({ r, bottom: L1_TOP, top: L2_TOP, corners: outerCorners(rect(r), L2_SLABS.map(rect)), shrubs: true })),
-  { r: L3, bottom: L2_TOP, top: L3_TOP, corners: ALL_CORNERS, shrubs: true },
-  { r: TIER_A, bottom: TIER_A.bottom, top: TIER_A.top, corners: ALL_CORNERS, shrubs: false },
-  { r: TIER_B, bottom: TIER_B.bottom, top: TIER_B.top, corners: ALL_CORNERS, radius: B_RADIUS, shrubs: false },
+  ...L2_SLABS.map((r): Storey => ({ r, bottom: L1_TOP, top: L2_TOP, corners: outerCorners(rect(r), [...L2_SLABS.map(rect), GALLERY_FACE]), shrubs: true })),
+  { r: L3, bottom: L2_TOP, top: L3_TOP, corners: outerCorners(rect(L3), [rect(L3), GALLERY_FACE]), shrubs: true },
+  // The gallery's storeys round the atrium (ADR-0093 O1; tiers A and B until then): P1 under P2's slab, P2, P3 under the roof's.
+  ...[
+    [MALL_LEVELS.p1, MALL_LEVELS.p2],
+    [MALL_LEVELS.p2, MALL_LEVELS.p3],
+    [MALL_LEVELS.p3, MALL_LEVELS.roof],
+  ].map(([bottom, top]): Storey => ({ r: GALLERY_RECT, bottom: bottom!, top: top!, corners: MALL_CORNERS, radius: MALL_RADIUS, shrubs: false, southShut: true })),
   // The house with arcades (C3): square, its roof a terrace with L2's.
   { r: ARCADE_FRONT, bottom: -3, top: ARCADE_FRONT.top, corners: [false, false, false, false], shrubs: true, bare: true },
 ];
@@ -91,7 +101,7 @@ const curtains = (s: Storey): Piece[] => {
   const under = s.top - SLAB - BEAM;
   return along(pts, CURTAIN_EVERY).flatMap(({ p, t, n }) => {
     const h = hash(p.x, p.z);
-    if (h < 0.18) return [];
+    if (h < 0.18 || (s.southShut && n.z < -0.5)) return [];
     const drop = 0.6 + h * 1.2;
     const y1 = s.top + 0.15;
     const w = CURTAIN * (0.7 + 0.6 * hash(p.z, p.x));
@@ -131,10 +141,26 @@ const tree = (x: number, z: number, y: number, seed: number): StreetPropItem[] =
   { prop: "tree", x, y: y + 0.45, z, yaw: (seed % 628) / 100, variant: measuredTreeVariant(seed, 6 + (seed % 3) * 0.5) },
 ];
 
-/** The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners, clear of the umbrellas), L2's terrace west of the sign. */
+/** A planter of the game's with a shrub of the game's in it. */
+const planted = (x: number, z: number, y: number, seed: number): StreetPropItem[] => [
+  { prop: "planter", x, y, z, yaw: 0, variant: seed & 0xff },
+  { prop: "shrubs", x, y: y + 0.45, z, yaw: (seed % 628) / 100, variant: ((seed * 37) & 0xf0f) | 0x10 },
+];
+
+/**
+ * The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners,
+ * clear of the umbrellas), L2's south terrace west of L3's sign (in front of it their crowns would
+ * hide CENTRUM HANDLOWE, stage 8: before the sign, planters with shrubs only). Once boxes of
+ * `front-dress.ts`; the game's trees since 19.11 (the user: no square trees in Alchemia).
+ */
 const roofTrees = (): StreetPropItem[] => {
   const e = L1_LEVEL[L1_LEVEL.length - 1]!;
+  const l2 = L2_SLABS[0]!;
   return [
+    ...tree(l2.minX + 2.2, 8, L2_TOP, 197),
+    ...tree(l2.minX + 6.2, 8, L2_TOP, 233),
+    ...planted(l2.minX + 13, 8, L2_TOP, 61),
+    ...planted(l2.maxX - 6, 8, L2_TOP, 89),
     ...tree(e.minX + 2, e.minZ + 1.8, L1_TOP, 41),
     ...tree(e.maxX - 2, e.minZ + 1.8, L1_TOP, 77),
     ...tree(L3.minX + 2.5, L3.maxZ - 3, L3_TOP, 113),

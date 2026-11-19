@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ALCHEMIA_PROPS,
+  MALL_PROPS,
   EAST_WING,
   FRONT_SIGN,
   L1_TOP,
@@ -15,8 +16,7 @@ import {
   P1_STAIR,
   PASSAGE_COLUMNS,
   PAVILION_CORNERS,
-  TIER_A,
-  TIER_B,
+  MALL_LEVELS,
   WEST_WING,
   frontDressPieces,
   frontPieces,
@@ -40,9 +40,11 @@ const apart = (a: R, b: R, gap: number): boolean => a.maxX + gap <= b.minX || b.
 const METRO_B: R = { minX: 424.4, maxX: 431.6, minZ: 26.2, maxZ: 29.8 };
 
 describe("Alchemia's front over P-1 (B1)", () => {
-  it("lays its roofs on the tiers' levels, L3 a storey over L2", () => {
-    expect(L1_TOP).toBe(TIER_A.top);
-    expect(L2_TOP).toBe(TIER_B.top);
+  it("lays its roofs on the gallery's floors, L3 a storey over L2 on its roof", () => {
+    // On the levels of tiers A and B until ADR-0093 O1, now the gallery's P2, P3 and roof (the same heights).
+    expect(L1_TOP).toBe(MALL_LEVELS.p2);
+    expect(L2_TOP).toBe(MALL_LEVELS.p3);
+    expect(L3_TOP).toBe(MALL_LEVELS.roof);
     expect(L3_TOP - L2_TOP).toBeCloseTo(4.2, 6);
     // Twelve metres and more over Bajkowskiego's footway.
     expect(L3_TOP - groundY(410, -8.8)).toBeGreaterThan(11);
@@ -82,7 +84,7 @@ describe("Alchemia's front over P-1 (B1)", () => {
     expect(FRONT_SIGN.z1).toBeLessThanOrEqual(L3.minZ);
     expect(FRONT_SIGN.y0).toBeGreaterThan(L2_TOP);
     expect(FRONT_SIGN.y1).toBeLessThan(L3_TOP);
-    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
+    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
   });
 
   it("stands its kiosks (B4) on the square before it, off the fountain, the ramp's trench and every solid of the map", () => {
