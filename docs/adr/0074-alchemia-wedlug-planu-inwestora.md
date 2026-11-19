@@ -484,7 +484,7 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
 
 ### Etap C2: zieleń (19.11)
 - **Zasłony zieleni** (`front-green.ts`) wiszą na każdej odsłoniętej krawędzi kondygnacji: L1–L3 frontu oraz A i B.
-  - Biegną wzdłuż zaokrąglonego obrysu płyty, 8 cm za jej krawędzią, co 2,6 m. Każda ma 0,9–1,7 m szerokości i spada 0,8–2,6 m spod belki płyty, a od góry wystaje nad płytę.
+  - Biegną wzdłuż zaokrąglonego obrysu płyty, 8 cm za jej krawędzią, co 3,2 m. Każda ma 0,9–1,7 m szerokości i spada 0,6–1,8 m spod belki płyty, a od góry wystaje nad płytę.
   - Pomijane są krawędzie, przy których stoi inna kondygnacja, oraz miejsca przy napisie i ekranach.
   - Co gdzie rośnie, rozstrzyga skrót położenia (hash). Nie ma list pozycji ani losowości.
   - Zasłony są tylko rysowane.
@@ -492,7 +492,8 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
   - Na tarasach A i B, po których się chodzi, nie ma nowych krzewów.
 - **Zielony stok** (`green-slope.ts`): trzy zielone stopnie silnik rysuje jako jedną równą pochylnię trawy od krawędzi dachu L1 do najniższego stopnia. Linia światła biegnie wzdłuż profilu po obu stronach i u stopy.
   - Symulacja zostaje przy trzech stopniach. Stopnie wysokie na 1,05 m nie są do chodzenia, więc pochylnia, która w głębi stopnia leży nad jego wierzchem, nikogo nie zasłania w zwykłej grze.
-- **Budżet.** Siatka kondygnacji ma 15,0 tys. trójkątów przy budżecie 16 tys. Kolejne etapy (napis, dziedziniec) muszą zmieścić się w reszcie albo przenieść część do siatki zewnętrza.
+- **Budżet.** Siatka kondygnacji ma 15,5 tys. trójkątów przy budżecie 16 tys., bo szkło straciło cokół i drugi pas tylnej ściany. Kolejne etapy idą do siatki zewnętrza.
+- **Kolor.** Liście i trawniki kondygnacji mają świeżą zieleń planszy (farba kitu barwiona na #4f9a58 i #5a9e4e), bo ciemna zieleń kitu w nocy czytała się jak ciemne płyty. Zasłona to dwa pasma nierównej długości, co 3,2 m.
 
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.

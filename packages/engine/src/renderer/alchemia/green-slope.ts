@@ -1,6 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import { type AlchemiaPiece, GREEN_SLOPE } from "@seki/sim";
 import { type CityKitData, type GeometrySink, swatchUv } from "../city-kit-data";
+import { LAWN } from "./storey-facade";
 
 /*
  * The board's green slope down from the west wing's roof to the street (C2, 19.11): the
@@ -23,7 +24,7 @@ const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
 
 /** The slope: its lawn, its sides and foot in green, the light along its profile and foot. */
 export const greenSlope = (sink: GeometrySink, data: CityKitData): void => {
-  const lawn = swatchUv(data, "plant");
+  const lawn = swatchUv(data, "paint");
   const led = swatchUv(data, "neon-cyan");
   const run = S.x1 - S.x0;
   const rise = S.top - S.foot;
@@ -31,11 +32,11 @@ export const greenSlope = (sink: GeometrySink, data: CityKitData): void => {
   // The lawn's normal: up and out to the west.
   const n = { x: -rise / len, y: run / len, z: 0 };
   // Corners wound as `band`'s: the face's normal is -(e1 × e2) of its first corner's two edges.
-  sink.quad(v(S.x0, S.foot, S.z1), v(S.x0, S.foot, S.z0), v(S.x1, S.top, S.z0), v(S.x1, S.top, S.z1), n, lawn);
+  sink.quad(v(S.x0, S.foot, S.z1), v(S.x0, S.foot, S.z0), v(S.x1, S.top, S.z0), v(S.x1, S.top, S.z1), n, lawn, LAWN);
   // Its sides down to the ground, and its foot.
-  sink.quad(v(S.x1, FOOT, S.z0), v(S.x1, S.top, S.z0), v(S.x0, S.foot, S.z0), v(S.x0, FOOT, S.z0), { x: 0, y: 0, z: -1 }, lawn);
-  sink.quad(v(S.x0, FOOT, S.z1), v(S.x0, S.foot, S.z1), v(S.x1, S.top, S.z1), v(S.x1, FOOT, S.z1), { x: 0, y: 0, z: 1 }, lawn);
-  sink.quad(v(S.x0, FOOT, S.z0), v(S.x0, S.foot, S.z0), v(S.x0, S.foot, S.z1), v(S.x0, FOOT, S.z1), { x: -1, y: 0, z: 0 }, lawn);
+  sink.quad(v(S.x1, FOOT, S.z0), v(S.x1, S.top, S.z0), v(S.x0, S.foot, S.z0), v(S.x0, FOOT, S.z0), { x: 0, y: 0, z: -1 }, lawn, LAWN);
+  sink.quad(v(S.x0, FOOT, S.z1), v(S.x0, S.foot, S.z1), v(S.x1, S.top, S.z1), v(S.x1, FOOT, S.z1), { x: 0, y: 0, z: 1 }, lawn, LAWN);
+  sink.quad(v(S.x0, FOOT, S.z0), v(S.x0, S.foot, S.z0), v(S.x0, S.foot, S.z1), v(S.x0, FOOT, S.z1), { x: -1, y: 0, z: 0 }, lawn, LAWN);
   // The light: a strip just under the lawn's edge on each side, along the slope, and along the foot.
   for (const [z, nz] of [
     [S.z0 - 0.02, -1],
