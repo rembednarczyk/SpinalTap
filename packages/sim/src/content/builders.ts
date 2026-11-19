@@ -47,7 +47,7 @@ export type Mechanism =
   | { readonly kind: "door"; readonly door: DoorDef; readonly leaf: number; readonly slide: { readonly x: number; readonly z: number } }
   | { readonly kind: "door-panel"; readonly door: string }
   /** A solid running to and fro by the clock along `axis` (ADR-0074 stage 5b: P-2's robots). */
-  | { readonly kind: "shuttle"; readonly key: string; readonly axis: "x" | "z"; readonly travel: number; readonly period: number; readonly phase: number; readonly pause: number };
+  | { readonly kind: "shuttle"; readonly key: string; readonly axis: "x" | "y" | "z"; readonly travel: number; readonly period: number; readonly phase: number; readonly pause: number };
 
 export interface ActorSpawn {
   readonly key: string;

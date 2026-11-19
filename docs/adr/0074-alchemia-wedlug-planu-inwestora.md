@@ -369,6 +369,18 @@ Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecen
   - Sesja: z T2 włazem do schronu i bramą do P−2, potem z powrotem, bez obrażeń.
 - **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
 
+### Etap 5e: winda aut z kabin P−1 (gałąź `feat/alchemia-winda-aut`)
+- **Szyb** (`P1_CAR_LIFT`, x 399,2–403,6, z 30–31,35) leży w północnej kabinie oddawania aut. Przechodzi przez podłogę pokładu P−1 i strop P−2 do północnego końca pasa robotów: za ostatnimi słupkami regałów i ich belkami, za biegiem robotów, przed północną ścianą P−2.
+- **Platforma** z autem (nadwozie i kabina) jeździ w górę i w dół według zegara, jak roboty: `shuttle` z nową osią `y`, okres 40 s, postój 20% na każdym końcu. Na dole platforma jest równo z podłogą P−2, na górze równo z podłogą P−1. Nic z niej nie trafia do zapisu.
+- **Na P−1** szyb zamykają ściany kabiny i jej roleta. **Na P−2** barierka zamyka go z zachodu i wschodu, a od strony pasa szyb jest otwarty, z kogutem nad nim. Kto stanie pod opadającą platformą, zostaje wypchnięty na pas.
+- **Testy:**
+  - szyb w kabinie, za paletami i biegiem robotów;
+  - otwór bez innych brył Alchemii;
+  - trzy jeźdźcy w osi `y` o wspólnym rytmie;
+  - poziomy na końcach;
+  - nikt nie stoi w platformie.
+- **Hashe i zapis:** złote hashe zgodne, schemat zapisu bez zmian.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**

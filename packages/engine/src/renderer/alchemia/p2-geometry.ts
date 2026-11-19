@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES, SHELTER_HATCH_PIECES, SHELTER_PIECES } from "@seki/sim";
+import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES, SHELTER_HATCH_PIECES, SHELTER_PIECES, CAR_LIFT_PIECES } from "@seki/sim";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 
 /**
@@ -89,7 +89,7 @@ export const p2Outside = (outside: GeometrySink, data: CityKitData, pieces: read
 };
 
 /** The store, the corridor and the shelter (stage 5d1) under the ground: their own sink. */
-export const p2Inside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = [...P2_SHELL_PIECES, ...P2_STORE_PIECES, ...SHELTER_PIECES]): GeometrySink => {
+export const p2Inside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = [...P2_SHELL_PIECES, ...P2_STORE_PIECES, ...SHELTER_PIECES, ...CAR_LIFT_PIECES]): GeometrySink => {
   const inside = new GeometrySink();
   for (const p of pieces) boxOf(inside, data, p.box, swatchOf(p));
   return inside;

@@ -79,7 +79,8 @@ export interface Shuttle {
   readonly key: string;
   /** Its box at the start of its run. */
   readonly base: Aabb;
-  readonly axis: "x" | "z";
+  /** Along x or z a cart on a lane; up y a car lift's platform (stage 5e). */
+  readonly axis: "x" | "y" | "z";
   /** How far it runs (m), and in how many real seconds there and back, a pause at each end included. */
   readonly travel: number;
   readonly period: number;

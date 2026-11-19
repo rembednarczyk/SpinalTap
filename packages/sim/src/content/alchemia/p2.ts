@@ -3,7 +3,7 @@ import type { GroundVault } from "../../world/vault";
 import type { Rect } from "../builders";
 import { groundY } from "../lublin/terrain";
 import { ARKADY } from "./arkady";
-import { P1, P1_STAIR_CUT, P1_STAIR_DOWN } from "./parking";
+import { P1, P1_CAR_LIFT, P1_STAIR_CUT, P1_STAIR_DOWN } from "./parking";
 import { type Piece, box, piece } from "./plan";
 
 /**
@@ -112,7 +112,11 @@ const shellPieces = (): Piece[] => {
     // Over the store and the annex but the flight, over the corridor up to its portal.
     ceiling(P2.minX, P2.maxX, P2.minZ, s.minZ),
     ceiling(a.minX, a.maxX, a.minZ, s.minZ),
-    ceiling(P2.minX, s.minX, s.minZ, P2.maxZ),
+    // North of the flight's line round the car lift's shaft (stage 5e).
+    ceiling(P2.minX, s.minX, s.minZ, P1_CAR_LIFT.minZ),
+    ceiling(P2.minX, P1_CAR_LIFT.minX, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    ceiling(P1_CAR_LIFT.maxX, s.minX, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    ceiling(P2.minX, s.minX, P1_CAR_LIFT.maxZ, P2.maxZ),
     ceiling(s.maxX, a.maxX, s.minZ, P2.maxZ),
     ceiling(LIFT_SHAFT.maxX, k.maxX, k.minZ, PORTAL.z0),
     ceiling(k.minX, LIFT_SHAFT.maxX, k.minZ, LIFT_SHAFT.z0),
