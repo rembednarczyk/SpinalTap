@@ -130,7 +130,11 @@ export const SW_CORE: StairCore = {
   door: { side: "n", a0: 400.4, a1: 401.9 },
   walls: { n: L.p1, s: L.p1 + 2.6, e: L.p1, w: L.roof },
 };
-/** The north-east core: kept clear of the rounded corner, its north wall the glass up to the roof. From P1: P0's corner is Oyaji's shop (O3). */
+/**
+ * The north-east core: kept clear of the rounded corner, its north wall the glass up to the roof (on
+ * P0 the hall's front, thinner there, `foodhall.ts`). From P0 since O3, which moved Oyaji's shop out
+ * of P0's corner to the food hall on P3.
+ */
 export const NE_CORE: StairCore = {
   key: "ne",
   x0: 427.7,
@@ -138,30 +142,45 @@ export const NE_CORE: StairCore = {
   z0: 54.7,
   z1: HALL.maxZ - 0.2,
   landing: 1.2,
-  floors: [L.p1, L.p2, L.p3, L.roof],
+  floors: [L.p0, L.p1, L.p2, L.p3, L.roof],
   door: { side: "w", a0: 55.5, a1: 57.0 },
-  walls: { n: L.roof, s: L.p1, e: L.p1, w: L.p1 },
+  walls: { n: L.roof, s: L.p0, e: L.p0, w: L.p0 },
 };
 export const STAIR_CORES: readonly StairCore[] = [SW_CORE, NE_CORE];
+
+/**
+ * The north-east lift's shaft in plan (`lift.ts`: its middle, a half of 1.1 m and walls of 0.1): its
+ * hole in P1's floor, the hall's old roof, since it runs from P0 (O3).
+ */
+export const NE_LIFT_AT = { x: 430.2, z: 53.2 } as const;
+export const NE_LIFT_SHAFT: Rectangle = { x0: NE_LIFT_AT.x - 1.2, x1: NE_LIFT_AT.x + 1.2, z0: NE_LIFT_AT.z - 1.2, z1: NE_LIFT_AT.z + 1.2 };
 
 /** A core's stairwell: inside its walls past the floor landing (a hole in every slab over its lowest floor). */
 export const stairwell = (c: StairCore): Rectangle => ({ x0: c.x0 + c.landing, x1: c.x1, z0: c.z0, z1: c.z1 });
 
+/** A storey of the gallery inside the glass, from its floor up to the underside of the slab over it. */
+type StoreyRoom = Rectangle & { readonly bottom: number; readonly top: number };
+const storeyRooms = (floors: readonly (readonly [number, number])[]): StoreyRoom[] =>
+  floors.flatMap(([bottom, top]) => {
+    const g = { x0: MALL.x0 + MALL_GLASS_THICK, x1: MALL.x1 - MALL_GLASS_THICK, z0: MALL.z0 + MALL_GLASS_THICK, z1: MALL.z1 - MALL_GLASS_THICK };
+    const r = MALL_GLASS_RADIUS;
+    const y = { bottom, top: top - MALL_SLAB };
+    // A cross of two rectangles, inside the glass's rounded north corners (the south ones are joins).
+    return [
+      { ...g, z1: g.z1 - r, ...y },
+      { ...g, x0: g.x0 + r, x1: g.x1 - r, z0: g.z1 - r, ...y },
+    ];
+  });
+
 /**
- * The gallery as an interior of ADR-0061 (O2): P1, P2 and P3 inside the glass, from each floor up to
- * the underside of the slab over it (the atrium's column in each one too: on the gallery round it).
+ * The gallery as an interior of ADR-0061 (O2): P1 and P2 inside the glass (the atrium's column in
+ * each one too: on the gallery round it). P0 is the hall's room (`FOODHALL_ROOM`), a floor of shops
+ * since O3, P3 the food hall's (`FOODHALL_ROOMS`).
  */
-export const GALLERY_ROOMS: readonly (Rectangle & { readonly bottom: number; readonly top: number })[] = [
+export const GALLERY_ROOMS: readonly StoreyRoom[] = storeyRooms([
   [L.p1, L.p2],
   [L.p2, L.p3],
-  [L.p3, L.roof],
-].flatMap(([bottom, top]) => {
-  const g = { x0: MALL.x0 + MALL_GLASS_THICK, x1: MALL.x1 - MALL_GLASS_THICK, z0: MALL.z0 + MALL_GLASS_THICK, z1: MALL.z1 - MALL_GLASS_THICK };
-  const r = MALL_GLASS_RADIUS;
-  const y = { bottom: bottom!, top: top! - MALL_SLAB };
-  // A cross of two rectangles, inside the glass's rounded north corners (the south ones are joins).
-  return [
-    { ...g, z1: g.z1 - r, ...y },
-    { ...g, x0: g.x0 + r, x1: g.x1 - r, z0: g.z1 - r, ...y },
-  ];
-});
+]);
+
+/** The food hall on P3 (ADR-0093 O3) as an interior of its own, inside the glass up to the roof's slab. */
+export const FOODHALL_ROOMS: readonly StoreyRoom[] = storeyRooms([[L.p3, L.roof]]);

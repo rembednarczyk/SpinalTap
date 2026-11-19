@@ -1,9 +1,9 @@
-import { type Box, box } from "./plan";
+import { type Box, HALL, HALL_INNER, box } from "./plan";
 import { MALL, MALL_GLASS_THICK, MALL_LEVELS } from "./mall-plan";
 import type { Rectangle } from "./rounded";
 
 /*
- * The shops of the gallery's P1 and P2 (ADR-0093 O2): the ring of units between the gallery round
+ * The shops of the gallery's P1 and P2 (ADR-0093 O2) and of P0, the old food hall's floor (O3): the ring of units between the gallery round
  * the atrium and the glass, as the board's scheme of storeys has it ("PASAŻE / SKLEPY"). Pattern:
  * the shopping mall's in-line unit (a shopfront on the mall, partitions to its neighbours, a back of
  * house behind the sales floor) in the outer ring round a central atrium. Pure numbers, world metres:
@@ -28,7 +28,7 @@ export type ShopFront = "n" | "s" | "e" | "w";
 
 export interface ShopDef {
   readonly id: string;
-  readonly floor: "p1" | "p2";
+  readonly floor: "p0" | "p1" | "p2";
   readonly rect: Rectangle;
   readonly front: ShopFront;
   /** The part of the front on the gallery (`u` from-to), for a corner unit; the rest of that side is a partition. */
@@ -89,11 +89,39 @@ const P2_SHOPS: readonly ShopDef[] = [
   { id: "p2-s3", floor: "p2", rect: r(421.4, 428, G.z0, 37), front: "n", trade: "tattoo", state: "open", sign: "INKSPOT", door: "r" },
 ];
 
-export const SHOPS: readonly ShopDef[] = [...P1_SHOPS, ...P2_SHOPS];
+/** The hall's walls' inner faces, P0's outer bounds (its front onto T1, its back wall onto P-1 and the car park). */
+const I: Rectangle = { x0: HALL_INNER.minX, x1: HALL_INNER.maxX, z0: HALL_INNER.minZ, z1: HALL_INNER.maxZ };
 
-/** A shop's floor, and the underside of the slab over it. */
+/**
+ * P0's ring (ADR-0093 O3, where the food hall's units stood): the walls instead of glass, the same
+ * strips as P1's. West 7.6 m deep from the hall's stairs' partition (z 34.8) to Fumiko's second place
+ * in the north-west corner (`fumiko-p0.ts`); north 4.6 m deep either side of the way in from T1 (x
+ * 413-419), short of the north-east core's corridor with the east door (x 425-427.5); east 7.2 m deep
+ * from the back wall to the north-east lift's lobby, its corner unit's window west onto the alcove
+ * before it (x 424.4-428); south 4.6 m deep between the hall's lift's lobby and that alcove. The
+ * back aisle to the stairs and the door onto P-1 (x 408-412.3) stays clear.
+ */
+const P0_SHOPS: readonly ShopDef[] = [
+  { id: "p0-w1", floor: "p0", rect: r(I.x0, 408, 34.8, 39.6), front: "e", trade: "repair", state: "open", sign: "CHIPFIX" },
+  { id: "p0-w2", floor: "p0", rect: r(I.x0, 408, 39.6, 44.2), front: "e", trade: "clothing", state: "open", sign: "NEONSKIN", door: "r" },
+  { id: "p0-w3", floor: "p0", rect: r(I.x0, 408, 44.2, 48.8), front: "e", trade: "pharmacy", state: "open", sign: "APTEKA NOVA" },
+  { id: "p0-w4", floor: "p0", rect: r(I.x0, 408, 48.8, 53.4), front: "e", trade: "electronics", state: "shut", sign: "DATAKOM" },
+  { id: "p0-n1", floor: "p0", rect: r(408, 413, 53, I.z1), front: "s", trade: "synth-food", state: "open", sign: "SOYA MAX" },
+  { id: "p0-n2", floor: "p0", rect: r(419, 425, 53, I.z1), front: "s", trade: "pawn", state: "open", sign: "SKUP", door: "r" },
+  { id: "p0-e0", floor: "p0", rect: r(428, I.x1, I.z0, 37), front: "w", trade: "arms", state: "open", sign: "TETSU" },
+  { id: "p0-e1", floor: "p0", rect: r(428, I.x1, 37, 41.2), front: "w", trade: "vr", state: "open", sign: "HOLODROM" },
+  { id: "p0-e2", floor: "p0", rect: r(428, I.x1, 41.2, 45.4), front: "w", trade: "implants", state: "vacant", sign: "" },
+  { id: "p0-e3", floor: "p0", rect: r(428, I.x1, 45.4, 49.4), front: "w", trade: "crypto", state: "open", sign: "KANTOR", door: "r" },
+  { id: "p0-s1", floor: "p0", rect: r(414.8, 419.6, I.z0, 37), front: "n", trade: "tattoo", state: "open", sign: "SUMI INK", door: "r" },
+  { id: "p0-s2", floor: "p0", rect: r(419.6, 424.4, I.z0, 37), front: "n", trade: "florist", state: "grille", sign: "FLORA" },
+];
+
+/** P1's and P2's first (their ids and solids as O2 left them), P0's after them (O3). */
+export const SHOPS: readonly ShopDef[] = [...P1_SHOPS, ...P2_SHOPS, ...P0_SHOPS];
+
+/** A shop's floor, and the underside of the slab over it (on P0 the hall's old roof, 0.4 m thick). */
 export const shopFloor = (s: ShopDef): number => MALL_LEVELS[s.floor];
-export const shopCeiling = (s: ShopDef): number => (s.floor === "p1" ? MALL_LEVELS.p2 : MALL_LEVELS.p3) - 0.3;
+export const shopCeiling = (s: ShopDef): number => (s.floor === "p0" ? HALL.ceiling : (s.floor === "p1" ? MALL_LEVELS.p2 : MALL_LEVELS.p3) - 0.3);
 
 /** Is a shop open to its customers? */
 export const isOpen = (s: ShopDef): boolean => s.state === "open";
@@ -156,12 +184,19 @@ export const shopAt = (x: number, y: number, z: number): ShopDef | null =>
  * doors' hall, the east door's lobby and the hall's lift's back; on P2 the hall's lift's lobby.
  */
 export const RING_WAYS: Readonly<Record<ShopDef["floor"], readonly Rectangle[]>> = {
+  // P0 (O3): the back aisle to the stairs and the door onto P-1, the hall's lift's lobby, the way in from T1, the north-east core's corridor, its lift's lobby, the alcove before the corner unit.
+  p0: [r(408, 412.3, I.z0, 37), r(412.3, 414.8, 34.8, 37), r(413, 419, 53, I.z1), r(425, 427.5, 53, I.z1), r(428, I.x1, 49.4, 51.9), r(424.4, 428, I.z0, 37)],
   p1: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(418.6, 421.4, G.z0, 37), r(425.2, G.x1, G.z0, 35.6), r(412.2, 414.8, 34.8, 37)],
   p2: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(412.2, 414.8, 34.8, 37)],
 };
 
 /** A partition's thickness, the shopfront's glass head and the door's head over the floor, the door's width. */
 export const SHOP_WALL = 0.15;
+/**
+ * A shop's partitions: P0's (O3) 0.2 m, as a room's wall, so a crouched, aimed shoulder by one starts
+ * its shot inside it (G-275); P1's and P2's as O2 built them.
+ */
+export const shopWall = (s: ShopDef): number => (s.floor === "p0" ? 0.2 : SHOP_WALL);
 export const SHOPFRONT_HEAD = 3.0;
 export const SHOP_DOOR_TOP = 2.4;
 export const SHOP_DOOR = 1.5;

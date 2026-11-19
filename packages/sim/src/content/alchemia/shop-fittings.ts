@@ -1,6 +1,6 @@
 import type { StreetPropItem, StreetPropKind } from "@seki/core";
 import { type Piece, type PieceKind, piece } from "./plan";
-import { SHOP_DOOR, SHOP_WALL, type ShopDef, type ShopFrame, shopCeiling, shopFloor, shopFrame } from "./shops-plan";
+import { SHOP_DOOR, type ShopDef, type ShopFrame, shopCeiling, shopFloor, shopFrame, shopWall } from "./shops-plan";
 
 /*
  * A shop's fittings in its frame (ADR-0093 O2, `docs/zasady-lokacji.md` §2): where its wall racks, its
@@ -46,10 +46,9 @@ export interface Layout {
 }
 
 const slot = (u0: number, u1: number, v0: number, v1: number): Slot => ({ u0, u1, v0, v1 });
-const W = SHOP_WALL;
 
-/** The sales floor's layout: deep (7.9 m strips), shallow (4.9 m ones) or narrow (under 4.3 m wide, its counter along the side). */
-export const shopLayout = (w: number, s: number, corner: boolean): Layout => {
+/** The sales floor's layout: deep (7.9 m strips), shallow (4.9 m ones) or narrow (under 4.3 m wide, its counter along the side); its partitions `W` thick. */
+export const shopLayout = (w: number, s: number, corner: boolean, W: number): Layout => {
   if (w < 4.3) {
     const counter = slot(w - 1.75, w - 1.0, 0.75, s - 0.55);
     const mid = (counter.v0 + counter.v1) / 2;
@@ -119,6 +118,8 @@ export interface Fit {
   readonly f: ShopFrame;
   readonly y: number;
   readonly c: number;
+  /** Its partitions' thickness. */
+  readonly wall: number;
   /** Drawn pieces (some of them solid). */
   readonly pieces: Piece[];
   /** Solids not drawn: the box of a fixture drawn as its parts. */
@@ -129,7 +130,7 @@ export interface Fit {
   readonly traces: string[];
 }
 
-export const newFit = (shop: ShopDef): Fit => ({ shop, f: shopFrame(shop), y: shopFloor(shop), c: shopCeiling(shop), pieces: [], solids: [], props: [], traces: [] });
+export const newFit = (shop: ShopDef): Fit => ({ shop, f: shopFrame(shop), y: shopFloor(shop), c: shopCeiling(shop), wall: shopWall(shop), pieces: [], solids: [], props: [], traces: [] });
 
 /** A drawn box of the shop's frame, `y0`..`y1` over its floor; solid when `solid`. */
 export const draw = (k: Fit, s: Slot, y0: number, y1: number, kind: PieceKind, solid = false): void => {
@@ -267,6 +268,7 @@ export const litter = (k: Fit, near: Spot, n: number, key: number): void => {
  */
 export const ceiling = (k: Fit, w: number, s: number, lit: number): void => {
   const top = k.c - k.y;
+  const W = k.wall;
   for (const [i, v] of [s * 0.28, s * 0.62].entries()) {
     draw(k, slot(W, w - W, v - 0.07, v + 0.07), top - 0.32 - i * 0.12, top - 0.18 - i * 0.12, "pipe");
   }

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   ALCHEMIA_LIFT,
   ALCHEMIA_LIFT_NE,
-  ALCHEMIA_PROPS,
   ATRIUM,
   ESCALATOR_LANDINGS,
   GALLERY,
@@ -21,11 +20,11 @@ import {
   galleryShopAt as shopAt,
   galleryShopOpen as shopOpen,
 } from "../src";
-import { prismsAt, type Prism } from "../src/world/prism";
 import { interiorAt } from "../src/content/interior-areas";
+import { PRISMS, type R, cellCentre, outside, overlap, raster, within } from "./alchemia-raster";
 
 /*
- * The gallery's shops on P1 and P2 (ADR-0093 O2), measured on the simulation's own solids: a ring
+ * The gallery's shops on P1 and P2 (ADR-0093 O2) and on P0 (O3), measured on the simulation's own solids: a ring
  * of units between the gallery and the glass, a quarter of them shut or empty, each open one with
  * its door on the gallery, its way from the door to the counter clear for an NPC (its raster's
  * clearance, `nav-raster.ts`), its seller behind the counter; the cores, the lifts' lobbies and the
@@ -33,74 +32,18 @@ import { interiorAt } from "../src/content/interior-areas";
  */
 
 const L = MALL_LEVELS;
-const FLOORS = { p1: L.p1, p2: L.p2 } as const;
-type R = { readonly x0: number; readonly x1: number; readonly z0: number; readonly z1: number };
-const within = (r: R, x: number, z: number, pad = 0): boolean => x > r.x0 - pad && x < r.x1 + pad && z > r.z0 - pad && z < r.z1 + pad;
-const overlap = (a: R, b: R, pad = 0): boolean => a.x0 < b.x1 - pad && b.x0 < a.x1 - pad && a.z0 < b.z1 - pad && b.z0 < a.z1 - pad;
+const FLOORS = { p0: L.p0, p1: L.p1, p2: L.p2 } as const;
+const prisms = PRISMS;
+/** P0's floor runs on under the atrium (its landmark there, O3); P1's and P2's are holed by it. */
+const RASTERS = { p0: raster(L.p0, true), p1: raster(L.p1), p2: raster(L.p2) };
+/** From the gallery's south side by the escalators on P1 and P2, from the way in's aisle on P0. */
+const REACHED = { p0: RASTERS.p0.reach(416, 51.6), p1: RASTERS.p1.reach(416.8, 38.5), p2: RASTERS.p2.reach(416.8, 38.5) };
+/** The floor nearest a height. */
+const floorOf = (y: number): keyof typeof FLOORS => (Object.keys(FLOORS) as (keyof typeof FLOORS)[]).reduce((a, b) => (Math.abs(FLOORS[b] - y) < Math.abs(FLOORS[a] - y) ? b : a));
 
-/** An NPC's body round a cell's middle on its raster (`nav-raster.ts`: 0.5 m cells, 0.48 m clearance). */
-const CELL = 0.5;
-const CLEARANCE = 0.48;
-const prisms: readonly Prism[] = ALCHEMIA_PROPS.flatMap((p) => prismsAt(p.prisms ?? [], p.center));
-/** The distance outside a prism along its farthest edge's normal (under the true distance at its corners: the stricter). */
-const outside = (q: Prism, x: number, z: number): number => Math.max(...q.normals.map((n, i) => n.x * x + n.z * z - q.offsets[i]!));
-
-/** Which cells of a floor an NPC stands in: on the gallery's body, off the atrium, clear of the solids from the knee to the head. */
-const raster = (y: number) => {
-  const nx = Math.round((MALL.x1 - MALL.x0) / CELL);
-  const nz = Math.round((MALL.z1 - MALL.z0) / CELL);
-  const free = new Array<boolean>(nx * nz).fill(true);
-  const centre = (i: number, k: number) => ({ x: MALL.x0 + (i + 0.5) * CELL, z: MALL.z0 + (k + 0.5) * CELL });
-  // The atrium is open but for the escalators' landings on this floor.
-  const landings = ESCALATOR_LANDINGS.filter((l) => Math.abs(l.y - y) < 0.01);
-  for (let i = 0; i < nx; i++)
-    for (let k = 0; k < nz; k++) {
-      const c = centre(i, k);
-      if (within(ATRIUM, c.x, c.z) && !landings.some((l) => within(l, c.x, c.z))) free[i * nz + k] = false;
-    }
-  for (const q of prisms) {
-    if (q.bottom > y + 1.7 || q.top < y + 0.3) continue;
-    const [i0, i1] = [Math.max(0, Math.floor((q.box.min.x - CLEARANCE - MALL.x0) / CELL)), Math.min(nx - 1, Math.floor((q.box.max.x + CLEARANCE - MALL.x0) / CELL))];
-    const [k0, k1] = [Math.max(0, Math.floor((q.box.min.z - CLEARANCE - MALL.z0) / CELL)), Math.min(nz - 1, Math.floor((q.box.max.z + CLEARANCE - MALL.z0) / CELL))];
-    for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) if (outside(q, centre(i, k).x, centre(i, k).z) < CLEARANCE) free[i * nz + k] = false;
-  }
-  const cellOf = (x: number, z: number) => Math.floor((x - MALL.x0) / CELL) * nz + Math.floor((z - MALL.z0) / CELL);
-  /** The cells reached from (x, z) through free cells, to their eight neighbours (a diagonal only past two free ones). */
-  const reach = (x: number, z: number): Set<number> => {
-    const seen = new Set<number>();
-    const start = cellOf(x, z);
-    if (!free[start]) return seen;
-    const todo = [start];
-    seen.add(start);
-    while (todo.length > 0) {
-      const c = todo.pop()!;
-      const [i, k] = [Math.floor(c / nz), c % nz];
-      for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
-        const [a, b] = [i + di, k + dk];
-        if (a < 0 || b < 0 || a >= nx || b >= nz) continue;
-        const n = a * nz + b;
-        if (seen.has(n) || !free[n]) continue;
-        if (di !== 0 && dk !== 0 && (!free[a * nz + k] || !free[i * nz + b])) continue;
-        seen.add(n);
-        todo.push(n);
-      }
-    }
-    return seen;
-  };
-  /** Is a free cell within `r` of (x, z) among `cells`? */
-  const near = (cells: Set<number>, x: number, z: number, r = 0.5): boolean => {
-    for (let dx = -r; dx <= r + 1e-9; dx += CELL / 2) for (let dz = -r; dz <= r + 1e-9; dz += CELL / 2) if (cells.has(cellOf(x + dx, z + dz))) return true;
-    return false;
-  };
-  return { reach, near, free, cellOf };
-};
-const RASTERS = { p1: raster(L.p1), p2: raster(L.p2) };
-/** From the gallery's south side by the escalators, on each floor. */
-const REACHED = { p1: RASTERS.p1.reach(416.8, 38.5), p2: RASTERS.p2.reach(416.8, 38.5) };
-
-describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
+describe("the gallery's shops on P0, P1 and P2 (ADR-0093 O2, O3)", () => {
   it("rings each floor with 8 to 12 units, about a quarter of them shut, barred or to let, every one of a trade and named but the empty ones", () => {
-    for (const f of ["p1", "p2"] as const) {
+    for (const f of ["p0", "p1", "p2"] as const) {
       const on = SHOPS.filter((s) => s.floor === f);
       expect(on.length).toBeGreaterThanOrEqual(8);
       expect(on.length).toBeLessThanOrEqual(12);
@@ -118,7 +61,9 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
     for (const b of SHOP_BUILDS) {
       const s = b.shop;
       expect(overlap(s.rect, GALLERY, 0.01), s.id).toBe(false);
-      for (const r of [...SHOP_RING_WAYS[s.floor], shaft(ALCHEMIA_LIFT), shaft(ALCHEMIA_LIFT_NE), ...STAIR_CORES.map(core)]) expect(overlap(s.rect, r, 0.01), `${s.id} ${JSON.stringify(r)}`).toBe(false);
+      // The cores where they stand: the south-west one from P1 (P0's way up is the hall's stairs), the north-east one from P0 (O3).
+      const cores = STAIR_CORES.filter((c) => c.floors.includes(FLOORS[s.floor])).map(core);
+      for (const r of [...SHOP_RING_WAYS[s.floor], shaft(ALCHEMIA_LIFT), shaft(ALCHEMIA_LIFT_NE), ...cores]) expect(overlap(s.rect, r, 0.01), `${s.id} ${JSON.stringify(r)}`).toBe(false);
       for (const o of SHOP_BUILDS) if (o !== b && o.shop.floor === s.floor) expect(overlap(s.rect, o.shop.rect, 0.01), `${s.id} ${o.shop.id}`).toBe(false);
       for (const p of [...b.pieces, ...b.solids]) {
         const q = p.box;
@@ -141,8 +86,7 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
       const r = RASTERS[b.shop.floor];
       const q = b.shop.rect;
       const inside = [...REACHED[b.shop.floor]].filter((c) => {
-        const x = MALL.x0 + (Math.floor(c / Math.round((MALL.z1 - MALL.z0) / CELL)) + 0.5) * CELL;
-        const z = MALL.z0 + ((c % Math.round((MALL.z1 - MALL.z0) / CELL)) + 0.5) * CELL;
+        const { x, z } = cellCentre(c);
         return within(q, x, z, -0.6);
       });
       expect(inside, b.shop.id).toEqual([]);
@@ -152,7 +96,8 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
 
   it("stands a seller behind the counter of every open shop (the still crowd's figure), a customer before every other one's (the crowd's)", () => {
     const figures = SHOP_PROPS.filter((p) => p.prop === "figure");
-    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === SHOP_PROPS)).toBe(true);
+    // Drawn in one street-props view with the food hall's models (O3).
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && SHOP_PROPS.every((p) => s.view.kind === "street-props" && s.view.items.includes(p)))).toBe(true);
     for (const b of SHOP_BUILDS) {
       const mine = figures.filter((f) => within(b.shop.rect, f.x, f.z) && Math.abs(f.y - FLOORS[b.shop.floor]) < 1);
       expect(mine.length, b.shop.id).toBe(shopOpen(b.shop) ? 1 : 0);
@@ -166,8 +111,9 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
     const customers = GALLERY_CROWD.filter((c) => shopAt(c.at.x, c.at.y, c.at.z));
     expect(customers.length).toBeGreaterThanOrEqual(5);
     for (const c of GALLERY_CROWD) {
-      const f = c.at.y < 0 ? "p1" : "p2";
-      expect(RASTERS[f].near(REACHED[f], c.at.x, c.at.z, 0.3), `${c.at.x},${c.at.z}`).toBe(true);
+      const f = floorOf(c.at.y);
+      // A sitter on a bench by P0's fountain sits on its solid: in reach of a free cell.
+      expect(RASTERS[f].near(REACHED[f], c.at.x, c.at.z, c.does.includes("sit") ? 1.0 : 0.3), `${c.at.x},${c.at.z}`).toBe(true);
     }
   });
 
@@ -175,7 +121,7 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
     for (const b of SHOP_BUILDS.filter((x) => x.shop.state !== "shut")) expect(b.traces.length, b.shop.id).toBeGreaterThan(0);
   });
 
-  it("keeps the cores' doors, both lifts' lobbies and the escalators' landings reached along the gallery on P1 and P2", () => {
+  it("keeps the cores' doors, both lifts' lobbies and the escalators' landings reached along the gallery on P1 and P2, and P0's doors, lifts, escalators and stairs", () => {
     for (const f of ["p1", "p2"] as const) {
       const r = RASTERS[f];
       const y = FLOORS[f];
@@ -191,12 +137,32 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
       if (f === "p1") goals.push(["east door", MALL.x1 - 1.4, 33.15], ["main doors", 420, MALL.z0 + 1.0]);
       for (const [name, x, z] of goals) expect(r.near(REACHED[f], x, z), `${f} ${name}`).toBe(true);
     }
+    // P0 (O3): the way in from T1 and the east door, the north-east core's door, both lifts' doors, the escalators' foot, the stairs' foot by the door onto P-1.
+    const p0: [string, number, number][] = [
+      ["way in", 416, MALL.z1 - 1.4],
+      ["east door", 426.35, MALL.z1 - 1.4],
+      ["north-east core", NE_CORE.x0 - 1.2, (NE_CORE.door.a0 + NE_CORE.door.a1) / 2],
+      ["north-east lift", ALCHEMIA_LIFT_NE.centre.x, ALCHEMIA_LIFT_NE.centre.z - 2.2],
+      ["hall's lift", ALCHEMIA_LIFT.centre.x, ALCHEMIA_LIFT.centre.z + 2.2],
+      ["escalators' foot", 425.0, 40.75],
+      ["stairs' foot", 410.8, 33.6],
+    ];
+    for (const [name, x, z] of p0) expect(RASTERS.p0.near(REACHED.p0, x, z), `p0 ${name}`).toBe(true);
   });
 
-  it("names the gallery in the HUD on P1..P3 (ADR-0061), the food hall under it and nothing on its roof", () => {
+  it("names the gallery in the HUD on P0..P2 (ADR-0061; P0 since O3), the food hall on P3 over it and nothing on its roof", () => {
     for (const b of SHOP_BUILDS.filter((x) => x.customer)) expect(interiorAt(b.customer!)?.id, b.shop.id).toBe("alchemia-gallery");
-    expect(interiorAt({ x: 426.5, y: L.p3, z: 46 })?.id).toBe("alchemia-gallery");
-    expect(interiorAt({ x: 418, y: L.p0, z: 47 })?.id).toBe("alchemia-foodhall");
+    expect(interiorAt({ x: 418, y: L.p0, z: 51 })?.id).toBe("alchemia-gallery");
+    expect(interiorAt({ x: 426.5, y: L.p3, z: 46 })?.id).toBe("alchemia-foodhall");
     expect(interiorAt({ x: 418, y: L.roof, z: 52 })).toBeNull();
+  });
+
+  it("builds P0's partitions 0.2 m thick, as a room's wall, where the player aims by them (G-275); P1's and P2's as O2 left them", () => {
+    for (const b of SHOP_BUILDS) {
+      // Its side partitions, each a metre long at least (a door's jamb or lintel aside).
+      const sides = b.pieces.filter((p) => p.kind === "partition" && Math.max(p.box.x1 - p.box.x0, p.box.z1 - p.box.z0) > 1 && p.box.y1 - p.box.y0 > 2.5);
+      const thin = sides.map((p) => Math.min(p.box.x1 - p.box.x0, p.box.z1 - p.box.z0));
+      expect(Math.min(...thin), b.shop.id).toBeCloseTo(b.shop.floor === "p0" ? 0.2 : 0.15, 6);
+    }
   });
 });
