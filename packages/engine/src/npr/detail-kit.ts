@@ -66,7 +66,7 @@ float kitDetail(vec2 uv, vec3 p, vec3 n, float dist) {
   vec4 mask;
   vec2 l = anyLayer(number, mask);
   vec2 q = facePlane(p, n) * l.x;
-  vec4 t = number < 3.5 ? texture2D(detailWalls, q) : number < 7.5 ? texture2D(detailGround, q) : number < 11.5 ? texture2D(detailRoofs, q) : texture2D(detailExtra, q);
+  vec4 t = number < 3.5 ? detailTex(detailWalls, q) : number < 7.5 ? detailTex(detailGround, q) : number < 11.5 ? detailTex(detailRoofs, q) : detailTex(detailExtra, q);
   return detailK(t, mask, l.y * (1.0 - smoothstep(60.0, 160.0, dist)));
 }
 #endif
