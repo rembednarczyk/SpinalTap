@@ -50,7 +50,7 @@ export interface EnemyType {
    * Its sight (ADR-0069). A sniper on its perch keeps its own (ADR-0024, its rifle's range): the
    * sniper's profile is for one with the AI of a ganger, W-3's observer before the alarm (ADR-0082).
    */
-  readonly vision?: SightProfile;
+  readonly vision: SightProfile;
   /** An elite is a level above its district's band (ADR-0059); the rest are regulars. */
   readonly rank?: "elite";
 }
@@ -87,5 +87,5 @@ export const ENEMY_TYPES = {
   tessen_sniper: { id: "tessen_sniper", faction: "tessen", hp: 70, weapon: "kagero_dmr", outfit: ["tactical_visor", "cargo_pants"], loot: "tessen_sniper", vision: SNIPER_SIGHT },
 } as const satisfies Record<EnemyTypeId, EnemyType>;
 
-/** The sight of an enemy type; anything untyped sees as a Hebi ganger. */
-export const sightOf = (type: EnemyTypeId | undefined): SightProfile => (ENEMY_TYPES[type ?? "hebi_ganger"] as EnemyType).vision ?? HEBI_SIGHT;
+/** The sight of an enemy type (every type names its own); anything untyped sees as a Hebi ganger. */
+export const sightOf = (type: EnemyTypeId | undefined): SightProfile => (ENEMY_TYPES[type ?? "hebi_ganger"] as EnemyType).vision;
