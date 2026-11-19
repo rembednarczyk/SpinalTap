@@ -66,6 +66,7 @@ export const enContent = {
   "interior.alchemia-foodhall": "Alchemia food hall",
   "interior.alchemia-parking": "Alchemia car park",
   "interior.alchemia-p2": "Alchemia car park, level -2",
+  "interior.alchemia-shelter": "Alchemia air-raid shelter",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",

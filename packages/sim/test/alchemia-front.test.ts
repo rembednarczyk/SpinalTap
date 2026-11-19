@@ -10,6 +10,7 @@ import {
   L3_TOP,
   P1_RAMP,
   P2_ROBOTS,
+  SHELTER_PROPS,
   P1_STAIR,
   PASSAGE_COLUMNS,
   PAVILION_CORNERS,
@@ -75,6 +76,6 @@ describe("Alchemia's front over P-1 (B1)", () => {
     expect(FRONT_SIGN.z1).toBeLessThanOrEqual(L3.minZ);
     expect(FRONT_SIGN.y0).toBeGreaterThan(L2_TOP);
     expect(FRONT_SIGN.y1).toBeLessThan(L3_TOP);
-    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
+    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
   });
 });

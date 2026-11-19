@@ -11,6 +11,8 @@ import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
 import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
 import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR_PIECES, P2_STORE_SHELL, P2_VAULT } from "./p2";
 import { P2_ROBOTS, P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
+import { SHELTER_GATE, SHELTER_HATCH_CUT, SHELTER_HATCH_PIECES, SHELTER_PIECES, SHELTER_VAULTS } from "./shelter";
+import { doorParts } from "../doors";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
@@ -32,6 +34,7 @@ export * from "./parking";
 export * from "./metro-door";
 export * from "./p2";
 export * from "./p2-store";
+export * from "./shelter";
 export { PARAPET_BEDS } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
@@ -84,6 +87,9 @@ export const P2_PROPS: readonly StaticProp[] = [
   solidProp([...P2_STORE_PIECES, ...P2_STORE_SOLIDS]),
 ];
 
+/** The shelter's solids (stage 5d1): its room with its flights and exhibit, the hatch's shaft, the steel gate's leaf. */
+export const SHELTER_PROPS: readonly StaticProp[] = [solidProp(SHELTER_PIECES), solidProp(SHELTER_HATCH_PIECES), ...doorParts(SHELTER_GATE)];
+
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(SHELL.filter((p) => p.kind !== "step")),
@@ -117,14 +123,16 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(FRONT),
   // Stage 5b after the front: P-2's robots, running by the clock.
   ...P2_ROBOTS,
+  // Stage 5d1 after 5b's: the shelter.
+  ...SHELTER_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */
 // The lift's shaft (stage 5c) before the hall's cut it lies in, as the hall's stairs: the first cut over a point is its floor.
-export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT];
+export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT, SHELTER_HATCH_CUT];
 
-/** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor). */
-export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT];
+/** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor; stage 5d1: the shelter and its way to the gate). */
+export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT, ...SHELTER_VAULTS];
 
 /** The middle of the hall: for streaming and drawing distances. */
 export const ALCHEMIA_CENTRE: GroundPoint = { x: (HALL.minX + HALL.maxX) / 2, z: (HALL.minZ + HALL.maxZ) / 2 };

@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { FOODHALL, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_CORRIDOR, P2_CUT, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES } from "@seki/sim";
+import { FOODHALL, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_CORRIDOR, P2_CUT, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { pointLightOn } from "../src/npr/toon-point-lights";
@@ -58,7 +58,9 @@ describe("P-2 under Alchemia's P-1 in the engine (ADR-0074 stage 5a)", () => {
       const inStore = x > P2.minX - 0.01 && x < P2.maxX + 0.01 && z > P2.minZ - 0.01 && z < P2.maxZ + 0.01;
       const inCorridor = x > P2_CORRIDOR.minX - 0.01 && x < P2_CORRIDOR.maxX + 0.01 && z > P2_CORRIDOR.minZ - 0.01 && z < P2_CORRIDOR.maxZ + 0.01;
       const inAnnex = x > P2_ANNEX.minX - 0.01 && x < P2_ANNEX.maxX + 0.01 && z > P2_ANNEX.minZ - 0.01 && z < P2_ANNEX.maxZ + 0.01;
-      expect(inStore || inCorridor || inAnnex, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+      // The shelter by its north end (stage 5d1): the gate's flight, the passage and the room.
+      const inShelter = x > SHELTER.minX - 0.01 && x < SHELTER.maxX + 0.01 && z > SHELTER_GATE_STAIR.minZ - 0.01 && z < SHELTER.maxZ + 0.01;
+      expect(inStore || inCorridor || inAnnex || inShelter, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
   });
 
@@ -68,7 +70,10 @@ describe("P-2 under Alchemia's P-1 in the engine (ADR-0074 stage 5a)", () => {
     expect(outside.indices.length / 3 / 12).toBeGreaterThanOrEqual(P2_CUTTING_PIECES.length);
     for (let i = 0; i < outside.positions.length; i += 3) {
       const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
-      expect(x > P2_CUTTING.minX - 0.01 && x < P2_CUTTING.maxX + 0.01 && z > P2_CORRIDOR.maxZ - P2.wall - 0.01 && z < P2_CUTTING.maxZ + 0.01, `${x},${z}`).toBe(true);
+      const inCutting = x > P2_CUTTING.minX - 0.01 && x < P2_CUTTING.maxX + 0.01 && z > P2_CORRIDOR.maxZ - P2.wall - 0.01 && z < P2_CUTTING.maxZ + 0.01;
+      // The shelter's hatch with its shaft and the leaf standing open by it (stage 5d1).
+      const inHatch = x > SHELTER_HATCH.minX - 0.01 && x < SHELTER_HATCH.maxX + 0.01 && z > SHELTER_HATCH.minZ - 0.01 && z < SHELTER_HATCH.maxZ + 0.1;
+      expect(inCutting || inHatch, `${x},${z}`).toBe(true);
     }
   });
 

@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_T1, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_CORRIDOR, P2_CUTTING } from "@seki/sim";
+import { ALCHEMIA_T1, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_CORRIDOR, P2_CUTTING, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH, SHELTER_HATCH_HEAD, SHELTER_PASSAGE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityKit } from "../city-kit";
@@ -12,7 +12,9 @@ import { p2Inside } from "./p2-geometry";
  * before its cutting. Its one lamp is dim and orange (§6, half-dark with the robots' beacons),
  * clipped to the store and on only with the eye down there; P-1's and the food hall's lamps over it
  * go off then (the toon shader's lights have no occlusion, G-263: they would light it through the
- * slabs). The cutting and the portal's parapet are Alchemia's outside mesh's.
+ * slabs). The cutting and the portal's parapet are Alchemia's outside mesh's. The shelter under T2
+ * (stage 5d1) is in the same mesh, with a lamp of its own (§6, weak emergency light) on with the
+ * eye in it; its hatch's shaft is Alchemia's outside mesh's.
  */
 
 type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
@@ -35,22 +37,38 @@ const LAMP = {
 } as const;
 export const P2_LAMP_KEY = "alchemia-p2";
 
+const SHELTER_LAMP = {
+  color: "#ffd08a",
+  range: 16,
+  intensity: 0.35,
+  position: { x: (SHELTER.minX + SHELTER.maxX) / 2, y: SHELTER.ceiling - 0.3, z: (SHELTER.minZ + SHELTER.maxZ) / 2 },
+  clip: { minX: SHELTER.minX, maxX: SHELTER.maxX, minZ: SHELTER_GATE_STAIR.minZ, maxZ: SHELTER.maxZ },
+} as const;
+export const SHELTER_LAMP_KEY = "alchemia-shelter";
+
 /** P-2's store, its annex and its corridor. */
 const P2_PARTS: readonly Rect[] = [P2, P2_ANNEX, P2_CORRIDOR];
 const inP2 = (x: number, z: number): boolean => P2_PARTS.some((r) => inRect(r, x, z));
 
-/** Is the eye down in P-2: in its store, annex or corridor (or over its flight), under P-1's floor? */
-export const eyeInP2 = (e: Vec3): boolean => e.y < P1.floor - 0.2 && inP2(e.x, e.z);
+/** The shelter's flight down from the gate (under T1, under P-2's corridor's slab); its passage, its room and the hatch's flight (under P-2's floor). */
+const SHELTER_STAIR: Rect = { ...SHELTER_GATE_STAIR, maxZ: SHELTER_PASSAGE.minZ };
+const SHELTER_LOWER: readonly Rect[] = [SHELTER_PASSAGE, SHELTER, { ...SHELTER_HATCH, maxX: SHELTER_HATCH_HEAD }];
+
+/** Is the eye down in the shelter (stage 5d1)? */
+export const eyeInShelter = (e: Vec3): boolean => (e.y < P2.slab && inRect(SHELTER_STAIR, e.x, e.z)) || (e.y < P2.floor - 0.4 && SHELTER_LOWER.some((r) => inRect(r, e.x, e.z)));
+
+/** Is the eye down in P-2: in its store, annex or corridor (or over its flight), under P-1's floor, or in the shelter by it? */
+export const eyeInP2 = (e: Vec3): boolean => (e.y < P1.floor - 0.2 && inP2(e.x, e.z)) || eyeInShelter(e);
 
 /** Can the eye see into P-2 from where it is? (`hold` grows the reach while it is on.) */
 export const p2Visible = (e: Vec3, hold = 0): boolean => {
   if (eyeInP2(e)) return true;
   if (inRect(P1, e.x, e.z) && e.y > P1.floor - 1 && e.y < P1.ceiling && toRect(e, P1_STAIR_DOWN) < P2_HOLE_DRAW + hold) return true;
-  return e.y < ALCHEMIA_T1 && toRect(e, P2_CUTTING) < P2_PORTAL_DRAW + hold;
+  return e.y < ALCHEMIA_T1 && (toRect(e, P2_CUTTING) < P2_PORTAL_DRAW + hold || toRect(e, SHELTER_HATCH) < P2_PORTAL_DRAW + hold);
 };
 
 /** Whether a roof is over (x, y, z) in P-2, where no rain falls: under its ceiling in the store and the corridor, not in the cutting. */
-export const p2RoofOver = (x: number, y: number, z: number): boolean => y < P2.slab && inP2(x, z);
+export const p2RoofOver = (x: number, y: number, z: number): boolean => (y < P2.slab && inP2(x, z)) || eyeInShelter({ x, y, z });
 
 export interface P2Deps {
   readonly scene: Scene;
@@ -63,7 +81,7 @@ export interface P2Deps {
 export class P2View {
   private mesh: Mesh | null = null;
   private kitSeen: CityKit | null = null;
-  private lit = false;
+  private lit: string | null = null;
 
   constructor(private readonly deps: P2Deps) {}
 
@@ -76,13 +94,13 @@ export class P2View {
   update(): void {
     const kit = this.deps.kit();
     if (!kit || !this.deps.city()) {
-      this.show(false, false);
+      this.show(false, null);
       return;
     }
     const e = this.deps.eye();
     const on = p2Visible(e, this.mesh?.isEnabled(false) ? HOLD : 0);
     if (on && kit !== this.kitSeen) this.build(kit);
-    this.show(on, on && eyeInP2(e));
+    this.show(on, on && eyeInShelter(e) ? SHELTER_LAMP_KEY : on && eyeInP2(e) ? P2_LAMP_KEY : null);
   }
 
   private build(kit: CityKit): void {
@@ -101,12 +119,13 @@ export class P2View {
     this.mesh = m;
   }
 
-  private show(on: boolean, lamp: boolean): void {
+  /** Shows the mesh or not, and turns on the lamp `lamp` (P-2's or the shelter's), the other off. */
+  private show(on: boolean, lamp: string | null): void {
     if (this.mesh && this.mesh.isEnabled(false) !== on) this.mesh.setEnabled(on);
-    const lit = lamp && this.mesh !== null;
+    const lit = this.mesh !== null ? lamp : null;
     if (lit === this.lit) return;
+    if (this.lit) this.deps.materials.removeLight(this.lit);
     this.lit = lit;
-    if (lit) this.deps.materials.addLight(P2_LAMP_KEY, LAMP);
-    else this.deps.materials.removeLight(P2_LAMP_KEY);
+    if (lit) this.deps.materials.addLight(lit, lit === SHELTER_LAMP_KEY ? SHELTER_LAMP : LAMP);
   }
 }

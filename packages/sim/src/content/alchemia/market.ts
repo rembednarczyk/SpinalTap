@@ -195,7 +195,8 @@ type MarketSite = "hana_stall" | "hebi_stash" | "raid_north" | "raid_east";
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
-  hebi_stash: [byArkady(6, 6), byArkady(12.5, 4.5), byArkady(9.5, 7.5), byArkady(5, 2.5)],
+  // The third one 1 m south of the shelter's hatch (stage 5d1), its rail at 95.0.
+  hebi_stash: [byArkady(6, 6), byArkady(12.5, 4.5), byArkady(8.3, 7.5), byArkady(5, 2.5)],
   raid_north: [ground(403, 72), ground(400.5, 74.5), ground(406, 74), ground(399, 70)],
   raid_east: [ground(441, 66), ground(442.5, 63), ground(439.5, 69), ground(443, 68)],
 };
