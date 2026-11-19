@@ -129,6 +129,8 @@ describe("P-2 under Alchemia's P-1 in the engine (ADR-0074 stage 5a)", () => {
     expect(view.stats.triangles).toBeGreaterThan(1000);
     expect(materials.light(P2_LAMP_KEY)).toBeDefined();
     expect(materials.light(PARKING_LAMP_KEY)).toBeUndefined();
+    // The hall over it is behind its slabs: its inside off (stage 5e: P-2's scene keeps its draw calls).
+    expect(alchemia.stats.meshes).toBe(2);
     // In the corridor under the hall: the hall's lamp off too.
     Object.assign(eye, { x: 417, y: P2.floor + 1.6, z: 45 });
     frame();

@@ -107,7 +107,8 @@ export class AlchemiaView {
     const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
     const near = toHall(e);
     const out = far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
-    const inn = near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
+    // Down in P-2 or the shelter the hall over it is behind its slabs: its inside off (its draw calls with it).
+    const inn = !eyeInP2(e) && near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
     // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
