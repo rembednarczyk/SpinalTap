@@ -154,7 +154,7 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
 
   it("leads from T1, the car park and the roof to every keeper", () => {
     const sim = loaded();
-    const starts = [node("alchemia-t1-west"), node("alchemia-t0-roof"), { x: 419, y: R, z: 50 }, { x: 397, y: groundY(397, 44), z: 44 }];
+    const starts = [node("alchemia-t1-west"), node("alchemia-t0-roof"), { x: 434.9, y: R, z: 50 }, { x: 397, y: groundY(397, 44), z: 44 }];
     for (const s of starts) {
       // Before the counters; Fumiko and Oyaji behind theirs, through their own doors.
       for (const key of Object.keys(STALL_KEEPERS) as (keyof typeof STALL_KEEPERS)[]) {
@@ -192,7 +192,8 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
   });
 
   it("an alerted brawler in the hall gets to the player on the green roof, up the stairs", () => {
-    expect(chase(beforeKeeper("kenta"), { x: 424, y: FOODHALL.roof, z: 50 }, 30)).not.toBeNull();
+    // On the roof's east strip, beside tier A (15.11).
+    expect(chase(beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }, 30)).not.toBeNull();
   });
 
   it("the lift goes from the hall's floor to the roof, its top door onto the car park", () => {

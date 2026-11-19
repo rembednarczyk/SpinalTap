@@ -1,0 +1,1 @@
+- Alchemia rośnie w górę: nad food hallem stoją dwie zielone kondygnacje (sklepy i pierścień food courtu z dziedzińcem), ze schodami z dachu hali i tarasami na dachach.

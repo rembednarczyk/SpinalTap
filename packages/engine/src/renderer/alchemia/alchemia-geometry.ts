@@ -1,6 +1,6 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
-import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { garlandsGeometry } from "./garlands";
@@ -40,6 +40,7 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   lawn: "plant",
   pergola: "rust",
   lantern: "win-warm",
+  led: "neon-cyan",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -67,8 +68,32 @@ const X: Vec3 = { x: 1, y: 0, z: 0 };
 const Y: Vec3 = { x: 0, y: 1, z: 0 };
 const Z: Vec3 = { x: 0, y: 0, z: 1 };
 
-const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: string): void => {
-  sink.box({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 }, [X, Y, Z], [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2], swatchUv(data, swatch));
+const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: string, skip?: ReadonlySet<BoxFace>): void => {
+  sink.box({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 }, [X, Y, Z], [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2], swatchUv(data, swatch), undefined, skip);
+};
+
+/** Kinds that stand on a floor or the ground: nobody sees their bottom. */
+const ON_FLOOR: ReadonlySet<AlchemiaPieceKind> = new Set(["wall", "glass", "green", "parapet", "partition", "counter", "table", "bench", "step", "memorial", "column", "charger", "machine", "lawn"]);
+
+/**
+ * The faces of a piece nobody sees: the bottom of one on a floor (not glass hanging as a lintel, which
+ * starts over the floor), and the back of a step under the next one up its flight (same width, taller).
+ */
+const hiddenFaces = (p: AlchemiaPiece, steps: ReadonlyMap<string, AlchemiaPiece>): ReadonlySet<BoxFace> => {
+  const out = new Set<BoxFace>();
+  const b = p.box;
+  if (ON_FLOOR.has(p.kind) && !(p.kind === "glass" && b.y1 - b.y0 < 1.2)) out.add("-y");
+  if (p.kind === "step") {
+    const k = (x0: number, x1: number, z0: number, z1: number) => `${x0.toFixed(3)}:${x1.toFixed(3)}:${z0.toFixed(3)}:${z1.toFixed(3)}`;
+    const covers = (q: AlchemiaPiece | undefined) => q !== undefined && q.box.y1 >= b.y1 && q.box.y0 <= b.y0 + 0.06;
+    for (const [face, key] of [
+      ["+z", k(b.x0, b.x1, b.z1, b.z1 + (b.z1 - b.z0))],
+      ["-z", k(b.x0, b.x1, b.z0 - (b.z1 - b.z0), b.z0)],
+      ["+x", k(b.x1, b.x1 + (b.x1 - b.x0), b.z0, b.z1)],
+      ["-x", k(b.x0 - (b.x1 - b.x0), b.x0, b.z0, b.z1)],
+    ] as const) if (covers(steps.get(key))) out.add(face);
+  }
+  return out;
 };
 
 /** A piece's swatch: the roof's big slab is the green roof's paving between its lawns (T0, stage 7), the lift's glass a cooler light. */
@@ -128,14 +153,20 @@ const ceilingLights = (sink: GeometrySink, data: CityKitData): void => {
 export interface AlchemiaSinks {
   readonly outside: GeometrySink;
   readonly inside: GeometrySink;
+  /** The green tiers over the hall (15.11): a building of its own, its own mesh and budget (ADR-0074 §7). */
+  readonly tiers: GeometrySink;
 }
+
+const TIER_SET: ReadonlySet<AlchemiaPiece> = new Set(ALCHEMIA_TIER_PIECES);
 
 /** Alchemia's two sinks from the simulation's pieces. */
 export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPiece[] = ALCHEMIA_PIECES): AlchemiaSinks => {
   const outside = new GeometrySink();
   const inside = new GeometrySink();
+  const tiers = new GeometrySink();
+  const steps = new Map(pieces.filter((p) => p.kind === "step").map((p) => [`${p.box.x0.toFixed(3)}:${p.box.x1.toFixed(3)}:${p.box.z0.toFixed(3)}:${p.box.z1.toFixed(3)}`, p] as const));
   for (const p of pieces) {
-    const sink = p.inside ? inside : outside;
+    const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -156,7 +187,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       }
       continue;
     }
-    boxOf(sink, data, b, swatchOf(p));
+    boxOf(sink, data, b, swatchOf(p), hiddenFaces(p, steps));
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
@@ -165,5 +196,5 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   garlandsGeometry(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
-  return { outside, inside };
+  return { outside, inside, tiers };
 };

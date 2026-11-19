@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
 import {
   ALCHEMIA_CHUNK,
-  ALCHEMIA_LIFT,
   ALCHEMIA_NAV,
   ALCHEMIA_PIECES,
   ALCHEMIA_PROPS,
@@ -12,10 +11,10 @@ import {
   P1_STAIR,
   PARAPET_BEDS,
   PERGOLA_DOOR,
+  COURTYARD,
   ROOF_LAWNS,
-  ROOF_PLANTERS,
+  TIER_B,
   SQUARE_GARLANDS,
-  STAIR_HOUSE,
   Simulation,
   gangerEntity,
   garlandAt,
@@ -43,14 +42,15 @@ const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
 const t0Nodes = ALCHEMIA_NAV.nodes.filter((n) => n.at.z < FOODHALL.minZ + 0.5 && Math.abs(n.at.y - groundY(n.at.x, n.at.z)) < 0.3);
 
 describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
-  it("has pergolas with lanterns, beds along the trench and lawns on the hall's roof", () => {
+  it("has pergolas with lanterns, beds along the trench and lawns on the green roof", () => {
     const count = (k: string) => square.filter((p) => p.kind === k).length;
     expect(count("pergola")).toBeGreaterThan(30);
     expect(count("lantern")).toBeGreaterThan(15);
     expect(count("green")).toBeGreaterThan(8);
+    // The lawns, on tier B's green roof since 15.11 (`alchemia-tiers.test.ts`).
     expect(count("lawn")).toBe(4);
-    // Its solids are one prop of Alchemia's, the last one: no id of the content moves.
-    const last = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 1]!;
+    // Its solids are one prop of Alchemia's, the last before the tiers' two (15.11): no id of the content moves.
+    const last = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3]!;
     expect(last.prisms).toHaveLength(solids.length);
   });
 
@@ -146,16 +146,16 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
     }
   });
 
-  it("lays the roof's lawns on its slab, clear of the stair house, the lift's kiosk and the planters", () => {
-    const L = ALCHEMIA_LIFT;
-    const kiosk = { x0: L.centre.x - L.half - L.wall, x1: L.centre.x + L.half + L.wall, z0: L.centre.z - L.half - L.wall - 1.2, z1: L.centre.z + L.half + L.wall };
+  it("lays the green roof's lawns on tier B (moved up on 15.11), clear of its parapets and the courtyard", () => {
+    expect(ROOF_LAWNS.length).toBeGreaterThanOrEqual(4);
     for (const b of ROOF_LAWNS) {
-      expect(b.y0).toBe(FOODHALL.roof);
-      expect(b.x0).toBeGreaterThan(FOODHALL.minX + 1);
-      expect(b.x1).toBeLessThan(FOODHALL.maxX - 1);
-      expect(b.z0).toBeGreaterThan(STAIR_HOUSE.maxZ + 1);
-      expect(b.z0).toBeGreaterThan(kiosk.z1 + 1);
-      for (const q of ROOF_PLANTERS) expect(b.z1 < q.z0 || b.z0 > q.z1).toBe(true);
+      expect(b.y0).toBe(TIER_B.top);
+      expect(b.x0).toBeGreaterThan(TIER_B.minX);
+      expect(b.x1).toBeLessThan(TIER_B.maxX);
+      expect(b.z0).toBeGreaterThan(TIER_B.minZ);
+      expect(b.z1).toBeLessThan(TIER_B.maxZ);
+      const inCourtyard = b.x1 > COURTYARD.minX && b.x0 < COURTYARD.maxX && b.z1 > COURTYARD.minZ && b.z0 < COURTYARD.maxZ;
+      expect(inCourtyard).toBe(false);
     }
   });
 
