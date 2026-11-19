@@ -104,6 +104,15 @@ test("Alchemia's car park P-1 in TPP stays within the perf budget", async ({ pag
   within("alchemia-p1", await sampleNow(page));
 });
 
+test("Alchemia's car park P-2 in TPP stays within the perf budget", async ({ page }) => {
+  // In P-2's automated store under P-1 (ADR-0074 stage 5a), on the service aisle by the control room walking north-west:
+  // the racks with the cars on their pallets, the robots' lane with its orange beacons, the flight from P-1 in the frame.
+  await tppAt(page, { x: 413.5, z: 8, y: -9.2, yaw: -Math.PI / 5, walk: 12 });
+  const s = await gameState(page);
+  expect(s.loadedChunks).toContain("krakowskie-2-1");
+  within("alchemia-p2", await sampleNow(page));
+});
+
 test("the building site at Zielona 5A in TPP stays within the perf budget", async ({ page }) => {
   // On Zielona south-west of the site's gate (ADR-0087), walking north-east to it: the fence with its ads, the gate and
   // the board, the containers and the crane over the dig in the frame (no scaffold since G-893: its wall bears a venue's board).
