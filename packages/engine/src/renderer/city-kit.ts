@@ -1,5 +1,6 @@
 import type { BlockSkin, EntityId, Vec3 } from "@seki/core";
 import { Color3, Constants, type GlowLayer, type Mesh, MeshClass, RawTexture, type Scene, type ShaderMaterial, VertexData } from "../babylon";
+import { KIT_GRID, kitDetailCodes } from "../npr/detail-kit";
 import type { ToonMaterials } from "../npr/toon-material";
 import {
   BLADE_LABELS,
@@ -155,7 +156,8 @@ export class CityKit {
     const { color, glow: lit } = kitTextures(data, this.options.labels !== false);
     const make = (pixels: Uint8Array) =>
       new RawTexture(pixels, KIT_TEXTURE.width, KIT_TEXTURE.height, Constants.TEXTUREFORMAT_RGBA, scene, true, false, Constants.TEXTURE_TRILINEAR_SAMPLINGMODE);
-    this.material = materials.forCityKit(make(color));
+    const codes = data.grid === KIT_GRID ? new RawTexture(kitDetailCodes(data.swatches.map((s) => s.name)), KIT_GRID, KIT_GRID, Constants.TEXTUREFORMAT_RGBA, scene, false, false, Constants.TEXTURE_NEAREST_SAMPLINGMODE) : null;
+    this.material = materials.forCityKit(make(color), codes);
     // The glow layer reads `emissiveTexture` and `emissiveColor` off any material: only
     // windows, neon and sign letters bloom; the rest of the cell renders black into the glow map.
     Object.assign(this.material, { emissiveTexture: make(lit), emissiveColor: this.glowColor });

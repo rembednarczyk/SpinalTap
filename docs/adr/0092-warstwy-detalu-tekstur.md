@@ -21,9 +21,9 @@ Status: Przyjęty (19.11), decyzja użytkownika z 18.11: „rozpoczniesz duży p
 
 ## Etapy
 1. Infrastruktura, fasady i grunt mapy (ten ADR, pierwszy PR).
-2. Zestaw miasta i Alchemia (etap 8 ADR-0074): warstwa z kodu w wierzchołkach elementów Alchemii, beton, szkło i drewno.
-3. Więcej warstw z odniesień Lublina: tynk boniowany parterów, klinkier, cegła licowa bloków z lat 60., granitowa kostka Starego Miasta jako ziarno pod proceduralnym wzorem, papa z kruszywem.
-4. Dane z mapy: `roof:material` i `building:material` = `concrete`/`metal`/`glass` w imporcie, gdy OSM je ma.
+2. Zestaw miasta i Alchemia (etap 8 ADR-0074). Zrobione: paleta zestawu nazywa swatche, więc `npr/detail-kit.ts` daje im warstwy (ściany i obramienia beton, cegła cegłę, dach papę, blacha, rdza i kontenery blachę falistą, rośliny darń; szkło, neony, lakier, drzwi i drobny wystrój bez warstwy). Shader odczytuje swatch z komórki palety (górna trzecia tekstury zestawu) i kod z tekstury 16 × 16 budowanej przy wczytaniu zestawu, warstwę kładzie na płaszczyźnie ściany (`facePlane`). Działa na wszystkim, co rysuje zestaw: bloki, Alchemia, W-3, meble i pojazdy.
+3. Fugi wielkiej płyty (zrobione): betonowa ściana bloku (okna `block`) ma spoinę co kondygnację i co drugie przęsło, między oknami, jak bloki LSM i Czechowa. W obszarze gry takich bloków jest kilka (8 budynków mieszkalnych od 6 kondygnacji). Dalej więcej warstw z odniesień Lublina: tynk boniowany parterów, klinkier, cegła licowa bloków z lat 60., granitowa kostka Starego Miasta jako ziarno pod proceduralnym wzorem, papa z kruszywem.
+4. Dane z mapy: `roof:material` i `building:material` = `concrete`/`metal`/`glass` w imporcie, gdy OSM je ma. Pomiar 19.11 na `data/osm`: w obszarze gry 9 budynków ma `building:material` (wszystkie `brick`, już czytane od G-244) i 12 ma `roof:material` (8 `roof_tiles`, 4 `metal`). Za mało, żeby przeliczać tablice; wraca przy odświeżeniu mapy, gdy tagów przybędzie.
 
 ## Konsekwencje
 - Miasto zyskuje fakturę z bliska bez zmiany stylu i bez kosztu w wywołaniach; pobranie gry rośnie o ok. 2,7 MB, pamięć GPU o ok. 4 MB z mipmapami.

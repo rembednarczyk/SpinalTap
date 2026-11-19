@@ -96,13 +96,17 @@ export class ToonMaterials {
    * The city kit's material (ADR-0022): colour from the swatch palette, whose alpha marks
    * tinted walls (vertex colour) and self-lit swatches (windows, neon). One per palette.
    */
-  forCityKit(palette: BaseTexture): ShaderMaterial {
+  forCityKit(palette: BaseTexture, codes: BaseTexture | null = null): ShaderMaterial {
     return this.cached(`city:${palette.uniqueId}`, () => {
-      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit") });
+      // The swatches' detail layers (ADR-0092 stage 2), when the kit has its code texture.
+      const detail = codes ? [...this.detail.binding, ["detailKit", codes] as const] : null;
+      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit"), detail });
+      if (detail) this.detailed.add(m);
       m.setFloat("selfLit", 1);
       return m;
     });
   }
+
 
   /**
    * The static reflection probe the wet surfaces sample (ADR-0036). Call before the first
