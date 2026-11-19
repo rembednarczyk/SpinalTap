@@ -79,19 +79,24 @@ describe("the cars at the deptak's south mouth (T-324)", () => {
     const now = Math.floor((sim.clock.seconds % 86400) / 60);
     sim.enqueue({ type: "wait", minutes: (hm(8) - now + 1440) % 1440 });
     sim.step();
+    // Seki 8 m off the seam, looking at it: a vehicle held at a lane's end in view stands there.
     const seam = pointAt(ring.points, 0);
-    teleportPlayer(sim, ground(seam.x + 6, seam.z), 0);
-    const last = new Map<number, number>();
-    let round = 0;
-    for (let t = 0; t < 60 * 45 && round === 0; t++) {
+    const eye = { x: seam.x - seam.tz * 8, z: seam.z + seam.tx * 8 };
+    teleportPlayer(sim, ground(eye.x, eye.z), Math.atan2(seam.x - eye.x, seam.z - eye.z));
+    const last = new Map<number, { s: number; x: number; z: number }>();
+    const rounds: string[] = [];
+    for (let t = 0; t < 60 * 45 && rounds.length === 0; t++) {
       sim.step();
       for (const v of sim.world) {
         if (v.vehicle?.route !== route) continue;
         const before = last.get(v.id);
-        if (before !== undefined && before > ring.length - 15 && v.vehicle.s < 15) round++;
-        last.set(v.id, v.vehicle.s);
+        // Over the seam from one step to the next, a step's drive on, not a jump.
+        if (before && before.s > ring.length - 15 && v.vehicle.s < 15) rounds.push(`${Math.hypot(v.position.x - before.x, v.position.z - before.z).toFixed(2)}`);
+        last.set(v.id, { s: v.vehicle.s, x: v.position.x, z: v.position.z });
       }
+      for (const id of [...last.keys()]) if (![...sim.world].some((v) => v.id === id)) last.delete(id);
     }
-    expect(round).toBeGreaterThan(0);
+    expect(rounds).toHaveLength(1);
+    expect(Number(rounds[0])).toBeLessThan(0.5);
   });
 });
