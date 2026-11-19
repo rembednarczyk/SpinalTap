@@ -423,6 +423,7 @@ export class BabylonRenderer implements RenderPort {
     this.capsule.update();
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
+    this.alchemia.p2.update();
     this.w3.update(dt, this.stage.options.reference);
     // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
     this.fx.indoorFade.set(this.w3.interior);

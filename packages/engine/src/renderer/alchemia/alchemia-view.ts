@@ -5,6 +5,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
+import { P2View, eyeInP2 } from "./p2-view";
 import { ParkingView } from "./parking-view";
 import type { CarAt } from "./parking-traffic";
 
@@ -80,9 +81,12 @@ export class AlchemiaView {
   private level = 0;
   /** Its car park's P-1 under T0, near it only, and the cars on its ramp (ADR-0074 stage 4): a part of its own. */
   readonly parking: ParkingView;
+  /** Its car park's P-2 under P-1 (ADR-0074 stage 5a): a part of its own. */
+  readonly p2: P2View;
 
   constructor(private readonly deps: AlchemiaDeps) {
     this.parking = new ParkingView(deps);
+    this.p2 = new P2View(deps);
   }
 
   /** The meshes drawn last frame and their triangles (debug, tests). */
@@ -105,7 +109,8 @@ export class AlchemiaView {
     const out = far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
     const inn = near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
-    this.show(out, inn, Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
+    // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
+    this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
   }
 
   private build(kit: CityKit): void {

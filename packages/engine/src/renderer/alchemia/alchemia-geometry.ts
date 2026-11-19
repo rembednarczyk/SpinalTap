@@ -4,6 +4,7 @@ import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-
 import { arkadyGeometry } from "./arkady-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { garlandsGeometry } from "./garlands";
+import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
 /**
@@ -200,6 +201,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   arkadyGeometry(outside, data);
   pavilionGeometry(outside, data);
   parkingOutside(outside, data);
+  p2Outside(outside, data);
   garlandsGeometry(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
