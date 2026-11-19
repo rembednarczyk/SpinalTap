@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_TIER_PIECES, FRONT_SIGN, GREEN_SLOPE, L3, L3_TOP, frontGreenPieces, frontPieces } from "../src";
+import { treeHeight } from "@seki/core";
+import { ALCHEMIA_CHUNK, ALCHEMIA_TIER_PIECES, FRONT_GREEN_PROPS, FRONT_SIGN, GREEN_SLOPE, L3, L3_TOP, WORLD_SCENERY, frontGreenPieces, frontPieces } from "../src";
 
 /** The board's green on Alchemia (C2 of the board 1:1, 19.11): drawn only, by rule along the storeys. */
 describe("Alchemia's green (C2)", () => {
@@ -10,6 +11,7 @@ describe("Alchemia's green (C2)", () => {
   it("hangs curtains of green over the storeys' open edges, all round the complex, none solid", () => {
     expect(curtains.length).toBeGreaterThan(60);
     for (const p of green) expect(p.solid, `${p.box.x0},${p.box.z0}`).toBe(false);
+    expect(curtains.length).toBe(green.length);
     // On every side: south, north, east and west of the complex's middle.
     const [mx, mz] = [416, 20];
     expect(curtains.some((p) => p.box.z1 < mz - 15)).toBe(true);
@@ -36,11 +38,21 @@ describe("Alchemia's green (C2)", () => {
     }
   });
 
-  it("plants shrubs and trees on the front's roofs only, none on the walked terraces of A and B, a tree on L3's roof", () => {
-    const shrubs = green.filter((p) => !p.outline && p.kind === "green");
+  it("plants the game's shrubs and trees in planters on the front's roofs only, none on the walked terraces of A and B, in Alchemia's chunk", () => {
+    const shrubs = FRONT_GREEN_PROPS.filter((p) => p.prop === "shrubs");
+    const trees = FRONT_GREEN_PROPS.filter((p) => p.prop === "tree");
     expect(shrubs.length).toBeGreaterThan(30);
-    for (const s of shrubs) expect(s.box.z0, `${s.box.x0},${s.box.z0}`).toBeLessThan(39);
-    expect(green.some((p) => p.kind === "frame" && p.box.y0 >= L3_TOP && p.box.x0 > L3.minX && p.box.x1 < L3.maxX)).toBe(true);
+    expect(trees.length).toBeGreaterThanOrEqual(4);
+    for (const p of FRONT_GREEN_PROPS) expect(p.z, `${p.x},${p.z}`).toBeLessThan(39);
+    // Every tree stands in a planter, some 6 to 7 m tall.
+    for (const t of trees) {
+      expect(FRONT_GREEN_PROPS.some((p) => p.prop === "planter" && p.x === t.x && p.z === t.z)).toBe(true);
+      expect(treeHeight(t.variant)).toBeGreaterThan(5.5);
+      expect(treeHeight(t.variant)).toBeLessThan(7.5);
+    }
+    expect(trees.some((t) => t.y >= L3_TOP && t.x > L3.minX && t.x < L3.maxX)).toBe(true);
+    const item = WORLD_SCENERY.find((s) => s.view.kind === "street-props" && s.view.items === FRONT_GREEN_PROPS)!;
+    expect(item.chunk).toBe(ALCHEMIA_CHUNK);
   });
 
   it("draws the green steps as one slope from L1's roof down to the lowest step", () => {

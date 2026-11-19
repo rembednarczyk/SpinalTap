@@ -1,6 +1,6 @@
-import type { GroundPoint } from "@seki/core";
+import { type GroundPoint, type StreetPropItem, measuredTreeVariant } from "@seki/core";
 import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces } from "./front";
-import { type Piece, box, outlined, piece } from "./plan";
+import { type Piece, outlined } from "./plan";
 import { type Corners, type Rectangle, ALL_CORNERS, outerCorners, roundedOutline } from "./rounded";
 import { B_RADIUS, TIER_A, TIER_B, slabOf } from "./tiers";
 import type { Rect } from "../builders";
@@ -57,7 +57,7 @@ const hash = (x: number, z: number): number => {
 };
 
 /** The curtains' pitch along an edge, how wide one is, how thick, how far out of the slab's edge. */
-const CURTAIN_EVERY = 3.2;
+const CURTAIN_EVERY = 2.6;
 const CURTAIN = 1.3;
 const CURTAIN_THICK = 0.12;
 const CURTAIN_OUT = 0.08;
@@ -105,37 +105,39 @@ const curtains = (s: Storey): Piece[] => {
   });
 };
 
-/** Shrubs along a front roof's balustrade, a step inside it, where no storey stands over the roof. */
-const shrubs = (s: Storey): Piece[] => {
+/** A shrub of the game's (`shrubs`) whose size (bits 4..7 of its variant, 0.7 to 1.2) comes from the hash. */
+const shrubAt = (x: number, y: number, z: number, h: number): StreetPropItem => ({ prop: "shrubs", x, y, z, yaw: h * 6.283, variant: (Math.floor(h * 4096) & 0xf0f) | 0x10 });
+
+/** Shrubs along a front roof's balustrade, a step inside it, where no storey stands over the roof: the game's own. */
+const shrubs = (s: Storey): StreetPropItem[] => {
   if (!s.shrubs) return [];
-  const pts = roundedOutline(slabOf(s.r), -0.75, s.corners, undefined, s.radius);
-  return along(pts, 2.2).flatMap(({ p }) => {
+  const pts = roundedOutline(slabOf(s.r), -0.85, s.corners, undefined, s.radius);
+  return along(pts, 1.6).flatMap(({ p }) => {
     const h = hash(p.x + 0.5, p.z - 0.5);
-    const tall = 0.55 + h * 0.5;
-    if (h < 0.15 || inStorey(p.x, s.top + 0.5, p.z, s) || !clear(p.x, p.z, s.top, s.top + tall)) return [];
-    const w = 0.45 + h * 0.25;
-    return [piece(box(p.x - w, p.x + w, p.z - w, p.z + w, s.top, s.top + tall), "green", false, false)];
+    if (h < 0.1 || inStorey(p.x, s.top + 0.5, p.z, s) || !clear(p.x, p.z, s.top, s.top + 1.2)) return [];
+    return [shrubAt(p.x, s.top, p.z, h)];
   });
 };
 
-/** A tree in a planter on a roof: trunk and two tiers of crown. */
-const tree = (x: number, z: number, y: number, size: number): Piece[] => [
-  piece(box(x - 0.6, x + 0.6, z - 0.6, z + 0.6, y, y + 0.6), "green", false, false),
-  piece(box(x - 0.1, x + 0.1, z - 0.1, z + 0.1, y + 0.6, y + 1.6 * size), "frame", false, false),
-  piece(box(x - 1.2 * size, x + 1.2 * size, z - 1.2 * size, z + 1.2 * size, y + 1.4 * size, y + 2.4 * size), "green", false, false),
-  piece(box(x - 0.75 * size, x + 0.75 * size, z - 0.75 * size, z + 0.75 * size, y + 2.4 * size, y + 3.0 * size), "green", false, false),
+/** A tree of the game's in a planter of the game's on a roof: the board's trees on its terraces, some 6.5 m tall. */
+const tree = (x: number, z: number, y: number, seed: number): StreetPropItem[] => [
+  { prop: "planter", x, y, z, yaw: 0, variant: seed & 0xff },
+  { prop: "tree", x, y: y + 0.45, z, yaw: (seed % 628) / 100, variant: measuredTreeVariant(seed, 6 + (seed % 3) * 0.5) },
 ];
 
-/** The board's trees on the roofs' corners: L1's east wing (its front corners), L3's roof (its back corners, clear of the umbrellas). */
-const roofTrees = (): Piece[] => {
+/** The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners, clear of the umbrellas), L2's terrace west of the sign. */
+const roofTrees = (): StreetPropItem[] => {
   const e = L1_LEVEL[L1_LEVEL.length - 1]!;
   return [
-    ...tree(e.minX + 2, e.minZ + 1.8, L1_TOP, 1),
-    ...tree(e.maxX - 2, e.minZ + 1.8, L1_TOP, 1.1),
-    ...tree(L3.minX + 2.5, L3.maxZ - 3, L3_TOP, 1.2),
-    ...tree(L3.maxX - 2.5, L3.maxZ - 3, L3_TOP, 1),
+    ...tree(e.minX + 2, e.minZ + 1.8, L1_TOP, 41),
+    ...tree(e.maxX - 2, e.minZ + 1.8, L1_TOP, 77),
+    ...tree(L3.minX + 2.5, L3.maxZ - 3, L3_TOP, 113),
+    ...tree(L3.maxX - 2.5, L3.maxZ - 3, L3_TOP, 151),
   ];
 };
 
-/** All of the green, drawn with the storeys. */
-export const frontGreenPieces = (): Piece[] => [...STOREYS.flatMap(curtains), ...STOREYS.flatMap(shrubs), ...roofTrees()];
+/** The curtains of green, drawn with the storeys. */
+export const frontGreenPieces = (): Piece[] => STOREYS.flatMap(curtains);
+
+/** The trees, planters and shrubs on the front's roofs: street furniture of the game's, in Alchemia's chunk (19.11: the game's models, no boxes). */
+export const FRONT_GREEN_PROPS: readonly StreetPropItem[] = [...STOREYS.flatMap(shrubs), ...roofTrees()];

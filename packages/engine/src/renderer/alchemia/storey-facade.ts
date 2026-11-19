@@ -146,10 +146,12 @@ export const glassFacade = (sink: GeometrySink, data: CityKitData, pts: readonly
   const floor = Math.max(y0, y1 - ROOM_HIGH);
   const frame = swatchUv(data, "trim-light");
   const back = insetConvex(pts, ROOM);
-  // The room's back, lit (its top is hidden by the slab's beam).
-  band(sink, back, floor, y1, swatchUv(data, "win-warm"), hidden);
+  // The room's back, lit; its ceiling's dark band under the slab.
+  band(sink, back, floor, y1 - 0.45, swatchUv(data, "win-warm"), hidden);
+  band(sink, back, y1 - 0.45, y1, swatchUv(data, "glass-dark"), hidden);
   lid(sink, pts, floor + 0.01, 1, swatchUv(data, "roof"));
-  // The frame's head on the glass line (its sill is the slab's edge under it).
+  // The frame: a sill and a head on the glass line.
+  band(sink, pts, floor, floor + 0.12, frame, hidden);
   band(sink, pts, y1 - TRANSOM, y1, frame, hidden);
   let carry = 0;
   pts.forEach((p, i) => {
