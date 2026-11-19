@@ -23,6 +23,10 @@ const afraid = (sim: Simulation) =>
 const panic = (seed: number): Simulation => {
   const { sim } = enterKanal("mugging", seed);
   const run0 = sim.session.street2.micro!;
+  // Hideo, saved by key, by the mugging when the shots ring out: the street runs from them, him too.
+  const hideo = byKey(sim, "hideo")!;
+  hideo.position = { x: run0.at.x - 6, y: run0.at.y, z: run0.at.z - 4 };
+  hideo.prevPosition = hideo.position;
   const [m0, m1] = run0.attackers;
   const a = [...sim.world].find((e) => e.id === m0)!;
   for (const e of [...sim.world] as Entity[]) if (run0.attackers.includes(e.id)) e.hackFx = { pinged: 0, blind: 100, crippled: 0 };
