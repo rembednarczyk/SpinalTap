@@ -1,0 +1,1 @@
+Alchemia jest galerią wokół atrium otwartego do nieba: kondygnacje P1–P3 i dach z galeriami i balustradami, szklana fasada z widocznym wnętrzem, dwa trzony ze schodami i windami oraz schody ruchome, a dawne tarasy A i B zniknęły (ADR-0093 O1).
