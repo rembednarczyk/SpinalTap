@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ARCADE_FRONT, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
@@ -8,6 +8,7 @@ import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
 import { greenSlope, ofGreenSlope } from "./green-slope";
+import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -49,8 +50,6 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   // P-2's store (stage 5a): its own sinks colour these (`p2-geometry.ts`); here only for the table's sake.
   rack: "metal",
   pallet: "trim-light",
-  car: "metal",
-  tyre: "tyre",
   rail: "metal",
   beacon: "neon-amber",
   // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box under its letters.
@@ -63,6 +62,8 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   // The gallery round the atrium (ADR-0093 O1): its glass drawn as a white frame, its escalators' steel.
   pane: "trim-light",
   escalator: "metal",
+  // The house with arcades (C3): pale cream, the kit's paint tinted (`PLASTER`).
+  plaster: "paint",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -214,6 +215,12 @@ const within = (pts: Outline, x: number, z: number): boolean =>
     return (q.x - p.x) * (z - p.z) - (q.z - p.z) * (x - p.x) >= 0;
   });
 
+/** Inside the house with arcades' upper storey (C3): L2's glass behind it shows nothing. */
+const inArcade = (x: number, y: number, z: number): boolean => {
+  const A = ARCADE_FRONT;
+  return x > A.minX && x < A.maxX && z > A.minZ && z < A.maxZ + 0.6 && y > A.ceiling && y < A.top;
+};
+
 /** The edges of a storey's glass that stand inside another's (the joints between a storey's bars, a wing under the next storey up): nothing to draw on them. */
 const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: number) => boolean) => {
   const pts = p.outline!;
@@ -226,7 +233,7 @@ const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: nu
     // Half a metre out of the edge's middle.
     const x = (a.x + b.x) / 2 + ((b.z - a.z) / len) * 0.5;
     const z = (a.z + b.z) / 2 - ((b.x - a.x) / len) * 0.5;
-    return others.some((g) => within(g.outline!, x, z));
+    return others.some((g) => within(g.outline!, x, z)) || inArcade(x, y, z);
   };
 };
 
@@ -325,10 +332,11 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       }
       continue;
     }
-    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted.
+    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
     const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
     const steel = p.kind === "step" && p.inside && onEscalator(b);
-    boxOf(sink, data, b, leaf ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), leaf ? (p.kind === "lawn" ? LAWN : LEAF) : undefined);
+    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
+    boxOf(sink, data, b, leaf ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
@@ -337,6 +345,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   p2Outside(outside, data);
   frontSignLetters(tiers, data);
   greenSlope(tiers, data);
+  arcadeFrontGeometry(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   escalatorGeometry(inside, data);

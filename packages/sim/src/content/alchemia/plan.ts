@@ -69,11 +69,9 @@ export type PieceKind =
   | "lantern"
   // The green tiers of 15.11: the strip of light along a slab's edge.
   | "led"
-  // P-2's automated store (stage 5a): its racks, pallets, the cars on them with their tyres, the robots' rails, the orange beacons.
+  // P-2's automated store (stage 5a): its racks, pallets, the robots' rails, the orange beacons (its cars are the scenery's parked vehicles, 19.11).
   | "rack"
   | "pallet"
-  | "car"
-  | "tyre"
   | "rail"
   | "beacon"
   // The front on Bajkowskiego (B1, 19.11): its screens and the sign's box.
@@ -87,7 +85,9 @@ export type PieceKind =
   | "vitrine"
   // The gallery round the atrium (ADR-0093 O1): its glass, drawn as frames only; its escalators' balustrades, drawn sloping.
   | "pane"
-  | "escalator";
+  | "escalator"
+  // The pale house with arcades in the front's axis (C3, 19.11).
+  | "plaster";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

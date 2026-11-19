@@ -1,3 +1,4 @@
+import type { ViewDescriptor } from "@seki/core";
 import type { Rect, StaticProp } from "../builders";
 import { P2, P2_CORRIDOR } from "./p2";
 import { type Piece, box, piece } from "./plan";
@@ -41,25 +42,37 @@ export const P2_PALLETS: readonly (Rect & { readonly car: boolean })[] = P2_ROWS
 export const P2_CONTROL: Rect = { minX: 414.6, maxX: P2.maxX - W, minZ: P2.minZ + W, maxZ: 7.6 };
 const CONTROL_DOOR = { x0: 415.2, x1: 416.2, top: 2.1 } as const;
 
-/** A car's body clear of its pallet, and its cabin's top, over the pallet's top. */
-const BODY = { lift: 0.2, top: 0.85, cabin: 0.5 } as const;
+/**
+ * A car on a pallet (19.11: drawn as the street's and P-1's cars, a parked vehicle of the scenery,
+ * the sports car every vehicle wears; once boxes of P-2's mesh): on the pallet's top, along the
+ * row, its nose to the lane. Its solid is the pallet's (`P2_STORE_SOLIDS`).
+ */
+/** A car's top over its pallet's, its solid's (the drawn car fits the sedan's body, as the street's). */
+const CAR_TOP = 1.35;
 
-/** A car on a pallet whose top is `y`, as drawn: its body, its cabin, a tyre at each corner (its solid is the pallet's, `P2_STORE_SOLIDS`). */
-const carPieces = (p: Rect, y: number): Piece[] => {
-  const mx = (p.minX + p.maxX) / 2;
-  const mz = (p.minZ + p.maxZ) / 2;
-  const body = box(mx - 2.15, mx + 2.15, mz - 0.9, mz + 0.9, y + BODY.lift, y + BODY.top);
-  const out: Piece[] = [piece(body, "car", true, false), piece(box(mx - 1.2, mx + 0.9, mz - 0.8, mz + 0.8, body.y1, body.y1 + BODY.cabin), "glass", true, false)];
-  for (const dx of [-1.35, 1.35]) for (const dz of [-0.82, 0.82]) out.push(piece(box(mx + dx - 0.32, mx + dx + 0.32, mz + dz - 0.1, mz + dz + 0.1, y, y + 0.55), "tyre", true, false));
-  return out;
-};
+export interface P2Car {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly yaw: number;
+  readonly tint: number;
+}
+
+export const P2_CARS: readonly P2Car[] = P2_PALLETS.flatMap((p, k): P2Car[] => {
+  if (!p.car) return [];
+  const x = (p.minX + p.maxX) / 2;
+  // The west row's noses east to the lane, the east row's west.
+  return [{ x, y: F + PALLET.height, z: (p.minZ + p.maxZ) / 2, yaw: x < P2_LANE.x0 ? Math.PI / 2 : -Math.PI / 2, tint: 6151 * (k + 5) }];
+});
+
+/** The view of a car on a pallet: drawn by the scenery, as a parked sedan. */
+export const p2CarView = (c: P2Car): ViewDescriptor => ({ kind: "vehicle", model: "sedan", tint: c.tint, parked: true });
 
 /** The pallets with their cars, the racks' uprights between them and a beam over each line of them, a beacon strip along the lane's. */
 const rackPieces = (): Piece[] => {
   const out: Piece[] = [];
   for (const p of P2_PALLETS) {
     out.push(piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height), "pallet", true, false));
-    if (p.car) out.push(...carPieces(p, F + PALLET.height));
   }
   const ends = { z0: PALLET.from - 0.2, z1: PALLET.from + (PALLET.count - 1) * PALLET.pitch + PALLET.width + 0.2 };
   // Uprights on the lane's side of both rows and the aisle's side of the east one (the west row's back is the wall).
@@ -120,7 +133,7 @@ export const P2_STORE_PIECES: readonly Piece[] = [...rackPieces(), ...lanePieces
  * solids is flat, `solid-index.ts`): the ramp's traffic tests ran some 15% longer.
  */
 export const P2_STORE_SOLIDS: readonly Piece[] = P2_PALLETS.map((p) =>
-  piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height + (p.car ? BODY.top + BODY.cabin : 0)), "pallet", true),
+  piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height + (p.car ? CAR_TOP : 0)), "pallet", true),
 );
 
 /**

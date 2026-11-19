@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Vec3 } from "@seki/core";
+import { VEHICLE_SIZE, type Vec3 } from "@seki/core";
 import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_NAV,
@@ -26,6 +26,7 @@ import {
   P2_CUTTING,
   P2_CUTTING_PIECES,
   P2_EARTH_PIECES,
+  P2_CARS,
   P2_PALLETS,
   LIFT_SHAFT_CUT,
   P2_PROPS,
@@ -44,6 +45,7 @@ import {
   Simulation,
   WORLD_CHUNKS,
   WORLD_NAV,
+  WORLD_SCENERY,
   type AlchemiaBox,
   type AlchemiaPiece,
   beforeKeeper,
@@ -198,14 +200,24 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
     for (const r of P2_ROOMS) expect(r.bottom).toBe(F);
   });
 
-  it("has its cars on their pallets, clear of the lane, the aisle and each other", () => {
-    const cars = P2_STORE_PIECES.filter((p) => p.kind === "car");
-    expect(cars.length).toBe(P2_PALLETS.filter((p) => p.car).length);
-    expect(cars.length).toBeGreaterThanOrEqual(12);
-    for (const c of cars) {
-      expect(P2_PALLETS.some((p) => c.box.x0 >= p.minX && c.box.x1 <= p.maxX && c.box.z0 >= p.minZ && c.box.z1 <= p.maxZ), `${c.box.x0},${c.box.z0}`).toBe(true);
-      expect(c.box.x1 < 400 || c.box.x0 > 404.6).toBe(true);
-      expect(c.box.x1).toBeLessThan(410);
+  it("has its cars on their pallets, clear of the lane, the aisle and each other, drawn as the street's parked cars", () => {
+    // No box of a car in P-2's mesh: its pallets only.
+    expect(P2_STORE_PIECES.filter((p) => p.kind === "pallet").length).toBe(P2_PALLETS.length);
+    expect(P2_CARS.length).toBe(P2_PALLETS.filter((p) => p.car).length);
+    expect(P2_CARS.length).toBeGreaterThanOrEqual(12);
+    const { width, length } = VEHICLE_SIZE.sedan;
+    for (const c of P2_CARS) {
+      // Along the row (yaw a quarter turn): its length in x, its width in z.
+      const b = { x0: c.x - length / 2, x1: c.x + length / 2, z0: c.z - width / 2, z1: c.z + width / 2 };
+      const pallet = P2_PALLETS.find((p) => b.x0 >= p.minX && b.x1 <= p.maxX && b.z0 >= p.minZ && b.z1 <= p.maxZ);
+      expect(pallet, `${c.x},${c.z}`).toBeDefined();
+      expect(c.y).toBeCloseTo(F + 0.15, 6);
+      expect(Math.abs(c.yaw)).toBeCloseTo(Math.PI / 2, 6);
+      expect(b.x1 < 400 || b.x0 > 404.6).toBe(true);
+      expect(b.x1).toBeLessThan(410);
+      const item = WORLD_SCENERY.find((s) => s.at.x === c.x && s.at.z === c.z && s.at.y === c.y)!;
+      expect(item.view).toEqual({ kind: "vehicle", model: "sedan", tint: c.tint, parked: true });
+      expect(item.chunk).toBe(ALCHEMIA_CHUNK);
     }
     // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's before the front's (B1).
     // The gallery round the atrium (ADR-0093 O1) last.

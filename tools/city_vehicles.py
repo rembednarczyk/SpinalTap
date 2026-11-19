@@ -59,7 +59,8 @@ DIRTY_BANDS = [(0.12, 'tyre'), (0.3, 'trim'), (0.45, 'metal'), (9, 'paint')]
 #   roof: role of the up-facing triangles of the top tenth; lengthen: (z0, z1) shares of the length stretched
 #   proportional: its height scaled as its length (not stretched to the body's)
 VEHICLES = [
-    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3))}),
+    # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11), the nearest few in its close-up `-hi` of some 4 thousand triangles.
+    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 4000}),
     ('veh-dirty', 'sedan', DIRTY, 0, {'proportional': True, 'bands': DIRTY_BANDS, 'materials': {'large_car_glass_mat': 'glass-dark', 'large_car_wheels_mat': 'tyre'}}),
     ('veh-suv', 'van', (KENNEY, 'x/Models/GLB format/suv.glb'), 0, {'kenney': True}),
     ('veh-pickup', 'van', (KENNEY, 'x/Models/GLB format/truck.glb'), 0, {'kenney': True}),
@@ -73,6 +74,8 @@ KIT_CARS = [('car-sedan', 'sedan'), ('car-hatchback', 'hatchback'), ('car-taxi',
 
 NEAR_TRIS, LITE_TRIS = 1000, 350
 MAX_TRIS = 1500
+# The welded model may come out a little over its target (the lamps, neon and tyres are reduced on their own).
+MAX_OVER = 1.5
 
 
 def turn(P, yaw):
@@ -332,40 +335,71 @@ def reduce(P, roles, target):
     return np.concatenate(outP + [Q]), outR + R
 
 
-def lods(key, P, roles):
-    """The near, phone and far versions of a fitted model: (key, triangles, roles) each."""
+def lods(key, P, roles, high_tris=None):
+    """The near, phone and far versions of a fitted model, and with `high_tris` its close-up `-hi`:
+    (key, triangles, roles) each."""
     near = reduce(P, roles, NEAR_TRIS)
     lite = reduce(P, roles, LITE_TRIS)
     far = far_lod(P, roles)
-    return [(key, *near), (f'{key}-lite', *lite), (f'{key}-far', *far)]
+    hi = [(f'{key}-hi', *reduce(P, roles, high_tris))] if high_tris else []
+    return [(key, *near), (f'{key}-lite', *lite), (f'{key}-far', *far), *hi]
+
+
+def kept_models(path, keys):
+    """The models `keys` (with their phone and far versions) as they stand in the file at `path`: for a
+    vehicle whose source did not come down, its look is carried over unchanged (the quantized
+    attributes read back exactly)."""
+    j, blob = read_glb(path)
+    out, extras = [], {}
+    for n in j['nodes']:
+        if n['name'].split('-lite')[0].split('-far')[0].split('-hi')[0] not in keys:
+            continue
+        prim = j['meshes'][n['mesh']]['primitives'][0]
+        a = prim['attributes']
+        out.append({'key': n['name'], 'pos': accessor(j, blob, a['POSITION']).astype(np.float32), 'nor': accessor(j, blob, a['NORMAL']),
+                    'uv': accessor(j, blob, a['TEXCOORD_0']), 'ind': accessor(j, blob, prim['indices']).reshape(-1).astype(np.uint32)})
+        extras[n['name']] = n['extras']
+    return out, extras
 
 
 def build_vehicles(folder, out_dir):
     out, extras = [], {}
+    dst = os.path.join(out_dir, 'vehicle-props.glb')
+    missing = [key for key, _, src, _, _ in VEHICLES if not os.path.isdir(os.path.join(folder, src if isinstance(src, str) else src[0]))]
+    if missing:
+        if not os.path.exists(dst):
+            raise SystemExit(f'no source for {missing} and no {dst} to keep them from')
+        print('kept from the file, their source missing:', ', '.join(missing))
+        kept, kept_extras = kept_models(dst, set(missing))
+        out.extend(kept)
+        extras.update(kept_extras)
 
-    def emit(key, body, P, roles, styles, credit):
+    def emit(key, body, P, roles, styles, credit, max_tris=MAX_TRIS):
         # Fitted again: the simplification and the dropped specks (mirrors) leave it smaller than its body.
         flat = P.reshape(-1, 3)
         P = fit(P, body, min(flat[:, 1].max() - flat[:, 1].min(), TROLLEY_BODY if body == 'trolleybus' else SIZE[body][1]))
         flat = P.reshape(-1, 3)
         lo, hi = flat.min(0), flat.max(0)
-        m = weld(key, P, flat_normals(P), roles, swatch_uv, MAX_TRIS)
+        m = weld(key, P, flat_normals(P), roles, swatch_uv, max_tris)
         size = [round(float(x), 3) for x in hi - lo]
         out.append(m)
         extras[key] = {'size': size, 'styles': styles, **({'credit': credit} if credit else {})}
         print(f"{key:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
 
     for key, body, src, yaw, opts in VEHICLES:
+        if key in missing:
+            continue
         P, roles = source(folder, key, src, yaw, body, opts)
         credit = src[0] if is_ccby(src[0]) else None
-        for k, Q, r in lods(key, P, roles):
-            emit(k, body, Q, r, [f'veh-{body}'] if k == key else ['veh-lite' if k.endswith('-lite') else 'veh-far'], credit)
+        high = opts.get('high')
+        for k, Q, r in lods(key, P, roles, high):
+            style = f'veh-{body}' if k == key else 'veh-hi' if k.endswith('-hi') else 'veh-lite' if k.endswith('-lite') else 'veh-far'
+            emit(k, body, Q, r, [style], credit, int(high * MAX_OVER) if k.endswith('-hi') else MAX_TRIS)
     for key, body in KIT_CARS:
         P, roles = kit_car(key)
         P = fit(P, body)
         for k, Q, r in lods(key, P, roles)[1:]:
             emit(k, body, Q, r, ['veh-lite' if k.endswith('-lite') else 'veh-far'], None)
     albedo, glow = palette_images()
-    dst = os.path.join(out_dir, 'vehicle-props.glb')
     write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
     print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))

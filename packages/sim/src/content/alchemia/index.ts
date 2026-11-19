@@ -47,6 +47,7 @@ export { slabOf as storeySlabOf } from "./storey";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
 export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
+export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
 /**

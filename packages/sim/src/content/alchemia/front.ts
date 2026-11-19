@@ -4,6 +4,7 @@ import { PARAPET, type Box, type Piece, box, outlined, piece } from "./plan";
 import { type Rectangle, balustrade, outerCorners, roundedOutline } from "./rounded";
 import { FRONT_OVERHANG, MALL, MALL_LEVELS } from "./mall-plan";
 import { slabOf, storey as tierStorey } from "./storey";
+import { ARCADE_FOOTPRINTS, ARCADE_FRONT, ARCADE_WALK, arcadeFrontPieces } from "./arcade-front";
 
 /*
  * Alchemia's front on Bajkowskiego (ADR-0074, "Bryła na całym terenie", stage B1, decisions of
@@ -31,7 +32,8 @@ const OVER = 0.3;
 
 /** L1's west wing: by Bajkowskiego as deep as the car park's slanted west edge allows, narrower to the north. */
 export const WEST_WING: readonly Rect[] = [
-  { minX: 394, maxX: 404, minZ: -2, maxZ: 14 },
+  // Its front behind the house with arcades' walk (C3): its lit shops under the arches.
+  { minX: 394, maxX: 404, minZ: ARCADE_FRONT.minZ + ARCADE_WALK, maxZ: 14 },
   { minX: 396, maxX: 404, minZ: 14, maxZ: 27.5 },
 ];
 /** The green steps down the west wing's west side, westwards to the car park's edge: their x spans and tops. */
@@ -111,7 +113,17 @@ const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r]): Piece[] =
     { x0: GREEN_STEPS[0]!.x0 - 1, x1: WEST_WING[0]!.minX + 0.5, z0: STEPS_Z.z0 - 0.5, z1: STEPS_Z.z1 },
     // Along the gallery's south face: its roof's own balustrade stands there (ADR-0093 O1).
     { x0: MALL.x0 - 0.5, x1: MALL.x1 + 0.5, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 },
+    // L2's terrace goes on over the house with arcades' roof (C3): no balustrade between them.
+    { x0: ARCADE_FRONT.minX - 0.5, x1: ARCADE_FRONT.maxX + 0.5, z0: ARCADE_FRONT.maxZ - 1, z1: ARCADE_FRONT.maxZ + 0.6 },
   ]);
+
+/** The balustrade round the house with arcades' roof, on its three open sides (C3). */
+const arcadeRail = (): Piece[] => {
+  const A = ARCADE_FRONT;
+  return balustrade({ x0: A.minX - 0.1, x1: A.maxX + 0.1, z0: A.minZ - 0.1, z1: A.maxZ }, -0.05, [false, false, false, false], A.top, PARAPET, false, [
+    { x0: A.minX - 1, x1: A.maxX + 1, z0: A.maxZ - 0.5, z1: A.maxZ + 1 },
+  ]);
+};
 
 /** The ground under a wing, a little under its lowest corner: the glass stands in the terrain, not over it. */
 const FOOT = -3;
@@ -128,9 +140,9 @@ const greenSteps = (): Piece[] =>
 
 /** The screens on the west wing's front and on L2's south face over the passage. */
 const screens = (): Piece[] => [
-  piece(box(395.5, 402.5, -2.06, -2, -1.1, 1.6), "screen", false, false),
   piece(box(425, 435, EAST_WING.minZ - 0.06, EAST_WING.minZ, -0.4, 1.7), "screen", false, false),
-  piece(box(L2_SLABS[0]!.minX + 1, L2_SLABS[0]!.minX + 9, L2_SLABS[0]!.minZ - 0.06, L2_SLABS[0]!.minZ, L1_TOP + 0.5, L2_TOP - 0.8), "screen", false, false),
+  // On L2's south face over the ramp's mouth, east of the house with arcades (C3).
+  piece(box(ARCADE_FRONT.maxX + 2, ARCADE_FRONT.maxX + 10, L2_SLABS[0]!.minZ - 0.06, L2_SLABS[0]!.minZ, L1_TOP + 0.5, L2_TOP - 0.8), "screen", false, false),
 ];
 
 /** The sign on L3's south face over the passage: its box, the letters are the engine's (proper name). */
@@ -179,11 +191,13 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
   ...PASSAGE_COLUMNS.map((c) => ({ minX: c.x - COLUMN / 2, maxX: c.x + COLUMN / 2, minZ: c.z - COLUMN / 2, maxZ: c.z + COLUMN / 2 })),
   FOUNTAIN,
   ...FRONT_KIOSKS,
+  ...ARCADE_FOOTPRINTS,
 ];
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */
 export const frontPieces = (): Piece[] => [
-  ...WEST_WING.flatMap((r) => [...storey(r, FOOT, L1_TOP, L1_LEVEL), ...roofRail(r, L1_TOP, L1_LEVEL)]),
+  // The west wing's roof is under the house with arcades and L2 all over: no balustrade.
+  ...WEST_WING.flatMap((r) => storey(r, FOOT, L1_TOP, L1_LEVEL)),
   ...greenSteps(),
   ...storey(EAST_WING, FOOT, L1_TOP, L1_LEVEL),
   ...roofRail(EAST_WING, L1_TOP, L1_LEVEL),
@@ -195,4 +209,6 @@ export const frontPieces = (): Piece[] => [
   piece(FRONT_SIGN, "sign", false),
   ...masts(),
   ...hedges(),
+  ...arcadeFrontPieces(),
+  ...arcadeRail(),
 ];

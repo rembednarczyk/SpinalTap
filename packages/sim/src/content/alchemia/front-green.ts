@@ -4,6 +4,7 @@ import { type Piece, outlined } from "./plan";
 import { type Corners, type Rectangle, outerCorners, roundedOutline } from "./rounded";
 import { FRONT_OVERHANG, MALL, MALL_CORNERS, MALL_LEVELS, MALL_RADIUS } from "./mall-plan";
 import { slabOf } from "./storey";
+import { ARCADE_FRONT } from "./arcade-front";
 import type { Rect } from "../builders";
 
 /*
@@ -25,6 +26,8 @@ interface Storey {
   readonly shrubs: boolean;
   /** No curtains on its south face (the gallery's: the front stands against it, its doors under it). */
   readonly southShut?: true;
+  /** No curtains over its edges (the house with arcades: its windows and letters under its cornice). */
+  readonly bare?: boolean;
 }
 
 const rect = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
@@ -45,6 +48,8 @@ const STOREYS: readonly Storey[] = [
     [MALL_LEVELS.p2, MALL_LEVELS.p3],
     [MALL_LEVELS.p3, MALL_LEVELS.roof],
   ].map(([bottom, top]): Storey => ({ r: GALLERY_RECT, bottom: bottom!, top: top!, corners: MALL_CORNERS, radius: MALL_RADIUS, shrubs: false, southShut: true })),
+  // The house with arcades (C3): square, its roof a terrace with L2's.
+  { r: ARCADE_FRONT, bottom: -3, top: ARCADE_FRONT.top, corners: [false, false, false, false], shrubs: true, bare: true },
 ];
 
 /** Is (x, y, z) in a storey's volume, its slab included (another storey hides what is there)? */
@@ -91,6 +96,7 @@ const along = (pts: readonly GroundPoint[], every: number): { p: GroundPoint; t:
 
 /** The curtains of green over a storey's open edges, under its slab's beam and a hand over its top. */
 const curtains = (s: Storey): Piece[] => {
+  if (s.bare) return [];
   const pts = roundedOutline(slabOf(s.r), CURTAIN_OUT, s.corners, undefined, s.radius);
   const under = s.top - SLAB - BEAM;
   return along(pts, CURTAIN_EVERY).flatMap(({ p, t, n }) => {
