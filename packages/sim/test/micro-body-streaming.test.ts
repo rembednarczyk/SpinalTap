@@ -21,6 +21,9 @@ const bodies = (sim: Simulation) => sim.world.with("downed").entities.filter((b)
 /** Both muggers of the mugging by Brama Krakowska taken down from behind (`lethal` or not): it is won. */
 const won = (seed: number, lethal: boolean): Simulation => {
   const { sim, ended } = enterKanal("mugging", seed);
+  // The Rynek's patrol, blinded: it would walk over to the bodies, and who walks over to a body
+  // starts again after a load (ADR-0065, `DownedBody.finder`), so the two games would part on that.
+  for (const e of sim.world.with("ai")) if (e.ai.territory) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
   const run0 = sim.session.street2.micro!;
   for (const e of [...sim.world] as Entity[]) if (run0.attackers.includes(e.id)) e.hackFx = { pinged: 0, blind: 100, crippled: 0 };
   const p = sim.player()!;

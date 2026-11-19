@@ -21,13 +21,15 @@ const afraid = (sim: Simulation) =>
 
 /**
  * The mugging by Brama Krakowska won by a takedown and a shot: the street runs from it. The
- * Rynek's patrol, provoked by the muggers' shots at their victim, keeps firing at the player
- * (a glitch of its own in docs/glitches.md); `blindPatrol` blinds it, so the street can calm down.
+ * Rynek's patrol stays out of it: the muggers' shots at their victim do not set it on the player (G-938).
  */
-const panic = (seed: number, blindPatrol = false): Simulation => {
+const panic = (seed: number): Simulation => {
   const { sim } = enterKanal("mugging", seed, 0, 21, BY_THE_GATE, IN_THE_GATE);
-  if (blindPatrol) for (const e of sim.world.with("ai")) if (e.ai.territory) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
   const run0 = sim.session.street2.micro!;
+  // Hideo, saved by key, by the mugging when the shots ring out: the street runs from them, him too.
+  const hideo = byKey(sim, "hideo")!;
+  hideo.position = { x: run0.at.x - 6, y: run0.at.y, z: run0.at.z - 4 };
+  hideo.prevPosition = hideo.position;
   const [m0, m1] = run0.attackers;
   const a = [...sim.world].find((e) => e.id === m0)!;
   for (const e of [...sim.world] as Entity[]) if (run0.attackers.includes(e.id)) e.hackFx = { pinged: 0, blind: 100, crippled: 0 };
@@ -68,7 +70,7 @@ describe("a save while the street panics (G-240)", () => {
   }
 
   it("a calm street is left as it is", () => {
-    const sim = panic(13, true);
+    const sim = panic(13);
     for (let i = 0; i < AFTER; i++) sim.step(CROUCH);
     expect(afraid(sim)).toEqual([]);
     const before = hash(sim);
