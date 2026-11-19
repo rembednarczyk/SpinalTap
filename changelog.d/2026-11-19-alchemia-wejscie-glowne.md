@@ -1,0 +1,1 @@
+- Do Alchemii wchodzi się od Bajkowskiego prosto: szeroka oświetlona na zielono droga na wschód od rampy prowadzi do nowych, szerokich drzwi galerii, a klatka na parking stoi teraz z boku przy skrzydle.

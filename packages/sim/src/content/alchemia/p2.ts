@@ -3,7 +3,7 @@ import type { GroundVault } from "../../world/vault";
 import type { Rect } from "../builders";
 import { groundY } from "../lublin/terrain";
 import { ARKADY } from "./arkady";
-import { P1, P1_CAR_LIFT, P1_STAIR_CUT, P1_STAIR_DOWN } from "./parking";
+import { P1, P1_CAR_LIFT, P1_STAIR_DOWN } from "./parking";
 import { type Piece, box, piece } from "./plan";
 
 /**
@@ -141,22 +141,15 @@ const shellPieces = (): Piece[] => {
 };
 
 /**
- * The earth east of the store under P-1's apron and stair core, as solids: P-1's vault reaches to
- * its east wall, and in a vault a ray goes on through the ground (`GroundField.vaultExit`), so
- * without them a shot from the store's east wall started past it (`tpp-shoulder.test.ts`). Not drawn.
+ * The earth east of the store under P-1's apron, as solids: P-1's vault reaches to its east wall, and
+ * in a vault a ray goes on through the ground (`GroundField.vaultExit`), so without them a shot from
+ * the store's east wall started past it (`tpp-shoulder.test.ts`). Not drawn. Until ADR-0093 O2b P-1's
+ * stair core's shaft stood over it here, notched out of it; the core went east, out of the vault.
  */
 const earthPieces = (): Piece[] => {
   const x0 = P2.maxX;
   const x1 = P1.maxX;
-  const shaft = P1_STAIR_CUT;
-  const mid = shaft.floor;
-  return [
-    piece(box(x0, x1, P2.minZ, P2_ANNEX.minZ, BASE, mid), "wall", true),
-    piece(box(x0, x1, P2.minZ, shaft.bounds.minZ, mid, SLAB_TOP), "wall", true),
-    piece(box(x0, x1, shaft.bounds.maxZ, P2_ANNEX.minZ, mid, SLAB_TOP), "wall", true),
-    piece(box(x0, shaft.bounds.minX, shaft.bounds.minZ, shaft.bounds.maxZ, mid, SLAB_TOP), "wall", true),
-    piece(box(P2_ANNEX.maxX, x1, P2_ANNEX.minZ, P2.maxZ, BASE, SLAB_TOP), "wall", true),
-  ];
+  return [piece(box(x0, x1, P2.minZ, P2_ANNEX.minZ, BASE, SLAB_TOP), "wall", true), piece(box(P2_ANNEX.maxX, x1, P2_ANNEX.minZ, P2.maxZ, BASE, SLAB_TOP), "wall", true)];
 };
 
 /**

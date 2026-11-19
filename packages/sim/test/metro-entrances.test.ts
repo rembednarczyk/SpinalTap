@@ -7,7 +7,7 @@ import { METRO_NAV } from "../src/content/metro-nav";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { lineOfSight } from "../src/world/hitscan";
-import { circleTouchesPrism } from "../src/world/prism";
+import { type Prism, circleTouchesPrism } from "../src/world/prism";
 import { teleportPlayer, run } from "./helpers";
 
 /**
@@ -17,6 +17,23 @@ import { teleportPlayer, run } from "./helpers";
  */
 
 type P = { readonly x: number; readonly z: number };
+/** Does a convex prism's footprint overlap the rectangle grown by `pad` (separating axes: the rectangle's and the prism's edges' normals)? */
+const prismOnRect = (p: Prism, r: Rect, pad: number): boolean => {
+  const q = { minX: r.minX - pad, maxX: r.maxX + pad, minZ: r.minZ - pad, maxZ: r.maxZ + pad };
+  if (p.box.max.x <= q.minX || p.box.min.x >= q.maxX || p.box.max.z <= q.minZ || p.box.min.z >= q.maxZ) return false;
+  const corners = [
+    { x: q.minX, z: q.minZ },
+    { x: q.maxX, z: q.minZ },
+    { x: q.maxX, z: q.maxZ },
+    { x: q.minX, z: q.maxZ },
+  ];
+  return p.points.every((a, i) => {
+    const b = p.points[(i + 1) % p.points.length]!;
+    const n = { x: b.z - a.z, z: a.x - b.x };
+    // Every corner of the rectangle outside this edge (the prism counter-clockwise: outside is right of it): apart.
+    return !corners.every((c) => (c.x - a.x) * n.x + (c.z - a.z) * n.z >= 0);
+  });
+};
 const toRect = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 const segToRect = (a: P, b: P, r: Rect): number => {
   let best = Infinity;
@@ -121,7 +138,8 @@ describe("metro entrances on the map (ADR-0071 stage 2)", () => {
       const b = x.solid!;
       const over = (r: Rect) => b.min.x < r.maxX && b.max.x > r.minX && b.min.z < r.maxZ && b.max.z > r.minZ && b.max.y > e.floor - 0.5 && b.min.y < e.street + 3.4;
       if (x.prisms) {
-        const hit = (r: Rect) => x.prisms!.some((p) => p.bottom < e.street + 3.4 && p.top > e.floor && circleTouchesPrism(p, (r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2, Math.hypot(r.maxX - r.minX, r.maxZ - r.minZ) / 2));
+        // A prism's footprint on the rectangle grown by half a metre (the circle round the rectangle took P-1's passage to its stair core, 1.4 m south of metro B's pavilion, ADR-0093 O2b).
+        const hit = (r: Rect) => x.prisms!.some((p) => p.bottom < e.street + 3.4 && p.top > e.floor && prismOnRect(p, r, 0.5));
         expect(over(room) && hit(room), `${x.id} in front`).toBe(false);
         expect(over(e.outline) && hit(e.outline), `${x.id} in the pavilion`).toBe(false);
       } else {

@@ -7,6 +7,7 @@ import {
   ESCALATOR_LANDINGS,
   LANE_A,
   FRONT_OVERHANG,
+  MAIN_DOORS,
   MALL,
   MALL_CORNERS,
   MALL_GLASS_RADIUS,
@@ -124,7 +125,7 @@ const PANE = MALL_GLASS_THICK;
  * corner) is the glass's wall where it stands.
  */
 export const P1_DOORS: readonly GlassDoor[] = [
-  { gap: { x0: 418.8, x1: 421.2, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 }, lintel: { x0: 418.8, x1: 421.2, z0: MALL.z0, z1: MALL.z0 + PANE } },
+  { gap: { ...MAIN_DOORS, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 }, lintel: { ...MAIN_DOORS, z0: MALL.z0, z1: MALL.z0 + PANE } },
   { gap: { x0: MALL.x1 - 0.5, x1: MALL.x1 + 0.5, z0: 32.4, z1: 33.9 }, lintel: { x0: MALL.x1 - PANE, x1: MALL.x1, z0: 32.4, z1: 33.9 } },
   { gap: { x0: 412.3, x1: 414.7, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 }, lintel: { x0: 412.3, x1: 414.7, z0: MALL.z0, z1: MALL.z0 + PANE } },
 ];

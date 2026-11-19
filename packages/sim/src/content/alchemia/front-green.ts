@@ -1,6 +1,7 @@
 import { type GroundPoint, type StreetPropItem, measuredTreeVariant } from "@seki/core";
 import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces } from "./front";
-import { type Piece, outlined } from "./plan";
+import { type Piece, box, outlined } from "./plan";
+import { P1_STAIR } from "./parking";
 import { type Corners, type Rectangle, outerCorners, roundedOutline } from "./rounded";
 import { FRONT_OVERHANG, MALL, MALL_CORNERS, MALL_LEVELS, MALL_RADIUS } from "./mall-plan";
 import { slabOf } from "./storey";
@@ -60,8 +61,12 @@ const inStorey = (x: number, y: number, z: number, not?: Storey): boolean =>
     return x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && y > s.bottom && y < s.top + 0.2;
   });
 
-/** What the green keeps clear of: the screens, the sign, the masts' feet. */
-const CLEAR = [...frontPieces().filter((p) => p.kind === "screen" || p.kind === "sign").map((p) => p.box), FRONT_SIGN];
+/**
+ * What the green keeps clear of: the screens, the sign, the masts' feet, and P-1's stair house against
+ * L1's east wing (ADR-0093 O2b: the wing's curtains hung into it, seen through its door).
+ */
+const STAIR_HOUSE_BOX = box(P1_STAIR.minX, P1_STAIR.maxX, P1_STAIR.minZ, P1_STAIR.maxZ, P1_STAIR.top - 1, P1_STAIR.top + P1_STAIR.house + 0.15);
+const CLEAR = [...frontPieces().filter((p) => p.kind === "screen" || p.kind === "sign").map((p) => p.box), FRONT_SIGN, STAIR_HOUSE_BOX];
 const clear = (x: number, z: number, y0: number, y1: number): boolean =>
   !CLEAR.some((b) => x > b.x0 - 0.6 && x < b.x1 + 0.6 && z > b.z0 - 0.6 && z < b.z1 + 0.6 && y1 > b.y0 - 0.3 && y0 < b.y1 + 0.3);
 

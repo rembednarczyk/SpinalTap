@@ -1,7 +1,7 @@
 import type { NavEdge, NavGraph, NavNode } from "../builders";
 import { groundY } from "../lublin/terrain";
 import { HALL } from "./plan";
-import { P1, P1_HALL_DOOR, P1_RAMP, P1_RAMP_WALK, P1_STAIR, P1_STAIR_HEAD_Z, p1RampY } from "./parking";
+import { P1, P1_HALL_DOOR, P1_RAMP, P1_RAMP_WALK, P1_STAIR, P1_STAIR_HEAD_Z, P1_STAIR_LINK, p1RampY } from "./parking";
 
 /**
  * P-1 in the level graph (ADR-0074 §5, stage 4): it lies under the car park (a vault), so its floor
@@ -9,7 +9,9 @@ import { P1, P1_HALL_DOOR, P1_RAMP, P1_RAMP_WALK, P1_STAIR, P1_STAIR_HEAD_Z, p1R
  * The ramp's open trench and the stair core's shaft are dug ground (cuts), walled off from the
  * car park round them: the graph says which way up. Walkers keep to the ramp's footway along its
  * east wall, nodes at its top on the car park, at the trench's end and a step under the terrace,
- * and at its foot; the stair core has its foot on P-1, its landing and a step out of its door.
+ * and at its foot; the stair core has its foot in its passage from P-1 (ADR-0093 O2b), its landing
+ * and a step out of its door, from which the way west round its house's corner joins the main
+ * entrance's way from Bajkowskiego to the gallery (`mall-nav.ts`).
  */
 
 const F = P1.floor;
@@ -34,8 +36,9 @@ const NODES: readonly NavNode[] = [
   { id: "alchemia-p1-deck", at: { x: 402, y: F, z: 22.8 } },
   { id: "alchemia-p1-door", at: { x: DOOR, y: F, z: HALL.minZ - 1.2 } },
   { id: "alchemia-p1-door-in", at: { x: DOOR, y: F, z: HALL.minZ + 1.2 } },
-  // The stair core by metro B: its foot on P-1, its landing, out of its door onto the car park.
+  // The stair core by metro B: its foot in its passage, the passage's west end at P-1's east wall, its landing, out of its door onto the car park.
   { id: "alchemia-p1-stair-foot", at: { x: STAIR_X, y: F, z: P1_STAIR.maxZ + OFF + 0.6 } },
+  { id: "alchemia-p1-stair-link", at: { x: P1.maxX - 1.4, y: F, z: P1_STAIR_LINK.maxZ - 0.6 } },
   { id: "alchemia-p1-stair-head", at: { x: STAIR_X, y: P1_STAIR.top, z: P1_STAIR_HEAD_Z - OFF } },
   { id: "alchemia-p1-stair-out", at: on(STAIR_X, P1_STAIR.minZ - 1.2) },
   // Round the stair house's corners on the car park: towards metro B and towards the ramp's top.
@@ -50,7 +53,7 @@ const EDGES: readonly NavEdge[] = [
   { a: "alchemia-p1-ramp-covered", b: "alchemia-p1-ramp-foot", via: { minX: P1_RAMP.minX, maxX: P1_RAMP.maxX, minZ: P1_RAMP.covered, maxZ: P1_RAMP.foot + 1 } },
   ...chain("ramp-foot", "apron", "door", "door-in"),
   ...chain("apron", "deck"),
-  ...chain("ramp-foot", "stair-foot"),
+  ...chain("ramp-foot", "stair-link", "stair-foot"),
   { a: "alchemia-p1-stair-foot", b: "alchemia-p1-stair-head", via: { minX: P1_STAIR.minX, maxX: P1_STAIR.maxX, minZ: P1_STAIR_HEAD_Z, maxZ: P1_STAIR.maxZ + 1 } },
   ...chain("stair-head", "stair-out", "stair-east"),
   ...chain("ramp-west", "ramp-top", "ramp-east"),

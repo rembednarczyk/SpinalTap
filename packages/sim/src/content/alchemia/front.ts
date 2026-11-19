@@ -51,9 +51,11 @@ export const GREEN_SLOPE = { x0: GREEN_STEPS[GREEN_STEPS.length - 1]!.x0, x1: WE
 
 /**
  * L1's east wing: north of the triangular pavilion, south of metro B's (its eaves clear), east of P-1's
- * stair house; the walk from the stair house's door east to Lubartowska passes south of it.
+ * stair house, which stands against its west face (ADR-0093 O2b: the house moved off the main
+ * entrance's way, the wing gave it 3.7 m; it began at x 424 before); the walk from the stair house's
+ * door east to Lubartowska passes south of it.
  */
-export const EAST_WING: Rect = { minX: 424, maxX: 436, minZ: 13.5, maxZ: 22.5 };
+export const EAST_WING: Rect = { minX: P1_STAIR.maxX, maxX: 436, minZ: 13.5, maxZ: 22.5 };
 
 /** L2: over the west wing and the passage, east of x 422 only over the east wing and on (the walk from the stair house to Lubartowska open to the sky). */
 export const L2_SLABS: readonly Rect[] = [
@@ -74,7 +76,9 @@ const SOFFIT = 0.35;
 const COLUMN = 0.6;
 /**
  * The passage's columns under L2, clear of the ramp's trench and its parapets, the stair house and
- * metro B's pavilion: on P-1's roof where the ramp runs covered (z over 11) and by the walls.
+ * metro B's pavilion: on P-1's roof where the ramp runs covered (z over 11) and by the walls. The two
+ * east of the ramp stand along its east wall (ADR-0093 O2b), on the main entrance's way's west edge;
+ * at x 422.6 (z 9.5 and 24.5) they stood in its middle.
  */
 export const PASSAGE_COLUMNS: readonly { readonly x: number; readonly z: number }[] = [
   { x: 405.2, z: 5.5 },
@@ -82,8 +86,8 @@ export const PASSAGE_COLUMNS: readonly { readonly x: number; readonly z: number 
   { x: 405.2, z: 24.5 },
   { x: P1_RAMP.minX + 4, z: 15 },
   { x: P1_RAMP.minX + 4, z: 24.5 },
-  { x: P1_STAIR.maxX + 0.9, z: 9.5 },
-  { x: P1_STAIR.maxX + 0.9, z: 24.5 },
+  { x: P1_RAMP.maxX + 0.6, z: P1_RAMP.covered + 0.8 },
+  { x: P1_RAMP.maxX + 0.6, z: 24.5 },
   { x: 434.6, z: 24.5 },
 ];
 
@@ -140,7 +144,7 @@ const greenSteps = (): Piece[] =>
 
 /** The screens on the west wing's front and on L2's south face over the passage. */
 const screens = (): Piece[] => [
-  piece(box(425, 435, EAST_WING.minZ - 0.06, EAST_WING.minZ, -0.4, 1.7), "screen", false, false),
+  piece(box(EAST_WING.minX + 1, 435, EAST_WING.minZ - 0.06, EAST_WING.minZ, -0.4, 1.7), "screen", false, false),
   // On L2's south face over the ramp's mouth, east of the house with arcades (C3).
   piece(box(ARCADE_FRONT.maxX + 2, ARCADE_FRONT.maxX + 10, L2_SLABS[0]!.minZ - 0.06, L2_SLABS[0]!.minZ, L1_TOP + 0.5, L2_TOP - 0.8), "screen", false, false),
 ];

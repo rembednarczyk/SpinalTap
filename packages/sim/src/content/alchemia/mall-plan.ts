@@ -165,3 +165,12 @@ export const GALLERY_ROOMS: readonly (Rectangle & { readonly bottom: number; rea
     { ...g, x0: g.x0 + r, x1: g.x1 - r, z0: g.z1 - r, ...y },
   ];
 });
+
+/**
+ * The main entrance (ADR-0093 O2b): one opening 4.4 m wide at the end of the way from Bajkowskiego east
+ * of the ramp, its middle on that way's (x 421); 2.4 m wide at x 418.8-421.2 before, behind P-1's
+ * stair house.
+ */
+export const MAIN_DOORS = { x0: 418.8, x1: 423.2 } as const;
+/** The main entrance's way (O2b): its middle, straight from Bajkowskiego's footway to the main doors' middle. */
+export const MAIN_WAY_X = (MAIN_DOORS.x0 + MAIN_DOORS.x1) / 2;
