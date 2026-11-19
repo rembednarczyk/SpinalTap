@@ -62,7 +62,7 @@ const hash = (x: number, z: number): number => {
 };
 
 /** The curtains' pitch along an edge, how wide one is, how thick, how far out of the slab's edge. */
-const CURTAIN_EVERY = 2.6;
+const CURTAIN_EVERY = 3.2;
 const CURTAIN = 1.3;
 const CURTAIN_THICK = 0.12;
 const CURTAIN_OUT = 0.08;
@@ -92,19 +92,22 @@ const curtains = (s: Storey): Piece[] => {
   return along(pts, CURTAIN_EVERY).flatMap(({ p, t, n }) => {
     const h = hash(p.x, p.z);
     if (h < 0.18) return [];
-    const drop = 0.8 + h * 1.8;
-    const [y0, y1] = [Math.max(s.bottom + 0.5, under - drop), s.top + 0.15];
+    const drop = 0.6 + h * 1.2;
+    const y1 = s.top + 0.15;
     const w = CURTAIN * (0.7 + 0.6 * hash(p.z, p.x));
     const q = { x: p.x + t.x * w, z: p.z + t.z * w };
+    const y0 = Math.max(s.bottom + 0.5, under - drop);
     // Open edge only, all along it: nothing of another storey out of it under the slab, nor round its top.
     const open = [0, 0.5, 1].every((k) => {
       const [x, z] = [p.x + (q.x - p.x) * k, p.z + (q.z - p.z) * k];
       return !inStorey(x + n.x * 0.5, under - 0.5, z + n.z * 0.5, s) && !inStorey(x, s.top - 0.1, z, s) && clear(x, z, y0, y1);
     });
     if (!open) return [];
-    // Counter-clockwise: along the edge's outside first, back along its inside.
-    const quad = [{ x: p.x + n.x * CURTAIN_THICK, z: p.z + n.z * CURTAIN_THICK }, { x: q.x + n.x * CURTAIN_THICK, z: q.z + n.z * CURTAIN_THICK }, q, p];
-    return [outlined(quad, y0, y1, "green", false)];
+    // Two strands of uneven length, the board's ragged green, each counter-clockwise: its outside first.
+    const strand = (a: GroundPoint, b: GroundPoint, bottom: number): Piece =>
+      outlined([{ x: a.x + n.x * CURTAIN_THICK, z: a.z + n.z * CURTAIN_THICK }, { x: b.x + n.x * CURTAIN_THICK, z: b.z + n.z * CURTAIN_THICK }, b, a], bottom, y1, "green", false);
+    const m = { x: (p.x + q.x) / 2, z: (p.z + q.z) / 2 };
+    return [strand(p, m, y0), strand(m, q, Math.min(under - 0.3, y0 + drop * (0.3 + 0.4 * hash(q.x, q.z))))];
   });
 };
 

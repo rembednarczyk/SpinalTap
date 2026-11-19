@@ -5,7 +5,7 @@ import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
 import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
@@ -246,8 +246,8 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, 
   }
   else if (p.kind === "green" && pts.length === 4) {
     // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.
-    band(sink, pts, b.y0, b.y1, swatchUv(data, SWATCH.green));
-    lid(sink, pts, b.y1, 1, swatchUv(data, SWATCH.green));
+    band(sink, pts, b.y0, b.y1, swatchUv(data, "paint"), undefined, LEAF);
+    lid(sink, pts, b.y1, 1, swatchUv(data, "paint"), LEAF);
   } else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
   return true;
 };
@@ -302,7 +302,10 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       }
       continue;
     }
-    boxOf(sink, data, b, swatchOf(p), hiddenFaces(p, steps), p.kind === "plaster" ? PLASTER : undefined);
+    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
+    const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
+    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
+    boxOf(sink, data, b, leaf ? "paint" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);

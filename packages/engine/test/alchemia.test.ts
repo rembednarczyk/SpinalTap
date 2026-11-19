@@ -71,7 +71,8 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const screenUvs = new Set<string>();
     for (let i = 0; i < screen.uvs.length; i += 2) screenUvs.add(`${screen.uvs[i]},${screen.uvs[i + 1]}`);
     for (const c of ["glass-dark", "win-teal", "neon-pink"]) expect(screenUvs.has(swatchUv(kitData, c).join(",")), c).toBe(true);
-    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "plant")]);
+    // The tiers' lawns in the board's fresh green since C2 (19.11): the kit's paint, tinted.
+    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "paint")]);
     const slab = kind("roof").filter((p) => (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) > 100);
     expect(uvOf(slab)).toEqual([...swatchUv(kitData, "trim-light")]);
   });
