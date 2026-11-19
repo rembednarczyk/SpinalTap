@@ -357,7 +357,18 @@ Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dot
     - Skrzydła na północ od hali nie ma. T1 to front hali z wejściami i Haną.
     - T2 to plac z kamieniem pamięci Placu Ofiar Getta, przy którym nie ma neonów ani reklam (§6).
     - Pas między granicą działki od Świętoduskiej a T2 ma przy wykopie P−2 najwyżej 3,6 m.
-  - **B4.** Detale z planszy: zaokrąglone płyty, ekrany i hologramy, pnącza na krawędziach, parasole i drzewa na tarasach, fontanna z hologramem i kioski na placu, portal rampy z zielonym światłem, maszty, balustrady zamiast pełnego parapetu przy wylocie P−2.
+  - **B4 (pierwsza część zrobiona).**
+    - **Zaokrąglone narożniki płyt** kondygnacji (A, B, L1–L3), promień 1 m, w silniku (`rounded-slab.ts`). Pas LED biegnie po łuku, a proste pasy z symulacji przy płytach znikają. Symulacja zostaje przy pudłach, a szkło pod płytą (0,3 m w głąb) mieści się pod łukiem.
+    - **Detale rysowane bez kolizji** (`front-dress.ts`):
+      - pnącza na krawędziach L2 i L3, z dala od napisu i ekranu;
+      - trzy drzewa w donicach na tarasie L2;
+      - cztery parasole ze stolikami na dachu L3;
+      - wysokie ekrany na bokach L3;
+      - zielone pasy światła w ścianach rampy P−1 i nad wjazdem pod strop.
+    - **Zostaje:**
+      - fontanna z hologramem i kioski na placu przed frontem;
+      - balustrada zamiast pełnego parapetu przy wylocie P−2;
+      - zaokrąglone szkło pod płytami.
 - **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).
 
 ## Konsekwencje

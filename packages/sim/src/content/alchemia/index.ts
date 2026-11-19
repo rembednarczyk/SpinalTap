@@ -17,6 +17,7 @@ import { squarePieces } from "./square";
 import { unitPieces } from "./units";
 import { tierPieces } from "./tiers";
 import { frontPieces } from "./front";
+import { frontDressPieces } from "./front-dress";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -64,7 +65,7 @@ const LIFT = liftPieces();
 const PLAZA = plazaPieces();
 const SQUARE = squarePieces();
 const TIERS = tierPieces();
-const FRONT = frontPieces();
+const FRONT = [...frontPieces(), ...frontDressPieces()];
 /** The green tiers' pieces (15.11) and the front's storeys over P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
 export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...TIERS, ...FRONT];
 
