@@ -48,7 +48,7 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
     vec2 rq = mix(vec2(dot(p.xz, t), p.y / sqrt(max(1.0 - n.y * n.y, 0.05))), p.xz, flatRoof);
     vec4 rm;
     vec2 rl = roofLayer(mix(mat, 3.0, flatRoof), rm);
-    k *= detailK(texture2D(detailRoofs, rq * rl.x), rm, rl.y * fade);
+    k *= detailK(detailTex(detailRoofs, rq * rl.x), rm, rl.y * fade);
 #else
     // Roofs: tile courses and a few repaired patches.
     k *= 0.86 + 0.14 * step(0.5, fract(p.y / 0.32 + 0.5 * step(0.5, fract((p.x + p.z) / 0.5)))) * near;
@@ -62,7 +62,7 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
   float wcode = q.y < 0.55 && mat < 0.5 ? 2.0 : mat;
   vec4 wm;
   vec2 wl = wallLayer(wcode, wm);
-  vec4 wt = wcode > 4.5 ? texture2D(detailExtra, q * wl.x) : wcode > 3.5 ? texture2D(detailRoofs, q * wl.x) : texture2D(detailWalls, q * wl.x);
+  vec4 wt = wcode > 4.5 ? detailTex(detailExtra, q * wl.x) : wcode > 3.5 ? detailTex(detailRoofs, q * wl.x) : detailTex(detailWalls, q * wl.x);
   k *= detailK(wt, wm, wl.y * fade);
 #endif
   if (q.y < 0.55) k *= 0.7;
@@ -229,13 +229,13 @@ const GROUND_DETAIL_GLSL = /* glsl */ `
 float groundDetail(float code, vec2 q, vec2 w, float dist) {
   float fade = 1.0 - smoothstep(60.0, 160.0, dist);
   if (code > 7.5) return 1.0;
-  if (code > 6.5) return detailK(texture2D(detailExtra, w * ${BALLAST.scale}.x), ${BALLAST.mask}, ${BALLAST.scale}.y * fade);
-  if (code > 3.5 && code < 4.5) return detailK(texture2D(detailExtra, w * ${SETTS.scale}.x), ${SETTS.mask}, ${SETTS.scale}.y * fade);
-  if (code > 2.5 && code < 3.5) return detailK(texture2D(detailRoofs, q * ${GRANITE.scale}.x), ${GRANITE.mask}, ${GRANITE.scale}.y * fade);
+  if (code > 6.5) return detailK(detailTex(detailExtra, w * ${BALLAST.scale}.x), ${BALLAST.mask}, ${BALLAST.scale}.y * fade);
+  if (code > 3.5 && code < 4.5) return detailK(detailTex(detailExtra, w * ${SETTS.scale}.x), ${SETTS.mask}, ${SETTS.scale}.y * fade);
+  if (code > 2.5 && code < 3.5) return detailK(detailTex(detailRoofs, q * ${GRANITE.scale}.x), ${GRANITE.mask}, ${GRANITE.scale}.y * fade);
   bool slabs = (code > 1.5 && code < 2.5) || code > 4.5 && code < 5.5;
   vec2 l = code < 0.5 ? ${EARTH.scale} : code < 1.5 ? ${ASPHALT.scale} : slabs ? ${PAVEMENT.scale} : ${GRASS.scale};
   vec4 m = code < 0.5 ? ${EARTH.mask} : code < 1.5 ? ${ASPHALT.mask} : slabs ? ${PAVEMENT.mask} : ${GRASS.mask};
-  return detailK(texture2D(detailGround, (slabs ? q : w) * l.x), m, l.y * fade);
+  return detailK(detailTex(detailGround, (slabs ? q : w) * l.x), m, l.y * fade);
 }
 #endif
 `;

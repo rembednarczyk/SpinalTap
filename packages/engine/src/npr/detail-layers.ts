@@ -13,28 +13,32 @@ export interface DetailLayer {
   readonly channel: 0 | 1 | 2 | 3;
   /** The side of one tile in the world (m), from the asset's dimensions. */
   readonly metres: number;
-  /** How far it moves the albedo at its brightest and darkest texel: albedo × (1 ± amp). */
+  /**
+   * How dark its ink lines are: albedo × (1 − amp) on a layer's darkest tenth (the joints of a brick
+   * wall, a crack in the asphalt), a lighter step over the next; 0 leaves the surface the palette's
+   * own flat colour (plaster, concrete, sidewalk slabs, grass: their photographs gave only grain).
+   */
   readonly amp: number;
 }
 
 /** Every layer by its Poly Haven asset; files and tiles as `packages/app/public/textures/layers.json` has them. */
 export const DETAIL_LAYERS = {
-  grey_plaster_02: { texture: "walls", channel: 0, metres: 1, amp: 0.22 },
-  medieval_red_brick: { texture: "walls", channel: 1, metres: 2, amp: 0.45 },
-  large_sandstone_blocks_01: { texture: "walls", channel: 2, metres: 3, amp: 0.3 },
-  concrete_wall_006: { texture: "walls", channel: 3, metres: 2, amp: 0.25 },
+  grey_plaster_02: { texture: "walls", channel: 0, metres: 1, amp: 0 },
+  medieval_red_brick: { texture: "walls", channel: 1, metres: 2, amp: 0.35 },
+  large_sandstone_blocks_01: { texture: "walls", channel: 2, metres: 3, amp: 0 },
+  concrete_wall_006: { texture: "walls", channel: 3, metres: 2, amp: 0 },
   asphalt_02: { texture: "ground", channel: 0, metres: 3, amp: 0.3 },
-  concrete_pavement: { texture: "ground", channel: 1, metres: 1.8, amp: 0.3 },
-  grass_path_2: { texture: "ground", channel: 2, metres: 1, amp: 0.35 },
-  forest_ground_04: { texture: "ground", channel: 3, metres: 3.15, amp: 0.35 },
-  clay_roof_tiles_02: { texture: "roofs", channel: 0, metres: 2.5, amp: 0.45 },
-  corrugated_iron_02: { texture: "roofs", channel: 1, metres: 2.7, amp: 0.4 },
-  bitumen: { texture: "roofs", channel: 2, metres: 20, amp: 0.25 },
-  granite_tile: { texture: "roofs", channel: 3, metres: 2.3, amp: 0.3 },
-  weathered_planks: { texture: "extra", channel: 0, metres: 2, amp: 0.35 },
-  gray_rocks: { texture: "extra", channel: 1, metres: 1.8, amp: 0.4 },
-  cobblestone_floor_08: { texture: "extra", channel: 2, metres: 2, amp: 0.25 },
-  red_brick_03: { texture: "extra", channel: 3, metres: 1, amp: 0.45 },
+  concrete_pavement: { texture: "ground", channel: 1, metres: 1.8, amp: 0 },
+  grass_path_2: { texture: "ground", channel: 2, metres: 1, amp: 0 },
+  forest_ground_04: { texture: "ground", channel: 3, metres: 3.15, amp: 0 },
+  clay_roof_tiles_02: { texture: "roofs", channel: 0, metres: 2.5, amp: 0.35 },
+  corrugated_iron_02: { texture: "roofs", channel: 1, metres: 2.7, amp: 0.3 },
+  bitumen: { texture: "roofs", channel: 2, metres: 20, amp: 0 },
+  granite_tile: { texture: "roofs", channel: 3, metres: 2.3, amp: 0 },
+  weathered_planks: { texture: "extra", channel: 0, metres: 2, amp: 0.3 },
+  gray_rocks: { texture: "extra", channel: 1, metres: 1.8, amp: 0.3 },
+  cobblestone_floor_08: { texture: "extra", channel: 2, metres: 2, amp: 0.35 },
+  red_brick_03: { texture: "extra", channel: 3, metres: 1, amp: 0.35 },
 } as const satisfies Record<string, DetailLayer>;
 
 export type DetailAsset = keyof typeof DETAIL_LAYERS;
@@ -98,10 +102,17 @@ export const chooser = (name: string, layers: readonly DetailLayer[]): string =>
 const byCode = <K extends string>(codes: Readonly<Record<K, number>>, layers: Readonly<Record<K, DetailAsset>>): DetailLayer[] =>
   (Object.keys(codes) as K[]).sort((a, b) => codes[a] - codes[b]).map((k) => DETAIL_LAYERS[layers[k]]);
 
-/** Albedo × (1 + amp × (texel − 0.5) × 2): the layer's grain round the palette's colour. */
+/**
+ * The comic version (decision of the user of 19.11): a layer is drawn, not photographed. Read one
+ * mip coarser than the screen asks (`detailTex`, no grain of the photograph), only its darkest
+ * texels count, in two steps like the cels: the lines of the joints and cracks, never a grey haze.
+ * Thresholds below the layer's mean (texel − 0.5), from the layers' histograms at that mip.
+ */
 const DETAIL_CORE = /* glsl */ `
+#define detailTex(s, uv) texture2D(s, uv, 1.0)
 float detailK(vec4 texel, vec4 mask, float amp) {
-  return 1.0 + amp * 2.0 * (dot(texel, mask) - 0.5);
+  float d = 0.5 - dot(texel, mask);
+  return 1.0 - amp * (0.4 * smoothstep(0.13, 0.15, d) + 0.6 * smoothstep(0.23, 0.25, d));
 }`;
 
 /** The shader's part of the detail layers (with the DETAIL define): samplers, choosers, the grain. */
