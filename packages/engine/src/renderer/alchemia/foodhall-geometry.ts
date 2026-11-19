@@ -144,8 +144,24 @@ const ringLights = (sink: GeometrySink, data: CityKitData): void => {
   for (const x of [x0, x1 - 0.25]) boxOf(sink, data, { x0: x, x1: x + 0.25, z0: z0 + 0.25, z1: z1 - 0.25, y0: y - 0.06, y1: y }, "win-warm");
 };
 
+/**
+ * The food hall's own sign (§9: a landmark seen from the escalators' arrival and from the floors under
+ * it across the atrium): a dark box hung under the roof's slab over the north gallery, FOOD HALL in
+ * amber neon facing south across the atrium (the mall's own name for it, the same in every language).
+ */
+const hallSign = (sink: GeometrySink, data: CityKitData): void => {
+  const s = { mid: { x: (ATRIUM.x0 + ATRIUM.x1) / 2, z: ATRIUM.z1 + 0.9 }, along: { x: 1, z: 0 }, out: { x: 0, z: -1 }, length: 0 };
+  const [y0, y1] = [FOODHALL_CEILING - 1.0, FOODHALL_CEILING - 0.25];
+  boxOf(sink, data, sideBox(s, -4.2, 4.2, 0, 0.15, y0, y1), "sign-back");
+  boxOf(sink, data, sideBox(s, -4.2, 4.2, 0, 0.15, y1, FOODHALL_CEILING), "cable");
+  const height = 0.45;
+  const foot = y0 + (y1 - y0 - height) / 2;
+  for (const t of neonText("FOOD HALL", height)) boxOf(sink, data, sideBox(s, t.x0, t.x1, 0.15, 0.21, foot + t.y0, foot + t.y1), "neon-amber");
+};
+
 /** The food hall's own drawing on top of its pieces: the signs and the light round the atrium. */
 export const foodhallGeometry = (sink: GeometrySink, data: CityKitData): void => {
   unitSigns(sink, data);
+  hallSign(sink, data);
   ringLights(sink, data);
 };

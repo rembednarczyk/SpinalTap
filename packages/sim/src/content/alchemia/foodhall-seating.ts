@@ -127,6 +127,30 @@ const services = (): Piece[] => [
   piece(box(415.0, 421.2, 33.4, 34.0, C - 0.45, C - 0.08), "duct", true, false),
 ];
 
+/**
+ * Strings of paper lanterns along the atrium's balustrade on all four sides, a cable sagging between
+ * hooks under the slab and a lantern every 1.4 m (the night market's light, §4), over the gallery.
+ */
+const festoons = (): Piece[] => {
+  const y = C - 0.75;
+  const lines: [number, number, number, number][] = [
+    [409.6, 426.4, 39.6, 39.6],
+    [409.6, 426.4, 50.4, 50.4],
+    [409.6, 409.6, 39.6, 50.4],
+    [426.4, 426.4, 39.6, 50.4],
+  ];
+  return lines.flatMap(([x0, x1, z0, z1]) => {
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const n = Math.floor(len / 1.4);
+    const out: Piece[] = [piece(box(Math.min(x0, x1) - 0.01, Math.max(x0, x1) + 0.01, Math.min(z0, z1) - 0.01, Math.max(z0, z1) + 0.01, y, y + 0.02), "cable", true, false)];
+    for (let i = 1; i < n; i++) {
+      const [x, z] = [x0 + ((x1 - x0) * i) / n, z0 + ((z1 - z0) * i) / n];
+      out.push(piece(box(x - 0.12, x + 0.12, z - 0.12, z + 0.12, y - 0.32, y - 0.02), "lantern", true, false));
+    }
+    return out;
+  });
+};
+
 /** The seating's pieces: tables, benches, stools and ledges (solid), lanterns, services and marks (drawn). */
 export const seatingPieces = (): Piece[] => [
   ...TABLE_GROUPS.flatMap((g) => {
@@ -136,6 +160,7 @@ export const seatingPieces = (): Piece[] => [
   ...FUMIKO_STOOLS.map((z) => piece(box(STOOL_X - 0.17, STOOL_X + 0.17, z - 0.17, z + 0.17, F - 0.05, F + 0.75), "bench", true)),
   ...LEDGES.map((b) => piece(b, "counter", true)),
   ...TABLE_GROUPS.flatMap(lanterns),
+  ...festoons(),
   ...services(),
   ...traces(),
 ];

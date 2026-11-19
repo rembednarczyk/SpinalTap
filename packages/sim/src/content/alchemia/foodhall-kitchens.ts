@@ -65,9 +65,19 @@ const kitchen = (q: UnitDef): Piece[] => {
     // Prep space: cartons of stock and a stack of bowls at the line's far end.
     put(w - 1.3, w - 0.75, line + 0.08, d - 0.1, 0.9, 1.15, "carton"),
     put(w - 0.65, w - 0.35, line + 0.15, line + 0.45, 0.9, 1.1, "cup"),
-    // The menu over the line: a screen hung off the slab, its light on the keeper's back.
-    put(0.4, Math.min(w - 0.4, 2.8), line - 0.08, line - 0.04, 1.55, 2.15, "display"),
-    put(0.45, 0.48, line - 0.07, line - 0.05, 2.15, C - F, "cable"),
+    // The menu over the line: three screens in dark bezels hung off the slab, their light on the keeper's back.
+    ...[0, 1, 2].flatMap((i) => {
+      const u0 = 0.5 + i * 0.85;
+      return [
+        put(u0, u0 + 0.75, line - 0.09, line - 0.05, 1.6, 2.1, "machine"),
+        put(u0 + 0.04, u0 + 0.71, line - 0.1, line - 0.09, 1.64, 2.06, "display"),
+        put(u0 + 0.36, u0 + 0.39, line - 0.08, line - 0.06, 2.1, C - F, "cable"),
+      ];
+    }),
+    // Gas bottles for the cooker by the line's far end, a bucket of scraps by them.
+    put(w - 0.65, w - 0.35, line - 0.4, line - 0.1, -0.05, 0.9, "machine"),
+    put(w - 1.0, w - 0.7, line - 0.4, line - 0.1, -0.05, 0.9, "machine"),
+    put(w - 1.45, w - 1.1, line - 0.4, line - 0.05, -0.05, 0.4, "carton"),
     // A fridge before the line's start by the side partition.
     put(W + 0.05, W + 0.75, line - 0.75, line - 0.05, -0.05, 1.9, "machine", true),
     // The till on the counter, its cable down from the slab, a cup by it; cartons stacked by the counter's end.
