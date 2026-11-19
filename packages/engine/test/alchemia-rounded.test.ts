@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ALCHEMIA_TIER_PIECES } from "@seki/sim";
-import { ledOfSlab, roundedOutline } from "../src/renderer/alchemia/rounded-slab";
+import { ledOfSlab, overhangOf, roundedOutline } from "../src/renderer/alchemia/rounded-slab";
 
 /** The storeys' slabs drawn with rounded corners (ADR-0074 B4): the simulation's boxes stay. */
 describe("Alchemia's rounded slabs (B4)", () => {
@@ -29,5 +29,23 @@ describe("Alchemia's rounded slabs (B4)", () => {
     const dropped = leds.filter((p) => ledOfSlab(p.box, slabs));
     expect(dropped.length).toBe(slabs.length * 4);
     expect(leds.length - dropped.length).toBeGreaterThan(0);
+  });
+
+  it("rounds the storeys' glass under their slabs, within the glass's box, its corners drawn in by the slab's overhang", () => {
+    const glass = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "glass" && overhangOf(p.box, slabs));
+    // The front's L1 to L3 and the tiers' A and B storeys under a slab.
+    expect(glass.length).toBeGreaterThanOrEqual(4);
+    for (const g of glass) {
+      const { slab, reach } = overhangOf(g.box, slabs)!;
+      const pts = roundedOutline(slab, -reach);
+      for (const p of pts) {
+        expect(p.x).toBeGreaterThanOrEqual(g.box.x0 - 1e-6);
+        expect(p.x).toBeLessThanOrEqual(g.box.x1 + 1e-6);
+        expect(p.z).toBeGreaterThanOrEqual(g.box.z0 - 1e-6);
+        expect(p.z).toBeLessThanOrEqual(g.box.z1 + 1e-6);
+      }
+      // Its corner is cut: no point of the outline at the box's own corner.
+      expect(Math.min(...pts.map((p) => Math.hypot(p.x - g.box.x1, p.z - g.box.z1)))).toBeGreaterThan(0.05);
+    }
   });
 });

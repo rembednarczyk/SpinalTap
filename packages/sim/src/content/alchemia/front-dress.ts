@@ -1,6 +1,6 @@
 import { P1_RAMP, p1RampY } from "./parking";
 import { type Piece, box, piece } from "./plan";
-import { FOUNTAIN, L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
+import { FOUNTAIN, FRONT_KIOSKS, L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
 import { groundY } from "../lublin/terrain";
 
 /*
@@ -101,5 +101,27 @@ const fountain = (): Piece[] => {
   return out;
 };
 
+/** A kiosk's height to its roof, its awning's reach over its counter, the lit window's band. */
+const KIOSK = { height: 2.5, awning: 0.7, window: { y0: 1.0, y1: 1.9 } } as const;
+
+/**
+ * The kiosks before the front (the board's booths): a solid box standing on the slope's low side,
+ * a lit window over the counter on the street's side, an awning over it, a strip of light round the
+ * roof's edge. Solid: walkers go round them.
+ */
+const kiosks = (): Piece[] =>
+  FRONT_KIOSKS.flatMap((k) => {
+    const low = Math.min(groundY(k.minX, k.minZ), groundY(k.maxX, k.minZ), groundY(k.minX, k.maxZ), groundY(k.maxX, k.maxZ));
+    const high = Math.max(groundY(k.minX, k.minZ), groundY(k.maxX, k.minZ), groundY(k.minX, k.maxZ), groundY(k.maxX, k.maxZ));
+    const top = high + KIOSK.height;
+    return [
+      piece(box(k.minX, k.maxX, k.minZ, k.maxZ, low - 0.1, top), "wall", false),
+      piece(box(k.minX - 0.1, k.maxX + 0.1, k.minZ - 0.1, k.maxZ + 0.1, top, top + 0.12), "roof", false),
+      piece(box(k.minX + 0.2, k.maxX - 0.2, k.minZ - 0.03, k.minZ, high + KIOSK.window.y0, high + KIOSK.window.y1), "glass", false, false),
+      piece(box(k.minX, k.maxX, k.minZ - KIOSK.awning, k.minZ, high + KIOSK.window.y1 + 0.1, high + KIOSK.window.y1 + 0.22), "umbrella", false, false),
+      piece(box(k.minX - 0.12, k.maxX + 0.12, k.minZ - 0.12, k.maxZ + 0.12, top + 0.12, top + 0.18), "led", false, false),
+    ];
+  });
+
 /** Every detail of B4 on the front. */
-export const frontDressPieces = (): Piece[] => [...vines(), ...trees(), ...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain()];
+export const frontDressPieces = (): Piece[] => [...vines(), ...trees(), ...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain(), ...kiosks()];

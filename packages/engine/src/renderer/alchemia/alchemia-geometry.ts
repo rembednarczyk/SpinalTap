@@ -4,7 +4,7 @@ import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
-import { ledOfSlab, roundedSlab } from "./rounded-slab";
+import { ledOfSlab, overhangOf, roundedGlass, roundedSlab } from "./rounded-slab";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -211,6 +211,14 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       continue;
     }
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
+    // A storey's glass under a rounded slab: its corners round with the slab's (B4).
+    if (TIER_SET.has(p) && p.kind === "glass") {
+      const over = overhangOf(b, slabs);
+      if (over) {
+        roundedGlass(sink, data, b, over.slab, over.reach, swatchOf(p));
+        continue;
+      }
+    }
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
       const lit = Math.min(b.y1, FOODHALL.floor + LIT_GLASS);
