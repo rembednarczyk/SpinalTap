@@ -27,7 +27,7 @@ HEBI: Skrzynki pilnujemy we dwóch, ale po północy Daisuke idzie do Fumiko na 
 -> END
 
 === hook_retrieve_2 ===
-Shard, notatka Hebi: „Brama schronu od garażu na dole: 2207. Kenji, przestań pytać i nie wstukuj go tak, żeby roboty widziały”.
+HEBI: Dwa, dwa, zero, siedem. Dwa dwa zero siedem. Jak jeszcze raz zapomnę kodu do bramy schronu, Daisuke zamknie mnie z robotami.
 -> END
 
 // protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.

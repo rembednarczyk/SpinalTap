@@ -27,7 +27,7 @@ HEBI: Two of us watch the crate, but after midnight Daisuke goes to Fumiko's for
 -> END
 
 === hook_retrieve_2 ===
-Shard, Hebi note: "Shelter gate from the garage downstairs: 2207. Kenji, stop asking, and stop letting the robots see you punch it in."
+HEBI: Two, two, zero, seven. Two-two-oh-seven. Forget the shelter gate code one more time and Daisuke locks me in with the robots.
 -> END
 
 // protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
