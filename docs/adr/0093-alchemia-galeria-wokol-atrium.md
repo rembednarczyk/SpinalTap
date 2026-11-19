@@ -132,8 +132,8 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
 - **Przesunięte, nie obudowane** (decyzja użytkownika z 19.11):
   - domek klatki P−1 o 6 m na wschód, pod zachodnią ścianę skrzydła wschodniego L1 (x 424,3–427,7, z bez zmian, drzwi dalej od południa). Bieg ma 29 stopni po 0,179 m (było 28 po 0,179, spocznik na −1,19 zamiast −1,39). Stopa biegu łączy się z fartuchem P−1 przejściem pod T0 (`P1_STAIR_LINK`, x 418,3–427,5, z 22,6–24,5) przez otwór we wschodniej ścianie P−1; poza obrysem P−1 przejście jest osobną komorą w gruncie (`P1_LINK_VAULT`). Pokój ADR-0061 `alchemia-parking` obejmuje przejście, a graf ma węzeł `alchemia-p1-stair-link`;
   - skrzydło wschodnie L1 zaczyna się na x 427,7 (było 424), domek klatki do niego przylega, ekran na froncie skrzydła krótszy o 3,7 m;
-  - dwa słupy przejścia pod L2 z x 422,6 na wschodnią krawędź rampy (x 418,9, z 11,8 i 24,5);
-  - zachodni narożnik trójkątnego pawilonu o 2,8 m na wschód po tej samej linii boku Bajkowskiego, do (423,3; −8,7). Zaplecze pawilonu dłuższe o 1 m na północ (do z 1), więc powierzchnia zostaje (82 m² przed, 80,7 m² po), a stopa cokołu 0,1 m głębiej (−1,2);
+  - dwa słupy przejścia pod L2 z x 422,6 na wschodnią krawędź rampy (środek x 418,6, lico 418,9; z 11,8 i 24,5);
+  - zachodni narożnik trójkątnego pawilonu o 2,8 m na wschód po tej samej linii boku Bajkowskiego, do (423,3; −8,7). Zaplecze pawilonu dłuższe o 1 m na północ (do z 1) oddaje część powierzchni: obrys z zapleczem 93,9 → 80,7 m² (−14%), sam trójkąt 82,5 → 62,9 m², w obrysie 12,9 × 14,7 m (plan inwestora ok. 18 × 15 m; przegląd kuratora 19.11). Stopa cokołu 0,1 m głębiej (−1,2);
   - grządka przy wschodnim parapecie rampy kończy się na z 1,2 (było 8), bo z latarnią z mapy (422,8; 3,5) zwężała oś do 3,8 m.
 - **Drzwi główne:** jeden otwór 4,4 m (x 418,8–423,2, `MAIN_DOORS`), środek w osi drogi (x 421, `MAIN_WAY_X`). Hol wejścia w pierścieniu sklepów P1 ma 4,8 m (było 2,8 m). VOLTAGE (elektronika, otwarty) przeszedł do lokalu SAKURY (x 414,8–418,6), a zamknięta roletą SAKURA do wąskiego lokalu na wschód od holu (x 423,4–425,8). Przejście z holu wschodnich drzwi na galerię ma 2,2 m. Liczba lokali i udział zamkniętych bez zmian.
 - **Oś:** od chodnika (z −11,3, na północ od słupków przy krawężniku z −11,8) do drzwi co najmniej 4 m w świetle. Najwęższe są ościeża drzwi (4,4 m) i miejsce przy latarni z mapy (4,3 m). Graf: węzeł `alchemia-t0-axis` (421; 11) łączy chodnik w zasięgu wzroku z `t0-roof` przed drzwiami i z drzwiami klatki P−1.
@@ -156,7 +156,7 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
 - **Otwarte po O2b:**
   - Przejście do klatki P−1 na wschód od x 422 leży poza zasięgiem lampy parkingu (przycięcie `clip` do obrysu P−1), więc jest ciemniejsze niż fartuch.
   - Zapis: schemat bez zmian. Pozycja zapisana na dachu pawilonu w odciętym klinie (x 420,5–423,3) albo w dawnym domku klatki wczyta się na gruncie albo w powietrzu nad nim.
-  - Słupki przy krawężniku Bajkowskiego (z −11,8, x 415,8, 419,3 i 420,8, meble z mapy) stoją na przedłużeniu osi i zostają: gracz idący dokładnie w osi od jezdni ociera się o słupek przy x 420,8.
+  - Słupki przy krawężniku Bajkowskiego (z −11,8, x 415,8, 419,2 i 421,0, meble planu, nie OSM) stoją na przedłużeniu osi i zostają: słupek przy x 421,0 wypada dokładnie w osi `MAIN_WAY_X`, więc gracz idący w osi od jezdni go obchodzi.
 
 ## Konsekwencje
 - Graf, punkty tłumu, zadania i dialogi związane z halą zmieniają się w O1 i O3. Testy tras i zadań idą za nimi.

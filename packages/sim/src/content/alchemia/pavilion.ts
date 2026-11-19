@@ -33,8 +33,9 @@ export const PAVILION_CORNERS: readonly [GroundPoint, GroundPoint, GroundPoint] 
 
 /**
  * The back-of-house box on the north-west side, towards the car park: the ladder hangs on its west
- * face. A metre longer to the north since ADR-0093 O2b (to z 0 before): it gives the floor back that
- * the west corner's move took (82 m² before, 81 after).
+ * face. A metre longer to the north since ADR-0093 O2b (to z 0 before): it gives back part of the
+ * floor the west corner's move took (outline with it 93.9 m² before, 80.7 after; the triangle 82.5 and
+ * 62.9 m²).
  */
 export const PAVILION_ANNEX: Rect = { minX: 424.5, maxX: 428.5, minZ: -3.5, maxZ: 1 };
 
