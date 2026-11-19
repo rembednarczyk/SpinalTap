@@ -183,7 +183,7 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
   const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
 
   it("an alerted brawler on the car park gets to the player at Kenta's counter down the stairs", () => {
-    for (const seed of [3, 11]) expect(chase(onGround(425, 22), beforeKeeper("kenta"), 30, seed), `seed ${seed}`).not.toBeNull();
+    for (const seed of [3, 11]) expect(chase(onGround(428, 10), beforeKeeper("kenta"), 30, seed), `seed ${seed}`).not.toBeNull();
   });
 
   it("an alerted brawler on T1 gets to the player in the hall through the way in, and one in the hall to her on T1", () => {

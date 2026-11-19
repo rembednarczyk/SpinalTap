@@ -1,0 +1,1 @@
+- Alchemia zajmuje cały teren od Bajkowskiego: podium ze skrzydłami i zielonym stokiem, piętro na słupach nad pasażem przy rampie P−1 i najwyższa kondygnacja z neonem ALCHEMIA CENTRUM HANDLOWE (ADR-0074, B1).
