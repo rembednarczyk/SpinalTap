@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type InputFrame, SAVE_SCHEMA_VERSION } from "@seki/core";
 import { PLAZA_STASHES, PLAZA_WAKE, checksum } from "@seki/persistence";
-import { ALCHEMIA_T1, ALCHEMIA_T2, ARKADY, CONTRACT_ITEM_SPOTS, HEBI_LOOKOUT_POST, TARG_OVERPASS_STASH, T2_STAIRS, arkadyLocal, arkadyPoint, arkadySpanMid, groundY } from "@seki/sim";
+import { ALCHEMIA_T1, ALCHEMIA_T2, ARKADY, HEBI_LOOKOUT_POST, SHELTER_HATCH, TARG_OVERPASS_STASH, T2_STAIRS, arkadyLocal, arkadyPoint, arkadySpanMid, groundY } from "@seki/sim";
 import { setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
@@ -36,7 +36,7 @@ const quiet = (session: GameSession): void => {
 };
 
 describe("T2 before the Arkady (ADR-0074 stage 2)", () => {
-  it("takes her from T1 down the stairs onto T2, unhurt, to the Hebi stash before the south arches", () => {
+  it("takes her from T1 down the stairs onto T2, unhurt, to the hatch of the shelter with the Hebi stash (stage 5d2)", () => {
     const { session } = start();
     teleport(session, T2_STAIRS.a.x, T2_STAIRS.a.z - 4, 0);
     steps(session, 3);
@@ -47,14 +47,11 @@ describe("T2 before the Arkady (ADR-0074 stage 2)", () => {
     walkAt(session, { x: T2_STAIRS.b.x, z: T2_STAIRS.b.z + 3 }, 600);
     expect(p.position.z).toBeGreaterThan(T2_STAIRS.b.z + 2);
     expect(p.position.y).toBeCloseTo(ALCHEMIA_T2, 1);
-    // Beside the stash's crate, between it and the big crate for a body.
-    const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
-    const by = arkadyPoint(11.2, -2.2);
+    // By the shelter's hatch, off the south-west corner of its railing.
+    const by = { x: SHELTER_HATCH.minX - 0.5, z: SHELTER_HATCH.minZ - 1.2 };
     walkAt(session, by, 600);
     expect(Math.hypot(p.position.x - by.x, p.position.z - by.z)).toBeLessThan(0.5);
-    expect(Math.hypot(p.position.x - crate.x, p.position.z - crate.z)).toBeLessThan(3);
     expect(p.position.y).toBeCloseTo(ALCHEMIA_T2, 1);
-    expect(groundY(crate.x, crate.z)).toBeCloseTo(ALCHEMIA_T2, 2);
     expect(p.health!.current).toBe(hp);
   });
 
@@ -79,17 +76,14 @@ describe("T2 before the Arkady (ADR-0074 stage 2)", () => {
     expect(p.position.y).toBeCloseTo(ARKADY.ground, 1);
   });
 
-  it("keeps the Hebi lookout under the arches by day, on T2", () => {
+  it("keeps the Hebi lookout by the shelter's hatch by day, on T2 (stage 5d2)", () => {
     const { session } = start();
     session.sim.enqueue({ type: "wait", minutes: 15 * 60 }); // 12:00
     teleport(session, HEBI_LOOKOUT_POST.x - 10, HEBI_LOOKOUT_POST.z - 6, 0);
     steps(session, 120);
     const lookout = [...session.sim.world].find((e) => e.key === "hebi-lookout")!;
     expect(Math.hypot(lookout.position.x - HEBI_LOOKOUT_POST.x, lookout.position.z - HEBI_LOOKOUT_POST.z)).toBeLessThan(0.5);
-    expect(lookout.position.y).toBeCloseTo(ARKADY.ground, 1);
-    const at = arkadyLocal(lookout.position.x, lookout.position.z);
-    expect(at.c).toBeGreaterThan(0);
-    expect(at.c).toBeLessThan(ARKADY.arcade);
+    expect(lookout.position.y).toBeCloseTo(ALCHEMIA_T2, 1);
   });
 
   it("loads a game saved in the old hollow by the ruin (v33) with Seki on T2 and the blockade's bag before the arches", async () => {

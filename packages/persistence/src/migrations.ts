@@ -1,6 +1,6 @@
 import { SAVE_SCHEMA_VERSION, START_CLOCK, progressionFromXp, streetCrimesAt } from "@seki/core";
 import { moveMarketToAlchemia } from "./market-move";
-import { levelAlchemiaT2, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
+import { levelAlchemiaT2, moveHebiStash, raiseAlchemiaPavilion, rebuildAlchemia } from "./alchemia-rebuild";
 import { digAlchemiaParking } from "./alchemia-parking";
 import { rebuildDocksAsW3 } from "./w3-site";
 import { compensatingShards, retroactiveXp, withV28Level } from "./progression-migration";
@@ -437,6 +437,8 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const clock = isObject(domain.clock) && typeof domain.clock.seconds === "number" ? { seconds: domain.clock.seconds } : START_CLOCK;
     return { ...old, version: 49, domain: { ...domain, streetCrimes: streetCrimesAt(clock) } };
   },
+  // v49 -> v50 (ADR-0074 stage 5d2): Hebi's stash into the shelter under T2 (`alchemia-rebuild.ts`).
+  49: moveHebiStash,
 };
 
 /** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */

@@ -354,6 +354,42 @@ Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wy
   - Trzy poziomy i drzwi na P−2.
 - **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
 
+### Etap 5d1: bryła schronu (gałąź `feat/alchemia-5d1`)
+Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecenie odzyskania przechodzą do schronu w 5d2 razem z migracją zapisu.
+- **Pokój** (`shelter.ts`): x 420,4–435, z 84–97, podłoga −12,2 (3 m pod T2), strop −9,9, płyta −9,6 pod gruntem T2 (−9,2). Pokój i droga do bramy to dwa `GroundVault`, więc teren i bruk T2 nad nimi są całe.
+- **Brama stalowa** we wschodniej ścianie korytarza P−2 (z 69–70,6): drzwi automatyczne (ADR-0038), otwierają się każdemu, kto podejdzie. Zamek dostaje w 5d2. Za bramą podest na poziomie P−2, schody w dół na północ (17 stopni po 0,176 m) i przejście do południowo-zachodniego rogu pokoju. Nad schodami strop korytarza P−2 pod gruntem T1.
+- **Właz** na T2 na wschód od pokoju, przy (441, 96): szyb (`GroundCut`) ze schodami w dół na zachód i pasem podłogi pokoju u ich stopy, żeby postać przechodziła pod ścianą nad otworem. Ściany szybu mają balustradę 1 m nad T2, a obok stoi otwarta klapa i lampka. Do kamienia pamięci jest 20 m (§6).
+- **Ekspozycja:** ławki z czasów wojny przy ścianie południowej i północnej, dwa słupy, dwie gabloty ze znaleziskami, panele zdjęć na ścianie zachodniej, ręczny wentylator i lampy awaryjne. Północno-zachodni róg zostaje wolny na skrytkę.
+- **Wnętrze i graf.** Wnętrze `alchemia-shelter` (en/pl). Graf poziomów ma dwa wyjścia: bramą do węzłów korytarza P−2 i włazem na T2.
+- **Silnik.** Schron rysuje się w siatce P−2, z własną słabą, ciepłą lampą zasilania awaryjnego (§6), gdy oko jest w schronie. Wtedy lampy P−2, P−1 i hali gasną. Szyb włazu należy do zewnętrza Alchemii. Deszcz nie pada pod płytą schronu.
+- **Zlecenie skrytki.** Jeden z ludzi Hebi stał na miejscu włazu, więc przesunął się o metr na południe (`byArkady(8.3, 7.5)`).
+- **Testy.**
+  - Symulacja: bryły pod gruntem i poza bryłami P−2, P−1, hali i T2, schody w kroku i z prześwitem, właz na poziomie T2 i poza bryłami mapy, wnętrze, graf, pościg przez bramę i przez właz.
+  - Silnik: siatki, lampa, widoczność, deszcz.
+  - Sesja: z T2 włazem do schronu i bramą do P−2, potem z powrotem, bez obrażeń.
+- **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
+
+### Etap 5d2: skrytka Hebi w schronie (gałąź `feat/alchemia-5d2`)
+- **Skrytka** w północno-zachodnim rogu sali schronu. Osłona stoi między nią a salą, a skrzynia na ciało stoi przy wentylatorze. Kamera wisi wysoko w południowo-wschodnim rogu i patrzy na skrytkę. Neon jest nad ławką przy północnej ścianie, a głośnik przy schodach włazu (`dev:targ-*`). Strefa `restricted` (`HEBI_STASH_ZONE`) obejmuje salę.
+- **Ludzie zlecenia** stoją w sali i patrzą na zachód, w stronę przejścia od bramy. Straż stoi przy osłonie, czujka lockdownu na T2 przy włazie, a zasadzka czeka przy obu wyjściach: w korytarzu P−2 przed bramą i na T2 przy włazie.
+- **Czujka** w dzień stoi przy włazie na T2. W nocy chodzi po P−2 tam i z powrotem: wzdłuż T2, w wykop, korytarzem obok bramy do narożnika magazynu i jego alejki serwisowej.
+- **Brama** ma zamek kodowy Hebi (ADR-0082) na czas odzyskania. Hebi przechodzą swobodnie. Gracz przechodzi z kodem albo po wyłamaniu panelu, a wyłamanie podnosi alarm.
+- **Kod bramy** (2207) czujka powtarza pod nosem. To trop `hook_retrieve_2`, który był wcześniej notatką o widoku z tarasu. Podsłuchany kod otwiera bramę bez alarmu, a kamera bierze gracza za swojego.
+- **Dwa podejścia bez alarmu:**
+  - włazem z T2: skulona postać schodzi za plecami załogi i idzie wzdłuż północnej ściany;
+  - bramą od P−2, obok robotów: z podsłuchanym kodem, wzdłuż zachodniej ściany.
+- **Spawn w sklepieniu.** `clearSpot` podnosił nowo stworzoną postać na teren nad nią, nawet w `GroundVault`. Załoga stawała więc na T2 nad schronem. Teraz postać postawiona głęboko w sklepieniu zostaje na jego podłodze.
+- **Zapis v50.** Migracja `moveHebiStash` w `alchemia-rebuild.ts` usuwa czujkę, ludzi i skrzynię trwającego odzyskania oraz wszystkich z dawnego miejsca skrytki przy Arkadach (x 435–449, z 86–101). Treść przywraca ich w nowych miejscach. Gracz zostaje, bo T2 dalej jest.
+- **Testy.**
+  - Symulacja:
+    - odzyskanie bez alarmu włazem i bramą;
+    - brama zamknięta bez kodu;
+    - pościg P−1 → P−2 → schron;
+    - miejsca ludzi, urządzeń i planów na podłodze schronu.
+  - Sesja: brama zatrzymuje gracza bez zlecenia, a właz działa w obie strony.
+  - Migracja: osobny test.
+- **Hashe.** Złoty hash determinizmu zmienia się tylko przez wersję schematu: z wersją 49 przebieg daje dawny skrót.
+
 ### Etap 8: spójność, pierwszy przegląd (19.11)
 Przegląd zrzutów z ulic dookoła: od Bajkowskiego, Lubartowskiej, Świętoduskiej, z T1, z T2, od Placu Łokietka i z lotu z północy i z południa.
 - **Zielone stopnie** zachodniego skrzydła miały ściany w tynku, a zieleń tylko na wierzchu, więc od Bajkowskiego wyglądały jak białe pudła. Teraz są obsadzone w całości, jak zielony stok z planszy.

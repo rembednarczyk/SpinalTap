@@ -92,6 +92,12 @@ export const P2_ROOMS: readonly (Rect & { readonly bottom: number; readonly top:
  */
 const LIFT_SHAFT = { maxX: 414.7, z0: 32.4, z1: 34.8 } as const;
 
+/**
+ * The shelter's steel gate in the corridor's east wall (stage 5d, `shelter.ts`): its span along the
+ * corridor and its head over P-2's floor. Behind it a flight goes down to the shelter under T2.
+ */
+export const P2_SHELTER_GATE = { z0: 69.0, z1: 70.6, top: 2.1 } as const;
+
 const shellPieces = (): Piece[] => {
   const k = P2_CORRIDOR;
   const a = P2_ANNEX;
@@ -119,7 +125,11 @@ const shellPieces = (): Piece[] => {
     // The annex's south and east walls, the east one on along the corridor; the corridor's west wall.
     wall(a.minX, a.maxX, a.minZ, a.minZ + W),
     wall(a.maxX - W, a.maxX, a.minZ + W, a.maxZ),
-    wall(k.maxX - W, k.maxX, k.minZ, PORTAL.z0),
+    // The corridor's east wall round the shelter's gate (stage 5d): either side of it and its head.
+    wall(k.maxX - W, k.maxX, k.minZ, P2_SHELTER_GATE.z0),
+    wall(k.maxX - W, k.maxX, P2_SHELTER_GATE.z1, PORTAL.z0),
+    piece(box(k.maxX - W, k.maxX, P2_SHELTER_GATE.z0, P2_SHELTER_GATE.z1, F + P2_SHELTER_GATE.top, SLAB_TOP), "wall", true),
+    piece(box(k.maxX - W, k.maxX, P2_SHELTER_GATE.z0, P2_SHELTER_GATE.z1, BASE, F), "floor", true),
     // The corridor's west wall, out of the lift's shaft (stage 5c): the shaft's walls and gate close it there.
     wall(k.minX, k.minX + W, k.minZ, LIFT_SHAFT.z0),
     wall(k.minX, k.minX + W, LIFT_SHAFT.z1, PORTAL.z0),
