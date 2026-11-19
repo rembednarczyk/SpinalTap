@@ -5,7 +5,9 @@ import {
   ATRIUM,
   ESCALATORS,
   ESCALATOR_LANDINGS,
+  CORE_WALL,
   LANE_A,
+  NE_CORE,
   FRONT_OVERHANG,
   MALL,
   MALL_CORNERS,
@@ -170,8 +172,27 @@ const STOREYS = STAIR_CORES.map(coreStoreys);
 const SHELLS = STAIR_CORES.flatMap(coreShell);
 const RAILS = [L.p1, L.p2, L.p3].flatMap(atriumRail);
 
-/** Its pieces drawn near only: the atrium's balustrades on P1..P3, the escalators, the cores. */
-export const mallInsidePieces = (): Piece[] => [...RAILS, ...FLIGHTS.flat(), ...LANDINGS.flat(), ...STOREYS.flat(2), ...SHELLS];
+/**
+ * The services' riser east of the north-east core (ADR-0093 O3), from P0's floor to the roof's slab:
+ * the dead corner between the core, its lift and the rounded glass filled, as a building's shaft for
+ * its pipes and cables beside the stairs. Without it the corner was open on every floor, and a
+ * crouched, aimed shoulder in the core by its east wall started its shot out there (G-275's measure:
+ * on P2 and P3 since O1, on P1 too once O3 brought the core down to P0).
+ */
+export const NE_RISER: readonly { x: number; z: number }[] = (() => {
+  const [x0, z0] = [NE_CORE.x1 + CORE_WALL, NE_CORE.z0 - CORE_WALL];
+  const r = MALL_GLASS_RADIUS - MALL_GLASS_THICK;
+  const [cx, cz] = [MALL.x1 - MALL_GLASS_RADIUS, MALL.z1 - MALL_GLASS_RADIUS];
+  const arc = [0, 1, 2, 3].map((k) => {
+    const a = (k / 3) * (Math.PI / 2);
+    return { x: cx + Math.cos(a) * r, z: cz + Math.sin(a) * r };
+  });
+  return [{ x: x0, z: z0 }, { x: MALL.x1 - MALL_GLASS_THICK, z: z0 }, ...arc, { x: x0, z: MALL.z1 - MALL_GLASS_THICK }];
+})();
+const riser = (): Piece => ({ ...outlined(NE_RISER, L.p0 - 0.05, L.roof - MALL_SLAB, "wall"), inside: true });
+
+/** Its pieces drawn near only: the atrium's balustrades on P1..P3, the escalators, the cores, the riser by the north-east one. */
+export const mallInsidePieces = (): Piece[] => [...RAILS, ...FLIGHTS.flat(), ...LANDINGS.flat(), ...STOREYS.flat(2), ...SHELLS, riser()];
 
 /** The tile of the gallery's solids (`tiledSolidProps`). */
 const TILE = 12;
