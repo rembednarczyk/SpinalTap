@@ -48,7 +48,7 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
     vec2 rq = mix(vec2(dot(p.xz, t), p.y / sqrt(max(1.0 - n.y * n.y, 0.05))), p.xz, flatRoof);
     vec4 rm;
     vec2 rl = roofLayer(mix(mat, 3.0, flatRoof), rm);
-    k *= detailK(texture2D(detailRoofs, rq * rl.x), rm, rl.y * fade);
+    k *= detailK(detailTex(detailRoofs, rq * rl.x), rm, rl.y * fade);
 #else
     // Roofs: tile courses and a few repaired patches.
     k *= 0.86 + 0.14 * step(0.5, fract(p.y / 0.32 + 0.5 * step(0.5, fract((p.x + p.z) / 0.5)))) * near;
@@ -62,7 +62,7 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
   float wcode = q.y < 0.55 && mat < 0.5 ? 2.0 : mat;
   vec4 wm;
   vec2 wl = wallLayer(wcode, wm);
-  vec4 wt = wcode > 4.5 ? texture2D(detailExtra, q * wl.x) : wcode > 3.5 ? texture2D(detailRoofs, q * wl.x) : texture2D(detailWalls, q * wl.x);
+  vec4 wt = wcode > 4.5 ? detailTex(detailExtra, q * wl.x) : wcode > 3.5 ? detailTex(detailRoofs, q * wl.x) : detailTex(detailWalls, q * wl.x);
   k *= detailK(wt, wm, wl.y * fade);
 #endif
   if (q.y < 0.55) k *= 0.7;
@@ -229,13 +229,13 @@ const GROUND_DETAIL_GLSL = /* glsl */ `
 float groundDetail(float code, vec2 q, vec2 w, float dist) {
   float fade = 1.0 - smoothstep(60.0, 160.0, dist);
   if (code > 7.5) return 1.0;
-  if (code > 6.5) return detailK(texture2D(detailExtra, w * ${BALLAST.scale}.x), ${BALLAST.mask}, ${BALLAST.scale}.y * fade);
-  if (code > 3.5 && code < 4.5) return detailK(texture2D(detailExtra, w * ${SETTS.scale}.x), ${SETTS.mask}, ${SETTS.scale}.y * fade);
-  if (code > 2.5 && code < 3.5) return detailK(texture2D(detailRoofs, q * ${GRANITE.scale}.x), ${GRANITE.mask}, ${GRANITE.scale}.y * fade);
+  if (code > 6.5) return detailK(detailTex(detailExtra, w * ${BALLAST.scale}.x), ${BALLAST.mask}, ${BALLAST.scale}.y * fade);
+  if (code > 3.5 && code < 4.5) return detailK(detailTex(detailExtra, w * ${SETTS.scale}.x), ${SETTS.mask}, ${SETTS.scale}.y * fade);
+  if (code > 2.5 && code < 3.5) return detailK(detailTex(detailRoofs, q * ${GRANITE.scale}.x), ${GRANITE.mask}, ${GRANITE.scale}.y * fade);
   bool slabs = (code > 1.5 && code < 2.5) || code > 4.5 && code < 5.5;
   vec2 l = code < 0.5 ? ${EARTH.scale} : code < 1.5 ? ${ASPHALT.scale} : slabs ? ${PAVEMENT.scale} : ${GRASS.scale};
   vec4 m = code < 0.5 ? ${EARTH.mask} : code < 1.5 ? ${ASPHALT.mask} : slabs ? ${PAVEMENT.mask} : ${GRASS.mask};
-  return detailK(texture2D(detailGround, (slabs ? q : w) * l.x), m, l.y * fade);
+  return detailK(detailTex(detailGround, (slabs ? q : w) * l.x), m, l.y * fade);
 }
 #endif
 `;
@@ -262,17 +262,14 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
   } else if (code < 1.5) {
     k = 0.92 + 0.08 * step(0.6, vnoise(w * 0.3)) - 0.1 * step(0.74, vnoise(w * 0.07 + 3.0));
   } else if (code < 2.5) {
-#ifndef DETAIL
+    // Sidewalk slabs of a metre, each its own shade (the comic version keeps them drawn, 19.11).
     k -= 0.24 * max(gridLine(q.x, 1.0, 0.018), gridLine(q.y, 1.0, 0.018)) * near;
     k += 0.06 * (hash(floor(q)) - 0.5);
-#endif
   } else if (code < 3.5) {
-#ifndef DETAIL
     // Granite slabs in running bond.
     vec2 g = vec2(q.x / 1.2 + 0.5 * step(0.5, fract(q.y / 1.2)), q.y / 0.6);
     k -= 0.14 * max(gridLine(g.x, 1.0, 0.015), gridLine(g.y, 1.0, 0.03)) * near;
     k += 0.08 * (hash(floor(g)) - 0.5);
-#endif
     // Bands of a darker stone every 6 m.
     k -= 0.07 * step(0.5, fract(q.y / 6.0)) * step(fract(q.y / 6.0), 0.6);
   } else if (code < 4.5) {
@@ -284,11 +281,9 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
     float fine = 1.0 - smoothstep(12.0, 35.0, dist);
     k = mix(0.95, k, fine) - 0.3 * joint * fine;
   } else if (code < 5.5) {
-#ifndef DETAIL
     vec2 g = w / 0.3;
     float fine = 1.0 - smoothstep(12.0, 35.0, dist);
     k -= 0.14 * max(gridLine(g.x, 1.0, 0.05), gridLine(g.y + 0.5 * step(0.5, fract(g.x * 0.5)), 1.0, 0.05)) * fine;
-#endif
   } else if (code < 6.5) {
     k = 0.75 + 0.3 * step(0.5, vnoise(w * 0.5)) + 0.12 * step(0.7, vnoise(w * 3.1));
   } else if (code < 7.5) {

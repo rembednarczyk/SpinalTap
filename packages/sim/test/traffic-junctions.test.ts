@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt } from "../src/content/traffic";
+import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt } from "../src/content/traffic";
+import { deptakMouthRoutes } from "../src/content/traffic-deptak";
 import { JUNCTION_REACH, joinAtJunctions, junctionJoins } from "../src/content/traffic-junctions";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { inBuilding } from "../src/content/lublin/places";
@@ -64,9 +65,8 @@ describe("turns at junctions (ADR-0055)", () => {
   });
 
   it("the one-way ends of G-024 have no other car street in the junction's reach: only delivery streets meet them", () => {
+    // Lubartowska's two by Olejna went with the deptak south of them (T-324): the street there has no car lane.
     const ends = [
-      ["Lubartowska", 462, 56],
-      ["Lubartowska", 459, 57],
       ["Kowalska", 567, 159],
       ["Kowalska", 568, 161],
       ["Świętoduska", 349, -47],
@@ -77,7 +77,7 @@ describe("turns at junctions (ADR-0055)", () => {
       expect(r, `${street} ${x},${z}`).toBeDefined();
       const e = end(r);
       const nearest = Math.min(...TRAFFIC_LANES.filter((o) => o.use === r.use && o.street !== r.street).map((o) => Math.hypot(pointAt(o.points, 0).x - e.x, pointAt(o.points, 0).z - e.z)));
-      // Measured: 100 m on Lubartowska, 56 m on Kowalska, 48 m on Świętoduska.
+      // Measured: 56 m on Kowalska, 48 m on Świętoduska.
       expect(nearest, r.id).toBeGreaterThan(JUNCTION_REACH * 2.5);
       expect(joinOf(r)).toBeUndefined();
     }
@@ -88,15 +88,16 @@ describe("turns at junctions (ADR-0055)", () => {
     expect(joins.length).toBeGreaterThan(30);
     expect(new Set(joins.map((j) => j.to)).size).toBe(joins.length);
     expect(new Set(joins.map((j) => j.from)).size).toBe(joins.length);
-    // The city's routes: Alchemia's two ramp routes after them drive pieces of one of them (`traffic-ramp.ts`).
-    const driven = CITY_ROUTES.flatMap((r) => r.id.split(">"));
+    // The junctions' routes; the city's put Bajkowskiego's by the deptak in their place (`traffic-deptak.ts`), Alchemia's two ramp routes after them drive pieces of one of them (`traffic-ramp.ts`).
+    const driven = JUNCTION_ROUTES.flatMap((r) => r.id.split(">"));
     expect([...driven].sort()).toEqual(TRAFFIC_LANES.map((r) => r.id).sort());
     // The city keeps its traffic: within 2% of its lanes' vehicles, and no route over its ids.
     const all = TRAFFIC_LANES.reduce((s, r) => s + r.vehicles, 0);
+    expect(Math.abs(JUNCTION_ROUTES.reduce((s, r) => s + r.vehicles, 0) - all)).toBeLessThanOrEqual(all * 0.02);
     expect(Math.abs(CITY_ROUTES.reduce((s, r) => s + r.vehicles, 0) - all)).toBeLessThanOrEqual(all * 0.02);
     expect(Math.max(...TRAFFIC_ROUTES.map((r) => r.vehicles))).toBeLessThanOrEqual(VEHICLE_IDS_PER_ROUTE);
     // Every join's arc, straight on too, is one of its route's arcs (the scan's `turn-off-road` reads them).
-    expect(CITY_ROUTES.reduce((s, r) => s + (r.arcs?.length ?? 0), 0)).toBe(joins.length);
+    expect(JUNCTION_ROUTES.reduce((s, r) => s + (r.arcs?.length ?? 0), 0)).toBe(joins.length);
     for (const j of joins) {
       expect(j.d).toBeLessThan(JUNCTION_REACH);
       expect(TRAFFIC_LANES[j.to]!.use).toBe(TRAFFIC_LANES[j.from]!.use);
@@ -105,7 +106,8 @@ describe("turns at junctions (ADR-0055)", () => {
 
   it("is a pure function of the lanes: the same routes every time, in the same order", () => {
     const again = joinAtJunctions(TRAFFIC_LANES);
-    expect(again).toEqual(CITY_ROUTES);
+    expect(again).toEqual(JUNCTION_ROUTES);
+    expect(deptakMouthRoutes(again, TRAFFIC_LANES)).toEqual(CITY_ROUTES);
     expect(TRAFFIC_ROUTES.slice(0, CITY_ROUTES.length)).toEqual(CITY_ROUTES);
     expect(junctionJoins(TRAFFIC_LANES)).toEqual(junctionJoins(TRAFFIC_LANES));
   });

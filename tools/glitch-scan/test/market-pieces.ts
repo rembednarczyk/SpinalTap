@@ -2,6 +2,7 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src"
 import { pointInRingEvenOdd, segmentDistance } from "../../../packages/core/src";
 import { FOOD_STALL, distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { belowGround } from "../../osm-import/src/building-tags.ts";
+import { isCarFree } from "../../osm-import/src/corrections-car-free.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import type { OsmData, Tags } from "../../osm-import/src/osm.ts";
@@ -94,7 +95,8 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
     const box = (ring: readonly Pt[]) => ({ ring, minX: Math.min(...ring.map((p) => p.x)), maxX: Math.max(...ring.map((p) => p.x)), minZ: Math.min(...ring.map((p) => p.z)), maxZ: Math.max(...ring.map((p) => p.z)) });
     const buildings = areas.filter((a) => isBuilding(a.tags)).map((a) => ({ id: a.id, ...box(a.ring) }));
     const surface = (l: { tags: Tags }) => Number(l.tags.layer ?? 0) >= 0 && l.tags.tunnel === undefined && l.tags.bridge === undefined && l.tags.area !== "yes";
-    const roads = lines.filter((l) => CAR_ROADS.has(l.tags.highway ?? "") && surface(l) && l.tags.service !== "parking_aisle").map((l) => ({ id: l.id, line: l.line, half: roadWidth(l.tags) / 2 }));
+    // A street the game closes to cars (a deptak, T-324) carries its stalls on the old carriageway.
+    const roads = lines.filter((l) => CAR_ROADS.has(l.tags.highway ?? "") && surface(l) && l.tags.service !== "parking_aisle" && !isCarFree(l.id)).map((l) => ({ id: l.id, line: l.line, half: roadWidth(l.tags) / 2 }));
     const zebras = [
       ...lines.filter((l) => l.tags.footway === "crossing" || l.tags.highway === "crossing").map((l) => ({ id: l.id, line: l.line, half: 0 })),
       ...[...osm.nodes.values()].filter((n) => n.tags?.highway === "crossing").map((n) => ({ id: `n${n.id}`, line: [geoToWorld(n.lat, n.lon)], half: 0 })),
