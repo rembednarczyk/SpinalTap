@@ -497,6 +497,23 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
 - **Budżet.** Decyzja użytkownika z 19.11: budżety trójkątów można podnosić. Budżet siatki Alchemii w testach rośnie z 16 do 40 tys., a bramkami zostają wywołania rysowania i aktywne siatki. Szkło zachowuje cokół i dwa pasy tylnej ściany, zasłony wiszą co 2,6 m.
 - **Kolor.** Liście i trawniki kondygnacji mają świeżą zieleń planszy (farba kitu barwiona na #4f9a58 i #5a9e4e), bo ciemna zieleń kitu w nocy czytała się jak ciemne płyty. Zasłona to dwa pasma nierównej długości.
 
+### Etap C3: budynek z arkadami w osi frontu (19.11)
+- **Decyzja użytkownika (19.11):** „budynek z arkadami może przejść od frontu”.
+- **Bryła** (`arcade-front.ts`): jasny dom z arkadami. Wzorzec: podcień (portyk) domu targowego, jak podcienia Starego Miasta i Arkady przy Świętoduskiej, czyli przejście pod piętrem za rzędem filarów.
+  - Stoi x 394–409, z −2…3,7, między zielonym stokiem a wykopem rampy, za fontanną.
+  - Na parterze jest pięć łuków na sześciu filarach (filary to bryły, 0,75 × 0,8 m). Podcień ma 3 m głębokości, a za nim świecą sklepy skrzydła zachodniego L1, które cofa się do z 1.
+  - Piętro od stropu podcienia (2,3) do dachu na poziomie L2 (6,5) jest bryłą. Dach łączy się z tarasem L2 w jeden taras, z balustradą na trzech bokach.
+  - Ekran z frontu skrzydła zachodniego zniknął. Ekran L2 przeszedł na wschód, nad wylot rampy.
+  - Lampy ulic znikają spod domu, a meble omijają filary.
+- **Rysunek** (`arcade-front-geometry.ts`):
+  - kremowy tynk (farba kitu barwiona na #e6d6b4);
+  - łuki z licem i podniebiem na głębokość filarów;
+  - okna piętra z ramą, słupkiem i ślemieniem, świecące ciepło albo ciemne;
+  - ciepły napis ALCHEMIA nad środkowym łukiem;
+  - gzyms z pasem światła;
+  - krzewy z gry na dachu, bez zasłon na elewacji.
+- **Pawilon na rogu** wraca do szkła z planu inwestora (rysunek sprzed B2), bo arkady ma teraz dom w osi frontu.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.

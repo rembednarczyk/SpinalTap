@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, FRONT_SIGN, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ARCADE_FRONT, FRONT_SIGN, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
@@ -7,6 +7,7 @@ import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
 import { greenSlope, ofGreenSlope } from "./green-slope";
+import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -57,6 +58,8 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   "led-green": "neon-green",
   water: "glass-blue",
   vitrine: "glass-blue",
+  // The house with arcades (C3): pale cream, the kit's paint tinted (`PLASTER`).
+  plaster: "paint",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -204,6 +207,12 @@ const within = (pts: Outline, x: number, z: number): boolean =>
     return (q.x - p.x) * (z - p.z) - (q.z - p.z) * (x - p.x) >= 0;
   });
 
+/** Inside the house with arcades' upper storey (C3): L2's glass behind it shows nothing. */
+const inArcade = (x: number, y: number, z: number): boolean => {
+  const A = ARCADE_FRONT;
+  return x > A.minX && x < A.maxX && z > A.minZ && z < A.maxZ + 0.6 && y > A.ceiling && y < A.top;
+};
+
 /** The edges of a storey's glass that stand inside another's (the joints between a storey's bars, a wing under the next storey up): nothing to draw on them. */
 const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: number) => boolean) => {
   const pts = p.outline!;
@@ -216,7 +225,7 @@ const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: nu
     // Half a metre out of the edge's middle.
     const x = (a.x + b.x) / 2 + ((b.z - a.z) / len) * 0.5;
     const z = (a.z + b.z) / 2 - ((b.x - a.x) / len) * 0.5;
-    return others.some((g) => within(g.outline!, x, z));
+    return others.some((g) => within(g.outline!, x, z)) || inArcade(x, y, z);
   };
 };
 
@@ -291,9 +300,10 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       }
       continue;
     }
-    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted.
+    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
     const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
-    boxOf(sink, data, b, leaf ? "paint" : swatchOf(p), hiddenFaces(p, steps), leaf ? (p.kind === "lawn" ? LAWN : LEAF) : undefined);
+    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
+    boxOf(sink, data, b, leaf ? "paint" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
@@ -302,6 +312,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   p2Outside(outside, data);
   frontSignLetters(tiers, data);
   greenSlope(tiers, data);
+  arcadeFrontGeometry(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside, tiers };

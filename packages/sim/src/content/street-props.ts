@@ -5,6 +5,7 @@ import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
 import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
 import { FRONT_FOOTPRINTS, L2_SLABS } from "./alchemia/front";
+import { ARCADE_FRONT } from "./alchemia/arcade-front";
 import { W3_ACTORS, W3_PROPS } from "./tessen-w3";
 import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
@@ -102,7 +103,7 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
 const STOCK_REACH = 2.6;
 
 /** A lamp under Alchemia's L2 over the passage (B1): its head would touch the slab's underside, and the passage is lit from it. */
-const underFront = (i: StreetPropItem): boolean => i.prop.startsWith("lamp") && L2_SLABS.some((r) => i.x > r.minX && i.x < r.maxX && i.z > r.minZ && i.z < r.maxZ);
+const underFront = (i: StreetPropItem): boolean => i.prop.startsWith("lamp") && [...L2_SLABS, ARCADE_FRONT].some((r) => i.x > r.minX && i.x < r.maxX && i.z > r.minZ && i.z < r.maxZ);
 
 /** The map's pieces clear of the game, before their stock is matched to the stalls kept. */
 const clear: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(

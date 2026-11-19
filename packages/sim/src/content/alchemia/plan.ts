@@ -82,7 +82,9 @@ export type PieceKind =
   | "led-green"
   | "water"
   // The shelter's exhibit (stage 5d1): the glass of its cases.
-  | "vitrine";
+  | "vitrine"
+  // The pale house with arcades in the front's axis (C3, 19.11).
+  | "plaster";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {
