@@ -9,53 +9,48 @@ import {
   FOODHALL,
   KUROSAWA_SPOT,
   P1_RAMP,
-  P1_STAIR,
   PARAPET_BEDS,
-  PERGOLA_DOOR,
   COURTYARD,
   ROOF_LAWNS,
   TIER_B,
-  SQUARE_GARLANDS,
   Simulation,
+  frontPieces,
   gangerEntity,
-  garlandAt,
   groundY,
-  p1RampY,
 } from "../src";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { teleportPlayer } from "./helpers";
 
 /**
- * T0's square over P-1 and the food hall's green roof (ADR-0074 stage 7): its pergolas, lanterns and
- * beds on the map's square where the car park was, laid round the level graph's ways on T0, the
- * people waiting there and the map's lawns, and the roof's lawns clear of what stands on the roof.
+ * T0 over P-1 (ADR-0074 stage 7) under the front's storeys (B1, 19.11): the beds along the trench
+ * and the front's solids standing on T0 (its wings, green steps and the passage's columns) laid
+ * round the level graph's ways on T0, the people waiting there and the map's lawns; the roof's
+ * lawns clear of what stands on the roof.
  */
 
 type Box = (typeof ALCHEMIA_PIECES)[number]["box"];
 
-const SQUARE_KINDS = new Set(["pergola", "lantern", "lawn"]);
-const square = ALCHEMIA_PIECES.filter((p) => SQUARE_KINDS.has(p.kind) || (p.kind === "green" && p.box.z1 < FOODHALL.minZ));
-const solids = square.filter((p) => p.solid);
+const inBed = (b: Box) => PARAPET_BEDS.some((r) => b.x0 >= r.x0 - 1e-6 && b.x1 <= r.x1 + 1e-6 && b.z0 >= r.z0 - 1e-6 && b.z1 <= r.z1 + 1e-6);
+const square = ALCHEMIA_PIECES.filter((p) => p.kind === "green" && p.box.z1 < FOODHALL.minZ && inBed(p.box));
+/** The front's solids standing on T0, under L1's roof: its wings, green steps and the passage's columns. */
+const front = frontPieces().filter((p) => p.solid && p.box.y0 < groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2) + 1);
+const solids = [...square.filter((p) => p.solid), ...front];
 const gap = (b: Box, x: number, z: number): number => Math.hypot(Math.max(b.x0 - x, 0, x - b.x1), Math.max(b.z0 - z, 0, z - b.z1));
 const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
 
 /** The level graph's nodes on T0 (the car park's ground, not P-1 under it or the hall's floor). */
 const t0Nodes = ALCHEMIA_NAV.nodes.filter((n) => n.at.z < FOODHALL.minZ + 0.5 && Math.abs(n.at.y - groundY(n.at.x, n.at.z)) < 0.3);
 
-describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
-  it("has pergolas with lanterns, beds along the trench and lawns on the green roof", () => {
-    const count = (k: string) => square.filter((p) => p.kind === k).length;
-    expect(count("pergola")).toBeGreaterThan(30);
-    expect(count("lantern")).toBeGreaterThan(15);
-    expect(count("green")).toBeGreaterThan(8);
-    // The lawns, on tier B's green roof since 15.11 (`alchemia-tiers.test.ts`).
-    expect(count("lawn")).toBe(4);
-    // Its solids are one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage and P-2's (stage 5a): no id of the content moves.
-    const last = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 4 - P2_PROPS.length]!;
-    expect(last.prisms).toHaveLength(solids.length);
+describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
+  it("keeps the beds along the trench, the pergolas gone with the square (19.11)", () => {
+    expect(square.length).toBeGreaterThan(8);
+    expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ)).toEqual([]);
+    // Its solids are still one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage, P-2's (stage 5a) and the front's (B1): no id of the content moves.
+    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 5 - P2_PROPS.length]!;
+    expect(beds.prisms).toHaveLength(square.filter((p) => p.solid).length);
   });
 
-  it("keeps its posts and beds 0.8 m off the level graph's nodes on T0 and the people waiting there", () => {
+  it("keeps its beds and the front's solids 0.8 m off the level graph's nodes on T0 and the people waiting there", () => {
     expect(t0Nodes.length).toBeGreaterThanOrEqual(8);
     const spots = [...t0Nodes.map((n) => ({ id: n.id, at: n.at })), { id: "kurosawa", at: KUROSAWA_SPOT }];
     for (const s of spots) for (const p of solids) expect(gap(p.box, s.at.x, s.at.z), s.id).toBeGreaterThan(0.8);
@@ -92,46 +87,7 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
     }
   });
 
-  it("roofs the stair house's door with a pergola from its posts to the house's wall", () => {
-    const beams = square.filter((p) => p.kind === "pergola" && !p.solid && p.box.x0 >= PERGOLA_DOOR.west - 0.3 && p.box.x1 <= PERGOLA_DOOR.east + 0.5 && p.box.z0 >= PERGOLA_DOOR.south - 0.01 && p.box.z1 <= P1_STAIR.minZ + 0.01);
-    expect(beams.some((p) => p.box.z1 === P1_STAIR.minZ && p.box.z0 === PERGOLA_DOOR.south)).toBe(true);
-    // The door's 2.3 m opening goes under it.
-    const under = Math.min(...beams.map((p) => p.box.y0));
-    expect(under - P1_STAIR.top).toBeGreaterThan(P1_STAIR.door.top + 0.2);
-  });
-
-  it("hangs its lanterns and beams over every head", () => {
-    for (const p of square.filter((q) => q.kind === "lantern")) expect(p.box.y0 - groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2)).toBeGreaterThan(2.0);
-    for (const p of square.filter((q) => q.kind === "pergola" && !q.solid)) expect(p.box.y0 - groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2)).toBeGreaterThan(2.6);
-  });
-
-  it("hangs its garlands crosswise from a pergola's corner to another's, over every head and the ramp's cars (user's request 7.11)", () => {
-    expect(SQUARE_GARLANDS).toHaveLength(4);
-    const posts = square.filter((p) => p.kind === "pergola" && p.solid).map((p) => p.box);
-    const beams = square.filter((p) => p.kind === "pergola" && !p.solid).map((p) => p.box);
-    for (const g of SQUARE_GARLANDS) {
-      // Each end on a beam's top over a post, or on a beam by the stair house's wall.
-      for (const e of [g.from, g.to]) {
-        expect(posts.some((b) => gap(b, e.x, e.z) < 0.35) || beams.some((b) => gap(b, e.x, e.z) < 0.05), `${e.x},${e.z}`).toBe(true);
-        expect(beams.some((b) => Math.abs(b.y1 - e.y) < 0.01 && gap(b, e.x, e.z) < 0.35), `${e.x},${e.z} on a beam`).toBe(true);
-      }
-      for (let t = 0; t <= 1; t += 0.05) {
-        const p = garlandAt(g, t);
-        expect(p.y - groundY(p.x, p.z), `${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBeGreaterThan(2.4);
-        // Over the ramp, a car's roof (1.6 m) well under it.
-        if (p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z < P1_RAMP.covered) expect(p.y - p1RampY(p.z)).toBeGreaterThan(3);
-      }
-    }
-    // Two by two they cross: each pair's spans meet in plan.
-    const meet = (a: (typeof SQUARE_GARLANDS)[number], b: (typeof SQUARE_GARLANDS)[number]) => {
-      const d = (p: { x: number; z: number }, q: { x: number; z: number }, r: { x: number; z: number }) => (q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x);
-      return d(a.from, a.to, b.from) * d(a.from, a.to, b.to) < 0 && d(b.from, b.to, a.from) * d(b.from, b.to, a.to) < 0;
-    };
-    expect(meet(SQUARE_GARLANDS[0]!, SQUARE_GARLANDS[1]!)).toBe(true);
-    expect(meet(SQUARE_GARLANDS[2]!, SQUARE_GARLANDS[3]!)).toBe(true);
-  });
-
-  it("stands its posts and beds on the square's paving, off the map's lawns, footways and roads", () => {
+  it("stands its beds on the square's paving, off the map's lawns, footways and roads", () => {
     const chunk = MAP_CHUNKS.find((c) => c.id === ALCHEMIA_CHUNK)!;
     const inside = (x: number, z: number, o: readonly number[]) => {
       let hit = false;
@@ -141,7 +97,7 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
       return hit;
     };
     const surfaceAt = (x: number, z: number) => chunk.ground.reduce<string | null>((s, g) => (inside(x, z, g.outline) ? g.surface : s), null);
-    for (const p of solids) {
+    for (const p of square.filter((q) => q.solid)) {
       const [x, z] = [(p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2];
       expect(surfaceAt(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe("square");
     }
@@ -177,7 +133,7 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
     return null;
   };
 
-  it("an alerted brawler under the walk's pergola gets round the trench to the player at the stair house's door, and back", () => {
+  it("an alerted brawler in the passage west of the trench gets round it to the player at the stair house's door, and back", () => {
     for (const seed of [3, 11]) {
       expect(chase(onGround(406.6, 12), onGround(420, 10.5), 40, seed), `across, seed ${seed}`).not.toBeNull();
       expect(chase(onGround(420, 10.5), onGround(406.6, 12), 40, seed), `back, seed ${seed}`).not.toBeNull();

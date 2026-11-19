@@ -75,7 +75,10 @@ export type PieceKind =
   | "car"
   | "tyre"
   | "rail"
-  | "beacon";
+  | "beacon"
+  // The front on Bajkowskiego (B1, 19.11): its screens and the sign's box.
+  | "screen"
+  | "sign";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

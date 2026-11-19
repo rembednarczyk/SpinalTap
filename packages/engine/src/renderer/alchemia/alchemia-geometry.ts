@@ -1,9 +1,9 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, FRONT_SIGN, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
+import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
-import { garlandsGeometry } from "./garlands";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -13,7 +13,7 @@ import { parkingOutside } from "./parking-geometry";
  * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
  * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4,
- * T0's pergolas with their paper lanterns and garlands, the beds and the roof's lawns of stage 7), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
+ * the beds along the ramp of stage 7, the green tiers and the front's storeys over P-1 of 19.11), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
  * only. Glass is opaque with the inside's warm light in it (ADR-0071's glass). Pure data, no Babylon.
  */
 
@@ -49,6 +49,9 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   tyre: "tyre",
   rail: "metal",
   beacon: "neon-amber",
+  // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box under its letters.
+  screen: "win-teal",
+  sign: "dark",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -151,6 +154,23 @@ const unitSigns = (sink: GeometrySink, data: CityKitData): void => {
   }
 };
 
+/**
+ * The letters on the front's sign (B1, 19.11), on its south face towards Bajkowskiego: ALCHEMIA in
+ * cyan over CENTRUM HANDLOWE in pink, neon tubes a hand proud of the dark box (the mall's own sign,
+ * the same in every language).
+ */
+const frontSignLetters = (sink: GeometrySink, data: CityKitData): void => {
+  const b = FRONT_SIGN;
+  const mid = (b.x0 + b.x1) / 2;
+  const face = b.z0;
+  const line = (text: string, height: number, foot: number, swatch: string) => {
+    for (const s of neonText(text, height)) boxOf(sink, data, { x0: mid + s.x0, x1: mid + s.x1, z0: face - 0.08, z1: face, y0: foot + s.y0, y1: foot + s.y1 }, swatch);
+  };
+  const h = b.y1 - b.y0;
+  line("ALCHEMIA", h * 0.45, b.y0 + h * 0.42, "neon-cyan");
+  line("CENTRUM HANDLOWE", h * 0.2, b.y0 + h * 0.1, "neon-pink");
+};
+
 /** The ceiling's light strips over the tables and the aisles: warm (ADR-0074 §6). */
 const ceilingLights = (sink: GeometrySink, data: CityKitData): void => {
   const I = FOODHALL_INNER;
@@ -202,7 +222,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   pavilionGeometry(outside, data);
   parkingOutside(outside, data);
   p2Outside(outside, data);
-  garlandsGeometry(outside, data);
+  frontSignLetters(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside, tiers };

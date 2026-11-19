@@ -199,8 +199,8 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
       expect(c.box.x1 < 400 || c.box.x0 > 404.6).toBe(true);
       expect(c.box.x1).toBeLessThan(410);
     }
-    // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's.
-    expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length)).toEqual(P2_PROPS);
+    // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's before the front's (B1).
+    expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length - 1, -1)).toEqual(P2_PROPS);
   });
 });
 

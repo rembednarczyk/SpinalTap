@@ -15,6 +15,9 @@ import { bakeP2StandIn, p2In } from "../src/renderer/alchemia/p2-far";
 import { P2_LAMP_KEY, P2View, p2RoofOver, p2Visible } from "../src/renderer/alchemia/p2-view";
 import { PARKING_LAMP_KEY } from "../src/renderer/alchemia/parking-view";
 
+/** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
+const ALCHEMIA_TRIANGLES = 16000;
+
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
@@ -49,7 +52,7 @@ describe("P-2 under Alchemia's P-1 in the engine (ADR-0074 stage 5a)", () => {
   it("draws every piece of its store and corridor in its own sink, within an inside's budget and its outline", () => {
     const inside = p2Inside(kitData);
     expect(inside.indices.length / 3 / 12).toBeGreaterThanOrEqual(P2_SHELL_PIECES.length + P2_STORE_PIECES.length);
-    expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
+    expect(inside.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
     for (let i = 0; i < inside.positions.length; i += 3) {
       const [x, z] = [inside.positions[i]!, inside.positions[i + 2]!];
       const inStore = x > P2.minX - 0.01 && x < P2.maxX + 0.01 && z > P2.minZ - 0.01 && z < P2.maxZ + 0.01;

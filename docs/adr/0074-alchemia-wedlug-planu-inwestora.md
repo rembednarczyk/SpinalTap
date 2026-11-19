@@ -317,6 +317,34 @@ Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wy
 - **Koszt symulacji.** Indeks brył jest płaski, więc zapytania na P−1 biorą też bryły magazynu pod nim. Paleta z autem to jedna bryła bez rysunku, belki nad głową są tylko rysowane, a korytarz z wykopem to osobna bryła poza oczkami P−1 (pryzmaty magazynu 91 → 60). Testy ruchu na rampie trwają ok. 10% dłużej niż bez P−2 (wcześniej 15%).
 - **Zostaje.** 5b: roboty na szynach jako ruchome bryły i winda aut z kabin P−1. 5c: przystanek windy na −9,2 w korytarzu. 5d: schron pod T2 przy północnym końcu P−2 z bramą, włazem i skrytką Hebi (migracja). Do przeglądu kuratora: zrzuty z T2 na wylot, z T1 na parapet portalu, z P−1 na otwór schodów.
 
+### Bryła na całym terenie (decyzje użytkownika 19.11)
+Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
+- **Kształty z planszy.**
+  - Schodkowe kondygnacje cofające się od frontu, z zieloną krawędzią i ciągłym pasem LED na każdej płycie.
+  - Zaokrąglone narożniki płyt.
+  - Podium przy Bajkowskiego z ekranami i zielonym spadzistym dachem schodzącym do ulicy, z linią światła wzdłuż jego profilu.
+  - Najwyższe piętro ze skrzynią napisu ALCHEMIA CENTRUM HANDLOWE i masztami, patrzące na Bajkowskiego.
+  - Z tyłu bryła schodzi na północ do T1, T2 i Arkad.
+  - Na rogu jasny budynek z arkadami.
+  - Przed frontem plac ze schodami, fontanną i kioskami oraz rampa P−1 w środku.
+- **Poziomy.** Dachy kondygnacji leżą na wysokościach istniejących tarasów: L1 2,3 (dach A), L2 6,5 (dach B), L3 10,7 (nowa, +4,2). Od chodnika Bajkowskiego (−0,8…−1,8) to ok. 12 m do dachu L3, a z napisem i masztami więcej.
+- **Bryły etapu B1 (front, nad P−1), `front.ts`.**
+  - **L1, skrzydło zachodnie.** x 394–404, z −2…14 i x 396–404, z 14…27,5, wzdłuż skośnej granicy parkingu od Świętoduskiej, z ekranem od frontu.
+  - **Zielony stok.** Trzy zielone stopnie z dachu L1 na zachód, x 386,8–394, z −2…14, każdy z linią LED wzdłuż krawędzi.
+  - **L1, skrzydło wschodnie.** x 424–436, z 13,5…22,5. Stoi między pawilonem trójkątnym a pawilonem metra B, poza okapem metra i 1,1 m od węzła wyjścia z klatki P−1, z ekranem od południa. Przejście od klatki na Lubartowską zostaje pod gołym niebem.
+  - **L2.** Dwie płyty na słupach nad pasażem T0: x 394–422, z 4…32 oraz x 422–436, z 13,5…32. Spód płyty leży na 1,95, czyli co najmniej 2,9 m nad gruntem pasażu. Ekran wisi na południowej ścianie L2. Pod płytą zostają rampa P−1 (otwarta do z 11, dalej pod płytą), domek klatki P−1, rabaty przy rampie i wejście do metra B. Okap metra jest wolny, bo spód L2 leży nad jego pasmem.
+  - **Słupy.** Siedem słupów 0,6 m poza rampą, klatką, węzłami grafu na T0 i drogą od klatki do Lubartowskiej.
+  - **L3.** x 398–428, z 12…32, ze skrzynią napisu na ścianie południowej i dwoma masztami na dachu. Napis to neon ALCHEMIA w cyjanie nad CENTRUM HANDLOWE w różu, a nowe litery R, U, D, O i W są w `neon-letters.ts`.
+  - **Dachy.** Front cofa się od ulicy: skrzydła od z −2, L2 od z 4, L3 od z 12. Na dachach L2 i L3 rosną żywopłoty, a każda płyta ma pas LED.
+  - **Plac T0 z pergolami** (etap 7) zniknął razem z girlandami. Zostały rabaty przy rampie. Meble mapy omijają obrysy skrzydeł, stopni i słupów (`FRONT_FOOTPRINTS` w `street-props.ts`), a latarnie znikają spod L2.
+  - **Rysunek i liczenie.** Front jest rysowany w siatce kondygnacji (`alchemia-tiers`), a w symulacji to osobny, ostatni prop Alchemii. Identyfikatory brył i złote hashe się nie zmieniają. Budżet każdej siatki Alchemii w testach wynosi 16 000 trójkątów.
+- **Etapy.**
+  - **B1.** Front nad P−1: skrzydła, L2 na słupach, L3 z napisem, zielony stok, usunięte pergole, budżet 16 000, przegląd kuratora.
+  - **B2.** Pawilon trójkątny jako budynek z arkadami: ten sam obrys, jasna elewacja, łuki na parterze z ciepłym światłem, napis ALCHEMIA nad nimi. Drabina i Ren zostają.
+  - **B3.** Skrzydło północne: kondygnacje schodzące z L2 nad food hallem na północ do T1 i T2 oraz wzdłuż Świętoduskiej, z wylotem P−2 pod nim.
+  - **B4.** Detale z planszy: zaokrąglone płyty, ekrany i hologramy, pnącza na krawędziach, parasole i drzewa na tarasach, fontanna z hologramem i kioski na placu, portal rampy z zielonym światłem, maszty, balustrady zamiast pełnego parapetu przy wylocie P−2.
+- **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.

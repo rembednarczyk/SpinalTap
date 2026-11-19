@@ -1,7 +1,7 @@
 /**
  * Block letters of neon tube for Alchemia's sign on the pavilion's roof (ADR-0074 stage 3) and
- * Tessen's over W-3's wagon gate (ADR-0082 stage 4): the proper names ALCHEMIA and TESSEN, the
- * same in every language, as straight strokes the kit's glow swatches can draw in the same mesh
+ * Tessen's over W-3's wagon gate (ADR-0082 stage 4) and the front's ALCHEMIA CENTRUM HANDLOWE (B1):
+ * proper names and the mall's own sign, the same in every language, as straight strokes the kit's glow swatches can draw in the same mesh
  * as their building (no glyph atlas, no draw call of its own). Pure data.
  */
 
@@ -23,6 +23,13 @@ const GLYPHS: Readonly<Record<string, { readonly w: number; readonly strokes: re
   I: { w: 3, strokes: [[1.5 - S / 2, 0, 1.5 + S / 2, 5], [0.5, 5 - S, 2.5, 5], [0.5, 0, 2.5, S]] },
   T: { w: 3, strokes: [[0, 5 - S, 3, 5], [1.5 - S / 2, 0, 1.5 + S / 2, 5 - S]] },
   S: { w: 3, strokes: [[0, 5 - S, 3, 5], [0, MID, S, 5 - S], [0, MID, 3, MID + S], [3 - S, S, 3, MID], [0, 0, 3, S]] },
+  // CENTRUM HANDLOWE on the front's sign (B1, 19.11).
+  R: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S], [3 - S, 0, 3, MID]] },
+  U: { w: 3, strokes: [[0, 0, S, 5], [3 - S, 0, 3, 5], [0, 0, 3, S]] },
+  D: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 2.4, 5], [0, 0, 2.4, S], [3 - S, S, 3, 5 - S]] },
+  O: { w: 3, strokes: [[0, 0, S, 5], [3 - S, 0, 3, 5], [0, 5 - S, 3, 5], [0, 0, 3, S]] },
+  W: { w: 4, strokes: [[0, 0, S, 5], [4 - S, 0, 4, 5], [0, 0, 4, S], [2 - S / 2, 0, 2 + S / 2, 3.4]] },
+  " ": { w: 1.5, strokes: [] },
   // The diagonal in three steps: the strokes stay rectangles.
   N: { w: 3.4, strokes: [[0, 0, S, 5], [3.4 - S, 0, 3.4, 5], [S, 3, S + 0.6, 4.2], [1.4, 1.9, 2, 3.1], [2, 0.8, 2.6, 2]] },
 };

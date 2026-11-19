@@ -16,6 +16,9 @@ import { SHUTTERS, rampPitch, shutterLifts } from "../src/renderer/alchemia/park
 import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, parkingRoofOver } from "../src/renderer/alchemia/parking-view";
 import { GeometrySink } from "../src/renderer/city-kit-data";
 
+/** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
+const ALCHEMIA_TRIANGLES = 16000;
+
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
@@ -55,7 +58,7 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     const boxes = (s: { indices: readonly number[] }) => s.indices.length / 3 / 12;
     expect(boxes(inside)).toBeGreaterThanOrEqual(P1_ALL_PIECES.filter((p) => p.inside && p.kind !== "shutter").length);
     expect(boxes(outside)).toBeGreaterThanOrEqual(P1_PIECES.filter((p) => !p.inside).length);
-    expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
+    expect(inside.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
     // The room under the car park, the trench and the stair house by it, the passage from metro B's hall (stage 10): nothing elsewhere.
     for (const s of [inside, outside])
       for (let i = 0; i < s.positions.length; i += 3) {

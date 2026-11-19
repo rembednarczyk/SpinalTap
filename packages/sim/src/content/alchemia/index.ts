@@ -16,6 +16,7 @@ import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
 import { unitPieces } from "./units";
 import { tierPieces } from "./tiers";
+import { frontPieces } from "./front";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -30,9 +31,10 @@ export * from "./parking";
 export * from "./metro-door";
 export * from "./p2";
 export * from "./p2-store";
-export { type Garland as AlchemiaGarland, PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, SQUARE_GARLANDS, garlandAt } from "./square";
+export { PARAPET_BEDS } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
+export { EAST_WING, FRONT_FOOTPRINTS, FRONT_SIGN, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
@@ -62,11 +64,12 @@ const LIFT = liftPieces();
 const PLAZA = plazaPieces();
 const SQUARE = squarePieces();
 const TIERS = tierPieces();
-/** The green tiers' pieces (15.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
-export const ALCHEMIA_TIER_PIECES: readonly Piece[] = TIERS;
+const FRONT = frontPieces();
+/** The green tiers' pieces (15.11) and the front's storeys over P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
+export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...TIERS, ...FRONT];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS];
+export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS, ...FRONT];
 
 /**
  * P-2's solids (stage 5a), the last of Alchemia's: its store's shell with the earth beside it, its
@@ -108,6 +111,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(METRO_DOOR_PIECES),
   // Stage 5a after stage 10's: P-2's shell with its portal and cutting, the flight down from P-1, the store's fittings.
   ...P2_PROPS,
+  // The front over P-1 (B1, 19.11) after stage 5a's: its wings, storeys, columns and green steps, one prop of its own.
+  solidProp(FRONT),
 ];
 
 /** The ground dug out under Alchemia. */
