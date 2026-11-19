@@ -5,6 +5,7 @@ import { RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { DRESS_FLAG, MeshSink } from "../src/renderer/mesh-sink";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
+import { DETAIL_STEP } from "../src/renderer/mapcity/facade-frame";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
 import { cableRuns, planLandmarkCables } from "../src/renderer/mapcity/landmarks/cables";
@@ -64,10 +65,10 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
       const plain = new MeshSink();
       planNearBuilding(plain, frameOf(id, false));
       const kit = points(near3(frameOf(id)));
-      // Walls with storeys and bays (windows) carry uv2.x > 0; roofs the roof style.
-      expect(kit.every((p) => p.u2 === 0)).toBe(true);
+      // Walls with storeys and bays (windows) carry them in uv2.x under the detail step (the surface is its multiple); roofs the roof style.
+      expect(kit.every((p) => p.u2 % DETAIL_STEP === 0)).toBe(true);
       expect(kit.every((p) => p.v2 < ROOF_STYLE)).toBe(true);
-      expect(points(plain).some((p) => p.u2 > 0 || p.v2 >= ROOF_STYLE)).toBe(true);
+      expect(points(plain).some((p) => p.u2 % DETAIL_STEP > 0 || p.v2 >= ROOF_STYLE)).toBe(true);
     }
   });
 

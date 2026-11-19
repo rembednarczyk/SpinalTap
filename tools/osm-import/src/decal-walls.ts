@@ -6,7 +6,7 @@
  * glass on it at all, the venues' boards on it and whether a holo-ad may hang on it. It reads the
  * renderer's modules: Node loads it through Vite's module runner (`props-build.ts`), the tests directly.
  */
-import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, metaStorey, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
@@ -24,7 +24,7 @@ import { type DrawnView, cityFrames, framedBoards } from "./venue-boards.ts";
  * `packages/engine/test/facade-glass-mask.ts`, ADR-0058 stage 9), and `facade-glass-pin.test.ts`
  * pins the GLSL this rule reads.
  */
-export const glassFree = (f: FacadeFrame, w: Wall): boolean => Math.floor(frameWallMeta(f, w)[0] + 0.0005) / 10 < 0.05;
+export const glassFree = (f: FacadeFrame, w: Wall): boolean => metaStorey(frameWallMeta(f, w)[0]) < 0.05;
 
 /** The map's building of a view, by its centre (`chunkBuildings` puts the view's entity there). */
 const buildingIds = (): Map<string, { id: string; district: string }> => {

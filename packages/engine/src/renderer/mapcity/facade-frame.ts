@@ -1,5 +1,6 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
 import type { BellTower } from "./landmarks/bell-towers";
+import { ROOF_DETAIL, WALL_DETAIL } from "../../npr/detail-layers";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, type WallMaterial, facadeStyle } from "./facade-style";
 import { type Box2, type Obb, type P2, orientedBox, signedArea } from "./polygon";
 import type { Rgba } from "../mesh-sink";
@@ -130,10 +131,19 @@ export type MapEdgeAt = (a: P2, c: P2) => boolean;
 /** The seed in the middle of one of 256 bins: the shader reads it back exactly. */
 export const seedBin = (seed: number): number => (Math.min(Math.floor(Math.max(seed, 0) * 256), 255) + 0.5) / 256;
 
-/** uv2 of a wall: x = storey (dm, integer) + bay / 10, y = window style + seed. */
-export const wallMeta = (storey: number, bay: number, style: number, seed: number): Uv => [bay > 0 ? Math.round(storey * 10) + Math.round(Math.min(Math.max(bay, 0.5), 9.9) * 100) / 1000 : 0, style + seedBin(seed)];
+/** The detail layer's offset in uv2.x (ADR-0092): above any storey in decimetres. */
+export const DETAIL_STEP = 128;
+
+/** uv2 of a wall: x = storey (dm, integer) + 128 × its surface (`WALL_DETAIL`) + bay / 10, y = window style + seed. */
+export const wallMeta = (storey: number, bay: number, style: number, seed: number, detail = 0): Uv => [
+  (bay > 0 ? Math.round(storey * 10) + Math.round(Math.min(Math.max(bay, 0.5), 9.9) * 100) / 1000 : 0) + DETAIL_STEP * detail,
+  style + seedBin(seed),
+];
+/** The storey (m) a wall's uv2.x carries, its surface's steps taken off, as `facadeDecode` reads it back. */
+export const metaStorey = (x: number): number => (Math.floor(x + 0.0005) - DETAIL_STEP * Math.floor((x + 0.0005) / DETAIL_STEP)) / 10;
 export const trimMeta = (seed: number): Uv => [0, seedBin(seed)];
-export const roofMeta = (seed: number): Uv => [0, ROOF_STYLE + seedBin(seed)];
+/** uv2 of a roof: x = 128 × its surface (`ROOF_DETAIL`), y = the roof style + seed. */
+export const roofMeta = (seed: number, detail = 0): Uv => [DETAIL_STEP * detail, ROOF_STYLE + seedBin(seed)];
 
 const SAMPLES = [0.15, 0.5, 0.85] as const;
 
@@ -189,7 +199,10 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: Neighb
 };
 
 /** uv2 of the walls of this frame (the window style with the shop bit). */
-export const frameWallMeta = (f: FacadeFrame, w: Wall): Uv => wallMeta(f.storey, w.bay, f.style.window + (f.style.shopfront ? SHOPFRONT_BIT : 0), f.style.seed);
+export const frameWallMeta = (f: FacadeFrame, w: Wall): Uv => wallMeta(f.storey, w.bay, f.style.window + (f.style.shopfront ? SHOPFRONT_BIT : 0), f.style.seed, WALL_DETAIL[f.style.wallDetail]);
+
+/** uv2 of this frame's roof surfaces. */
+export const frameRoofMeta = (f: FacadeFrame): Uv => roofMeta(f.style.seed, ROOF_DETAIL[f.style.roofDetail]);
 
 /** Walls a neighbour hides up to this building's top: not worth drawing. */
 export const hiddenWall = (f: FacadeFrame, w: Wall): boolean => w.blind && w.coveredTo >= f.top - 0.1;

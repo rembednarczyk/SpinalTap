@@ -73,6 +73,11 @@ export interface RendererOptions {
    * Off in Lublin (ADR-0045): the map's own city is drawn to the horizon.
    */
   readonly farCity?: boolean;
+  /**
+   * URL of the folder of the detail textures (ADR-0092), ending in `/`: the grain of the city's
+   * plaster, brick, asphalt and roofs. Without it the surfaces keep their palette and patterns alone.
+   */
+  readonly detailTextures?: string | null;
 }
 
 /** The effects over the whole frame the game sets (ADR-0030): hits, quickhacks, heat, the scanner; the fog for the map preview. */
@@ -168,7 +173,7 @@ export class BabylonRenderer implements RenderPort {
     options: RendererOptions = {},
   ) {
     const { scene } = stage;
-    this.materials = new ToonMaterials(scene);
+    this.materials = new ToonMaterials(scene, NIGHT_RIG, options.detailTextures ?? null);
     const tier = qualityTier(stage.options.quality);
     const high = tier.shadowMap > 1024;
     // Before any material: the wet presets compile with the probe in them.
@@ -286,7 +291,7 @@ export class BabylonRenderer implements RenderPort {
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
     const { materials, shadow } = this;
     const gbuffer = this.lineArt?.geometryBuffer ?? null;
-    this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
+    this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => Promise.all([this.cityKit.ready, this.materials.detail.ready]), cityWaiting: () => this.map.current?.waiting ?? 0 });
     const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
     this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet, shadow: this.shadow });
   }

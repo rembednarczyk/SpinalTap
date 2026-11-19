@@ -1,4 +1,4 @@
-import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "./facade-frame";
+import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, metaStorey } from "./facade-frame";
 import { WINDOW_STYLE } from "./facade-style";
 import { type VenueBoard, venueBoards } from "./venue-plan";
 
@@ -46,7 +46,7 @@ const WINDOW_RECT: Readonly<Record<number, readonly [number, number, number, num
 /** The shader's storey, bay and seed of a wall, as its UVs quantise them (`wallMeta`, `facadeDecode`). */
 const decoded = (f: FacadeFrame, w: Wall): { storey: number; bay: number; seed: number } => {
   const [mx, my] = frameWallMeta(f, w);
-  return { storey: Math.floor(mx + 0.0005) / 10, bay: Math.floor((mx % 1) * 1000 + 0.5) / 100, seed: (Math.floor((my % 1) * 256) + 0.5) / 256 };
+  return { storey: metaStorey(mx), bay: Math.floor((mx % 1) * 1000 + 0.5) / 100, seed: (Math.floor((my % 1) * 256) + 0.5) / 256 };
 };
 
 /**
@@ -128,7 +128,7 @@ export const doorSlots = (f: FacadeFrame, w: Wall, boards: readonly VenueBoard[]
   if (glass.length === 0 && f.style.window !== WINDOW_STYLE.none) return [];
   const spans = boardsOn(f, w, boards);
   // Under the first floor's panes (the shader's ground floor, `facadeDecode`).
-  const first = (Math.floor(frameWallMeta(f, w)[0] + 0.0005) / 10) * 1.25 - GLASS_GAP;
+  const first = metaStorey(frameWallMeta(f, w)[0]) * 1.25 - GLASS_GAP;
   const out: DoorSlot[] = [];
   const add = (u: number, width: number, top: number, cover: boolean) => {
     const max = Math.min(cover ? first : top + PIER_SLACK, underBoards(spans, u - width / 2, u + width / 2));

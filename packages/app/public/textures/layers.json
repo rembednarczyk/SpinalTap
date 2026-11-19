@@ -1,0 +1,62 @@
+{
+  "asphalt_02": {
+    "channel": "r",
+    "file": "textures/detail-ground.png",
+    "metres": 3.0
+  },
+  "bitumen": {
+    "channel": "b",
+    "file": "textures/detail-roofs.png",
+    "metres": 20.0
+  },
+  "clay_roof_tiles_02": {
+    "channel": "r",
+    "file": "textures/detail-roofs.png",
+    "metres": 2.5
+  },
+  "concrete_pavement": {
+    "channel": "g",
+    "file": "textures/detail-ground.png",
+    "metres": 1.8
+  },
+  "concrete_wall_006": {
+    "channel": "a",
+    "file": "textures/detail-walls.png",
+    "metres": 2.0
+  },
+  "corrugated_iron_02": {
+    "channel": "g",
+    "file": "textures/detail-roofs.png",
+    "metres": 2.7
+  },
+  "forest_ground_04": {
+    "channel": "a",
+    "file": "textures/detail-ground.png",
+    "metres": 3.15
+  },
+  "granite_tile": {
+    "channel": "a",
+    "file": "textures/detail-roofs.png",
+    "metres": 2.3
+  },
+  "grass_path_2": {
+    "channel": "b",
+    "file": "textures/detail-ground.png",
+    "metres": 1.0
+  },
+  "grey_plaster_02": {
+    "channel": "r",
+    "file": "textures/detail-walls.png",
+    "metres": 1.0
+  },
+  "large_sandstone_blocks_01": {
+    "channel": "b",
+    "file": "textures/detail-walls.png",
+    "metres": 3.0
+  },
+  "medieval_red_brick": {
+    "channel": "g",
+    "file": "textures/detail-walls.png",
+    "metres": 2.0
+  }
+}

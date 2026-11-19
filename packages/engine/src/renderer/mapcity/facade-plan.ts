@@ -1,6 +1,6 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, hexColor } from "../mesh-sink";
-import { type FacadeFrame, PLINTH_BAND, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, plinthBand, roofMeta, trimMeta } from "./facade-frame";
+import { type FacadeFrame, PLINTH_BAND, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, plinthBand, frameRoofMeta, trimMeta } from "./facade-frame";
 import { planBrackets } from "./bracket-plan";
 import { DOWN, band, slab, wallQuad } from "./facade-parts";
 import { planPassages } from "./passage-plan";
@@ -29,7 +29,7 @@ const parapet = (sink: MeshSink, f: FacadeFrame, from: number, colors: { wall: R
   const ring = f.b.ring;
   const inner = offsetRing(ring, -0.3);
   if (!inner) {
-    slab(sink, ring, f.top, colors.roof, roofMeta(f.style.seed));
+    slab(sink, ring, f.top, colors.roof, frameRoofMeta(f));
     return ring;
   }
   const meta = trimMeta(f.style.seed);
@@ -41,7 +41,7 @@ const parapet = (sink: MeshSink, f: FacadeFrame, from: number, colors: { wall: R
     wallQuad(sink, a, b, { x: -(b.z - a.z) / len, z: (b.x - a.x) / len }, from, f.top, f.b.base, colors.wall, meta);
   }
   band(sink, inner, 0.3, f.top - 0.02, f.top + 0.12, colors.trim, meta, f.b.base);
-  slab(sink, inner, from, colors.roof, roofMeta(f.style.seed));
+  slab(sink, inner, from, colors.roof, frameRoofMeta(f));
   return inner;
 };
 
@@ -190,7 +190,7 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
     return;
   }
   if (s.attic === "none") {
-    slab(sink, f.b.ring, f.top, p.roof, roofMeta(s.seed));
+    slab(sink, f.b.ring, f.top, p.roof, frameRoofMeta(f));
   } else {
     parapet(sink, f, f.top - Math.min(s.atticHeight, 1.2), p);
     if (s.attic === "crenel") merlons(sink, f, p.trim);
@@ -205,7 +205,7 @@ export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   const roof = f.b.roof ?? 0;
   if (stacked(f)) {
     walls(sink, f, f.top, p.wall);
-    slab(sink, f.b.ring, f.top, p.roof, roofMeta(f.style.seed));
+    slab(sink, f.b.ring, f.top, p.roof, frameRoofMeta(f));
   } else if (pitched(f)) {
     // The same pitched roof as near, so a tenement keeps its red roof across the city.
     walls(sink, f, f.top, p.wall);
@@ -213,12 +213,12 @@ export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   } else if (f.style.roof === "onion" && roof > 0.3) {
     // A helmet stays a helmet from afar: the landmark's silhouette.
     walls(sink, f, f.top, p.wall);
-    slab(sink, f.b.ring, f.top, p.roof, roofMeta(f.style.seed));
+    slab(sink, f.b.ring, f.top, p.roof, frameRoofMeta(f));
     addOnion(sink, f, roof, p.roof, true);
   } else {
     const top = f.top + roof * 0.35;
     walls(sink, f, top, p.wall);
-    slab(sink, f.b.ring, top, p.roof, roofMeta(f.style.seed));
+    slab(sink, f.b.ring, top, p.roof, frameRoofMeta(f));
   }
   if (f.b.lifted) soffit(sink, f, p.plinth);
   if (f.style.tower) addTowers(sink, f, p, false);

@@ -1,0 +1,9 @@
+{
+  "size": 512,
+  "note": "Detail layers of the toon shader (ADR-0092): Poly Haven textures (CC0) as luminance only, four to an RGBA file in the order r, g, b, a. `metres` is the side of one tile in the world, from the asset's dimensions. The colour stays the palette's.",
+  "textures": {
+    "walls": ["grey_plaster_02", "medieval_red_brick", "large_sandstone_blocks_01", "concrete_wall_006"],
+    "ground": ["asphalt_02", "concrete_pavement", "grass_path_2", "forest_ground_04"],
+    "roofs": ["clay_roof_tiles_02", "corrugated_iron_02", "bitumen", "granite_tile"]
+  }
+}
