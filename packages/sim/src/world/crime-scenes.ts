@@ -49,7 +49,7 @@ export const POSTS: Readonly<Record<MicroEventKind, readonly Post[]>> = {
 export const hasVictim = (kind: MicroEventKind): boolean => kind !== "deal" && kind !== "droneTheft";
 
 const CRATE: ViewDescriptor = { kind: "block", size: { x: 0.9, y: 0.6, z: 0.6 }, material: "metal" };
-const DRONE: ViewDescriptor = { kind: "block", size: { x: 0.9, y: 0.35, z: 0.9 }, material: "metal" };
+const DRONE: ViewDescriptor = { kind: "block", size: { x: 1.1, y: 0.45, z: 1.1 }, material: "metal" };
 const VAN: ViewDescriptor = { kind: "vehicle", model: "van", tint: 7 };
 
 /** Half the van's length and width with a hand's room (ADR-0050 `VEHICLE_SIZE` "van", rounded up). */
@@ -80,7 +80,9 @@ export const vanPlace = (at: Vec3): { readonly at: Vec3; readonly yaw: number } 
 };
 
 const thing = (ctx: SimContext, key: string, view: ViewDescriptor, at: Vec3, yaw: number): Entity => {
-  const position = { x: at.x, y: ctx.streamer.ground.heightAt(at.x, at.z), z: at.z };
+  // A block stands on its centre (`builders.ts`), a vehicle on its wheels.
+  const lift = view.kind === "block" ? view.size.y / 2 : 0;
+  const position = { x: at.x, y: ctx.streamer.ground.heightAt(at.x, at.z) + lift, z: at.z };
   const e: Entity = { id: ctx.streamer.takeId(), key, chunk: ctx.streamer.chunkIdAt(position), position, prevPosition: position, yaw, prevYaw: yaw, pitch: 0, view };
   ctx.world.add(e);
   return e;

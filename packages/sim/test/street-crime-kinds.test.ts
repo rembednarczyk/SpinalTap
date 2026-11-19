@@ -73,6 +73,8 @@ describe("the crimes round a thing of the street (ADR-0091 stage 5b)", () => {
     expect(r.attackers).toHaveLength(3);
     expect(r.props).toHaveLength(1);
     const crate = byId(sim, r.props![0]!)!;
+    // On the ground, not sunk into it: a block stands on its centre.
+    expect(crate.position.y).toBeCloseTo(r.at.y + 0.3, 1);
     for (const id of r.attackers) expect(Math.hypot(byId(sim, id)!.position.x - crate.position.x, byId(sim, id)!.position.z - crate.position.z)).toBeCloseTo(1.3, 1);
     const eddies = sim.domain.wallet.eddies;
     const pay = stake(sim, crime);
