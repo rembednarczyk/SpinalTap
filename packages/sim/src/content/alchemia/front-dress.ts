@@ -26,14 +26,21 @@ const vines = (): Piece[] => {
   return out;
 };
 
-/** Trees in planters along L2's south terrace, between L3's front and L2's edge. */
-const trees = (): Piece[] =>
-  [L2.minX + 4, L2.minX + 13, L2.maxX - 6].flatMap((x) => [
+/**
+ * Trees in planters along L2's south terrace, between L3's front and L2's edge: west of L3's sign
+ * (stage 8: in front of it their crowns hid CENTRUM HANDLOWE from the street and from the air);
+ * before the sign, the planters only.
+ */
+const PLANTERS = [L2.minX + 13, L2.maxX - 6] as const;
+const trees = (): Piece[] => [
+  ...PLANTERS.map((x) => piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP, L2_TOP + 0.7), "green", false, false)),
+  ...[L2.minX + 2.2, L2.minX + 6.2].flatMap((x) => [
     piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP, L2_TOP + 0.7), "green", false, false),
     piece(box(x - 0.12, x + 0.12, 7.88, 8.12, L2_TOP + 0.7, L2_TOP + 2.6), "frame", false, false),
     piece(box(x - 1.3, x + 1.3, 6.7, 9.3, L2_TOP + 2.2, L2_TOP + 3.4), "green", false, false),
     piece(box(x - 0.8, x + 0.8, 7.2, 8.8, L2_TOP + 3.4, L2_TOP + 4.0), "green", false, false),
-  ]);
+  ]),
+];
 
 /** Umbrellas over tables on L3's roof, towards its south edge: the board's top terrace. */
 const umbrellas = (): Piece[] =>
