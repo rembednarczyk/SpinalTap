@@ -1,5 +1,5 @@
 import { type Box, box } from "./plan";
-import { MAIN_DOORS, MALL, MALL_LEVELS } from "./mall-plan";
+import { MAIN_DOORS, MALL, MALL_GLASS_THICK, MALL_LEVELS } from "./mall-plan";
 import type { Rectangle } from "./rounded";
 
 /*
@@ -42,8 +42,8 @@ export interface ShopDef {
   readonly door?: "r";
 }
 
-/** The glass's inner faces (its panes 0.12 thick inside the body's line, `mall.ts`). */
-export const GLASS_IN: Rectangle = { x0: MALL.x0 + 0.12, x1: MALL.x1 - 0.12, z0: MALL.z0 + 0.12, z1: MALL.z1 - 0.12 };
+/** The glass's inner faces (its panes `MALL_GLASS_THICK` deep inside the body's line, `mall.ts`). */
+export const GLASS_IN: Rectangle = { x0: MALL.x0 + MALL_GLASS_THICK, x1: MALL.x1 - MALL_GLASS_THICK, z0: MALL.z0 + MALL_GLASS_THICK, z1: MALL.z1 - MALL_GLASS_THICK };
 const G = GLASS_IN;
 const r = (x0: number, x1: number, z0: number, z1: number): Rectangle => ({ x0, x1, z0, z1 });
 

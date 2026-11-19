@@ -18,6 +18,11 @@ export const MALL_FLOORS: readonly number[] = [L.p0, L.p1, L.p2, L.p3, L.roof];
 
 /** The body's glass line: the hall's outline. */
 export const MALL: Rectangle = { x0: HALL.minX, x1: HALL.maxX, z0: HALL.minZ, z1: HALL.maxZ };
+/**
+ * The facade glass's depth inside the body's line: as deep as a room's wall (0.2 m), so a crouched,
+ * aimed shoulder against it starts its shot inside the glass, not outside it (G-275's measure).
+ */
+export const MALL_GLASS_THICK = 0.2;
 /** The atrium, open from P0's floor to the sky. */
 export const ATRIUM: Rectangle = { x0: 411, x1: 425, z0: 40, z1: 50 };
 /** The gallery round it on P1..P3: 3 m wide. */
@@ -150,7 +155,16 @@ export const GALLERY_ROOMS: readonly (Rectangle & { readonly bottom: number; rea
   [L.p1, L.p2],
   [L.p2, L.p3],
   [L.p3, L.roof],
-].map(([bottom, top]) => ({ x0: MALL.x0 + 0.12, x1: MALL.x1 - 0.12, z0: MALL.z0 + 0.12, z1: MALL.z1 - 0.12, bottom: bottom!, top: top! - MALL_SLAB }));
+].flatMap(([bottom, top]) => {
+  const g = { x0: MALL.x0 + MALL_GLASS_THICK, x1: MALL.x1 - MALL_GLASS_THICK, z0: MALL.z0 + MALL_GLASS_THICK, z1: MALL.z1 - MALL_GLASS_THICK };
+  const r = MALL_GLASS_RADIUS;
+  const y = { bottom: bottom!, top: top! - MALL_SLAB };
+  // A cross of two rectangles, inside the glass's rounded north corners (the south ones are joins).
+  return [
+    { ...g, z1: g.z1 - r, ...y },
+    { ...g, x0: g.x0 + r, x1: g.x1 - r, z0: g.z1 - r, ...y },
+  ];
+});
 
 /**
  * The main entrance (ADR-0093 O2b): one opening 4.4 m wide at the end of the way from Bajkowskiego east

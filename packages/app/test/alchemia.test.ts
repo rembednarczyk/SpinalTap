@@ -88,14 +88,16 @@ describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
     const { session } = start();
     teleport(session, 420, 28, 0);
     steps(session, 2);
-    // In through the main doors from T0's strip, along the east side of P1.
+    // In through the main doors from T0's strip, between the south shops to the gallery and along
+    // its east side (ADR-0093 O2: the shops stand between the gallery and the glass).
     walkAt(session, { x: 420, z: 35 }, 600);
-    walkAt(session, { x: 434.9, z: 35 }, 600);
-    walkAt(session, { x: 434.9, z: 50 }, 600);
+    walkAt(session, { x: 420, z: 38.5 }, 300);
+    walkAt(session, { x: 426.5, z: 38.5 }, 600);
+    walkAt(session, { x: 426.5, z: 50 }, 600);
     expect(at(session).z).toBeGreaterThan(49);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
     // The glass over T1 keeps her in.
-    walkAt(session, { x: 434.9, z: 66 }, 300);
+    walkAt(session, { x: 426.5, z: 66 }, 300);
     expect(at(session).z).toBeLessThan(FOODHALL.maxZ);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
   });
