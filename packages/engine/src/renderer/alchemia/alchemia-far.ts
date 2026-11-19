@@ -25,17 +25,34 @@ const WARM: Rgba = hexColor("#c99662", DRESS_FLAG.lit);
 const GREEN: Rgba = hexColor("#1f4a3a");
 const FLOOR: Rgba = hexColor("#5a6170");
 
+/** Is a piece's outline its box's rectangle (its box lies inside what the detailed mesh draws)? */
+const boxLike = (p: AlchemiaPiece): boolean =>
+  !p.outline || (p.outline.length === 4 && p.outline.every((q) => (q.x === p.box.x0 || q.x === p.box.x1) && (q.z === p.box.z0 || q.z === p.box.z1)));
+
 /**
- * What of the hall stands in from afar: the outside's solid pieces on its outline (the gallery's over
- * it with its slabs' overhang, ADR-0093 O1) but the steps on the ramp (not T2's, low and near).
+ * What of the hall stands in from afar: the outside's solid pieces on its outline (the gallery's slabs
+ * over it with their overhang, ADR-0093 O1) but the steps on the ramp (not T2's, low and near). Not
+ * what the detailed mesh draws open, as the stand-in is drawn near too: the gallery's glass (a frame
+ * only), a balustrade (posts and a rail), a rounded corner (its box reaches past the arc).
  */
 const standIn = (pieces: readonly AlchemiaPiece[]): AlchemiaPiece[] =>
-  pieces.filter((p) => p.solid && !p.inside && p.kind !== "step" && p.box.x0 >= FOODHALL.minX - 0.35 && p.box.x1 <= FOODHALL.maxX + 0.35 && p.box.z0 >= FOODHALL.minZ - 0.2 && p.box.z1 <= FOODHALL.maxZ + 0.35);
+  pieces.filter(
+    (p) =>
+      p.solid &&
+      !p.inside &&
+      p.kind !== "step" &&
+      p.kind !== "pane" &&
+      !(p.kind === "parapet" && p.outline) &&
+      boxLike(p) &&
+      p.box.x0 >= FOODHALL.minX - 0.35 &&
+      p.box.x1 <= FOODHALL.maxX + 0.35 &&
+      p.box.z0 >= FOODHALL.minZ - 0.2 &&
+      p.box.z1 <= FOODHALL.maxZ + 0.35,
+  );
 
 const colorOf = (p: AlchemiaPiece): Rgba => {
   const b = p.box;
-  // The gallery's glass (ADR-0093 O1) from afar: lit, as the hall's front.
-  if (p.kind === "glass" || p.kind === "pane") return WARM;
+  if (p.kind === "glass") return WARM;
   if (p.kind === "roof" && (b.x1 - b.x0) * (b.z1 - b.z0) > 100) return GREEN;
   return COLORS[p.kind] ?? COLORS.wall!;
 };
