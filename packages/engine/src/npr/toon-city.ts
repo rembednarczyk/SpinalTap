@@ -262,17 +262,14 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
   } else if (code < 1.5) {
     k = 0.92 + 0.08 * step(0.6, vnoise(w * 0.3)) - 0.1 * step(0.74, vnoise(w * 0.07 + 3.0));
   } else if (code < 2.5) {
-#ifndef DETAIL
+    // Sidewalk slabs of a metre, each its own shade (the comic version keeps them drawn, 19.11).
     k -= 0.24 * max(gridLine(q.x, 1.0, 0.018), gridLine(q.y, 1.0, 0.018)) * near;
     k += 0.06 * (hash(floor(q)) - 0.5);
-#endif
   } else if (code < 3.5) {
-#ifndef DETAIL
     // Granite slabs in running bond.
     vec2 g = vec2(q.x / 1.2 + 0.5 * step(0.5, fract(q.y / 1.2)), q.y / 0.6);
     k -= 0.14 * max(gridLine(g.x, 1.0, 0.015), gridLine(g.y, 1.0, 0.03)) * near;
     k += 0.08 * (hash(floor(g)) - 0.5);
-#endif
     // Bands of a darker stone every 6 m.
     k -= 0.07 * step(0.5, fract(q.y / 6.0)) * step(fract(q.y / 6.0), 0.6);
   } else if (code < 4.5) {
@@ -284,11 +281,9 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
     float fine = 1.0 - smoothstep(12.0, 35.0, dist);
     k = mix(0.95, k, fine) - 0.3 * joint * fine;
   } else if (code < 5.5) {
-#ifndef DETAIL
     vec2 g = w / 0.3;
     float fine = 1.0 - smoothstep(12.0, 35.0, dist);
     k -= 0.14 * max(gridLine(g.x, 1.0, 0.05), gridLine(g.y + 0.5 * step(0.5, fract(g.x * 0.5)), 1.0, 0.05)) * fine;
-#endif
   } else if (code < 6.5) {
     k = 0.75 + 0.3 * step(0.5, vnoise(w * 0.5)) + 0.12 * step(0.7, vnoise(w * 3.1));
   } else if (code < 7.5) {

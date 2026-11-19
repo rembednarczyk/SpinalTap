@@ -24,7 +24,7 @@ export interface DetailLayer {
 /** Every layer by its Poly Haven asset; files and tiles as `packages/app/public/textures/layers.json` has them. */
 export const DETAIL_LAYERS = {
   grey_plaster_02: { texture: "walls", channel: 0, metres: 1, amp: 0 },
-  medieval_red_brick: { texture: "walls", channel: 1, metres: 2, amp: 0.35 },
+  medieval_red_brick: { texture: "walls", channel: 1, metres: 2, amp: 0.55 },
   large_sandstone_blocks_01: { texture: "walls", channel: 2, metres: 3, amp: 0 },
   concrete_wall_006: { texture: "walls", channel: 3, metres: 2, amp: 0 },
   asphalt_02: { texture: "ground", channel: 0, metres: 3, amp: 0.3 },
@@ -38,7 +38,7 @@ export const DETAIL_LAYERS = {
   weathered_planks: { texture: "extra", channel: 0, metres: 2, amp: 0.3 },
   gray_rocks: { texture: "extra", channel: 1, metres: 1.8, amp: 0.3 },
   cobblestone_floor_08: { texture: "extra", channel: 2, metres: 2, amp: 0.35 },
-  red_brick_03: { texture: "extra", channel: 3, metres: 1, amp: 0.35 },
+  red_brick_03: { texture: "extra", channel: 3, metres: 1, amp: 0.55 },
 } as const satisfies Record<string, DetailLayer>;
 
 export type DetailAsset = keyof typeof DETAIL_LAYERS;
