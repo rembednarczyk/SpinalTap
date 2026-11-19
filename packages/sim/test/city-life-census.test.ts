@@ -17,10 +17,10 @@ type Census = Record<DistrictId, { readonly people: number; readonly hebi: numbe
 
 /** Floors of 18.11 (ADR-0091, „Kontekst”), raised by stage 4's groups (the car wash's yard counts once the prologue is over, so not here). */
 const FLOOR: Census = {
-  "shinsekai-7": { people: 28, hebi: 6, hides: 3, spots: 3 },
-  kanal: { people: 12, hebi: 9, hides: 1, spots: 3 },
-  targ: { people: 11, hebi: 11, hides: 0, spots: 3 },
-  doki: { people: 2, hebi: 0, hides: 10, spots: 3 },
+  "shinsekai-7": { people: 28, hebi: 6, hides: 3, spots: 7 },
+  kanal: { people: 12, hebi: 9, hides: 1, spots: 7 },
+  targ: { people: 11, hebi: 11, hides: 0, spots: 7 },
+  doki: { people: 2, hebi: 0, hides: 10, spots: 7 },
 };
 
 /** Metres from the clinic's wake spot to the nearest Hebi on 18.11: the Bramowa patrol. */
