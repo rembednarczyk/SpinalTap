@@ -9,8 +9,8 @@ import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
 import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
-import { P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_SHELL_PIECES, P2_STAIR_PIECES, P2_VAULT } from "./p2";
-import { P2_STORE_PIECES } from "./p2-store";
+import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR_PIECES, P2_STORE_SHELL, P2_VAULT } from "./p2";
+import { P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
@@ -68,8 +68,16 @@ export const ALCHEMIA_TIER_PIECES: readonly Piece[] = TIERS;
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
 export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS];
 
-/** P-2's solids (stage 5a), the last of Alchemia's: its shell and cutting, its stairs, its store. */
-export const P2_PROPS: readonly StaticProp[] = [solidProp([...P2_SHELL_PIECES, ...P2_EARTH_PIECES, ...P2_CUTTING_PIECES]), solidProp(P2_STAIR_PIECES), solidProp(P2_STORE_PIECES)];
+/**
+ * P-2's solids (stage 5a), the last of Alchemia's: its store's shell with the earth beside it, its
+ * corridor's with the cutting, its stairs, its store's fittings with the pallets and their cars.
+ */
+export const P2_PROPS: readonly StaticProp[] = [
+  solidProp([...P2_STORE_SHELL, ...P2_EARTH_PIECES]),
+  solidProp([...P2_CORRIDOR_SHELL, ...P2_CUTTING_PIECES]),
+  solidProp(P2_STAIR_PIECES),
+  solidProp([...P2_STORE_PIECES, ...P2_STORE_SOLIDS]),
+];
 
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [

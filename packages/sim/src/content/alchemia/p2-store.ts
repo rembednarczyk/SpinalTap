@@ -41,12 +41,15 @@ export const P2_PALLETS: readonly (Rect & { readonly car: boolean })[] = P2_ROWS
 export const P2_CONTROL: Rect = { minX: 414.6, maxX: P2.maxX - W, minZ: P2.minZ + W, maxZ: 7.6 };
 const CONTROL_DOOR = { x0: 415.2, x1: 416.2, top: 2.1 } as const;
 
-/** A car on a pallet whose top is `y`: its body clear of the pallet, its cabin, a tyre at each corner. */
+/** A car's body clear of its pallet, and its cabin's top, over the pallet's top. */
+const BODY = { lift: 0.2, top: 0.85, cabin: 0.5 } as const;
+
+/** A car on a pallet whose top is `y`, as drawn: its body, its cabin, a tyre at each corner (its solid is the pallet's, `P2_STORE_SOLIDS`). */
 const carPieces = (p: Rect, y: number): Piece[] => {
   const mx = (p.minX + p.maxX) / 2;
   const mz = (p.minZ + p.maxZ) / 2;
-  const body = box(mx - 2.15, mx + 2.15, mz - 0.9, mz + 0.9, y + 0.2, y + 0.85);
-  const out: Piece[] = [piece(body, "car", true), piece(box(mx - 1.2, mx + 0.9, mz - 0.8, mz + 0.8, body.y1, body.y1 + 0.5), "glass", true)];
+  const body = box(mx - 2.15, mx + 2.15, mz - 0.9, mz + 0.9, y + BODY.lift, y + BODY.top);
+  const out: Piece[] = [piece(body, "car", true, false), piece(box(mx - 1.2, mx + 0.9, mz - 0.8, mz + 0.8, body.y1, body.y1 + BODY.cabin), "glass", true, false)];
   for (const dx of [-1.35, 1.35]) for (const dz of [-0.82, 0.82]) out.push(piece(box(mx + dx - 0.32, mx + dx + 0.32, mz + dz - 0.1, mz + dz + 0.1, y, y + 0.55), "tyre", true, false));
   return out;
 };
@@ -55,7 +58,7 @@ const carPieces = (p: Rect, y: number): Piece[] => {
 const rackPieces = (): Piece[] => {
   const out: Piece[] = [];
   for (const p of P2_PALLETS) {
-    out.push(piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height), "pallet", true));
+    out.push(piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height), "pallet", true, false));
     if (p.car) out.push(...carPieces(p, F + PALLET.height));
   }
   const ends = { z0: PALLET.from - 0.2, z1: PALLET.from + (PALLET.count - 1) * PALLET.pitch + PALLET.width + 0.2 };
@@ -66,7 +69,7 @@ const rackPieces = (): Piece[] => {
       const z = PALLET.from + i * PALLET.pitch - (PALLET.pitch - PALLET.width) / 2;
       out.push(piece(box(x, x + 0.15, z - 0.075, z + 0.075, F, C), "rack", true));
     }
-    out.push(piece(box(x, x + 0.15, ends.z0, ends.z1, C - 0.35, C - 0.2), "rack", true));
+    out.push(piece(box(x, x + 0.15, ends.z0, ends.z1, C - 0.35, C - 0.2), "rack", true, false));
   }
   // The beacons along the lane, under its beams: the robots' warning light, orange.
   out.push(piece(box(lines[0]! + 0.15, lines[0]! + 0.18, ends.z0, ends.z1, C - 0.45, C - 0.35), "beacon", true, false));
@@ -108,5 +111,14 @@ const corridorPieces = (): Piece[] => {
   return out;
 };
 
-/** The store's fittings: drawn with P-2's shell, near it only. */
+/** The store's fittings: drawn with P-2's shell, near it only. The pallets, the cars and the beams over head height are drawn only. */
 export const P2_STORE_PIECES: readonly Piece[] = [...rackPieces(), ...lanePieces(), ...controlPieces(), ...corridorPieces()];
+
+/**
+ * The pallets with their cars as solids, not drawn: a box a pallet up to its car's cabin. A pallet
+ * and the car's body and cabin were three prisms of every query on P-1 over the store (the index of
+ * solids is flat, `solid-index.ts`): the ramp's traffic tests ran some 15% longer.
+ */
+export const P2_STORE_SOLIDS: readonly Piece[] = P2_PALLETS.map((p) =>
+  piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height + (p.car ? BODY.top + BODY.cabin : 0)), "pallet", true),
+);

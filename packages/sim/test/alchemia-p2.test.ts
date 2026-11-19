@@ -34,6 +34,7 @@ import {
   P2_STAIR_PIECES,
   P2_STAIR_RISE,
   P2_STORE_PIECES,
+  P2_STORE_SOLIDS,
   P2_VAULT,
   Simulation,
   WORLD_CHUNKS,
@@ -62,7 +63,8 @@ const F = P2.floor;
 const node = (id: string): Vec3 => ALCHEMIA_NAV.nodes.find((n) => n.id === id)!.at;
 const up = (p: Vec3, dy: number): Vec3 => ({ ...p, y: p.y + dy });
 const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
-const STORE = { x: 407, y: F, z: 16 } as const;
+/** In the robots' lane between the rows. */
+const STORE = { x: 402.3, y: F, z: 16 } as const;
 const MOUTH = { x: (P2_CUTTING.minX + P2_CUTTING.maxX) / 2, z: P2_CUTTING.maxZ + 3 };
 
 /** The world with Alchemia's chunk loaded, nobody in it but the player. */
@@ -124,7 +126,7 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
   });
 
   it("stands clear of P-1's, the food hall's and the passage from metro B's solids, and of P-1's stair core", () => {
-    const mine = solidOf([...P2_SHELL_PIECES, ...P2_EARTH_PIECES, ...P2_STAIR_PIECES, ...P2_STORE_PIECES, ...P2_CUTTING_PIECES]);
+    const mine = solidOf([...P2_SHELL_PIECES, ...P2_EARTH_PIECES, ...P2_STAIR_PIECES, ...P2_STORE_PIECES, ...P2_STORE_SOLIDS, ...P2_CUTTING_PIECES]);
     const theirs = solidOf([...P1_PIECES, ...ALCHEMIA_PIECES, ...METRO_DOOR_PIECES]);
     const hits: string[] = [];
     for (const a of mine) for (const b of theirs) if (overlap(a.box, b.box) > 1e-6) hits.push(`${a.kind} ${a.box.x0},${a.box.z0} in ${b.kind} ${b.box.x0},${b.box.z0}`);

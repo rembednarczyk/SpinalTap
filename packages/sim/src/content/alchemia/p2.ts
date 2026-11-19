@@ -109,7 +109,8 @@ const shellPieces = (): Piece[] => {
     wall(P2.minX + W, s.minX, P2.maxZ - W, P2.maxZ),
     // The annex's south and east walls, the east one on along the corridor; the corridor's west wall.
     wall(a.minX, a.maxX, a.minZ, a.minZ + W),
-    wall(a.maxX - W, a.maxX, a.minZ + W, PORTAL.z0),
+    wall(a.maxX - W, a.maxX, a.minZ + W, a.maxZ),
+    wall(k.maxX - W, k.maxX, k.minZ, PORTAL.z0),
     wall(k.minX, k.minX + W, k.minZ, PORTAL.z0),
   ];
 };
@@ -186,6 +187,9 @@ const cuttingPieces = (): Piece[] => {
 
 /** P-2's shell, under the ground: drawn near only. */
 export const P2_SHELL_PIECES: readonly Piece[] = shellPieces();
+/** Its store's and annex's part (under P-1) and its corridor's (north of it): solids of their own, so a query on P-1 leaves the corridor's out. */
+export const P2_STORE_SHELL: readonly Piece[] = P2_SHELL_PIECES.filter((p) => p.box.z0 < P2.maxZ);
+export const P2_CORRIDOR_SHELL: readonly Piece[] = P2_SHELL_PIECES.filter((p) => p.box.z0 >= P2.maxZ);
 /** The earth beside the store (solid, not drawn). */
 export const P2_EARTH_PIECES: readonly Piece[] = earthPieces();
 /** The flight down from P-1: drawn with P-1 (`P1_ALL_PIECES`), seen from both levels. */
