@@ -341,6 +341,19 @@ Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wy
   - 5c: przystanek windy na −9,2;
   - 5d: schron ze skrytką Hebi.
 
+### Etap 5c: przystanek windy na P−2 (gałąź `feat/alchemia-5c`)
+- **Trzy poziomy windy** (`lift.ts`): P−2 (−9,2), hala (−6,4), T0 (−2,2), od najniższego.
+  - Szyb schodzi pod podłogę hali w wykopie `LIFT_SHAFT_CUT`. Na liście cięć stoi przed wykopem hali, bo o podłodze w punkcie decyduje pierwsze cięcie.
+  - Na P−2 bramka otwiera się na wschód, prosto w korytarz serwisowy.
+  - Platforma startuje jak dotąd przy hali: fabryka ustawia cel na poziom, przy którym stoi platforma.
+- **Jazda.** Jedzie dalej w tę stronę, w którą jechała ostatnio, i zawraca na końcu: hala, T0, hala, P−2, hala. Przy dwóch poziomach to to samo co wcześniej. Kierunek nie jest zapisywany, a po wczytaniu jazda zaczyna w górę.
+- **Korytarz P−2.** Jego zachodnia ściana i strop omijają rozpiętość szybu (x 412,3–414,7, z 32,4–34,8), więc platforma jedzie swobodnie, a szyb zamykają jego własne ściany i bramka. Północna i południowa ściana szybu stoją na podłodze P−2, bo pod nią płyta podłogi korytarza wchodzi w jamę szybu.
+- **Testy.**
+  - Sesja: z hali na T0, z powrotem do hali, w dół na P−2 i wyjście do korytarza, bez obrażeń.
+  - Ściany korytarza poza otworem.
+  - Trzy poziomy i drzwi na P−2.
+- **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**

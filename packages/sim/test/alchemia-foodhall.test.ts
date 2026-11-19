@@ -4,6 +4,9 @@ import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_CUTS,
   ALCHEMIA_LIFT,
+  P2,
+  P2_CORRIDOR,
+  P2_SHELL_PIECES,
   ALCHEMIA_NAV,
   ALCHEMIA_PIECES,
   ALCHEMIA_T0,
@@ -55,8 +58,9 @@ const up = (p: Vec3, dy: number): Vec3 => ({ ...p, y: p.y + dy });
 describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () => {
   it("is dug to its floor, T1 in front of it, its roof level with the car park behind it", () => {
     const g = loaded().streamer.ground;
-    // The hall's stairs and the hall; then P-1's ramp trench and stair core (stage 4, `alchemia-parking.test.ts`).
-    expect(ALCHEMIA_CUTS.slice(0, 2).map((c) => c.floor)).toEqual([ALCHEMIA_T1, ALCHEMIA_T1]);
+    // The lift's shaft down to P-2 (stage 5c), the hall's stairs and the hall; then P-1's ramp trench and stair core (stage 4, `alchemia-parking.test.ts`).
+    expect(ALCHEMIA_CUTS[0]!.floor).toBeLessThan(P2.floor);
+    expect(ALCHEMIA_CUTS.slice(1, 3).map((c) => c.floor)).toEqual([ALCHEMIA_T1, ALCHEMIA_T1]);
     for (const [x, z] of [
       [418, 45],
       [401, 33],
@@ -196,9 +200,17 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     expect(chase(beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }, 30)).not.toBeNull();
   });
 
-  it("the lift goes from the hall's floor to the roof, its top door onto the car park", () => {
-    expect(ALCHEMIA_LIFT.levels).toEqual([F, R]);
-    const top = ALCHEMIA_LIFT.doors[1];
+  it("the lift goes from P-2 by the hall's floor to the roof, its top door onto the car park, its bottom one into P-2's corridor (stage 5c)", () => {
+    expect(ALCHEMIA_LIFT.levels).toEqual([P2.floor, F, R]);
+    const pit = ALCHEMIA_LIFT.doors[0];
+    expect(pit.x).toBeGreaterThan(P2_CORRIDOR.minX + 0.5);
+    expect(pit.x).toBeLessThan(P2_CORRIDOR.maxX - 0.5);
+    expect(pit.y).toBe(P2.floor);
+    // The corridor's west wall is open where the shaft stops: the shell leaves the span the gate fills.
+    const p2 = ALCHEMIA_LIFT.p2Door;
+    const wallInDoor = P2_SHELL_PIECES.filter((p) => p.kind === "wall" && p.box.x0 < P2_CORRIDOR.minX + 0.4 && p.box.x1 > P2_CORRIDOR.minX && p.box.z1 > p2.z0 + 0.01 && p.box.z0 < p2.z1 - 0.01 && p.box.y0 < p2.top - 0.01);
+    expect(wallInDoor).toEqual([]);
+    const top = ALCHEMIA_LIFT.doors[2];
     expect(top.z).toBeLessThan(FOODHALL.minZ);
     expect(Math.abs(groundY(top.x, top.z) - R)).toBeLessThan(0.1);
     expect(ALCHEMIA_PIECES.length).toBeGreaterThan(100);

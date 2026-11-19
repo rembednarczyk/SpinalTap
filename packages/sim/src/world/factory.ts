@@ -104,7 +104,10 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   }
   const m = prop.mechanism;
   if (m?.kind === "platform" && e.solid) {
-    e.elevator = { key: m.key, levels: m.levels, speed: m.speed, target: 0, settled: false };
+    // At rest where the platform stands (Alchemia's at the hall's floor, its second of three levels).
+    const top = e.solid.max.y;
+    const target = m.levels.reduce((best, y, i) => (Math.abs(y - top) < Math.abs((m.levels[best] ?? 0) - top) ? i : best), 0);
+    e.elevator = { key: m.key, levels: m.levels, speed: m.speed, target, settled: false };
     e.velocity = { x: 0, y: 0, z: 0 };
   } else if (m?.kind === "gate" && e.solid) {
     e.gate = { elevator: m.elevator, level: m.level, closed: e.solid, travel: m.travel };

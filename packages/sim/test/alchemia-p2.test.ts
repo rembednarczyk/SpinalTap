@@ -26,6 +26,7 @@ import {
   P2_CUTTING_PIECES,
   P2_EARTH_PIECES,
   P2_PALLETS,
+  LIFT_SHAFT_CUT,
   P2_PROPS,
   P2_ROBOTS,
   P2_ROOMS,
@@ -113,13 +114,16 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
     expect(g.underStreet({ x: 416, y: F, z: 85 })).toBe(false);
   });
 
-  it("keeps every solid of the store and the corridor under the ground, the corridor under the food hall's floor and T1", () => {
+  /** In the lift's shaft (stage 5c): dug down to its pit, the corridor's floor slab at its threshold under the open shaft. */
+  const inShaft = (x: number, z: number) => x >= LIFT_SHAFT_CUT.bounds.minX && x <= LIFT_SHAFT_CUT.bounds.maxX && z >= LIFT_SHAFT_CUT.bounds.minZ && z <= LIFT_SHAFT_CUT.bounds.maxZ;
+
+  it("keeps every solid of the store and the corridor under the ground (but in the lift's shaft), the corridor under the food hall's floor and T1", () => {
     const g = loaded().streamer.ground;
     for (const p of [...P2_SHELL_PIECES, ...P2_STORE_PIECES]) {
       const b = p.box;
       let low = Infinity;
       for (let x = b.x0; x <= b.x1 + 1e-9; x += 0.5)
-        for (let z = b.z0; z <= b.z1 + 1e-9; z += 0.5) if (!inCutting(Math.min(x, b.x1), Math.min(z, b.z1))) low = Math.min(low, g.heightAt(Math.min(x, b.x1), Math.min(z, b.z1)));
+        for (let z = b.z0; z <= b.z1 + 1e-9; z += 0.5) if (!inCutting(Math.min(x, b.x1), Math.min(z, b.z1)) && !inShaft(Math.min(x, b.x1), Math.min(z, b.z1))) low = Math.min(low, g.heightAt(Math.min(x, b.x1), Math.min(z, b.z1)));
       expect(b.y1, `${p.kind} ${b.x0},${b.z0}`).toBeLessThan(low - 0.1);
     }
     expect(P2_CORRIDOR.minX).toBeGreaterThanOrEqual(FOODHALL.minX);
