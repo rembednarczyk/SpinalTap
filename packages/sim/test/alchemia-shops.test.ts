@@ -22,6 +22,7 @@ import {
   galleryShopOpen as shopOpen,
 } from "../src";
 import { prismsAt, type Prism } from "../src/world/prism";
+import { interiorAt } from "../src/content/interior-areas";
 
 /*
  * The gallery's shops on P1 and P2 (ADR-0093 O2), measured on the simulation's own solids: a ring
@@ -190,5 +191,12 @@ describe("the gallery's shops on P1 and P2 (ADR-0093 O2)", () => {
       if (f === "p1") goals.push(["east door", MALL.x1 - 1.4, 33.15], ["main doors", 420, MALL.z0 + 1.0]);
       for (const [name, x, z] of goals) expect(r.near(REACHED[f], x, z), `${f} ${name}`).toBe(true);
     }
+  });
+
+  it("names the gallery in the HUD on P1..P3 (ADR-0061), the food hall under it and nothing on its roof", () => {
+    for (const b of SHOP_BUILDS.filter((x) => x.customer)) expect(interiorAt(b.customer!)?.id, b.shop.id).toBe("alchemia-gallery");
+    expect(interiorAt({ x: 426.5, y: L.p3, z: 46 })?.id).toBe("alchemia-gallery");
+    expect(interiorAt({ x: 418, y: L.p0, z: 47 })?.id).toBe("alchemia-foodhall");
+    expect(interiorAt({ x: 418, y: L.roof, z: 52 })).toBeNull();
   });
 });

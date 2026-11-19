@@ -141,3 +141,13 @@ export const STAIR_CORES: readonly StairCore[] = [SW_CORE, NE_CORE];
 
 /** A core's stairwell: inside its walls past the floor landing (a hole in every slab over its lowest floor). */
 export const stairwell = (c: StairCore): Rectangle => ({ x0: c.x0 + c.landing, x1: c.x1, z0: c.z0, z1: c.z1 });
+
+/**
+ * The gallery as an interior of ADR-0061 (O2): P1, P2 and P3 inside the glass, from each floor up to
+ * the underside of the slab over it (the atrium's column in each one too: on the gallery round it).
+ */
+export const GALLERY_ROOMS: readonly (Rectangle & { readonly bottom: number; readonly top: number })[] = [
+  [L.p1, L.p2],
+  [L.p2, L.p3],
+  [L.p3, L.roof],
+].map(([bottom, top]) => ({ x0: MALL.x0 + 0.12, x1: MALL.x1 - 0.12, z0: MALL.z0 + 0.12, z1: MALL.z1 - 0.12, bottom: bottom!, top: top! - MALL_SLAB }));

@@ -8,6 +8,7 @@ import {
   ALCHEMIA_PIECES,
   ALCHEMIA_PROPS,
   MALL_PROPS,
+  SHOP_SOLID_PROPS,
   ALCHEMIA_T2,
   ALCHEMIA_VAULTS,
   METRO_DOOR_PIECES,
@@ -159,8 +160,9 @@ describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
   });
 
   it("is the last of Alchemia's props but the car lift's (5e), the gate's leaf a door in P-2's corridor's wall", () => {
-    // The gallery round the atrium (ADR-0093 O1) comes after the car lift.
-    expect(ALCHEMIA_PROPS.slice(-SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length, -CAR_LIFT_PROPS.length - MALL_PROPS.length)).toEqual(SHELTER_PROPS);
+    // The gallery round the atrium (ADR-0093 O1) comes after the car lift, its shops (O2) after the gallery.
+    const after = CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length;
+    expect(ALCHEMIA_PROPS.slice(-SHELTER_PROPS.length - after, -after)).toEqual(SHELTER_PROPS);
     const leaf = SHELTER_PROPS.find((p) => p.mechanism?.kind === "door")!;
     expect(leaf.mechanism?.kind).toBe("door");
     expect(leaf.center.x).toBeGreaterThan(P2_CORRIDOR.maxX - P2.wall);

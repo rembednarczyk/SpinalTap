@@ -64,6 +64,7 @@ export const plContent = {
   "interior.alchemia-parking": "Parking Alchemii",
   "interior.alchemia-p2": "Parking Alchemii, poziom -2",
   "interior.alchemia-shelter": "Schron przeciwlotniczy pod Alchemią",
+  "interior.alchemia-gallery": "Galeria Alchemia",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",

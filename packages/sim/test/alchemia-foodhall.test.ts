@@ -111,7 +111,8 @@ describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () =>
 
   it("counts as an interior inside its walls, not on its roof or on T1", () => {
     expect(interiorAt({ x: 418, y: F, z: 45 })?.id).toBe("alchemia-foodhall");
-    expect(interiorAt({ x: 418, y: R, z: 45 })).toBeNull();
+    // Its roof is P1 of the gallery round the atrium since ADR-0093 (an interior of its own since O2).
+    expect(interiorAt({ x: 418, y: R, z: 45 })?.id).toBe("alchemia-gallery");
     expect(interiorAt({ x: 418, y: ALCHEMIA_T1, z: 62 })).toBeNull();
   });
 
