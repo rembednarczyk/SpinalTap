@@ -10,6 +10,7 @@ import {
   crimeSlot,
   grudgeAfter,
   streetCrimePay,
+  streetDistrusts,
 } from "@seki/core";
 import { MICRO_SPOTS } from "../content/encounter-rewards";
 import { CONTRACT_SITE_BANDS, DISTRICT_BANDS } from "../content/district-bands";
@@ -58,12 +59,16 @@ const kindOf = (r: number): MicroEventKind => {
   return KINDS[KINDS.length - 1]![0];
 };
 
-/** The board of `slot`: per district 1–2 crimes at distinct spots, from the seed alone. */
-export const crimeBoard = (seed: number, slot: number): readonly BoardCrime[] =>
+/**
+ * The board of `slot`: per district 1–2 crimes at distinct spots, from the seed alone; two in each
+ * while the street distrusts the player (`streetDistrusts`), the first the same either way.
+ */
+export const crimeBoard = (seed: number, slot: number, distrusted = false): readonly BoardCrime[] =>
   DISTRICT_IDS.flatMap((district) => {
     const spots = MICRO_SPOTS[district];
     const rng = deriveRandom(seed, `crime:${district}:${slot}`);
-    const count = Math.min(spots.length, rng.next() < 0.5 ? 1 : 2);
+    const rolled = rng.next() < 0.5 ? 1 : 2;
+    const count = Math.min(spots.length, distrusted ? 2 : rolled);
     const first = Math.floor(rng.next() * spots.length);
     return Array.from({ length: count }, (_, n): BoardCrime => ({
       id: `crime:${slot}:${district}:${n}`,
@@ -81,7 +86,23 @@ const hidden = (ctx: SimContext, c: BoardCrime): boolean => crimeHidden(ctx.stat
 /** The board's crimes the player may still run into now. */
 export const openCrimes = (ctx: SimContext): readonly BoardCrime[] => {
   const log = ctx.state.domain.streetCrimes;
-  return crimeBoard(ctx.seed, crimeSlot(ctx.state.domain.clock)).filter((c) => !log.done.includes(c.id) && !hidden(ctx, c));
+  const distrusted = streetDistrusts(ctx.state.domain.reputation.civilians);
+  return crimeBoard(ctx.seed, crimeSlot(ctx.state.domain.clock), distrusted).filter((c) => !log.done.includes(c.id) && !hidden(ctx, c));
+};
+
+/** The first board from `from` (up to `horizon` boards on) with a crime that passes `test`: tools and tests. */
+export const nextCrime = (
+  seed: number,
+  from: number,
+  test: (c: BoardCrime) => boolean,
+  distrusted = false,
+  horizon = 2000,
+): { readonly slot: number; readonly crime: BoardCrime } | null => {
+  for (let slot = from; slot < from + horizon; slot++) {
+    const crime = crimeBoard(seed, slot, distrusted).find(test);
+    if (crime) return { slot, crime };
+  }
+  return null;
 };
 
 /** Keeps the log on the clock's board and day. */
@@ -112,7 +133,7 @@ const heldBy = (district: DistrictId): boolean => Object.values(TERRITORIES).som
  * A crime of the board over: foiled (Tessen pays, the street thanks her, the gang of the district
  * holds it against her), failed or left.
  */
-export const closeCrime = (ctx: SimContext, run: MicroEventRun & { readonly crime: BoardCrime }, outcome: "won" | "helped" | "failed" | "left"): number => {
+export const closeCrime = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "failed" | "left"): number => {
   if (outcome === "left") return 0;
   const d = ctx.state.domain;
   const foiled = outcome === "won" || outcome === "helped";

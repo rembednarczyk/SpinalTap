@@ -92,8 +92,8 @@ export interface StreetScenes {
 export interface MicroEventRun {
   readonly id: string;
   readonly kind: MicroEventKind;
-  /** The board's crime it is (ADR-0091 stage 5); none for a micro-event rolled on entering a district. */
-  readonly crime?: BoardCrime;
+  /** The board's crime it is (ADR-0091 stage 5). */
+  readonly crime: BoardCrime;
   readonly at: Vec3;
   /** The passer-by (the one robbed, squeezed, kidnapped or to help); none at a deal or a drone. */
   readonly victim: EntityId | null;
