@@ -22,7 +22,8 @@ const codeAt = (codes: Uint8Array, [u, v]: readonly [number, number]): number =>
 
 describe("the city kit's detail layers (ADR-0092 stage 2)", () => {
   it("numbers the layers by file and channel, as the shader reads them", () => {
-    expect(LAYERS_BY_NUMBER.map(globalLayer)).toEqual(Array.from({ length: 12 }, (_, i) => i));
+    expect(LAYERS_BY_NUMBER.map(globalLayer)).toEqual(Array.from({ length: Object.keys(DETAIL_LAYERS).length }, (_, i) => i));
+    expect(globalLayer("weathered_planks")).toBe(12);
     expect(globalLayer("grey_plaster_02")).toBe(0);
     expect(globalLayer("asphalt_02")).toBe(4);
     expect(globalLayer("granite_tile")).toBe(11);
@@ -38,7 +39,7 @@ describe("the city kit's detail layers (ADR-0092 stage 2)", () => {
       const want = KIT_DETAIL[name];
       expect(codeAt(codes, swatchUv(kit, name)), name).toBe(want ? globalLayer(want) + 1 : 0);
     }
-    for (const name of ["glass-dark", "shop-warm", "neon-cyan", "paint", "door", "win-warm"]) expect(codeAt(codes, swatchUv(kit, name)), name).toBe(0);
+    for (const name of ["glass-dark", "shop-warm", "neon-cyan", "paint", "win-warm"]) expect(codeAt(codes, swatchUv(kit, name)), name).toBe(0);
     expect(codeAt(codes, swatchUv(kit, "brick"))).toBe(globalLayer("medieval_red_brick") + 1);
   });
 });

@@ -299,6 +299,8 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
 const surfaces = (s: StyleInput, look: Omit<FacadeStyle, "wallDetail" | "roofDetail">, rand: () => number): Pick<FacadeStyle, "wallDetail" | "roofDetail" | "plaster" | "trim" | "plinth"> => {
   const mapped = s.material !== undefined || s.colour !== undefined;
   const industrialBrick = rand() < 0.55;
+  // Drawn after the old draws: half the brick halls in a factory's dark clinker.
+  const clinker = rand() < 0.5;
   const roofDetail: RoofDetail = look.roof === "flat" ? "bitumen" : (ROOFS_COPPER as readonly string[]).includes(look.roofColor) ? "copper" : (ROOFS_TILE as readonly string[]).includes(look.roofColor) ? "tile" : "metal";
   const keep = { plaster: look.plaster, trim: look.trim, plinth: look.plinth, roofDetail };
   if (s.material === "brick" || s.material === "stone") return { ...keep, wallDetail: s.material };
@@ -307,7 +309,7 @@ const surfaces = (s: StyleInput, look: Omit<FacadeStyle, "wallDetail" | "roofDet
     if (!industrialBrick) return { ...keep, wallDetail: "metal" };
     if (mapped) return { ...keep, wallDetail: "brick" };
     const plaster = pick(rand, BRICK);
-    return { plaster, trim: darken(plaster, 0.22), plinth: darken(plaster, 0.45), roofDetail, wallDetail: "brick" };
+    return { plaster, trim: darken(plaster, 0.22), plinth: darken(plaster, 0.45), roofDetail, wallDetail: clinker ? "clinker" : "brick" };
   }
   if (look.window === WINDOW_STYLE.modern && s.levels >= 6) return { ...keep, wallDetail: "concrete" };
   return { ...keep, wallDetail: "plaster" };
