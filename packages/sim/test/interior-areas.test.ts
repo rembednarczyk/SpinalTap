@@ -44,7 +44,7 @@ const quiet = (seed = 3): Simulation => {
 describe("interiors as areas (ADR-0061)", () => {
   it("names every interior in the catalogues and keeps the ids unique", () => {
     // The metro's platforms (ADR-0071 stage 4) last, in the line's order.
-    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "w3-hall", "w3-basement", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking", "alchemia-p2", "alchemia-shelter"]);
+    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "w3-hall", "w3-basement", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking", "alchemia-p2", "alchemia-shelter", "alchemia-gallery"]);
     for (const i of INTERIORS) expect(i.name).toBe(`interior.${i.id}`);
   });
 

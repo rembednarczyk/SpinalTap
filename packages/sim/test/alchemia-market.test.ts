@@ -5,6 +5,7 @@ import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_MARKET_ACTORS,
   FOODHALL,
+  MALL_FLOORS,
   P1,
   P1_ROOMS,
   P2,
@@ -88,7 +89,8 @@ const floorAt = (p: Vec3): number => {
   if (P1_ROOMS.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ) && p.y < P1.ceiling) return P1.floor;
   const inHall = p.x >= FOODHALL.minX && p.x <= FOODHALL.maxX && p.z >= FOODHALL.minZ && p.z <= FOODHALL.maxZ;
   if (!inHall) return groundY(p.x, p.z);
-  return p.y > FOODHALL.floor + 1 ? FOODHALL.roof : FOODHALL.floor;
+  // The gallery over the hall (ADR-0093): its floors P0..the roof, the nearest one (its shops' crowd on P1 and P2 since O2).
+  return MALL_FLOORS.reduce((best, f) => (Math.abs(f - p.y) < Math.abs(best - p.y) ? f : best), FOODHALL.floor);
 };
 
 const where = (p: Vec3): string => `(${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)})`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GAME_SECONDS_PER_REAL_SECOND } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_PROPS, MALL_PROPS, CAR_LIFT_PIECES, CAR_LIFT_PROPS, CAR_LIFT_TRAVEL, P1, P1_CABINS, P1_CAR_LIFT, P1_PIECES, P2, P2_PALLETS, P2_ROBOT, P2_SHELL_PIECES, P2_STORE_PIECES, Simulation, type AlchemiaBox } from "../src";
+import { ALCHEMIA_PIECES, ALCHEMIA_PROPS, MALL_PROPS, SHOP_SOLID_PROPS, CAR_LIFT_PIECES, CAR_LIFT_PROPS, CAR_LIFT_TRAVEL, P1, P1_CABINS, P1_CAR_LIFT, P1_PIECES, P2, P2_PALLETS, P2_ROBOT, P2_SHELL_PIECES, P2_STORE_PIECES, Simulation, type AlchemiaBox } from "../src";
 import { shuttleProgress } from "../src/systems/shuttle-system";
 import { teleportPlayer } from "./helpers";
 
@@ -35,8 +35,9 @@ describe("the car lift from P-1's cabins to P-2 (ADR-0074 stage 5e)", () => {
   });
 
   it("is the last of Alchemia's props, its platform and car riding up y by the clock, together", () => {
-    // The gallery round the atrium (ADR-0093 O1) comes after it.
-    expect(ALCHEMIA_PROPS.slice(-CAR_LIFT_PROPS.length - MALL_PROPS.length, -MALL_PROPS.length)).toEqual(CAR_LIFT_PROPS);
+    // The gallery round the atrium (ADR-0093 O1) comes after it, its shops (O2) after the gallery.
+    const after = MALL_PROPS.length + SHOP_SOLID_PROPS.length;
+    expect(ALCHEMIA_PROPS.slice(-CAR_LIFT_PROPS.length - after, -after)).toEqual(CAR_LIFT_PROPS);
     const riders = CAR_LIFT_PROPS.filter((p) => p.mechanism?.kind === "shuttle");
     expect(riders).toHaveLength(3);
     for (const r of riders) expect(r.mechanism).toMatchObject({ axis: "y", travel: CAR_LIFT_TRAVEL });

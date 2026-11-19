@@ -87,7 +87,21 @@ export type PieceKind =
   | "pane"
   | "escalator"
   // The pale house with arcades in the front's axis (C3, 19.11).
-  | "plaster";
+  | "plaster"
+  // The gallery's shops (ADR-0093 O2): the shopfronts' glass (drawn as frames), the goods, screens and their errors, the light strips,
+  // the services under the ceiling (pipes, ducts, cables) and the small things (cups and their steam, cartons, paper).
+  | "shopfront"
+  | "goods"
+  | "display"
+  | "error"
+  | "lamp"
+  | "pipe"
+  | "duct"
+  | "cable"
+  | "cup"
+  | "steam"
+  | "carton"
+  | "paper";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

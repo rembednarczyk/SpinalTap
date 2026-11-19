@@ -1,0 +1,1 @@
+Galeria Alchemii ma na kondygnacjach P1 i P2 po dwanaście sklepów wokół atrium (apteka, tatuaż, lombard, wszczepy, kantor, broń, salon VR i inne) z witrynami, towarem, sprzedawcami i neonowymi szyldami, a co czwarty lokal jest zamknięty roletą, kratą albo czeka na najemcę.

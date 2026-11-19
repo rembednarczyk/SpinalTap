@@ -12,7 +12,7 @@ import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS }
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, FRONT_GREEN_PROPS, P1_CARS, P2_CARS, type P1Car, p1CarView, p2CarView } from "./alchemia";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, FRONT_GREEN_PROPS, P1_CARS, SHOP_PROPS, P2_CARS, type P1Car, p1CarView, p2CarView } from "./alchemia";
 import { ALCHEMIA_NAV } from "./alchemia/nav";
 import { METRO_DOOR_LINK } from "./alchemia/metro-door";
 import type { GroundCut } from "../world/ground";
@@ -193,6 +193,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...P2_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p2CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
   // Alchemia's roof green (C2, 19.11): the game's trees, planters and shrubs, last so every id above stays.
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: FRONT_GREEN_PROPS }, at: { x: 0, y: 0, z: 0 } },
+  // The gallery's shops (ADR-0093 O2): the game's machines, cabinets and shrubs in them and their sellers, last.
+  { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: SHOP_PROPS }, at: { x: 0, y: 0, z: 0 } },
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */

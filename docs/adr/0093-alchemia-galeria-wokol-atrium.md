@@ -92,8 +92,39 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
 - **Otwarte po O1:**
   - Zapis: schemat się nie zmienia, więc migracji nie ma. Pozycja zapisana na dachu A lub B nad dzisiejszym atrium (x 411–425, z 40–50) albo na schodach A i B wczyta się w powietrzu i gracz spadnie (do 8,7 m). Przeniesienie na najbliższy węzeł (§10) to praca dla Persistence.
   - Przegląd kuratora topografii (T-329): zrobiony 19.11, przyjęte z uwagami (tylko dokumentacja, wpisane do T-329, T-145, T-205, T-242, T-327). Zapas skanu przesłaniania: kościół św. Józefa 23,2% przy progu 25%, więc O4 i O5 go pilnują. Proponowane kontrole skanu `alchemia-mall-footprint` (element galerii poza x 399,7–436,3, z 32–58,3) i `alchemia-mall-height` (ponad y 13,5), baza 0, do dodania w O2.
-  - Wnętrze galerii jako obszar ADR-0061 (nazwa w HUD) w O2, razem ze sklepami.
+  - Wnętrze galerii jako obszar ADR-0061 (nazwa w HUD) w O2, razem ze sklepami. Zrobione w O2 (`alchemia-gallery`), razem z kontrolami skanu.
 - **Wydajność:** przeszukiwanie grafu poziomów dostało kopiec (`world/nav.ts`, te same trasy), bo ok. 50 nowych węzłów podniosło czas pościgów w `alchemia-parking.test.ts` z ok. 4,1 do 4,7–5,1 s. Teraz jest ok. 3,8–4,4 s, a czas CPU czterech pościgów 3,7 s wobec 3,9 s przed O1.
+
+## Etap O2: wykonanie (19.11, gałąź `feat/alchemia-o2-sklepy`)
+- **Wzorzec:** lokal liniowy galerii handlowej (in-line unit): witryna od pasażu z wejściem, ścianki działowe do sąsiadów, zaplecze za ścianą z drzwiami dla obsługi, fryz pod szyld nad witryną; lokale narożne z witryną tylko na odcinku od galerii. Pierścień lokali między galerią (3 m wokół atrium) a szkłem fasady, jak na schemacie kondygnacji planszy („PASAŻE / SKLEPY”).
+- **Plan** (`shops-plan.ts`, liczby w metrach świata): na P1 i P2 po 12 lokali, pasy W i E głębokie na 7,9 m (sala 5,9 m, zaplecze 2 m), N i S na 4,9 m (sala 3,7 m, zaplecze 1,2 m), dwa lokale narożne (P1 i P2 przy galerii zachodniej od północy, P2 przy galerii wschodniej od południa) z zapleczem z boku. Wolne zostają korytarze trzonów SW i NE, hol windy NE, hol wejścia głównego i wschodnich drzwi na P1, hol windy hali na P2 (`RING_WAYS`).
+- **Lokale** (P1 / P2; z = zamknięte):
+  - P1: MEDIFARM (apteka), IREZUMI (tatuaż), LOMBARD (lombard, narożny), SYNTHMART (syntetyczne jedzenie), lokal do wynajęcia (z, papier na szybie, kartony, drabina), PLASTIFLORA (plastikowe kwiaty), FIXPOINT (naprawa terminali), MEGABOX (z, roleta), NEUROTEK (wszczepy), BITKANTOR (kantor kryptowalut), SAKURA (z, roleta), VOLTAGE (elektronika).
+  - P2: DREAMDECK (salon VR), KAWAII WEAR (odzież), HAGANE ARMS (broń legalna, narożny), CHROMEDOC (wszczepy), MOGUMOGU (z, krata, w środku widać sklep), REBOOT (naprawa), OMNIBYTE (elektronika, narożny), KOINEX (kantor), lokal do wynajęcia (z), MEDIX (apteka), TOKYO DRIP (z, roleta), INKSPOT (tatuaż).
+- **Trzy warstwy** (`shop-fittings.ts`, `shop-trades.ts`): ścianki, fryz, zaplecze z regałem towaru i kartonami, rury, kanał i kable pod stropem, pasy światła; lada z terminalem, kablem ze stropu i kubkiem, regały ścienne, wyspy (gabloty, wieszaki, fotele tatuażu, kabiny VR, stoły warsztatowe, cokoły z kwiatami), ekspozycja w witrynie; drobiazg: towar na półkach z lukami po wyprzedanym, ulotki przy drzwiach, kartony. Kontrast techniki i biedy: gabloty z podświetleniem obok kartonów, terminal z błędem na ladzie z plastikowym kubkiem. Ślad świeżej obecności według branży (parujący kubek, terminal z czerwonym błędem, niedojedzony posiłek, rozlany karton, ubrania zostawione na ladzie); w lokalu z kratą też, w lokalu do wynajęcia kubek kawy ekipy.
+- **Modele gry:** automaty z napojami (syntetyczne jedzenie), bankomaty (kantory), szafy uliczne jako serwery i sejfy (wszczepy, naprawa, VR, broń, elektronika), biletomaty jako terminale kantoru, krzewy jako plastikowe kwiaty; bryły z ich obrysu w `furniture.ts`. Sprzedawca to figura stałego tłumu (ADR-0058 etap 8, model `crowd-props.glb`) za ladą każdego otwartego lokalu; widok `street-props` sklepów na końcu `WORLD_SCENERY`. Własna geometria tylko dla regałów, lad, gablot, rolet, krat i ścianek.
+- **Tłum ADR-0060:** klient przed ladą co drugiego otwartego lokalu (hash lokalu) i cztery osoby przy balustradzie atrium na P1 i P2 (`GALLERY_CROWD`, miejsca stojących w chunku Alchemii).
+- **Szyldy:** nazwy własne neonem (`neon-letters.ts`, nowe litery B F G K P V X Y Z) na fryzie nad witryną, kolor według branży (§4: ciepłe jedzenie, odzież i kwiaty; zimna technika; zielona apteka i kantor; czerwona broń), martwa litera w co trzecim, zgaszony przy rolecie, brak przy lokalu do wynajęcia.
+- **Bryły:** ścianki, witryny (cienkie bryły rysowane ramą z aluminium), fryzy, rolety, kraty, lady, regały, gabloty i modele gry; drobiazg tylko rysowany. Jeden prop na lokal na końcu `ALCHEMIA_PROPS` (identyfikatory sprzed O2 bez zmian).
+- **Graf poziomów:** ścianki zasłoniły proste drogi z O1, więc doszły węzły `g1-main-in` (galeria naprzeciw wejścia głównego), `g1-east-lobby` (hol wschodnich drzwi) i `g1-e`, `g2-e` (północny koniec galerii wschodniej przy holu windy NE).
+- **Wnętrze ADR-0061:** `alchemia-gallery` (P1–P3 w obrysie szkła), klucz `interior.alchemia-gallery` w `en` i `pl`.
+- **Skan:** kontrole `alchemia-mall-footprint` i `alchemia-mall-height` z bazą 0 (`tools/glitch-scan/test/alchemia-checks.ts`).
+- **Różnice od wzorca i od briefu:**
+  - Sprzedawca jest figurą stałego tłumu (ADR-0058), a nie stojącym mieszkańcem ADR-0060: stojący zajmują losowo dwa z pięciu miejsc chunku (jest ich więcej niż stojących), więc nie byłoby sprzedawcy w każdym sklepie. Klienci i ludzie przy balustradzie są miejscami tłumu ADR-0060.
+  - Drzwi zaplecza mają 0,85 m: tylko dla obsługi, poza drogą NPC; za ladą jest kieszeń sprzedawcy, do której klient nie wchodzi.
+  - Lokal z roletą nie ma wyposażenia (nie widać go i nie da się wejść); z kratą ma, przy zgaszonym świetle i ekranach.
+  - Plecy lokali to szkło fasady (rama bez tafli), więc zaplecza widać z ulicy; regał towaru stoi przy szkle.
+  - Sklepy na P0 (etap O2 w planie etapów) czekają na O3: dopóki food hall nie przejdzie na P3, P0 to hala z jednostkami i sprzedawcami z imionami, których O2 nie rusza.
+- **Rysunek i budżety:** sklepy w siatce wnętrza (do 45 m od hali), bez nowej siatki i wywołań; modele gry i sprzedawcy w siatce bloku mebli ulicznych (ADR-0050). Trójkąty siatki wnętrza 4 432 → 52 342 (104 684 wierzchołki, indeksy 32-bitowe); limit testu wnętrza 60 000 obok wspólnych 40 000 (decyzja z 19.11: trójkąty wolne). Sceny `npr-perf` (wywołania i aktywne siatki, przed → po, budżety bez zmian):
+  - `alchemia-tpp`: 299/118 → 299/118 (budżet 380/146);
+  - `alchemia-t2-tpp`: 222/77 → 222/77;
+  - `alchemia-p1`: 209/78 → 209/78;
+  - `alchemia-p2`: 211/78 → 211/78 (budżet 216/80);
+  - `zielona-budowa-tpp`: 157/72 (budżet 172/80).
+- **Otwarte po O2:**
+  - Przegląd kuratora topografii (treść Alchemii w obrysie T-329 bez zmian obrysu i wysokości; kontrole skanu pilnują obu).
+  - Czas klatki na telefonie odniesienia z siatką wnętrza ok. 52 tys. trójkątów niezmierzony (pod SwiftShaderem tylko raport).
+  - Lokal z roletą nie ma śladu świeżej obecności (nie widać wnętrza).
 
 ## Konsekwencje
 - Graf, punkty tłumu, zadania i dialogi związane z halą zmieniają się w O1 i O3. Testy tras i zadań idą za nimi.

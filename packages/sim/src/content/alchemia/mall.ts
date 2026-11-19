@@ -10,6 +10,7 @@ import {
   MALL,
   MALL_CORNERS,
   MALL_GLASS_RADIUS,
+  MALL_GLASS_THICK,
   MALL_LEVELS,
   MALL_OVER,
   MALL_RADIUS,
@@ -115,7 +116,7 @@ interface GlassDoor {
   readonly lintel: Rectangle;
 }
 const DOOR_TOP = 2.3;
-const PANE = 0.12;
+const PANE = MALL_GLASS_THICK;
 
 /**
  * P1's ways in through the glass: the main doors from T0's strip under L2 (south), the side door onto
@@ -131,18 +132,19 @@ export const P1_DOORS: readonly GlassDoor[] = [
 const STAIR_HOUSE_GAP: Rectangle = { x0: MALL.x0 - 0.5, x1: 407.9, z0: MALL.z0 - 0.5, z1: 34.9 };
 
 /** The glass of a storey from `y0` to the slab over it at `y1`, open over `gaps`. */
-const glass = (y0: number, y1: number, gaps: readonly Rectangle[]): Piece[] => balustrade(MALL, 0, MALL_CORNERS, y0, y1 - y0, true, gaps, MALL_GLASS_RADIUS, "pane");
+const glass = (y0: number, y1: number, gaps: readonly Rectangle[]): Piece[] => balustrade(MALL, 0, MALL_CORNERS, y0, y1 - y0, true, gaps, MALL_GLASS_RADIUS, "pane", MALL_GLASS_THICK);
 
-/** Under L2 (all along the south face at P2) and L3 (x 398..428 at P3) the front's glass is the wall. */
-const SOUTH_P2: Rectangle = { x0: MALL.x0 - 0.5, x1: MALL.x1 + 0.5, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.05 };
-const SOUTH_P3: Rectangle = { x0: MALL.x0 - 0.5, x1: 428, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.05 };
-
+/*
+ * Under L2 (P2) and L3 (P3) the front's storeys stand against the south face, but the glass runs on
+ * behind them all the same: without it a 0.2 m slot stayed between their boxes and the shops' backs,
+ * and a crouched, aimed shoulder there started its shot in it (G-275's measure, ADR-0093 O2).
+ */
 /** The glass of P1..P3 with P1's doors' lintels. */
 export const mallGlass = (): Piece[] => [
   ...glass(L.p1, L.p2 - MALL_SLAB, [STAIR_HOUSE_GAP, ...P1_DOORS.map((d) => d.gap)]),
   ...P1_DOORS.map((d) => outlined(roundedOutline(d.lintel, 0, [false, false, false, false]), L.p1 + DOOR_TOP, L.p2 - MALL_SLAB, "pane")),
-  ...glass(L.p2, L.p3 - MALL_SLAB, [SOUTH_P2]),
-  ...glass(L.p3, L.roof - MALL_SLAB, [SOUTH_P3]),
+  ...glass(L.p2, L.p3 - MALL_SLAB, []),
+  ...glass(L.p3, L.roof - MALL_SLAB, []),
 ];
 
 /** The balustrade round the atrium at `y`, a rail thick outside its hole, open where an escalator lands on the floor. */

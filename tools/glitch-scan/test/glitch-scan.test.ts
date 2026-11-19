@@ -51,7 +51,7 @@ import { figureChecks } from "./figure-pieces";
 import { type ScanDoor, barrierChecks, facadeDoor } from "./barrier-pieces";
 import { barrierCoverChecks } from "./barrier-cover";
 import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
-import { alchemiaHidesLandmarks, keptInGame, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
+import { alchemiaHidesLandmarks, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
@@ -1558,6 +1558,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "pad-dip-uncovered": () => padDipUncovered(dipInGame()),
   /** The pavilion on Alchemia's corner on a sidewalk's paving, a crossing or a carriageway, or its ladder's foot on a sidewalk (ADR-0074 stage 3). */
   "pavilion-on-paving": () => pavilionOnPaving(pavingInGame()),
+  /** A piece of Alchemia's gallery (ADR-0093: its body, cores, lifts, escalators, shops) off its plot, x 399.7..436.3, z 32..58.3 (review of O1). */
+  "alchemia-mall-footprint": () => mallFootprint(),
+  /** A piece of the gallery over y 13.5, past its roof's stair houses (review of O1). */
+  "alchemia-mall-height": () => mallHeight(),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**

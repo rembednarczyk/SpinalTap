@@ -8,6 +8,7 @@ import { P1_ROOMS } from "./alchemia/parking";
 import { METRO_DOOR_ROOM } from "./alchemia/metro-door";
 import { P2_ROOMS } from "./alchemia/p2";
 import { SHELTER_ROOMS } from "./alchemia/shelter";
+import { GALLERY_ROOMS } from "./alchemia/mall-plan";
 import { CLINIC_SITE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 import { W3_OFFICE } from "./tessen-w3/tower-pipes";
 import { W3_BASEMENT_ROOMS, W3_HALL_ROOMS } from "./tessen-w3/rooms";
@@ -82,6 +83,8 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "alchemia-p2", name: "interior.alchemia-p2", building: null, rooms: P2_ROOMS },
   // The air-raid shelter under T2 by P-2's north end (stage 5d1): its room, the passage, both flights.
   { id: "alchemia-shelter", name: "interior.alchemia-shelter", building: null, rooms: SHELTER_ROOMS },
+  // Its gallery round the atrium over the hall (ADR-0093 O2): P1..P3 inside the glass, its shops on P1 and P2.
+  { id: "alchemia-gallery", name: "interior.alchemia-gallery", building: null, rooms: GALLERY_ROOMS.map((r) => ({ minX: r.x0, maxX: r.x1, minZ: r.z0, maxZ: r.z1, bottom: r.bottom, top: r.top })) },
 ];
 
 /** Feet this far under a room's floor still count (a floor slab, a step down the stairs). */

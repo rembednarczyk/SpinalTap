@@ -35,8 +35,21 @@ const RING: readonly [string, number, number][] = [
   ["se", 426.5, 38.5],
 ];
 
-const ringNodes = (): NavNode[] => UPPER.flatMap(([f, y]) => RING.map(([k, x, z]) => node(`${f}-${k}`, x, y, z)));
-const ringEdges = (): NavEdge[] => UPPER.flatMap(([f]) => RING.slice(1).map(([k], i) => edge(`${f}-${RING[i]![0]}`, `${f}-${k}`)));
+/**
+ * On the floors with shops (ADR-0093 O2) the east gallery's north end, by the north-east lift's lobby:
+ * the shops' partitions hide the lobby from the ring's south-east node.
+ */
+const EAST: readonly [string, number, number] = ["e", 426.5, 50.65];
+const SHOP_FLOORS: ReadonlySet<string> = new Set(["g1", "g2"]);
+
+const ringNodes = (): NavNode[] => [
+  ...UPPER.flatMap(([f, y]) => RING.map(([k, x, z]) => node(`${f}-${k}`, x, y, z))),
+  ...UPPER.filter(([f]) => SHOP_FLOORS.has(f)).map(([f, y]) => node(`${f}-${EAST[0]}`, EAST[1], y, EAST[2])),
+];
+const ringEdges = (): NavEdge[] => [
+  ...UPPER.flatMap(([f]) => RING.slice(1).map(([k], i) => edge(`${f}-${RING[i]![0]}`, `${f}-${k}`))),
+  ...UPPER.filter(([f]) => SHOP_FLOORS.has(f)).map(([f]) => edge(`${f}-se`, `${f}-${EAST[0]}`)),
+];
 
 /** A core's nodes and edges: per floor its landing's two (south and north lane) and the door's outside, per storey the mid landing's two. */
 const core = (c: StairCore): { nodes: NavNode[]; edges: NavEdge[] } => {
@@ -120,17 +133,22 @@ const DOOR_NODES: readonly NavNode[] = [
   on("g1-west-out", MALL.x0 - 1.4, (STAIR_HOUSE.west.z0 + STAIR_HOUSE.west.z1) / 2),
   node("g1-east-in", MALL.x1 - 1.4, L.p1, 33.15),
   on("g1-east-out", MALL.x1 + 1.6, 33.15),
+  // Between the shops (ADR-0093 O2): on the gallery straight in from the main doors, and the east door's lobby's west end before its way north to the gallery.
+  node("g1-main-in", 420, L.p1, 37.8),
+  node("g1-east-lobby", 426.6, L.p1, 34.0),
 ];
 const DOOR_EDGES: readonly NavEdge[] = [
   edge("stair-head", "sh-landing"),
   edge("sh-landing", "g1-west-out"),
   edge("g1-west-out", "t0-west"),
   edge("sh-landing", "core-sw-s-0"),
-  // Through the main doors from T0's strip straight onto the gallery's south side.
-  edge("t0-roof", "g1-s"),
+  // Through the main doors from T0's strip onto the gallery's south side, between the shops either side of the doors' hall (O2).
+  edge("t0-roof", "g1-main-in"),
+  edge("g1-main-in", "g1-s"),
   edge("t0-east", "g1-east-out"),
   edge("g1-east-out", "g1-east-in"),
-  edge("g1-east-in", "g1-se"),
+  edge("g1-east-in", "g1-east-lobby"),
+  edge("g1-east-lobby", "g1-se"),
 ];
 
 /** The gallery's graph, joined to the hall's (`nav.ts`) at its stair head, its back aisle and T0's nodes. */
