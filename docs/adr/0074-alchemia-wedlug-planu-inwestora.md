@@ -390,6 +390,12 @@ Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecen
   - Migracja: osobny test.
 - **Hashe.** Złoty hash determinizmu zmienia się tylko przez wersję schematu: z wersją 49 przebieg daje dawny skrót.
 
+### Etap 8: spójność, pierwszy przegląd (19.11)
+Przegląd zrzutów z ulic dookoła: od Bajkowskiego, Lubartowskiej, Świętoduskiej, z T1, z T2, od Placu Łokietka i z lotu z północy i z południa.
+- **Zielone stopnie** zachodniego skrzydła miały ściany w tynku, a zieleń tylko na wierzchu, więc od Bajkowskiego wyglądały jak białe pudła. Teraz są obsadzone w całości, jak zielony stok z planszy.
+- **Drzewa na tarasie L2** zasłaniały napis CENTRUM HANDLOWE na L3, z ulicy i z lotu. Drzewa stoją teraz na zachód od napisu, a przed nim zostają same donice.
+- Bez zmian w symulacji ruchu i kolizji: stopnie zostają bryłami, a drzewa i donice są tylko rysowane.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**
