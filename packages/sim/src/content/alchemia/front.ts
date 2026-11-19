@@ -138,6 +138,9 @@ const hedges = (): Piece[] => [
   piece(box(L3.minX + 1, L3.maxX - 1, L3.maxZ - 0.8, L3.maxZ - 0.3, L3_TOP, L3_TOP + 0.6), "green", false),
 ];
 
+/** The fountain on the square before the west wing (B4): its basin's outline, the board's hologram over it. */
+export const FOUNTAIN: Rect = { minX: 397.9, maxX: 401.1, minZ: -7.1, maxZ: -3.9 };
+
 /**
  * What of the front stands on T0, in plan: the wings, the green steps and the passage's columns. The
  * map's furniture keeps clear of them (`street-props.ts`), as of the game's blocks.
@@ -147,6 +150,7 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
   EAST_WING,
   { minX: GREEN_STEPS[GREEN_STEPS.length - 1]!.x0, maxX: WEST_WING[0]!.minX, minZ: STEPS_Z.z0, maxZ: STEPS_Z.z1 },
   ...PASSAGE_COLUMNS.map((c) => ({ minX: c.x - COLUMN / 2, maxX: c.x + COLUMN / 2, minZ: c.z - COLUMN / 2, maxZ: c.z + COLUMN / 2 })),
+  FOUNTAIN,
 ];
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */

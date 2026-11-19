@@ -1,0 +1,1 @@
+- Przed frontem Alchemii stoi fontanna z hologramem, a wylot z P−2 na T2 ma balustradę zamiast pełnego muru, więc z T1 widać plac (ADR-0074, B4).

@@ -78,7 +78,11 @@ export type PieceKind =
   | "beacon"
   // The front on Bajkowskiego (B1, 19.11): its screens and the sign's box.
   | "screen"
-  | "sign";
+  | "sign"
+  // Its details (B4): the umbrellas' canopies, the ramp's green light.
+  | "umbrella"
+  | "led-green"
+  | "water";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {
