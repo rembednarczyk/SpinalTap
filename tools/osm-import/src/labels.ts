@@ -1,6 +1,7 @@
 /** Street names for the minimap and texts, and named points of interest for placing content later. */
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
+import { isCarFree } from "./corrections-car-free.ts";
 import { STEPS_BEND, pathWidth, roadWidth, underground } from "./ground.ts";
 import { oneway } from "./markings.ts";
 import { type FlightOut, type FootWayOut, type StepRunOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
@@ -73,6 +74,7 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: Street
         ...(half ? { half } : {}),
         ...(one ? { oneway: true as const } : {}),
         ...(closed ? { noVehicles: true as const } : {}),
+        ...(isCarFree(l.id) ? { carFree: true as const } : {}),
       });
     }
   }
