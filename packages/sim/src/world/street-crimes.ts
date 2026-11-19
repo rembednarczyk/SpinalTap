@@ -1,6 +1,7 @@
 import {
   type ContractSiteId,
   type MicroEventKind,
+  QUIET_DEAL_BONUS,
   TERRITORIES,
   TESSEN_FOIL_STANDING,
   advanceStreetCrimes,
@@ -37,8 +38,25 @@ export type { BoardCrime } from "./street-crime-types";
 
 const DISTRICT_IDS = Object.keys(DISTRICTS) as DistrictId[];
 
-/** The kind of a crime by a roll: a mugging, an extortion, a passer-by in need. */
-const kindOf = (r: number): MicroEventKind => (r < 0.45 ? "mugging" : r < 0.7 ? "extortion" : "aid");
+/** The kinds of the board and their shares of the roll (ADR-0091 §3: all six). */
+const KINDS: readonly (readonly [MicroEventKind, number])[] = [
+  ["mugging", 0.24],
+  ["extortion", 0.16],
+  ["aid", 0.18],
+  ["deal", 0.14],
+  ["droneTheft", 0.14],
+  ["kidnap", 0.14],
+];
+
+/** The kind of a crime by a roll in [0, 1). */
+const kindOf = (r: number): MicroEventKind => {
+  let acc = 0;
+  for (const [kind, share] of KINDS) {
+    acc += share;
+    if (r < acc) return kind;
+  }
+  return KINDS[KINDS.length - 1]![0];
+};
 
 /** The board of `slot`: per district 1–2 crimes at distinct spots, from the seed alone. */
 export const crimeBoard = (seed: number, slot: number): readonly BoardCrime[] =>
@@ -99,7 +117,9 @@ export const closeCrime = (ctx: SimContext, run: MicroEventRun & { readonly crim
   const d = ctx.state.domain;
   const foiled = outcome === "won" || outcome === "helped";
   const level = bandLevel(d.progression.level, DISTRICT_BANDS[run.crime.district]);
-  const eddies = foiled ? streetCrimePay(run.kind, level, d.streetCrimes.paidToday, d.reputation.tessen) : 0;
+  const pay = foiled ? streetCrimePay(run.kind, level, d.streetCrimes.paidToday, d.reputation.tessen) : 0;
+  // A deal taken down with none of the dealers alerted (§3, organized crime in CP2077).
+  const eddies = run.kind === "deal" && !run.alarmed ? Math.round(pay * (1 + QUIET_DEAL_BONUS)) : pay;
   ctx.state.domain = { ...d, streetCrimes: closeStreetCrime(d.streetCrimes, run.crime.id, foiled) };
   if (foiled) adjustReputation(ctx, "tessen", TESSEN_FOIL_STANDING);
   if (outcome === "won" && run.kind !== "aid" && heldBy(run.crime.district)) {

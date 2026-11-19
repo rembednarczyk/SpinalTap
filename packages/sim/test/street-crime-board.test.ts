@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GRUDGE_STEP, SECONDS_PER_HOUR, TERRITORIES, TESSEN_FOIL_STANDING, crimeSlot, standingOf, streetCrimePay, streetCrimesAt } from "@seki/core";
-import { CRIME_REACH, type BoardCrime, MICRO_SPOTS, Simulation, TERRITORY_GROUPS, chunkAt, crimeBoard, crimeHidden, ground, inBuilding } from "../src";
+import { GRUDGE_STEP, SECONDS_PER_HOUR, bandLevel, TERRITORIES, TESSEN_FOIL_STANDING, crimeSlot, standingOf, streetCrimePay, streetCrimesAt } from "@seki/core";
+import { CRIME_REACH, type BoardCrime, DISTRICT_BANDS, MICRO_SPOTS, Simulation, TERRITORY_GROUPS, chunkAt, crimeBoard, crimeHidden, ground, inBuilding } from "../src";
 import { onRoad } from "../src/content/lublin/roads";
 import { run, teleportPlayer } from "./helpers";
 
@@ -41,7 +41,7 @@ describe("the street's board of crimes (ADR-0091 stage 5a)", () => {
     for (const d of ["shinsekai-7", "kanal", "targ", "doki"]) expect(board.filter((c) => c.district === d).length).toBeLessThanOrEqual(2);
     expect(new Set(board.map((c) => c.id)).size).toBe(board.length);
     const kinds = new Set(Array.from({ length: 6 }, (_, s) => crimeBoard(6, crimeSlot({ seconds: HOUR * SECONDS_PER_HOUR }) + s).map((c) => c.kind)).flat());
-    expect([...kinds].sort()).toEqual(["aid", "extortion", "mugging"]);
+    expect([...kinds].sort()).toEqual(["aid", "deal", "droneTheft", "extortion", "kidnap", "mugging"]);
     expect(boardCrime("mugging")).toBeDefined();
   });
 
@@ -70,8 +70,10 @@ describe("the street's board of crimes (ADR-0091 stage 5a)", () => {
       e.lastHitBy = sim.player()!.id;
     }
     run(sim, 2);
-    expect(sim.session.street2.micro).toBeNull();
-    expect(sim.domain.wallet.eddies - eddies).toBe(streetCrimePay("mugging", sim.domain.progression.level, 0, tessen));
+    // Another crime of the board near by may start on the next step.
+    expect(sim.session.street2.micro?.crime?.id).not.toBe(c.id);
+    // At the level of the district's band (ADR-0059), as the contracts there pay.
+    expect(sim.domain.wallet.eddies - eddies).toBe(streetCrimePay("mugging", bandLevel(sim.domain.progression.level, DISTRICT_BANDS[c.district]), 0, tessen));
     expect(sim.domain.reputation.tessen).toBe(tessen + TESSEN_FOIL_STANDING);
     expect(sim.domain.streetCrimes.done).toEqual([c.id]);
     expect(sim.domain.streetCrimes.paidToday).toBe(1);
