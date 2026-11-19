@@ -16,10 +16,14 @@ import { type Piece, box, piece } from "./plan";
 /** Rounded to the centimetre, as the simulation's other heights. */
 const cm = (v: number): number => Math.round(v * 100) / 100;
 
-/** The beds along the trench's parapets: west the whole open length, east up to the stair house's approach. */
+/**
+ * The beds along the trench's parapets: west the whole open length, east 8 m (to z 8 until ADR-0093
+ * O2b), short of the map's lamp on the main entrance's way's east edge (422.8; 3.5): with the bed
+ * beside it the way was 3.8 m wide there.
+ */
 export const PARAPET_BEDS = [
   { x0: P1_RAMP.minX - 0.3 - 0.8, x1: P1_RAMP.minX - 0.3, z0: -6.8, z1: 11 },
-  { x0: P1_RAMP.maxX + 0.3, x1: P1_RAMP.maxX + 0.3 + 0.5, z0: -6.8, z1: 8.0 },
+  { x0: P1_RAMP.maxX + 0.3, x1: P1_RAMP.maxX + 0.3 + 0.5, z0: -6.8, z1: 1.2 },
 ] as const;
 const BED_HEIGHT = 0.45;
 const BED_STEP = 2;
