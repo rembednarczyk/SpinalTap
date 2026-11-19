@@ -28,8 +28,6 @@ const COLOR: Readonly<Record<PavilionLook, Rgba>> = {
   metal: hexColor("#596070"),
   board: hexColor("#1a1c22"),
   neon: hexColor("#00e5ff", DRESS_FLAG.lit),
-  plaster: hexColor("#b9b2a4"),
-  lettering: hexColor("#ffc070", DRESS_FLAG.lit),
 };
 
 /** Bakes the stand-in into a block's sink. */

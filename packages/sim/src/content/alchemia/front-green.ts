@@ -3,6 +3,7 @@ import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces
 import { type Piece, box, outlined, piece } from "./plan";
 import { type Corners, type Rectangle, ALL_CORNERS, outerCorners, roundedOutline } from "./rounded";
 import { B_RADIUS, TIER_A, TIER_B, slabOf } from "./tiers";
+import { ARCADE_FRONT } from "./arcade-front";
 import type { Rect } from "../builders";
 
 /*
@@ -22,6 +23,8 @@ interface Storey {
   readonly radius?: number;
   /** The front's roofs, nobody on them: shrubs along their balustrades. */
   readonly shrubs: boolean;
+  /** No curtains over its edges (the house with arcades: its windows and letters under its cornice). */
+  readonly bare?: boolean;
 }
 
 const rect = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
@@ -35,6 +38,8 @@ const STOREYS: readonly Storey[] = [
   { r: L3, bottom: L2_TOP, top: L3_TOP, corners: ALL_CORNERS, shrubs: true },
   { r: TIER_A, bottom: TIER_A.bottom, top: TIER_A.top, corners: ALL_CORNERS, shrubs: false },
   { r: TIER_B, bottom: TIER_B.bottom, top: TIER_B.top, corners: ALL_CORNERS, radius: B_RADIUS, shrubs: false },
+  // The house with arcades (C3): square, its roof a terrace with L2's.
+  { r: ARCADE_FRONT, bottom: -3, top: ARCADE_FRONT.top, corners: [false, false, false, false], shrubs: true, bare: true },
 ];
 
 /** Is (x, y, z) in a storey's volume, its slab included (another storey hides what is there)? */
@@ -81,6 +86,7 @@ const along = (pts: readonly GroundPoint[], every: number): { p: GroundPoint; t:
 
 /** The curtains of green over a storey's open edges, under its slab's beam and a hand over its top. */
 const curtains = (s: Storey): Piece[] => {
+  if (s.bare) return [];
   const pts = roundedOutline(slabOf(s.r), CURTAIN_OUT, s.corners, undefined, s.radius);
   const under = s.top - SLAB - BEAM;
   return along(pts, CURTAIN_EVERY).flatMap(({ p, t, n }) => {

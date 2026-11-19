@@ -12,7 +12,7 @@ import { neonText } from "./neon-letters";
  */
 
 /** What a face is, for the sinks' swatches and colours. */
-export type PavilionLook = "plinth" | "glass" | "glass-top" | "frame" | "fascia" | "roof" | "annex" | "door" | "attic" | "metal" | "board" | "neon" | "plaster" | "lettering";
+export type PavilionLook = "plinth" | "glass" | "glass-top" | "frame" | "fascia" | "roof" | "annex" | "door" | "attic" | "metal" | "board" | "neon";
 
 /** Takes a face: four corners in order round it (a triangle repeats its last), its outward normal. */
 export type FaceSink = (corners: readonly [Vec3, Vec3, Vec3, Vec3], n: Vec3, look: PavilionLook) => void;
@@ -76,69 +76,37 @@ const thinner = (w: AtticWall, d: number): GroundPoint[] => {
 
 const distanceToLine = (c: GroundPoint, p: GroundPoint, q: GroundPoint): number => Math.abs((q.x - p.x) * (c.z - p.z) - (q.z - p.z) * (c.x - p.x)) / Math.hypot(q.x - p.x, q.z - p.z);
 
-/** The arcade's bays (B2, the board's pale corner house): an arch this wide, a pier between two, its springing over the floor. */
-const ARCH = 1.8;
-const PIER = 0.9;
-const SPRING = 1.9;
-/** How far the lit glass stands back in an arch, and the wall's top (the cornice under the roof). */
-const RECESS = 0.25;
-const SEGMENTS = 6;
-
-/**
- * One side of the triangle as an arcade (ADR-0074 B2, decisions of 19.11): a pale wall from the
- * floor to the cornice with round arches on piers, the restaurant's warm light in them a hand back,
- * and over the arches a band with ALCHEMIA in warm letters on the two street sides.
- */
-const arcadeSide = (face: FaceSink, p: GroundPoint, q: GroundPoint, lettered: boolean): void => {
+/** The triangle's frame: a mullion every 1.6 m along each side and a post at each corner, proud of the glass. */
+const mullions = (face: FaceSink): void => {
   const P = ALCHEMIA_PAVILION;
   const top = P.roof - P.fascia;
-  const len = Math.hypot(q.x - p.x, q.z - p.z);
-  const u = { x: (q.x - p.x) / len, z: (q.z - p.z) / len };
-  const n = outward(p, q);
-  const at = (s: number, y: number, back = 0): Vec3 => ({ x: p.x + u.x * s - n.x * back, y, z: p.z + u.z * s - n.z * back });
-  const wall = (s0: number, s1: number, y0: number, y1: number) => face([at(s0, y0), at(s1, y0), at(s1, y1), at(s0, y1)], n, "plaster");
-  const bays = Math.max(1, Math.floor((len - PIER) / (ARCH + PIER)));
-  const margin = (len - bays * ARCH - (bays - 1) * PIER) / 2;
-  wall(0, margin, P.floor, top);
-  let s = margin;
-  for (let k = 0; k < bays; k++) {
-    const r = ARCH / 2;
-    const c = s + r;
-    // The arch's head: strips of wall from its curve up to the cornice, the lit glass under it a hand back.
-    for (let i = 0; i < SEGMENTS; i++) {
-      const a0 = Math.PI - (Math.PI * i) / SEGMENTS;
-      const a1 = Math.PI - (Math.PI * (i + 1)) / SEGMENTS;
-      const [s0, y0] = [c + r * Math.cos(a0), P.floor + SPRING + r * Math.sin(a0)];
-      const [s1, y1] = [c + r * Math.cos(a1), P.floor + SPRING + r * Math.sin(a1)];
-      face([at(s0, y0), at(s1, y1), at(s1, top), at(s0, top)], n, "plaster");
-      face([at(c, P.floor + SPRING, RECESS), at(s1, y1, RECESS), at(s0, y0, RECESS), at(s0, y0, RECESS)], n, "glass");
-      // The reveal under the curve, from the face back to the glass.
-      face([at(s0, y0), at(s0, y0, RECESS), at(s1, y1, RECESS), at(s1, y1)], { x: 0, y: -1, z: 0 }, "plaster");
+  PAVILION_CORNERS.forEach((p, i) => {
+    const q = PAVILION_CORNERS[(i + 1) % 3]!;
+    const len = Math.hypot(q.x - p.x, q.z - p.z);
+    const along = { x: (q.x - p.x) / len, z: (q.z - p.z) / len };
+    const out = outward(p, q);
+    const n = Math.max(2, Math.round(len / 1.6));
+    for (let k = 0; k < n; k++) {
+      const half = k === 0 ? 0.12 : 0.05;
+      const c = { x: p.x + along.x * (len * k) / n + out.x * 0.04, z: p.z + along.z * (len * k) / n + out.z * 0.04 };
+      // Counter-clockwise: along the side on its outer face, back along its inner one.
+      const corners = [
+        { x: c.x - along.x * half + out.x * 0.05, z: c.z - along.z * half + out.z * 0.05 },
+        { x: c.x + along.x * half + out.x * 0.05, z: c.z + along.z * half + out.z * 0.05 },
+        { x: c.x + along.x * half - out.x * 0.05, z: c.z + along.z * half - out.z * 0.05 },
+        { x: c.x - along.x * half - out.x * 0.05, z: c.z - along.z * half - out.z * 0.05 },
+      ];
+      prism(face, corners, P.floor, top, "frame");
     }
-    face([at(s, P.floor, RECESS), at(s + ARCH, P.floor, RECESS), at(s + ARCH, P.floor + SPRING, RECESS), at(s, P.floor + SPRING, RECESS)], n, "glass");
-    // The jambs either side of the opening.
-    face([at(s, P.floor, RECESS), at(s, P.floor), at(s, P.floor + SPRING), at(s, P.floor + SPRING, RECESS)], { x: u.x, y: 0, z: u.z }, "plaster");
-    face([at(s + ARCH, P.floor), at(s + ARCH, P.floor, RECESS), at(s + ARCH, P.floor + SPRING, RECESS), at(s + ARCH, P.floor + SPRING)], { x: -u.x, y: 0, z: -u.z }, "plaster");
-    s += ARCH;
-    const next = k + 1 < bays ? s + PIER : len;
-    wall(s, next, P.floor, top);
-    s = next;
-  }
-  if (!lettered) return;
-  // ALCHEMIA over the arches, warm letters a hand proud of the band.
-  const height = 0.36;
-  const foot = top - height - 0.12;
-  for (const l of neonText("ALCHEMIA", height)) {
-    const s0 = len / 2 + l.x0;
-    const s1 = len / 2 + l.x1;
-    const out = (ss: number, y: number): Vec3 => ({ x: p.x + u.x * ss + n.x * 0.03, y, z: p.z + u.z * ss + n.z * 0.03 });
-    face([out(s0, foot + l.y0), out(s1, foot + l.y0), out(s1, foot + l.y1), out(s0, foot + l.y1)], n, "lettering");
-  }
-};
-
-/** The arcade round the triangle: its two street sides lettered, the third towards the passage plain. */
-const arcade = (face: FaceSink): void => {
-  PAVILION_CORNERS.forEach((p, i) => arcadeSide(face, p, PAVILION_CORNERS[(i + 1) % 3]!, i < 2));
+    // The transom over the doors' height, the length of the side.
+    const t = [
+      { x: p.x + out.x * 0.08, z: p.z + out.z * 0.08 },
+      { x: q.x + out.x * 0.08, z: q.z + out.z * 0.08 },
+      { x: q.x + out.x * 0.01, z: q.z + out.z * 0.01 },
+      { x: p.x + out.x * 0.01, z: p.z + out.z * 0.01 },
+    ];
+    prism(face, t, P.floor + 2.6, P.floor + 2.7, "frame");
+  });
 };
 
 /** The service ladder on the annex's west face (ADR-0021): two rails and rungs on the world's 0.3 m grid (the climber's hands, `ladder-hands.ts`). */
@@ -186,18 +154,14 @@ export const pavilionFaces = (face: FaceSink, inset = 0, detail = true): void =>
   const A = PAVILION_ANNEX;
   const i = inset;
   prism(face, tri, P.base, P.floor, "plinth", null);
-  // From afar the arcade's wall as one pale prism with a warm band where the arches are; near, the arcade itself.
-  if (!detail) {
-    // Behind the arches' glass: the stand-in also stands near, in its block, and must not show through them.
-    const back = shrink(PAVILION_CORNERS, inset + RECESS + 0.05);
-    prism(face, back, P.floor, P.floor + SPRING, "glass", null);
-    prism(face, back, P.floor + SPRING, P.roof - P.fascia, "plaster", null);
-  } else arcade(face);
+  prism(face, tri, P.floor, P.floor + 3.1, "glass", null);
+  prism(face, tri, P.floor + 3.1, P.roof - P.fascia, "glass-top", null);
   prism(face, tri, P.roof - P.fascia, P.roof - i, "fascia", "roof");
   box(face, A.minX + i, A.maxX - i, A.minZ + i, A.maxZ - i, P.base, P.roof - i, "annex");
   for (const w of PAVILION_ATTIC) prism(face, thinner(w, i), P.roof - 0.05, P.roof + P.attic - i, "attic");
   sign(face, i, detail);
   if (!detail) return;
+  mullions(face);
   ladder(face);
   // The annex's service door on its north face, to the car park.
   box(face, 426.0, 427.1, A.maxZ, A.maxZ + 0.05, P.floor, P.floor + 2.2, "door");
