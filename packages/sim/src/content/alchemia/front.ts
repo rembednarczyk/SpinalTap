@@ -51,8 +51,13 @@ export const L2_SLABS: readonly Rect[] = [
   { minX: 394, maxX: 422, minZ: 4, maxZ: 32 },
   { minX: 422, maxX: 436, minZ: EAST_WING.minZ, maxZ: 32 },
 ];
-/** L3: the top storey, set back from L2's front by a terrace, its back to the tiers. */
-export const L3: Rect = { minX: 398, maxX: 428, minZ: 12, maxZ: 32 };
+/**
+ * L3: the top storey, set back from L2's front by a terrace, on north over T0's back strip to tier
+ * B's south edge (B3, 19.11): from there the complex steps down northwards, L3's roof, B's, A's, T1.
+ * North of the hall T1 is the hall's front and T2 the square with the memorial of Plac Ofiar Getta
+ * (§6: no neon, no adverts by it), so the complex grows no wing there.
+ */
+export const L3: Rect = { minX: 398, maxX: 428, minZ: 12, maxZ: TIER_B.minZ };
 
 /** L2's underside over the passage: a slab this thick under its glass. */
 const SOFFIT = 0.35;
