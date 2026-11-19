@@ -59,8 +59,8 @@ DIRTY_BANDS = [(0.12, 'tyre'), (0.3, 'trim'), (0.45, 'metal'), (9, 'paint')]
 #   roof: role of the up-facing triangles of the top tenth; lengthen: (z0, z1) shares of the length stretched
 #   proportional: its height scaled as its length (not stretched to the body's)
 VEHICLES = [
-    # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11): near at some 4 thousand triangles.
-    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'near': 4000}),
+    # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11), the nearest few in its close-up `-hi` of some 4 thousand triangles.
+    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 4000}),
     ('veh-dirty', 'sedan', DIRTY, 0, {'proportional': True, 'bands': DIRTY_BANDS, 'materials': {'large_car_glass_mat': 'glass-dark', 'large_car_wheels_mat': 'tyre'}}),
     ('veh-suv', 'van', (KENNEY, 'x/Models/GLB format/suv.glb'), 0, {'kenney': True}),
     ('veh-pickup', 'van', (KENNEY, 'x/Models/GLB format/truck.glb'), 0, {'kenney': True}),
@@ -335,12 +335,14 @@ def reduce(P, roles, target):
     return np.concatenate(outP + [Q]), outR + R
 
 
-def lods(key, P, roles, near_tris=NEAR_TRIS):
-    """The near, phone and far versions of a fitted model: (key, triangles, roles) each."""
-    near = reduce(P, roles, near_tris)
+def lods(key, P, roles, high_tris=None):
+    """The near, phone and far versions of a fitted model, and with `high_tris` its close-up `-hi`:
+    (key, triangles, roles) each."""
+    near = reduce(P, roles, NEAR_TRIS)
     lite = reduce(P, roles, LITE_TRIS)
     far = far_lod(P, roles)
-    return [(key, *near), (f'{key}-lite', *lite), (f'{key}-far', *far)]
+    hi = [(f'{key}-hi', *reduce(P, roles, high_tris))] if high_tris else []
+    return [(key, *near), (f'{key}-lite', *lite), (f'{key}-far', *far), *hi]
 
 
 def kept_models(path, keys):
@@ -350,7 +352,7 @@ def kept_models(path, keys):
     j, blob = read_glb(path)
     out, extras = [], {}
     for n in j['nodes']:
-        if n['name'].split('-lite')[0].split('-far')[0] not in keys:
+        if n['name'].split('-lite')[0].split('-far')[0].split('-hi')[0] not in keys:
             continue
         prim = j['meshes'][n['mesh']]['primitives'][0]
         a = prim['attributes']
@@ -389,9 +391,10 @@ def build_vehicles(folder, out_dir):
             continue
         P, roles = source(folder, key, src, yaw, body, opts)
         credit = src[0] if is_ccby(src[0]) else None
-        near = opts.get('near', NEAR_TRIS)
-        for k, Q, r in lods(key, P, roles, near):
-            emit(k, body, Q, r, [f'veh-{body}'] if k == key else ['veh-lite' if k.endswith('-lite') else 'veh-far'], credit, max(MAX_TRIS, int(near * MAX_OVER)))
+        high = opts.get('high')
+        for k, Q, r in lods(key, P, roles, high):
+            style = f'veh-{body}' if k == key else 'veh-hi' if k.endswith('-hi') else 'veh-lite' if k.endswith('-lite') else 'veh-far'
+            emit(k, body, Q, r, [style], credit, int(high * MAX_OVER) if k.endswith('-hi') else MAX_TRIS)
     for key, body in KIT_CARS:
         P, roles = kit_car(key)
         P = fit(P, body)

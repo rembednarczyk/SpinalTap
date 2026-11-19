@@ -1,1 +1,1 @@
-Wszystkie auta na ulicach, parkingach i w Alchemii mają teraz szczegółowy model sportowego auta (ok. 4 tys. trójkątów), także auta na paletach P-2.
+Wszystkie auta na ulicach, parkingach i w Alchemii, także na paletach P-2, mają model sportowego auta; kilkanaście najbliższych w szczegółowej wersji (ok. 4 tys. trójkątów).

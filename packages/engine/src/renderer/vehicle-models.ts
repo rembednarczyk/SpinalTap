@@ -176,7 +176,12 @@ const farVehicle = (data: CityKitData, model: VehicleModel, paint: string): Vehi
  * a car the kit lacks. A look's model missing from the props falls back to the kit's car (or the
  * procedural trolleybus), and its far version to the boxes.
  */
-export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: number, look: VehicleLook = {}): { readonly near: VehicleTemplate; readonly far: VehicleTemplate } | null => {
+export const vehicleTemplates = (
+  data: CityKitData,
+  model: VehicleModel,
+  paint: number,
+  look: VehicleLook = {},
+): { readonly near: VehicleTemplate; readonly far: VehicleTemplate; readonly high?: VehicleTemplate } | null => {
   const color = PAINTS[paint] ?? PAINTS[0];
   const props = look.props ?? null;
   const key = look.variant?.key;
@@ -187,5 +192,8 @@ export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: 
   const near = props && nearModel ? propsVehicle(props, nearModel, model, tintOf, gear) : model === "trolleybus" ? trolleybus(data) : kitCar(data, model, color);
   const farModel = fromProps(`${key}-far`);
   const far = props && farModel ? propsVehicle(props, farModel, model, tintOf) : farVehicle(data, model, color);
-  return near ? { near, far } : null;
+  // The close-up of the nearest few (19.11), not on phones.
+  const highModel = look.lite ? undefined : fromProps(`${key}-hi`);
+  const high = props && highModel ? propsVehicle(props, highModel, model, tintOf, gear) : undefined;
+  return near ? { near, far, ...(high ? { high } : {}) } : null;
 };

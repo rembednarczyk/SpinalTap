@@ -10,7 +10,7 @@ import { parseCityKit } from "../src/renderer/city-kit-data";
 import { kitUvs, mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/city-props";
 import { PAINTS, type VehicleTemplate, vehicleTemplates } from "../src/renderer/vehicle-models";
 import { TROLLEY_LIVERY, VEHICLE_VARIANTS, pickVariant } from "../src/renderer/vehicle-variants";
-import { VehicleViews } from "../src/renderer/vehicle-views";
+import { VEHICLE_LOD, VehicleViews } from "../src/renderer/vehicle-views";
 
 /**
  * The street's vehicles of ADR-0058 stage 4: `vehicle-props.glb` (CC-BY cars of the user's second
@@ -49,7 +49,8 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
         // The body the file fits it to (the sports car a hatchback's): the renderer fits it to the vehicle's own.
         const own = v.key.startsWith("veh-") ? (vehicles.models.get(v.key)!.styles[0]!.slice(4) as typeof model) : model;
         const size = VEHICLE_SIZE[own];
-        for (const k of [`${v.key}-lite`, `${v.key}-far`, ...(v.key.startsWith("veh-") ? [v.key] : [])]) {
+        const hi = vehicles.models.has(`${v.key}-hi`) ? [`${v.key}-hi`] : [];
+        for (const k of [`${v.key}-lite`, `${v.key}-far`, ...(v.key.startsWith("veh-") ? [v.key] : []), ...hi]) {
           const m = vehicles.models.get(k)!;
           expect(m, k).toBeDefined();
           // Across and along exactly the body's; never above it.
@@ -63,12 +64,13 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
     }
   });
 
-  it("is light: near up to 1000 triangles (the sports car every vehicle wears up to 4500), the phone's up to 350, far ones under 200, a file under 820 KiB, on the props' palette", () => {
-    // Decision of the user of 19.11: the sports car near at some 4 thousand triangles; the file grows with it (600 to 782 KiB).
-    expect(vehicleBytes.byteLength).toBeLessThan(820 * 1024);
+  it("is light: near up to 1000 triangles, the sports car's close-up up to 4500, the phone's up to 350, far ones under 200, a file under 880 KiB, on the props' palette", () => {
+    // Decision of the user of 19.11: the sports car at some 4 thousand triangles close up (`-hi`); the file grows with it (600 to 845 KiB).
+    expect(vehicleBytes.byteLength).toBeLessThan(880 * 1024);
     expect(vehicles.swatches).toEqual(props.swatches);
+    expect(triangleCount(vehicles.models.get("veh-cyber-hi")!)).toBeGreaterThan(3500);
     for (const m of vehicles.models.values()) {
-      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key === "veh-cyber" ? 4500 : 1000;
+      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key.endsWith("-hi") ? 4500 : 1000;
       expect(triangleCount(m), m.key).toBeLessThanOrEqual(cap);
       expect(m.key).toMatch(/^(veh|car)-[a-z-]+$/);
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
@@ -82,7 +84,7 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
       sources: { id: string; used?: string[] }[];
     }).sources;
     const used = sources.flatMap((s) => (s.used ?? []).filter((k) => k.startsWith("veh-")).map((k) => ({ id: s.id, k })));
-    expect(used.map((u) => u.k).sort()).toEqual([...vehicles.models.keys()].filter((k) => k.startsWith("veh-") && !/-(lite|far)$/.test(k)).sort());
+    expect(used.map((u) => u.k).sort()).toEqual([...vehicles.models.keys()].filter((k) => k.startsWith("veh-") && !/-(lite|far|hi)$/.test(k)).sort());
     expect(used.find((u) => u.k === "veh-cyber")!.id).toBe("sketchfab-cyberpunk-car");
     expect(used.find((u) => u.k === "veh-trolleybus")!.id).toBe("quaternius-public-transport");
   });
@@ -171,5 +173,27 @@ describe("vehicle views with the vehicles' file (ADR-0058 stage 4)", () => {
     }
     expect(counts.high).not.toBe(counts["high:before"]);
     expect(counts.low).toBeLessThan(counts.high!);
+  });
+
+  it("puts the close-up on the nearest few only, as many as the pool's places, none on phones; a car leaving gives its place to the next", () => {
+    for (const quality of ["high", "medium", "low"] as const) {
+      const scene = new Scene(new NullEngine());
+      const city = new CityKit(scene, new ToonMaterials(scene), null, kit, { labels: false });
+      city.setProps(props);
+      let eye = { x: 0, z: 0 };
+      const views = new VehicleViews({ scene, kit: () => city, glow: null, eye: () => eye, quality });
+      // Thirty parked cars in a row, 2 m apart from 5 m off the eye.
+      for (let i = 0; i < 30; i++) views.spawn(i + 1, { kind: "vehicle", model: "sedan", tint: 7 + i, parked: true }, at(0, 5 + i * 2));
+      views.update();
+      const lod = VEHICLE_LOD[quality];
+      const within = Array.from({ length: 30 }, (_, i) => 5 + i * 2).filter((d) => d <= lod.highReach).length;
+      expect(views.stats.high, quality).toBe(Math.min(lod.high, within));
+      expect(views.stats.near, quality).toBe(Array.from({ length: 30 }, (_, i) => 5 + i * 2).filter((d) => d <= lod.near).length);
+      // The eye moves along the row: the close-ups follow it, never more than the places.
+      eye = { x: 0, z: 40 };
+      views.update();
+      expect(views.stats.high, quality).toBeLessThanOrEqual(lod.high);
+      if (quality !== "low") expect(views.stats.high, quality).toBeGreaterThan(0);
+    }
   });
 });
