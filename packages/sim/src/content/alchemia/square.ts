@@ -1,7 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import { groundY } from "../lublin/terrain";
 import { P1_RAMP, P1_STAIR } from "./parking";
-import { type Box, HALL, type Piece, box, piece } from "./plan";
+import { type Piece, box, piece } from "./plan";
 
 /**
  * T0's square over P-1 and the food hall's green roof (ADR-0074 stage 7, decision 7.11): where the
@@ -51,7 +51,6 @@ const BED_HEIGHT = 0.45;
 const BED_STEP = 2;
 
 /** The lawns on the hall's roof: four beds of grass either side of a cross of paths. */
-export const ROOF_LAWNS: readonly Box[] = [402.5, 420].flatMap((x) => [37, 47.5].map((z) => box(x, x + 13.5, z, z + 7.5, HALL.roof, HALL.roof + 0.05)));
 
 /** The tops of the pergolas' crossbeams: of pergola A's pair at z, of pergola C's, of pergola B's. */
 const walkTop = (z: number): number => {
@@ -187,4 +186,4 @@ const beds = (): Piece[] =>
   });
 
 /** Every piece of T0's square and the green roof, in the world's axes (none inside the hall). */
-export const squarePieces = (): Piece[] => [...walkPergola(), ...backPergola(), ...doorPergola(), ...beds(), ...ROOF_LAWNS.map((b) => piece(b, "lawn", false, false))];
+export const squarePieces = (): Piece[] => [...walkPergola(), ...backPergola(), ...doorPergola(), ...beds()];

@@ -26,12 +26,15 @@ const kitData = parseCityKit(file("city-kit.glb"));
  */
 describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
   it("draws every piece of the simulation, the outside and the inside within their budgets", () => {
-    const { outside, inside } = alchemiaGeometry(kitData);
-    // A box is 12 triangles; the frame, the signs and the lights come on top.
+    const { outside, inside, tiers } = alchemiaGeometry(kitData);
+    // A box is up to 12 triangles (faces nobody sees left out: a bottom on a floor, a step's back); the frame, the signs and the lights come on top.
     const boxes = (s: { indices: readonly number[] }) => s.indices.length / 3 / 12;
-    expect(boxes(outside) + boxes(inside)).toBeGreaterThanOrEqual(ALCHEMIA_PIECES.length + ARKADY_PIECES.length);
+    expect(boxes(outside) + boxes(inside) + boxes(tiers)).toBeGreaterThanOrEqual(0.8 * (ALCHEMIA_PIECES.length + ARKADY_PIECES.length));
     expect(outside.indices.length / 3).toBeLessThanOrEqual(8000);
     expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
+    // The green tiers of 15.11, a building of their own (ADR-0074 §7).
+    expect(tiers.indices.length / 3).toBeGreaterThan(500);
+    expect(tiers.indices.length / 3).toBeLessThanOrEqual(8000);
     // Nothing of it outside the plot round the hall and its ramps, T2 with its stairs, the Arkady with their pavements, and the pavilion on the corner (stage 3).
     const onPlot = (x: number, z: number) => x > FOODHALL.minX - 7 && x < FOODHALL.maxX + 7 && z > FOODHALL.minZ - 7 && z < 94;
     const onCorner = (x: number, z: number) => x > 420.2 && x < 436.6 && z > -9.1 && z < 6.4;
@@ -53,7 +56,9 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
   it("draws T0's pergolas in timber with their paper lanterns lit, and the green roof's lawns on its paving (stage 7)", () => {
     // The first vertex's uv of the pieces of a kind: every box's vertices share its swatch.
     const uvOf = (pieces: typeof ALCHEMIA_PIECES) => {
-      const s = alchemiaGeometry(kitData, pieces).outside;
+      // The lawns are on the green tiers' roof since 15.11: their own mesh.
+      const g = alchemiaGeometry(kitData, pieces);
+      const s = g.tiers.uvs.length > 0 ? g.tiers : g.outside;
       return [s.uvs[0], s.uvs[1]];
     };
     const kind = (k: string) => ALCHEMIA_PIECES.filter((p) => p.kind === k);
@@ -94,15 +99,16 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
 
   it("draws the outside from afar, the inside and its lamp only near the hall, none without the map city", () => {
     const { scene, view, eye, box, materials } = setup();
+    // The outside, the green tiers (15.11) with it, and the inside.
     view.update();
-    expect(view.stats.meshes).toBe(2);
+    expect(view.stats.meshes).toBe(3);
     expect(materials.light(ALCHEMIA_LAMP_KEY)).toBeDefined();
     eye.z = FOODHALL.maxZ + INSIDE_DRAW + 3;
     view.update();
-    expect(view.stats.meshes).toBe(2);
+    expect(view.stats.meshes).toBe(3);
     eye.z += 10;
     view.update();
-    expect(view.stats.meshes).toBe(1);
+    expect(view.stats.meshes).toBe(2);
     expect(materials.light(ALCHEMIA_LAMP_KEY)).toBeUndefined();
     eye.z = ALCHEMIA_CENTRE.z - ALCHEMIA_DRAW - 15;
     view.update();
@@ -111,7 +117,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     box.city = false;
     view.update();
     expect(view.stats.meshes).toBe(0);
-    expect(scene.meshes.filter((m) => m.name.startsWith("alchemia"))).toHaveLength(2);
+    expect(scene.meshes.filter((m) => m.name.startsWith("alchemia"))).toHaveLength(3);
   });
 
   it("draws the outside near the Arkady (ADR-0074 stage 2) when the hall is beyond its distance", () => {
@@ -120,7 +126,8 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     eye.z = ARKADY_CENTRE.z + 110;
     expect(Math.hypot(eye.x - ALCHEMIA_CENTRE.x, eye.z - ALCHEMIA_CENTRE.z)).toBeGreaterThan(ALCHEMIA_DRAW + 10);
     view.update();
-    expect(view.stats.meshes).toBe(1);
+    // The outside and the green tiers with it.
+    expect(view.stats.meshes).toBe(2);
     eye.z = ARKADY_CENTRE.z + ALCHEMIA_DRAW + 15;
     view.update();
     expect(view.stats.meshes).toBe(0);

@@ -88,11 +88,13 @@ describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
     const { session } = start();
     teleport(session, 420, 28, 0);
     steps(session, 2);
-    walkAt(session, { x: 420, z: 50 }, 600);
+    // Past the green tiers (15.11) along the roof's east strip.
+    walkAt(session, { x: 434.9, z: 34 }, 600);
+    walkAt(session, { x: 434.9, z: 50 }, 600);
     expect(at(session).z).toBeGreaterThan(49);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
     // The parapet over T1 keeps her on it.
-    walkAt(session, { x: 420, z: 66 }, 300);
+    walkAt(session, { x: 434.9, z: 66 }, 300);
     expect(at(session).z).toBeLessThan(FOODHALL.maxZ);
     expect(at(session).y).toBeCloseTo(FOODHALL.roof, 1);
   });

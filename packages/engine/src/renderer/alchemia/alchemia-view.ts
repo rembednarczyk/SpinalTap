@@ -74,6 +74,8 @@ const toHall = (e: Vec3): number => Math.hypot(Math.max(FOODHALL.minX - e.x, 0, 
 export class AlchemiaView {
   private outside: Mesh | null = null;
   private inside: Mesh | null = null;
+  /** The green tiers over the hall (15.11), drawn with the outside. */
+  private tiers: Mesh | null = null;
   private kitSeen: CityKit | null = null;
   private level = 0;
   /** Its car park's P-1 under T0, near it only, and the cars on its ramp (ADR-0074 stage 4): a part of its own. */
@@ -86,7 +88,8 @@ export class AlchemiaView {
   /** The meshes drawn last frame and their triangles (debug, tests). */
   get stats(): { readonly meshes: number; readonly triangles: number; readonly insideTriangles: number } {
     const on = (m: Mesh | null) => (m?.isEnabled(false) ? 1 : 0);
-    return { meshes: on(this.outside) + on(this.inside), triangles: this.outside ? this.outside.getTotalIndices() / 3 : 0, insideTriangles: this.inside ? this.inside.getTotalIndices() / 3 : 0 };
+    const tris = (m: Mesh | null) => (m ? m.getTotalIndices() / 3 : 0);
+    return { meshes: on(this.outside) + on(this.inside) + on(this.tiers), triangles: tris(this.outside) + tris(this.tiers), insideTriangles: tris(this.inside) };
   }
 
   /** Call once per frame before rendering. */
@@ -107,9 +110,10 @@ export class AlchemiaView {
 
   private build(kit: CityKit): void {
     this.kitSeen = kit;
-    const { outside, inside } = alchemiaGeometry(kit.data);
+    const { outside, inside, tiers } = alchemiaGeometry(kit.data);
     this.outside = this.fill(this.outside, "alchemia", outside, kit);
     this.inside = this.fill(this.inside, "alchemia-inside", inside, kit);
+    this.tiers = this.fill(this.tiers, "alchemia-tiers", tiers, kit);
   }
 
   private fill(mesh: Mesh | null, name: string, sink: GeometrySink, kit: CityKit): Mesh {
@@ -128,6 +132,7 @@ export class AlchemiaView {
 
   private show(out: boolean, inn: boolean, fade = 0): void {
     if (this.outside && this.outside.isEnabled(false) !== out) this.outside.setEnabled(out);
+    if (this.tiers && this.tiers.isEnabled(false) !== out) this.tiers.setEnabled(out);
     if (this.inside && this.inside.isEnabled(false) !== inn) this.inside.setEnabled(inn);
     const level = inn && this.inside !== null ? fade : 0;
     if (level === this.level) return;

@@ -169,7 +169,7 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
   it("leads from the car park, the hall and the green roof down to its deck, and from its deck up to all three", () => {
     const sim = loaded();
     const deck = { x: 402, y: F, z: 15 };
-    const elsewhere = [onGround(405, -3), onGround(424, 18), beforeKeeper("kenta"), { x: 419, y: FOODHALL.roof, z: 50 }];
+    const elsewhere = [onGround(405, -3), onGround(424, 18), beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
     for (const s of elsewhere) {
       expect(routeAcrossLevels(sim.world, WORLD_NAV, s, deck), `${s.x},${s.z} to the deck`).not.toBeNull();
       expect(routeAcrossLevels(sim.world, WORLD_NAV, deck, s), `the deck to ${s.x},${s.z}`).not.toBeNull();
