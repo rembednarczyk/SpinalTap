@@ -354,6 +354,21 @@ Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wy
   - Trzy poziomy i drzwi na P−2.
 - **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
 
+### Etap 5d1: bryła schronu (gałąź `feat/alchemia-5d1`)
+Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecenie odzyskania przechodzą do schronu w 5d2 razem z migracją zapisu.
+- **Pokój** (`shelter.ts`): x 420,4–435, z 84–97, podłoga −12,2 (3 m pod T2), strop −9,9, płyta −9,6 pod gruntem T2 (−9,2). Pokój i droga do bramy to dwa `GroundVault`, więc teren i bruk T2 nad nimi są całe.
+- **Brama stalowa** we wschodniej ścianie korytarza P−2 (z 69–70,6): drzwi automatyczne (ADR-0038), otwierają się każdemu, kto podejdzie. Zamek dostaje w 5d2. Za bramą podest na poziomie P−2, schody w dół na północ (17 stopni po 0,176 m) i przejście do południowo-zachodniego rogu pokoju. Nad schodami strop korytarza P−2 pod gruntem T1.
+- **Właz** na T2 na wschód od pokoju, przy (441, 96): szyb (`GroundCut`) ze schodami w dół na zachód i pasem podłogi pokoju u ich stopy, żeby postać przechodziła pod ścianą nad otworem. Ściany szybu mają balustradę 1 m nad T2, a obok stoi otwarta klapa i lampka. Do kamienia pamięci jest 20 m (§6).
+- **Ekspozycja:** ławki z czasów wojny przy ścianie południowej i północnej, dwa słupy, dwie gabloty ze znaleziskami, panele zdjęć na ścianie zachodniej, ręczny wentylator i lampy awaryjne. Północno-zachodni róg zostaje wolny na skrytkę.
+- **Wnętrze i graf.** Wnętrze `alchemia-shelter` (en/pl). Graf poziomów ma dwa wyjścia: bramą do węzłów korytarza P−2 i włazem na T2.
+- **Silnik.** Schron rysuje się w siatce P−2, z własną słabą, ciepłą lampą zasilania awaryjnego (§6), gdy oko jest w schronie. Wtedy lampy P−2, P−1 i hali gasną. Szyb włazu należy do zewnętrza Alchemii. Deszcz nie pada pod płytą schronu.
+- **Zlecenie skrytki.** Jeden z ludzi Hebi stał na miejscu włazu, więc przesunął się o metr na południe (`byArkady(8.3, 7.5)`).
+- **Testy.**
+  - Symulacja: bryły pod gruntem i poza bryłami P−2, P−1, hali i T2, schody w kroku i z prześwitem, właz na poziomie T2 i poza bryłami mapy, wnętrze, graf, pościg przez bramę i przez właz.
+  - Silnik: siatki, lampa, widoczność, deszcz.
+  - Sesja: z T2 włazem do schronu i bramą do P−2, potem z powrotem, bez obrażeń.
+- **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**
