@@ -74,6 +74,31 @@ export const roundedSlab = (sink: GeometrySink, data: CityKitData, b: AlchemiaBo
   if (led) band(sink, roundedOutline(b, LED_OUT), b.y0 + LED_FOOT, b.y0 + LED_FOOT + LED_HIGH, swatchUv(data, led));
 };
 
+/**
+ * The slab over a storey's glass `g`, when the slab overhangs it by the same reach all round (the
+ * front's and the tiers' storeys): that reach, else null.
+ */
+export const overhangOf = (g: AlchemiaBox, slabs: readonly AlchemiaBox[]): { readonly slab: AlchemiaBox; readonly reach: number } | null => {
+  for (const s of slabs) {
+    if (Math.abs(s.y0 - g.y1) > 0.06) continue;
+    const reach = g.x0 - s.x0;
+    if (reach < 0.05 || reach > 1) continue;
+    if ([s.x1 - g.x1, g.z0 - s.z0, s.z1 - g.z1].every((d) => Math.abs(d - reach) < 0.02)) return { slab: s, reach };
+  }
+  return null;
+};
+
+/**
+ * A storey's glass under a rounded slab (B4): the slab's outline drawn in by its overhang, so the
+ * glass's corners follow the slab's arcs instead of standing square under them.
+ */
+export const roundedGlass = (sink: GeometrySink, data: CityKitData, g: AlchemiaBox, slab: AlchemiaBox, reach: number, swatch: string): void => {
+  const pts = roundedOutline(slab, -reach);
+  const uv = swatchUv(data, swatch);
+  band(sink, pts, g.y0, g.y1, uv);
+  lid(sink, pts, g.y1, 1, uv);
+};
+
 /** Is `p` a thin piece of a slab's strip of light, the simulation's straight one the rounded slab replaces? */
 export const ledOfSlab = (p: AlchemiaBox, slabs: readonly AlchemiaBox[]): boolean =>
   slabs.some((s) => Math.abs(p.y0 - (s.y0 + LED_FOOT)) < 1e-6 && p.x0 >= s.x0 - 0.1 && p.x1 <= s.x1 + 0.1 && p.z0 >= s.z0 - 0.1 && p.z1 <= s.z1 + 0.1);
