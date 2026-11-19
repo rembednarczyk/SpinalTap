@@ -8,7 +8,7 @@ import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
-import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
+import { P1_LINK_VAULT, P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
 import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR_PIECES, P2_STORE_SHELL, P2_VAULT } from "./p2";
 import { P2_ROBOTS, P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
 import { SHELTER_GATE, SHELTER_HATCH_CUT, SHELTER_HATCH_PIECES, SHELTER_PIECES, SHELTER_VAULTS } from "./shelter";
@@ -22,6 +22,7 @@ import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "
 import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
 import { frontGreenPieces } from "./front-green";
+import { entrancePieces } from "./entrance";
 import { SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, modelBoxes } from "./shops";
 import { FOODHALL_PROPS, seatingPieces } from "./foodhall-seating";
 import { kitchenPieces } from "./foodhall-kitchens";
@@ -52,6 +53,7 @@ export { slabOf as storeySlabOf } from "./storey";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
 export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
+export { entrancePieces } from "./entrance";
 export {
   GLASS_IN as SHOP_GLASS_IN,
   RING_WAYS as SHOP_RING_WAYS,
@@ -106,7 +108,7 @@ const LIFT_NE = liftPieces(ALCHEMIA_LIFT_NE);
 /** The gallery round the atrium (ADR-0093 O1): its body drawn from afar, its galleries' balustrades, escalators and cores near. */
 const MALL_OUT = mallOutsidePieces();
 const MALL_IN = mallInsidePieces();
-const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces()];
+const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), ...entrancePieces()];
 /**
  * The gallery's body (ADR-0093 O1; the green tiers of 15.11 until then) and the front's storeys over
  * P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own.
@@ -227,8 +229,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
 // The gallery's cores and escalators (ADR-0093 O1) as the hall's stairs, before the hall's cut.
 export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, ...MALL_CUTS, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT, SHELTER_HATCH_CUT];
 
-/** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor; stage 5d1: the shelter and its way to the gate). */
-export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT, ...SHELTER_VAULTS];
+/** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor; stage 5d1: the shelter and its way to the gate; ADR-0093 O2b: P-1's passage to its stair core). */
+export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT, ...SHELTER_VAULTS, P1_LINK_VAULT];
 
 /** The middle of the hall: for streaming and drawing distances. */
 export const ALCHEMIA_CENTRE: GroundPoint = { x: (HALL.minX + HALL.maxX) / 2, z: (HALL.minZ + HALL.maxZ) / 2 };

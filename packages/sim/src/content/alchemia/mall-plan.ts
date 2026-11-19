@@ -184,3 +184,12 @@ export const GALLERY_ROOMS: readonly StoreyRoom[] = storeyRooms([
 
 /** The food hall on P3 (ADR-0093 O3) as an interior of its own, inside the glass up to the roof's slab. */
 export const FOODHALL_ROOMS: readonly StoreyRoom[] = storeyRooms([[L.p3, L.roof]]);
+
+/**
+ * The main entrance (ADR-0093 O2b): one opening 4.4 m wide at the end of the way from Bajkowskiego east
+ * of the ramp, its middle on that way's (x 421); 2.4 m wide at x 418.8-421.2 before, behind P-1's
+ * stair house.
+ */
+export const MAIN_DOORS = { x0: 418.8, x1: 423.2 } as const;
+/** The main entrance's way (O2b): its middle, straight from Bajkowskiego's footway to the main doors' middle. */
+export const MAIN_WAY_X = (MAIN_DOORS.x0 + MAIN_DOORS.x1) / 2;

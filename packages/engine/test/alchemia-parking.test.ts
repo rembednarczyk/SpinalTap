@@ -60,11 +60,12 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     expect(boxes(inside)).toBeGreaterThanOrEqual(P1_ALL_PIECES.filter((p) => p.inside && p.kind !== "shutter").length);
     expect(boxes(outside)).toBeGreaterThanOrEqual(P1_PIECES.filter((p) => !p.inside).length);
     expect(inside.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
-    // The room under the car park, the trench and the stair house by it, the passage from metro B's hall (stage 10): nothing elsewhere.
+    // The room under the car park, the trench and the stair house by it, the passage from metro B's hall (stage 10), the stair core east of it (ADR-0093 O2b): nothing elsewhere.
+    const east = Math.max(METRO_DOOR.inner, P1_STAIR_CUT.bounds.maxX);
     for (const s of [inside, outside])
       for (let i = 0; i < s.positions.length; i += 3) {
         const [x, z] = [s.positions[i]!, s.positions[i + 2]!];
-        expect(x > P1.minX - 0.5 && x < METRO_DOOR.inner + 0.5 && z > P1_RAMP_CUT.bounds.minZ - 0.5 && z < P1.maxZ + 0.5, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+        expect(x > P1.minX - 0.5 && x < east + 0.5 && z > P1_RAMP_CUT.bounds.minZ - 0.5 && z < P1.maxZ + 0.5, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
       }
   });
 
@@ -95,9 +96,10 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     const c = P1_RAMP_CUT.bounds;
     expect(parkingIn({ minX: 256, maxX: 512, minZ: 0, maxZ: 256 })).toBe(true);
     expect(parkingIn({ minX: 256, maxX: 512, minZ: -256, maxZ: 0 })).toBe(false);
+    // Round the trench, and the stair core's house 6 m east of it since ADR-0093 O2b.
     for (let i = 0; i < sink.positions.length; i += 3) {
       const [x, z] = [sink.positions[i]!, sink.positions[i + 2]!];
-      expect(x > c.minX - 4 && x < c.maxX + 4 && z > c.minZ - 1 && z < P1.maxZ, `${x},${z}`).toBe(true);
+      expect(x > c.minX - 4 && x < Math.max(c.maxX + 4, P1_STAIR_CUT.bounds.maxX + 0.5) && z > c.minZ - 1 && z < P1.maxZ, `${x},${z}`).toBe(true);
     }
   });
 

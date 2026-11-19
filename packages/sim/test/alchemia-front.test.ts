@@ -61,12 +61,14 @@ describe("Alchemia's front over P-1 (B1)", () => {
   });
 
   it("keeps its wings and columns off the ramp's trench, P-1's stair house, the pavilions and metro B's way", () => {
+    expect(EAST_WING.minX).toBe(P1_STAIR.maxX);
     const trench: R = { minX: P1_RAMP.minX - 0.3, maxX: P1_RAMP.maxX + 0.3, minZ: P1_RAMP.top, maxZ: P1_RAMP.covered };
     const columns = PASSAGE_COLUMNS.map((c) => ({ minX: c.x - 0.3, maxX: c.x + 0.3, minZ: c.z - 0.3, maxZ: c.z + 0.3 }));
     const pavilion: R = { minX: Math.min(...PAVILION_CORNERS.map((c) => c.x)), maxX: Math.max(...PAVILION_CORNERS.map((c) => c.x)), minZ: Math.min(...PAVILION_CORNERS.map((c) => c.z)), maxZ: Math.max(...PAVILION_CORNERS.map((c) => c.z)) };
     for (const r of [...WEST_WING, EAST_WING, ...columns]) {
       expect(apart(r, trench, 0.5), JSON.stringify(r)).toBe(true);
-      expect(apart(r, P1_STAIR, 0.5), JSON.stringify(r)).toBe(true);
+      // ADR-0093 O2b: the stair house stands against the east wing's west face (moved off the main entrance's way), off everything else.
+      expect(apart(r, P1_STAIR, r === EAST_WING ? 0 : 0.5), JSON.stringify(r)).toBe(true);
       expect(apart(r, pavilion, 2), JSON.stringify(r)).toBe(true);
       expect(apart(r, METRO_B, 1.5), JSON.stringify(r)).toBe(true);
     }
