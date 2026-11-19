@@ -3,6 +3,7 @@ import type { GroundCut } from "../../world/ground";
 import type { GroundVault } from "../../world/vault";
 import type { Rect, StaticProp } from "../builders";
 import { groundY } from "../lublin/terrain";
+import { ARKADY } from "./arkady";
 import { type Box, HALL, type Piece, box, piece } from "./plan";
 
 /**
@@ -143,11 +144,12 @@ export const P1_STAIR_CUT: GroundCut = { bounds: { minX: P1_STAIR.minX, maxX: P1
 
 /**
  * P-1 in the ground: feet deep under the car park stand on its solids (`VAULT_COVER`). Its ground
- * lies 2 m under the floor's slab, as a metro platform's under its track bed: a body on the floor
- * is raised over the ground (`LEVEL_GAP`), so an NPC on the hall's floor after one on P-1's goes
- * by the level graph, through the door, instead of straight at the wall between them.
+ * lies 2 m under the floor of the lowest level in it, as a metro platform's under its track bed: a
+ * body on a floor is raised over the ground (`LEVEL_GAP`), so an NPC on the hall's floor after one
+ * on P-1's goes by the level graph, through the door, instead of straight at the wall between them.
+ * Since stage 5a that level is P-2 under it (`p2.ts`), on T2's level: the ground 2 m under its floor.
  */
-export const P1_VAULT: GroundVault = { bounds: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ }, floor: F - 2 };
+export const P1_VAULT: GroundVault = { bounds: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ }, floor: ARKADY.ground - 2 };
 
 /** P-1 as an interior of ADR-0061: the deck, the apron with the strip by the stair core's foot. */
 export const P1_ROOMS: readonly (Rect & { readonly bottom: number; readonly top: number })[] = [
@@ -194,6 +196,14 @@ const rampPieces = (): Piece[] => {
  */
 export const P1_METRO_OPENING = { minZ: 26.8, maxZ: 29.2 } as const;
 
+/**
+ * The hole in the apron's floor over the stairs down to P-2 (ADR-0074 §4, stage 5a, `p2.ts`): along
+ * the hall's back wall from its door and the lift east, clear of the cars' turns at the ramp's foot
+ * and of the walk from the passage from metro B's hall to the apron. North of it, under the hall's
+ * back wall, a strip of floor 0.6 m wide over the wall between the flight and P-2's corridor.
+ */
+export const P1_STAIR_DOWN = { minX: 414.4, maxX: 418.6, minZ: 29.8, maxZ: P1.maxZ - 0.6 } as const;
+
 /** The deck's, the apron's and the stair core's strip's floor and ceiling, P-1's outer walls. */
 const shellPieces = (): Piece[] => {
   const r = P1_RAMP;
@@ -201,9 +211,16 @@ const shellPieces = (): Piece[] => {
   const base = F - W;
   const top = C + P1.slab;
   const slab = (x0: number, x1: number, z0: number, z1: number): Piece[] => [piece(box(x0, x1, z0, z1, base, F), "floor", true), piece(box(x0, x1, z0, z1, C, top), "roof", true)];
+  const h = P1_STAIR_DOWN;
+  const floor = (x0: number, x1: number, z0: number, z1: number): Piece => piece(box(x0, x1, z0, z1, base, F), "floor", true);
   return [
     ...slab(P1.minX, r.minX - W, P1.minZ, P1.maxZ),
-    ...slab(r.minX - W, P1.maxX, r.foot, P1.maxZ),
+    // The apron's floor round the hole over the stairs down to P-2 (stage 5a), its ceiling whole.
+    floor(r.minX - W, P1.maxX, r.foot, h.minZ),
+    floor(r.minX - W, h.minX, h.minZ, h.maxZ),
+    floor(h.maxX, P1.maxX, h.minZ, h.maxZ),
+    floor(r.minX - W, P1.maxX, h.maxZ, P1.maxZ),
+    piece(box(r.minX - W, P1.maxX, r.foot, P1.maxZ, C, top), "roof", true),
     ...slab(s.minX, P1.maxX, s.maxZ, r.foot),
     // West, south (the deck's), north west of the hall, east by the apron.
     piece(box(P1.minX, P1.minX + W, P1.minZ, P1.maxZ, base, top), "wall", true),

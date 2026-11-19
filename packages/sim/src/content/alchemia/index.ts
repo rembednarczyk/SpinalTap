@@ -9,6 +9,8 @@ import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
 import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
+import { P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_SHELL_PIECES, P2_STAIR_PIECES, P2_VAULT } from "./p2";
+import { P2_STORE_PIECES } from "./p2-store";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
@@ -26,6 +28,8 @@ export * from "./market";
 export * from "./pavilion";
 export * from "./parking";
 export * from "./metro-door";
+export * from "./p2";
+export * from "./p2-store";
 export { type Garland as AlchemiaGarland, PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, SQUARE_GARLANDS, garlandAt } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
@@ -34,7 +38,7 @@ export { ALCHEMIA_NAV } from "./nav";
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
  * green roof and the terraces round it (stage 1); the lower square T2 with its stairs and the
  * Arkady rebuilt on it (stage 2); the triangular pavilion on the corner with Ren on its roof
- * (stage 3, `pavilion.ts`); P-1 under the car park (stage 4, `parking.ts`); T0's square with its
+ * (stage 3, `pavilion.ts`); P-1 under the car park (stage 4, `parking.ts`) and P-2 under it (stage 5a, `p2.ts`); T0's square with its
  * pergolas, lanterns and beds and the lawns of the green roof (stage 7, `square.ts`). Everything is drawn by the engine
  * (`renderer/alchemia`) from `ALCHEMIA_PIECES`; the solid ones are the simulation's scenery, with
  * ids from `ROOM_ID_BASE` (outside the allocator).
@@ -64,6 +68,9 @@ export const ALCHEMIA_TIER_PIECES: readonly Piece[] = TIERS;
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
 export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS];
 
+/** P-2's solids (stage 5a), the last of Alchemia's: its shell and cutting, its stairs, its store. */
+export const P2_PROPS: readonly StaticProp[] = [solidProp([...P2_SHELL_PIECES, ...P2_EARTH_PIECES, ...P2_CUTTING_PIECES]), solidProp(P2_STAIR_PIECES), solidProp(P2_STORE_PIECES)];
+
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(SHELL.filter((p) => p.kind !== "step")),
@@ -91,13 +98,15 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(TIERS.filter((p) => p.kind === "step")),
   // Stage 10 after the tiers: the passage from metro B's hall down to P-1.
   solidProp(METRO_DOOR_PIECES),
+  // Stage 5a after stage 10's: P-2's shell with its portal and cutting, the flight down from P-1, the store's fittings.
+  ...P2_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */
-export const ALCHEMIA_CUTS: readonly GroundCut[] = [FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT];
+export const ALCHEMIA_CUTS: readonly GroundCut[] = [FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT];
 
-/** The rooms of Alchemia in the ground under the car park, its terrain whole over them (stage 4: P-1). */
-export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT];
+/** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor). */
+export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT];
 
 /** The middle of the hall: for streaming and drawing distances. */
 export const ALCHEMIA_CENTRE: GroundPoint = { x: (HALL.minX + HALL.maxX) / 2, z: (HALL.minZ + HALL.maxZ) / 2 };

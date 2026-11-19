@@ -41,6 +41,13 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   pergola: "rust",
   lantern: "win-warm",
   led: "neon-cyan",
+  // P-2's store (stage 5a): its own sinks colour these (`p2-geometry.ts`); here only for the table's sake.
+  rack: "metal",
+  pallet: "trim-light",
+  car: "metal",
+  tyre: "tyre",
+  rail: "metal",
+  beacon: "neon-amber",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
