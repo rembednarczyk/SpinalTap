@@ -102,6 +102,8 @@ class Fleet {
   constructor(
     private readonly deps: VehicleViewsDeps,
     private readonly name: string,
+    /** Whether it keeps a pool of close-ups: the parked cars only, whose buffers go up only when something changes (the driving ones' go up every frame). */
+    private readonly closeUps: boolean,
   ) {}
 
   has(id: EntityId): boolean {
@@ -321,7 +323,7 @@ class Fleet {
       triangles += m.pair.near.indices.length + m.pair.far.indices.length;
     }
     // The close-ups' pool after the vehicles' own versions: every place laid out for one close-up.
-    const places = high ? VEHICLE_LOD[this.deps.quality].high : 0;
+    const places = high && this.closeUps ? VEHICLE_LOD[this.deps.quality].high : 0;
     this.poolBase = total;
     this.poolVerts = high?.vertexCount ?? 0;
     this.poolOwners = Array.from({ length: places }, () => null);
@@ -398,8 +400,8 @@ export class VehicleViews {
   private readonly parked: Fleet;
 
   constructor(private readonly deps: VehicleViewsDeps) {
-    this.driving = new Fleet(deps, "vehicles");
-    this.parked = new Fleet(deps, "parked");
+    this.driving = new Fleet(deps, "vehicles", false);
+    this.parked = new Fleet(deps, "parked", true);
   }
 
   has(id: EntityId): boolean {
