@@ -117,10 +117,11 @@ describe("P-1 under Alchemia's car park (ADR-0074 stage 4)", () => {
     expect(P1_STAIR_RISE).toBeLessThan(0.19);
   });
 
-  it("opens its door onto the hall's floor by Sachiko's kiosk, level", () => {
+  it("opens its door onto the hall's floor by the stairs' foot, level", () => {
     expect(P1_HALL_DOOR.x1 - P1_HALL_DOOR.x0).toBeGreaterThan(1.5);
-    const sachiko = beforeKeeper("sachiko");
-    expect(Math.hypot(sachiko.x - (P1_HALL_DOOR.x0 + P1_HALL_DOOR.x1) / 2, sachiko.z - FOODHALL.minZ)).toBeLessThan(5.5);
+    // Sachiko's kiosk stood by it until ADR-0093 O3 took it up to the food hall on P3: the hall's back aisle runs to it, clear of P0's shops.
+    const aisle = node("alchemia-hall-back");
+    expect(Math.hypot(aisle.x - (P1_HALL_DOOR.x0 + P1_HALL_DOOR.x1) / 2, aisle.z - FOODHALL.minZ)).toBeLessThan(7);
     const sim = loaded();
     expect(lineOfSight(sim.world, up(node("alchemia-p1-door"), 0.6), up(node("alchemia-p1-door-in"), 0.6))).toBe(true);
   });
@@ -169,7 +170,8 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
   it("leads from the car park, the hall and the green roof down to its deck, and from its deck up to all three", () => {
     const sim = loaded();
     const deck = { x: 402, y: F, z: 15 };
-    const elsewhere = [onGround(405, -3), onGround(428, 10), beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
+    // The hall's floor on P0's north walkway (before Kenta's counter until ADR-0093 O3), the food hall on P3 before it now.
+    const elsewhere = [onGround(405, -3), onGround(428, 10), { x: 420, y: F, z: 51.6 }, beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
     for (const s of elsewhere) {
       expect(routeAcrossLevels(sim.world, WORLD_NAV, s, deck), `${s.x},${s.z} to the deck`).not.toBeNull();
       expect(routeAcrossLevels(sim.world, WORLD_NAV, deck, s), `the deck to ${s.x},${s.z}`).not.toBeNull();
@@ -199,7 +201,9 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
   });
 
   it("an alerted brawler in the hall gets to the player on the apron through the door, and back", () => {
-    expect(chase(beforeKeeper("goro"), { x: 409, y: F, z: 27 }, 30)).not.toBeNull();
-    expect(chase({ x: 409, y: F, z: 27 }, beforeKeeper("goro"), 30)).not.toBeNull();
+    // On P0's north walkway (before Goro's counter until ADR-0093 O3 took it up to the food hall on P3).
+    const hall = { x: 420, y: F, z: 51.6 };
+    expect(chase(hall, { x: 409, y: F, z: 27 }, 30)).not.toBeNull();
+    expect(chase({ x: 409, y: F, z: 27 }, hall, 30)).not.toBeNull();
   });
 });

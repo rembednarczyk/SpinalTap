@@ -3,6 +3,7 @@ import {
   ALCHEMIA_PROPS,
   MALL_PROPS,
   SHOP_SOLID_PROPS,
+  FOODHALL_SOLID_PROPS,
   EAST_WING,
   FRONT_SIGN,
   L1_TOP,
@@ -85,7 +86,7 @@ describe("Alchemia's front over P-1 (B1)", () => {
     expect(FRONT_SIGN.z1).toBeLessThanOrEqual(L3.minZ);
     expect(FRONT_SIGN.y0).toBeGreaterThan(L2_TOP);
     expect(FRONT_SIGN.y1).toBeLessThan(L3_TOP);
-    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
+    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
   });
 
   it("stands its kiosks (B4) on the square before it, off the fountain, the ramp's trench and every solid of the map", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type ReputationState, hm } from "@seki/core";
-import { SCHEDULES, SIM_HZ, Simulation, spotNear } from "../src";
+import { SCHEDULES, SIM_HZ, STALL_KEEPERS, Simulation, beforeKeeper } from "../src";
 import { byKey, run, teleportPlayer } from "./helpers";
 
 /*
@@ -28,8 +28,10 @@ const skipTo = (sim: Simulation, minute: number) => {
 describe("G-358: the north market at 23:00", () => {
   it.each([{ civilians: 0 }, { civilians: 50 }])("with standing %o no vendor runs from the player at the stall", (reputation) => {
     const sim = simWith(reputation);
+    // Before Fumiko's bar in the food hall on P3 (ADR-0093 O3; on T1 before her hatch until then), where she is at 23:00.
     const stall = SCHEDULES.fumiko!.stops.find((s) => s.label === "stragan")!.path.at(-1)!;
-    teleportPlayer(sim, spotNear(stall.x + 1.5, stall.z + 0.5), 0);
+    expect(stall).toEqual(STALL_KEEPERS.fumiko);
+    teleportPlayer(sim, beforeKeeper("fumiko", 0.9, 0.5), -Math.PI / 2);
     run(sim, SIM_HZ);
     // The second night, as in the report: the first one passes in a skip of the clock.
     skipTo(sim, hm(22, 59));
@@ -37,9 +39,9 @@ describe("G-358: the north market at 23:00", () => {
     run(sim, SIM_HZ);
     const vendors = VENDORS.map((key) => byKey(sim, key));
     vendors.forEach((v, i) => expect(v, VENDORS[i]).toBeDefined());
-    // Two minutes round 23:00, every step.
+    // Up to 23:59, every step (two hours until ADR-0093 O3: at midnight Fumiko goes down to her hatch on P0).
     const scared: string[] = [];
-    for (let i = 0; i < 2 * 60 * SIM_HZ; i++) {
+    for (let i = 0; i < 59 * SIM_HZ; i++) {
       sim.step();
       vendors.forEach((v, n) => {
         const state = v!.civilian?.crowd?.state ?? "calm";

@@ -166,6 +166,17 @@ export const CAR_LIFT_PROPS: readonly StaticProp[] = [solidProp(CAR_LIFT_PIECES)
 export const MALL_PROPS: readonly StaticProp[] = [...mallSolidProps(MALL_OUT, LIFT_NE), ...ALCHEMIA_LIFT_NE_MECHANISM];
 
 /**
+ * The food hall's kitchens on P3 a prop per tile, Fumiko's second place and P0's landmark (ADR-0093
+ * O3), the boxes of the game's models in both last: Alchemia's last solids.
+ */
+export const FOODHALL_SOLID_PROPS: readonly StaticProp[] = [
+  ...tiledSolidProps(KITCHENS, 12),
+  solidProp(FUMIKO_P0),
+  solidProp(LANDMARK),
+  solidProp(modelBoxes([...FOODHALL_PROPS, ...LANDMARK_PROPS])),
+];
+
+/**
  * Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the
  * Arkady. The units' two props and the tables' one hold the food hall on P3 since ADR-0093 O3 (its
  * units, north and south of z 45, and its seating), so the ids after them stay as they were.
@@ -206,11 +217,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...MALL_PROPS,
   // Its shops on P1 and P2 (O2), then P0's (O3), so every id above stays.
   ...SHOP_SOLID_PROPS,
-  // The food hall's kitchens on P3 a prop per tile, Fumiko's second place and P0's landmark (O3), the boxes of the game's models in both last.
-  ...tiledSolidProps(KITCHENS, 12),
-  solidProp(FUMIKO_P0),
-  solidProp(LANDMARK),
-  solidProp(modelBoxes([...FOODHALL_PROPS, ...LANDMARK_PROPS])),
+  // The food hall's kitchens, Fumiko's second place and P0's landmark (O3) last.
+  ...FOODHALL_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */
