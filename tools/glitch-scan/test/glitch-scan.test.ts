@@ -139,6 +139,8 @@ import { belowGround } from "../../osm-import/src/building-tags.ts";
 import { isTowerTags } from "../../osm-import/src/building-towers.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, correctedLine } from "../../osm-import/src/corrections.ts";
 import { withoutReplaced } from "../../osm-import/src/corrections-alchemia.ts";
+import { CAR_FREE_WAYS } from "../../osm-import/src/corrections-car-free.ts";
+import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./deptak-checks";
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
@@ -233,6 +235,8 @@ const once = <T>(f: () => T): (() => T) => {
 const LANDUSE_BARE = once(() => landuseBare(cityLanduseWorld(SOURCE_OSM)));
 const KERB_GAP_BARE = once(() => kerbGapBare(cityKerbWorld(SOURCE_OSM)));
 const GROUND_STRIP_GAP = once(() => groundStripGap(STRIP_RASTERS(), inBuilding));
+/** The deptaki the game made of car streets (`CAR_FREE_WAYS`), as the map draws them, with their carriageway's width. */
+const DEPTAKS = once(() => deptaksOf(CAR_FREE_WAYS, extractFeatures(SOURCE_OSM).lines, (l) => roadWidth(correctedLine(l).tags)));
 const KERB_STRIP_BARE = once(() =>
   kerbStripBare({
     lines: withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)),
@@ -677,9 +681,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    */
   "lane-dead-end": () => {
     const starts = cars.map((r) => ({ r, p: pointAt(r.points, 0) }));
-    // Alchemia's ramp routes end in the hand-over cabin, or where the city's route they go on with does.
+    // Alchemia's ramp routes end in the hand-over cabin, or where the city's route they go on with does;
+    // a ring (south of the deptak, T-324) goes on from its end at its own start.
     return cars.flatMap((r) => {
       if (r.ownWay) return [];
+      const e0 = pointAt(r.points, 0);
+      if (r.ring && Math.hypot(e0.x - r.points[r.points.length - 1]![0], e0.z - r.points[r.points.length - 1]![1]) < 1e-6) return [];
       const e = pointAt(r.points, r.length);
       if (!deepInMap(e.x, e.z, 6)) return [];
       const met = starts.some(({ r: o, p }) => o !== r && o.use === r.use && Math.hypot(p.x - e.x, p.z - e.z) < 3 && p.tx * e.tx + p.tz * e.tz > 0.5);
@@ -1569,6 +1576,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * footway's axis the import does not drop in its favour with a row in the register (G-500, `cut-on-road.ts`).
    */
   "cut-on-road": () => cutOnRoadInGame(extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags))),
+  /** A car route on the old carriageway of a deptak the game made of a car street (T-324, `deptak-checks.ts`). */
+  "deptak-car-lane": () => deptakCarLanes(DEPTAKS(), TRAFFIC_ROUTES),
+  /** A way the import closes to cars (`CAR_FREE_WAYS`) without its row in docs/topografia.md naming it. */
+  "road-retag-row": () => roadRetagRows(CAR_FREE_WAYS, extractFeatures(SOURCE_OSM).lines, readFileSync(join(__dirname, "../../../docs/topografia.md"), "utf8")),
+  /** A kiosk, a stall or a game block on a deptak by the trolleybus's line or in metro B's way onto it (T-324, T-157). */
+  "deptak-stall-clear": () =>
+    deptakStallClear(DEPTAKS(), [
+      ...Object.values(WORLD_STREET_PROPS)
+        .flat()
+        .filter((i) => i.prop !== "bollard" && furnitureRadius(i) > 0)
+        .map((i) => ({ x: i.x, z: i.z, r: furnitureRadius(i), what: i.prop })),
+      ...GAME_PROPS.flatMap((p) => (p.solid && p.view.kind === "block" ? [{ x: p.center.x, z: p.center.z, r: Math.hypot(p.view.size.x, p.view.size.z) / 2, what: "game block" }] : [])),
+    ]),
   /**
    * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
    * every chunk of the map (G-052) or cleared by a set piece.

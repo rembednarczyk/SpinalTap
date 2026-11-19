@@ -49,7 +49,8 @@ const underCanvas = (s: StreetPropItem, x: number, z: number, pad = 0) => {
   return Math.abs(dx * c - dz * n) <= 1.2 + pad && Math.abs(dx * n + dz * c) <= 0.9 + pad;
 };
 
-const markets = PLAN.items.filter((i) => i.kind === "market" || i.kind === "market-stall").map((i) => {
+// The plan's market areas: an outline of stalls (a group set at its points, the deptak's of T-324, has no area of its own).
+const markets = PLAN.items.filter((i) => (i.kind === "market" || i.kind === "market-stall") && i.polygon).map((i) => {
   const f = i.polygon!;
   const ring = [];
   for (let k = 0; k + 1 < f.length; k += 2) ring.push({ x: f[k]!, z: f[k + 1]! });

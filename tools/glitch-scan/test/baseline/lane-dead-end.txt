@@ -11,7 +11,6 @@ krakowskie-1-1 42,118
 krakowskie-2-0 336,-185
 krakowskie-2-0 353,-48
 krakowskie-2-0 349,-47
-krakowskie-2-1 459,57
 nabrzeze-0-0 2456,245
 nabrzeze-0-1 2402,284
 nabrzeze-0-1 2395,286 *2
@@ -41,5 +40,4 @@ podzamcze-2-0 1095,268
 podzamcze-2-0 1041,284
 podzamcze-2-1 1000,461
 podzamcze-2-1 930,472
-stare-miasto-0-1 462,56
 stare-miasto-0-1 567,159

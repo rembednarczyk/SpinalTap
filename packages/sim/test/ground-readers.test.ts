@@ -13,7 +13,8 @@ import { TRAFFIC_LANES } from "../src/content/traffic";
  */
 
 /** Points of the car lanes off the carriageway on the ground laid in layers (glitches of their own, not the partition's). */
-const KNOWN_OFF_ROAD = new Set(["Radziwiłłowska#29:f -18.6,115.8", "Ciasna#103:b 583.1,575.5", "Mełgiewska#114:0 2448.8,249.6", "Mełgiewska#114:t 2448.8,249.6", "Mełgiewska#115:0 2459.2,304.2", "Mełgiewska#115:t 2459.2,304.2"]);
+// By street, lane and place: a chain's number moves with the map's data (the deptak's of T-324 moved these).
+const KNOWN_OFF_ROAD = new Set(["Radziwiłłowska:f -18.6,115.8", "Ciasna:b 583.1,575.5", "Mełgiewska:0 2448.8,249.6", "Mełgiewska:t 2448.8,249.6", "Mełgiewska:0 2459.2,304.2", "Mełgiewska:t 2459.2,304.2"]);
 /** Parked cars on a sidewalk's piece on the ground laid in layers. */
 const KNOWN_ON_SIDEWALK = new Set(["taxi 733,298"]);
 
@@ -53,7 +54,7 @@ describe("the simulation's readers of the ground (ADR-0078 step 3)", () => {
         }
       }
     // Known before the partition (`KNOWN_OFF_ROAD`): four points at the asphalt's edge or just past it.
-    expect(off.filter((o) => !KNOWN_OFF_ROAD.has(o)).slice(0, 20)).toEqual([]);
+    expect(off.filter((o) => !KNOWN_OFF_ROAD.has(o.replace(/#\d+:/, ":"))).slice(0, 20)).toEqual([]);
   });
 
   it("parks every car on a carriageway, a cobbled way or a square, never on a sidewalk or a zebra", () => {

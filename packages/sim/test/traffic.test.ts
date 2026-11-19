@@ -318,9 +318,15 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     const sim = busySim();
     run(sim, 20);
     // One with no crossing between it and the player (there it would wait its turn instead) and
-    // no vehicle ahead of it in its lane (that one would stop for the player first).
+    // no vehicle ahead of it in its lane, of its route or another on the same line (a trolleybus
+    // drives a carriageway's lane: it would stop for the player first).
     const clearAhead = (x: Entity & { vehicle: NonNullable<Entity["vehicle"]> }) =>
-      !vehicles(sim).some((o) => o !== x && o.vehicle.route === x.vehicle.route && o.vehicle.s > x.vehicle.s && o.vehicle.s < x.vehicle.s + 60);
+      !vehicles(sim).some((o) => {
+        if (o === x) return false;
+        if (o.vehicle.route === x.vehicle.route) return o.vehicle.s > x.vehicle.s && o.vehicle.s < x.vehicle.s + 60;
+        const q = projectOn(TRAFFIC_ROUTES[x.vehicle.route]!.points, o.position.x, o.position.z);
+        return q.d < 1.5 && q.s > x.vehicle.s && q.s < x.vehicle.s + 60;
+      });
     const v = vehicles(sim).find((x) => x.view?.kind === "vehicle" && x.view.model !== "trolleybus" && x.vehicle.v > 5 && x.vehicle.s < TRAFFIC_ROUTES[x.vehicle.route]!.length - 80 && !crossingAhead(x.vehicle.route, x.vehicle.s, x.vehicle.s + 45) && clearAhead(x))!;
     expect(v).toBeDefined();
     const lane = TRAFFIC_ROUTES[v.vehicle.route]!;

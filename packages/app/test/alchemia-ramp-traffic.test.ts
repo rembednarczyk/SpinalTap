@@ -11,14 +11,16 @@ import { GameSession } from "../src/game-session";
  * The cars of Alchemia's P-1 in the street's traffic (ADR-0074 §4, G-491, G-510), headless: seen
  * from T0's square by the ramp's trench, one comes along Bajkowskiego, turns onto the driveway and
  * down the ramp into the south hand-over cabin, another comes out of the north cabin, up the ramp
- * and away along Bajkowskiego and up Lubartowska past Olejna; on the ramp's surface, never into
- * another car, and neither comes or goes where Seki on the square would see it.
+ * and away along Bajkowskiego, onto its right lane and south down Lubartowska past the deptak's
+ * mouth (T-324); on the ramp's surface, never into another car, and neither comes or goes where
+ * Seki on the square would see it.
  */
 
 const audio: AudioPort = { play() {}, stopAll() {} };
 const IN = TRAFFIC_ROUTES.length - 2;
 const OUT = TRAFFIC_ROUTES.length - 1;
-const OLEJNA = { x: 454.9, z: 42.8 };
+/** Lubartowska (w40050981) south of Bajkowskiego, the cars' way since the deptak north of it (T-324). */
+const SOUTH = { x: 440.5, z: -40 };
 /** On T0 west of the ramp's trench, looking south-east to Bajkowskiego and the driveway. */
 const ON_T0 = { x: 407, z: 0 };
 const LOOK = Math.atan2(414 - ON_T0.x, -12 - ON_T0.z);
@@ -69,7 +71,7 @@ const inSight = (session: GameSession, p: { x: number; y: number; z: number }): 
 };
 
 describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
-  it("brings one from Bajkowskiego down the ramp into the south cabin and one out of the north cabin up Lubartowska past Olejna, into no other car", () => {
+  it("brings one from Bajkowskiego down the ramp into the south cabin and one out of the north cabin south down Lubartowska, into no other car", () => {
     const session = start();
     const lives = new Map<number, { route: number; first: Car["vehicle"]["s"]; last: number; seen: { x: number; y: number; z: number }[] }>();
     const done: { route: number; first: number; last: number; seen: { x: number; y: number; z: number }[] }[] = [];
@@ -111,8 +113,9 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
     // In: along Bajkowskiego west of the driveway, then all the way into the south cabin.
     const came = done.filter((l) => l.route === IN && l.seen.some((p) => p.z < -12 && p.x < 405) && l.seen.some((p) => cabin(P1_CABINS[0]!, p)));
     expect(came.length).toBeGreaterThan(0);
-    // Out: from the north cabin up the ramp, by Olejna northwards.
-    const went = done.filter((l) => l.route === OUT && cabin(P1_CABINS[1]!, l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - OLEJNA.x, p.z - OLEJNA.z) < 3));
+    // Out: from the north cabin up the ramp, south down Lubartowska and never onto the deptak north of Bajkowskiego.
+    const went = done.filter((l) => l.route === OUT && cabin(P1_CABINS[1]!, l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - SOUTH.x, p.z - SOUTH.z) < 3));
+    expect(done.filter((l) => l.route === OUT).flatMap((l) => l.seen.filter((p) => p.x > 434 && p.z > -14))).toEqual([]);
     expect(went.length).toBeGreaterThan(0);
   });
 

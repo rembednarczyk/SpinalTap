@@ -74,7 +74,8 @@ type Piece = { pts: Pt[]; half: Reach[]; directed: boolean };
 
 const piecesOf = (c: LublinChunkData): ({ key: string; name: string; kind: string; use: StreetUse; oneway: boolean } & Piece)[] =>
   c.streets.flatMap((st) => {
-    const use = st.noVehicles ? null : useOf(st.kind, c.district);
+    // A deptak the game made of a car street (T-324) carries only deliveries, as a pedestrian street does.
+    const use = st.noVehicles ? null : st.carFree ? "deliveries" : useOf(st.kind, c.district);
     if (!use) return [];
     const pts: Pt[] = [];
     const half: Reach[] = [];

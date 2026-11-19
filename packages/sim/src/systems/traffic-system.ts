@@ -512,6 +512,8 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   st.v += Math.max(-BRAKE * 1.5 * dt, Math.min(ACCEL * dt, goal - st.v));
   if (goal <= 0 && st.v < 0.05) st.v = 0;
   st.s += st.v * dt;
+  // A ring's end is its start: on round it (the pocket south of the deptak, T-324).
+  if (lane.ring && st.s >= lane.length) st.s -= lane.length;
   if (st.s >= lane.length) {
     // The end of the lane: gone out of sight, round to its start again (held while the player watches).
     const end = lanePose(lane, lane.length);
