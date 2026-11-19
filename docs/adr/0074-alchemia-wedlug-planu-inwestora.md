@@ -369,6 +369,27 @@ Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecen
   - Sesja: z T2 włazem do schronu i bramą do P−2, potem z powrotem, bez obrażeń.
 - **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
 
+### Etap 5d2: skrytka Hebi w schronie (gałąź `feat/alchemia-5d2`)
+- **Skrytka** w północno-zachodnim rogu sali schronu. Osłona stoi między nią a salą, a skrzynia na ciało stoi przy wentylatorze. Kamera wisi wysoko w południowo-wschodnim rogu i patrzy na skrytkę. Neon jest nad ławką przy północnej ścianie, a głośnik przy schodach włazu (`dev:targ-*`). Strefa `restricted` (`HEBI_STASH_ZONE`) obejmuje salę.
+- **Ludzie zlecenia** stoją w sali i patrzą na zachód, w stronę przejścia od bramy. Straż stoi przy osłonie, czujka lockdownu na T2 przy włazie, a zasadzka czeka przy obu wyjściach: w korytarzu P−2 przed bramą i na T2 przy włazie.
+- **Czujka** w dzień stoi przy włazie na T2. W nocy chodzi po P−2 tam i z powrotem: wzdłuż T2, w wykop, korytarzem obok bramy do narożnika magazynu i jego alejki serwisowej.
+- **Brama** ma zamek kodowy Hebi (ADR-0082) na czas odzyskania. Hebi przechodzą swobodnie. Gracz przechodzi z kodem albo po wyłamaniu panelu, a wyłamanie podnosi alarm.
+- **Kod bramy** (2207) czujka powtarza pod nosem. To trop `hook_retrieve_2`, który był wcześniej notatką o widoku z tarasu. Podsłuchany kod otwiera bramę bez alarmu, a kamera bierze gracza za swojego.
+- **Dwa podejścia bez alarmu:**
+  - włazem z T2: skulona postać schodzi za plecami załogi i idzie wzdłuż północnej ściany;
+  - bramą od P−2, obok robotów: z podsłuchanym kodem, wzdłuż zachodniej ściany.
+- **Spawn w sklepieniu.** `clearSpot` podnosił nowo stworzoną postać na teren nad nią, nawet w `GroundVault`. Załoga stawała więc na T2 nad schronem. Teraz postać postawiona głęboko w sklepieniu zostaje na jego podłodze.
+- **Zapis v50.** Migracja `moveHebiStash` w `alchemia-rebuild.ts` usuwa czujkę, ludzi i skrzynię trwającego odzyskania oraz wszystkich z dawnego miejsca skrytki przy Arkadach (x 435–449, z 86–101). Treść przywraca ich w nowych miejscach. Gracz zostaje, bo T2 dalej jest.
+- **Testy.**
+  - Symulacja:
+    - odzyskanie bez alarmu włazem i bramą;
+    - brama zamknięta bez kodu;
+    - pościg P−1 → P−2 → schron;
+    - miejsca ludzi, urządzeń i planów na podłodze schronu.
+  - Sesja: brama zatrzymuje gracza bez zlecenia, a właz działa w obie strony.
+  - Migracja: osobny test.
+- **Hashe.** Złote hashe zgodne.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**
