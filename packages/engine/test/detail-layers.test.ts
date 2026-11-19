@@ -69,7 +69,8 @@ describe("detail layers of the city's surfaces (ADR-0092)", () => {
     expect(blocks.length).toBeGreaterThan(50);
     expect(blocks.every((s) => s.wallDetail === "concrete")).toBe(true);
     const halls = looks.map((l) => style({ use: "industrial", levels: 2, height: 9 }, l));
-    const brick = halls.filter((s) => s.wallDetail === "brick");
+    const brick = halls.filter((s) => s.wallDetail === "brick" || s.wallDetail === "clinker");
+    expect(halls.some((s) => s.wallDetail === "clinker")).toBe(true);
     expect(brick.length / halls.length).toBeGreaterThan(0.4);
     expect(halls.some((s) => s.wallDetail === "metal")).toBe(true);
     // Factory brick is brick red, not a grey plaster with a brick grain.

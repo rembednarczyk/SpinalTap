@@ -6,7 +6,7 @@
  * fades out by itself where a procedural grid would shimmer.
  */
 
-export type DetailTexture = "walls" | "ground" | "roofs";
+export type DetailTexture = "walls" | "ground" | "roofs" | "extra";
 
 export interface DetailLayer {
   readonly texture: DetailTexture;
@@ -31,6 +31,10 @@ export const DETAIL_LAYERS = {
   corrugated_iron_02: { texture: "roofs", channel: 1, metres: 2.7, amp: 0.4 },
   bitumen: { texture: "roofs", channel: 2, metres: 20, amp: 0.25 },
   granite_tile: { texture: "roofs", channel: 3, metres: 2.3, amp: 0.3 },
+  weathered_planks: { texture: "extra", channel: 0, metres: 2, amp: 0.35 },
+  gray_rocks: { texture: "extra", channel: 1, metres: 1.8, amp: 0.4 },
+  cobblestone_floor_08: { texture: "extra", channel: 2, metres: 2, amp: 0.25 },
+  red_brick_03: { texture: "extra", channel: 3, metres: 1, amp: 0.45 },
 } as const satisfies Record<string, DetailLayer>;
 
 export type DetailAsset = keyof typeof DETAIL_LAYERS;
@@ -40,6 +44,7 @@ export const DETAIL_FILES: Readonly<Record<DetailTexture, string>> = {
   walls: "detail-walls.png",
   ground: "detail-ground.png",
   roofs: "detail-roofs.png",
+  extra: "detail-extra.png",
 };
 
 /** The sampler each texture binds to in the toon shader. */
@@ -47,13 +52,14 @@ export const DETAIL_SAMPLERS: Readonly<Record<DetailTexture, string>> = {
   walls: "detailWalls",
   ground: "detailGround",
   roofs: "detailRoofs",
+  extra: "detailExtra",
 };
 
 /**
  * A wall's surface the facade shader samples (uv2.y / 32 of a wall, ADR-0092): plaster, the map's
- * brick or stone, the concrete of the post-war blocks, the sheet metal of a hall.
+ * brick or stone, the concrete of the post-war blocks, the sheet metal of a hall, a factory's dark clinker.
  */
-export const WALL_DETAIL = { plaster: 0, brick: 1, stone: 2, concrete: 3, metal: 4 } as const;
+export const WALL_DETAIL = { plaster: 0, brick: 1, stone: 2, concrete: 3, metal: 4, clinker: 5 } as const;
 export type WallDetail = keyof typeof WALL_DETAIL;
 
 /** A roof's surface (uv2.y / 32 of a roof): clay tiles, sheet metal, copper, a flat roof's bitumen. */
@@ -67,6 +73,7 @@ const WALL_LAYER: Readonly<Record<WallDetail, DetailAsset>> = {
   stone: "large_sandstone_blocks_01",
   concrete: "concrete_wall_006",
   metal: "corrugated_iron_02",
+  clinker: "red_brick_03",
 };
 const ROOF_LAYER: Readonly<Record<RoofDetail, DetailAsset>> = {
   tile: "clay_roof_tiles_02",
@@ -103,6 +110,7 @@ export const DETAIL_GLSL = `
 uniform sampler2D detailWalls;
 uniform sampler2D detailGround;
 uniform sampler2D detailRoofs;
+uniform sampler2D detailExtra;
 ${DETAIL_CORE}
 ${chooser("wallLayer", byCode(WALL_DETAIL, WALL_LAYER))}
 ${chooser("roofLayer", byCode(ROOF_DETAIL, ROOF_LAYER))}

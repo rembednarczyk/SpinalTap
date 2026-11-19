@@ -14,6 +14,11 @@
     "file": "textures/detail-roofs.png",
     "metres": 2.5
   },
+  "cobblestone_floor_08": {
+    "channel": "b",
+    "file": "textures/detail-extra.png",
+    "metres": 2.0
+  },
   "concrete_pavement": {
     "channel": "g",
     "file": "textures/detail-ground.png",
@@ -44,6 +49,11 @@
     "file": "textures/detail-ground.png",
     "metres": 1.0
   },
+  "gray_rocks": {
+    "channel": "g",
+    "file": "textures/detail-extra.png",
+    "metres": 1.8
+  },
   "grey_plaster_02": {
     "channel": "r",
     "file": "textures/detail-walls.png",
@@ -57,6 +67,16 @@
   "medieval_red_brick": {
     "channel": "g",
     "file": "textures/detail-walls.png",
+    "metres": 2.0
+  },
+  "red_brick_03": {
+    "channel": "a",
+    "file": "textures/detail-extra.png",
+    "metres": 1.0
+  },
+  "weathered_planks": {
+    "channel": "r",
+    "file": "textures/detail-extra.png",
     "metres": 2.0
   }
 }

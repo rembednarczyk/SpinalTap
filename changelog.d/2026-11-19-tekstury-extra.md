@@ -1,0 +1,1 @@
+- Drzwi i stoliki mają słoje desek, torowiska tłuczeń, bruk Starego Miasta ziarno granitu, a część hal ciemny klinkier.

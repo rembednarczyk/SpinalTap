@@ -3,8 +3,8 @@ import { DETAIL_FILES, DETAIL_LAYERS, type DetailAsset, type DetailTexture, choo
 /**
  * The detail layers of the city kit (ADR-0092 stage 2): the kit's palette names its swatches, and
  * each swatch that stands for a surface gets a layer: its walls and trims concrete, its brick brick,
- * its roofs bitumen, its sheet metal corrugated iron, its plants turf. Glass, neon, paint, doors and
- * the small decor keep their flat colour. The toon shader finds a fragment's swatch from its palette
+ * its roofs bitumen, its sheet metal corrugated iron, its plants turf, its doors and tables planks.
+ * Glass, neon, paint and the small decor keep their flat colour. The toon shader finds a fragment's swatch from its palette
  * cell and reads the layer's code from a 16 × 16 texture built here.
  */
 export const KIT_DETAIL: Readonly<Record<string, DetailAsset>> = {
@@ -18,6 +18,7 @@ export const KIT_DETAIL: Readonly<Record<string, DetailAsset>> = {
   rust: "corrugated_iron_02",
   dumpster: "corrugated_iron_02",
   plant: "grass_path_2",
+  door: "weathered_planks",
 };
 
 /** The palette grid the shader decodes (`CityKitData.grid`); another grid draws the kit without layers. */
@@ -65,7 +66,7 @@ float kitDetail(vec2 uv, vec3 p, vec3 n, float dist) {
   vec4 mask;
   vec2 l = anyLayer(number, mask);
   vec2 q = facePlane(p, n) * l.x;
-  vec4 t = number < 3.5 ? texture2D(detailWalls, q) : number < 7.5 ? texture2D(detailGround, q) : texture2D(detailRoofs, q);
+  vec4 t = number < 3.5 ? texture2D(detailWalls, q) : number < 7.5 ? texture2D(detailGround, q) : number < 11.5 ? texture2D(detailRoofs, q) : texture2D(detailExtra, q);
   return detailK(t, mask, l.y * (1.0 - smoothstep(60.0, 160.0, dist)));
 }
 #endif
