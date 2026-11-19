@@ -47,8 +47,6 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   // P-2's store (stage 5a): its own sinks colour these (`p2-geometry.ts`); here only for the table's sake.
   rack: "metal",
   pallet: "trim-light",
-  car: "metal",
-  tyre: "tyre",
   rail: "metal",
   beacon: "neon-amber",
   // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box under its letters.
