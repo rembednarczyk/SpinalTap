@@ -7,6 +7,7 @@ import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
+import { shopPiece, shopSigns } from "./shop-geometry";
 import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
@@ -64,6 +65,19 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   escalator: "metal",
   // The house with arcades (C3): pale cream, the kit's paint tinted (`PLASTER`).
   plaster: "paint",
+  // The gallery's shops (ADR-0093 O2): their own part colours them by their trade (`shop-geometry.ts`); here only for the table's sake.
+  shopfront: "dark",
+  goods: "paint",
+  display: "win-teal",
+  error: "neon-red",
+  lamp: "win-white",
+  pipe: "pipe",
+  duct: "ac",
+  cable: "cable",
+  cup: "ac",
+  steam: "win-white",
+  carton: "fabric-amber",
+  paper: "paint",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -296,6 +310,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
     // The escalators' upright balustrades: drawn sloping (`escalator-geometry.ts`).
     if (p.kind === "escalator") continue;
+    // The gallery's shops (ADR-0093 O2): by their trade, their shopfronts as frames.
+    if (p.inside && shopPiece(sink, data, p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -349,5 +365,6 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   unitSigns(inside, data);
   ceilingLights(inside, data);
   escalatorGeometry(inside, data);
+  shopSigns(inside, data);
   return { outside, inside, tiers };
 };

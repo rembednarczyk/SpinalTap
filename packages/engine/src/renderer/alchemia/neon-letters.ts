@@ -30,6 +30,16 @@ const GLYPHS: Readonly<Record<string, { readonly w: number; readonly strokes: re
   O: { w: 3, strokes: [[0, 0, S, 5], [3 - S, 0, 3, 5], [0, 5 - S, 3, 5], [0, 0, 3, S]] },
   W: { w: 4, strokes: [[0, 0, S, 5], [4 - S, 0, 4, 5], [0, 0, 4, S], [2 - S / 2, 0, 2 + S / 2, 3.4]] },
   " ": { w: 1.5, strokes: [] },
+  // The gallery's shops' names (ADR-0093 O2).
+  B: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 2.4, 5], [0, MID, 2.6, MID + S], [0, 0, 2.6, S], [2.4 - S, MID, 2.4, 5], [3 - S, 0, 3, MID + S]] },
+  F: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [0, MID, 2.4, MID + S]] },
+  G: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [0, 0, 3, S], [3 - S, S, 3, MID + S], [1.6, MID, 3, MID + S]] },
+  K: { w: 3, strokes: [[0, 0, S, 5], [0, MID, 1.8, MID + S], [1.6, MID + S, 1.6 + S, 3.6], [2.2, 3.6, 3, 5], [1.6, 0, 1.6 + S, MID], [2.2, 0, 3, 1.2]] },
+  P: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S]] },
+  V: { w: 3, strokes: [[0, 1.6, S, 5], [3 - S, 1.6, 3, 5], [S, 0.6, S + 0.6, 2.0], [3 - S - 0.6, 0.6, 3 - S, 2.0], [1.2, 0, 1.8, 1.0]] },
+  X: { w: 3, strokes: [[0, 0, S, 1.6], [3 - S, 0, 3, 1.6], [0, 3.4, S, 5], [3 - S, 3.4, 3, 5], [S, 1.4, 3 - S, 3.6]] },
+  Y: { w: 3, strokes: [[0, MID, S, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S], [1.5 - S / 2, 0, 1.5 + S / 2, MID]] },
+  Z: { w: 3, strokes: [[0, 5 - S, 3, 5], [0, 0, 3, S], [2.2, 3, 3, 5 - S], [1.1, MID - 0.2, 1.9, 3.2], [0, S, 0.8, MID]] },
   // The diagonal in three steps: the strokes stay rectangles.
   N: { w: 3.4, strokes: [[0, 0, S, 5], [3.4 - S, 0, 3.4, 5], [S, 3, S + 0.6, 4.2], [1.4, 1.9, 2, 3.1], [2, 0.8, 2.6, 2]] },
 };

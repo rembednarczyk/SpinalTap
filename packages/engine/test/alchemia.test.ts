@@ -15,6 +15,12 @@ import { builtRoofOver } from "../src/renderer/built-roofs";
 /** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
 /** A mesh of Alchemia's at most (decision of the user of 19.11: triangle budgets may grow; the gates are draw calls and active meshes). */
 const ALCHEMIA_TRIANGLES = 40000;
+/**
+ * The inside's mesh with the gallery's shops (ADR-0093 O2: 24 units on P1 and P2, their shelves of
+ * goods some 40 thousand triangles of it; the user's decision of 19.11, triangles free, the gates the
+ * draw calls and active meshes of `npr-perf`, which the shops leave as they were: they are in this mesh).
+ */
+const INSIDE_TRIANGLES = 60000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -34,7 +40,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const boxes = (s: { indices: readonly number[] }) => s.indices.length / 3 / 12;
     expect(boxes(outside) + boxes(inside) + boxes(tiers)).toBeGreaterThanOrEqual(0.8 * (ALCHEMIA_PIECES.length + ARKADY_PIECES.length));
     expect(outside.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
-    expect(inside.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
+    expect(inside.indices.length / 3).toBeLessThanOrEqual(INSIDE_TRIANGLES);
     // The green tiers of 15.11, a building of their own (ADR-0074 §7).
     expect(tiers.indices.length / 3).toBeGreaterThan(500);
     expect(tiers.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
