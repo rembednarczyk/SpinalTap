@@ -169,7 +169,7 @@ export const shelves = (k: Fit, s: Slot, h: number, backAt: "u0" | "u1" | "v0" |
     // Goods along the shelf in runs of 0.2-0.5 m, a gap now and then (a sold-out place).
     for (let a = 0.06; a < len - 0.1; ) {
       const g = shopHash(k.shop.id, key * 31 + i, a * 10);
-      const run = Math.min(0.2 + g * 0.3, len - 0.06 - a);
+      const run = Math.min(0.14 + g * 0.22, len - 0.06 - a);
       if (g > 0.12) {
         const tall = 0.12 + ((g * 7) % 1) * 0.26;
         const inset = 0.05;
@@ -220,8 +220,14 @@ export const rail = (k: Fit, s: Slot, key: number): void => {
   }
 };
 
-/** A flat screen on a wall (drawn): `face` the side of the slot it looks out of. */
-export const screen = (k: Fit, s: Slot, y0: number, y1: number): void => draw(k, s, y0, y1, "display");
+/** A flat screen on a wall or in a window (drawn): a dark bezel the slot's size, the lit picture inset in it and a hair proud of it both ways. */
+export const screen = (k: Fit, s: Slot, y0: number, y1: number): void => {
+  draw(k, s, y0, y1, "machine");
+  const alongU = s.u1 - s.u0 >= s.v1 - s.v0;
+  const inset = Math.min(0.04, (y1 - y0) / 6);
+  const pic = alongU ? slot(s.u0 + inset, s.u1 - inset, s.v0 - 0.008, s.v1 + 0.008) : slot(s.u0 - 0.008, s.u1 + 0.008, s.v0 + inset, s.v1 - inset);
+  draw(k, pic, y0 + inset, y1 - inset, "display");
+};
 
 /** Cartons in a stack on the floor (drawn only: small things lie and stand where they fall, §7). */
 export const cartons = (k: Fit, at: Spot, n: number, key: number): void => {

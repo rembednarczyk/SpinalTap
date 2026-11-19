@@ -128,7 +128,7 @@ export const shopPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiec
     default: {
       const swatch = SMALL[p.kind];
       if (!swatch) return false;
-      boxOf(sink, data, b, swatch, p.kind === "paper" ? hexRgb("#e8e4dc") : undefined, p.kind === "carton" || p.kind === "cup" ? NO_BOTTOM : undefined);
+      boxOf(sink, data, b, swatch, p.kind === "paper" ? hexRgb("#9c968a") : undefined, p.kind === "carton" || p.kind === "cup" ? NO_BOTTOM : undefined);
       return true;
     }
   }

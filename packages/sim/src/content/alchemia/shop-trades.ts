@@ -161,7 +161,13 @@ export const fitTrade = (k: Fit, L: Layout, w: number, s: number): void => {
     if (t === "clothing") mannequins(k, wd);
     else if (t === "florist") flowers(k, wd, 20);
     else if (t === "synth-food" && wd.u1 - wd.u0 >= 1.0) row(k, slot(wd.u0, wd.u1, 0.2, 0.96), "vending-machine", 1.05, "in", (i) => i);
-    else if (t === "vr" || t === "tattoo") screen(k, slot(wd.u0, wd.u1, 0.3, 0.34), 1.0, 2.3);
+    // A screen on a stand in the window, its back to the gallery: the studio's flash, the booths' worlds.
+    else if (t === "vr" || t === "tattoo") {
+      const m = (wd.u0 + wd.u1) / 2;
+      draw(k, slot(m - 0.04, m + 0.04, 0.34, 0.42), 0, 1.15, "rack", true);
+      draw(k, slot(m - 0.3, m + 0.3, 0.2, 0.56), 0, 0.05, "rack");
+      screen(k, slot(m - 0.55, m + 0.55, 0.3, 0.34), 1.15, 1.85);
+    }
     // The exchange's cash machines in its window, their fronts to the customers inside.
     else if (t === "crypto") row(k, slot(wd.u0, wd.u1, 0.15, 0.75), "atm", 0.9, "in", () => 0);
     else glassCase(k, wd, 20);
