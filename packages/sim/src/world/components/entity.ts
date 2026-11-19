@@ -5,7 +5,7 @@ import type { Prism } from "../prism";
 import type { CivilianAi, DownedBody, EscortAi, GangerAi, HideKind, SniperState, WalkProgress } from "./ai";
 import type { CharacterBody, Combatant, MeleeState, Posture } from "./body";
 import type { Device, HackEffects } from "./devices";
-import type { DoorLeaf, Elevator, ElevatorGate, Interactable, LadderDef } from "./interaction";
+import type { DoorLeaf, Elevator, ElevatorGate, Interactable, LadderDef, Shuttle } from "./interaction";
 import type { Climbing, JumpState, Mantle } from "./movement";
 import type { PerkState } from "./perks";
 import type { Scheduled } from "./schedule";
@@ -67,6 +67,8 @@ export interface Entity {
   elevator?: Elevator;
   gate?: ElevatorGate;
   door?: DoorLeaf;
+  /** A solid running to and fro by the clock (P-2's robots, ADR-0074 stage 5b). */
+  shuttle?: Shuttle;
   /** The lock panel of a coded door (ADR-0038): the door's key. */
   doorPanel?: string;
   body?: CharacterBody;

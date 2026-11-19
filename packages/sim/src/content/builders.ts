@@ -45,7 +45,9 @@ export type Mechanism =
   | { readonly kind: "crawl"; readonly to: Vec3; readonly yaw: number }
   /** A leaf of an automatic door (ADR-0038): it slides by `slide` when open; the panel of a coded one. */
   | { readonly kind: "door"; readonly door: DoorDef; readonly leaf: number; readonly slide: { readonly x: number; readonly z: number } }
-  | { readonly kind: "door-panel"; readonly door: string };
+  | { readonly kind: "door-panel"; readonly door: string }
+  /** A solid running to and fro by the clock along `axis` (ADR-0074 stage 5b: P-2's robots). */
+  | { readonly kind: "shuttle"; readonly key: string; readonly axis: "x" | "z"; readonly travel: number; readonly period: number; readonly phase: number; readonly pause: number };
 
 export interface ActorSpawn {
   readonly key: string;

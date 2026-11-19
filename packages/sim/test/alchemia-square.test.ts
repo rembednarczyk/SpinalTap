@@ -6,6 +6,7 @@ import {
   ALCHEMIA_PIECES,
   ALCHEMIA_PROPS,
   P2_PROPS,
+  P2_ROBOTS,
   FOODHALL,
   KUROSAWA_SPOT,
   P1_RAMP,
@@ -45,8 +46,8 @@ describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
   it("keeps the beds along the trench, the pergolas gone with the square (19.11)", () => {
     expect(square.length).toBeGreaterThan(8);
     expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ)).toEqual([]);
-    // Its solids are still one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage, P-2's (stage 5a) and the front's (B1): no id of the content moves.
-    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 5 - P2_PROPS.length]!;
+    // Its solids are still one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage, P-2's (stage 5a), the front's (B1) and P-2's robots (5b): no id of the content moves.
+    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 5 - P2_PROPS.length - P2_ROBOTS.length]!;
     expect(beds.prisms).toHaveLength(square.filter((p) => p.solid).length);
   });
 

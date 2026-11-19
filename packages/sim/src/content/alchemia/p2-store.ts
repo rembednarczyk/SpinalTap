@@ -1,4 +1,4 @@
-import type { Rect } from "../builders";
+import type { Rect, StaticProp } from "../builders";
 import { P2, P2_CORRIDOR } from "./p2";
 import { type Piece, box, piece } from "./plan";
 
@@ -122,3 +122,26 @@ export const P2_STORE_PIECES: readonly Piece[] = [...rackPieces(), ...lanePieces
 export const P2_STORE_SOLIDS: readonly Piece[] = P2_PALLETS.map((p) =>
   piece(box(p.minX, p.maxX, p.minZ, p.maxZ, F, F + PALLET.height + (p.car ? BODY.top + BODY.cabin : 0)), "pallet", true),
 );
+
+/**
+ * The robots of the store (ADR-0074 stage 5b): two low carts on the lane's rails, each running its
+ * half of the lane to and fro by the clock, pausing at each end where they would take a car off a
+ * pallet. A body in their way is pushed aside (the lane is 4.6 m wide, a cart 1.6 m): they never
+ * pin anyone, their runs end 1.5 m short of the lane's ends and of each other.
+ */
+export const P2_ROBOT = { width: 1.6, length: 2.2, height: 0.9, travel: 9.5, period: 32, pause: 0.12 } as const;
+const ROBOT_STARTS: readonly { readonly z: number; readonly phase: number }[] = [
+  { z: 4.5, phase: 0 },
+  { z: 17.8, phase: 0.5 },
+];
+export const P2_ROBOTS: readonly StaticProp[] = ROBOT_STARTS.map(({ z, phase }, i) => {
+  const mx = (P2_LANE.x0 + P2_LANE.x1) / 2;
+  const r = P2_ROBOT;
+  return {
+    key: `alchemia-p2-robot-${i}`,
+    center: { x: mx, y: F + r.height / 2, z: z + r.length / 2 },
+    view: { kind: "block", size: { x: r.width, y: r.height, z: r.length }, material: "metal" },
+    solid: true,
+    mechanism: { kind: "shuttle", key: `alchemia-p2-robot-${i}`, axis: "z", travel: r.travel, period: r.period, phase, pause: r.pause },
+  };
+});
