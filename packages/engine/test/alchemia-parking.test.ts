@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
+import { METRO_DOOR, P1, P1_ALL_PIECES, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_CUT, P1_STAIR_CUT, p1RampY } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { pointLightOn } from "../src/npr/toon-point-lights";
@@ -53,14 +53,14 @@ describe("P-1 under Alchemia's car park in the engine (ADR-0074 stage 4)", () =>
     const outside = new GeometrySink();
     parkingOutside(outside, kitData);
     const boxes = (s: { indices: readonly number[] }) => s.indices.length / 3 / 12;
-    expect(boxes(inside)).toBeGreaterThanOrEqual(P1_PIECES.filter((p) => p.inside && p.kind !== "shutter").length);
+    expect(boxes(inside)).toBeGreaterThanOrEqual(P1_ALL_PIECES.filter((p) => p.inside && p.kind !== "shutter").length);
     expect(boxes(outside)).toBeGreaterThanOrEqual(P1_PIECES.filter((p) => !p.inside).length);
     expect(inside.indices.length / 3).toBeLessThanOrEqual(8000);
-    // The room under the car park, the trench and the stair house by it: nothing elsewhere.
+    // The room under the car park, the trench and the stair house by it, the passage from metro B's hall (stage 10): nothing elsewhere.
     for (const s of [inside, outside])
       for (let i = 0; i < s.positions.length; i += 3) {
         const [x, z] = [s.positions[i]!, s.positions[i + 2]!];
-        expect(x > P1.minX - 0.5 && x < P1.maxX + 0.5 && z > P1_RAMP_CUT.bounds.minZ - 0.5 && z < P1.maxZ + 0.5, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+        expect(x > P1.minX - 0.5 && x < METRO_DOOR.inner + 0.5 && z > P1_RAMP_CUT.bounds.minZ - 0.5 && z < P1.maxZ + 0.5, `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
       }
   });
 

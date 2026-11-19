@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P1, P1_CABINS, P1_PIECES, P1_RAMP, P1_RAMP_GRADE, p1RampY } from "@seki/sim";
+import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P1, P1_CABINS, P1_ALL_PIECES, P1_RAMP, P1_RAMP_GRADE, p1RampY } from "@seki/sim";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 
 /**
@@ -77,13 +77,13 @@ const cabins = (sink: GeometrySink, data: CityKitData): void => {
 const swatchOf = (p: AlchemiaPiece): string => SWATCH[p.kind] ?? "wall-dark";
 
 /** What shows of P-1 from the car park, into Alchemia's outside sink: the trench with its ramp and parapets, the stair house. */
-export const parkingOutside = (outside: GeometrySink, data: CityKitData, pieces: readonly AlchemiaPiece[] = P1_PIECES): void => {
+export const parkingOutside = (outside: GeometrySink, data: CityKitData, pieces: readonly AlchemiaPiece[] = P1_ALL_PIECES): void => {
   for (const p of pieces) if (!p.inside) boxOf(outside, data, p.box, swatchOf(p));
   ramp(outside, data);
 };
 
 /** The room under the ground: its own sink. */
-export const parkingInside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = P1_PIECES): GeometrySink => {
+export const parkingInside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = P1_ALL_PIECES): GeometrySink => {
   const inside = new GeometrySink();
   for (const p of pieces) if (p.inside && p.kind !== "shutter") boxOf(inside, data, p.box, swatchOf(p));
   ceilingLights(inside, data);

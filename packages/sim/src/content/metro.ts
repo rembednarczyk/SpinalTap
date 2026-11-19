@@ -1,7 +1,7 @@
 import { METRO_STATION_IDS, type MetroStationId, type Vec3 } from "@seki/core";
 import type { GroundCut } from "../world/ground";
 import type { Rect } from "./builders";
-import { type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
+import { type EndDoorway, type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
 import { type PlatformDef, type PlatformSpan, platform } from "./metro-platform";
 
 export { HALL_DEPTH, PAVILION, STAIRS } from "./metro-pavilion";
@@ -30,6 +30,11 @@ export interface MetroEntranceDef extends Pavilion {
    * and their ticket machine (`machine`) stands on it; an entrance B keeps its machine in the hall.
    */
   readonly platform: PlatformDef | null;
+  /**
+   * The doorway in the hall's end wall: down to the platform (entrances A), or on to a passage of
+   * its own (entrance B by Alchemia, down to P-1, ADR-0074 stage 10); null for a closed end wall.
+   */
+  readonly endDoor: EndDoorway | null;
   /** Where a ticket is bought: in front of the machine, facing it. */
   readonly ticket: Vec3;
   readonly ticketYaw: number;
@@ -53,17 +58,20 @@ export interface MetroStationDef {
 /** The ticket can be bought this close to the machine (horizontally). */
 export const KIOSK_REACH = 2.2;
 
-const entrance = (label: "A" | "B", name: string, spot: PavilionSpot, span?: PlatformSpan): MetroEntranceDef => {
+/** Headroom of the doorway in entrance B's end wall by Alchemia and of the passage beyond it to P-1 (ADR-0074 stage 10). */
+export const ALCHEMIA_DOOR_HEAD = 2.1;
+
+const entrance = (label: "A" | "B", name: string, spot: PavilionSpot, span?: PlatformSpan, door: EndDoorway | null = null): MetroEntranceDef => {
   const chunk = pavilionChunk(spot.x, spot.z);
   if (!span) {
-    const p = pavilion(spot);
-    return { label, name, spot, chunk, ...p, platform: null, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
+    const p = pavilion(spot, door);
+    return { label, name, spot, chunk, ...p, platform: null, endDoor: door, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
   }
   const deck = platform(spot, span);
   const p = pavilion(spot, { head: deck.doorwayHead });
   const { machine, machineSize, machineYaw, arrival, arrivalYaw, ticket, ticketYaw } = deck;
   const hall = { hallSpot: p.arrival, hallYaw: p.arrivalYaw };
-  return { label, name, spot, chunk, ...p, props: [...p.props, ...deck.props], machine, machineSize, machineYaw, arrival, arrivalYaw, platform: deck, ticket, ticketYaw, ...hall };
+  return { label, name, spot, chunk, ...p, props: [...p.props, ...deck.props], machine, machineSize, machineYaw, arrival, arrivalYaw, platform: deck, endDoor: { head: deck.doorwayHead }, ticket, ticketYaw, ...hall };
 };
 
 const station = (id: MetroStationId, name: string, district: DistrictId, node: { x: number; z: number }, entrances: readonly [MetroEntranceDef, ...MetroEntranceDef[]]): MetroStationDef => ({
@@ -94,7 +102,7 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
     // Its platform runs east under Królewska, off the houses west of the square (w -14 and on):
     // the track's tunnel reaches about 4.3 m past w0, so w0 -9.5 keeps it off w67498758 (G-373).
     entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }, { w0: -9.5, w1: 16 }),
-    entrance("B", "Alchemia", { x: 428, z: 28, along: "x", opens: 1 }),
+    entrance("B", "Alchemia", { x: 428, z: 28, along: "x", opens: 1 }, undefined, { head: ALCHEMIA_DOOR_HEAD, through: true }),
   ]),
   // Plac Zamkowy: the node on Aleja Tysiąclecia. A on the square's car park by the west houses, open north to
   // their pavement; B between the Dworzec Autobusowy and the avenue, open south to the avenue's path.

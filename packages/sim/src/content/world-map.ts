@@ -14,6 +14,7 @@ import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lu
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
 import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, P1_CARS, type P1Car, p1CarView } from "./alchemia";
 import { ALCHEMIA_NAV } from "./alchemia/nav";
+import { METRO_DOOR_LINK } from "./alchemia/metro-door";
 import type { GroundCut } from "../world/ground";
 import type { GroundVault } from "../world/vault";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
@@ -202,7 +203,7 @@ export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
  * Alchemia's food hall under its terrace (ADR-0074). The streets themselves are one level
  * on the terrain.
  */
-export const WORLD_NAV: NavGraph = mergeNav(W3_NAV, S7_NAV, METRO_NAV, ALCHEMIA_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(W3_NAV, S7_NAV, METRO_NAV, ALCHEMIA_NAV, METRO_DOOR_LINK);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];

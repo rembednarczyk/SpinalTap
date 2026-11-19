@@ -276,6 +276,23 @@ Brak. Pytanie o godziny lokali rozstrzygnął użytkownik 6.11 (sekcja „Decyzj
 - **Zapis i hash.** Bez zmiany schematu i złotego hasha: nowe bryły dokładają się na końcu listy, a postać zapisana w ich miejscu na dachu hali jest wypychana (G-485).
 - **Odłożone:** rampa w osi placu i deptak (zmieniają trasy ruchu, osobny PR z wierszem T), etapy 5 i 10, spójność materiałów (etap 8, razem z teksturami ADR-0092).
 
+### Etap 10: drzwi z hali metra B na P−1 (gałąź `ccr-ec2c4269-ilh8k8-alchemia-metro-b`)
+- **Pomiar (T-157).** Wejście B stacji Brama Krakowska stoi w x 424,4–431,6, z 26,2–29,8. Posadzka hali leży na −4,31, czyli 2,09 m nad P−1 (−6,4). Ściana końcowa hali (zewnętrzna x 424,4) stoi 2,4 m od wschodniej ściany P−1 (zewnętrzna x 422), a hala w osi z 28 wychodzi na fartuch P−1.
+- **Drzwi.** Ściana końcowa hali B dostaje otwór na szerokość hali (z 26,8–29,2) o wysokości 2,1 m (`EndDoorway.through`). Posadzka hali biegnie dalej przez otwór, a ściana końcowa zostaje jednym blokiem nad nim. Pawilon ma więc tyle samo brył w alokatorze, a złote hashe (`determinism`, `reinforcement-sidestep`) się nie zmieniają, wbrew założeniu z §12.
+- **Przejście (`alchemia/metro-door.ts`).**
+  - Za drzwiami 11 stopni po 0,28 m i 0,174 m prowadzi na zachód pod terenem. Ostatnie trzy stoją w P−1, za otworem we wschodniej ścianie (`P1_METRO_OPENING`).
+  - Ściany boczne, strop 2,1 m nad posadzką hali i ścianka nad otworem P−1. Pod całym przejściem jest co najmniej 2 m prześwitu (test). Płyta leży pod terenem, więc z placu nic nie widać.
+  - Przejście jest sklepieniem w ziemi (`GroundVault`), jak korytarz peronu A.
+  - Jego bryły to jeden `solidProp` na końcu `ALCHEMIA_PROPS`. Pokój nad stopniami należy do wnętrza `alchemia-parking`.
+- **Graf.**
+  - W grafie metra węzeł w otworze (`metro-kanal-B-end`), po stronie wolnej od automatu biletowego.
+  - W grafie P−1 węzeł przy stopie schodów (`alchemia-p1-metro-foot`) z krawędzią na fartuch.
+  - Schody łączy krawędź `via` w osobnym grafie `METRO_DOOR_LINK`, scalanym w `WORLD_NAV`. Dzięki temu grafy metra i Alchemii zostają zamknięte.
+  - P−1 ma teraz cztery wyjścia.
+- **Rysunek.** Ściana końcowa pawilonu B rysuje się z otworem (`pavilion-bake` czyta `endDoor`). Przejście jest w siatce wnętrza P−1 (`P1_ALL_PIECES`).
+- **Skan.** `metro-shaft-open` uznaje otwór B tak jak otwór peronu A.
+- **Zapis.** Bez zmiany schematu, bo przejście zajmuje dotąd pełną ziemię.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.
