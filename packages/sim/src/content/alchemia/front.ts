@@ -143,6 +143,16 @@ const hedges = (): Piece[] => [
 export const FOUNTAIN: Rect = { minX: 397.9, maxX: 401.1, minZ: -7.1, maxZ: -3.9 };
 
 /**
+ * The kiosks on the square before the front (B4, the board's booths by the fountain): one west of
+ * the fountain towards Świętoduska, one east of it on the way to the ramp, their counters to the
+ * street (south).
+ */
+export const FRONT_KIOSKS: readonly Rect[] = [
+  { minX: 390.6, maxX: 392.6, minZ: -6.2, maxZ: -4.6 },
+  { minX: 402.4, maxX: 404.4, minZ: -6.6, maxZ: -5.0 },
+];
+
+/**
  * What of the front stands on T0, in plan: the wings, the green steps and the passage's columns. The
  * map's furniture keeps clear of them (`street-props.ts`), as of the game's blocks.
  */
@@ -152,6 +162,7 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
   { minX: GREEN_STEPS[GREEN_STEPS.length - 1]!.x0, maxX: WEST_WING[0]!.minX, minZ: STEPS_Z.z0, maxZ: STEPS_Z.z1 },
   ...PASSAGE_COLUMNS.map((c) => ({ minX: c.x - COLUMN / 2, maxX: c.x + COLUMN / 2, minZ: c.z - COLUMN / 2, maxZ: c.z + COLUMN / 2 })),
   FOUNTAIN,
+  ...FRONT_KIOSKS,
 ];
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */
