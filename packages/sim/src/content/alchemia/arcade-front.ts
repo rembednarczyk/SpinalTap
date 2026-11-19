@@ -24,8 +24,8 @@ export const ARCADE_PIER = { width: 0.75, depth: 0.8 } as const;
 export const ARCADE_BAYS = 5;
 /** The ground under it, as the wings' glass stands in it (`front.ts`). */
 const FOOT = -3;
-/** The upper storey's roof slab and the cornice under it. */
-const SLAB = 0.3;
+/** The upper storey's roof slab (a masonry house's, thicker than the glass storeys' 0.3 m) and the cornice under it. */
+const SLAB = 0.35;
 const CORNICE = 0.35;
 
 /** The piers' west edges along the front, from the house's west corner to its east one. */

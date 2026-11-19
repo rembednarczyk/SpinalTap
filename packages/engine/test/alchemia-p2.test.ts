@@ -16,7 +16,8 @@ import { P2_LAMP_KEY, P2View, p2RoofOver, p2Visible } from "../src/renderer/alch
 import { PARKING_LAMP_KEY } from "../src/renderer/alchemia/parking-view";
 
 /** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
-const ALCHEMIA_TRIANGLES = 16000;
+/** A mesh of Alchemia's at most (decision of the user of 19.11: triangle budgets may grow; the gates are draw calls and active meshes). */
+const ALCHEMIA_TRIANGLES = 40000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));

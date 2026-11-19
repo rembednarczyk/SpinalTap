@@ -484,16 +484,35 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
 
 ### Etap C2: zieleń (19.11)
 - **Zasłony zieleni** (`front-green.ts`) wiszą na każdej odsłoniętej krawędzi kondygnacji: L1–L3 frontu oraz A i B.
-  - Biegną wzdłuż zaokrąglonego obrysu płyty, 8 cm za jej krawędzią, co 3,2 m. Każda ma 0,9–1,7 m szerokości i spada 0,6–1,8 m spod belki płyty, a od góry wystaje nad płytę.
+  - Biegną wzdłuż zaokrąglonego obrysu płyty, 8 cm za jej krawędzią, co 2,6 m. Każda ma 0,9–1,7 m szerokości i spada 0,6–1,8 m spod belki płyty, a od góry wystaje nad płytę.
   - Pomijane są krawędzie, przy których stoi inna kondygnacja, oraz miejsca przy napisie i ekranach.
   - Co gdzie rośnie, rozstrzyga skrót położenia (hash). Nie ma list pozycji ani losowości.
   - Zasłony są tylko rysowane.
-- **Krzewy** rosną co 2,2 m wzdłuż balustrad dachów frontu, 0,75 m od krawędzi, tam, gdzie nad dachem nie stoi wyższa kondygnacja. Na rogach skrzydła wschodniego L1 i na tylnych rogach L3 stoją cztery drzewa w donicach.
-  - Na tarasach A i B, po których się chodzi, nie ma nowych krzewów.
+- **Drzewa i krzewy z gry** (decyzja użytkownika z 19.11: modele gry zamiast własnych pudełek) to meble uliczne `shrubs`, `planter` i `tree` w osobnym elemencie sceny chunka Alchemii, na końcu `WORLD_SCENERY` (`FRONT_GREEN_PROPS`).
+  - Krzewy stoją co 1,6 m wzdłuż balustrad dachów frontu, 0,85 m od krawędzi, tam, gdzie nad dachem nie stoi wyższa kondygnacja. Ich wielkość rozstrzyga skrót położenia.
+  - Cztery drzewa wysokie na 6–7 m (`measuredTreeVariant`) stoją w donicach na rogach skrzydła wschodniego L1 i na tylnych rogach L3.
+  - Na tarasach A i B, po których się chodzi, nowych krzewów nie ma.
 - **Zielony stok** (`green-slope.ts`): trzy zielone stopnie silnik rysuje jako jedną równą pochylnię trawy od krawędzi dachu L1 do najniższego stopnia. Linia światła biegnie wzdłuż profilu po obu stronach i u stopy.
   - Symulacja zostaje przy trzech stopniach. Stopnie wysokie na 1,05 m nie są do chodzenia, więc pochylnia, która w głębi stopnia leży nad jego wierzchem, nikogo nie zasłania w zwykłej grze.
-- **Budżet.** Siatka kondygnacji ma 15,5 tys. trójkątów przy budżecie 16 tys., bo szkło straciło cokół i drugi pas tylnej ściany. Kolejne etapy idą do siatki zewnętrza.
-- **Kolor.** Liście i trawniki kondygnacji mają świeżą zieleń planszy (farba kitu barwiona na #4f9a58 i #5a9e4e), bo ciemna zieleń kitu w nocy czytała się jak ciemne płyty. Zasłona to dwa pasma nierównej długości, co 3,2 m.
+- **Budżet.** Decyzja użytkownika z 19.11: budżety trójkątów można podnosić. Budżet siatki Alchemii w testach rośnie z 16 do 40 tys., a bramkami zostają wywołania rysowania i aktywne siatki. Szkło zachowuje cokół i dwa pasy tylnej ściany, zasłony wiszą co 2,6 m.
+- **Kolor.** Liście i trawniki kondygnacji mają świeżą zieleń planszy (farba kitu barwiona na #4f9a58 i #5a9e4e), bo ciemna zieleń kitu w nocy czytała się jak ciemne płyty. Zasłona to dwa pasma nierównej długości.
+
+### Etap C3: budynek z arkadami w osi frontu (19.11)
+- **Decyzja użytkownika (19.11):** „budynek z arkadami może przejść od frontu”.
+- **Bryła** (`arcade-front.ts`): jasny dom z arkadami. Wzorzec: podcień (portyk) domu targowego, jak podcienia Starego Miasta i Arkady przy Świętoduskiej, czyli przejście pod piętrem za rzędem filarów.
+  - Stoi x 394–409, z −2…3,7, między zielonym stokiem a wykopem rampy, za fontanną.
+  - Na parterze jest pięć łuków na sześciu filarach (filary to bryły, 0,75 × 0,8 m). Podcień ma 3 m głębokości, a za nim świecą sklepy skrzydła zachodniego L1, które cofa się do z 1.
+  - Piętro od stropu podcienia (2,3) do dachu na poziomie L2 (6,5) jest bryłą. Dach łączy się z tarasem L2 w jeden taras, z balustradą na trzech bokach.
+  - Ekran z frontu skrzydła zachodniego zniknął. Ekran L2 przeszedł na wschód, nad wylot rampy.
+  - Lampy ulic znikają spod domu, a meble omijają filary.
+- **Rysunek** (`arcade-front-geometry.ts`):
+  - kremowy tynk (farba kitu barwiona na #e6d6b4);
+  - łuki z licem i podniebiem na głębokość filarów;
+  - okna piętra z ramą, słupkiem i ślemieniem, świecące ciepło albo ciemne;
+  - ciepły napis ALCHEMIA nad środkowym łukiem;
+  - gzyms z pasem światła;
+  - krzewy z gry na dachu, bez zasłon na elewacji.
+- **Pawilon na rogu** wraca do szkła z planu inwestora (rysunek sprzed B2), bo arkady ma teraz dom w osi frontu.
 
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.

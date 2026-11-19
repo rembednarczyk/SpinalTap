@@ -17,7 +17,8 @@ import { PARKING_DRAW, PARKING_LAMP_KEY, ParkingView, parkingRoofOver } from "..
 import { GeometrySink } from "../src/renderer/city-kit-data";
 
 /** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
-const ALCHEMIA_TRIANGLES = 16000;
+/** A mesh of Alchemia's at most (decision of the user of 19.11: triangle budgets may grow; the gates are draw calls and active meshes). */
+const ALCHEMIA_TRIANGLES = 40000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
