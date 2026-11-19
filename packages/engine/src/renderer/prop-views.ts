@@ -11,6 +11,7 @@ import type { ScanVisitor } from "./screen-fx";
 import type { Stage } from "./stage";
 import { InteriorBatches } from "./interior-batch";
 import { W3InteriorCull } from "./tessen-w3/w3-interior-cull";
+import { AlchemiaUndergroundCull } from "./alchemia/underground-cull";
 import { W3PropBake, w3Bakeable } from "./tessen-w3/w3-prop-bake";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
@@ -186,6 +187,7 @@ export class PropViews {
     if (prop.light && lightKey) materials.addLight(lightKey, prop.light);
     this.props.set(id, { prop, lightKey, decor, at: glowCentre(prop, at), shown: true });
     this.w3.track(id, prop.root, at);
+    this.underground.track(id, prop.root, at);
     const own = prop.root.getChildMeshes(true)[0] as Mesh | undefined;
     if (view.kind === "block" && own && w3Bakeable(view, at)) this.w3Bake.add(id, own, at);
     this.glowEye = null;
@@ -216,10 +218,13 @@ export class PropViews {
 
   /** W-3's hall's own meshes, drawn only near it (ADR-0082 §4). */
   private readonly w3 = new W3InteriorCull();
+  /** Alchemia's P-2 and shelter's own meshes, drawn only near them (ADR-0074 stage 5e). */
+  private readonly underground = new AlchemiaUndergroundCull();
 
   /** Shows W-3's hall's doors, stairs and ladders near it and hides them from afar (its blocks are baked, `W3View`). */
   updateInteriors(eye: Vector3): void {
     if (this.w3.update(eye)) this.w3Bake.setShown(this.w3.shown);
+    this.underground.update(eye);
   }
 
   /** Where the glow was last judged from; null: judge again. */
@@ -288,6 +293,7 @@ export class PropViews {
     this.props.delete(id);
     this.unsettled.delete(id);
     this.w3.untrack(id);
+    this.underground.untrack(id);
     this.w3Bake.remove(id);
     const { materials, atmosphere } = this.deps;
     this.deps.cityKit.remove(id);
