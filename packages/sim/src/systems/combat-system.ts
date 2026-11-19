@@ -160,7 +160,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
     if (hitWithPellet(ctx, shot, weapon, { target, health: target.health, point: result.point, zone: result.zone }, rng)) hurtPlayer = true;
   }
   combatant.bloom = addBloom(weapon.spread, combatant.bloom);
-  alertNearbyGangers(ctx, shot.origin, weapon.alertRadius);
+  alertNearbyGangers(ctx, shot.origin, weapon.alertRadius, shot.shooter);
   disturb(ctx, "gunshot", shot.origin, weapon.alertRadius, shot.shooter.id);
   if (crime) offend(ctx, "gunfire", shot.origin);
   const result = first ?? { distance: 0, point: farthest, entity: null, zone: null };
@@ -229,10 +229,18 @@ const warnPlayer = (ctx: SimContext, shot: ShotRequest, hurtPlayer: boolean, imp
   }
 };
 
-export const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {
+/**
+ * Gangers within `radius` of a shot or a blow at `at` are alerted. A gang's own member who is not
+ * fighting (a mugger at its victim, G-938) alerts none of its gang: they know what the noise is,
+ * and taking it for the player's would set a whole territory on a player who only watched. Once
+ * the member fights (alerted), its noise calls its gang as before.
+ */
+export const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number, source?: Entity): void => {
+  const ownBusiness = source !== undefined && !source.player && source.ai !== undefined && !source.ai.alerted ? source.faction : undefined;
   for (const g of ctx.world.with("ai")) {
     // Someone knocked out hears nothing (ADR-0065).
-    if (!g.unconscious && Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
+    if (g.unconscious || (ownBusiness !== undefined && g.faction === ownBusiness)) continue;
+    if (Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
   }
 };
 
