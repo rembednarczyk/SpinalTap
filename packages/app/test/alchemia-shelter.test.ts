@@ -1,0 +1,94 @@
+import { describe, expect, it } from "vitest";
+import { EMPTY_INPUT, type InputFrame, type Vec3 } from "@seki/core";
+import { ALCHEMIA_T2, P2, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH, SHELTER_STAIR_FOOT, groundY } from "@seki/sim";
+import { setup, steps, teleport } from "./story-helpers";
+import type { GameSession } from "../src/game-session";
+
+/**
+ * The air-raid shelter under T2 (ADR-0074 stage 5d1), headless: Seki goes down the hatch on T2
+ * into the shelter (an interior of its own, ADR-0061), across its room past the exhibit, down the
+ * passage and up the flight to the steel gate, which opens for her into P-2's corridor; and back
+ * from the corridor through the gate and up the hatch onto T2, unhurt.
+ */
+
+const at = (session: GameSession): Vec3 => session.sim.player()!.position;
+const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
+const HATCH_Z = (SHELTER_HATCH.minZ + SHELTER_HATCH.maxZ) / 2;
+const STAIR_X = (SHELTER_GATE_STAIR.minX + SHELTER_GATE_STAIR.maxX) / 2;
+const GATE_Z = 69.8;
+
+/** Walks towards (x, z), turning to it every step, for at most `n` steps or until within `near` of it. */
+const walkAt = (session: GameSession, to: { x: number; z: number }, n: number, near = 0.3): void => {
+  for (let i = 0; i < n; i++) {
+    const p = session.sim.player()!;
+    if (Math.hypot(to.x - p.position.x, to.z - p.position.z) < near) return;
+    const want = Math.atan2(to.x - p.position.x, to.z - p.position.z);
+    const input: InputFrame = { ...EMPTY_INPUT, moveZ: 1, lookYaw: Math.atan2(Math.sin(want - p.yaw), Math.cos(want - p.yaw)) };
+    steps(session, 1, input);
+  }
+};
+
+const start = () => {
+  const { session } = setup();
+  session.newGame();
+  steps(session, 2);
+  for (const g of [...session.sim.world.with("ai")]) session.sim.world.remove(g);
+  return session;
+};
+
+/** From T2 east of the hatch down into the room, across it to the passage, along it and up the gate's flight into P-2's corridor. */
+const OUT = { x: SHELTER_HATCH.maxX + 2, z: HATCH_Z } as const;
+const WAY = [
+  { x: SHELTER.maxX - 0.8, z: HATCH_Z },
+  { x: STAIR_X, z: 93.8 },
+  { x: STAIR_X, z: SHELTER.minZ + 1.5 },
+  { x: STAIR_X, z: SHELTER_STAIR_FOOT + 1 },
+  { x: STAIR_X, z: GATE_Z },
+  { x: 418.4, z: GATE_Z },
+] as const;
+
+describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
+  it("takes her down the hatch from T2 into the shelter, across it and up through the steel gate into P-2's corridor", () => {
+    const session = start();
+    teleport(session, OUT.x, OUT.z, -Math.PI / 2);
+    steps(session, 2);
+    const me = session.sim.player()!;
+    const hp = me.health!.current;
+    const [foot, west, south, passage, landing, corridor] = WAY;
+    walkAt(session, foot, 900);
+    expect(flat(at(session), foot)).toBeLessThan(0.5);
+    expect(at(session).y).toBeCloseTo(SHELTER.floor, 1);
+    steps(session, 2);
+    expect(session.sim.session.interior).toBe("alchemia-shelter");
+    for (const p of [west, south, passage]) walkAt(session, p, 900);
+    expect(flat(at(session), passage)).toBeLessThan(0.5);
+    expect(session.sim.session.interior).toBe("alchemia-shelter");
+    walkAt(session, landing, 900);
+    expect(flat(at(session), landing)).toBeLessThan(0.5);
+    expect(at(session).y).toBeCloseTo(P2.floor, 1);
+    walkAt(session, corridor, 600);
+    expect(flat(at(session), corridor)).toBeLessThan(0.5);
+    steps(session, 2);
+    expect(session.sim.session.interior).toBe("alchemia-p2");
+    expect(me.health!.current).toBe(hp);
+  });
+
+  it("takes her back from P-2's corridor through the gate, down and across the shelter and up the hatch onto T2", () => {
+    const session = start();
+    const corridor = WAY.at(-1)!;
+    teleport(session, corridor.x, corridor.z, Math.PI / 2, 0, P2.floor);
+    steps(session, 2);
+    const me = session.sim.player()!;
+    const hp = me.health!.current;
+    for (const p of [...WAY].reverse().slice(1)) walkAt(session, p, 900);
+    expect(flat(at(session), WAY[0])).toBeLessThan(0.5);
+    expect(session.sim.session.interior).toBe("alchemia-shelter");
+    walkAt(session, OUT, 900);
+    expect(flat(at(session), OUT)).toBeLessThan(0.5);
+    steps(session, 10);
+    expect(at(session).y).toBeCloseTo(groundY(OUT.x, OUT.z), 1);
+    expect(at(session).y).toBeCloseTo(ALCHEMIA_T2, 1);
+    expect(session.sim.session.interior).toBeNull();
+    expect(me.health!.current).toBe(hp);
+  });
+});

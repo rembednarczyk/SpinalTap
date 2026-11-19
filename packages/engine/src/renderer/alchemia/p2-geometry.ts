@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES } from "@seki/sim";
+import { type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, P2_CUTTING, P2_CUTTING_PIECES, P2_SHELL_PIECES, P2_STORE_PIECES, SHELTER_HATCH_PIECES, SHELTER_PIECES } from "@seki/sim";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 
 /**
@@ -24,6 +24,13 @@ const SWATCH: Readonly<Partial<Record<AlchemiaPieceKind, string>>> = {
   beacon: "neon-amber",
   machine: "metal",
   marking: "fabric-amber",
+  // The shelter (stage 5d1): its wartime benches' timber, the cases' frames and glass, the photographs, the hatch's steel.
+  bench: "door",
+  column: "trim",
+  counter: "dark",
+  screen: "trim-light",
+  step: "trim",
+  shutter: "metal",
 };
 
 /** The cars' paint, one of these by where the car stands (fixed: nothing of it is random). */
@@ -72,16 +79,16 @@ const railedWall = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox): void
   }
 };
 
-/** The portal's parapet and the cutting, into Alchemia's outside sink. */
-export const p2Outside = (outside: GeometrySink, data: CityKitData, pieces: readonly AlchemiaPiece[] = P2_CUTTING_PIECES): void => {
+/** The portal's parapet and the cutting, the shelter's hatch with its shaft (stage 5d1), into Alchemia's outside sink. */
+export const p2Outside = (outside: GeometrySink, data: CityKitData, pieces: readonly AlchemiaPiece[] = [...P2_CUTTING_PIECES, ...SHELTER_HATCH_PIECES]): void => {
   for (const p of pieces) {
     if (p.kind === "parapet" && isRailed(p.box)) railedWall(outside, data, p.box);
     else boxOf(outside, data, p.box, swatchOf(p));
   }
 };
 
-/** The store and the corridor under the ground: their own sink. */
-export const p2Inside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = [...P2_SHELL_PIECES, ...P2_STORE_PIECES]): GeometrySink => {
+/** The store, the corridor and the shelter (stage 5d1) under the ground: their own sink. */
+export const p2Inside = (data: CityKitData, pieces: readonly AlchemiaPiece[] = [...P2_SHELL_PIECES, ...P2_STORE_PIECES, ...SHELTER_PIECES]): GeometrySink => {
   const inside = new GeometrySink();
   for (const p of pieces) boxOf(inside, data, p.box, swatchOf(p));
   return inside;

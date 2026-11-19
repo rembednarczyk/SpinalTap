@@ -7,6 +7,7 @@ import { FOODHALL_ROOM } from "./alchemia/foodhall";
 import { P1_ROOMS } from "./alchemia/parking";
 import { METRO_DOOR_ROOM } from "./alchemia/metro-door";
 import { P2_ROOMS } from "./alchemia/p2";
+import { SHELTER_ROOMS } from "./alchemia/shelter";
 import { CLINIC_SITE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 import { W3_OFFICE } from "./tessen-w3/tower-pipes";
 import { W3_BASEMENT_ROOMS, W3_HALL_ROOMS } from "./tessen-w3/rooms";
@@ -79,6 +80,8 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "alchemia-parking", name: "interior.alchemia-parking", building: null, rooms: [...P1_ROOMS, METRO_DOOR_ROOM] },
   // Its lower level P-2 under P-1 (stage 5a): the automated store, the corridor north to its portal, the flight down.
   { id: "alchemia-p2", name: "interior.alchemia-p2", building: null, rooms: P2_ROOMS },
+  // The air-raid shelter under T2 by P-2's north end (stage 5d1): its room, the passage, both flights.
+  { id: "alchemia-shelter", name: "interior.alchemia-shelter", building: null, rooms: SHELTER_ROOMS },
 ];
 
 /** Feet this far under a room's floor still count (a floor slab, a step down the stairs). */
