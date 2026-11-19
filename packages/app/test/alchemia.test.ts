@@ -2,14 +2,15 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type EntityId, type InputFrame, type Vec3, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { ALCHEMIA_CHUNK, ALCHEMIA_PROPS, FOODHALL, ROOM_ID_BASE, STAIR, STAIR_HEAD_X, beforeKeeper, ground, opening } from "@seki/sim";
+import { ALCHEMIA_CHUNK, ALCHEMIA_PROPS, FOODHALL, MALL_LEVELS, ROOM_ID_BASE, STAIR, STAIR_HEAD_X, beforeKeeper, ground, opening } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { FakeRender, steps, teleport } from "./story-helpers";
 
 /**
  * Alchemia's food hall under its terrace (ADR-0074 stage 1), headless: Seki walks from T1 in
- * through the way in to the counters, the glass of the front stops her, she walks up the stairs
+ * through the way in onto P0 and up the escalators to the food hall's counters on P3 (ADR-0093 O3),
+ * the glass of the front stops her, she walks up the stairs
  * by the lift to the car park and back down, and onto the green roof from the car park; entering
  * the hall is an interior of ADR-0061 (autosave); its solids stream in with the plot's chunk,
  * without views (the engine draws them).
@@ -42,15 +43,30 @@ const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.
 const ENTRANCE = (opening("entrance").x0 + opening("entrance").x1) / 2;
 
 describe("Alchemia's food hall under its terrace (ADR-0074 stage 1)", () => {
-  it("lets her in from T1 through the way in to Kenta's counter, on the hall's floor, and counts it an interior", () => {
+  it("lets her in from T1 through the way in onto the gallery's P0, its shops round the fountain, and counts it an interior", () => {
     const { session } = start();
     teleport(session, ENTRANCE, 64, Math.PI);
     steps(session, 2);
     expect(session.sim.session.interior).toBeNull();
-    for (const p of [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, beforeKeeper("kenta")]) walkAt(session, p, 400);
-    expect(flat(at(session), beforeKeeper("kenta"))).toBeLessThan(0.5);
+    // Past the fountain in the atrium (ADR-0093 O3) to the escalators' foot.
+    for (const p of [{ x: ENTRANCE, z: 55 }, { x: 416, z: 51.6 }, { x: 426.3, z: 51.4 }, { x: 425.8, z: 40.75 }]) walkAt(session, p, 400);
+    expect(flat(at(session), { x: 425.8, z: 40.75 })).toBeLessThan(0.5);
     expect(at(session).y).toBeCloseTo(FOODHALL.floor, 2);
+    expect(session.sim.session.interior).toBe("alchemia-gallery");
+  });
+
+  it("takes her up the escalators from P0 to the food hall on P3 and to Kenta's counter, an interior of its own (ADR-0093 O3)", () => {
+    const { session } = start();
+    teleport(session, 425.8, 40.75, -Math.PI / 2, 0, FOODHALL.floor);
+    steps(session, 2);
+    const hp = session.sim.player()!.health!.current;
+    // West up the first flight, east up the second, west up the third (`mall-plan.ts`), off the landing onto the gallery.
+    for (const p of [{ x: 416.4, z: 40.75 }, { x: 416.4, z: 42.35 }, { x: 425.3, z: 42.35 }, { x: 425.3, z: 40.75 }, { x: 416.6, z: 40.75 }, { x: 416.6, z: 39.2 }, { x: 409.2, z: 39.2 }, { x: 409.2, z: 51.5 }, beforeKeeper("kenta")])
+      walkAt(session, p, 600);
+    expect(flat(at(session), beforeKeeper("kenta"))).toBeLessThan(0.5);
+    expect(at(session).y).toBeCloseTo(MALL_LEVELS.p3, 2);
     expect(session.sim.session.interior).toBe("alchemia-foodhall");
+    expect(session.sim.player()!.health!.current).toBe(hp);
   });
 
   it("stops her at the front's glass beside the way in", () => {
