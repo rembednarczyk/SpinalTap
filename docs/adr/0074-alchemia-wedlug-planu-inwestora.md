@@ -388,7 +388,7 @@ Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecen
     - miejsca ludzi, urządzeń i planów na podłodze schronu.
   - Sesja: brama zatrzymuje gracza bez zlecenia, a właz działa w obie strony.
   - Migracja: osobny test.
-- **Hashe.** Złote hashe zgodne.
+- **Hashe.** Złoty hash determinizmu zmienia się tylko przez wersję schematu: z wersją 49 przebieg daje dawny skrót.
 
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
