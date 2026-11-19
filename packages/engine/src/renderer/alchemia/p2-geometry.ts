@@ -27,7 +27,8 @@ const SWATCH: Readonly<Partial<Record<AlchemiaPieceKind, string>>> = {
   // The shelter (stage 5d1): its wartime benches' timber, the cases' frames and glass, the photographs, the hatch's steel.
   bench: "door",
   column: "trim",
-  counter: "dark",
+  counter: "trim-light",
+  vitrine: "glass-blue",
   screen: "trim-light",
   step: "trim",
   shutter: "metal",

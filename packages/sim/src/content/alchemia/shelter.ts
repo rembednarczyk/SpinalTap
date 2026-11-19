@@ -169,7 +169,7 @@ const exhibitPieces = (): Piece[] => {
   ];
   for (const z of [87.0, 91.8]) out.push(piece(box(427.4, 427.8, z - 0.2, z + 0.2, F, C), "column", true));
   for (const x of [424.5, 429.0]) {
-    out.push(piece(box(x, x + 2.0, 88.6, 89.6, F, F + 0.85), "counter", true), piece(box(x + 0.05, x + 1.95, 88.65, 89.55, F + 0.85, F + 1.25), "glass", true));
+    out.push(piece(box(x, x + 2.0, 88.6, 89.6, F, F + 0.85), "counter", true), piece(box(x + 0.05, x + 1.95, 88.65, 89.55, F + 0.85, F + 1.25), "vitrine", true));
   }
   for (const z of [86.6, 89.0, 91.4]) out.push(piece(box(r.minX + W, r.minX + W + 0.05, z, z + 1.8, F + 0.9, F + 1.9), "screen", true, false));
   for (const [x, z] of [[424, r.minZ + W], [431, r.minZ + W], [424, r.maxZ - W - 0.06], [431, r.maxZ - W - 0.06]] as const) {
