@@ -42,11 +42,13 @@ const extent = (t: VehicleTemplate) => {
 };
 
 describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
-  it("has every look of every body with its phone and far versions, each fitted to its body", () => {
+  it("has every look of every body with its phone and far versions, each fitted to its own body in the file", () => {
     for (const model of VEHICLE_MODELS) {
-      const size = VEHICLE_SIZE[model];
       for (const v of VEHICLE_VARIANTS[model]) {
         expect(has(v.key), v.key).toBe(true);
+        // The body the file fits it to (the sports car a hatchback's): the renderer fits it to the vehicle's own.
+        const own = v.key.startsWith("veh-") ? (vehicles.models.get(v.key)!.styles[0]!.slice(4) as typeof model) : model;
+        const size = VEHICLE_SIZE[own];
         for (const k of [`${v.key}-lite`, `${v.key}-far`, ...(v.key.startsWith("veh-") ? [v.key] : [])]) {
           const m = vehicles.models.get(k)!;
           expect(m, k).toBeDefined();
@@ -56,16 +58,17 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
           expect(m.size.y, k).toBeLessThanOrEqual(size.height + 1e-3);
           expect(m.size.y, k).toBeGreaterThan(size.height * 0.6);
         }
-        if (v.key.startsWith("veh-")) expect(vehicles.models.get(v.key)!.styles, v.key).toEqual([`veh-${model}`]);
+        if (v.key.startsWith("veh-")) expect(VEHICLE_SIZE[own], v.key).toBeDefined();
       }
     }
   });
 
-  it("is light: near up to 1000 triangles, the phone's up to 350, far ones under 200, a file under 640 KiB, on the props' palette", () => {
-    expect(vehicleBytes.byteLength).toBeLessThan(640 * 1024);
+  it("is light: near up to 1000 triangles (the sports car every vehicle wears up to 4500), the phone's up to 350, far ones under 200, a file under 820 KiB, on the props' palette", () => {
+    // Decision of the user of 19.11: the sports car near at some 4 thousand triangles; the file grows with it (600 to 782 KiB).
+    expect(vehicleBytes.byteLength).toBeLessThan(820 * 1024);
     expect(vehicles.swatches).toEqual(props.swatches);
     for (const m of vehicles.models.values()) {
-      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : 1000;
+      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key === "veh-cyber" ? 4500 : 1000;
       expect(triangleCount(m), m.key).toBeLessThanOrEqual(cap);
       expect(m.key).toMatch(/^(veh|car)-[a-z-]+$/);
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
@@ -101,7 +104,9 @@ describe("vehicle looks (ADR-0058 stage 4)", () => {
 
   it("keeps the kit's cars and the procedural trolleybus before the file has loaded", () => {
     const kitOnly = (k: string) => kit.models.has(k);
-    for (let i = 0; i < 100; i++) expect(pickVariant("sedan", i, kitOnly)!.key).toBe("car-sedan");
+    // Before the file: no look of its own, the kit's car of the body (every body's look is the file's sports car).
+    for (let i = 0; i < 100; i++) expect(pickVariant("sedan", i, kitOnly)).toBeNull();
+    expect(vehicleTemplates(kit, "sedan", 0, { props: null, variant: null })).not.toBeNull();
     expect(pickVariant("trolleybus", 3, kitOnly)).toBeNull();
     const pair = vehicleTemplates(kit, "trolleybus", 0, { props: null, variant: null })!;
     expect(extent(pair.near).max[1]).toBeGreaterThan(5.8);
@@ -139,8 +144,9 @@ describe("vehicle looks (ADR-0058 stage 4)", () => {
     expect([...colours(dirty.near)]).toEqual([hex(PAINTS[1])]);
     const bus = colours(vehicleTemplates(kit, "trolleybus", 0, { props: look, variant: VEHICLE_VARIANTS.trolleybus[0] })!.near);
     for (const c of Object.values(TROLLEY_LIVERY)) expect(bus.has(hex(c)), c).toBe(true);
-    // The garbage trucks are amber whatever their seed.
-    expect(VEHICLE_VARIANTS.delivery.find((v) => v.key === "veh-garbage")!.paint).toBe(4);
+    // Every vehicle but the trolleybus wears the sports car (19.11); the taxis are amber whatever their seed.
+    for (const model of VEHICLE_MODELS) if (model !== "trolleybus") expect(VEHICLE_VARIANTS[model].map((v) => v.key)).toEqual(["veh-cyber"]);
+    expect(VEHICLE_VARIANTS.taxi[0]!.paint).toBe(4);
   });
 });
 

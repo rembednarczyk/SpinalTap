@@ -69,11 +69,9 @@ export type PieceKind =
   | "lantern"
   // The green tiers of 15.11: the strip of light along a slab's edge.
   | "led"
-  // P-2's automated store (stage 5a): its racks, pallets, the cars on them with their tyres, the robots' rails, the orange beacons.
+  // P-2's automated store (stage 5a): its racks, pallets, the robots' rails, the orange beacons (its cars are the scenery's parked vehicles, 19.11).
   | "rack"
   | "pallet"
-  | "car"
-  | "tyre"
   | "rail"
   | "beacon"
   // The front on Bajkowskiego (B1, 19.11): its screens and the sign's box.
