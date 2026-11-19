@@ -120,6 +120,7 @@ export const balustrade = (
   gaps: readonly Rectangle[] = [],
   radius = cornerRadius(b),
   kind: PieceKind = "parapet",
+  thick = RAIL_THICK,
 ): Piece[] => {
   const pts = roundedOutline(b, grow, corners, RAIL_ARC, radius);
   const out: Piece[] = [];
@@ -128,7 +129,7 @@ export const balustrade = (
     const len = Math.hypot(q0.x - p0.x, q0.z - p0.z);
     if (len < 0.05) return;
     // Inwards is left of the edge on a counter-clockwise outline.
-    const [nx, nz] = [(-(q0.z - p0.z) / len) * RAIL_THICK, ((q0.x - p0.x) / len) * RAIL_THICK];
+    const [nx, nz] = [(-(q0.z - p0.z) / len) * thick, ((q0.x - p0.x) / len) * thick];
     for (const [t0, t1] of outsideGaps(p0, q0, gaps)) {
       if ((t1 - t0) * len < 0.05) continue;
       const p = { x: p0.x + (q0.x - p0.x) * t0, z: p0.z + (q0.z - p0.z) * t0 };
