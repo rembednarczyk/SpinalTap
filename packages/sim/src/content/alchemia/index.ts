@@ -21,6 +21,7 @@ import { unitPieces } from "./units";
 import { tierPieces } from "./tiers";
 import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
+import { frontGreenPieces } from "./front-green";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -41,7 +42,8 @@ export { PARAPET_BEDS } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
-export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
+export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
+export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
@@ -71,7 +73,7 @@ const LIFT = liftPieces();
 const PLAZA = plazaPieces();
 const SQUARE = squarePieces();
 const TIERS = tierPieces();
-const FRONT = [...frontPieces(), ...frontDressPieces()];
+const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces()];
 /** The green tiers' pieces (15.11) and the front's storeys over P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
 export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...TIERS, ...FRONT];
 

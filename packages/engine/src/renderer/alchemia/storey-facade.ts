@@ -1,5 +1,5 @@
 import type { GroundPoint, Vec3 } from "@seki/core";
-import { type BoxFace, type CityKitData, type GeometrySink, swatchUv } from "../city-kit-data";
+import { type BoxFace, type CityKitData, type GeometrySink, hexRgb, swatchUv } from "../city-kit-data";
 
 /*
  * Alchemia's storeys to the board 1:1 (19.11): the simulation gives each storey's slab, glass and
@@ -15,32 +15,44 @@ import { type BoxFace, type CityKitData, type GeometrySink, swatchUv } from "../
  * Pure data, no Babylon.
  */
 
+/** The storeys' leaves and lawns (C2): the board's fresh greens, tints of the kit's paint. */
+export const LEAF = hexRgb("#4f9a58");
+export const LAWN = hexRgb("#5a9e4e");
+
 type P2 = GroundPoint;
 
 const at = (p: P2, y: number): Vec3 => ({ x: p.x, y, z: p.z });
 
 /** A ring of quads round a counter-clockwise outline from y0 to y1, facing out; `skip` leaves out edges by index. */
-export const band = (sink: GeometrySink, pts: readonly P2[], y0: number, y1: number, uv: readonly [number, number], skip?: (i: number) => boolean): void => {
+export const band = (
+  sink: GeometrySink,
+  pts: readonly P2[],
+  y0: number,
+  y1: number,
+  uv: readonly [number, number],
+  skip?: (i: number) => boolean,
+  tint?: readonly [number, number, number],
+): void => {
   pts.forEach((p, i) => {
     if (skip?.(i)) return;
     const q = pts[(i + 1) % pts.length]!;
     const len = Math.hypot(q.x - p.x, q.z - p.z);
     if (len < 1e-6) return;
     const n = { x: (q.z - p.z) / len, y: 0, z: -(q.x - p.x) / len };
-    sink.quad(at(p, y0), at(q, y0), at(q, y1), at(p, y1), n, uv);
+    sink.quad(at(p, y0), at(q, y0), at(q, y1), at(p, y1), n, uv, tint);
   });
 };
 
 /** A fan of the outline at y from its middle, facing `ny` (1 up, -1 down): a quad per two edges. */
-export const lid = (sink: GeometrySink, pts: readonly P2[], y: number, ny: number, uv: readonly [number, number]): void => {
+export const lid = (sink: GeometrySink, pts: readonly P2[], y: number, ny: number, uv: readonly [number, number], tint?: readonly [number, number, number]): void => {
   const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
   const n = pts.length;
   for (let i = 0; i < n; i += 2) {
     const [p, q, r] = [pts[i]!, pts[(i + 1) % n]!, pts[(i + 2) % n]!];
     // An odd outline's last edge is a quad with its far corner doubled.
     const last = i + 1 === n ? q : r;
-    if (ny > 0) sink.quad(at(c, y), at(last, y), at(q, y), at(p, y), { x: 0, y: 1, z: 0 }, uv);
-    else sink.quad(at(c, y), at(p, y), at(q, y), at(last, y), { x: 0, y: -1, z: 0 }, uv);
+    if (ny > 0) sink.quad(at(c, y), at(last, y), at(q, y), at(p, y), { x: 0, y: 1, z: 0 }, uv, tint);
+    else sink.quad(at(c, y), at(p, y), at(q, y), at(last, y), { x: 0, y: -1, z: 0 }, uv, tint);
   }
 };
 

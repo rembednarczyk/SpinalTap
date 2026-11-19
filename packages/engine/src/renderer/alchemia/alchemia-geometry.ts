@@ -5,7 +5,8 @@ import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { glassFacade, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
+import { greenSlope, ofGreenSlope } from "./green-slope";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -83,8 +84,8 @@ const X: Vec3 = { x: 1, y: 0, z: 0 };
 const Y: Vec3 = { x: 0, y: 1, z: 0 };
 const Z: Vec3 = { x: 0, y: 0, z: 1 };
 
-const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: string, skip?: ReadonlySet<BoxFace>): void => {
-  sink.box({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 }, [X, Y, Z], [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2], swatchUv(data, swatch), undefined, skip);
+const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: string, skip?: ReadonlySet<BoxFace>, tint?: readonly [number, number, number]): void => {
+  sink.box({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 }, [X, Y, Z], [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2], swatchUv(data, swatch), tint, skip);
 };
 
 /** Kinds that stand on a floor or the ground: nobody sees their bottom. */
@@ -232,7 +233,11 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, 
     const y = (b.y0 + b.y1) / 2;
     if (!glass.some((g) => g.box.y0 < y && g.box.y1 > y && within(g.outline!, x, z))) railing(sink, data, pts, b.y0, b.y1);
   }
-  else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
+  else if (p.kind === "green" && pts.length === 4) {
+    // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.
+    band(sink, pts, b.y0, b.y1, swatchUv(data, "paint"), undefined, LEAF);
+    lid(sink, pts, b.y1, 1, swatchUv(data, "paint"), LEAF);
+  } else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
   return true;
 };
 
@@ -249,6 +254,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
+    if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -285,7 +291,9 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       }
       continue;
     }
-    boxOf(sink, data, b, swatchOf(p), hiddenFaces(p, steps));
+    // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted.
+    const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
+    boxOf(sink, data, b, leaf ? "paint" : swatchOf(p), hiddenFaces(p, steps), leaf ? (p.kind === "lawn" ? LAWN : LEAF) : undefined);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
@@ -293,6 +301,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   parkingOutside(outside, data);
   p2Outside(outside, data);
   frontSignLetters(tiers, data);
+  greenSlope(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside, tiers };

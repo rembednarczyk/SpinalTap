@@ -39,6 +39,11 @@ export const GREEN_STEPS: readonly { readonly x0: number; readonly x1: number; r
   { x0: 386.8, x1: 389.2, top: L1_TOP - 3.15 },
 ];
 const STEPS_Z = { z0: -2, z1: 14 } as const;
+/**
+ * The green steps drawn as the board's slope (C2, 19.11): from L1's roof edge down to the lowest
+ * step's top at its foot, along their z span. The simulation keeps its three steps.
+ */
+export const GREEN_SLOPE = { x0: GREEN_STEPS[GREEN_STEPS.length - 1]!.x0, x1: WEST_WING[0]!.minX, z0: STEPS_Z.z0, z1: STEPS_Z.z1, top: L1_TOP, foot: GREEN_STEPS[GREEN_STEPS.length - 1]!.top } as const;
 
 /**
  * L1's east wing: north of the triangular pavilion, south of metro B's (its eaves clear), east of P-1's
@@ -79,7 +84,7 @@ export const PASSAGE_COLUMNS: readonly { readonly x: number; readonly z: number 
 ];
 
 /** L1's storeys: the wings, their joints square. */
-const L1_LEVEL: readonly Rect[] = [...WEST_WING, EAST_WING];
+export const L1_LEVEL: readonly Rect[] = [...WEST_WING, EAST_WING];
 
 /** L2's underside over the passage, under its glass's rounded outline. */
 const soffit = (r: Rect): Piece => outlined(roundedOutline(slabOf(r), -OVER, outerCorners(rectOf(r), L2_SLABS.map(rectOf))), L1_TOP - SOFFIT, L1_TOP, "roof");

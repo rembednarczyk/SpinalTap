@@ -13,7 +13,8 @@ import { ALCHEMIA_DRAW, ALCHEMIA_LAMP_KEY, AlchemiaView, INSIDE_DRAW } from "../
 import { builtRoofOver } from "../src/renderer/built-roofs";
 
 /** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
-const ALCHEMIA_TRIANGLES = 16000;
+/** A mesh of Alchemia's at most (decision of the user of 19.11: triangle budgets may grow; the gates are draw calls and active meshes). */
+const ALCHEMIA_TRIANGLES = 40000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -71,7 +72,8 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const screenUvs = new Set<string>();
     for (let i = 0; i < screen.uvs.length; i += 2) screenUvs.add(`${screen.uvs[i]},${screen.uvs[i + 1]}`);
     for (const c of ["glass-dark", "win-teal", "neon-pink"]) expect(screenUvs.has(swatchUv(kitData, c).join(",")), c).toBe(true);
-    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "plant")]);
+    // The tiers' lawns in the board's fresh green since C2 (19.11): the kit's paint, tinted.
+    expect(uvOf(kind("lawn"))).toEqual([...swatchUv(kitData, "paint")]);
     const slab = kind("roof").filter((p) => (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) > 100);
     expect(uvOf(slab)).toEqual([...swatchUv(kitData, "trim-light")]);
   });
