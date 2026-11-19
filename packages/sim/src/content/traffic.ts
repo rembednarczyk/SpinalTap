@@ -5,9 +5,10 @@ import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_FOOTPRINTS } from "./metro";
 import { groundY } from "./lublin/terrain";
-import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice } from "./traffic-lane";
+import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice, uTurn } from "./traffic-lane";
 import { joinAtJunctions } from "./traffic-junctions";
 import { alchemiaRampRoutes } from "./traffic-ramp";
+import { deptakMouthRoutes } from "./traffic-deptak";
 import { type Street, reachAt, roadHalfWidth, turnedRound } from "./traffic-reach";
 
 export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt, projectOn } from "./traffic-lane";
@@ -386,19 +387,6 @@ const onTheMap = (p: Piece): Piece => {
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
 
-/** Half a circle from `a` heading (tx, tz) round to `b`: the turn round in front of a block. */
-const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
-  const cx = (a[0] + b[0]) / 2;
-  const cz = (a[1] + b[1]) / 2;
-  const r = Math.hypot(b[0] - a[0], b[1] - a[1]) / 2;
-  const out: Pt[] = [];
-  for (let k = 1; k < 8; k++) {
-    const t = (Math.PI * k) / 8;
-    out.push([cx + (a[0] - cx) * Math.cos(t) + tx * r * Math.sin(t), cz + (a[1] - cz) * Math.cos(t) + tz * r * Math.sin(t)]);
-  }
-  return out;
-};
-
 /**
  * The pieces as lanes: one cut short by a block or a dead end turns round there onto the nearest
  * unclaimed piece of the same use that starts beside its end the other way (the two carriageways
@@ -446,8 +434,11 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
 /** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks, on the map. */
 export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k)).map(onTheMap)));
 
-/** The city's routes: the lanes joined at the junctions (ADR-0055). */
-export const CITY_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
+/** The lanes joined at the junctions (ADR-0055): each lane on one route. */
+export const JUNCTION_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
+
+/** The city's routes: the junctions' routes, Bajkowskiego's turned south at the deptak's mouth with the ring past it (T-324, `traffic-deptak.ts`). */
+export const CITY_ROUTES: readonly TrafficRoute[] = deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES);
 
 /** The routes the vehicles drive: the city's, then the two in and out of Alchemia's P-1 off Bajkowskiego (ADR-0074 §4, G-491). */
 export const TRAFFIC_ROUTES: readonly TrafficRoute[] = [...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)];

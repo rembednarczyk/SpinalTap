@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
 import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, ownWayRoom, streetSegments } from "../src/content/traffic-ramp";
+import { DEPTAK_MOUTH } from "../src/content/traffic-deptak";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
 import { onRoad, surfacesAt } from "../src/content/lublin/roads";
 import { vehiclePlan } from "../src/world/traffic";
@@ -10,9 +11,12 @@ import { vehiclePlan } from "../src/world/traffic";
 const [IN, OUT] = TRAFFIC_ROUTES.slice(CITY_ROUTES.length);
 const inside = (c: (typeof P1_CABINS)[number], p: { x: number; z: number }) => p.x > c.minX && p.x < c.maxX && p.z > c.minZ && p.z < c.maxZ;
 const ofStreet = (id: string) => TRAFFIC_LANES.find((l) => l.id === id)!;
-/** Bajkowskiego's left lane eastwards (the north one) and Lubartowska's left lane northwards by Olejna. */
+/** Bajkowskiego's lanes eastwards: the left (north) one and the right one; the city's route of the left one (`traffic-deptak.ts`). */
 const bajkowskiegoLeft = TRAFFIC_LANES.find((l) => l.street === "Wacława Bajkowskiego" && projectOn(l.points, 414, -14.8).d < 0.5)!;
-const OLEJNA = { x: 454.9, z: 42.8 };
+const bajkowskiegoRight = TRAFFIC_LANES.find((l) => l.street === "Wacława Bajkowskiego" && projectOn(l.points, 414, -18).d < 0.5)!;
+const cityLeft = CITY_ROUTES.find((c) => c.id.startsWith(`${bajkowskiegoLeft.id}~`))!;
+/** On Lubartowska w40050981 south of the junction. */
+const SOUTH = { x: 440.5, z: -40 };
 
 describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
   it("drive two routes after the city's, the same every time", () => {
@@ -38,7 +42,7 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
     expect(r.ownWay).toEqual([[own[0], r.length]]);
   });
 
-  it("goes out of the north cabin up the ramp's west lane, left onto Bajkowskiego's left lane and left again up Lubartowska past Olejna", () => {
+  it("goes out of the north cabin up the ramp's west lane, left onto Bajkowskiego's left lane, onto its right lane and right, south down Lubartowska past the deptak's mouth", () => {
     const r = OUT!;
     expect(inside(P1_CABINS[1]!, pointAt(r.points, 0))).toBe(true);
     for (let z = P1_RAMP.top; z < P1_RAMP.foot - 3; z += 1) expect(projectOn(r.points, RAMP_UP_X, z).d, `${z}`).toBeLessThan(0.01);
@@ -47,12 +51,22 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
     const on = pointAt(r.points, own[1] + 0.5);
     expect(on.tx).toBeGreaterThan(0.95);
     expect(projectOn(bajkowskiegoLeft.points, on.x, on.z).d).toBeLessThan(0.05);
-    // Left up Lubartowska (one way north) by the junction with Olejna, and on to where the city's route ends.
-    const by = projectOn(r.points, OLEJNA.x, OLEJNA.z);
+    // Onto the right lane within 30 m of Bajkowskiego, and on it, eastwards, before the junction (T-324).
+    const right = (t: number) => {
+      const p = pointAt(r.points, t);
+      return p.tx > 0.95 && p.x < DEPTAK_MOUTH.x - 5 && projectOn(bajkowskiegoRight.points, p.x, p.z).d < 0.05;
+    };
+    const onRight = Array.from({ length: 61 }, (_, k) => own[1] + k * 0.5).find(right);
+    expect(onRight).toBeDefined();
+    // Right, south down Lubartowska (w40050981), never north into the deptak.
+    const by = projectOn(r.points, SOUTH.x, SOUTH.z);
     expect(by.d).toBeLessThan(2);
-    expect(pointAt(r.points, by.s).tz).toBeGreaterThan(0.9);
-    const city = CITY_ROUTES.find((c) => c.id.startsWith(`${bajkowskiegoLeft.id}>`))!;
-    expect(pointAt(r.points, r.length)).toEqual(pointAt(city.points, city.length));
+    expect(pointAt(r.points, by.s).tz).toBeLessThan(-0.9);
+    for (const [x, z] of r.points) expect(x < DEPTAK_MOUTH.x - 8 || z < DEPTAK_MOUTH.z + 1, `${x},${z}`).toBe(true);
+    // To where the city's route ends: where Królewska turns round, the start of the ring south of the deptak.
+    const ring = CITY_ROUTES.find((c) => c.ring)!;
+    const end = pointAt(r.points, r.length);
+    for (const q of [pointAt(cityLeft.points, cityLeft.length), pointAt(ring.points, 0)]) expect(Math.hypot(end.x - q.x, end.z - q.z)).toBeLessThan(1e-6);
   });
 
   it("keeps to the street's lanes, the ramp's lanes 1.6 m off its carriageway's axis, and its turns on the driveway", () => {
@@ -77,7 +91,7 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
       }
       expect(r.turns).toEqual(expect.arrayContaining(r.ownWay!.map((w) => [...w])));
       expect(r.speed).toBeGreaterThan(TURN_SPEED);
-      expect(r.speed).toBeLessThan(CITY_ROUTES.find((c) => c.id.startsWith(`${bajkowskiegoLeft.id}>`))!.speed);
+      expect(r.speed).toBeLessThan(cityLeft.speed);
     }
   });
 

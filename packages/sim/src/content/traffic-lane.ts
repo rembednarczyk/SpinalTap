@@ -32,6 +32,8 @@ export interface TrafficRoute {
    * piece's (`p1DriveFloor`), not the map's ground.
    */
   readonly ownWay?: readonly (readonly [number, number])[];
+  /** Its end is its start, the way it set out: driven round and round, its vehicles on from the end to the start (the pocket south of the deptak, T-324). */
+  readonly ring?: true;
   /** The models that drive it, by weight, where not every car of the city fits (Alchemia's hand-over cabins take cars up to a taxi). */
   readonly models?: readonly (readonly [VehicleModel, number])[];
 }
@@ -157,5 +159,18 @@ export const slice = (pts: readonly Pt[], from: number, to: number): Pt[] => {
     if (s > from && s < to) out.push(pts[i]!);
   }
   out.push([b.x, b.z]);
+  return out;
+};
+
+/** Half a circle from `a` heading (tx, tz) round to `b`: the turn round in front of a block. */
+export const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
+  const cx = (a[0] + b[0]) / 2;
+  const cz = (a[1] + b[1]) / 2;
+  const r = Math.hypot(b[0] - a[0], b[1] - a[1]) / 2;
+  const out: Pt[] = [];
+  for (let k = 1; k < 8; k++) {
+    const t = (Math.PI * k) / 8;
+    out.push([cx + (a[0] - cx) * Math.cos(t) + tx * r * Math.sin(t), cz + (a[1] - cz) * Math.cos(t) + tz * r * Math.sin(t)]);
+  }
   return out;
 };
