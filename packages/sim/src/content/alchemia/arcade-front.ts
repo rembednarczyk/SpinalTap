@@ -1,7 +1,7 @@
 import { type Piece, box, piece } from "./plan";
 import { MALL_LEVELS } from "./mall-plan";
 
-/** L1's and L2's roofs (as `front.ts`: the tiers' levels). */
+/** L1's and L2's roofs: the gallery's P2 and P3 (ADR-0093). */
 const L1_TOP = MALL_LEVELS.p2;
 const L2_TOP = MALL_LEVELS.p3;
 
