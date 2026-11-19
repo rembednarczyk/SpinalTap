@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { ALCHEMIA_LIFT_MECHANISM, ALCHEMIA_LIFT_NE_MECHANISM } from "@seki/sim";
 import { Scene, TransformNode, Vector3 } from "../src/babylon";
-import { AlchemiaGalleryCull, inAlchemiaGallery } from "../src/renderer/alchemia/gallery-cull";
+import { AlchemiaGalleryCull, GALLERY_DRAW, inAlchemiaGallery } from "../src/renderer/alchemia/gallery-cull";
 
 /**
  * The gallery's lifts' gates and platforms over P0 (ADR-0093 O1) are hidden while the eye is down in
@@ -28,5 +28,18 @@ describe("Alchemia's gallery's moving meshes hidden from P-2 (ADR-0093 O1)", () 
     expect(below.isEnabled(false)).toBe(true);
     cull.update(new Vector3(418, -4.8, 78));
     expect(node.isEnabled(false)).toBe(true);
+  });
+
+  it("hides them from afar too (Zielona's building site, some 180 m west), shows them within reach of the gallery's walls", () => {
+    const scene = new Scene(new NullEngine());
+    const cull = new AlchemiaGalleryCull();
+    const node = new TransformNode("gate", scene);
+    cull.track(1, node, new Vector3(413.5, 3.45, 34.85));
+    cull.update(new Vector3(238.8, 2, -6.5));
+    expect(node.isEnabled(false)).toBe(false);
+    cull.update(new Vector3(400 - GALLERY_DRAW + 1, 0, 45));
+    expect(node.isEnabled(false)).toBe(true);
+    cull.update(new Vector3(400 - GALLERY_DRAW - 1, 0, 45));
+    expect(node.isEnabled(false)).toBe(false);
   });
 });
