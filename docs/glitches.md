@@ -2248,7 +2248,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-938 Strzały napastników do ofiary prowokują patrol Rynku przeciw graczowi
 - Ważność: S2 · Zasięg: Stare Miasto przy Bramie Krakowskiej (przestępstwo przy 528; −58), każde przestępstwo z bronią w zasięgu alarmu grupy terytorium
 - Opis: Napastnicy Hebi strzelają do ofiary; alertNearbyGangers alarmuje członków terytorium w promieniu strzału, a territory-system uznaje zaalarmowanego członka za prowokację (TerritoryProvoked alarm dla rynek, grodzka-bridge, panasa-lane). Patrol hebi-rynek-noc strzela potem do gracza, który nic nie zrobił (19 strzałów w 15 s, ślad na main 19.11, save-load-crowd-panic seed 13). Poprawka: strzał członka gangu, który nie walczy z graczem, nie alarmuje jego gangu przeciw graczowi albo alarm bez winy gracza nie prowokuje terytorium.
-- Status: nowy
+- Status: w PR #757; wcześniej: nowy
 - Pakiet właściciela: packages/sim (combat-system alertNearbyGangers, territory-system)
 - Test przyjęcia: test sim: napad przy patrolu, napastnicy strzelają do ofiary, patrol nie strzela do gracza i gang nie jest sprowokowany
 
