@@ -77,7 +77,8 @@ export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
- * green roof and the terraces round it (stage 1); the lower square T2 with its stairs and the
+ * green roof and the terraces round it (stage 1; the gallery round its atrium since ADR-0093, its
+ * food hall on P3 and its shops on P0..P2); the lower square T2 with its stairs and the
  * Arkady rebuilt on it (stage 2); the triangular pavilion on the corner with Ren on its roof
  * (stage 3, `pavilion.ts`); P-1 under the car park (stage 4, `parking.ts`) and P-2 under it (stage 5a, `p2.ts`); T0's square with its
  * pergolas, lanterns and beds and the lawns of the green roof (stage 7, `square.ts`). Everything is drawn by the engine

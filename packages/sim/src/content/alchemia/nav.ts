@@ -16,7 +16,7 @@ import { EAST_RAMP, WEST_RAMP } from "./terraces";
  * outside and inside each door, a step off both ends of the stairs and on the roof's south edge.
  * The terraces T0 and T1 and their ramps are one floor of the terrain: their nodes are linked
  * along the ramps only so that a way from the roof or the hall goes on to the other terrace.
- * Inside the hall an NPC walks round the tables and units itself. The lift is the player's.
+ * Inside the hall (P0, its shops round the fountain since ADR-0093 O3) an NPC walks round them itself. The lift is the player's.
  */
 
 const F = HALL.floor;
