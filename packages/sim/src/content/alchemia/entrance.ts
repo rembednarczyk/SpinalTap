@@ -1,3 +1,4 @@
+import { SURFACE_LIFT } from "@seki/core";
 import { groundY } from "../lublin/terrain";
 import { L1_TOP, L2_SLABS } from "./front";
 import { MAIN_DOORS, MAIN_WAY_X, MALL, MALL_LEVELS } from "./mall-plan";
@@ -8,7 +9,7 @@ import { type Piece, box, piece } from "./plan";
  * The light that leads in by the main entrance (ADR-0093 O2b, `docs/zasady-lokacji.md` §4: green is
  * for ways and doors, the way always lit brighter than round it). Pattern: the wayfinding of a
  * shopping mall's entrance (a lit portal at the end of a straight approach, the "desire line" of
- * urban design paved and lit, so the way in reads from the street). Drawn only, flat on the ground,
+ * urban design paved and lit, so the way in reads from the street). Drawn only, low on the paving,
  * under L2's soffit or on the glass: nothing of it at the body's height stands out of a face.
  * - Two dashed strips of light in the paving, the way's edges, from Bajkowskiego's footway to the doors.
  * - One along L2's soffit over the way's middle, where L2 covers it.
@@ -24,9 +25,12 @@ const WAY = { z0: P1_RAMP.top + 0.3, z1: MALL.z0 - 0.4 } as const;
 /** A dash and the gap after it, along the way. */
 const DASH = 1.2;
 const EVERY = 2;
-/** A strip's width and how far it stands out of the paving (the import's setts lie on the terrain). */
+/**
+ * A strip's width and how far it stands out of the terrain: a hand over the highest paving the
+ * engine lays over it (`SURFACE_LIFT`, the sidewalk's 0.16 m), so no surface hides it.
+ */
 const STRIP = 0.12;
-const PROUD = 0.03;
+const PROUD = SURFACE_LIFT.sidewalk + 0.02;
 /** L2's soffit's underside over the way, and the strip under it. */
 const SOFFIT = L1_TOP - 0.35;
 /** The crossing from the passage west of the ramp over its covered part, on this line. */
@@ -37,7 +41,7 @@ const cm = (v: number): number => Math.round(v * 100) / 100;
 /** A strip from `a` to `b` along x or z on the ground, its top `PROUD` over the highest ground along it. */
 const groundStrip = (x0: number, x1: number, z0: number, z1: number): Piece => {
   const g = [groundY(x0, z0), groundY(x1, z0), groundY(x0, z1), groundY(x1, z1)];
-  return piece(box(x0, x1, z0, z1, cm(Math.min(...g) - 0.02), cm(Math.max(...g) + PROUD)), "led-green", false, false);
+  return piece(box(x0, x1, z0, z1, cm(Math.min(...g) + SURFACE_LIFT.water), cm(Math.max(...g) + PROUD)), "led-green", false, false);
 };
 
 /** The way's two dashed edges in the paving. */
