@@ -4,7 +4,8 @@ import { BodyGrid } from "./garment-fit";
 /**
  * The model's cloth under a garment (ADR-0086, first layer against clipping): the triangles of its
  * top (and what it wears over the top) that the garment covers are not drawn while it is worn, so
- * a short sleeve or a collar cannot show through the jacket in motion. An open jacket covers the
+ * a short sleeve or a collar cannot show through the jacket in motion. The skin of the arms and the
+ * torso under it goes the same way (user notes of 19.11: the shoulders showed through the jacket). An open jacket covers the
  * sleeves, the back and the sides, not the front between its flaps: there the top stays.
  *
  * A triangle is covered when each of its corners has a garment vertex over it (`COVER`). The rest of
@@ -19,8 +20,15 @@ import { BodyGrid } from "./garment-fit";
  */
 export const COVER = { SIDE: 0.02, BELOW: 0.005, ABOVE: 0.06 } as const;
 
-/** The indices of the cloth's triangles left uncovered, from the garment's vertices (fitted, same space). */
-export const uncoveredTriangles = (cloth: { positions: ArrayLike<number>; normals: ArrayLike<number>; indices: ArrayLike<number> }, garment: Float32Array): number[] => {
+/**
+ * The indices of the cloth's triangles left uncovered, from the garment's vertices (fitted, same space).
+ * `may` limits what may be hidden by vertex (the skin of the arms and the torso, not of the legs or the hands).
+ */
+export const uncoveredTriangles = (
+  cloth: { positions: ArrayLike<number>; normals: ArrayLike<number>; indices: ArrayLike<number> },
+  garment: Float32Array,
+  may: (v: number) => boolean = () => true,
+): number[] => {
   const grid = new BodyGrid({ positions: garment, normals: garment });
   const p = cloth.positions;
   const n = cloth.normals;
@@ -43,7 +51,7 @@ export const uncoveredTriangles = (cloth: { positions: ArrayLike<number>; normal
   const idx = cloth.indices;
   for (let t = 0; t + 2 < idx.length; t += 3) {
     const [a, b, c] = [idx[t]!, idx[t + 1]!, idx[t + 2]!];
-    if (!covered(a) || !covered(b) || !covered(c)) out.push(a, b, c);
+    if (!may(a) || !may(b) || !may(c) || !covered(a) || !covered(b) || !covered(c)) out.push(a, b, c);
   }
   return out;
 };
