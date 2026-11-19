@@ -135,8 +135,9 @@ describe("delivery (Kaito → Hana, against the clock)", () => {
 describe("retrieval (Hana's crate from the Hebi stash)", () => {
   const crateOf = (sim: Simulation, c: Contract) => byKey(sim, contractItemKey(c.id));
   const grab = (sim: Simulation) => {
+    // In the shelter under T2 (ADR-0074 stage 5d2): east of the crate on its floor, facing it.
     const spot = CONTRACT_ITEM_SPOTS.hebi_stash!;
-    teleportPlayer(sim, at(spot.x - 1, spot.z), Math.PI / 2);
+    teleportPlayer(sim, { x: spot.x + 1, y: spot.y - 0.3, z: spot.z }, -Math.PI / 2);
     sim.step(input({ interact: true }));
   };
 
