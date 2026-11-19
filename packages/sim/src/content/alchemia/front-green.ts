@@ -1,8 +1,9 @@
 import { type GroundPoint, type StreetPropItem, measuredTreeVariant } from "@seki/core";
 import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces } from "./front";
 import { type Piece, outlined } from "./plan";
-import { type Corners, type Rectangle, ALL_CORNERS, outerCorners, roundedOutline } from "./rounded";
-import { B_RADIUS, TIER_A, TIER_B, slabOf } from "./tiers";
+import { type Corners, type Rectangle, outerCorners, roundedOutline } from "./rounded";
+import { FRONT_OVERHANG, MALL, MALL_CORNERS, MALL_LEVELS, MALL_RADIUS } from "./mall-plan";
+import { slabOf } from "./storey";
 import type { Rect } from "../builders";
 
 /*
@@ -22,19 +23,28 @@ interface Storey {
   readonly radius?: number;
   /** The front's roofs, nobody on them: shrubs along their balustrades. */
   readonly shrubs: boolean;
+  /** No curtains on its south face (the gallery's: the front stands against it, its doors under it). */
+  readonly southShut?: true;
 }
 
 const rect = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
+const GALLERY_RECT: Rect = { minX: MALL.x0, maxX: MALL.x1, minZ: MALL.z0, maxZ: MALL.z1 };
+/** The gallery as the front's neighbour: L2's and L3's corners against its face are square (`front.ts`). */
+const GALLERY_FACE: Rectangle = { ...MALL, z0: MALL.z0 - FRONT_OVERHANG };
 const SLAB = 0.3;
 /** The slab's edge beam under it (the engine draws it, `storey-facade.ts`). */
 const BEAM = 0.32;
 
 const STOREYS: readonly Storey[] = [
   ...L1_LEVEL.map((r): Storey => ({ r, bottom: -3, top: L1_TOP, corners: outerCorners(rect(r), L1_LEVEL.map(rect)), shrubs: true })),
-  ...L2_SLABS.map((r): Storey => ({ r, bottom: L1_TOP, top: L2_TOP, corners: outerCorners(rect(r), L2_SLABS.map(rect)), shrubs: true })),
-  { r: L3, bottom: L2_TOP, top: L3_TOP, corners: ALL_CORNERS, shrubs: true },
-  { r: TIER_A, bottom: TIER_A.bottom, top: TIER_A.top, corners: ALL_CORNERS, shrubs: false },
-  { r: TIER_B, bottom: TIER_B.bottom, top: TIER_B.top, corners: ALL_CORNERS, radius: B_RADIUS, shrubs: false },
+  ...L2_SLABS.map((r): Storey => ({ r, bottom: L1_TOP, top: L2_TOP, corners: outerCorners(rect(r), [...L2_SLABS.map(rect), GALLERY_FACE]), shrubs: true })),
+  { r: L3, bottom: L2_TOP, top: L3_TOP, corners: outerCorners(rect(L3), [rect(L3), GALLERY_FACE]), shrubs: true },
+  // The gallery's storeys round the atrium (ADR-0093 O1; tiers A and B until then): P1 under P2's slab, P2, P3 under the roof's.
+  ...[
+    [MALL_LEVELS.p1, MALL_LEVELS.p2],
+    [MALL_LEVELS.p2, MALL_LEVELS.p3],
+    [MALL_LEVELS.p3, MALL_LEVELS.roof],
+  ].map(([bottom, top]): Storey => ({ r: GALLERY_RECT, bottom: bottom!, top: top!, corners: MALL_CORNERS, radius: MALL_RADIUS, shrubs: false, southShut: true })),
 ];
 
 /** Is (x, y, z) in a storey's volume, its slab included (another storey hides what is there)? */
@@ -85,7 +95,7 @@ const curtains = (s: Storey): Piece[] => {
   const under = s.top - SLAB - BEAM;
   return along(pts, CURTAIN_EVERY).flatMap(({ p, t, n }) => {
     const h = hash(p.x, p.z);
-    if (h < 0.18) return [];
+    if (h < 0.18 || (s.southShut && n.z < -0.5)) return [];
     const drop = 0.6 + h * 1.2;
     const y1 = s.top + 0.15;
     const w = CURTAIN * (0.7 + 0.6 * hash(p.z, p.x));

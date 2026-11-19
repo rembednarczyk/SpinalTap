@@ -16,6 +16,8 @@ import {
   FOODHALL_INNER,
   METRO_ENTRANCES,
   STALL_KEEPERS,
+  MALL_FLOORS,
+  STAIR_CORES,
   Simulation,
   WORLD_NAV,
   beforeKeeper,
@@ -142,7 +144,9 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     // P-1's nodes (stage 4) stand on its floor, ramp and stairs: `alchemia-parking.test.ts`; P-2's (stage 5a): `alchemia-p2.test.ts`; the shelter's (5d1): `alchemia-shelter.test.ts`.
     for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-") && !n.id.startsWith("alchemia-p2-") && !n.id.startsWith("alchemia-shelter-"))) {
       const inHall = n.at.x >= FOODHALL.minX && n.at.x <= FOODHALL.maxX && n.at.z >= FOODHALL.minZ && n.at.z <= FOODHALL.maxZ;
-      const floor = inHall ? (n.at.y > F + 1 ? R : F) : g.heightAt(n.at.x, n.at.z);
+      // Over the hall the gallery's floors and its cores' mid landings (ADR-0093 O1; each node on a solid top: `alchemia-mall.test.ts`).
+      const floors = [F, ...MALL_FLOORS, ...STAIR_CORES.flatMap((c) => c.floors.slice(0, -1).map((y, i) => (y + c.floors[i + 1]!) / 2))];
+      const floor = inHall ? floors.reduce((a, b) => (Math.abs(b - n.at.y) < Math.abs(a - n.at.y) ? b : a)) : g.heightAt(n.at.x, n.at.z);
       expect(n.at.y, n.id).toBeCloseTo(floor, 1);
     }
   });
@@ -201,8 +205,9 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
   });
 
   it("the lift goes from P-2 by the hall's floor to the roof, its top door onto the car park, its bottom one into P-2's corridor (stage 5c)", () => {
-    expect(ALCHEMIA_LIFT.levels).toEqual([P2.floor, F, R]);
-    const pit = ALCHEMIA_LIFT.doors[0];
+    // On up through the gallery's P2, P3 and roof since ADR-0093 O1 (`alchemia-mall.test.ts`).
+    expect(ALCHEMIA_LIFT.levels).toEqual([P2.floor, F, R, ...MALL_FLOORS.slice(2)]);
+    const pit = ALCHEMIA_LIFT.doors[0]!;
     expect(pit.x).toBeGreaterThan(P2_CORRIDOR.minX + 0.5);
     expect(pit.x).toBeLessThan(P2_CORRIDOR.maxX - 0.5);
     expect(pit.y).toBe(P2.floor);
@@ -210,7 +215,7 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     const p2 = ALCHEMIA_LIFT.p2Door;
     const wallInDoor = P2_SHELL_PIECES.filter((p) => p.kind === "wall" && p.box.x0 < P2_CORRIDOR.minX + 0.4 && p.box.x1 > P2_CORRIDOR.minX && p.box.z1 > p2.z0 + 0.01 && p.box.z0 < p2.z1 - 0.01 && p.box.y0 < p2.top - 0.01);
     expect(wallInDoor).toEqual([]);
-    const top = ALCHEMIA_LIFT.doors[2];
+    const top = ALCHEMIA_LIFT.doors[2]!;
     expect(top.z).toBeLessThan(FOODHALL.minZ);
     expect(Math.abs(groundY(top.x, top.z) - R)).toBeLessThan(0.1);
     expect(ALCHEMIA_PIECES.length).toBeGreaterThan(100);

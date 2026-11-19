@@ -2,7 +2,8 @@ import type { Rect } from "../builders";
 import { P1_RAMP, P1_STAIR } from "./parking";
 import { PARAPET, type Box, type Piece, box, outlined, piece } from "./plan";
 import { type Rectangle, balustrade, outerCorners, roundedOutline } from "./rounded";
-import { TIER_A, TIER_B, slabOf, storey as tierStorey } from "./tiers";
+import { FRONT_OVERHANG, MALL, MALL_LEVELS } from "./mall-plan";
+import { slabOf, storey as tierStorey } from "./storey";
 
 /*
  * Alchemia's front on Bajkowskiego (ADR-0074, "Bryła na całym terenie", stage B1, decisions of
@@ -16,14 +17,15 @@ import { TIER_A, TIER_B, slabOf, storey as tierStorey } from "./tiers";
  *   it P-1's ramp (open to z 11), its stair house, the beds by the ramp and the way into metro B stay
  *   T0's, a covered passage;
  * - L3, the top storey, the sign ALCHEMIA CENTRUM HANDLOWE on its south face and masts on its roof.
- * Every roof lies on a level of the green tiers (L1 = A's roof, L2 = B's, L3 four metres over),
- * every slab has its strip of light. They are scenery, solid boxes of lit glass, as the tiers are.
+ * Every roof lies on a floor of the gallery behind (ADR-0093 O1: L1 on P2's level, L2 on P3's, L3 on
+ * its roof), every slab has its strip of light. They are scenery, solid boxes of lit glass, standing
+ * against the gallery's south face.
  */
 
-/** The storeys' roofs: L1 on A's level, L2 on B's, L3 a storey over it. */
-export const L1_TOP = TIER_A.top;
-export const L2_TOP = TIER_B.top;
-export const L3_TOP = L2_TOP + 4.2;
+/** The storeys' roofs: L1 on the gallery's P2, L2 on its P3, L3 on its roof. */
+export const L1_TOP = MALL_LEVELS.p2;
+export const L2_TOP = MALL_LEVELS.p3;
+export const L3_TOP = MALL_LEVELS.roof;
 /** A slab's overhang past the glass (the tiers' storeys'). */
 const OVER = 0.3;
 
@@ -57,12 +59,12 @@ export const L2_SLABS: readonly Rect[] = [
   { minX: 422, maxX: 436, minZ: EAST_WING.minZ, maxZ: 32 },
 ];
 /**
- * L3: the top storey, set back from L2's front by a terrace, on north over T0's back strip to tier
- * B's south edge (B3, 19.11): from there the complex steps down northwards, L3's roof, B's, A's, T1.
- * North of the hall T1 is the hall's front and T2 the square with the memorial of Plac Ofiar Getta
- * (§6: no neon, no adverts by it), so the complex grows no wing there.
+ * L3: the top storey, set back from L2's front by a terrace, on north over T0's back strip to the
+ * gallery's south face (ADR-0093 O1; B3 took it on to tier B's edge, z 38), whose roof it meets on
+ * its level. North of the hall T1 is the hall's front and T2 the square with the memorial of Plac
+ * Ofiar Getta (§6: no neon, no adverts by it), so the complex grows no wing there.
  */
-export const L3: Rect = { minX: 398, maxX: 428, minZ: 12, maxZ: TIER_B.minZ };
+export const L3: Rect = { minX: 398, maxX: 428, minZ: 12, maxZ: MALL.z0 };
 
 /** L2's underside over the passage: a slab this thick under its glass. */
 const SOFFIT = 0.35;
@@ -86,25 +88,29 @@ export const PASSAGE_COLUMNS: readonly { readonly x: number; readonly z: number 
 /** L1's storeys: the wings, their joints square. */
 export const L1_LEVEL: readonly Rect[] = [...WEST_WING, EAST_WING];
 
-/** L2's underside over the passage, under its glass's rounded outline. */
-const soffit = (r: Rect): Piece => outlined(roundedOutline(slabOf(r), -OVER, outerCorners(rectOf(r), L2_SLABS.map(rectOf))), L1_TOP - SOFFIT, L1_TOP, "roof");
-
 const rectOf = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
+/** The gallery behind as a neighbour of L2 and L3 (ADR-0093 O1): their corners against its south face are joints, square. */
+const GALLERY_FACE: Rectangle = { ...MALL, z0: MALL.z0 - FRONT_OVERHANG };
+const withGallery = (level: readonly Rect[]): Rectangle[] => [...level.map(rectOf), GALLERY_FACE];
+
+/** L2's underside over the passage, under its glass's rounded outline. */
+const soffit = (r: Rect): Piece => outlined(roundedOutline(slabOf(r), -OVER, outerCorners(rectOf(r), withGallery(L2_SLABS))), L1_TOP - SOFFIT, L1_TOP, "roof");
 
 /**
  * A storey of a level whose storeys are `level`: its glass from `bottom` up to the slab, the slab
  * with its overhang, the light along it, the outer corners rounded (19.11) as the tiers' are.
  */
-const storey = (r: Rect, bottom: number, top: number, level: readonly Rect[] = [r]): Piece[] =>
-  tierStorey(r, bottom, top, outerCorners(rectOf(r), level.map(rectOf)));
+const storey = (r: Rect, bottom: number, top: number, level: readonly Rect[] = [r]): Piece[] => tierStorey(r, bottom, top, outerCorners(rectOf(r), withGallery(level)));
 
 /**
  * The balustrade round a storey's roof, drawn only (nobody walks the front's roofs), open where the
  * green steps go down off L1 to the west.
  */
 const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r]): Piece[] =>
-  balustrade(slabOf(r), -0.05, outerCorners(rectOf(r), level.map(rectOf)), top, PARAPET, false, [
+  balustrade(slabOf(r), -0.05, outerCorners(rectOf(r), withGallery(level)), top, PARAPET, false, [
     { x0: GREEN_STEPS[0]!.x0 - 1, x1: WEST_WING[0]!.minX + 0.5, z0: STEPS_Z.z0 - 0.5, z1: STEPS_Z.z1 },
+    // Along the gallery's south face: its roof's own balustrade stands there (ADR-0093 O1).
+    { x0: MALL.x0 - 0.5, x1: MALL.x1 + 0.5, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 },
   ]);
 
 /** The ground under a wing, a little under its lowest corner: the glass stands in the terrain, not over it. */

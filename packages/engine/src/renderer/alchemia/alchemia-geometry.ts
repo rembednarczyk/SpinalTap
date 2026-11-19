@@ -59,6 +59,9 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   "led-green": "neon-green",
   water: "glass-blue",
   vitrine: "glass-blue",
+  // The gallery round the atrium (ADR-0093 O1): its glass drawn as a white frame, its escalators' steel.
+  pane: "trim-light",
+  escalator: "metal",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */

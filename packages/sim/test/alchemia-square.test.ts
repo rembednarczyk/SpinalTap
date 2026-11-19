@@ -5,6 +5,7 @@ import {
   ALCHEMIA_NAV,
   ALCHEMIA_PIECES,
   ALCHEMIA_PROPS,
+  MALL_PROPS,
   P2_PROPS,
   P2_ROBOTS,
   SHELTER_PROPS,
@@ -13,9 +14,6 @@ import {
   KUROSAWA_SPOT,
   P1_RAMP,
   PARAPET_BEDS,
-  COURTYARD,
-  ROOF_LAWNS,
-  TIER_B,
   Simulation,
   frontDressPieces,
   frontPieces,
@@ -49,8 +47,8 @@ describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
   it("keeps the beds along the trench, the pergolas gone with the square (19.11)", () => {
     expect(square.length).toBeGreaterThan(8);
     expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ)).toEqual([]);
-    // Its solids are still one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage, P-2's (stage 5a), the front's (B1) and P-2's robots (5b): no id of the content moves.
-    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 5 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length]!;
+    // Its solids are still one prop of Alchemia's, the last before stage 10's passage, P-2's (stage 5a), the front's (B1), P-2's robots (5b), the shelter, the car lift and the gallery (ADR-0093 O1, which took the tiers' two away).
+    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length]!;
     expect(beds.prisms).toHaveLength(square.filter((p) => p.solid).length);
   });
 
@@ -104,19 +102,6 @@ describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
     for (const p of square.filter((q) => q.solid)) {
       const [x, z] = [(p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2];
       expect(surfaceAt(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe("square");
-    }
-  });
-
-  it("lays the green roof's lawns on tier B (moved up on 15.11), clear of its parapets and the courtyard", () => {
-    expect(ROOF_LAWNS.length).toBeGreaterThanOrEqual(4);
-    for (const b of ROOF_LAWNS) {
-      expect(b.y0).toBe(TIER_B.top);
-      expect(b.x0).toBeGreaterThan(TIER_B.minX);
-      expect(b.x1).toBeLessThan(TIER_B.maxX);
-      expect(b.z0).toBeGreaterThan(TIER_B.minZ);
-      expect(b.z1).toBeLessThan(TIER_B.maxZ);
-      const inCourtyard = b.x1 > COURTYARD.minX && b.x0 < COURTYARD.maxX && b.z1 > COURTYARD.minZ && b.z0 < COURTYARD.maxZ;
-      expect(inCourtyard).toBe(false);
     }
   });
 
