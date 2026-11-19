@@ -114,9 +114,9 @@ const arms = (q: UnitDef): Piece[] => {
   }
   const r = OYAJI_BACK_ROOM;
   out.push(
-    // A glass case of sights and grips by the counter's north end.
-    put(0.2, 0.75, 1.0, 2.2, -0.05, 0.55, "counter", true),
-    put(0.25, 0.7, 1.05, 2.15, 0.97, 1.0, "vitrine"),
+    // A glass case of sights and grips along the glass by the counter's south end, clear of his flap and his stool.
+    put(w - 0.65, w - 0.15, 2.2, 3.4, -0.05, 0.55, "counter", true),
+    put(w - 0.6, w - 0.2, 2.25, 3.35, 0.97, 1.0, "vitrine"),
     put(1.6, 1.68, 0.4, 0.48, 1.1, 1.21, "cup"),
     put(1.0, 3.2, 1.9, 2.0, C - F - 0.06, C - F - 0.02, "lamp"),
     // The back room's crates, stacked, a lamp over them.

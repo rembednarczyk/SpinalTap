@@ -158,10 +158,15 @@ class GangerAgent {
 
   ShootAtVictim = (): State => (this.target.victim ? attack(this, this.target.victim) : State.FAILED);
 
+  /**
+   * Goes for its victim as for the player: up the stairs or the escalators when it is on another
+   * floor (ADR-0093 O3: Oyaji's shop went up to the food hall on Alchemia's P3; on the hall's floor,
+   * the street's level, a walk on this floor reached it).
+   */
   ChaseVictim = (): State => {
     const { self, target } = this;
     if (!self || !target.victim) return State.FAILED;
-    this.walk.walkTo(target.victim.position);
+    this.walk.pursueTo(target.victim.position);
     faceTowards(this, target.victim);
     return State.SUCCEEDED;
   };

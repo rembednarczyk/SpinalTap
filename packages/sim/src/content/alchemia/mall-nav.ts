@@ -106,8 +106,15 @@ const P0_EDGES: readonly NavEdge[] = [edge("g0-ne", "hall-centre"), edge("g0-ne"
  * The food hall on P3 (O3): the west gallery's north end and the aisles before the west and east
  * units' counters, behind the tables (their customers in sight of no ring node past them).
  */
-const P3_NODES: readonly NavNode[] = [node("g3-w", 409.0, L.p3, 50.5), node("g3-wa", 405.2, L.p3, 48.4), node("g3-ea", 430.7, L.p3, 49.0)];
-const P3_EDGES: readonly NavEdge[] = [edge("g3-sw", "g3-w"), edge("g3-w", "g3-wa"), edge("g3-e", "g3-ea")];
+const P3_NODES: readonly NavNode[] = [
+  node("g3-w", 409.0, L.p3, 50.5),
+  node("g3-wa", 405.2, L.p3, 48.4),
+  node("g3-ea", 430.7, L.p3, 49.0),
+  // Before and behind the flap at the north end of Oyaji's counter: the Hebi's way in to him (his back door onto T1 on P0 until O3).
+  node("g3-oyaji-out", 427.2, L.p3, 36.0),
+  node("g3-oyaji-in", 429.6, L.p3, 36.0),
+];
+const P3_EDGES: readonly NavEdge[] = [edge("g3-sw", "g3-w"), edge("g3-w", "g3-wa"), edge("g3-e", "g3-ea"), edge("g3-se", "g3-oyaji-out"), edge("g3-oyaji-out", "g3-oyaji-in")];
 
 /** The escalators' ends: P0's foot, each landing's node in lane A and in lane B. */
 const [E1, E2, E3] = ESCALATORS as readonly [(typeof ESCALATORS)[number], (typeof ESCALATORS)[number], (typeof ESCALATORS)[number]];

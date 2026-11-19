@@ -13,7 +13,7 @@ import { GLASS_IN } from "./shops-plan";
  * hatch onto T1, stayed on P0: `fumiko-p0.ts`), Kenta and Goro on the north side, Oyaji's shop in
  * the south-east corner behind an armoured counter with a back room, and Sachiko's kiosk on the south
  * side. The other seven are kitchens of the real plan's list (S13), three with their shutters down.
- * Their signs are proper names, drawn without words. Moved with their counters, keepers and crowd,
+ * Their signs are proper names in neon (O3; lit bands without words until then). Moved with their counters, keepers and crowd,
  * their ids and their keepers' keys as they were (a save names them).
  */
 
@@ -30,6 +30,8 @@ export interface UnitDef {
   readonly open: UnitOpen;
   /** Its shutter is down: no counter, no way in. */
   readonly shut?: true;
+  /** Its sign over the counter, in neon (O3): a proper name in the world's language, the same in every language (ADR-0056). */
+  readonly sign: string;
 }
 
 /** The food hall's floor (P3) and the underside of the roof's slab over it. */
@@ -53,18 +55,18 @@ const EAST_ROW = 431.6;
  */
 export const ALCHEMIA_UNITS: readonly UnitDef[] = [
   // Her counter from the glass to a flap at its south end: her way out (`schedules.ts`).
-  { id: "fumiko", keeper: "fumiko", cuisine: "ramen", rect: r(G.minX, WEST_ROW, 49.0, G.maxZ), open: "e" },
-  { id: "kenta", keeper: "kenta", cuisine: "okonomiyaki", rect: r(408, 413.67, 53, G.maxZ), open: "s" },
-  { id: "goro", keeper: "goro", cuisine: "umbrellas-tea", rect: r(413.67, 419.33, 53, G.maxZ), open: "s" },
-  { id: "cafe", cuisine: "coffee", rect: r(419.33, 425, 53, G.maxZ), open: "s" },
-  { id: "oyaji", keeper: "oyaji", cuisine: "arms", rect: r(428, G.maxX, G.minZ, 37), open: "w" },
-  { id: "thai", cuisine: "thai", rect: r(G.minX, WEST_ROW, 39.8, 44.4), open: "e" },
-  { id: "korean", cuisine: "korean", rect: r(G.minX, WEST_ROW, 44.4, 49.0), open: "e", shut: true },
-  { id: "greek", cuisine: "greek", rect: r(EAST_ROW, G.maxX, 37, 41.2), open: "w" },
-  { id: "georgian", cuisine: "georgian", rect: r(EAST_ROW, G.maxX, 41.2, 45.4), open: "w", shut: true },
-  { id: "wok", cuisine: "wok", rect: r(EAST_ROW, G.maxX, 45.4, 49.4), open: "w" },
-  { id: "burger", cuisine: "burger", rect: r(408, 412.2, G.minZ, 37), open: "n", shut: true },
-  { id: "sachiko", keeper: "sachiko", cuisine: "kiosk", rect: r(421.4, 425.2, G.minZ, 37), open: "n" },
+  { id: "fumiko", keeper: "fumiko", cuisine: "ramen", rect: r(G.minX, WEST_ROW, 49.0, G.maxZ), open: "e", sign: "RAMEN FUMIKO" },
+  { id: "kenta", keeper: "kenta", cuisine: "okonomiyaki", rect: r(408, 413.67, 53, G.maxZ), open: "s", sign: "OKONOMIYAKI" },
+  { id: "goro", keeper: "goro", cuisine: "umbrellas-tea", rect: r(413.67, 419.33, 53, G.maxZ), open: "s", sign: "KASA TEA" },
+  { id: "cafe", cuisine: "coffee", rect: r(419.33, 425, 53, G.maxZ), open: "s", sign: "KAWA" },
+  { id: "oyaji", keeper: "oyaji", cuisine: "arms", rect: r(428, G.maxX, G.minZ, 37), open: "w", sign: "ARMS" },
+  { id: "thai", cuisine: "thai", rect: r(G.minX, WEST_ROW, 39.8, 44.4), open: "e", sign: "THAI" },
+  { id: "korean", cuisine: "korean", rect: r(G.minX, WEST_ROW, 44.4, 49.0), open: "e", shut: true, sign: "SEOUL" },
+  { id: "greek", cuisine: "greek", rect: r(EAST_ROW, G.maxX, 37, 41.2), open: "w", sign: "GYROS" },
+  { id: "georgian", cuisine: "georgian", rect: r(EAST_ROW, G.maxX, 41.2, 45.4), open: "w", shut: true, sign: "TBILISI" },
+  { id: "wok", cuisine: "wok", rect: r(EAST_ROW, G.maxX, 45.4, 49.4), open: "w", sign: "WOK" },
+  { id: "burger", cuisine: "burger", rect: r(408, 412.2, G.minZ, 37), open: "n", shut: true, sign: "BURGER" },
+  { id: "sachiko", keeper: "sachiko", cuisine: "kiosk", rect: r(421.4, 425.2, G.minZ, 37), open: "n", sign: "KIOSK" },
 ];
 
 /** A partition's thickness: 0.2 m, as a room's wall, so a crouched, aimed shoulder by it starts its shot inside it (G-275). */
@@ -129,7 +131,13 @@ export const KEEPER_YAW: Readonly<Record<KeeperKey, number>> = {
 /** Where a customer stands before a keeper's counter: `out` metres out of the open side, facing in. */
 export const beforeKeeper = (key: KeeperKey, out = CUSTOMER_OUT, across = 0): Vec3 => atUnit(key, out, across);
 
-/** The counter along a unit's open side, inside it (Fumiko's from her flap to the glass). */
+/**
+ * The door of Oyaji's back room at its north end, and the flap at his counter's north end before it:
+ * the way the Hebi came in by his back door onto T1 when his shop was on P0 (`mall-nav.ts`).
+ */
+export const OYAJI_BACK_DOOR = { minZ: 35.4, maxZ: 36.6 } as const;
+
+/** The counter along a unit's open side, inside it (Fumiko's from her flap to the glass, Oyaji's from the glass to his). */
 export const counterBox = (u: UnitDef, top: number): Box => {
   const q = u.rect;
   const y0 = FOODHALL_FLOOR - 0.05;
@@ -137,7 +145,8 @@ export const counterBox = (u: UnitDef, top: number): Box => {
   if (u.open === "n") return box(q.minX + 0.6, q.maxX - 0.6, q.maxZ - COUNTER_DEPTH, q.maxZ, y0, y1);
   if (u.open === "s") return box(q.minX + 0.6, q.maxX - 0.6, q.minZ, q.minZ + COUNTER_DEPTH, y0, y1);
   if (u.open === "e") return u.id === "fumiko" ? box(q.maxX - COUNTER_DEPTH, q.maxX, q.minZ + UNIT_WALL + FUMIKO_FLAP, q.maxZ, y0, y1) : box(q.maxX - COUNTER_DEPTH, q.maxX, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
-  return box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
+  // Oyaji's from the glass's end of it to his flap at its north end, by the back room's door.
+  return u.id === "oyaji" ? box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, OYAJI_BACK_DOOR.minZ, y0, y1) : box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
 };
 
 /** A shutter across the open side, down to the floor. */
@@ -171,7 +180,6 @@ const CEILING = FOODHALL_CEILING - FOODHALL_FLOOR;
  * his grille, by the counter (`schedules.ts`).
  */
 const OYAJI_BACK_X = 432.6;
-export const OYAJI_BACK_DOOR = { minZ: 35.4, maxZ: 36.6 } as const;
 const oyajiBack = (): Box[] => {
   const q = unitOf("oyaji").rect;
   const [y0, y1] = [FOODHALL_FLOOR - 0.05, FOODHALL_CEILING];
