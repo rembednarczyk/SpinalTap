@@ -2245,13 +2245,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
-### G-938 Strzały napastników do ofiary prowokują patrol Rynku przeciw graczowi
-- Ważność: S2 · Zasięg: Stare Miasto przy Bramie Krakowskiej (przestępstwo przy 528; −58), każde przestępstwo z bronią w zasięgu alarmu grupy terytorium
-- Opis: Napastnicy Hebi strzelają do ofiary; alertNearbyGangers alarmuje członków terytorium w promieniu strzału, a territory-system uznaje zaalarmowanego członka za prowokację (TerritoryProvoked alarm dla rynek, grodzka-bridge, panasa-lane). Patrol hebi-rynek-noc strzela potem do gracza, który nic nie zrobił (19 strzałów w 15 s, ślad na main 19.11, save-load-crowd-panic seed 13). Poprawka: strzał członka gangu, który nie walczy z graczem, nie alarmuje jego gangu przeciw graczowi albo alarm bez winy gracza nie prowokuje terytorium.
-- Status: w PR #757; wcześniej: nowy
-- Pakiet właściciela: packages/sim (combat-system alertNearbyGangers, territory-system)
-- Test przyjęcia: test sim: napad przy patrolu, napastnicy strzelają do ofiary, patrol nie strzela do gracza i gang nie jest sprowokowany
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl

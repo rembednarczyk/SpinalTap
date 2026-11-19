@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-938 Strzały napastników do ofiary prowokują patrol Rynku przeciw graczowi
+- Ważność: S2 · Zasięg: Stare Miasto przy Bramie Krakowskiej (przestępstwo przy 528; −58), każde przestępstwo z bronią w zasięgu alarmu grupy terytorium
+- Opis: Napastnicy Hebi strzelają do ofiary; alertNearbyGangers alarmuje członków terytorium w promieniu strzału, a territory-system uznaje zaalarmowanego członka za prowokację (TerritoryProvoked alarm dla rynek, grodzka-bridge, panasa-lane). Patrol hebi-rynek-noc strzela potem do gracza, który nic nie zrobił (19 strzałów w 15 s, ślad na main 19.11, save-load-crowd-panic seed 13). Poprawka: strzał członka gangu, który nie walczy z graczem, nie alarmuje jego gangu przeciw graczowi albo alarm bez winy gracza nie prowokuje terytorium.
+- Status: naprawione (19.11, #757 scalony); wcześniej: w PR #757; wcześniej: nowy
+- Pakiet właściciela: packages/sim (combat-system alertNearbyGangers, territory-system)
+- Test przyjęcia: test sim: napad przy patrolu, napastnicy strzelają do ofiary, patrol nie strzela do gracza i gang nie jest sprowokowany
+
 ### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
 - Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
 - Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
