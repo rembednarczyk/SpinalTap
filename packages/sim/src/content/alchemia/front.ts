@@ -103,7 +103,8 @@ const FOOT = -3;
 /** The west wing's green steps, each with its strip of light along its edge to the west, as on the board. */
 const greenSteps = (): Piece[] =>
   GREEN_STEPS.flatMap((s) => [
-    piece(box(s.x0, s.x1, STEPS_Z.z0, STEPS_Z.z1, FOOT, s.top - 0.05), "wall", false),
+    // Planted all over, as the board's green slope down to the street (stage 8: pale walls read from Bajkowskiego as boxes).
+    piece(box(s.x0, s.x1, STEPS_Z.z0, STEPS_Z.z1, FOOT, s.top - 0.05), "green", false),
     piece(box(s.x0, s.x1, STEPS_Z.z0, STEPS_Z.z1, s.top - 0.05, s.top), "lawn", false, false),
     piece(box(s.x0 - 0.04, s.x0, STEPS_Z.z0 - 0.04, STEPS_Z.z1 + 0.04, s.top - 0.14, s.top - 0.06), "led", false, false),
     piece(box(s.x0, s.x1, STEPS_Z.z0 - 0.04, STEPS_Z.z0, s.top - 0.14, s.top - 0.06), "led", false, false),
