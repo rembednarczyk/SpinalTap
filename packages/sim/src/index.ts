@@ -75,6 +75,7 @@ export {
   CARRY_REACH,
   CARRY_SPEED,
   HIDE_REACH,
+  shuttleProgress,
 } from "./systems";
 export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
 export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "./world/bodies";

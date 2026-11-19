@@ -114,6 +114,10 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
     e.door = { key: `${d.key}#${m.leaf}`, door: d.key, closed: e.solid, slide: m.slide, sensor: d.at, open: 0, idle: DOOR_CLOSE_DELAY, ...(d.lock ? { lock: d.lock } : {}) };
     // A sealed door never moves: a static solid, so the AI's ground raster sees it as a wall.
     if (d.lock?.kind !== "sealed") e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "shuttle" && e.solid) {
+    e.shuttle = { key: m.key, base: e.solid, axis: m.axis, travel: m.travel, period: m.period, phase: m.phase, pause: m.pause };
+    // Moving: the AI's ground raster leaves it out, as it does a lift's platform.
+    e.velocity = { x: 0, y: 0, z: 0 };
   } else if (m?.kind === "door-panel") {
     e.doorPanel = m.door;
   } else if (m?.kind === "button") {

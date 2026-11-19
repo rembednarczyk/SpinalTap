@@ -325,6 +325,22 @@ Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wy
 - **Koszt symulacji.** Indeks brył jest płaski, więc zapytania na P−1 biorą też bryły magazynu pod nim. Paleta z autem to jedna bryła bez rysunku, belki nad głową są tylko rysowane, a korytarz z wykopem to osobna bryła poza oczkami P−1 (pryzmaty magazynu 91 → 60). Testy ruchu na rampie trwają ok. 10% dłużej niż bez P−2 (wcześniej 15%).
 - **Zostaje.** 5b: roboty na szynach jako ruchome bryły i winda aut z kabin P−1. 5c: przystanek windy na −9,2 w korytarzu. 5d: schron pod T2 przy północnym końcu P−2 z bramą, włazem i skrytką Hebi (migracja). Przegląd zrzutów (19.11, z T2 na wylot, z T1 na portal, z lotu): wykop ze schodkowymi murami i portal pod T1 pasują do skarpy, a wykop nie wchodzi na jezdnię. Pełny parapet wykopu wychodzi z T1 jako długa szara ściana, która zasłania plac T2. Zamiana na balustradę idzie z detalami planszy (B4).
 
+### Etap 5b: roboty magazynu P−2 (gałąź `feat/alchemia-5b`)
+- **Mechanizm `shuttle`** (`builders.ts`, `shuttle-system.ts`): bryła jeździ tam i z powrotem po jednej osi według zegara domeny, w realnych sekundach.
+  - Jej miejsce wynika z czasu, więc zapis nie potrzebuje nowego pola. Wczytana gra stawia robota tam, gdzie był, a czekanie przesuwa go dalej.
+  - System działa przed ruchem, razem z windami i drzwiami.
+  - Ciało na drodze robota zostaje zepchnięte w bok, na bliższą stronę jego toru. Bez tego robot najeżdżał na stojącego gracza (test).
+  - Bryła ma prędkość, więc raster terenu AI jej nie piecze, jak platformy windy.
+- **Dwa wózki na pasie magazynu** (`P2_ROBOTS`):
+  - wymiary 1,6 × 2,2 × 0,9 m, każdy na swojej połowie pasa;
+  - trasa 9,5 m, 32 s tam i z powrotem, z postojem na obu końcach;
+  - obok zostaje 1,5 m chodnika z każdej strony, a trasy obu wózków się nie stykają.
+- **Kolejność propów.** Wózki są ostatnimi propami Alchemii, więc identyfikatory i złote hashe się nie zmieniają. Zapis bez zmian.
+- **Zostaje:**
+  - winda aut z kabin P−1 (otwór w płycie P−1 ze ścianami kabiny i jazda na platformie): osobny krok;
+  - 5c: przystanek windy na −9,2;
+  - 5d: schron ze skrytką Hebi.
+
 ### Bryła na całym terenie (decyzje użytkownika 19.11)
 Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
 - **Kształty z planszy.**

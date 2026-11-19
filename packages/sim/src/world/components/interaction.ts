@@ -68,6 +68,24 @@ export interface ElevatorGate {
 export type DoorLock = { readonly kind: "sealed" } | { readonly kind: "code"; readonly staff: FactionId; readonly during: ContractKind } | { readonly kind: "alarm" };
 
 /** A leaf of an automatic door (ADR-0038). Its state goes into saves under `key`. */
+/**
+ * A solid that runs to and fro along one axis by the clock (ADR-0074 stage 5b: P-2's robots), not
+ * by anyone near: where it stands follows from the domain's time alone, so a save needs nothing of
+ * its own. It pushes bodies out of its way, as the lifts do; its lane ends short of the walls.
+ */
+export interface Shuttle {
+  readonly key: string;
+  /** Its box at the start of its run. */
+  readonly base: Aabb;
+  readonly axis: "x" | "z";
+  /** How far it runs (m), and in how many real seconds there and back, a pause at each end included. */
+  readonly travel: number;
+  readonly period: number;
+  /** The share of its period it starts in (0..1), and the share it stands still at each end. */
+  readonly phase: number;
+  readonly pause: number;
+}
+
 export interface DoorLeaf {
   /** `<door>#<leaf>`. */
   readonly key: string;

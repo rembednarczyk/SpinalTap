@@ -10,7 +10,7 @@ import { PAVILION_PROPS } from "./pavilion";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
 import { P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
 import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR_PIECES, P2_STORE_SHELL, P2_VAULT } from "./p2";
-import { P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
+import { P2_ROBOTS, P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
@@ -115,6 +115,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...P2_PROPS,
   // The front over P-1 (B1, 19.11) after stage 5a's: its wings, storeys, columns and green steps, one prop of its own.
   solidProp(FRONT),
+  // Stage 5b after the front: P-2's robots, running by the clock.
+  ...P2_ROBOTS,
 ];
 
 /** The ground dug out under Alchemia. */
