@@ -112,6 +112,7 @@ const start = async (): Promise<void> => {
     cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb"), asset("door-props.glb"), asset("vehicle-props.glb"), asset("drone-props.glb"), asset("crowd-props.glb"), asset("room-props.glb")] : null,
     world: [],
     fogScale: fog,
+    detailTextures: new URL("textures/", document.baseURI).href,
   });
   renderer.rig.camera.minZ = 0.3;
   renderer.rig.camera.maxZ = 1500;

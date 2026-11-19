@@ -1,0 +1,1 @@
+- Ściany, dachy i ulice Lublina mają z bliska fakturę: tynk, cegłę, kamień, beton, asfalt, płyty chodnika, dachówkę i blachę z tekstur Poly Haven, w kolorach palety gry.

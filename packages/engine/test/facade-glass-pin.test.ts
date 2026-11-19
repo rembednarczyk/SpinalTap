@@ -32,6 +32,6 @@ const fnv = (text: string): string => {
 describe("the facade shader's glass mask the doors and the decals are checked against", () => {
   it("is the one the TypeScript ports follow", () => {
     const pinned = ["void facadeDecode(", "float facadeWindow(", "vec4 facadeGlass("].map((s) => fnv(glslFunction(FACADE_GLSL, s)));
-    expect(pinned, "the facade's glass mask changed: update groundGlass (door-slots.ts), shaderGlass (test/facade-glass-mask.ts) and glassFree (tools/osm-import/src/decal-walls.ts) to it, then these hashes").toEqual(["3c20ab3a", "f977ee7d", "30281b4c"]);
+    expect(pinned, "the facade's glass mask changed: update groundGlass (door-slots.ts), shaderGlass (test/facade-glass-mask.ts) and glassFree (tools/osm-import/src/decal-walls.ts) to it, then these hashes").toEqual(["fdec1860", "f977ee7d", "30281b4c"]);
   });
 });

@@ -1,3 +1,5 @@
+import { metaStorey } from "../src/renderer/mapcity/facade-frame";
+
 /**
  * The facade shader's glass mask (`facadeDecode`, `facadeWindow`, `facadeGlass` in `npr/toon-city.ts`)
  * ported line by line, near the camera (detail 1): what the doors of ADR-0058 stage 9 are checked
@@ -15,7 +17,7 @@ const step = (e: number, x: number) => (x < e ? 0 : 1);
  * the shader's hash says) or null. A church's lancets are taken as filling their cells.
  */
 export const shaderGlass = (q: { x: number; y: number }, meta: readonly [number, number]): "pane" | "gate" | null => {
-  const storey = Math.floor(meta[0] + 0.0005) / 10;
+  const storey = metaStorey(meta[0]);
   const bay = Math.floor(fract(meta[0]) * 1000 + 0.5) / 100;
   const code = Math.floor(meta[1] + 0.0005);
   const seed = (Math.floor(fract(meta[1]) * 256) + 0.5) / 256;

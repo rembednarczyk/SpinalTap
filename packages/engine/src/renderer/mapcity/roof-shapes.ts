@@ -1,5 +1,5 @@
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
-import { type FacadeFrame, roofMeta, trimMeta } from "./facade-frame";
+import { type FacadeFrame, frameRoofMeta, trimMeta } from "./facade-frame";
 import { DOWN } from "./facade-parts";
 import { type P2, centroid, obbLocal, offsetRing, triangulate } from "./polygon";
 import { lathe } from "./roof-plan";
@@ -204,7 +204,7 @@ export const addPlanesRoof = (sink: MeshSink, f: FacadeFrame, kind: PlanesKind, 
   const y0 = f.top - 0.08;
   const eaves = offsetRing(f.b.ring, EAVES) ?? [...f.b.ring];
   const planes = roofPlanes(f, kind, rise, eaves);
-  faces(sink, planes, eaves, y0, f.b.base, colors.roof, roofMeta(f.style.seed));
+  faces(sink, planes, eaves, y0, f.b.base, colors.roof, frameRoofMeta(f));
   gables(sink, f, planes, y0, colors.wall);
   if (underside && eaves.length === f.b.ring.length) soffits(sink, f, eaves, y0, colors.trim);
 };
@@ -262,5 +262,5 @@ export const addOnion = (sink: MeshSink, f: FacadeFrame, rise: number, color: Rg
   const r = Math.max(inRadius(f.b.ring, c), 0.5);
   const at: Vec = { x: c.x, y: f.top, z: c.z };
   const profile = (far ? ONION_FAR : ONION).map(([pr, ph]) => [r * pr, rise * ph] as const);
-  lathe(sink, at, profile, far ? 8 : 16, color, roofMeta(f.style.seed));
+  lathe(sink, at, profile, far ? 8 : 16, color, frameRoofMeta(f));
 };

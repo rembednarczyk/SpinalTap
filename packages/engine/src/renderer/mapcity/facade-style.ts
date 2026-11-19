@@ -1,4 +1,5 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
+import type { RoofDetail, WallDetail } from "../../npr/detail-layers";
 import { DAY_RIG } from "../../npr/lighting";
 import { prng } from "../city-kit-data";
 
@@ -78,6 +79,10 @@ export interface FacadeStyle {
   readonly signs: number;
   /** Seed in [0, 1) the shader varies lit windows and shop colours by. */
   readonly seed: number;
+  /** The walls' surface the shader lays its detail layer of (ADR-0092). */
+  readonly wallDetail: WallDetail;
+  /** The roof's surface: clay tiles, sheet metal, copper, a flat roof's bitumen. */
+  readonly roofDetail: RoofDetail;
 }
 
 /** Plaster of the old town: ochre, salmon, mint, butter yellow, terracotta, cream, pale blue, dusty pink. */
@@ -262,7 +267,7 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const roofColor = roof === "dome" || roof === "onion" || (sacred === "church" && rand() < 0.6) ? pick(rand, ROOFS_COPPER) : oldTown && rand() < 0.7 ? pick(rand, ROOFS_TILE) : pick(rand, ROOFS_METAL);
   const bay = window === WINDOW_STYLE.civic ? 3.6 + rand() * 0.6 : window === WINDOW_STYLE.church ? 4.2 + rand() : window === WINDOW_STYLE.modern ? 3 + rand() * 0.6 : window === WINDOW_STYLE.block ? 2.9 + rand() * 0.3 : 2.6 + rand() * 0.6;
   const lively = !tower && (s.use === "commercial" || shopfront);
-  return {
+  const look = {
     plaster,
     // Bare brick or stone has no light plaster mouldings: its trims are a darker course of it.
     trim: bare ? darken(plaster, 0.22) : sunSafe(lighten(plaster, 0.35)),
@@ -282,4 +287,28 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
     signs: lively ? 1 + Math.floor(rand() * 2) : 0,
     seed: rand(),
   };
+  return { ...look, ...surfaces(s, look, rand) };
+};
+
+/**
+ * The surfaces of a building's walls and roof (ADR-0092), drawn after everything else so a building
+ * keeps the looks it had: the map's brick or stone; the post-war blocks and garages in concrete;
+ * an industrial hall in Lublin's factory brick (the breweries, the old works on Fabryczna), or in sheet
+ * metal; a tall office block in concrete; plaster for the rest. A roof by its colour, a flat one bitumen.
+ */
+const surfaces = (s: StyleInput, look: Omit<FacadeStyle, "wallDetail" | "roofDetail">, rand: () => number): Pick<FacadeStyle, "wallDetail" | "roofDetail" | "plaster" | "trim" | "plinth"> => {
+  const mapped = s.material !== undefined || s.colour !== undefined;
+  const industrialBrick = rand() < 0.55;
+  const roofDetail: RoofDetail = look.roof === "flat" ? "bitumen" : (ROOFS_COPPER as readonly string[]).includes(look.roofColor) ? "copper" : (ROOFS_TILE as readonly string[]).includes(look.roofColor) ? "tile" : "metal";
+  const keep = { plaster: look.plaster, trim: look.trim, plinth: look.plinth, roofDetail };
+  if (s.material === "brick" || s.material === "stone") return { ...keep, wallDetail: s.material };
+  if (look.window === WINDOW_STYLE.block || s.use === "garage") return { ...keep, wallDetail: "concrete" };
+  if (s.use === "industrial" && !look.freeTower) {
+    if (!industrialBrick) return { ...keep, wallDetail: "metal" };
+    if (mapped) return { ...keep, wallDetail: "brick" };
+    const plaster = pick(rand, BRICK);
+    return { plaster, trim: darken(plaster, 0.22), plinth: darken(plaster, 0.45), roofDetail, wallDetail: "brick" };
+  }
+  if (look.window === WINDOW_STYLE.modern && s.levels >= 6) return { ...keep, wallDetail: "concrete" };
+  return { ...keep, wallDetail: "plaster" };
 };
