@@ -4,6 +4,7 @@ import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
+import { ledOfSlab, roundedSlab } from "./rounded-slab";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -52,6 +53,9 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box under its letters.
   screen: "win-teal",
   sign: "dark",
+  umbrella: "fabric-teal",
+  "led-green": "neon-green",
+  water: "glass-blue",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -187,15 +191,25 @@ export interface AlchemiaSinks {
 
 const TIER_SET: ReadonlySet<AlchemiaPiece> = new Set(ALCHEMIA_TIER_PIECES);
 
+/** A storey's slab: a roof piece a slab thick, big enough to be a floor (not L2's underside, nor a planter). */
+const isSlab = (p: AlchemiaPiece): boolean => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30;
+
 /** Alchemia's two sinks from the simulation's pieces. */
 export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPiece[] = ALCHEMIA_PIECES): AlchemiaSinks => {
   const outside = new GeometrySink();
   const inside = new GeometrySink();
   const tiers = new GeometrySink();
   const steps = new Map(pieces.filter((p) => p.kind === "step").map((p) => [`${p.box.x0.toFixed(3)}:${p.box.x1.toFixed(3)}:${p.box.z0.toFixed(3)}:${p.box.z1.toFixed(3)}`, p] as const));
+  // The storeys' slabs, drawn round-cornered with their strip of light (B4); the simulation's straight strips go.
+  const slabs = pieces.filter((p) => TIER_SET.has(p) && isSlab(p)).map((p) => p.box);
   for (const p of pieces) {
     const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
+    if (TIER_SET.has(p) && isSlab(p)) {
+      roundedSlab(sink, data, b, swatchOf(p), SWATCH.led);
+      continue;
+    }
+    if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
       const lit = Math.min(b.y1, FOODHALL.floor + LIT_GLASS);
