@@ -128,7 +128,7 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     // Alchemia's gallery (ADR-0093 O2) is measured on its own, a baseline that only falls: 770 with its
     // glass 0.12 thick and open behind the front's L2, none along the glass now (0.2 thick, closed all
     // round). The 11 left stand in the hall's lift's shaft at P1's gate (walls and gate 0.1 thick) and by
-    // the north-east core: G-941.
+    // the north-east core: G-939.
     expect(galleryLeaks).toBeLessThanOrEqual(11);
   });
 });
