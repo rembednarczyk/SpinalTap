@@ -180,7 +180,7 @@ const terraceFurniture = (): Piece[] =>
   ]);
 
 /** B's ring rounds at its bars' radius (the narrowest bar's), its joints round the courtyard square. */
-const B_RADIUS = Math.min(...B_BARS.map((b) => cornerRadius(slabOf(b))));
+export const B_RADIUS = Math.min(...B_BARS.map((b) => cornerRadius(slabOf(b))));
 const B_RECTS = B_BARS.map((b) => ({ x0: b.minX, x1: b.maxX, z0: b.minZ, z1: b.maxZ }));
 
 export const tierPieces = (): Piece[] => {

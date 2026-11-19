@@ -5,7 +5,8 @@ import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { glassFacade, prismOutline, railing, slabOutline } from "./storey-facade";
+import { band, glassFacade, lid, prismOutline, railing, slabOutline } from "./storey-facade";
+import { greenSlope, ofGreenSlope } from "./green-slope";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -234,7 +235,11 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, 
     const y = (b.y0 + b.y1) / 2;
     if (!glass.some((g) => g.box.y0 < y && g.box.y1 > y && within(g.outline!, x, z))) railing(sink, data, pts, b.y0, b.y1);
   }
-  else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
+  else if (p.kind === "green" && pts.length === 4) {
+    // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.
+    band(sink, pts, b.y0, b.y1, swatchUv(data, SWATCH.green));
+    lid(sink, pts, b.y1, 1, swatchUv(data, SWATCH.green));
+  } else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
   return true;
 };
 
@@ -251,6 +256,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
+    if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -295,6 +301,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   parkingOutside(outside, data);
   p2Outside(outside, data);
   frontSignLetters(tiers, data);
+  greenSlope(tiers, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);
   return { outside, inside, tiers };
