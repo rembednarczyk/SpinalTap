@@ -84,7 +84,7 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - `alchemia-p2`: 213/79 → 211/78 (budżet 216/80). Bramki i platformy wind nad P0 chowa `AlchemiaGalleryCull`, gdy oko jest w P−2. Bez tego scena miała 215/80.
 - **Różnice od wzorca i od briefu:**
   - Biegi trzonów, schody ruchome i drzwi mają 1,5 m, a nie 1,2 m. Węższych nie przechodzi droga NPC (ciało 0,38 m z marginesem na siatce 0,5 m).
-  - Trzon NE zaczyna się na P1, bo róg P0 to sklep Oyajiego z zapleczem, harmonogramem i zadaniami. Przeniesienie należy do O3, a P0 ma drugą drogę przez schody ruchome i wyjścia na T1. Trzon NE stoi 2,5 m od narożnika (x do 433,7), poza zaokrągleniem.
+  - Trzon NE zaczyna się na P1, bo róg P0 to sklep Oyajiego z zapleczem, harmonogramem i zadaniami. Przeniesienie należy do O3 (zrobione: trzon i winda od P0), a P0 ma drugą drogę przez schody ruchome i wyjścia na T1. Trzon NE stoi 2,5 m od narożnika (x do 433,7), poza zaokrągleniem.
   - Wejścia z zachodu i wschodu tylko przy południowym końcu, bo dalej rampa schodzi do T1 i stopień przekroczyłby 0,45 m.
   - Węzły wind nie trafiają do grafu, bo NPC nie jeżdżą windami (ADR-0021).
   - Winda jeździ według ADR-0020 (dalej w tę stronę, w którą jechała). Przy sześciu poziomach jazda z T0 do hali prowadzi przez dach, więc wybór piętra w kabinie zostaje na później.
@@ -114,7 +114,7 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - Drzwi zaplecza mają 0,85 m: tylko dla obsługi, poza drogą NPC; za ladą jest kieszeń sprzedawcy, do której klient nie wchodzi.
   - Lokal z roletą nie ma wyposażenia (nie widać go i nie da się wejść); z kratą ma, przy zgaszonym świetle i ekranach.
   - Plecy lokali to szkło fasady (rama bez tafli), więc zaplecza widać z ulicy; regał towaru stoi przy szkle.
-  - Sklepy na P0 (etap O2 w planie etapów) czekają na O3: dopóki food hall nie przejdzie na P3, P0 to hala z jednostkami i sprzedawcami z imionami, których O2 nie rusza.
+  - Sklepy na P0 (etap O2 w planie etapów) czekają na O3: dopóki food hall nie przejdzie na P3, P0 to hala z jednostkami i sprzedawcami z imionami, których O2 nie rusza (zrobione w O3).
 - **Rysunek i budżety:** sklepy w siatce wnętrza (do 45 m od hali), bez nowej siatki i wywołań; modele gry i sprzedawcy w siatce bloku mebli ulicznych (ADR-0050). Trójkąty siatki wnętrza 4 432 → 52 342 (104 684 wierzchołki, indeksy 32-bitowe); limit testu wnętrza 60 000 obok wspólnych 40 000 (decyzja z 19.11: trójkąty wolne). Sceny `npr-perf` (wywołania i aktywne siatki, przed → po, budżety bez zmian):
   - `alchemia-tpp`: 299/118 → 299/118 (budżet 380/146);
   - `alchemia-t2-tpp`: 222/77 → 222/77;
@@ -125,6 +125,38 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - Przegląd kuratora topografii (treść Alchemii w obrysie T-329 bez zmian obrysu i wysokości; kontrole skanu pilnują obu).
   - Czas klatki na telefonie odniesienia z siatką wnętrza ok. 52 tys. trójkątów niezmierzony (pod SwiftShaderem tylko raport).
   - Lokal z roletą nie ma śladu świeżej obecności (nie widać wnętrza).
+
+## Etap O3: wykonanie (19.11, gałąź `feat/alchemia-o3-foodhall`)
+- **Wzorzec:** food court na najwyższej kondygnacji galerii handlowej jako kotwica, która ciągnie ruch w górę przez cały budynek (przyjęta praktyka projektowania galerii: kotwice na końcach ciągów i na górze, schody ruchome przy atrium). Stoiska z ladami w pierścieniu zewnętrznym, wspólne stoliki w pasach przed nimi, jedno wejście z galerii do każdej lady. Na P0 lokal liniowy galerii (in-line unit) jak w O2 i punkt orientacyjny w atrium (fontanna pod otwartym atrium jako miejsce spotkań).
+- **Przeniesione na P3** (`units.ts`, ten sam identyfikator i klucz sprzedawcy, bo zapis je nazywa): dwanaście jednostek hali z ladami, ściankami (0,2 m), roletami, zapleczem Oyajiego, kioskiem Sachiko z daszkiem, punktami sprzedawców i klientów oraz tłumem (`crowd.ts`).
+  - Zachód (lada na wschód, głębokość 4,2 m): thai, korean (roleta), bar Fumiko w narożniku NW (lada od szkła do klapy przy południowym końcu, stołki przed nią).
+  - Północ (lada na południe, 4,8 m): Kenta, Goro, kawiarnia.
+  - Wschód (lada na zachód, 4,2 m): grecka, gruzińska (roleta), wok.
+  - Południe (lada na północ): burger (roleta), kiosk Sachiko.
+  - Narożnik SE: sklep Oyajiego, lada pancerna z kratą na zachód, zaplecze za ścianką z drzwiami, klapa w ladzie przy drzwiach zaplecza.
+  - Szyldy z nazwami własnymi neonem (RAMEN FUMIKO, OKONOMIYAKI, KASA TEA, KAWA, ARMS, THAI, GYROS, WOK, KIOSK; zgaszone SEOUL, TBILISI, BURGER).
+- **Trzy warstwy P3** (`foodhall-kitchens.ts`, `foodhall-seating.ts`): kuchnie (blat do biodra, kuchenka, garnki z parą, okap z kanałem do stropu, lodówka, ekran z menu, kasa z kablem ze stropu, kubek, kartony); stoły z ławami (dwa zestawy na zachodzie, trzy na wschodzie, dwa na południu między holem windy a kioskiem, jeden w kącie przed barem Fumiko), półki do jedzenia na stojąco przy balustradzie atrium na galerii zachodniej i wschodniej, lampiony nad stołami, rury, kable i kanał pod stropem, automaty z napojami i kosze z modeli gry. Ślady świeżej obecności: parujące miski, rozlany napój, przewrócony stołek, serwetki pod stołami, para nad garnkiem w każdej otwartej kuchni.
+- **Drugi lokal Fumiko na P0** (`fumiko-p0.ts`): narożnik NW dawnej hali z okienkiem i drzwiami na T1, ścianki do sklepów bez drzwi, kuchnia z okapem i lodówką. Harmonogram (`keeper-walks.ts`, `schedules.ts`): od 16 do północy bar na P3, po północy (hala zamknięta) schodami ruchomymi i przez T1 do okienka, gdzie obsługuje do 4, potem stołek przed okienkiem do 16 (dialog `fumiko_closed`). Stołki przechodniów przy okienku zostały.
+- **Sklepy P0** (`shops-plan.ts`, wzorzec O2, ścianki 0,2 m): CHIPFIX (naprawa), NEONSKIN (odzież), APTEKA NOVA, DATAKOM (roleta), SOYA MAX (syntetyczne jedzenie), SKUP (lombard), TETSU (broń, narożny), HOLODROM (VR), lokal do wynajęcia (wszczepy), KANTOR, SUMI INK (tatuaż), FLORA (krata). Zamknięte 3 z 12. Wejście od T1 (6 m), drzwi wschodnie w miejscu tylnych drzwi Oyajiego (do korytarza trzonu NE), tylne przejście do schodów hali i drzwi na P−1, hole obu wind.
+- **Punkt orientacyjny P0** (`landmark.ts`): fontanna 3,2 × 3,2 m w środku atrium, na północ od pasów schodów ruchomych, z kolumną projektora i koi ze świetlnych plastrów (jeden przesunięty: pęknięty hologram), dwie ławy z gry i donice. Drogi grafu omijają ją od zachodu i północy.
+- **Trzon NE od P0:** klatka zakosami od P0 (biegi P0→P1 jak wyżej, stopień 0,175 m), winda `alchemia-lift-ne` od −6,4 (otwory w płycie P1), szkło frontu przy trzonie 0,2 m zamiast 0,4 m, żeby pas schodów miał 1,5 m. Szacht instalacyjny w rogu za trzonem od P0 do stropu dachu.
+- **Graf:** węzły P0 (`g0-ne`, przesunięte `hall-centre` i `hall-aisle` wokół fontanny, drzwi wschodnie do drzwi trzonu), P3 (`g3-e`, `g3-w`, przejścia przed ladami zachodnimi i wschodnimi, przed i za klapą Oyajiego). Usunięte węzły zaplecza Oyajiego na P0.
+- **Wnętrza ADR-0061:** `alchemia-foodhall` to teraz P3, `alchemia-gallery` to P0–P2.
+- **Zapis:** schemat się nie zmienia, migracji nie ma. Klucze postaci, identyfikatory jednostek i sklepów (`shopId` `yatai`, `oyaji`) zostały. Kenta, Goro, Fumiko i Oyaji mają harmonogramy, więc przy wczytaniu stają tam, gdzie mówi plan; Sachiko dostała jednoprzystankowy plan z tego samego powodu. Bryły hali na P3 zajmują sloty dawnych jednostek i stołów w `ALCHEMIA_PROPS`, więc identyfikatory po nich zostały; winda NE ma o poziom więcej, więc sklepy O2 przesunęły się o dwa (bez stanu w zapisie). Otwarte jak po O1: gracz zapisany na P0 w miejscu nowej ścianki sklepu wczyta się w niej.
+- **Różnice od wzorca i od briefu:**
+  - P3 ma 3,9 m w świetle (wysokości kondygnacji z O1), mniej niż 5–8 m dla food hallu z zasad.
+  - Hana zostaje z wózkiem na T1: to handlarka uliczna, nie jednostka hali.
+  - Fala Hebi idzie do Oyajiego po grafie poziomów: `ChaseVictim` używa `pursueTo` jak pościg za graczem (obszar AI/NPC, jedna linia), bo ofiara jest na innej kondygnacji niż ulica. Zamiast tylnych drzwi Oyajiego na T1 lada ma klapę przy drzwiach zaplecza.
+  - Oyaji spędza noc za kratą przy ladzie, nie przy tylnych drzwiach na T1 (tych już nie ma).
+  - Pościgi z „hali” w testach `alchemia-foodhall`, `alchemia-mall` i `alchemia-parking` biegną z P0 (północny chodnik), nie spod lady Kenty, żeby nie wydłużać ich czasu; nowy pościg z T1 na P3 jest w `alchemia-food-court.test.ts`.
+- **Miara strzału zza barku (G-939):** galeria z food hallem 11 → 5. Trzon NE do P0 dokładał 3 miejsca na P1; szacht w rogu za trzonem zamknął wszystkie dziewięć przy trzonie, zostaje szyb windy hali na P1.
+- **Rysunek i budżety:** jednostki, kuchnie, stoły, szyldy, sklepy P0, lokal Fumiko i fontanna w siatce wnętrza, bez nowych siatek; modele gry w widoku `street-props` sklepów. Trójkąty siatki wnętrza 52 342 → 81 840 (limit testu 60 000 → 90 000, decyzja z 19.11). Przesłanianie `AlchemiaGalleryCull` obejmuje ruchome części wind od P0. Sceny `npr-perf` (wywołania i aktywne siatki, przed → po, budżety bez zmian): `alchemia-tpp` 299/118 → 283/113 (budżet 380/146; windy od P0 w przesłanianiu, sprzedawcy hali nad ulicą), `alchemia-t2-tpp` 222/77 → 222/77, `alchemia-p1` 209/78 → 197/74, `alchemia-p2` 211/78 → 207/76 (budżet 216/80), `zielona-budowa-tpp` 157/72 → 153/70 (budżet 172/80).
+- **Testy:** sim `alchemia-food-court.test.ts` (jednostki P3 w pierścieniu, sprzedawcy za ladami, klienci i tłum w zasięgu, rolety, ściany 0,2 m, kuchnie w trzech warstwach, pościg z T1 do lady Kenty, drugi lokal Fumiko z okienkiem, jej harmonogram, trzon i winda NE od P0, fontanna poza drogami), sklepy P0 w `alchemia-shops.test.ts` (raster drogi NPC przez wspólny `alchemia-raster.ts`), poprawione świadomie z komentarzem: `alchemia-foodhall`, `alchemia-mall`, `alchemia-parking`, `alchemia-market`, `schedule`, `w5-street-life`, `market-night`, `street-furniture`, `tpp-shoulder` i liczniki brył; app `alchemia`, `alchemia-market`, `alchemia-parking`, `trade-loop`, `item-level-session`, `m2-schedules`, `day-trade-ui`, `metro-map`; engine `alchemia`, `alchemia-gallery-cull`. Skan glitchy bez nowych miejsc.
+- **Otwarte po O3:**
+  - Przegląd kuratora topografii (treść w obrysie T-329, obrys i wysokość bez zmian, kontrole skanu zielone).
+  - Gracz zapisany na P0 w miejscu nowej ścianki sklepu albo na P3 w miejscu lady wczyta się w bryle (jak po O1: przeniesienie na najbliższy węzeł to praca dla Persistence).
+  - Szyb windy hali przy bramce P1 (5 miejsc miary strzału zza barku, G-939) do osobnej poprawki.
+  - Czas klatki na telefonie odniesienia z siatką wnętrza ok. 82 tys. trójkątów niezmierzony.
 
 ## Konsekwencje
 - Graf, punkty tłumu, zadania i dialogi związane z halą zmieniają się w O1 i O3. Testy tras i zadań idą za nimi.
