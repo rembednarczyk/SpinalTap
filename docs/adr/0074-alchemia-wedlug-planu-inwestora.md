@@ -390,6 +390,18 @@ Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecen
   - Migracja: osobny test.
 - **Hashe.** Złoty hash determinizmu zmienia się tylko przez wersję schematu: z wersją 49 przebieg daje dawny skrót.
 
+### Etap 5e: winda aut z kabin P−1 (gałąź `feat/alchemia-winda-aut`)
+- **Szyb** (`P1_CAR_LIFT`, x 399,2–403,6, z 30–31,35) leży w północnej kabinie oddawania aut. Przechodzi przez podłogę pokładu P−1 i strop P−2 do północnego końca pasa robotów: za ostatnimi słupkami regałów i ich belkami, za biegiem robotów, przed północną ścianą P−2.
+- **Platforma** z autem (nadwozie i kabina) jeździ w górę i w dół według zegara, jak roboty: `shuttle` z nową osią `y`, okres 40 s, postój 20% na każdym końcu. Na dole platforma jest równo z podłogą P−2, na górze równo z podłogą P−1. Nic z niej nie trafia do zapisu.
+- **Na P−1** szyb zamykają ściany kabiny i jej roleta. **Na P−2** barierka zamyka go z zachodu i wschodu, a od strony pasa szyb jest otwarty, z kogutem nad nim. Kto stanie pod opadającą platformą, zostaje wypchnięty na pas.
+- **Testy:**
+  - szyb w kabinie, za paletami i biegiem robotów;
+  - otwór bez innych brył Alchemii;
+  - trzy jeźdźcy w osi `y` o wspólnym rytmie;
+  - poziomy na końcach;
+  - nikt nie stoi w platformie.
+- **Hashe i zapis:** złote hashe zgodne, schemat zapisu bez zmian.
+
 ### Etap 8: spójność, pierwszy przegląd (19.11)
 Przegląd zrzutów z ulic dookoła: od Bajkowskiego, Lubartowskiej, Świętoduskiej, z T1, z T2, od Placu Łokietka i z lotu z północy i z południa.
 - **Zielone stopnie** zachodniego skrzydła miały ściany w tynku, a zieleń tylko na wierzchu, więc od Bajkowskiego wyglądały jak białe pudła. Teraz są obsadzone w całości, jak zielony stok z planszy.

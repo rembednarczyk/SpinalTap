@@ -1,11 +1,11 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER, LIFT_HOLE, STAIR_HOUSE } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER, LIFT_HOLE, P2_CORRIDOR, STAIR_HOUSE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
-import { P2View, eyeInP2 } from "./p2-view";
+import { P2View, eyeInP2, eyeInShelter } from "./p2-view";
 import { ParkingView } from "./parking-view";
 import type { CarAt } from "./parking-traffic";
 
@@ -72,6 +72,17 @@ const toHall = (e: Vec3): number => Math.hypot(Math.max(FOODHALL.minX - e.x, 0, 
  * each (two with the G-buffer). No moon shadow and no glow layer: its neon and lit glass are
  * bright in the kit's own emissive colours.
  */
+/** P-2's portal onto T2: within this of it the outside shows through it (the cutting, T2, the Arkady). */
+const PORTAL = { x: (P2_CORRIDOR.minX + P2_CORRIDOR.maxX) / 2, z: P2_CORRIDOR.maxZ } as const;
+const PORTAL_SIGHT = 25;
+
+/**
+ * Down in P-2's store or corridor, away from its portal, nothing of Alchemia's outside or its storeys
+ * shows (slabs and earth all round; stage 5e: P-2's scene keeps its draw calls). In the shelter its
+ * hatch's flight looks up at the sky: there they stay.
+ */
+const deepInP2 = (e: Vec3): boolean => eyeInP2(e) && !eyeInShelter(e) && Math.hypot(e.x - PORTAL.x, e.z - PORTAL.z) > PORTAL_SIGHT;
+
 export class AlchemiaView {
   private outside: Mesh | null = null;
   private inside: Mesh | null = null;
@@ -106,8 +117,9 @@ export class AlchemiaView {
     const e = this.deps.eye();
     const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
     const near = toHall(e);
-    const out = far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
-    const inn = near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
+    const out = !deepInP2(e) && far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
+    // Down in P-2 or the shelter the hall over it is behind its slabs: its inside off (its draw calls with it).
+    const inn = !eyeInP2(e) && near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
     // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));

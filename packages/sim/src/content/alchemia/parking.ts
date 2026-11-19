@@ -87,6 +87,12 @@ export const P1_CABINS: readonly Rect[] = [
   { minX: 398, maxX: 404, minZ: 28.4, maxZ: 31.6 },
 ];
 const CABIN_WALL = 0.2;
+/**
+ * The car lift's shaft (ADR-0074 stage 5e) in the north cabin, down through P-1's deck to the north
+ * end of P-2's lane, where the robots take the cars: inside the cabin's walls, north of the racks'
+ * last uprights and beams and past the robots' runs, short of P-2's north wall.
+ */
+export const P1_CAR_LIFT: Rect = { minX: 399.2, maxX: 403.6, minZ: 30.0, maxZ: 31.35 };
 const CABIN_ROOF = 2.5;
 
 /** The bays: two rows of 2.5 m either side of the deck's aisle, from z 3.5, nose to the walls. */
@@ -214,7 +220,12 @@ const shellPieces = (): Piece[] => {
   const h = P1_STAIR_DOWN;
   const floor = (x0: number, x1: number, z0: number, z1: number): Piece => piece(box(x0, x1, z0, z1, base, F), "floor", true);
   return [
-    ...slab(P1.minX, r.minX - W, P1.minZ, P1.maxZ),
+    // The deck's floor round the car lift's shaft in the north cabin (stage 5e), its ceiling whole.
+    floor(P1.minX, r.minX - W, P1.minZ, P1_CAR_LIFT.minZ),
+    floor(P1.minX, P1_CAR_LIFT.minX, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    floor(P1_CAR_LIFT.maxX, r.minX - W, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    floor(P1.minX, r.minX - W, P1_CAR_LIFT.maxZ, P1.maxZ),
+    piece(box(P1.minX, r.minX - W, P1.minZ, P1.maxZ, C, top), "roof", true),
     // The apron's floor round the hole over the stairs down to P-2 (stage 5a), its ceiling whole.
     floor(r.minX - W, P1.maxX, r.foot, h.minZ),
     floor(r.minX - W, h.minX, h.minZ, h.maxZ),

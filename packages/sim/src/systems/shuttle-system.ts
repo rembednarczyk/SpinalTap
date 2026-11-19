@@ -23,11 +23,12 @@ const place = (e: Runner, p: number, dt: number): void => {
   const { base, axis, travel } = e.shuttle;
   const d = travel * p;
   const dx = axis === "x" ? d : 0;
+  const dy = axis === "y" ? d : 0;
   const dz = axis === "z" ? d : 0;
   const was = e.position;
-  e.solid = { min: { x: base.min.x + dx, y: base.min.y, z: base.min.z + dz }, max: { x: base.max.x + dx, y: base.max.y, z: base.max.z + dz } };
-  e.position = { x: (base.min.x + base.max.x) / 2 + dx, y: (base.min.y + base.max.y) / 2, z: (base.min.z + base.max.z) / 2 + dz };
-  e.velocity = dt > 0 ? { x: (e.position.x - was.x) / dt, y: 0, z: (e.position.z - was.z) / dt } : { x: 0, y: 0, z: 0 };
+  e.solid = { min: { x: base.min.x + dx, y: base.min.y + dy, z: base.min.z + dz }, max: { x: base.max.x + dx, y: base.max.y + dy, z: base.max.z + dz } };
+  e.position = { x: (base.min.x + base.max.x) / 2 + dx, y: (base.min.y + base.max.y) / 2 + dy, z: (base.min.z + base.max.z) / 2 + dz };
+  e.velocity = dt > 0 ? { x: (e.position.x - was.x) / dt, y: (e.position.y - was.y) / dt, z: (e.position.z - was.z) / dt } : { x: 0, y: 0, z: 0 };
 };
 
 /** A body's clearance from a shuttle it was pushed off, over its radius. */
@@ -36,6 +37,8 @@ const CLEAR = 0.02;
 /**
  * Bodies a shuttle's new box reaches into go aside across its run, to the nearer side: a cart on a
  * lane pushes whoever stands in its way onto the walkway beside it (P-2's lane has 1.5 m each side).
+ * A lift's platform coming down (stage 5e) puts whoever stands under it out on its open side, the
+ * lane south of it (its other sides are railed).
  */
 const pushAside = (ctx: SimContext, e: Runner): void => {
   const b = e.solid;
@@ -45,7 +48,9 @@ const pushAside = (ctx: SimContext, e: Runner): void => {
     const p = o.position;
     if (p.y >= b.max.y || p.y + o.body.height <= b.min.y) continue;
     if (p.x <= b.min.x - r || p.x >= b.max.x + r || p.z <= b.min.z - r || p.z >= b.max.z + r) continue;
-    if (along === "z") {
+    if (along === "y") {
+      o.position = { ...p, z: b.min.z - r - CLEAR };
+    } else if (along === "z") {
       const mid = (b.min.x + b.max.x) / 2;
       o.position = { ...p, x: p.x < mid ? b.min.x - r - CLEAR : b.max.x + r + CLEAR };
     } else {

@@ -13,6 +13,7 @@ import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR
 import { P2_ROBOTS, P2_STORE_PIECES, P2_STORE_SOLIDS } from "./p2-store";
 import { SHELTER_GATE, SHELTER_HATCH_CUT, SHELTER_HATCH_PIECES, SHELTER_PIECES, SHELTER_VAULTS } from "./shelter";
 import { doorParts } from "../doors";
+import { CAR_LIFT_PIECES, CAR_LIFT_RIDERS } from "./car-lift";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
@@ -35,6 +36,7 @@ export * from "./metro-door";
 export * from "./p2";
 export * from "./p2-store";
 export * from "./shelter";
+export * from "./car-lift";
 export { PARAPET_BEDS } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
@@ -90,6 +92,9 @@ export const P2_PROPS: readonly StaticProp[] = [
 /** The shelter's solids (stage 5d1): its room with its flights and exhibit, the hatch's shaft, the steel gate's leaf. */
 export const SHELTER_PROPS: readonly StaticProp[] = [solidProp(SHELTER_PIECES), solidProp(SHELTER_HATCH_PIECES), ...doorParts(SHELTER_GATE)];
 
+/** The car lift's solids (stage 5e): its railing at P-2, its platform and the car riding it by the clock. */
+export const CAR_LIFT_PROPS: readonly StaticProp[] = [solidProp(CAR_LIFT_PIECES), ...CAR_LIFT_RIDERS];
+
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(SHELL.filter((p) => p.kind !== "step")),
@@ -125,6 +130,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...P2_ROBOTS,
   // Stage 5d1 after 5b's: the shelter.
   ...SHELTER_PROPS,
+  // Stage 5e after 5d1's: the car lift from P-1's north cabin down to P-2's lane.
+  ...CAR_LIFT_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

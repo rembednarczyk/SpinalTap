@@ -30,6 +30,7 @@ import {
   P2_PROPS,
   P2_ROBOTS,
   SHELTER_PROPS,
+  CAR_LIFT_PROPS,
   P2_ROOMS,
   ROOM_ID_BASE,
   P2_SHELL_PIECES,
@@ -206,7 +207,7 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
       expect(c.box.x1).toBeLessThan(410);
     }
     // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's before the front's (B1).
-    expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length - 1 - P2_ROBOTS.length - SHELTER_PROPS.length, -1 - P2_ROBOTS.length - SHELTER_PROPS.length)).toEqual(P2_PROPS);
+    expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length - 1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length, -1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length)).toEqual(P2_PROPS);
   });
 });
 
