@@ -293,6 +293,15 @@ Brak. Pytanie o godziny lokali rozstrzygnął użytkownik 6.11 (sekcja „Decyzj
 - **Skan.** `metro-shaft-open` uznaje otwór B tak jak otwór peronu A.
 - **Zapis.** Bez zmiany schematu, bo przejście zajmuje dotąd pełną ziemię.
 
+### Rampa P−1 wysunięta do Bajkowskiego (plan kuratora 19.11, `docs/world/alchemia-deptak-rampa.md`)
+- **Decyzja (rekomendowana, pod nieobecność użytkownika).** Plansza z 15.11 przesuwa wjazd. Rampa zostaje w pasie x 410–418, w osi kompleksu przy szybie T-238, ale jej szczyt przechodzi z z −5,5 na z −8,8, na krawędź chodnika Bajkowskiego. Auto wjeżdża w rampę wprost z ulicy, a asfaltowy wjazd przez plac znika.
+  - Narożnik przy deptaku, dosłownie z planszy, odpada: rampa przecinałaby pawilon trójkątny, a wjazd na P−1 musiałby się zmieścić w 3,9 m między szybem a przejściem z metra B.
+  - Rampa w osi frontu placu (x 398–406) wymagałaby przebudowy P−1. Portal od Świętoduskiej nie zgadza się z planszą.
+- **Liczby.** 33,3 m przy spadku 16,4% (było 17,8%). Część otwarta do z 11, dalej strop z prześwitem 2,2 m. Rabaty przy parapetach od z −6,8. Punkt, przy którym trasa wjazdu szuka lewego pasa Bajkowskiego, jest stały (z −13,5) i nie zależy już od szczytu rampy.
+- **Import.** Bez zmian. Wykop zjada północną część asfaltowego wjazdu (`T-241/wjazd-plac`), a chodnik w232464426 zostaje poza wykopem: `cut-on-road` = 0.
+- **Zapis i hash.** Bez zmian.
+- **Deptak** na Lubartowskiej (w216497220, od Bajkowskiego do Olejnej, z trolejbusem) idzie osobnym PR. Zmienia trasę wyjazdu z rampy na południową.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.

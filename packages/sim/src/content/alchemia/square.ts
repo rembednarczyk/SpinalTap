@@ -44,8 +44,8 @@ export const PERGOLA_DOOR = { west: P1_STAIR.minX + 0.2, east: P1_STAIR.maxX + 0
 
 /** The beds along the trench's parapets: west the whole open length, east up to the stair house's approach. */
 export const PARAPET_BEDS = [
-  { x0: P1_RAMP.minX - 0.3 - 0.8, x1: P1_RAMP.minX - 0.3, z0: -3.5, z1: 11.5 },
-  { x0: P1_RAMP.maxX + 0.3, x1: P1_RAMP.maxX + 0.3 + 0.5, z0: -3.5, z1: 8.0 },
+  { x0: P1_RAMP.minX - 0.3 - 0.8, x1: P1_RAMP.minX - 0.3, z0: -6.8, z1: 11 },
+  { x0: P1_RAMP.maxX + 0.3, x1: P1_RAMP.maxX + 0.3 + 0.5, z0: -6.8, z1: 8.0 },
 ] as const;
 const BED_HEIGHT = 0.45;
 const BED_STEP = 2;

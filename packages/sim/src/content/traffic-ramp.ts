@@ -64,8 +64,8 @@ const APRON_OUT: readonly Pt[] = [
   [RAMP_UP_X - FOOT_OUT, midZ(CABIN_OUT)],
 ];
 
-/** A point on Bajkowskiego's carriageway by the driveway, north of its axis. */
-const BY_DRIVEWAY = { x: AXIS, z: P1_RAMP.top - 8 } as const;
+/** A point on Bajkowskiego's carriageway by the driveway, north of its axis (its left lane; fixed, as the ramp's top moved to the footway's edge on 19.11). */
+const BY_DRIVEWAY = { x: AXIS, z: -13.5 } as const;
 
 /** The city's route that drives Bajkowskiego's left lane past the driveway, eastwards. */
 const leftLaneOf = (routes: readonly TrafficRoute[]): TrafficRoute => {

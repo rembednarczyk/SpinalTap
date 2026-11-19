@@ -27,19 +27,21 @@ const C = P1.ceiling;
 const W = P1.wall;
 
 /**
- * The ramp: between its walls from x 410 to 418, its top level with the car park's ground at z
- * -5.5, its foot on P-1's floor at z 24.5 (5.4 m over 30 m, 18%). Two lanes, down on the east and up
- * on the west (keep right), a footway along its east wall from `walk`. Open over it up to
- * `covered`, where the ground over its ceiling's slab is deep enough.
+ * The ramp: between its walls from x 410 to 418, its top level with the square's ground at z
+ * -8.8, at the edge of Bajkowskiego's footway (the curator's plan of 19.11 for the board of 15.11:
+ * the drive in from the street, not across the square), its foot on P-1's floor at z 24.5 (5.5 m
+ * over 33.3 m, 16.4%). Two lanes, down on the east and up on the west (keep right), a footway
+ * along its east wall from `walk`. Open over it up to `covered`, where the ground over its
+ * ceiling's slab is deep enough.
  */
 export const P1_RAMP = {
   minX: 410,
   maxX: 418,
   walk: 416.5,
-  top: -5.5,
+  top: -8.8,
   foot: 24.5,
-  yTop: Math.round(groundY(414, -5.5) * 100) / 100,
-  covered: 12,
+  yTop: Math.round(groundY(414, -8.8) * 100) / 100,
+  covered: 11,
   /** Headroom over the ramp under its stepped ceiling. */
   headroom: 2.2,
 } as const;
