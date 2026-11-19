@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type AlchemiaPiece, box, piece } from "../../../packages/sim/src/content/alchemia/plan";
+import { type Piece as AlchemiaPiece, box, piece } from "../../../packages/sim/src/content/alchemia/plan";
 import { GALLERY_PLOT, GALLERY_TOP, mallFootprint, mallHeight } from "./alchemia-checks";
 
 /** A piece of the gallery a metre square on its plot's floor, moved to (x, z) and up to `top`. */
