@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SITE_CABIN, type StreetPropItem, figureLayout, isSitting, seatAt, siteCabinStacked } from "@seki/core";
-import { CROWD_SPOTS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
+import { CROWD_SPOTS, FRONT_GREEN_PROPS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
 import { SOLID_FURNITURE, distanceToPiece, furniturePrisms, turnLocal } from "../src/content/lublin/furniture";
 import { seatGroups } from "../src/content/lublin/seats";
 import { STREET_ID_BASE } from "../src/world/streaming";
@@ -16,8 +16,8 @@ const benchOf = (chunk: string): StreetPropItem => {
 
 describe("street furniture in the game (ADR-0050)", () => {
   it("the scenery draws every chunk's furniture, on the game's terrain, clear of the set pieces", () => {
-    // The map's barriers (ADR-0077) come in views of their own (`barriers.test.ts`).
-    const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props" && !s.view.items.some((i) => i.prop === "barrier"));
+    // The map's barriers (ADR-0077) come in views of their own (`barriers.test.ts`), Alchemia's roof green on its roofs (`alchemia-green.test.ts`).
+    const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props" && s.view.items !== FRONT_GREEN_PROPS && !s.view.items.some((i) => i.prop === "barrier"));
     expect(views).toHaveLength(WORLD_CHUNKS.filter((c) => c.street).length);
     let total = 0;
     for (const v of views) {
