@@ -8,6 +8,7 @@
  * to the table measured on the orthophoto (`ORTHO_CORRECTIONS`, ADR-0080 PR 10).
  */
 import type { AddedArea, TagCorrection } from "./corrections.ts";
+import { CAR_FREE_CORRECTIONS } from "./corrections-car-free.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import type { Line } from "./features.ts";
@@ -149,5 +150,5 @@ export const withOrtho = (manual: readonly TagCorrection[]): Map<string, TagCorr
   return out;
 };
 
-/** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199). */
-export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS];
+/** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199) and the setts of the streets the game closes to cars (T-324). */
+export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...CAR_FREE_CORRECTIONS];

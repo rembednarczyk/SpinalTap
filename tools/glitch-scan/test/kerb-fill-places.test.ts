@@ -22,7 +22,8 @@ const surfacesAt = (x: number, z: number): string[] => {
 describe("the kerbs of G-522's fills on the orthophoto (G-570)", () => {
   it.each<[string, number, number, string[]]>([
     ["Kapucyńska's parking lane on the east", 150.5, -128, ["road"]],
-    ["Lubartowska's bus bay at Brama Krakowska 01", 452.5, 13, ["road"]],
+    // Paved with the deptak's setts since T-324: the fill reaches the kerb as before.
+    ["Lubartowska's bus bay at Brama Krakowska 01", 452.5, 13, ["cobble"]],
     // The estimate is the asphalt's width there (T-247): the gap is the pavement with the lamp posts.
     ["Królewska's pavement north of the carriageway", 565, -204.5, ["sidewalk"]],
     ["the verge of Andersa's northbound carriageway", 2385, 375, ["grass"]],

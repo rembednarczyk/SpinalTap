@@ -62,7 +62,8 @@ describe("street furniture of ADR-0058 stage 2 (generator)", () => {
   });
 
   it("sets food carts and containers whole on open ground, clear of the stalls, the roads and each other", () => {
-    expect(of("food-cart").length).toBe(5);
+    // The rule's five on the markets and the deptak's window with cebularze (T-324).
+    expect(of("food-cart").length).toBe(6);
     expect(of("container").length).toBe(6);
     const solids = pieces.filter((i) => furniturePrisms(i).length > 0 && i.prop !== "bollard");
     for (const piece of [...of("food-cart"), ...of("container")]) {

@@ -84,6 +84,8 @@ export interface StreetOut {
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles: no lane, not even for deliveries (G-002). */
   readonly noVehicles?: true;
+  /** A street the game closes to cars (a deptak of 2077, `CAR_FREE_WAYS`): deliveries only. */
+  readonly carFree?: true;
 }
 
 /** An unnamed service road's axis (world polyline, clipped to the chunk) and its carriageway's width (m). */

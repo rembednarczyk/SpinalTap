@@ -1,0 +1,1 @@
+- Main wraca na zielone pokrycie: każdy typ wroga ma własny wzrok, bez martwej gałęzi zapasowej.

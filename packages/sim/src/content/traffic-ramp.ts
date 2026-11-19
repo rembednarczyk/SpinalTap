@@ -8,8 +8,9 @@ import { TURN_SPEED, type TrafficRoute, pointAt, projectOn, slice } from "./traf
  * along Bajkowskiego (one way east) on its left lane, turning left off it onto the car park's
  * driveway (`turn:lanes=left|right`, way 40052294) and down the ramp's east lane to the apron and
  * into the south hand-over cabin; one route out, from the north cabin up the ramp's west lane,
- * left onto Bajkowskiego's left lane and with it left again, north up Lubartowska (one way) past
- * Olejna to where the city's route ends. Both are the city's route along Bajkowskiego's left lane,
+ * left onto Bajkowskiego's left lane, with it onto the right lane before the junction and right,
+ * south down Lubartowska (w40050981; north of it is the deptak, T-324) to Królewska, where the
+ * city's route ends (`traffic-deptak.ts`). Both are the city's route along Bajkowskiego's left lane,
  * cut where they leave or join it, so their cars drive its lane at its pace and give way as the
  * rest of the traffic does. Pure data of the map, built once.
  */

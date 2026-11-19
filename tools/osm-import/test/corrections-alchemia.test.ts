@@ -58,12 +58,14 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect((chunk.carParks ?? []).map((p) => p.id)).not.toContain("w173531008");
   });
 
-  it("leaves Bajkowskiego's footway, Lubartowska's footway and its carriageway as they were", () => {
+  it("leaves Bajkowskiego's footway and Lubartowska's footway as they were, Lubartowska's carriageway the deptak's setts (T-324)", () => {
     expect(surfaceAt(400, -10.9)).toBe("footway");
     expect(surfaceAt(437.6, 4)).toBe("footway");
-    expect(surfaceAt(446, 16)).toBe("road");
-    const dashes = (chunk.markings ?? []).filter((m) => m.kind === "lane-dash" && m.line[0] === 441.3);
-    expect(dashes).toHaveLength(1);
+    expect(surfaceAt(446, 16)).toBe("cobble");
+    // The junction of Bajkowskiego and Lubartowska w40050981 stays asphalt; the deptak has no painted lanes.
+    expect(surfaceAt(440.5, -17)).toBe("road");
+    const onDeptak = (m: { line: readonly number[] }) => m.line.some((v, k) => k % 2 === 1 && v > -9 && v < 42 && m.line[k - 1]! > 438 && m.line[k - 1]! < 458);
+    expect((chunk.markings ?? []).filter((m) => m.kind === "lane-dash" && onDeptak(m))).toHaveLength(0);
   });
 
   it("drives from Bajkowskiego's carriageway onto the ramp's top across the footway, which runs on over it", () => {

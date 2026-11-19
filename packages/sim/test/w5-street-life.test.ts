@@ -141,7 +141,10 @@ describe("daily plans on the street (ADR-0026)", () => {
     const sim = Simulation.create({ seed: 1 });
     skipTo(sim, hm(7, 29));
     teleportPlayer(sim, spotNear(KANAL_SPOTS.hideoHome.x + 3, KANAL_SPOTS.hideoHome.z));
-    sim.step();
+    // She follows him as a passer-by, the weapon put away: a drawn one in the Rynek's territory
+    // starts the gang's warning and then a shoot-out (ADR-0091), which is not this test's street.
+    sim.step(input({ toggleWeapon: true }));
+    expect([...sim.world.with("player")][0]?.combatant?.holstered).toBe(true);
     const hideo = byKey(sim, "hideo")!;
     expect(Math.hypot(hideo.position.x - KANAL_SPOTS.hideoHome.x, hideo.position.z - KANAL_SPOTS.hideoHome.z)).toBeLessThan(0.1);
     let closest = Infinity;

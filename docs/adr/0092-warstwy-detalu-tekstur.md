@@ -25,6 +25,15 @@ Status: Przyjęty (19.11), decyzja użytkownika z 18.11: „rozpoczniesz duży p
 3. Fugi wielkiej płyty (zrobione): betonowa ściana bloku (okna `block`) ma spoinę co kondygnację i co drugie przęsło, między oknami, jak bloki LSM i Czechowa. W obszarze gry takich bloków jest kilka (8 budynków mieszkalnych od 6 kondygnacji). Czwarty plik `detail-extra` (zrobione): deski (`weathered_planks`) na drzwiach i stolikach zestawu, tłuczeń (`gray_rocks`) na torowisku, ziarno granitowej kostki (`cobblestone_floor_08`, siła 0,25) pod proceduralnym brukiem Starego Miasta i ciemny klinkier (`red_brick_03`) na połowie ceglanych hal (`WALL_DETAIL.clinker`, losowanie dopisane na końcu). Dalej: tynk boniowany parterów, cegła licowa bloków z lat 60., papa z kruszywem.
 4. Dane z mapy: `roof:material` i `building:material` = `concrete`/`metal`/`glass` w imporcie, gdy OSM je ma. Pomiar 19.11 na `data/osm`: w obszarze gry 9 budynków ma `building:material` (wszystkie `brick`, już czytane od G-244) i 12 ma `roof:material` (8 `roof_tiles`, 4 `metal`). Za mało, żeby przeliczać tablice; wraca przy odświeżeniu mapy, gdy tagów przybędzie.
 
+## Wersja komiksowa (19.11)
+Decyzja użytkownika z 19.11, po zrzutach przed i po: dawny wygląd miał więcej charakteru, bo ziarno zdjęć zamulało kolor i kłóciło się z konturem. Użytkownik przyjął wersję komiksową (trzy wersje na tych samych kadrach w dzień i w nocy) i kazał przywrócić stare chodniki.
+- Warstwę czyta się o jeden mip grubiej (`detailTex`, bias 1), więc ziarna zdjęcia nie widać.
+- Liczą się tylko teksele ciemniejsze od średniej warstwy, w dwóch stopniach jak cele: 40% siły od 0,13 poniżej średniej, pełna od 0,23. Wychodzą linie fug, rzędów i pęknięć, bez szarej mgiełki. Albedo × (1 − siła) na najciemniejszych tekselach, gdzie indziej kolor palety.
+- Siła 0 (płaski kolor palety): tynk, beton ścian, płyty chodnika, trawa, ziemia, piaskowiec cokołu, granit placu, papa. Ich zdjęcia dawały tylko plamy.
+- Linie zostają na cegle (0,55, wzmocnione na prośbę użytkownika), klinkierze, asfalcie (pęknięcia), dachówce, blasze, deskach, tłuczniu i kostce.
+- Chodnik, ścieżka i plac znowu mają proceduralne płyty sprzed ADR-0092 (siatka co 1 m z odcieniem płyty, płytki 0,3 m, granit w przewiązce).
+- Generator materiałów (pkt 3) zostaje: decyduje, gdzie są linie cegły, dachówki i blachy.
+
 ## Konsekwencje
 - Miasto zyskuje fakturę z bliska bez zmiany stylu i bez kosztu w wywołaniach; pobranie gry rośnie o ok. 2,7 MB, pamięć GPU o ok. 4 MB z mipmapami.
 - Wygląd fasad i gruntu się zmienia: nowa migawka NPR, obejrzana przed scaleniem.
