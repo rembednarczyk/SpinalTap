@@ -65,9 +65,9 @@ const setup = async () => {
   return { session, ui, persistence };
 };
 
-const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
+const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0, y?: number) => {
   const p = s.sim.player()!;
-  p.position = ground(x, z);
+  p.position = y === undefined ? ground(x, z) : { x, y, z };
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -162,7 +162,8 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(ui.getState().questTitle).toBe("Contract 3 · Hana");
     expect(ui.getState().mapMarkers.some((m) => m.kind === "target" && m.id === `${retrieval.id}-item`)).toBe(true);
     const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
-    teleport(session, crate.x - 1, crate.z, Math.PI / 2);
+    // In the shelter under T2 (ADR-0074 stage 5d2): east of the crate on its floor, facing it.
+    teleport(session, crate.x + 1, crate.z, -Math.PI / 2, 0, crate.y - 0.3);
     steps(session, 1, frame({ interact: true }));
     expect(session.sim.domain.contracts.active?.status).toBe("cleared");
     expect(ui.getState().objective).toBe("Crate taken. Go back to Hana for your pay");

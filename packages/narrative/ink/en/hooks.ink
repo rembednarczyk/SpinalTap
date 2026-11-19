@@ -21,13 +21,13 @@ Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package hol
 HEBI: We grab couriers under the footbridge. We don't go up top, because Kenji's scared of heights and nobody wants to go first.
 -> END
 
-// retrieve: Hana's crate at the Hebi stash by the ruin behind Alchemia's stalls.
+// retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.
 === hook_retrieve_1 ===
 HEBI: Two of us watch the crate, but after midnight Daisuke goes to Fumiko's for ramen. Back in fifteen, if there's no line.
 -> END
 
 === hook_retrieve_2 ===
-Shard, Hebi note: "From the roof terrace of Alchemia you can see the stash plain as day. The lift up is behind the hall. The boys at the crate only watch the way in from the square."
+Shard, Hebi note: "Shelter gate from the garage downstairs: 2207. Kenji, stop asking, and stop letting the robots see you punch it in."
 -> END
 
 // protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.

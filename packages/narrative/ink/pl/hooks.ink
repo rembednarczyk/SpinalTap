@@ -21,13 +21,13 @@ Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temp
 HEBI: Pod kładką łapiemy kurierów. Na górę nie chodzimy, bo Kenji ma lęk wysokości i nikt nie chce pierwszy.
 -> END
 
-// retrieve: Hana's crate at the Hebi stash by the ruin behind Alchemia's stalls.
+// retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.
 === hook_retrieve_1 ===
 HEBI: Skrzynki pilnujemy we dwóch, ale po północy Daisuke idzie do Fumiko na ramen. Wraca po kwadransie, jak nie ma kolejki.
 -> END
 
 === hook_retrieve_2 ===
-Shard, notatka Hebi: „Z tarasu na dachu Alchemii widać skrytkę jak na dłoni. Winda na górę jest za halą. Chłopaki przy skrzynce pilnują tylko wejścia od placu”.
+Shard, notatka Hebi: „Brama schronu od garażu na dole: 2207. Kenji, przestań pytać i nie wstukuj go tak, żeby roboty widziały”.
 -> END
 
 // protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.

@@ -5,10 +5,10 @@ import { setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
 /**
- * The air-raid shelter under T2 (ADR-0074 stage 5d1), headless: Seki goes down the hatch on T2
- * into the shelter (an interior of its own, ADR-0061), across its room past the exhibit, down the
- * passage and up the flight to the steel gate, which opens for her into P-2's corridor; and back
- * from the corridor through the gate and up the hatch onto T2, unhurt.
+ * The air-raid shelter under T2 (ADR-0074 stages 5d1 and 5d2), headless: Seki goes down the hatch
+ * on T2 into the shelter (an interior of its own, ADR-0061), across its room past the exhibit, down
+ * the passage and up the flight to the steel gate, Hebi's and coded: shut to her without a job;
+ * from P-2's corridor it keeps her out; from the room she goes back up the hatch onto T2, unhurt.
  */
 
 const at = (session: GameSession): Vec3 => session.sim.player()!.position;
@@ -47,8 +47,8 @@ const WAY = [
   { x: 418.4, z: GATE_Z },
 ] as const;
 
-describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
-  it("takes her down the hatch from T2 into the shelter, across it and up through the steel gate into P-2's corridor", () => {
+describe("the shelter under T2 (ADR-0074 stages 5d1, 5d2)", () => {
+  it("takes her down the hatch from T2 into the shelter, across it and up the gate's flight, where the Hebi's locked gate holds her", () => {
     const session = start();
     teleport(session, OUT.x, OUT.z, -Math.PI / 2);
     steps(session, 2);
@@ -62,28 +62,30 @@ describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
     expect(session.sim.session.interior).toBe("alchemia-shelter");
     for (const p of [west, south, passage]) walkAt(session, p, 900);
     expect(flat(at(session), passage)).toBeLessThan(0.5);
-    expect(session.sim.session.interior).toBe("alchemia-shelter");
     walkAt(session, landing, 900);
     expect(flat(at(session), landing)).toBeLessThan(0.5);
     expect(at(session).y).toBeCloseTo(P2.floor, 1);
-    walkAt(session, corridor, 600);
-    expect(flat(at(session), corridor)).toBeLessThan(0.5);
-    steps(session, 2);
-    expect(session.sim.session.interior).toBe("alchemia-p2");
+    // Against the gate (stage 5d2): coded, Hebi's; no job, no way through.
+    walkAt(session, corridor, 300);
+    expect(at(session).x).toBeGreaterThan(SHELTER_GATE_STAIR.minX);
+    expect(session.sim.session.interior).toBe("alchemia-shelter");
     expect(me.health!.current).toBe(hp);
   });
 
-  it("takes her back from P-2's corridor through the gate, down and across the shelter and up the hatch onto T2", () => {
+  it("keeps her out of the gate from P-2's corridor, and takes her back up the hatch onto T2 from inside", () => {
     const session = start();
     const corridor = WAY.at(-1)!;
     teleport(session, corridor.x, corridor.z, Math.PI / 2, 0, P2.floor);
     steps(session, 2);
     const me = session.sim.player()!;
     const hp = me.health!.current;
-    for (const p of [...WAY].reverse().slice(1)) walkAt(session, p, 900);
-    expect(flat(at(session), WAY[0])).toBeLessThan(0.5);
-    expect(session.sim.session.interior).toBe("alchemia-shelter");
-    walkAt(session, OUT, 900);
+    walkAt(session, WAY.at(-2)!, 300);
+    expect(at(session).x).toBeLessThan(SHELTER_GATE_STAIR.minX - P2.wall);
+    expect(session.sim.session.interior).toBe("alchemia-p2");
+    // From the room up the hatch.
+    teleport(session, WAY[1].x, WAY[1].z, Math.PI / 2, 0, SHELTER.floor);
+    steps(session, 2);
+    for (const p of [WAY[0], OUT]) walkAt(session, p, 900);
     expect(flat(at(session), OUT)).toBeLessThan(0.5);
     steps(session, 10);
     expect(at(session).y).toBeCloseTo(groundY(OUT.x, OUT.z), 1);

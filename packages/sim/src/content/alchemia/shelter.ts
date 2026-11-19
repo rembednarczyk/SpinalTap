@@ -58,7 +58,11 @@ export const SHELTER_HATCH = { minX: SHELTER.maxX, maxX: 441.4, minZ: 95.0, maxZ
 /** The east end of the hatch's last tread: the landing under the hatch from there. */
 export const SHELTER_HATCH_HEAD = SHELTER_HATCH.foot + (SHELTER_RISERS - 1) * SHELTER_HATCH.going;
 
-/** The steel gate in P-2's corridor's east wall: it opens for whoever comes up to it (stage 5d2 locks it). */
+/**
+ * The steel gate in P-2's corridor's east wall, Hebi's (stage 5d2): it opens for them; for the
+ * player only on a retrieval, with the code or forced at its panel on the corridor's side (ADR-0082's
+ * coded doors). Otherwise the way in is the hatch on T2.
+ */
 export const SHELTER_GATE: DoorDef = {
   key: "alchemia-shelter-gate",
   at: { x: P2_CORRIDOR.maxX - P2.wall / 2, y: F2, z: (P2_SHELTER_GATE.z0 + P2_SHELTER_GATE.z1) / 2 },
@@ -68,6 +72,8 @@ export const SHELTER_GATE: DoorDef = {
   leaves: 1,
   dir: -1,
   material: "metal",
+  lock: { kind: "code", staff: "hebi", during: "retrieve" },
+  panel: { x: P2_CORRIDOR.maxX - P2.wall - 0.08, y: F2 + 1.3, z: P2_SHELTER_GATE.z1 + 0.5 },
 };
 
 /** The top of the step under z on the gate's flight: P-2's floor on its landing, the room's past its foot. */
