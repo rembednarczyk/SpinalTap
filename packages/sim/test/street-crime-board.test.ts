@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { GRUDGE_STEP, SECONDS_PER_HOUR, bandLevel, TERRITORIES, TESSEN_FOIL_STANDING, crimeSlot, standingOf, streetCrimePay, streetCrimesAt } from "@seki/core";
 import { CRIME_REACH, type BoardCrime, DISTRICT_BANDS, MICRO_SPOTS, Simulation, TERRITORY_GROUPS, chunkAt, crimeBoard, crimeHidden, ground, inBuilding } from "../src";
+import { LUBLIN_CHUNKS } from "../src/content/lublin";
 import { onRoad } from "../src/content/lublin/roads";
+import { groundY } from "../src/content/lublin/terrain";
+import { walkBoth } from "../src/world/walk";
 import { run, teleportPlayer } from "./helpers";
 
 /*
@@ -12,6 +15,39 @@ import { run, teleportPlayer } from "./helpers";
  */
 
 const HOUR = 13;
+
+/** Churches, the castle and its chapel: no crime within `SACRED_OFF` of them; places of memory: `MEMORY_OFF` (ADR-0091 §1). */
+const SACRED = /Kości|Cerkiew|Kaplica|Synagog|Archikatedr|Bazylik|Klasztor|Zamek/;
+const MEMORY = /Getto|Langfus|Chewra/;
+const SACRED_OFF = 50;
+const MEMORY_OFF = 100;
+
+/** Metres from (x, z) to the nearest corner of a building whose name or use matches. */
+const nearestOf = (x: number, z: number, match: (b: (typeof LUBLIN_CHUNKS)[number]["buildings"][number]) => boolean): number => {
+  let best = Infinity;
+  for (const c of LUBLIN_CHUNKS)
+    for (const b of c.buildings) {
+      if (!match(b)) continue;
+      for (let i = 0; i + 1 < b.outline.length; i += 2) best = Math.min(best, Math.hypot(b.x + b.outline[i]! - x, b.z + b.outline[i + 1]! - z));
+    }
+  return best;
+};
+
+/** The ground as the walk's rule reads it: height, and slope over half a metre. */
+const cell = (x: number, z: number) => ({
+  y: groundY(x, z),
+  slope: Math.max(Math.abs(groundY(x + 0.25, z) - groundY(x - 0.25, z)), Math.abs(groundY(x, z + 0.25) - groundY(x, z - 0.25))) / 0.5,
+  flight: false,
+});
+
+/** Can one walk from the spot 3 m out every way (its people's room), in steps of half a metre? */
+const roomy = (x: number, z: number): boolean =>
+  Array.from({ length: 8 }, (_, k) => (k * Math.PI) / 4).every((a) =>
+    Array.from({ length: 6 }, (_, i) => i).every((i) => {
+      const [x0, z0, x1, z1] = [x + Math.sin(a) * i * 0.5, z + Math.cos(a) * i * 0.5, x + Math.sin(a) * (i + 1) * 0.5, z + Math.cos(a) * (i + 1) * 0.5];
+      return !inBuilding(x1, z1) && walkBoth(cell(x0, z0), cell(x1, z1)) === null;
+    }),
+  );
 
 /** After Kaito's first word, at 13:00, with `patch` on the domain. */
 const street = (seed = 6, patch: (d: Simulation["domain"]) => Simulation["domain"] = (d) => d): Simulation => {
@@ -105,13 +141,24 @@ describe("the street's board of crimes (ADR-0091 stage 5a)", () => {
     expect(crimeHidden(null, "kanal")).toBe(false);
   });
 
-  it("stands every spot of the board on the pavement of its district", () => {
+  it("stands every spot of the board on the pavement of its district, with room round it", () => {
     for (const [district, spots] of Object.entries(MICRO_SPOTS)) {
+      expect(spots.length, district).toBeGreaterThanOrEqual(6);
+      expect(spots.length, district).toBeLessThanOrEqual(8);
       for (const p of spots) {
         expect(chunkAt(p.x, p.z)?.district, `${p.x},${p.z}`).toBe(district);
         expect(inBuilding(p.x, p.z)).toBe(false);
         if (district !== "doki") expect(onRoad(p.x, p.z)).toBe(false);
+        expect(roomy(p.x, p.z), `${p.x},${p.z}: 3 m round it to walk`).toBe(true);
+        for (const q of spots) if (q !== p) expect(Math.hypot(q.x - p.x, q.z - p.z), `${p.x},${p.z} by ${q.x},${q.z}`).toBeGreaterThanOrEqual(25);
       }
+    }
+  });
+
+  it("keeps every spot off the churches, the castle and the places of memory (ADR-0091 §1)", () => {
+    for (const p of Object.values(MICRO_SPOTS).flat()) {
+      expect(nearestOf(p.x, p.z, (b) => b.use === "church" || SACRED.test(b.name ?? "")), `${p.x},${p.z} by a church`).toBeGreaterThanOrEqual(SACRED_OFF);
+      expect(nearestOf(p.x, p.z, (b) => MEMORY.test(b.name ?? "")), `${p.x},${p.z} by a place of memory`).toBeGreaterThanOrEqual(MEMORY_OFF);
     }
   });
 });
