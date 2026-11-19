@@ -454,6 +454,34 @@ Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dot
     - **Zaokrąglone szkło** (zrobione): szkło kondygnacji pod płytą z równym wysięgiem na wszystkie strony (front L1–L3, kondygnacje A i B) silnik rysuje po obrysie płyty z łukami, cofniętym o wysięg (`roundedGlass`). Narożniki szkła idą więc za łukami płyty. Symulacja zostaje przy pudłach.
 - **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).
 
+### Do 1:1 z planszą (decyzje użytkownika 19.11, wieczór)
+Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy rampie i przy pawilonie) dało listę różnic. Użytkownik: „Lecimy z Twoim planem usprawnień, budynek z arkadami może przejść od frontu, robimy dziedziniec w dachu taki jak na referencji + nasze pergole z lampionami i ławki. Maksymalnie 1:1 z referencyjną grafiką”. Etapy, każdy osobnym PR-em:
+- **C1.** Szkło z wnętrzem, płyty, balustrady, mocniejsze LED.
+- **C2.** Zieleń: pnącza na krawędziach, drzewa i krzewy na tarasach, zielony stok jako ciągła pochylnia z linią LED.
+- **C3.** Jasny budynek z arkadami w osi frontu, za fontanną i obok rampy, z dwiema kondygnacjami (łuki i okna). Pawilon na rogu wraca do szkła z planu inwestora.
+- **C4.** Jasna skrzynia napisu, pionowe holo-ekrany obok niej, ekrany podium z obrazem.
+- **C5.** Plac: szerokie schody, okrągła fontanna, kioski z jedzeniem i parasolami, automaty, stoliki.
+- **C6.** Dziedziniec w dachu jak w aksonometrii, z pergolami, lampionami i ławkami.
+- **C7.** Deptak z neonami (pionowy ALCHEMIA, PARKING CAŁODOBOWY, SPOŻYWCZY) i straganami, ruch aut na rampie, schody obok niej, ludzie na tarasach.
+
+### Etap C1: szkło, płyty i balustrady (19.11)
+- **Zaokrąglenia w symulacji.** B4 zaokrąglał tylko rysunek, więc na odciętym narożniku tarasu dało się stać w powietrzu. Teraz element (`Piece`) może mieć obrys (`outline`), a bryła symulacji to graniastosłup tego obrysu.
+  - Płyta, szkło pod nią i balustrada kondygnacji mają jeden zaokrąglony obrys (`rounded.ts`). Wzorzec: prostokąt o zaokrąglonych narożnikach, czyli suma Minkowskiego prostokąta i koła, z łukami współśrodkowymi, więc obrys przesunięty do środka zostaje zaokrąglony.
+  - Promień wynosi 2 m, najwyżej ćwierć krótszego boku (wcześniej 1 m).
+  - Zaokrąglone są tylko narożniki zewnętrzne. Styki pasm kondygnacji B i skrzydeł L1 zostają proste (`outerCorners`).
+  - Liczba brył się nie zmienia, więc identyfikatory i złote hashe zostają.
+- **Balustrady.** Tarasy A i B dostały balustrady z bryłami wzdłuż zaokrąglonej krawędzi płyty, w miejsce prostych murków na linii szkła. Przejścia zostają nad podestami schodów.
+  - Na każdym prostym boku jest jeden graniastosłup, a na każdym łuku dwa, bo każda bryła kosztuje w płaskim indeksie brył.
+  - Dachy L1–L3 dostały balustrady tylko rysowane, bo nikt po nich nie chodzi. Przy zielonych stopniach L1 balustrada ma przerwę.
+  - Silnik rysuje balustradę jako słupki co 2 m z poręczą. Balustrad schowanych w szkle wyższej kondygnacji nie rysuje.
+- **Szkło jak na planszy** (`storey-facade.ts`). Wzorzec: fałszywe wnętrze oświetlonego okna (interior mapping, J. van Dongen 2008), zbudowane z geometrii, bo materiał kitu nie ma paralaksy.
+  - Na linii szkła stoją białe słupki ram co 3 m, cokół i nadproże.
+  - 1,6 m w głębi świeci ciepło tylna ściana pomieszczenia, a pod stropem ma ciemny pas.
+  - Pomieszczenie ma podłogę, a przy niej stoją ciemne sylwetki ludzi i stoliki, rozstawione deterministycznie co 2,9 m.
+  - Krawędzie schowane w sąsiedniej kondygnacji nie dostają nic.
+- **Płyty.** Są jasne, z belką krawędziową 0,32 m pod płytą. Pas światła ma 0,14 m zamiast 0,08 i biegnie po łuku wzdłuż belki.
+- **Budżet.** Siatka kondygnacji ma 12,2 tys. trójkątów przy budżecie 16 tys. Wywołania rysowania się nie zmieniają, bo ramy, wnętrza i balustrady leżą w siatce kondygnacji.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.

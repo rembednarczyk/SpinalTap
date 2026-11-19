@@ -1,4 +1,4 @@
-import type { Vec3, ViewDescriptor } from "@seki/core";
+import type { GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
 import type { Rect, StaticProp } from "../builders";
 import type { PrismDef } from "../../world/prism";
 
@@ -92,9 +92,23 @@ export interface Piece {
   readonly kind: PieceKind;
   readonly solid: boolean;
   readonly inside: boolean;
+  /**
+   * Its footprint when it is not its box (a rounded slab, its glass, a balustrade's piece on an arc,
+   * 19.11): a convex outline counter-clockwise on the map within the box's x and z, its prism's.
+   */
+  readonly outline?: readonly GroundPoint[];
 }
 
 export const piece = (b: Box, kind: PieceKind, inside: boolean, solid = true): Piece => ({ box: b, kind, solid, inside });
+
+/** A piece whose footprint is `outline` (convex, counter-clockwise), from `y0` to `y1`: its box bounds it. */
+export const outlined = (outline: readonly GroundPoint[], y0: number, y1: number, kind: PieceKind, solid = true): Piece => ({
+  box: box(Math.min(...outline.map((p) => p.x)), Math.max(...outline.map((p) => p.x)), Math.min(...outline.map((p) => p.z)), Math.max(...outline.map((p) => p.z)), y0, y1),
+  kind,
+  solid,
+  inside: false,
+  outline,
+});
 
 /** Seen nowhere as an entity: the engine draws Alchemia (`scenery`). */
 const NO_VIEW: ViewDescriptor = { kind: "street-props", items: [] };
@@ -111,15 +125,23 @@ const prismOf = (b: Box, c: Vec3): PrismDef => ({
   top: b.y1 - c.y,
 });
 
+/** An outlined piece as a prism around `c`. */
+const outlinePrism = (p: Piece, c: Vec3): PrismDef => ({
+  points: p.outline!.map((q) => ({ x: q.x - c.x, z: q.z - c.z })),
+  bottom: p.box.y0 - c.y,
+  top: p.box.y1 - c.y,
+});
+
 /** The solid pieces as one static prop of prisms, its centre at the middle of their boxes' foot. */
 export const solidProp = (pieces: readonly Piece[]): StaticProp => {
-  const boxes = pieces.filter((p) => p.solid).map((p) => p.box);
+  const solids = pieces.filter((p) => p.solid);
+  const boxes = solids.map((p) => p.box);
   const c = {
     x: (Math.min(...boxes.map((b) => b.x0)) + Math.max(...boxes.map((b) => b.x1))) / 2,
     y: Math.min(...boxes.map((b) => b.y0)),
     z: (Math.min(...boxes.map((b) => b.z0)) + Math.max(...boxes.map((b) => b.z1))) / 2,
   };
-  return { center: c, view: NO_VIEW, solid: true, prisms: boxes.map((b) => prismOf(b, c)), scenery: true };
+  return { center: c, view: NO_VIEW, solid: true, prisms: solids.map((p) => (p.outline ? outlinePrism(p, c) : prismOf(p.box, c))), scenery: true };
 };
 
 /** A point on the hall's floor. */

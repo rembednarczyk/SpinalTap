@@ -4,7 +4,8 @@ import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
 import { pavilionGeometry } from "./pavilion-geometry";
-import { ledOfSlab, overhangOf, roundedGlass, roundedSlab } from "./rounded-slab";
+import { ledOfSlab } from "./rounded-slab";
+import { glassFacade, prismOutline, railing, slabOutline } from "./storey-facade";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
@@ -195,6 +196,48 @@ const TIER_SET: ReadonlySet<AlchemiaPiece> = new Set(ALCHEMIA_TIER_PIECES);
 /** A storey's slab: a roof piece a slab thick, big enough to be a floor (not L2's underside, nor a planter). */
 const isSlab = (p: AlchemiaPiece): boolean => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30;
 
+type Outline = readonly { readonly x: number; readonly z: number }[];
+
+/** Is (x, z) inside a convex counter-clockwise outline? */
+const within = (pts: Outline, x: number, z: number): boolean =>
+  pts.every((p, i) => {
+    const q = pts[(i + 1) % pts.length]!;
+    return (q.x - p.x) * (z - p.z) - (q.z - p.z) * (x - p.x) >= 0;
+  });
+
+/** The edges of a storey's glass that stand inside another's (the joints between a storey's bars, a wing under the next storey up): nothing to draw on them. */
+const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: number) => boolean) => {
+  const pts = p.outline!;
+  const y = (p.box.y0 + p.box.y1) / 2;
+  const others = glass.filter((g) => g !== p && g.box.y0 < y && g.box.y1 > y);
+  return (i) => {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    // Half a metre out of the edge's middle.
+    const x = (a.x + b.x) / 2 + ((b.z - a.z) / len) * 0.5;
+    const z = (a.z + b.z) / 2 - ((b.x - a.x) / len) * 0.5;
+    return others.some((g) => within(g.outline!, x, z));
+  };
+};
+
+/** A piece of the storeys drawn from its outline (19.11, the board 1:1): false when it is not one. */
+const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): boolean => {
+  const pts = p.outline;
+  if (!pts) return false;
+  const b = p.box;
+  if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led);
+  else if (p.kind === "glass") glassFacade(sink, data, pts, b.y0, b.y1, hiddenEdges(p, glass));
+  else if (p.kind === "parapet") {
+    // A roof's balustrade under the next storey up stands in its glass: not drawn.
+    const [x, z] = [pts.reduce((s, q) => s + q.x, 0) / pts.length, pts.reduce((s, q) => s + q.z, 0) / pts.length];
+    const y = (b.y0 + b.y1) / 2;
+    if (!glass.some((g) => g.box.y0 < y && g.box.y1 > y && within(g.outline!, x, z))) railing(sink, data, pts, b.y0, b.y1);
+  }
+  else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
+  return true;
+};
+
 /** Alchemia's two sinks from the simulation's pieces. */
 export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPiece[] = ALCHEMIA_PIECES): AlchemiaSinks => {
   const outside = new GeometrySink();
@@ -203,22 +246,12 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   const steps = new Map(pieces.filter((p) => p.kind === "step").map((p) => [`${p.box.x0.toFixed(3)}:${p.box.x1.toFixed(3)}:${p.box.z0.toFixed(3)}:${p.box.z1.toFixed(3)}`, p] as const));
   // The storeys' slabs, drawn round-cornered with their strip of light (B4); the simulation's straight strips go.
   const slabs = pieces.filter((p) => TIER_SET.has(p) && isSlab(p)).map((p) => p.box);
+  const glass = pieces.filter((p) => p.kind === "glass" && p.outline);
   for (const p of pieces) {
     const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
-    if (TIER_SET.has(p) && isSlab(p)) {
-      roundedSlab(sink, data, b, swatchOf(p), SWATCH.led);
-      continue;
-    }
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
-    // A storey's glass under a rounded slab: its corners round with the slab's (B4).
-    if (TIER_SET.has(p) && p.kind === "glass") {
-      const over = overhangOf(b, slabs);
-      if (over) {
-        roundedGlass(sink, data, b, over.slab, over.reach, swatchOf(p));
-        continue;
-      }
-    }
+    if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
       const lit = Math.min(b.y1, FOODHALL.floor + LIT_GLASS);

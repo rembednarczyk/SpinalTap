@@ -1,4 +1,5 @@
-import { HALL, PARAPET, type Box, type Piece, box, piece } from "./plan";
+import { HALL, PARAPET, type Box, type Piece, box, outlined, piece } from "./plan";
+import { ALL_CORNERS, type Corners, type Rectangle, balustrade, cornerRadius, outerCorners, roundedOutline } from "./rounded";
 
 /*
  * Alchemia's green tiers over the food hall (ADR-0074, decisions of 15.11: the concept board
@@ -71,8 +72,23 @@ const flight = (f: Flight): Piece[] => {
   return out;
 };
 
-/** A ring of parapets round a rectangle at `y`, open over the z spans in `gapsWest` of its west side. */
-const parapets = (r: { minX: number; maxX: number; minZ: number; maxZ: number }, y: number, gapsWest: readonly { z0: number; z1: number }[] = []): Piece[] => {
+type Area = { minX: number; maxX: number; minZ: number; maxZ: number };
+
+/** A storey's slab: its glass's outline grown by the overhang. */
+export const slabOf = (r: Area): Rectangle => ({ x0: r.minX - OVER, x1: r.maxX + OVER, z0: r.minZ - OVER, z1: r.maxZ + OVER });
+
+/**
+ * The balustrade round a terrace (19.11, the board's): a hand in from its slab's rounded edge, open
+ * over a stair's landing on its west side (the z spans in `gapsWest`).
+ */
+const terraceRail = (r: Area, y: number, gapsWest: readonly { z0: number; z1: number }[], radius?: number): Piece[] => {
+  const s = slabOf(r);
+  const gaps = gapsWest.map((g) => ({ x0: s.x0 - 1, x1: r.minX + 0.5, z0: g.z0, z1: g.z1 }));
+  return balustrade(s, -0.05, ALL_CORNERS, y, PARAPET, true, gaps, radius);
+};
+
+/** A ring of parapets round a rectangle at `y` (the courtyard's hole: square, knee-high walls). */
+const parapets = (r: Area, y: number, gapsWest: readonly { z0: number; z1: number }[] = []): Piece[] => {
   const top = y + PARAPET;
   const west: Piece[] = [];
   let z = r.minZ + WALL;
@@ -89,12 +105,16 @@ const parapets = (r: { minX: number; maxX: number; minZ: number; maxZ: number },
   ];
 };
 
-/** A slab over glass: the glass up to it, the slab with its overhang, a strip of light along its edge. */
-const storey = (r: { minX: number; maxX: number; minZ: number; maxZ: number }, bottom: number, top: number): Piece[] => {
+/**
+ * A slab over glass: the glass up to it, the slab with its overhang, a strip of light along its
+ * edge; its `corners` rounded (19.11), the glass's concentric with the slab's.
+ */
+export const storey = (r: Area, bottom: number, top: number, corners: Corners = ALL_CORNERS, radius = cornerRadius(slabOf(r))): Piece[] => {
   const s = top - SLAB;
+  const slab = slabOf(r);
   return [
-    piece(box(r.minX, r.maxX, r.minZ, r.maxZ, bottom - 0.05, s), "glass", false),
-    piece(box(r.minX - OVER, r.maxX + OVER, r.minZ - OVER, r.maxZ + OVER, s, top), "roof", false),
+    outlined(roundedOutline(slab, -OVER, corners, undefined, radius), bottom - 0.05, s, "glass"),
+    outlined(roundedOutline(slab, 0, corners, undefined, radius), s, top, "roof"),
     ...ledRing(r, s, OVER),
   ];
 };
@@ -159,14 +179,18 @@ const terraceFurniture = (): Piece[] =>
     piece(box(x - 0.1, x + 1.3, TIER_A.minZ + 0.3, TIER_A.minZ + 0.5, TIER_A.top, TIER_A.top + 0.45), "bench", false),
   ]);
 
+/** B's ring rounds at its bars' radius (the narrowest bar's), its joints round the courtyard square. */
+const B_RADIUS = Math.min(...B_BARS.map((b) => cornerRadius(slabOf(b))));
+const B_RECTS = B_BARS.map((b) => ({ x0: b.minX, x1: b.maxX, z0: b.minZ, z1: b.maxZ }));
+
 export const tierPieces = (): Piece[] => {
   const lA = landing(FLIGHT_A);
   const lB = landing(FLIGHT_B);
   return [
     ...storey(TIER_A, TIER_A.bottom, TIER_A.top),
-    ...B_BARS.flatMap((b) => storey(b, TIER_B.bottom, TIER_B.top)),
-    ...parapets(TIER_A, TIER_A.top, [{ z0: lA.z0 - 0.1, z1: lA.z1 + 0.1 }]),
-    ...parapets(TIER_B, TIER_B.top, [{ z0: lB.z0 - 0.1, z1: lB.z1 + 0.1 }]),
+    ...B_BARS.flatMap((b, i) => storey(b, TIER_B.bottom, TIER_B.top, outerCorners(B_RECTS[i]!, B_RECTS), B_RADIUS)),
+    ...terraceRail(TIER_A, TIER_A.top, [{ z0: lA.z0 - 0.1, z1: lA.z1 + 0.1 }]),
+    ...terraceRail(TIER_B, TIER_B.top, [{ z0: lB.z0 - 0.1, z1: lB.z1 + 0.1 }], B_RADIUS),
     // Round the courtyard's hole in B's roof: knee-high walls with nothing between.
     ...parapets({ minX: COURTYARD.minX - WALL, maxX: COURTYARD.maxX + WALL, minZ: COURTYARD.minZ - WALL, maxZ: COURTYARD.maxZ + WALL }, TIER_B.top),
     ...flight(FLIGHT_A),

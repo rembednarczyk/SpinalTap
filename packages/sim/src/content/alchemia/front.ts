@@ -1,7 +1,8 @@
 import type { Rect } from "../builders";
 import { P1_RAMP, P1_STAIR } from "./parking";
-import { type Box, type Piece, box, piece } from "./plan";
-import { TIER_A, TIER_B } from "./tiers";
+import { PARAPET, type Box, type Piece, box, outlined, piece } from "./plan";
+import { type Rectangle, balustrade, outerCorners, roundedOutline } from "./rounded";
+import { TIER_A, TIER_B, slabOf, storey as tierStorey } from "./tiers";
 
 /*
  * Alchemia's front on Bajkowskiego (ADR-0074, "Bryła na całym terenie", stage B1, decisions of
@@ -23,8 +24,7 @@ import { TIER_A, TIER_B } from "./tiers";
 export const L1_TOP = TIER_A.top;
 export const L2_TOP = TIER_B.top;
 export const L3_TOP = L2_TOP + 4.2;
-/** A slab's thickness at a storey's top and its overhang past the glass. */
-const SLAB = 0.3;
+/** A slab's overhang past the glass (the tiers' storeys'). */
 const OVER = 0.3;
 
 /** L1's west wing: by Bajkowskiego as deep as the car park's slanted west edge allows, narrower to the north. */
@@ -78,24 +78,29 @@ export const PASSAGE_COLUMNS: readonly { readonly x: number; readonly z: number 
   { x: 434.6, z: 24.5 },
 ];
 
-/** The light along a slab's edge: four thin strips just outside it, under its top. */
-const ledRing = (r: Rect, y: number, over: number): Piece[] => {
-  const [x0, x1, z0, z1] = [r.minX - over - 0.04, r.maxX + over + 0.04, r.minZ - over - 0.04, r.maxZ + over + 0.04];
-  const [y0, y1] = [y + 0.06, y + 0.14];
-  return [
-    piece(box(x0, x1, z0, z0 + 0.04, y0, y1), "led", false, false),
-    piece(box(x0, x1, z1 - 0.04, z1, y0, y1), "led", false, false),
-    piece(box(x0, x0 + 0.04, z0, z1, y0, y1), "led", false, false),
-    piece(box(x1 - 0.04, x1, z0, z1, y0, y1), "led", false, false),
-  ];
-};
+/** L1's storeys: the wings, their joints square. */
+const L1_LEVEL: readonly Rect[] = [...WEST_WING, EAST_WING];
 
-/** A storey: its glass from `bottom` up to the slab, the slab with its overhang, the light along it. */
-const storey = (r: Rect, bottom: number, top: number): Piece[] => [
-  piece(box(r.minX, r.maxX, r.minZ, r.maxZ, bottom, top - SLAB), "glass", false),
-  piece(box(r.minX - OVER, r.maxX + OVER, r.minZ - OVER, r.maxZ + OVER, top - SLAB, top), "roof", false),
-  ...ledRing(r, top - SLAB, OVER),
-];
+/** L2's underside over the passage, under its glass's rounded outline. */
+const soffit = (r: Rect): Piece => outlined(roundedOutline(slabOf(r), -OVER, outerCorners(rectOf(r), L2_SLABS.map(rectOf))), L1_TOP - SOFFIT, L1_TOP, "roof");
+
+const rectOf = (r: Rect): Rectangle => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
+
+/**
+ * A storey of a level whose storeys are `level`: its glass from `bottom` up to the slab, the slab
+ * with its overhang, the light along it, the outer corners rounded (19.11) as the tiers' are.
+ */
+const storey = (r: Rect, bottom: number, top: number, level: readonly Rect[] = [r]): Piece[] =>
+  tierStorey(r, bottom, top, outerCorners(rectOf(r), level.map(rectOf)));
+
+/**
+ * The balustrade round a storey's roof, drawn only (nobody walks the front's roofs), open where the
+ * green steps go down off L1 to the west.
+ */
+const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r]): Piece[] =>
+  balustrade(slabOf(r), -0.05, outerCorners(rectOf(r), level.map(rectOf)), top, PARAPET, false, [
+    { x0: GREEN_STEPS[0]!.x0 - 1, x1: WEST_WING[0]!.minX + 0.5, z0: STEPS_Z.z0 - 0.5, z1: STEPS_Z.z1 },
+  ]);
 
 /** The ground under a wing, a little under its lowest corner: the glass stands in the terrain, not over it. */
 const FOOT = -3;
@@ -167,11 +172,13 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */
 export const frontPieces = (): Piece[] => [
-  ...WEST_WING.flatMap((r) => storey(r, FOOT, L1_TOP)),
+  ...WEST_WING.flatMap((r) => [...storey(r, FOOT, L1_TOP, L1_LEVEL), ...roofRail(r, L1_TOP, L1_LEVEL)]),
   ...greenSteps(),
-  ...storey(EAST_WING, FOOT, L1_TOP),
-  ...L2_SLABS.flatMap((r) => [piece(box(r.minX, r.maxX, r.minZ, r.maxZ, L1_TOP - SOFFIT, L1_TOP), "roof", false), ...storey(r, L1_TOP, L2_TOP)]),
+  ...storey(EAST_WING, FOOT, L1_TOP, L1_LEVEL),
+  ...roofRail(EAST_WING, L1_TOP, L1_LEVEL),
+  ...L2_SLABS.flatMap((r) => [soffit(r), ...storey(r, L1_TOP, L2_TOP, L2_SLABS), ...roofRail(r, L2_TOP, L2_SLABS)]),
   ...storey(L3, L2_TOP, L3_TOP),
+  ...roofRail(L3, L3_TOP),
   ...columns(),
   ...screens(),
   piece(FRONT_SIGN, "sign", false),

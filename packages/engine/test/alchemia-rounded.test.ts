@@ -1,51 +1,52 @@
 import { describe, expect, it } from "vitest";
 import { ALCHEMIA_TIER_PIECES } from "@seki/sim";
-import { ledOfSlab, overhangOf, roundedOutline } from "../src/renderer/alchemia/rounded-slab";
+import { GeometrySink } from "../src/renderer/city-kit-data";
+import { ledOfSlab } from "../src/renderer/alchemia/rounded-slab";
+import { glassFacade, insetConvex } from "../src/renderer/alchemia/storey-facade";
+import { parseCityKit } from "../src/renderer/city-kit-data";
+// @ts-expect-error The engine is typed for the browser; the test reads the kit off disk.
+import { readFileSync } from "node:fs";
 
-/** The storeys' slabs drawn with rounded corners (ADR-0074 B4): the simulation's boxes stay. */
-describe("Alchemia's rounded slabs (B4)", () => {
-  const slabs = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30).map((p) => p.box);
-
-  it("rounds every storey's slab within its box, clear of the glass 0.3 m in under it", () => {
-    expect(slabs.length).toBeGreaterThanOrEqual(6);
-    for (const b of slabs) {
-      const pts = roundedOutline(b);
-      for (const p of pts) {
-        expect(p.x).toBeGreaterThanOrEqual(b.x0 - 1e-9);
-        expect(p.x).toBeLessThanOrEqual(b.x1 + 1e-9);
-        expect(p.z).toBeGreaterThanOrEqual(b.z0 - 1e-9);
-        expect(p.z).toBeLessThanOrEqual(b.z1 + 1e-9);
-      }
-      // The glass's corner (0.3 m in from both edges) stays under the rounded slab: no point of
-      // the outline cuts nearer the corner than it.
-      const glass = { x: b.x1 - 0.3, z: b.z1 - 0.3 };
-      const nearest = Math.min(...pts.map((p) => Math.hypot(p.x - b.x1, p.z - b.z1)));
-      expect(nearest).toBeLessThanOrEqual(Math.hypot(glass.x - b.x1, glass.z - b.z1) + 1e-9);
-    }
-  });
+/** The storeys' rounded slabs and their glass as the board shows them (ADR-0074 B4, 1:1 on 19.11). */
+describe("Alchemia's rounded storeys in the drawing", () => {
+  const bytes = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/city/city-kit.glb", import.meta.url));
+  const data = parseCityKit(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+  const slabs = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30);
 
   it("drops only the straight strips of light along the slabs, the green steps' ones stay", () => {
     const leds = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "led");
-    const dropped = leds.filter((p) => ledOfSlab(p.box, slabs));
+    const dropped = leds.filter((p) => ledOfSlab(p.box, slabs.map((s) => s.box)));
     expect(dropped.length).toBe(slabs.length * 4);
     expect(leds.length - dropped.length).toBeGreaterThan(0);
   });
 
-  it("rounds the storeys' glass under their slabs, within the glass's box, its corners drawn in by the slab's overhang", () => {
-    const glass = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "glass" && overhangOf(p.box, slabs));
-    // The front's L1 to L3 and the tiers' A and B storeys under a slab.
-    expect(glass.length).toBeGreaterThanOrEqual(4);
-    for (const g of glass) {
-      const { slab, reach } = overhangOf(g.box, slabs)!;
-      const pts = roundedOutline(slab, -reach);
-      for (const p of pts) {
-        expect(p.x).toBeGreaterThanOrEqual(g.box.x0 - 1e-6);
-        expect(p.x).toBeLessThanOrEqual(g.box.x1 + 1e-6);
-        expect(p.z).toBeGreaterThanOrEqual(g.box.z0 - 1e-6);
-        expect(p.z).toBeLessThanOrEqual(g.box.z1 + 1e-6);
-      }
-      // Its corner is cut: no point of the outline at the box's own corner.
-      expect(Math.min(...pts.map((p) => Math.hypot(p.x - g.box.x1, p.z - g.box.z1)))).toBeGreaterThan(0.05);
+  it("insets a rounded outline evenly: every point of the inset a room's depth inside", () => {
+    const glass = ALCHEMIA_TIER_PIECES.find((p) => p.kind === "glass" && p.outline && p.outline.length > 8)!;
+    const pts = glass.outline!;
+    const back = insetConvex(pts, 1.6);
+    expect(back.length).toBe(pts.length);
+    for (const b of back) {
+      // Its distance to the outline's nearest edge.
+      const d = Math.min(
+        ...pts.map((p, i) => {
+          const q = pts[(i + 1) % pts.length]!;
+          const [dx, dz] = [q.x - p.x, q.z - p.z];
+          const t = Math.max(0, Math.min(1, ((b.x - p.x) * dx + (b.z - p.z) * dz) / (dx * dx + dz * dz)));
+          return Math.hypot(b.x - p.x - dx * t, b.z - p.z - dz * t);
+        }),
+      );
+      expect(d).toBeCloseTo(1.6, 1);
     }
+  });
+
+  it("draws a storey's glass with its room behind it, nothing on the edges hidden in a neighbour", () => {
+    const glass = ALCHEMIA_TIER_PIECES.find((p) => p.kind === "glass" && p.outline && p.outline.length > 8)!;
+    const all = new GeometrySink();
+    glassFacade(all, data, glass.outline!, glass.box.y0, glass.box.y1, () => false);
+    const none = new GeometrySink();
+    glassFacade(none, data, glass.outline!, glass.box.y0, glass.box.y1, () => true);
+    expect(all.indices.length).toBeGreaterThan(none.indices.length * 4);
+    // Only the room's floor is left when every edge is hidden.
+    expect(none.indices.length).toBe(Math.ceil(glass.outline!.length / 2) * 6);
   });
 });
