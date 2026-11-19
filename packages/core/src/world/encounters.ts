@@ -32,26 +32,21 @@ export const markEncounter = (log: EncounterLog, def: EncounterDef, clock: GameC
   def.once ? { ...log, used: [...log.used, def.id].sort() } : { ...log, nights: { ...log.nights, [def.id]: nightOf(clock) } };
 
 /**
- * Micro-events in the style of Scanner Hustles (ADR-0034): a single beat on entering a
- * district, rolled rarely. A mugging is a fight (the gang on a passer-by), an aid a short help.
+ * The street's crimes in progress (ADR-0034, ADR-0091): a single beat at a spot of the street,
+ * off the board of every 4 game hours (`street-crimes.ts`). A mugging is a fight (the gang on a
+ * passer-by), an aid a short help, the rest of stage 5 the gang round a thing of the street.
  */
 export type MicroEventKind = "mugging" | "aid" | "extortion" | "deal" | "droneTheft" | "kidnap";
 
-/** Chance per district entry that a micro-event starts. */
-export const MICRO_EVENT_CHANCE = 0.12;
-
 /**
- * The chance while the street thinks badly of the player (civilians below −10, wary or hostile):
- * more chances to make it right (ADR-0070).
+ * While the street thinks badly of the player (civilians below this, wary or hostile) every
+ * district's board holds two crimes instead of one or two: more chances to make it right
+ * (ADR-0070, carried onto the board by ADR-0091 stage 5b in place of the entry roll's 25%).
  */
-export const MICRO_EVENT_CHANCE_DISTRUSTED = 0.25;
-
-/** Civilians' standing below this raises the chance of a micro-event (ADR-0070). */
 export const MICRO_EVENT_DISTRUST_BELOW = -10;
 
-/** The chance per district entry at `civilians` standing. */
-export const microEventChance = (civilians: number): number =>
-  civilians < MICRO_EVENT_DISTRUST_BELOW ? MICRO_EVENT_CHANCE_DISTRUSTED : MICRO_EVENT_CHANCE;
+/** Does the street think badly enough of the player for the fuller board? */
+export const streetDistrusts = (civilians: number): boolean => civilians < MICRO_EVENT_DISTRUST_BELOW;
 
 /** What it pays: eddies and standing with the civilians. */
 export const MICRO_EVENT_REWARD: Readonly<Record<MicroEventKind, { readonly eddies: number; readonly civilians: number }>> = {
