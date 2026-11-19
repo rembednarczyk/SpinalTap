@@ -134,6 +134,11 @@ export const inwardYaw = (spot: PavilionSpot, sign: 1 | -1): number => yawOf(spo
 /** The end wall's doorway down to the platform of stage 4: as wide as the stairs, from the hall's floor up to `head` over it. */
 export interface EndDoorway {
   readonly head: number;
+  /**
+   * The hall's floor runs on through the doorway (entrance B by Alchemia, ADR-0074 stage 10): the
+   * end wall is one block over the head, so the pavilion keeps its number of blocks.
+   */
+  readonly through?: boolean;
 }
 
 /** The street at the opening: the head of the stairs, the level everything of the entrance counts from. */
@@ -171,12 +176,14 @@ export const pavilion = (spot: PavilionSpot, doorway: EndDoorway | null = null):
       solid: true,
       scenery: true,
     },
-    // The hall's floor.
-    box(foot, hallEnd, -inner, inner, base, floor, "concrete"),
+    // The hall's floor, on through the end wall's doorway where it is open to a passage beyond.
+    box(foot, doorway?.through ? L : hallEnd, -inner, inner, base, floor, "concrete"),
     // The side walls and the end wall: concrete up to the plinth's top, glass above.
     ...[-1, 1].flatMap((s) => [box(0, L, s * inner, s * half, base, street + PLINTH, "concrete"), box(0, L, s * inner, s * half, street + PLINTH, top, "glass")]),
     // The end wall, with the doorway down to the platform where the entrance has one (stage 4).
-    ...(doorway ? [box(hallEnd, L, -inner, inner, base, floor, "concrete"), box(hallEnd, L, -inner, inner, floor + doorway.head, street + PLINTH, "concrete")] : [box(hallEnd, L, -inner, inner, base, street + PLINTH, "concrete")]),
+    ...(doorway
+      ? [...(doorway.through ? [] : [box(hallEnd, L, -inner, inner, base, floor, "concrete")]), box(hallEnd, L, -inner, inner, floor + doorway.head, street + PLINTH, "concrete")]
+      : [box(hallEnd, L, -inner, inner, base, street + PLINTH, "concrete")]),
     box(hallEnd, L, -inner, inner, street + PLINTH, top, "glass"),
     // The lintel over the opening and the roof with its eaves.
     box(0, END_WALL, -inner, inner, street + LINTEL, top, "glass"),

@@ -1,4 +1,4 @@
-import { P1_PIECES, P1_RAMP, P1_RAMP_CUT, type AlchemiaPiece, p1RampY } from "@seki/sim";
+import { P1_ALL_PIECES, P1_RAMP, P1_RAMP_CUT, type AlchemiaPiece, p1RampY } from "@seki/sim";
 import type { Box2 } from "../mapcity/polygon";
 import { type MeshSink, type Rgba, hexColor } from "../mesh-sink";
 
@@ -19,7 +19,7 @@ const FLOOR: Rgba = hexColor("#23262e");
 const standIn = (pieces: readonly AlchemiaPiece[]): AlchemiaPiece[] => pieces.filter((p) => p.solid && !p.inside);
 
 /** Bakes the stand-in into a block's sink. */
-export const bakeParkingStandIn = (sink: MeshSink, pieces: readonly AlchemiaPiece[] = P1_PIECES): void => {
+export const bakeParkingStandIn = (sink: MeshSink, pieces: readonly AlchemiaPiece[] = P1_ALL_PIECES): void => {
   for (const p of standIn(pieces)) {
     const b = p.box;
     const w = b.x1 - b.x0 - 2 * INSET;

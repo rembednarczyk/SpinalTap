@@ -185,6 +185,13 @@ const rampPieces = (): Piece[] => {
   return out;
 };
 
+/**
+ * The opening in P-1's east wall to the passage from metro B's hall (ADR-0074 stage 10): as wide as
+ * the hall between its stairs' walls (entrance B at z 28, its stairs 2.4 m wide; a test holds the
+ * two together), up to P-1's ceiling.
+ */
+export const P1_METRO_OPENING = { minZ: 26.8, maxZ: 29.2 } as const;
+
 /** The deck's, the apron's and the stair core's strip's floor and ceiling, P-1's outer walls. */
 const shellPieces = (): Piece[] => {
   const r = P1_RAMP;
@@ -202,7 +209,9 @@ const shellPieces = (): Piece[] => {
     piece(box(P1.minX, HALL.minX, P1.maxZ - W, P1.maxZ, base, top), "wall", true),
     // The threshold in the hall's back wall: its floor drawn across the wall's thickness.
     piece(box(P1_HALL_DOOR.x0, P1_HALL_DOOR.x1, HALL.minZ, HALL.minZ + HALL.wall, base, F), "floor", true, false),
-    piece(box(P1.maxX - W, P1.maxX, s.maxZ, P1.maxZ, base, top), "wall", true),
+    // East by the apron, open to the passage from metro B (stage 10).
+    piece(box(P1.maxX - W, P1.maxX, s.maxZ, P1_METRO_OPENING.minZ, base, top), "wall", true),
+    piece(box(P1.maxX - W, P1.maxX, P1_METRO_OPENING.maxZ, P1.maxZ, base, top), "wall", true),
     // The trench's west wall goes on along the deck's east side down to the covered part.
     piece(box(r.minX - W, r.minX, P1.minZ, r.covered, base, top), "wall", true),
   ];
