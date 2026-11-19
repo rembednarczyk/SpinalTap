@@ -92,7 +92,7 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
 - **Otwarte po O1:**
   - Zapis: schemat się nie zmienia, więc migracji nie ma. Pozycja zapisana na dachu A lub B nad dzisiejszym atrium (x 411–425, z 40–50) albo na schodach A i B wczyta się w powietrzu i gracz spadnie (do 8,7 m). Przeniesienie na najbliższy węzeł (§10) to praca dla Persistence.
   - Przegląd kuratora topografii (T-329): zrobiony 19.11, przyjęte z uwagami (tylko dokumentacja, wpisane do T-329, T-145, T-205, T-242, T-327). Zapas skanu przesłaniania: kościół św. Józefa 23,2% przy progu 25%, więc O4 i O5 go pilnują. Proponowane kontrole skanu `alchemia-mall-footprint` (element galerii poza x 399,7–436,3, z 32–58,3) i `alchemia-mall-height` (ponad y 13,5), baza 0, do dodania w O2.
-  - Wnętrze galerii jako obszar ADR-0061 (nazwa w HUD) w O2, razem ze sklepami.
+  - Wnętrze galerii jako obszar ADR-0061 (nazwa w HUD) w O2, razem ze sklepami. Zrobione w O2 (`alchemia-gallery`), razem z kontrolami skanu.
 - **Wydajność:** przeszukiwanie grafu poziomów dostało kopiec (`world/nav.ts`, te same trasy), bo ok. 50 nowych węzłów podniosło czas pościgów w `alchemia-parking.test.ts` z ok. 4,1 do 4,7–5,1 s. Teraz jest ok. 3,8–4,4 s, a czas CPU czterech pościgów 3,7 s wobec 3,9 s przed O1.
 
 ## Etap O2: wykonanie (19.11, gałąź `feat/alchemia-o2-sklepy`)
@@ -114,6 +114,17 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - Drzwi zaplecza mają 0,85 m: tylko dla obsługi, poza drogą NPC; za ladą jest kieszeń sprzedawcy, do której klient nie wchodzi.
   - Lokal z roletą nie ma wyposażenia (nie widać go i nie da się wejść); z kratą ma, przy zgaszonym świetle i ekranach.
   - Plecy lokali to szkło fasady (rama bez tafli), więc zaplecza widać z ulicy; regał towaru stoi przy szkle.
+  - Sklepy na P0 (etap O2 w planie etapów) czekają na O3: dopóki food hall nie przejdzie na P3, P0 to hala z jednostkami i sprzedawcami z imionami, których O2 nie rusza.
+- **Rysunek i budżety:** sklepy w siatce wnętrza (do 45 m od hali), bez nowej siatki i wywołań; modele gry i sprzedawcy w siatce bloku mebli ulicznych (ADR-0050). Trójkąty siatki wnętrza 4 432 → 52 342 (104 684 wierzchołki, indeksy 32-bitowe); limit testu wnętrza 60 000 obok wspólnych 40 000 (decyzja z 19.11: trójkąty wolne). Sceny `npr-perf` (wywołania i aktywne siatki, przed → po, budżety bez zmian):
+  - `alchemia-tpp`: 299/118 → 299/118 (budżet 380/146);
+  - `alchemia-t2-tpp`: 222/77 → 222/77;
+  - `alchemia-p1`: 209/78 → 209/78;
+  - `alchemia-p2`: 211/78 → 211/78 (budżet 216/80);
+  - `zielona-budowa-tpp`: 157/72 (budżet 172/80).
+- **Otwarte po O2:**
+  - Przegląd kuratora topografii (treść Alchemii w obrysie T-329 bez zmian obrysu i wysokości; kontrole skanu pilnują obu).
+  - Czas klatki na telefonie odniesienia z siatką wnętrza ok. 52 tys. trójkątów niezmierzony (pod SwiftShaderem tylko raport).
+  - Lokal z roletą nie ma śladu świeżej obecności (nie widać wnętrza).
 
 ## Konsekwencje
 - Graf, punkty tłumu, zadania i dialogi związane z halą zmieniają się w O1 i O3. Testy tras i zadań idą za nimi.
