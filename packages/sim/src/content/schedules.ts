@@ -4,7 +4,7 @@ import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
 import { KANAL_PATROL_SCHEDULES } from "./kanal-patrols";
-import { OYAJI_BACK_DOOR, OYAJI_BACK_ROOM, arkadySpanMid, atUnit, byArkady, opening } from "./alchemia";
+import { OYAJI_BACK_DOOR, OYAJI_BACK_ROOM, P2, atUnit, opening } from "./alchemia";
 import { HALL } from "./alchemia/plan";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
@@ -83,18 +83,21 @@ const oyaji = (): ScheduleDef => {
 };
 
 /**
- * The Hebi lookout by the Arkady north of the stash on T2 (ADR-0074 stage 2): holds his place under
- * their arches by day, walks a loop of the square at night, out of the stash's corner.
+ * The Hebi lookout by the shelter's hatch on T2 (ADR-0074 stage 5d2, §3): holds his post by it by
+ * day; at night walks P-2, there and back: west along T2 north of its beds, into the cutting, down
+ * the corridor past the shelter's gate to the store's corner and its service aisle.
  */
 const hebiLookout = (): ScheduleDef => {
   const post = spawnOf("hebi-lookout");
   const p = post.position;
+  const f = P2.floor;
+  const out = [ground(430, 99.8), ground(417.4, 99.8), { x: 417.4, y: f, z: 90 }, { x: 417.4, y: f, z: 72 }, { x: 419.35, y: f, z: 34 }, { x: 419.35, y: f, z: 26.5 }, { x: 416.5, y: f, z: 26.5 }, { x: 416, y: f, z: 20 }];
+  const back = out.slice(0, -1).reverse();
   return {
     speed: PATROL_WALK,
     stops: [
       { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
-      // Out from under the arch of his span (between the piers), then round the square.
-      { label: "patrol", at: hm(22), path: [p, byArkady(arkadySpanMid(8), 1.5), ground(452, 121), ground(441, 122), ground(434, 108)], yaw: post.yaw, loop: true },
+      { label: "patrol", at: hm(22), path: [p, ...out, ...back], yaw: post.yaw, loop: true },
     ],
   };
 };

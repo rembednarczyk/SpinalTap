@@ -74,7 +74,7 @@ export const enContent = {
   "hook.delivery_1": "Grodzka under the footbridge is faster and nobody stands there",
   "hook.delivery_2": "The Hebi catch couriers under the footbridge on Grodzka; they don't watch Plac po Farze",
   "hook.retrieve_1": "After midnight the stash's second guard goes out for ramen for a quarter of an hour",
-  "hook.retrieve_2": "The stash is in view from Alchemia's roof terrace; the guards only watch the passage",
+  "hook.retrieve_2": "The shelter's gate from P-2 opens with 2207 (the camera takes you for one of them)",
   "hook.protect_1": "The Hebi always come for Oyaji the same way",
   "hook.protect_2": "From the roof terrace you can see the whole path along the stalls",
   "hook.escort_1": "The ambush waits by the office, not on the pier",

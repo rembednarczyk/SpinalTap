@@ -159,7 +159,7 @@ describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
 
   it("is the last of Alchemia's props but the car lift's (5e), the gate's leaf a door in P-2's corridor's wall", () => {
     expect(ALCHEMIA_PROPS.slice(-SHELTER_PROPS.length - CAR_LIFT_PROPS.length, -CAR_LIFT_PROPS.length)).toEqual(SHELTER_PROPS);
-    const leaf = SHELTER_PROPS.at(-1)!;
+    const leaf = SHELTER_PROPS.find((p) => p.mechanism?.kind === "door")!;
     expect(leaf.mechanism?.kind).toBe("door");
     expect(leaf.center.x).toBeGreaterThan(P2_CORRIDOR.maxX - P2.wall);
     expect(leaf.center.x).toBeLessThan(P2_CORRIDOR.maxX);

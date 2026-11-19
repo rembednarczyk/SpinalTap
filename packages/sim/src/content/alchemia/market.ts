@@ -13,18 +13,19 @@ import {
 import { type ActorDef, type Rect, type StaticProp, crate, lamp } from "../builders";
 import { ground, groundY } from "../lublin/terrain";
 import { ALCHEMIA_LIFT } from "./lift";
-import { ARKADY_ARCADE_FLOOR, ARKADY_FRAME, arkadyPoint, arkadySpanMid } from "./arkady";
+import { ARKADY_FRAME, arkadyPoint, arkadySpanMid } from "./arkady";
 import { SOUTH, facing } from "./plan";
 import { onPavilionRoof } from "./pavilion";
 import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
+import { SHELTER } from "./shelter";
 
 /**
  * The market in Alchemia by the investor's plan (ADR-0074 §3, stage 1; once ADR-0063 stage 6):
  * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`);
  * Hana sells from her cart on the square in front of it (T1); Ren sleeps on the roof of the
  * triangular pavilion on the corner (stage 3), the Hebi bag by him; Kurosawa of Kagami
- * waits by the lift's kiosk on the car park. The Hebi keep their stash on the lower square T2 before
- * the Arkady's south arches (stage 2, until the shelter of stage 5), their lookout by the Arkady.
+ * waits by the lift's kiosk on the car park. The Hebi keep their stash in the air-raid shelter under
+ * T2 (stage 5d2; before it on T2 before the Arkady's south arches), their lookout by its hatch.
  *
  * World metres, every point on the ground, on the hall's floor or on the pavilion's roof.
  */
@@ -51,34 +52,42 @@ export const byArkady = (along: number, out: number, up = 0): Vec3 => {
 /** Which way a thing on the Arkady's west face faces: out of it, to the square. */
 export const ARKADY_OUT_YAW = Math.atan2(-ARKADY_FRAME.across.x, -ARKADY_FRAME.across.z);
 
-/** The Hebi stash on T2 before the Arkady's south arches (the retrieval's no-go zone, `devices.ts`). */
-export const HEBI_STASH_ZONE: Rect = { minX: 435, maxX: 449, minZ: 86, maxZ: 101 };
+/** The Hebi stash: the shelter's room under T2 (stage 5d2; the retrieval's no-go zone, `devices.ts`). */
+export const HEBI_STASH_ZONE: Rect = { minX: SHELTER.minX + SHELTER.wall, maxX: SHELTER.maxX - SHELTER.wall, minZ: SHELTER.minZ + SHELTER.wall, maxZ: SHELTER.maxZ - SHELTER.wall };
+
+/** A point on the shelter's floor, `up` over it. */
+export const inShelter = (x: number, z: number, up = 0): Vec3 => ({ x, y: SHELTER.floor + up, z });
+/** A box standing on the shelter's floor. */
+const onShelterFloor = (p: StaticProp): StaticProp => ({ ...p, center: { ...p.center, y: p.center.y + SHELTER.floor } });
 
 /** A box standing on the ground at (x, z), sunk a little into the slope's high side. */
 const onGround = (p: StaticProp, sink = 0.08): StaticProp => ({ ...p, center: { ...p.center, y: p.center.y + groundY(p.center.x, p.center.z) - sink } });
 
 /**
- * The stash before the third span from the south (6.25..9.9 m, the orthophoto's, `ARKADY_PIERS`),
- * its cover further out: where they stood by the ruin, which the retrieval's sneaking is laid out round.
+ * The stash in the shelter's north-west corner (stage 5d2), away from both ways in: the passage
+ * from the gate comes into its south-west corner, the hatch's flight into its east wall. Its cover
+ * stands between it and the room, the crate that takes a body by the hand-cranked fan.
  */
-const STASH_ALONG = 9;
-const RETRIEVE_CRATE = byArkady(STASH_ALONG, 1.8);
+const RETRIEVE_CRATE = inShelter(422.0, 95.6);
 
 /** A lamp standing on the ground at `p`. */
 const lampAt = (p: Vec3, color: string): StaticProp => ({ ...lamp(p.x, p.z, color), center: p });
 
-const COVER = byArkady(STASH_ALONG, 4.2);
-const BODY_CRATE = byArkady(13.6, 1.5);
+const COVER = inShelter(424.6, 92.4);
+const BODY_CRATE = inShelter(433.6, 88.0);
+/** The lookout's post on T2 north-east of the shelter's hatch (stage 5d2). */
+const HATCH_POST = ground(443.4, 98.6);
 
 /** Hana's cart, the Hebi stash's crates and lights: the market's own things outside the hall. */
 export const ALCHEMIA_MARKET_PROPS: readonly StaticProp[] = [
   // Hana's handcart, just east of where she stands.
   onGround(crate(HANA_SPOT.x + 1.3, HANA_SPOT.z, 0.9, 1.0, 1.8)),
   lampAt(ground(HANA_SPOT.x + 1.3, HANA_SPOT.z + 1.6), "#9ad7ff"),
-  // The Hebi stash: cover in front of it, and the big crate by it takes a body (ADR-0065).
-  onGround(crate(COVER.x, COVER.z, 1.0, 1.1, 2.4)),
-  { ...onGround(crate(BODY_CRATE.x, BODY_CRATE.z, 1.6, 1.4, 1.4)), hide: "container" },
-  lampAt(byArkady(4, 1.2), "#ffcf8a"),
+  // The Hebi stash in the shelter: cover in front of it, and the big crate in the room takes a body (ADR-0065).
+  onShelterFloor(crate(COVER.x, COVER.z, 1.0, 1.1, 2.4)),
+  { ...onShelterFloor(crate(BODY_CRATE.x, BODY_CRATE.z, 1.6, 1.4, 1.4)), hide: "container" },
+  // The lamp over the lookout's post by the hatch on T2.
+  lampAt(ground(HATCH_POST.x - 0.4, HATCH_POST.z + 1.0), "#ffcf8a"),
 ];
 
 /** A stash placed once, when the player first comes near (ADR-0021). */
@@ -166,9 +175,9 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
   interactable,
 });
 
-/** The Hebi lookout by the Arkady north of the stash, under their arches: watches T2 and the stairs from T1 by day, walks the square at night. */
-export const HEBI_LOOKOUT_POST: Vec3 = { ...byArkady(arkadySpanMid(8), -1.2), y: ARKADY_ARCADE_FLOOR };
-/** He looks south-west down the square, to the stairs from T1 and the stash. */
+/** The Hebi lookout by the shelter's hatch on T2 (stage 5d2, ADR-0074 §3): watches it and the stairs from T1 by day, walks P-2 at night. */
+export const HEBI_LOOKOUT_POST: Vec3 = HATCH_POST;
+/** He looks south-west, over the hatch to the stairs from T1. */
 const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
 
 export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
@@ -195,8 +204,8 @@ type MarketSite = "hana_stall" | "hebi_stash" | "raid_north" | "raid_east";
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
-  // The third one 1 m south of the shelter's hatch (stage 5d1), its rail at 95.0.
-  hebi_stash: [byArkady(6, 6), byArkady(12.5, 4.5), byArkady(8.3, 7.5), byArkady(5, 2.5)],
+  // In the shelter's room round the stash (stage 5d2): by its cover, by the hatch's flight, by the bench, by the stash.
+  hebi_stash: [inShelter(423.0, 90.6), inShelter(431.6, 94.2), inShelter(429.2, 86.2), inShelter(426.2, 95.2)],
   raid_north: [ground(403, 72), ground(400.5, 74.5), ground(406, 74), ground(399, 70)],
   raid_east: [ground(441, 66), ground(442.5, 63), ground(439.5, 69), ground(443, 68)],
 };
@@ -207,7 +216,8 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec
  */
 export const TARG_CONTRACT_SITE_FACING: Readonly<Record<MarketSite, Vec3>> = {
   hana_stall: HANA_SPOT,
-  hebi_stash: byArkady(7, 24),
+  // West, to the passage from the gate.
+  hebi_stash: inShelter(410, 90),
   raid_north: STALL_KEEPERS.oyaji,
   raid_east: STALL_KEEPERS.oyaji,
 };

@@ -1,7 +1,8 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
 import { w3 } from "./tessen-w3/site";
-import { byArkady } from "./alchemia/market";
+import { inShelter } from "./alchemia/market";
+import { P2 } from "./alchemia/p2";
 import { koiPoint } from "./interiors";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
@@ -30,7 +31,13 @@ export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   car_wash: { guards: [wash(0, 44.2), wash(2.2, 42.4)], twin: wash(-1.5, 46.5), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-1.5, 29.5), wash(4, 31)] },
   south_gate: { guards: [gate(-5, -34.2), gate(-3, -34.6)], twin: gate(8.5, -34.5), lookout: gate(-3, -29), ambush: [gate(0, -24), gate(-5, -26), gate(5, -25)] },
   kanal_bridge: { guards: [spotNear(660.5, 75.5), spotNear(658, 73.5)], twin: spotNear(664, 79.5), lookout: spotNear(650, 63), ambush: [spotNear(646, 58), spotNear(668, 84), spotNear(652, 66)] },
-  hebi_stash: { guards: [byArkady(5.2, 7), byArkady(7, 5)], lookout: byArkady(9, 14), ambush: [byArkady(7, 16), byArkady(13, 16), byArkady(3, 13)] },
+  // In the shelter under T2 (ADR-0074 stage 5d2): the guards by the stash's cover, the lockdown's lookout on T2 by the
+  // hatch, the ambush at both ways out (P-2's corridor before the gate, T2 round the hatch).
+  hebi_stash: {
+    guards: [inShelter(422.4, 89.2), inShelter(423.8, 90.4)],
+    lookout: ground(444.6, 96.2),
+    ambush: [{ x: 418.6, y: P2.floor, z: 66.0 }, ground(446.0, 99.6), ground(439.0, 101.0)],
+  },
   raid_north: { lookout: ground(431.5, 123) },
   raid_east: { lookout: ground(445, 74) },
   // W-3 (ADR-0082): the pass office in the tower, the quay by the pier, the riverside path.
