@@ -35,6 +35,18 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Produkt
 
+- **Zasady lokacji (19.11):** decyzja użytkownika: wszystkie miejsca w grze projektujemy według `docs/zasady-lokacji.md`:
+  - gęsto i bez pustych, sterylnych pokoi (poza korporacją), w trzech warstwach;
+  - z kontrastem techniki i biedy, z ostrym sztucznym światłem i ze śladem świeżej obecności;
+  - z klatkami schodowymi i windami w zorganizowanych trzonach, jak w prawdziwych budynkach i galeriach.
+- **Budżety trójkątów (19.11):** decyzja użytkownika: budżety trójkątów na siatkę można podnosić dowolnie, a wcześniejsze cięcia detalu przywracać.
+  - Drzewa i krzewy bierzemy z modeli gry, nie budujemy własnych pudełek.
+  - Bramkami zostają wywołania rysowania i aktywne siatki oraz czas klatki na telefonie odniesienia. Limitów czasu testów to nie zmienia.
+- **Alchemia według planszy (19.11):** decyzja użytkownika: gruntowna przebudowa wnętrz i brył Alchemii według rzutu, schematu kondygnacji i aksonometrii z `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`.
+  - Front zostaje, reszta może się zmienić w całości. Bryłę można powiększać.
+  - To, co stoi na drodze, przesuwamy, a nie obudowujemy.
+  - Pytania rozstrzygamy opcją rekomendowaną.
+
 - **Ustawienia domyślne (decyzja użytkownika 1.11):** grafika High na każdym urządzeniu, liczby obrażeń przy trafieniu, przycisk Ustawienia na ekranie tytułowym; jednorazowa migracja starych wpisów ustawień (`rev: 2`); w main (#121).
 
 ## Czas testów w CI (12.11)

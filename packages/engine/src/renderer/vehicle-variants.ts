@@ -18,29 +18,16 @@ export interface VehicleVariant {
   readonly paint?: number;
 }
 
+/** The user's sports car (Cyberpunk car, 4d_Bob), near at some 4 thousand triangles: every vehicle of the street wears it but the trolleybus (decision of 19.11). */
+const CYBER: readonly VehicleVariant[] = [{ key: "veh-cyber", weight: 1 }];
+
 export const VEHICLE_VARIANTS: Readonly<Record<VehicleModel, readonly VehicleVariant[]>> = {
-  // The kit's saloon and the user's old one (Dirty car, 3D Error 404).
-  sedan: [
-    { key: "car-sedan", weight: 3 },
-    { key: "veh-dirty", weight: 2 },
-  ],
-  // The kit's hatchback and the user's sports car (Cyberpunk car, 4d_Bob).
-  hatchback: [
-    { key: "car-hatchback", weight: 3 },
-    { key: "veh-cyber", weight: 2 },
-  ],
-  taxi: [{ key: "car-taxi", weight: 1 }],
-  // Vans, SUVs and pickups share a body.
-  van: [
-    { key: "car-van", weight: 2 },
-    { key: "veh-suv", weight: 2 },
-    { key: "veh-pickup", weight: 1 },
-  ],
-  // Box vans, and one in five a garbage truck.
-  delivery: [
-    { key: "car-delivery", weight: 4 },
-    { key: "veh-garbage", weight: 1, paint: 4 },
-  ],
+  sedan: CYBER,
+  hatchback: CYBER,
+  // A taxi in the city's amber.
+  taxi: [{ key: "veh-cyber", weight: 1, paint: 4 }],
+  van: CYBER,
+  delivery: CYBER,
   // Quaternius' bus lengthened to Lublin's trolleybus; without the file the procedural one.
   trolleybus: [{ key: "veh-trolleybus", weight: 1 }],
 };

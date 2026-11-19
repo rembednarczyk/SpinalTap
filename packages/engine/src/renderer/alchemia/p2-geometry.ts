@@ -19,7 +19,6 @@ const SWATCH: Readonly<Partial<Record<AlchemiaPieceKind, string>>> = {
   rack: "metal",
   pallet: "trim-light",
   glass: "glass-dark",
-  tyre: "tyre",
   rail: "metal",
   beacon: "neon-amber",
   machine: "metal",
@@ -34,9 +33,6 @@ const SWATCH: Readonly<Partial<Record<AlchemiaPieceKind, string>>> = {
   shutter: "metal",
 };
 
-/** The cars' paint, one of these by where the car stands (fixed: nothing of it is random). */
-const PAINT = ["fabric-teal", "glass-blue", "fabric-magenta", "metal", "brick", "fabric-amber", "dumpster", "trim-light"] as const;
-
 const X: Vec3 = { x: 1, y: 0, z: 0 };
 const Y: Vec3 = { x: 0, y: 1, z: 0 };
 const Z: Vec3 = { x: 0, y: 0, z: 1 };
@@ -46,7 +42,6 @@ const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: st
 };
 
 const swatchOf = (p: AlchemiaPiece): string => {
-  if (p.kind === "car") return PAINT[Math.abs(Math.round(p.box.x0 * 3 + p.box.z0 * 7)) % PAINT.length]!;
   return SWATCH[p.kind] ?? "wall-dark";
 };
 
