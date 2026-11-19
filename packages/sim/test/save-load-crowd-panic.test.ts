@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type DomainEvents, type SaveSnapshot, WITNESS_CALL_SECONDS } from "@seki/core";
 import { SIM_HZ, Simulation, TAKEDOWN_TIME, ground, stateHash, type Entity } from "../src";
 import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
-import { enterKanal } from "./micro-scenes";
+import { BY_THE_GATE, IN_THE_GATE, enterKanal } from "./micro-scenes";
 import { CROUCH, offset, quietStreet, stallholder, takeDown, ticks, victim } from "./takedown-scenes";
 
 /**
@@ -19,9 +19,14 @@ const AFTER = 15 * SIM_HZ;
 const afraid = (sim: Simulation) =>
   sim.world.with("civilian").entities.filter((c) => (c.civilian.crowd?.state ?? "calm") !== "calm").map((c) => c.key ?? `#${c.id}`);
 
-/** The mugging by Brama Krakowska won by a takedown and a shot: the street runs from it. */
-const panic = (seed: number): Simulation => {
-  const { sim } = enterKanal("mugging", seed);
+/**
+ * The mugging by Brama Krakowska won by a takedown and a shot: the street runs from it. The
+ * Rynek's patrol, provoked by the muggers' shots at their victim, keeps firing at the player
+ * (a glitch of its own in docs/glitches.md); `blindPatrol` blinds it, so the street can calm down.
+ */
+const panic = (seed: number, blindPatrol = false): Simulation => {
+  const { sim } = enterKanal("mugging", seed, 0, 21, BY_THE_GATE, IN_THE_GATE);
+  if (blindPatrol) for (const e of sim.world.with("ai")) if (e.ai.territory) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
   const run0 = sim.session.street2.micro!;
   const [m0, m1] = run0.attackers;
   const a = [...sim.world].find((e) => e.id === m0)!;
@@ -63,7 +68,7 @@ describe("a save while the street panics (G-240)", () => {
   }
 
   it("a calm street is left as it is", () => {
-    const sim = panic(13);
+    const sim = panic(13, true);
     for (let i = 0; i < AFTER; i++) sim.step(CROUCH);
     expect(afraid(sim)).toEqual([]);
     const before = hash(sim);

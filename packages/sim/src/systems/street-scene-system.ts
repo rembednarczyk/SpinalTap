@@ -1,12 +1,12 @@
 import type { System } from "../world/context";
-import { rollMicroEvent, runMicroEvent, startCrime } from "../world/micro-events";
+import { runMicroEvent, startCrime } from "../world/micro-events";
 import { crimeInReach, tickStreetCrimes } from "../world/street-crimes";
 import { runEncounters, streetMet } from "../world/street-scenes";
 
 /**
- * Street encounters and micro-events (ADR-0034), near the end of the step: the micro-event
- * under way is judged first (its fight was fought this step), then entering a district may
- * start one, then the district's encounters are checked. Nothing happens to a rider, in a
+ * Street encounters and the street's crimes (ADR-0034, ADR-0091), near the end of the step: the
+ * crime under way is judged first (its fight was fought this step), then one of the board within
+ * reach may start, then the district's encounters are checked. Nothing happens to a rider, in a
  * dialogue or after death; the first step of a new game only notes the district (a load reads
  * it from the saved position, G-174).
  */
@@ -24,10 +24,8 @@ export const streetSceneSystem: System = {
       if (crime) startCrime(ctx, crime);
     }
     const district = ctx.streamer.districtAt(player.position);
-    const before = s.district;
     if (district !== null) s.district = district;
     if (district === null) return;
-    if (before !== null && before !== district) rollMicroEvent(ctx, district, player);
     runEncounters(ctx, player, district);
   },
 };
