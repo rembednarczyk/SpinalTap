@@ -1,0 +1,1 @@
+Food hall Alchemii z Fumiko, Kentą, Goro, Oyajim i Sachiko na najwyższej kondygnacji galerii (P3) wokół atrium, a na dawnej hali (P0) sklepy, fontanna z hologramem i okienko drugiego lokalu Fumiko od Świętoduskiej (ADR-0093 O3).

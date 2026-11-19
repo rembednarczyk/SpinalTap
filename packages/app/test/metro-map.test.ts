@@ -90,13 +90,14 @@ describe("the metro layer", () => {
 
   it("finds up to four marked things within 150 m of a station, the nearest first", () => {
     // Brama Krakowska from its node on Lubartowska (stage 2): the counters of Alchemia's food hall
-    // behind the station (ADR-0074), Sachiko's kiosk by the back wall nearest; Hana's cart on T1 and
-    // Mori's clinic come after them.
+    // behind the station (ADR-0074, on P3 since ADR-0093 O3), Oyaji's shop in its south-east corner
+    // nearest (Sachiko's kiosk by the hall's back wall until then); Hana's cart on T1 and Mori's clinic
+    // come after them.
     const kanal = metroNear("kanal");
     expect(kanal).toHaveLength(NEAR_MAX);
     expect(kanal.map((n) => n.distance)).toEqual([...kanal.map((n) => n.distance)].sort((a, b) => a - b));
     expect(kanal.every((n) => n.distance <= NEAR_RADIUS)).toBe(true);
-    expect(kanal[0]).toMatchObject({ kind: "shop", label: "prompt.shop.sachiko" });
+    expect(kanal[0]).toMatchObject({ kind: "shop", label: "prompt.shop.oyaji" });
     expect(kanal.map((n) => n.label).sort()).toEqual(["prompt.shop.goro", "prompt.shop.kenta", "prompt.shop.oyaji", "prompt.shop.sachiko"]);
     // Plac Zamkowy lost the market to Alchemia, Plac Litewski has nothing within 150 m.
     expect(metroNear("targ")).toEqual([]);

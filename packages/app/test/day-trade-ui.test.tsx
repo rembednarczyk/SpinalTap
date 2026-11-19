@@ -4,10 +4,14 @@ import { afterEach, describe, expect, it } from "vitest";
 import { SCHEDULES, ground } from "@seki/sim";
 import { type Game, mountGame, run, unmountGame } from "./game-ui";
 
-/** The car park behind Alchemia's food hall, the market's chunk loaded, and T1 by Oyaji's back door at night (his plan's last stop, ADR-0074). */
+/**
+ * The car park behind Alchemia's food hall, the market's chunk loaded, and before Oyaji's counter by
+ * him at night behind his grille in the food hall on P3 (his plan's last stop; ADR-0093 O3, on T1 by
+ * his back door until then).
+ */
 const CAR_PARK = { x: 410, z: 28 };
 const OYAJI_DOOR = SCHEDULES.oyaji!.stops[1]!.path.at(-1)!;
-const BY_OYAJI_DOOR = { x: OYAJI_DOOR.x, z: OYAJI_DOOR.z + 1.4 };
+const BY_OYAJI_DOOR = { x: OYAJI_DOOR.x - 2.3, z: OYAJI_DOOR.z, y: OYAJI_DOOR.y };
 
 /**
  * The day clock and Oyaji's stall on the real UI (formerly e2e/day-cycle.spec.ts and
@@ -20,11 +24,11 @@ const start = () => {
   return game;
 };
 
-/** Teleports to a point of the market in Alchemia (ADR-0063) and lets one step stream it in. */
-const toMarket = (g: Game, at: { readonly x: number; readonly z: number }) => {
+/** Teleports to a point of the market in Alchemia (ADR-0063), on the ground or on a floor `y`, and lets one step stream it in. */
+const toMarket = (g: Game, at: { readonly x: number; readonly z: number; readonly y?: number }) => {
   run(() => {
     const p = ground(at.x, at.z);
-    g.seki.teleport(p.x, p.z, 0, 0, p.y);
+    g.seki.teleport(p.x, p.z, 0, 0, at.y ?? p.y);
   });
   g.step(1);
 };
@@ -55,7 +59,8 @@ describe("day clock in the game", () => {
     g.step(2);
     expect(clock()).toContain("day");
     expect(clock()).toContain("Day 2");
-    expect(screen.queryByTestId("prompt")).toBeNull();
+    // Back at his counter, in reach of the same place before it (ADR-0093 O3): open, no closed sign.
+    expect(screen.queryByTestId("prompt")?.textContent ?? "").not.toContain("closed");
   });
 });
 
@@ -68,7 +73,8 @@ describe("Oyaji's stall in the game", () => {
     g.step(2);
     expect(g.seki.state().clock).toMatch(/^12:0\d$/);
     const oyaji = [...g.session.sim.world].find((x) => x.key === "oyaji")!;
-    run(() => g.seki.teleport(oyaji.position.x + Math.sin(oyaji.yaw) * 1.4, oyaji.position.z + Math.cos(oyaji.yaw) * 1.4));
+    // Before his counter, on his floor (the food hall's P3 since ADR-0093 O3).
+    run(() => g.seki.teleport(oyaji.position.x + Math.sin(oyaji.yaw) * 1.9, oyaji.position.z + Math.cos(oyaji.yaw) * 1.9, 0, 0, oyaji.position.y));
     g.step(1);
     expect(screen.getByTestId("prompt").textContent).toContain("Oyaji's stall");
     g.step(1, { interact: true });
