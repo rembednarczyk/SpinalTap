@@ -80,6 +80,13 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
     float sill = inBay * step(0.17, fy) * step(fy, 0.22);
     k += 0.18 * max(lintel, sill) * near;
   }
+#ifdef DETAIL
+  // Large-panel blocks (ADR-0092 stage 3, the blocks of LSM and Czechów): a joint at each storey and
+  // every second bay, between the windows.
+  if (mat > 2.5 && mat < 3.5 && style > 5.5 && style < 6.5 && q.y > ground) {
+    k -= 0.2 * max(gridLine(q.y - ground, storey, 0.02), gridLine(q.x, bay * 2.0, 0.02)) * near;
+  }
+#endif
   return albedo * k;
 }
 
