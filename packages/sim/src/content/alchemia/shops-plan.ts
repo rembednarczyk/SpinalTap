@@ -1,5 +1,5 @@
 import { type Box, box } from "./plan";
-import { MALL, MALL_LEVELS } from "./mall-plan";
+import { MAIN_DOORS, MALL, MALL_LEVELS } from "./mall-plan";
 import type { Rectangle } from "./rounded";
 
 /*
@@ -47,12 +47,18 @@ export const GLASS_IN: Rectangle = { x0: MALL.x0 + 0.12, x1: MALL.x1 - 0.12, z0:
 const G = GLASS_IN;
 const r = (x0: number, x1: number, z0: number, z1: number): Rectangle => ({ x0, x1, z0, z1 });
 
+/** The main doors' hall through P1's south strip, a partition's breadth either side of the doors (ADR-0093 O2b). */
+export const MAIN_HALL = { x0: MAIN_DOORS.x0 - 0.2, x1: MAIN_DOORS.x1 + 0.2 } as const;
+/** The east door's lobby's west end on P1: its way north to the gallery between it and FIXPOINT is 2.2 m wide. */
+const EAST_LOBBY_X = 425.8;
+
 /**
  * The ring of P1 (19 numbers from the gallery's 3 m round the atrium out to the glass): west 7.9 m
  * deep north of the south-west core's corridor (z 37.9-39.8), north 4.9 m deep west of the north-east
  * core's corridor (x 425-427.5), east 7.9 m between the east door's lobby (z 32-35.6) and the
  * north-east lift's (z 49.4-51.9), south 4.9 m either side of the hall's lift's back (x 412.2-414.8)
- * and the main doors' hall (x 418.6-421.4).
+ * and the main doors' hall (x 418.6-423.4). The hall widened with the doors (ADR-0093 O2b, 2.8 m
+ * before): VOLTAGE moved west into SAKURA's unit, SAKURA, shut, into a narrow one east of the hall.
  */
 const P1_SHOPS: readonly ShopDef[] = [
   { id: "p1-w1", floor: "p1", rect: r(G.x0, 408, 39.8, 44.2), front: "e", trade: "pharmacy", state: "open", sign: "MEDIFARM" },
@@ -65,8 +71,8 @@ const P1_SHOPS: readonly ShopDef[] = [
   { id: "p1-e2", floor: "p1", rect: r(428, G.x1, 40.2, 44.8), front: "w", trade: "synth-food", state: "shut", sign: "MEGABOX" },
   { id: "p1-e3", floor: "p1", rect: r(428, G.x1, 44.8, 49.4), front: "w", trade: "implants", state: "open", sign: "NEUROTEK", door: "r" },
   { id: "p1-s1", floor: "p1", rect: r(408, 412.2, G.z0, 37), front: "n", trade: "crypto", state: "open", sign: "BITKANTOR", door: "r" },
-  { id: "p1-s2", floor: "p1", rect: r(414.8, 418.6, G.z0, 37), front: "n", trade: "clothing", state: "shut", sign: "SAKURA" },
-  { id: "p1-s3", floor: "p1", rect: r(421.4, 425.2, G.z0, 37), front: "n", trade: "electronics", state: "open", sign: "VOLTAGE" },
+  { id: "p1-s2", floor: "p1", rect: r(414.8, MAIN_HALL.x0, G.z0, 37), front: "n", trade: "electronics", state: "open", sign: "VOLTAGE" },
+  { id: "p1-s3", floor: "p1", rect: r(MAIN_HALL.x1, EAST_LOBBY_X, G.z0, 37), front: "n", trade: "clothing", state: "shut", sign: "SAKURA" },
 ];
 
 /**
@@ -156,7 +162,7 @@ export const shopAt = (x: number, y: number, z: number): ShopDef | null =>
  * doors' hall, the east door's lobby and the hall's lift's back; on P2 the hall's lift's lobby.
  */
 export const RING_WAYS: Readonly<Record<ShopDef["floor"], readonly Rectangle[]>> = {
-  p1: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(418.6, 421.4, G.z0, 37), r(425.2, G.x1, G.z0, 35.6), r(412.2, 414.8, 34.8, 37)],
+  p1: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(MAIN_HALL.x0, MAIN_HALL.x1, G.z0, 37), r(EAST_LOBBY_X, G.x1, G.z0, 35.6), r(412.2, 414.8, 34.8, 37)],
   p2: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(412.2, 414.8, 34.8, 37)],
 };
 

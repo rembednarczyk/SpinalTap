@@ -1,6 +1,6 @@
 import type { NavEdge, NavGraph, NavNode, Rect } from "../builders";
 import { groundY } from "../lublin/terrain";
-import { CORE_WALL, ESCALATORS, LANE_A, LANE_B, MALL, MALL_LEVELS, STAIR_CORES, type StairCore, escalatorHead } from "./mall-plan";
+import { CORE_WALL, ESCALATORS, LANE_A, LANE_B, MAIN_WAY_X, MALL, MALL_LEVELS, STAIR_CORES, type StairCore, escalatorHead } from "./mall-plan";
 import { coreLanes, coreSpan } from "./mall-cores";
 import { STAIR_HOUSE } from "./foodhall";
 
@@ -134,7 +134,9 @@ const DOOR_NODES: readonly NavNode[] = [
   node("g1-east-in", MALL.x1 - 1.4, L.p1, 33.15),
   on("g1-east-out", MALL.x1 + 1.6, 33.15),
   // Between the shops (ADR-0093 O2): on the gallery straight in from the main doors, and the east door's lobby's west end before its way north to the gallery.
-  node("g1-main-in", 420, L.p1, 37.8),
+  node("g1-main-in", MAIN_WAY_X, L.p1, 37.8),
+  // The main entrance's way from Bajkowskiego (O2b) where it passes P-1's stair house, in sight of the footway and of its door.
+  on("t0-axis", MAIN_WAY_X, 11.0),
   node("g1-east-lobby", 426.6, L.p1, 34.0),
 ];
 const DOOR_EDGES: readonly NavEdge[] = [
@@ -144,6 +146,9 @@ const DOOR_EDGES: readonly NavEdge[] = [
   edge("sh-landing", "core-sw-s-0"),
   // Through the main doors from T0's strip onto the gallery's south side, between the shops either side of the doors' hall (O2).
   edge("t0-roof", "g1-main-in"),
+  // Up the main entrance's way under L2 to T0's strip before the doors, and round P-1's stair house's corner to its door (O2b).
+  edge("t0-axis", "t0-roof"),
+  edge("t0-axis", "p1-stair-out"),
   edge("g1-main-in", "g1-s"),
   edge("t0-east", "g1-east-out"),
   edge("g1-east-out", "g1-east-in"),
