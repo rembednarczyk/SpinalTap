@@ -203,6 +203,22 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       if (b.y1 > lit) boxOf(sink, data, { ...b, y0: Math.max(b.y0, lit) }, "glass-dark");
       continue;
     }
+    // The front's screens (B1): a dark panel with lit bands across it, a picture on a display, not a lit box.
+    if (p.kind === "screen") {
+      boxOf(sink, data, b, "glass-dark");
+      const alongX = b.x1 - b.x0 >= b.z1 - b.z0;
+      const proud = 0.02;
+      const face = alongX ? { z0: b.z0 - proud, z1: b.z0 } : { x0: b.x0 - proud, x1: b.x0 };
+      const bands = Math.max(3, Math.round((b.y1 - b.y0) / 0.45));
+      const step = (b.y1 - b.y0) / bands;
+      for (let k = 0; k < bands; k++) {
+        const y0 = b.y0 + k * step + step * 0.18;
+        const inset = (k * 0.37) % 1 < 0.5 ? 0.15 : 0.6;
+        const span = alongX ? { x0: b.x0 + inset, x1: b.x1 - 0.15 } : { z0: b.z0 + inset, z1: b.z1 - 0.15 };
+        boxOf(sink, data, { ...b, ...face, ...span, y0, y1: y0 + step * 0.55 }, k % 3 === 1 ? "neon-pink" : "win-teal");
+      }
+      continue;
+    }
     // Oyaji's grille over his counter: bars, the shop seen through them.
     if (p.kind === "grille") {
       const alongX = b.x1 - b.x0 >= b.z1 - b.z0;
