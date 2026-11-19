@@ -8,19 +8,35 @@ import { type CarAt, rampPitch } from "./alchemia/parking-traffic";
 
 export type VehicleDescriptor = Extract<ViewDescriptor, { kind: "vehicle" }>;
 
-/** How far vehicles are drawn, and where the far version takes over (m from the camera), per quality. */
-export const VEHICLE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number }>> = {
-  high: { near: 90, draw: 240 },
-  medium: { near: 70, draw: 180 },
-  low: { near: 45, draw: 120 },
+/** Vehicles driving and parked, those drawn last frame near (close-ups among them) and far, and the meshes drawn (debug, tests). */
+export interface FleetStats {
+  readonly driving: number;
+  readonly parked: number;
+  readonly near: number;
+  readonly high: number;
+  readonly far: number;
+  readonly meshes: number;
+}
+
+/**
+ * How far vehicles are drawn, where the far version takes over (m from the camera), and how many of
+ * the nearest wear their close-up within how far (19.11), per quality. The close-ups take places of
+ * a pool in the shared mesh (discrete LOD with a fixed pool of the finest level, as the drones'
+ * places), so the mesh holds the close-up a few times, not once per car of the city.
+ */
+export const VEHICLE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly high: number; readonly highReach: number }>> = {
+  high: { near: 90, draw: 240, high: 12, highReach: 45 },
+  medium: { near: 70, draw: 180, high: 8, highReach: 35 },
+  low: { near: 45, draw: 120, high: 0, highReach: 0 },
 };
 
 interface Pair {
   readonly near: VehicleTemplate;
   readonly far: VehicleTemplate;
+  readonly high?: VehicleTemplate;
 }
 
-type Shown = "near" | "far" | "none";
+type Shown = "high" | "near" | "far" | "none";
 
 interface Member {
   readonly view: VehicleDescriptor;
@@ -30,6 +46,8 @@ interface Member {
   offset: number;
   /** What was drawn last frame; a parked car is written only when this changes. */
   shown: Shown;
+  /** Its place in the close-ups' pool while it wears its close-up, else -1. */
+  slot: number;
 }
 
 export interface VehicleViewsDeps {
@@ -71,6 +89,11 @@ class Fleet {
   private normals = new Float32Array(0);
   private readonly min = new Vector3();
   private readonly max = new Vector3();
+  private colors = new Float32Array(0);
+  /** The close-ups' pool: its first vertex, a place's vertices (one topology: the sports car's), who holds each place. */
+  private poolBase = 0;
+  private poolVerts = 0;
+  private poolOwners: (Member | null)[] = [];
   /** Positions of the vehicles drawn now, x y z each: what the view test looks at. */
   private readonly drawn: number[] = [];
   private kitSeen: CityKit | null = null;
@@ -79,6 +102,8 @@ class Fleet {
   constructor(
     private readonly deps: VehicleViewsDeps,
     private readonly name: string,
+    /** Whether it keeps a pool of close-ups: the parked cars only, whose buffers go up only when something changes (the driving ones' go up every frame). */
+    private readonly closeUps: boolean,
   ) {}
 
   has(id: EntityId): boolean {
@@ -90,20 +115,22 @@ class Fleet {
   }
 
   /** Vehicles driving and parked, those drawn last frame near and far, and the meshes drawn (debug, tests). */
-  get stats(): { readonly driving: number; readonly parked: number; readonly near: number; readonly far: number; readonly meshes: number } {
+  get stats(): FleetStats {
     let near = 0;
     let far = 0;
+    let high = 0;
     let parked = 0;
     for (const m of this.members.values()) {
       if (m.view.parked) parked++;
       if (m.shown === "near") near++;
+      else if (m.shown === "high") high++;
       else if (m.shown === "far") far++;
     }
-    return { driving: this.members.size - parked, parked, near, far, meshes: this.mesh?.isEnabled() ? 1 : 0 };
+    return { driving: this.members.size - parked, parked, near: near + high, high, far, meshes: this.mesh?.isEnabled() ? 1 : 0 };
   }
 
   spawn(id: EntityId, view: VehicleDescriptor, t: Transform): void {
-    this.members.set(id, { view, transform: t, pair: null, offset: 0, shown: "none" });
+    this.members.set(id, { view, transform: t, pair: null, offset: 0, shown: "none", slot: -1 });
     this.dirty = true;
   }
 
@@ -158,27 +185,30 @@ class Fleet {
     this.min.set(Infinity, Infinity, Infinity);
     this.max.set(-Infinity, -Infinity, -Infinity);
     let any = false;
-    let wrote = false;
+    let wrote = this.releaseHigh(this.closest(eye));
+    let painted = wrote;
     this.drawn.length = 0;
     for (const m of this.members.values()) {
       const pair = m.pair;
       if (!pair) continue;
       const p = m.transform.position;
       const dist = Math.hypot(p.x - eye.x, p.z - eye.z);
-      const want: Shown = dist > lod.draw ? "none" : dist > lod.near ? "far" : "near";
+      const want: Shown = dist > lod.draw ? "none" : dist > lod.near ? "far" : m.shown === "high" || this.wantsHigh.has(m) ? "high" : "near";
       const changed = want !== m.shown;
       if (changed) {
         if (m.shown === "near") this.fold(m.offset, pair.near.vertexCount, p);
         if (m.shown === "far") this.fold(m.offset + pair.near.vertexCount, pair.far.vertexCount, p);
-        m.shown = want;
+        if (want === "high") painted = this.takeSlot(m) || painted;
+        m.shown = want === "high" && m.slot < 0 ? "near" : want;
         wrote = true;
       }
-      if (want === "none") continue;
+      if (m.shown === "none") continue;
       any = true;
       this.drawn.push(p.x, p.y, p.z);
       if (changed || !m.view.parked) {
         wrote = true;
-        if (want === "near") this.place(pair.near, m.offset, m.transform);
+        if (m.shown === "high") this.place(pair.high!, this.poolBase + m.slot * this.poolVerts, m.transform);
+        else if (m.shown === "near") this.place(pair.near, m.offset, m.transform);
         else this.place(pair.far, m.offset + pair.near.vertexCount, m.transform);
       }
       this.min.set(Math.min(this.min.x, p.x - PAD), Math.min(this.min.y, p.y - 1), Math.min(this.min.z, p.z - PAD));
@@ -188,7 +218,52 @@ class Fleet {
     if (!any || !wrote) return;
     mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions, false, false);
     mesh.updateVerticesData(VertexBuffer.NormalKind, this.normals, false, false);
+    if (painted) mesh.updateVerticesData(VertexBuffer.ColorKind, this.colors, false, false);
     mesh.buildBoundingInfo(this.min, this.max);
+  }
+
+  /** Those of the vehicles with a close-up that should wear it: the nearest within reach, as many as the pool has places. */
+  private readonly wantsHigh = new Set<Member>();
+
+  private closest(eye: { x: number; z: number }): ReadonlySet<Member> {
+    this.wantsHigh.clear();
+    const lod = VEHICLE_LOD[this.deps.quality];
+    if (this.poolOwners.length === 0) return this.wantsHigh;
+    const near: [number, Member][] = [];
+    for (const m of this.members.values()) {
+      if (m.pair?.high?.vertexCount !== this.poolVerts) continue;
+      const p = m.transform.position;
+      const d = Math.hypot(p.x - eye.x, p.z - eye.z);
+      if (d <= Math.min(lod.highReach, lod.near)) near.push([d, m]);
+    }
+    near.sort((a, b) => a[0] - b[0]);
+    for (const [, m] of near.slice(0, this.poolOwners.length)) this.wantsHigh.add(m);
+    return this.wantsHigh;
+  }
+
+  /** Gives back the places of those no longer among the nearest: their close-up folded, their near version drawn again. True when it wrote. */
+  private releaseHigh(keep: ReadonlySet<Member>): boolean {
+    let wrote = false;
+    this.poolOwners.forEach((m, slot) => {
+      if (!m || keep.has(m)) return;
+      this.fold(this.poolBase + slot * this.poolVerts, this.poolVerts, m.transform.position);
+      this.poolOwners[slot] = null;
+      m.slot = -1;
+      m.shown = "none";
+      wrote = true;
+    });
+    return wrote;
+  }
+
+  /** A free place of the pool for `m`, painted in its colours; false when none is free. */
+  private takeSlot(m: Member): boolean {
+    const slot = this.poolOwners.indexOf(null);
+    if (slot < 0 || !m.pair?.high) return false;
+    this.poolOwners[slot] = m;
+    m.slot = slot;
+    // Its own near and far versions stay folded while it wears its close-up.
+    this.colors.set(m.pair.high.colors, (this.poolBase + slot * this.poolVerts) * 4);
+    return true;
   }
 
   /**
@@ -236,14 +311,24 @@ class Fleet {
     this.dirty = false;
     let total = 0;
     let triangles = 0;
+    let high: VehicleTemplate | null = null;
     for (const m of this.members.values()) {
       m.pair = this.pairOf(kit, m.view);
       m.offset = total;
       m.shown = "none";
+      m.slot = -1;
       if (!m.pair) continue;
+      high ??= m.pair.high ?? null;
       total += m.pair.near.vertexCount + m.pair.far.vertexCount;
       triangles += m.pair.near.indices.length + m.pair.far.indices.length;
     }
+    // The close-ups' pool after the vehicles' own versions: every place laid out for one close-up.
+    const places = high && this.closeUps ? VEHICLE_LOD[this.deps.quality].high : 0;
+    this.poolBase = total;
+    this.poolVerts = high?.vertexCount ?? 0;
+    this.poolOwners = Array.from({ length: places }, () => null);
+    total += places * this.poolVerts;
+    triangles += places * (high?.indices.length ?? 0);
     if (total === 0) {
       this.mesh?.setEnabled(false);
       return;
@@ -252,6 +337,7 @@ class Fleet {
     this.normals = new Float32Array(total * 3);
     const uvs = new Float32Array(total * 2);
     const colors = new Float32Array(total * 4);
+    this.colors = colors;
     const indices = new Uint32Array(triangles);
     let k = 0;
     for (const m of this.members.values()) {
@@ -265,11 +351,17 @@ class Fleet {
         at += t.vertexCount;
       }
     }
+    for (let slot = 0; high && slot < places; slot++) {
+      const at = this.poolBase + slot * this.poolVerts;
+      uvs.set(high.uvs, at * 2);
+      colors.set(high.colors, at * 4);
+      for (const i of high.indices) indices[k++] = i + at;
+    }
     const mesh = this.mesh ?? this.createMesh(kit);
     mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true, 3);
     mesh.setVerticesData(VertexBuffer.NormalKind, this.normals, true, 3);
     mesh.setVerticesData(VertexBuffer.UVKind, uvs, false, 2);
-    mesh.setVerticesData(VertexBuffer.ColorKind, colors, false, 4);
+    mesh.setVerticesData(VertexBuffer.ColorKind, colors, true, 4);
     mesh.setIndices(indices, total);
   }
 
@@ -308,8 +400,8 @@ export class VehicleViews {
   private readonly parked: Fleet;
 
   constructor(private readonly deps: VehicleViewsDeps) {
-    this.driving = new Fleet(deps, "vehicles");
-    this.parked = new Fleet(deps, "parked");
+    this.driving = new Fleet(deps, "vehicles", false);
+    this.parked = new Fleet(deps, "parked", true);
   }
 
   has(id: EntityId): boolean {
@@ -321,10 +413,10 @@ export class VehicleViews {
   }
 
   /** Vehicles driving and parked, those drawn last frame near and far, and the meshes drawn (debug, tests). */
-  get stats(): { readonly driving: number; readonly parked: number; readonly near: number; readonly far: number; readonly meshes: number } {
+  get stats(): FleetStats {
     const d = this.driving.stats;
     const p = this.parked.stats;
-    return { driving: d.driving, parked: p.parked, near: d.near + p.near, far: d.far + p.far, meshes: d.meshes + p.meshes };
+    return { driving: d.driving, parked: p.parked, near: d.near + p.near, high: d.high + p.high, far: d.far + p.far, meshes: d.meshes + p.meshes };
   }
 
   spawn(id: EntityId, view: VehicleDescriptor, t: Transform): void {

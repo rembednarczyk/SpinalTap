@@ -87,13 +87,14 @@ export interface VehicleLook {
 /**
  * A model of the props stretched to the body's footprint and never above its height (the
  * trolleybus's booms aside), on the kit's UVs; each vertex coloured by its swatch (`color`), which
- * only the tinted swatches show.
+ * only the tinted swatches show. On a body longer than the model (the sports car on a van's or a
+ * delivery's) it grows in height with its length, up to the body's.
  */
 const propsVehicle = (props: VehicleProps, m: KitModel, model: VehicleModel, color: (swatch: string) => string, extra?: (sink: GeometrySink) => void): VehicleTemplate => {
   const size = VEHICLE_SIZE[model];
   const sink = new GeometrySink();
   // Front +z in the file is -z once parsed (like the kit's cars): turned round.
-  sink.addModel(m, { key: m.key, x: 0, y: 0, z: 0, turn: Math.PI, sx: size.width / m.size.x, sy: Math.min(1, size.height / m.size.y), sz: size.length / m.size.z, tint: "#ffffff" });
+  sink.addModel(m, { key: m.key, x: 0, y: 0, z: 0, turn: Math.PI, sx: size.width / m.size.x, sy: Math.min(Math.max(1, size.length / m.size.z), size.height / m.size.y), sz: size.length / m.size.z, tint: "#ffffff" });
   for (let v = 0; v * 2 < m.uvs.length; v++) {
     const s = swatchAt(props.data, m.uvs[v * 2] ?? 0, m.uvs[v * 2 + 1] ?? 0);
     const uv = props.uvs[s] ?? [0, 0];
@@ -175,7 +176,12 @@ const farVehicle = (data: CityKitData, model: VehicleModel, paint: string): Vehi
  * a car the kit lacks. A look's model missing from the props falls back to the kit's car (or the
  * procedural trolleybus), and its far version to the boxes.
  */
-export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: number, look: VehicleLook = {}): { readonly near: VehicleTemplate; readonly far: VehicleTemplate } | null => {
+export const vehicleTemplates = (
+  data: CityKitData,
+  model: VehicleModel,
+  paint: number,
+  look: VehicleLook = {},
+): { readonly near: VehicleTemplate; readonly far: VehicleTemplate; readonly high?: VehicleTemplate } | null => {
   const color = PAINTS[paint] ?? PAINTS[0];
   const props = look.props ?? null;
   const key = look.variant?.key;
@@ -186,5 +192,8 @@ export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: 
   const near = props && nearModel ? propsVehicle(props, nearModel, model, tintOf, gear) : model === "trolleybus" ? trolleybus(data) : kitCar(data, model, color);
   const farModel = fromProps(`${key}-far`);
   const far = props && farModel ? propsVehicle(props, farModel, model, tintOf) : farVehicle(data, model, color);
-  return near ? { near, far } : null;
+  // The close-up of the nearest few (19.11), not on phones.
+  const highModel = look.lite ? undefined : fromProps(`${key}-hi`);
+  const high = props && highModel ? propsVehicle(props, highModel, model, tintOf, gear) : undefined;
+  return near ? { near, far, ...(high ? { high } : {}) } : null;
 };
