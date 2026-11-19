@@ -8,7 +8,9 @@ import { type AbstractMesh, type Mesh, Scene, VertexBuffer } from "../src/babylo
 import { ToonMaterials } from "../src/npr/toon-material";
 import { buildCivilian, buildHeroine } from "../src/renderer/characters";
 import { GarmentAssets, bodySurfaceOf } from "../src/renderer/garment-assets";
-import { BodyGrid, GARMENT_LIFT } from "../src/renderer/garment-fit";
+import { BodyGrid, GARMENT_LIFT, TRANSFER_FULL, fitGarment } from "../src/renderer/garment-fit";
+import { activityJoints } from "../src/renderer/activity-poses";
+import { applyActivityPose } from "../src/renderer/activity-rig";
 import { Loadouts } from "../src/renderer/loadout";
 import { ModelLibrary, toonSourceOf } from "../src/renderer/model-library";
 import { HumanoidRetarget } from "../src/renderer/model-rig";
@@ -72,6 +74,29 @@ const standOffs = (jacket: Mesh, meshes: readonly AbstractMesh[]): number[] => {
   return out;
 };
 
+/** A skinned mesh's positions and normals in its skeleton's current pose, worked out on the CPU (what the GPU draws). */
+const skinned = (m: AbstractMesh): { positions: Float32Array; normals: Float32Array } => {
+  const p = m.getVerticesData(VertexBuffer.PositionKind)!;
+  const n = m.getVerticesData(VertexBuffer.NormalKind)!;
+  const j = m.getVerticesData(VertexBuffer.MatricesIndicesKind)!;
+  const w = m.getVerticesData(VertexBuffer.MatricesWeightsKind)!;
+  const mats = m.skeleton!.getTransformMatrices(m);
+  const positions = new Float32Array(p.length);
+  const normals = new Float32Array(p.length);
+  for (let v = 0; v < p.length / 3; v++) {
+    for (let k = 0; k < 4; k++) {
+      const wt = w[v * 4 + k]!;
+      if (!wt) continue;
+      const o = j[v * 4 + k]! * 16;
+      for (let a = 0; a < 3; a++) {
+        positions[v * 3 + a]! += wt * (p[v * 3]! * mats[o + a]! + p[v * 3 + 1]! * mats[o + 4 + a]! + p[v * 3 + 2]! * mats[o + 8 + a]! + mats[o + 12 + a]!);
+        normals[v * 3 + a]! += wt * (n[v * 3]! * mats[o + a]! + n[v * 3 + 1]! * mats[o + 4 + a]! + n[v * 3 + 2]! * mats[o + 8 + a]!);
+      }
+    }
+  }
+  return { positions, normals };
+};
+
 describe("garment assets (ADR-0086)", () => {
   // Seki (F00) and the ganger (Base_Male, M00): the jacket was cut out of an N00 file of another figure.
   for (const file of ["seki.vrm", "ganger.vrm"]) {
@@ -95,13 +120,13 @@ describe("garment assets (ADR-0086)", () => {
         expect(left / all, m.name).toBeGreaterThan(0.2);
         expect(left / all, m.name).toBeLessThan(0.6);
       }
-      // One mesh of 5140 triangles on the J_Bip_ bones of the model, in the gang's green.
+      // One mesh of 5140 triangles on the bones of the model (its J_Bip_, and the J_Sec_ of the cloth it lies on), in the gang's green.
       expect(jacket!.getIndices()!.length / 3).toBe(5140);
       const bones = new Set<string>();
       const idx = jacket!.getVerticesData(VertexBuffer.MatricesIndicesKind)!;
       const w = jacket!.getVerticesData(VertexBuffer.MatricesWeightsKind)!;
       for (let i = 0; i < idx.length; i++) if (w[i]! > 0) bones.add(jacket!.skeleton!.bones[idx[i]!]!.name);
-      expect([...bones].every((b) => b.startsWith("J_Bip_")), [...bones].join()).toBe(true);
+      expect([...bones].every((b) => /^J_(Bip|Sec)_/.test(b)), [...bones].join()).toBe(true);
       expect(jacket!.material?.name).toContain(":tint");
     });
 
@@ -114,6 +139,93 @@ describe("garment assets (ADR-0086)", () => {
       expect(Math.min(...out)).toBeGreaterThan(GARMENT_LIFT - 0.003);
     });
   }
+
+  it("ganger.vrm: hides the skin of the arms and the torso under the jacket, draws the hands, the neck and the legs", async () => {
+    const { scene, model, jacket } = await dress("ganger.vrm", HEBI);
+    const body = model.meshes.find((m) => m.name === "c-Body_primitive0")!;
+    expect(body.isEnabled(false)).toBe(false);
+    const rest = scene.getMeshByName("c-Body_primitive0-jacket-techwear-rest") as Mesh;
+    expect(rest.skeleton).toBe(jacket!.skeleton);
+    const [all, left] = [body.getIndices()!.length, rest.getIndices()!.length];
+    expect(left / all).toBeGreaterThan(0.3);
+    expect(left / all).toBeLessThan(0.9);
+    // What the drawn skin follows most: the hands, the head and the legs among it.
+    const j = rest.getVerticesData(VertexBuffer.MatricesIndicesKind)!;
+    const w = rest.getVerticesData(VertexBuffer.MatricesWeightsKind)!;
+    const follows = new Set<string>();
+    for (let v = 0; v < j.length / 4; v++) {
+      let k = 0;
+      for (let i = 1; i < 4; i++) if (w[v * 4 + i]! > w[v * 4 + k]!) k = i;
+      follows.add(rest.skeleton!.bones[j[v * 4 + k]!]!.name.replace(/^.*J_Bip_/, ""));
+    }
+    for (const b of ["L_Hand", "R_Hand", "C_Head", "L_UpperLeg", "R_LowerLeg"]) expect(follows.has(b), b).toBe(true);
+  });
+
+  // The user's notes of 19.11: the shoulders and the armpits showed through the jacket once the arms came down.
+  for (const file of ["ganger.vrm", "kaito.vrm"]) {
+    it(`${file}: no drawn skin comes through the jacket in the activities' poses`, async () => {
+      const { scene, rig, model, jacket } = await dress(file, HEBI);
+      const retarget = HumanoidRetarget.create(rig, model.root, model.prefix)!;
+      const rest = scene.getMeshByName("c-Body_primitive0-jacket-techwear-rest") as Mesh;
+      // The drawn skin's vertices in the bind pose that lie under the jacket: each with the jacket's vertex over it.
+      const jb = jacket!.getVerticesData(VertexBuffer.PositionKind)!;
+      const jn = jacket!.getVerticesData(VertexBuffer.NormalKind)!;
+      const rb = rest.getVerticesData(VertexBuffer.PositionKind)!;
+      const grid = new BodyGrid({ positions: Float32Array.from(jb), normals: Float32Array.from(jn) });
+      const under: [number, number][] = [];
+      for (let v = 0; v < rb.length / 3; v++) {
+        const g = grid.nearest(rb[v * 3]!, rb[v * 3 + 1]!, rb[v * 3 + 2]!);
+        if (g < 0) continue;
+        const out = (rb[v * 3]! - jb[g * 3]!) * jn[g * 3]! + (rb[v * 3 + 1]! - jb[g * 3 + 1]!) * jn[g * 3 + 1]! + (rb[v * 3 + 2]! - jb[g * 3 + 2]!) * jn[g * 3 + 2]!;
+        if (out < -0.004) under.push([v, g]);
+      }
+      expect(under.length).toBeGreaterThan(50);
+      for (const act of ["idle", "phone", "drink", "smoke"] as const) {
+        applyActivityPose(rig, activityJoints(act, 2.5), 1);
+        retarget.update();
+        for (const n of scene.transformNodes) n.computeWorldMatrix(true);
+        for (const m of scene.meshes) m.computeWorldMatrix(true);
+        jacket!.skeleton!.prepare(true);
+        const J = skinned(jacket!);
+        const R = skinned(rest);
+        const through = under.filter(([v, g]) => {
+          const d = [0, 1, 2].map((a) => R.positions[v * 3 + a]! - J.positions[g * 3 + a]!);
+          return d[0]! * J.normals[g * 3]! + d[1]! * J.normals[g * 3 + 1]! + d[2]! * J.normals[g * 3 + 2]! > 0.002;
+        });
+        expect(through.length, act).toBe(0);
+      }
+    });
+  }
+
+  it("fits a garment's weights to the skin under it, and keeps its own over the legs and away from the body", () => {
+    // Bones: 0 the root, 1 an arm, 2 a leg, 3 the garment's own. A body vertex on the arm and one on the leg, both facing +z.
+    const target = { names: ["root", "arm", "leg", "own"], bind: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]] as [number, number, number][] };
+    const body = {
+      positions: Float32Array.from([0, 1, 0, 0, 0, 0]),
+      normals: Float32Array.from([0, 0, 1, 0, 0, 1]),
+      joints: Float32Array.from([1, 0, 0, 0, 2, 0, 0, 0]),
+      weights: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0]),
+      keepOwn: new Set([2]),
+    };
+    // Garment vertices: over the arm close, over the arm far, over the leg close; all on the garment's own bone.
+    const at = [0, 1, 0.02, 0, 1, 0.3, 0, 0, 0.02];
+    const g = {
+      positions: Float32Array.from(at),
+      normals: Float32Array.from([0, 0, 1, 0, 0, 1, 0, 0, 1]),
+      uvs: new Float32Array(6),
+      indices: Uint32Array.from([0, 1, 2]),
+      joints: Float32Array.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      weights: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]),
+      bones: ["own"],
+      bind: [[0, 0, 0]] as [number, number, number][],
+      parents: [-1],
+    };
+    expect(0.02).toBeLessThan(TRANSFER_FULL);
+    const fit = fitGarment(g, target, body);
+    expect([fit.joints[0], fit.weights[0]]).toEqual([1, 1]);
+    expect([fit.joints[4], fit.weights[4]]).toEqual([3, 1]);
+    expect([fit.joints[8], fit.weights[8]]).toEqual([3, 1]);
+  });
 
   it("takes the jacket off with the look or the model, and the top shows again", async () => {
     const { scene, loadouts, rig, model, jacket } = await dress("seki.vrm", HEBI);

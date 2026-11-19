@@ -10,6 +10,11 @@
  * 2. Body: a vertex nearer the body than `lift` along the normal of the nearest body vertex (or
  *    inside it) is pushed out to `lift`. Models of one base differ in their figure sliders (bust,
  *    hips, shoulders), so a garment made on one goes into the body of another without this.
+ * 3. Weights: a vertex close on the body takes the skin weights of its nearest body vertex (fully
+ *    within `TRANSFER_FULL`, blended out to `TRANSFER_REACH`), so it moves as the skin under it
+ *    does: the garment's own weights come from another figure and let the shoulders and the
+ *    armpits through when the arms come down from the bind pose (user notes of 19.11). The legs'
+ *    skin lends none: a long coat's skirt keeps its own weights instead of parting with each leg.
  */
 
 /** A garment as its file gives it: per vertex 3 floats of position and normal, 4 bone slots. */
@@ -38,6 +43,11 @@ export interface TargetSkeleton {
 export interface BodySurface {
   readonly positions: Float32Array;
   readonly normals: Float32Array;
+  /** Per vertex four bone indices into the cast skeleton and four weights, when known (step 3 of the fit). */
+  readonly joints?: Float32Array;
+  readonly weights?: Float32Array;
+  /** Bones whose skin lends no weights (the legs'), by index into the cast skeleton. */
+  readonly keepOwn?: ReadonlySet<number>;
 }
 
 export interface FittedGarment {
@@ -58,6 +68,9 @@ const REACH = 0.06;
 const CELL = 0.03;
 /** Rounds of pushing a garment off the body at most. */
 const PUSH_ROUNDS = 6;
+/** A garment vertex this near the skin moves with it alone; out to `TRANSFER_REACH` (the grid's reach) the two blend. */
+export const TRANSFER_FULL = 0.025;
+export const TRANSFER_REACH = REACH;
 
 /** A garment bone's index in the cast skeleton, or that of its nearest ancestor the cast has. */
 const targetBoneOf = (g: GarmentGeometry, target: TargetSkeleton): number[] => {
@@ -174,6 +187,42 @@ export const fitGarment = (g: GarmentGeometry, target: TargetSkeleton, body: Bod
     }
     for (const m of moved) if (m > 0) pushed++;
     deepest = Math.max(0, ...moved);
+    if (body.joints && body.weights) transferWeights(positions, joints, weights, grid, body);
   }
   return { positions, normals: g.normals, joints, weights, pushed, deepest };
+};
+
+/** The bone of a vertex's largest weight. */
+const mainBone = (joints: Float32Array, weights: Float32Array, v: number): number => {
+  let k = 0;
+  for (let i = 1; i < 4; i++) if (weights[v * 4 + i]! > weights[v * 4 + k]!) k = i;
+  return joints[v * 4 + k]!;
+};
+
+/** Step 3: the garment's vertices near the skin take its weights (see the file's comment). */
+const transferWeights = (positions: Float32Array, joints: Float32Array, weights: Float32Array, grid: BodyGrid, body: BodySurface): void => {
+  const bp = body.positions;
+  const bj = body.joints!;
+  const bw = body.weights!;
+  for (let v = 0; v < positions.length / 3; v++) {
+    const [x, y, z] = [positions[v * 3]!, positions[v * 3 + 1]!, positions[v * 3 + 2]!];
+    const b = grid.nearest(x, y, z);
+    if (b < 0 || body.keepOwn?.has(mainBone(bj, bw, b))) continue;
+    const d = Math.hypot(bp[b * 3]! - x, bp[b * 3 + 1]! - y, bp[b * 3 + 2]! - z);
+    const f = d <= TRANSFER_FULL ? 1 : Math.max(0, 1 - (d - TRANSFER_FULL) / (TRANSFER_REACH - TRANSFER_FULL));
+    if (f <= 0) continue;
+    const mix = new Map<number, number>();
+    for (let k = 0; k < 4; k++) {
+      const own = weights[v * 4 + k]! * (1 - f);
+      if (own > 0) mix.set(joints[v * 4 + k]!, (mix.get(joints[v * 4 + k]!) ?? 0) + own);
+      const lent = bw[b * 4 + k]! * f;
+      if (lent > 0) mix.set(bj[b * 4 + k]!, (mix.get(bj[b * 4 + k]!) ?? 0) + lent);
+    }
+    const top = [...mix].sort((a, c) => c[1] - a[1]).slice(0, 4);
+    const total = top.reduce((sum, [, w]) => sum + w, 0);
+    for (let k = 0; k < 4; k++) {
+      joints[v * 4 + k] = top[k]?.[0] ?? 0;
+      weights[v * 4 + k] = top[k] ? top[k]![1] / total : 0;
+    }
+  }
 };
