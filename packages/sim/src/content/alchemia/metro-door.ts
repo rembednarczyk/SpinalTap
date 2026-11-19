@@ -3,6 +3,7 @@ import type { NavGraph, Rect } from "../builders";
 import { groundY } from "../lublin/terrain";
 import { ALCHEMIA_DOOR_HEAD, METRO_ENTRANCES } from "../metro";
 import { P1, P1_PIECES } from "./parking";
+import { P2_STAIR_PIECES } from "./p2";
 import { type Piece, box, piece } from "./plan";
 
 /*
@@ -101,5 +102,5 @@ export const METRO_DOOR_LINK: NavGraph = {
   edges: [{ a: B_END, b: "alchemia-p1-metro-foot", via: { minX: METRO_DOOR_FOOT - 0.6, maxX: METRO_DOOR.inner, minZ: METRO_DOOR.minZ, maxZ: METRO_DOOR.maxZ } satisfies Rect }],
 };
 
-/** P-1's pieces with the passage's: what the car park's views draw. */
-export const P1_ALL_PIECES: readonly Piece[] = [...P1_PIECES, ...METRO_DOOR_PIECES];
+/** P-1's pieces with the passage's and the flight down to P-2 (stage 5a): what the car park's views draw. */
+export const P1_ALL_PIECES: readonly Piece[] = [...P1_PIECES, ...METRO_DOOR_PIECES, ...P2_STAIR_PIECES];

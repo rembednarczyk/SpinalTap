@@ -1,6 +1,7 @@
 import { type NavEdge, type NavGraph, type NavNode, mergeNav } from "../builders";
 import { P1_NAV } from "./parking-nav";
 import { METRO_DOOR_NAV } from "./metro-door";
+import { P2_NAV } from "./p2-nav";
 import { groundY } from "../lublin/terrain";
 import { STAIR, STAIR_HEAD_X, opening } from "./foodhall";
 import { HALL } from "./plan";
@@ -82,5 +83,5 @@ const EDGES: readonly NavEdge[] = [
   ...chain("t0-roof", "roof-south", "roof-east-south", "roof-east-north", "roof-north"),
 ];
 
-/** The food hall's graph, P-1's under the car park (stage 4, `parking-nav.ts`) and the passage from metro B (stage 10). */
-export const ALCHEMIA_NAV: NavGraph = mergeNav({ nodes: NODES, edges: EDGES }, P1_NAV, METRO_DOOR_NAV);
+/** The food hall's graph, P-1's under the car park (stage 4, `parking-nav.ts`), the passage from metro B (stage 10) and P-2 (stage 5a, `p2-nav.ts`). */
+export const ALCHEMIA_NAV: NavGraph = mergeNav({ nodes: NODES, edges: EDGES }, P1_NAV, METRO_DOOR_NAV, P2_NAV);

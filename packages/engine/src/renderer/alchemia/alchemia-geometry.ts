@@ -4,6 +4,7 @@ import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-
 import { arkadyGeometry } from "./arkady-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { garlandsGeometry } from "./garlands";
+import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 
 /**
@@ -41,6 +42,13 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   pergola: "rust",
   lantern: "win-warm",
   led: "neon-cyan",
+  // P-2's store (stage 5a): its own sinks colour these (`p2-geometry.ts`); here only for the table's sake.
+  rack: "metal",
+  pallet: "trim-light",
+  car: "metal",
+  tyre: "tyre",
+  rail: "metal",
+  beacon: "neon-amber",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */
@@ -193,6 +201,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   arkadyGeometry(outside, data);
   pavilionGeometry(outside, data);
   parkingOutside(outside, data);
+  p2Outside(outside, data);
   garlandsGeometry(outside, data);
   unitSigns(inside, data);
   ceilingLights(inside, data);

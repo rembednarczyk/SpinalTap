@@ -4,6 +4,7 @@ import { type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../b
 import type { ToonMaterials } from "../../npr/toon-material";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
+import { eyeInP2 } from "./p2-view";
 import { parkingInside } from "./parking-geometry";
 import { type CarAt, SHUTTERS, SHUTTER_RISE, shutterLifts } from "./parking-traffic";
 
@@ -99,7 +100,7 @@ export class ParkingView {
     const near = toRect(e, P1);
     const inn = near < PARKING_DRAW + (this.inside?.isEnabled(false) ? PARKING_HOLD : 0);
     if (inn && kit !== this.kitSeen) this.build(kit);
-    this.show(inn);
+    this.show(inn, !eyeInP2(e));
     if (inn) this.drive(dt, reference);
   }
 
@@ -156,10 +157,11 @@ export class ParkingView {
     for (let k = 0; k < src.length; k += 3, o += 3) this.positions.set([p.x + (src[k] ?? 0), p.y + (src[k + 1] ?? 0), p.z + (src[k + 2] ?? 0)], o);
   }
 
-  private show(inn: boolean): void {
+  /** The room and its shutters on or off; its lamp with them, but off with the eye down in P-2 (it would light P-2 through the floor, G-263). */
+  private show(inn: boolean, lamp = true): void {
     if (this.inside && this.inside.isEnabled(false) !== inn) this.inside.setEnabled(inn);
     if (this.moving && this.moving.isEnabled(false) !== inn) this.moving.setEnabled(inn);
-    const lit = inn && this.inside !== null;
+    const lit = inn && lamp && this.inside !== null;
     if (lit === this.lit) return;
     this.lit = lit;
     if (lit) this.deps.materials.addLight(PARKING_LAMP_KEY, LAMP);

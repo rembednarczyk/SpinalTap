@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, FOODHALL_INNER, P1, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ALCHEMIA_T0, ALCHEMIA_T1, ARKADY, ARKADY_CENTRE, ARKADY_PIECES, FOODHALL, FOODHALL_INNER, P1, P2_CUTTING, SQUARE_GARLANDS, arkadyLocal } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { pointLightOn } from "../src/npr/toon-point-lights";
@@ -43,13 +43,15 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     const byRamp = (x: number, z: number) => x > 409.2 && x < 422 && z > -6 && z < 25;
     // T0's square where the car park was, its pergolas and beds (stage 7): within the car park's outline's box.
     const onSquare = (x: number, z: number) => x > 379.2 && x < 441.3 && z > -9.3 && z < 38.6;
+    // P-2's portal and its cutting in the slope down to T2 (stage 5a, `alchemia-p2.test.ts`).
+    const byCutting = (x: number, z: number) => x > P2_CUTTING.minX - 0.01 && x < P2_CUTTING.maxX + 0.01 && z > P2_CUTTING.minZ - 0.31 && z < P2_CUTTING.maxZ + 0.01;
     const byArkady = (x: number, z: number) => {
       const q = arkadyLocal(x, z);
       return q.a > -3.2 && q.a < ARKADY.length + 0.2 && q.c > -0.3 && q.c < ARKADY.depth + 5.2;
     };
     for (let i = 0; i < outside.positions.length; i += 3) {
       const [x, z] = [outside.positions[i]!, outside.positions[i + 2]!];
-      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z) || byRamp(x, z) || onSquare(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+      expect(onPlot(x, z) || onT2(x, z) || byArkady(x, z) || onCorner(x, z) || byRamp(x, z) || onSquare(x, z) || byCutting(x, z), `${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
     }
   });
 

@@ -68,7 +68,14 @@ export type PieceKind =
   | "pergola"
   | "lantern"
   // The green tiers of 15.11: the strip of light along a slab's edge.
-  | "led";
+  | "led"
+  // P-2's automated store (stage 5a): its racks, pallets, the cars on them with their tyres, the robots' rails, the orange beacons.
+  | "rack"
+  | "pallet"
+  | "car"
+  | "tyre"
+  | "rail"
+  | "beacon";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

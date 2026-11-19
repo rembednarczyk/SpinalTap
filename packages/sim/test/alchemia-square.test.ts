@@ -5,6 +5,7 @@ import {
   ALCHEMIA_NAV,
   ALCHEMIA_PIECES,
   ALCHEMIA_PROPS,
+  P2_PROPS,
   FOODHALL,
   KUROSAWA_SPOT,
   P1_RAMP,
@@ -49,8 +50,8 @@ describe("T0's square and the green roof (ADR-0074 stage 7)", () => {
     expect(count("green")).toBeGreaterThan(8);
     // The lawns, on tier B's green roof since 15.11 (`alchemia-tiers.test.ts`).
     expect(count("lawn")).toBe(4);
-    // Its solids are one prop of Alchemia's, the last before the tiers' two (15.11) and stage 10's passage: no id of the content moves.
-    const last = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 4]!;
+    // Its solids are one prop of Alchemia's, the last before the tiers' two (15.11), stage 10's passage and P-2's (stage 5a): no id of the content moves.
+    const last = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 4 - P2_PROPS.length]!;
     expect(last.prisms).toHaveLength(solids.length);
   });
 

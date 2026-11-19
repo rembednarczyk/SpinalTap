@@ -135,8 +135,8 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     const ids = new Set(WORLD_NAV.nodes.map((n) => n.id));
     for (const n of ALCHEMIA_NAV.nodes) expect(ids.has(n.id), n.id).toBe(true);
     const g = loaded().streamer.ground;
-    // P-1's nodes (stage 4) stand on its floor, ramp and stairs: `alchemia-parking.test.ts`.
-    for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-"))) {
+    // P-1's nodes (stage 4) stand on its floor, ramp and stairs: `alchemia-parking.test.ts`; P-2's (stage 5a): `alchemia-p2.test.ts`.
+    for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-") && !n.id.startsWith("alchemia-p2-"))) {
       const inHall = n.at.x >= FOODHALL.minX && n.at.x <= FOODHALL.maxX && n.at.z >= FOODHALL.minZ && n.at.z <= FOODHALL.maxZ;
       const floor = inHall ? (n.at.y > F + 1 ? R : F) : g.heightAt(n.at.x, n.at.z);
       expect(n.at.y, n.id).toBeCloseTo(floor, 1);
