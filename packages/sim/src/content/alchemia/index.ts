@@ -35,7 +35,8 @@ export * from "./p2-store";
 export { PARAPET_BEDS } from "./square";
 export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
-export { EAST_WING, FRONT_FOOTPRINTS, FRONT_SIGN, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
+export { frontDressPieces } from "./front-dress";
+export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_SIGN, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its

@@ -81,7 +81,8 @@ export type PieceKind =
   | "sign"
   // Its details (B4): the umbrellas' canopies, the ramp's green light.
   | "umbrella"
-  | "led-green";
+  | "led-green"
+  | "water";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

@@ -55,6 +55,7 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   sign: "dark",
   umbrella: "fabric-teal",
   "led-green": "neon-green",
+  water: "glass-blue",
 };
 
 /** The signs' neon by the unit's kitchen: the kit's glow swatches. */

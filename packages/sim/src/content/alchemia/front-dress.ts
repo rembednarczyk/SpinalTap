@@ -1,6 +1,7 @@
 import { P1_RAMP, p1RampY } from "./parking";
 import { type Piece, box, piece } from "./plan";
-import { L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
+import { FOUNTAIN, L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
+import { groundY } from "../lublin/terrain";
 
 /*
  * The board's details on the front (ADR-0074 B4, decisions of 19.11): green hanging over the
@@ -66,5 +67,32 @@ const rampLights = (): Piece[] => {
   return out;
 };
 
+/**
+ * The fountain on the square before the west wing (the board's, with its hologram): a basin knee
+ * high of four solid walls, its water, and over it a figure of light in stacked rings round a core.
+ */
+const fountain = (): Piece[] => {
+  const f = FOUNTAIN;
+  const cx = (f.minX + f.maxX) / 2;
+  const cz = (f.minZ + f.maxZ) / 2;
+  const low = Math.min(groundY(f.minX, f.minZ), groundY(f.maxX, f.minZ), groundY(f.minX, f.maxZ), groundY(f.maxX, f.maxZ));
+  const top = Math.max(groundY(f.minX, f.minZ), groundY(f.maxX, f.minZ), groundY(f.minX, f.maxZ), groundY(f.maxX, f.maxZ)) + 0.5;
+  const T = 0.25;
+  const out: Piece[] = [
+    piece(box(f.minX, f.maxX, f.minZ, f.minZ + T, low - 0.2, top), "parapet", false),
+    piece(box(f.minX, f.maxX, f.maxZ - T, f.maxZ, low - 0.2, top), "parapet", false),
+    piece(box(f.minX, f.minX + T, f.minZ + T, f.maxZ - T, low - 0.2, top), "parapet", false),
+    piece(box(f.maxX - T, f.maxX, f.minZ + T, f.maxZ - T, low - 0.2, top), "parapet", false),
+    piece(box(f.minX + T, f.maxX - T, f.minZ + T, f.maxZ - T, low - 0.2, top - 0.12), "water", false),
+    piece(box(cx - 0.06, cx + 0.06, cz - 0.06, cz + 0.06, top - 0.12, top + 2.4), "led", false, false),
+  ];
+  for (let k = 0; k < 5; k++) {
+    const r = 0.55 - k * 0.07;
+    const y = top + 0.4 + k * 0.42;
+    out.push(piece(box(cx - r, cx + r, cz - r, cz + r, y, y + 0.03), "led", false, false));
+  }
+  return out;
+};
+
 /** Every detail of B4 on the front. */
-export const frontDressPieces = (): Piece[] => [...vines(), ...trees(), ...umbrellas(), ...sideScreens(), ...rampLights()];
+export const frontDressPieces = (): Piece[] => [...vines(), ...trees(), ...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain()];

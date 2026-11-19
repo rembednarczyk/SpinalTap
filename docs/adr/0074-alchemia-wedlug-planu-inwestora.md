@@ -365,10 +365,9 @@ Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dot
       - cztery parasole ze stolikami na dachu L3;
       - wysokie ekrany na bokach L3;
       - zielone pasy światła w ścianach rampy P−1 i nad wjazdem pod strop.
-    - **Zostaje:**
-      - fontanna z hologramem i kioski na placu przed frontem;
-      - balustrada zamiast pełnego parapetu przy wylocie P−2;
-      - zaokrąglone szkło pod płytami.
+    - **Fontanna z hologramem** na placu przed skrzydłem zachodnim, x 397,9–401,1, z −7,1…−3,9: niecka z czterech brył do kolan, woda i figura ze światła ze stosu pierścieni wokół rdzenia. Meble mapy ją omijają (`FRONT_FOOTPRINTS`).
+    - **Wylot P−2.** Ściany wykopu i parapet nad portalem mają w rysunku balustradę, czyli słupki i dwie poręcze na wysokości metra nad zboczem, zamiast pełnego parapetu. Z T1 widać przez nią wykop i plac T2. Zastępnik z daleka też ma tylko ścianę do zbocza i poręcz, bo w swoim bloku stoi i z bliska. Symulacja zostaje przy pełnym parapecie.
+    - **Zostaje:** kioski na placu (deptak obok ma ich osiem) i zaokrąglone szkło pod płytami.
 - **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).
 
 ## Konsekwencje

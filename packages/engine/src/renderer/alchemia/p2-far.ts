@@ -1,6 +1,7 @@
 import { P2, P2_CUTTING, P2_CUTTING_PIECES, type AlchemiaPiece } from "@seki/sim";
 import type { Box2 } from "../mapcity/polygon";
 import { type MeshSink, type Rgba, hexColor } from "../mesh-sink";
+import { RAILING, isRailed } from "./p2-geometry";
 
 /**
  * What shows of P-2 from afar (ADR-0074 stage 5a) as the street furniture's block meshes draw it,
@@ -12,12 +13,20 @@ import { type MeshSink, type Rgba, hexColor } from "../mesh-sink";
 
 const INSET = 0.03;
 const TRIM: Rgba = hexColor("#5a6170");
+const RAIL: Rgba = hexColor("#596070");
 const FLOOR: Rgba = hexColor("#23262e");
 
 /** Bakes the stand-in into a block's sink. */
 export const bakeP2StandIn = (sink: MeshSink, pieces: readonly AlchemiaPiece[] = P2_CUTTING_PIECES): void => {
   for (const p of pieces.filter((q) => q.solid)) {
-    const b = p.box;
+    // A railed wall (B4): the stand-in stands near too, in its block, so only its wall up to the slope and a top rail.
+    const railed = p.kind === "parapet" && isRailed(p.box);
+    const b = railed ? { ...p.box, y1: p.box.y1 - RAILING } : p.box;
+    if (railed) {
+      const alongZ = b.z1 - b.z0 > b.x1 - b.x0;
+      const top = p.box.y1 - 0.05;
+      sink.box({ x: (b.x0 + b.x1) / 2, y: top, z: (b.z0 + b.z1) / 2 }, alongZ ? 0.04 : b.x1 - b.x0, 0.04, alongZ ? b.z1 - b.z0 : 0.04, RAIL);
+    }
     const w = b.x1 - b.x0 - 2 * INSET;
     const h = b.y1 - b.y0 - 2 * INSET;
     const d = b.z1 - b.z0 - 2 * INSET;

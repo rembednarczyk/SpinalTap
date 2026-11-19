@@ -14,6 +14,7 @@ import {
   ROOF_LAWNS,
   TIER_B,
   Simulation,
+  frontDressPieces,
   frontPieces,
   gangerEntity,
   groundY,
@@ -33,7 +34,7 @@ type Box = (typeof ALCHEMIA_PIECES)[number]["box"];
 const inBed = (b: Box) => PARAPET_BEDS.some((r) => b.x0 >= r.x0 - 1e-6 && b.x1 <= r.x1 + 1e-6 && b.z0 >= r.z0 - 1e-6 && b.z1 <= r.z1 + 1e-6);
 const square = ALCHEMIA_PIECES.filter((p) => p.kind === "green" && p.box.z1 < FOODHALL.minZ && inBed(p.box));
 /** The front's solids standing on T0, under L1's roof: its wings, green steps and the passage's columns. */
-const front = frontPieces().filter((p) => p.solid && p.box.y0 < groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2) + 1);
+const front = [...frontPieces(), ...frontDressPieces()].filter((p) => p.solid && p.box.y0 < groundY((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2) + 1);
 const solids = [...square.filter((p) => p.solid), ...front];
 const gap = (b: Box, x: number, z: number): number => Math.hypot(Math.max(b.x0 - x, 0, x - b.x1), Math.max(b.z0 - z, 0, z - b.z1));
 const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
