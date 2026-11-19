@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { treeHeight } from "@seki/core";
-import { ALCHEMIA_CHUNK, ALCHEMIA_TIER_PIECES, FRONT_GREEN_PROPS, FRONT_SIGN, GREEN_SLOPE, L3, L3_TOP, WORLD_SCENERY, frontGreenPieces, frontPieces } from "../src";
+import { ALCHEMIA_CHUNK, ALCHEMIA_TIER_PIECES, FRONT_GREEN_PROPS, FRONT_SIGN, GREEN_SLOPE, L2_TOP, L3, L3_TOP, WORLD_SCENERY, frontGreenPieces, frontPieces } from "../src";
 
 /** The board's green on Alchemia (C2 of the board 1:1, 19.11): drawn only, by rule along the storeys. */
 describe("Alchemia's green (C2)", () => {
@@ -53,6 +53,14 @@ describe("Alchemia's green (C2)", () => {
     expect(trees.some((t) => t.y >= L3_TOP && t.x > L3.minX && t.x < L3.maxX)).toBe(true);
     const item = WORLD_SCENERY.find((s) => s.view.kind === "street-props" && s.view.items === FRONT_GREEN_PROPS)!;
     expect(item.chunk).toBe(ALCHEMIA_CHUNK);
+  });
+
+  it("has no square trees left (the user, 19.11): no trunk of a box, the game's trees on L2's terrace too", () => {
+    const trunks = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "frame" && p.box.x1 - p.box.x0 < 0.5 && p.box.z1 - p.box.z0 < 0.5 && p.box.y1 - p.box.y0 > 0.8);
+    expect(trunks).toEqual([]);
+    const onL2 = FRONT_GREEN_PROPS.filter((p) => p.prop === "tree" && Math.abs(p.y - L2_TOP - 0.45) < 1e-6);
+    expect(onL2.length).toBe(2);
+    expect(FRONT_GREEN_PROPS.filter((p) => p.prop === "tree").length).toBeGreaterThanOrEqual(6);
   });
 
   it("draws the green steps as one slope from L1's roof down to the lowest step", () => {

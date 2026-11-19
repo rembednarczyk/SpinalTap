@@ -141,10 +141,26 @@ const tree = (x: number, z: number, y: number, seed: number): StreetPropItem[] =
   { prop: "tree", x, y: y + 0.45, z, yaw: (seed % 628) / 100, variant: measuredTreeVariant(seed, 6 + (seed % 3) * 0.5) },
 ];
 
-/** The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners, clear of the umbrellas), L2's terrace west of the sign. */
+/** A planter of the game's with a shrub of the game's in it. */
+const planted = (x: number, z: number, y: number, seed: number): StreetPropItem[] => [
+  { prop: "planter", x, y, z, yaw: 0, variant: seed & 0xff },
+  { prop: "shrubs", x, y: y + 0.45, z, yaw: (seed % 628) / 100, variant: ((seed * 37) & 0xf0f) | 0x10 },
+];
+
+/**
+ * The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners,
+ * clear of the umbrellas), L2's south terrace west of L3's sign (in front of it their crowns would
+ * hide CENTRUM HANDLOWE, stage 8: before the sign, planters with shrubs only). Once boxes of
+ * `front-dress.ts`; the game's trees since 19.11 (the user: no square trees in Alchemia).
+ */
 const roofTrees = (): StreetPropItem[] => {
   const e = L1_LEVEL[L1_LEVEL.length - 1]!;
+  const l2 = L2_SLABS[0]!;
   return [
+    ...tree(l2.minX + 2.2, 8, L2_TOP, 197),
+    ...tree(l2.minX + 6.2, 8, L2_TOP, 233),
+    ...planted(l2.minX + 13, 8, L2_TOP, 61),
+    ...planted(l2.maxX - 6, 8, L2_TOP, 89),
     ...tree(e.minX + 2, e.minZ + 1.8, L1_TOP, 41),
     ...tree(e.maxX - 2, e.minZ + 1.8, L1_TOP, 77),
     ...tree(L3.minX + 2.5, L3.maxZ - 3, L3_TOP, 113),
