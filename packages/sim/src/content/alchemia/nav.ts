@@ -56,7 +56,10 @@ const NODES: readonly NavNode[] = [
   { id: "alchemia-stair-foot", at: { x: STAIR.footX + OFF, y: F, z: (STAIR.minZ + STAIR.maxZ) / 2 } },
   { id: "alchemia-stair-head", at: { x: STAIR_HEAD_X - OFF, y: R, z: (STAIR.minZ + STAIR.maxZ) / 2 } },
   { id: "alchemia-roof-south", at: { x: 420, y: R, z: HALL.minZ + 1.2 } },
-  { id: "alchemia-roof-north", at: { x: 419, y: R, z: HALL.maxZ - 3 } },
+  // Past tier A (15.11) along the roof's east strip, between its glass and the parapet.
+  { id: "alchemia-roof-east-south", at: { x: 434.9, y: R, z: HALL.minZ + 2.6 } },
+  { id: "alchemia-roof-east-north", at: { x: 434.9, y: R, z: HALL.maxZ - 2.4 } },
+  { id: "alchemia-roof-north", at: { x: 419, y: R, z: HALL.maxZ - 2.4 } },
 ];
 
 const chain = (...ids: string[]): NavEdge[] => ids.slice(1).map((b, i) => ({ a: `alchemia-${ids[i]}`, b: `alchemia-${b}` }));
@@ -75,7 +78,7 @@ const EDGES: readonly NavEdge[] = [
   { a: "alchemia-stair-foot", b: "alchemia-stair-head", via: { minX: STAIR_HEAD_X, maxX: STAIR.footX, minZ: STAIR.minZ, maxZ: STAIR.maxZ } },
   ...chain("stair-head", "t0-stair"),
   // Onto the green roof from the car park.
-  ...chain("t0-roof", "roof-south", "roof-north"),
+  ...chain("t0-roof", "roof-south", "roof-east-south", "roof-east-north", "roof-north"),
 ];
 
 /** The food hall's graph and P-1's under the car park (stage 4, `parking-nav.ts`). */

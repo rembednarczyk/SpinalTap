@@ -477,8 +477,19 @@ export class GeometrySink {
     else this.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
 
-  /** An oriented box: centre, half extents along three orthonormal axes; `tint` paints the kit's tinted swatches. */
-  box(center: Vec3, axes: readonly [Vec3, Vec3, Vec3], half: readonly [number, number, number], uv: readonly [number, number], tint: readonly [number, number, number] = [1, 1, 1]): void {
+  /**
+   * An oriented box: centre, half extents along three orthonormal axes; `tint` paints the kit's
+   * tinted swatches. `skip` leaves out faces nobody sees (a box on a floor needs no bottom), by
+   * axis and side: "+x", "-x", "+y", "-y", "+z", "-z" of `axes`.
+   */
+  box(
+    center: Vec3,
+    axes: readonly [Vec3, Vec3, Vec3],
+    half: readonly [number, number, number],
+    uv: readonly [number, number],
+    tint: readonly [number, number, number] = [1, 1, 1],
+    skip: ReadonlySet<BoxFace> = NO_FACES,
+  ): void {
     const corner = (sx: number, sy: number, sz: number): Vec3 => ({
       x: center.x + axes[0].x * half[0] * sx + axes[1].x * half[1] * sy + axes[2].x * half[2] * sz,
       y: center.y + axes[0].y * half[0] * sx + axes[1].y * half[1] * sy + axes[2].y * half[2] * sz,
@@ -486,14 +497,19 @@ export class GeometrySink {
     });
     const neg = (v: Vec3): Vec3 => ({ x: -v.x, y: -v.y, z: -v.z });
     const [ax, ay, az] = axes;
-    this.quad(corner(1, -1, -1), corner(1, 1, -1), corner(1, 1, 1), corner(1, -1, 1), ax, uv, tint);
-    this.quad(corner(-1, -1, -1), corner(-1, -1, 1), corner(-1, 1, 1), corner(-1, 1, -1), neg(ax), uv, tint);
-    this.quad(corner(-1, 1, -1), corner(-1, 1, 1), corner(1, 1, 1), corner(1, 1, -1), ay, uv, tint);
-    this.quad(corner(-1, -1, -1), corner(1, -1, -1), corner(1, -1, 1), corner(-1, -1, 1), neg(ay), uv, tint);
-    this.quad(corner(-1, -1, 1), corner(1, -1, 1), corner(1, 1, 1), corner(-1, 1, 1), az, uv, tint);
-    this.quad(corner(-1, -1, -1), corner(-1, 1, -1), corner(1, 1, -1), corner(1, -1, -1), neg(az), uv, tint);
+    if (!skip.has("+x")) this.quad(corner(1, -1, -1), corner(1, 1, -1), corner(1, 1, 1), corner(1, -1, 1), ax, uv, tint);
+    if (!skip.has("-x")) this.quad(corner(-1, -1, -1), corner(-1, -1, 1), corner(-1, 1, 1), corner(-1, 1, -1), neg(ax), uv, tint);
+    if (!skip.has("+y")) this.quad(corner(-1, 1, -1), corner(-1, 1, 1), corner(1, 1, 1), corner(1, 1, -1), ay, uv, tint);
+    if (!skip.has("-y")) this.quad(corner(-1, -1, -1), corner(1, -1, -1), corner(1, -1, 1), corner(-1, -1, 1), neg(ay), uv, tint);
+    if (!skip.has("+z")) this.quad(corner(-1, -1, 1), corner(1, -1, 1), corner(1, 1, 1), corner(-1, 1, 1), az, uv, tint);
+    if (!skip.has("-z")) this.quad(corner(-1, -1, -1), corner(-1, 1, -1), corner(1, 1, -1), corner(1, -1, -1), neg(az), uv, tint);
   }
 }
+
+/** A face of a box: its axis and side. */
+export type BoxFace = "+x" | "-x" | "+y" | "-y" | "+z" | "-z";
+
+const NO_FACES: ReadonlySet<BoxFace> = new Set();
 
 /** Distance from a model's footprint edge within which roof parts count as parapet. */
 const PARAPET_BAND = 0.6;

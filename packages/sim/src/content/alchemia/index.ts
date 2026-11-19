@@ -12,6 +12,7 @@ import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
 import { unitPieces } from "./units";
+import { tierPieces } from "./tiers";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -23,7 +24,8 @@ export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_M
 export * from "./market";
 export * from "./pavilion";
 export * from "./parking";
-export { type Garland as AlchemiaGarland, PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, ROOF_LAWNS, SQUARE_GARLANDS, garlandAt } from "./square";
+export { type Garland as AlchemiaGarland, PARAPET_BEDS, PERGOLA_BACK, PERGOLA_DOOR, PERGOLA_WALK, SQUARE_GARLANDS, garlandAt } from "./square";
+export { COURTYARD, FLIGHT_A, FLIGHT_B, ROOF_LAWNS, TIER_A, TIER_B, TIER_HEDGES, TIER_PLANTERS, landing as tierLanding, onTierRoof, tierPieces } from "./tiers";
 export { ALCHEMIA_NAV } from "./nav";
 
 /**
@@ -53,9 +55,12 @@ const LIFT = liftPieces();
 
 const PLAZA = plazaPieces();
 const SQUARE = squarePieces();
+const TIERS = tierPieces();
+/** The green tiers' pieces (15.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own. */
+export const ALCHEMIA_TIER_PIECES: readonly Piece[] = TIERS;
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE];
+export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...PLANTERS, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...TIERS];
 
 /** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
@@ -79,6 +84,9 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...P1_RAMP_PROPS,
   // Stage 7 after stage 4's: T0's square, its pergolas' posts and the beds along the trench.
   solidProp(SQUARE),
+  // The green tiers of 15.11 after stage 7's: their glass, slabs, parapets and planters, then their stairs.
+  solidProp(TIERS.filter((p) => p.kind !== "step")),
+  solidProp(TIERS.filter((p) => p.kind === "step")),
 ];
 
 /** The ground dug out under Alchemia. */

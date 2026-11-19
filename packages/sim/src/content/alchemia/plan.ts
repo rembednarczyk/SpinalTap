@@ -66,7 +66,9 @@ export type PieceKind =
   // T0's square and the green roof (stage 7): the roof's lawns, the pergolas' timber, their paper lanterns.
   | "lawn"
   | "pergola"
-  | "lantern";
+  | "lantern"
+  // The green tiers of 15.11: the strip of light along a slab's edge.
+  | "led";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {
