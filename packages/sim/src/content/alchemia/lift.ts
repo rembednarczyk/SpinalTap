@@ -18,6 +18,8 @@ import { type Box, HALL, type Piece, box, piece } from "./plan";
 const HALF = 1.1;
 const WALL = 0.1;
 const OPENING = 2.3;
+/** How far P-2's gate reaches into the shaft from its east face: the platform is this much short of it. */
+const GATE_DEPTH = 0.2;
 const LINTEL = 0.25;
 const HEAD = 0.3;
 const CAP = 0.15;
@@ -75,7 +77,9 @@ const plan = (): FoodhallLift => {
       b(-HALF, HALF, -out, -HALF, pit, top),
       b(-HALF, HALF, -out, -HALF, top + OPENING, head),
     ],
-    gates: [b(out, out + WALL, -HALF, HALF, pit, pit + OPENING), b(-HALF, HALF, out, out + WALL, low, low + OPENING), b(-HALF, HALF, -out - WALL, -out, top, top + OPENING)],
+    // At P-2 the gate fills the corridor's wall's thickness (G-275: by a gate a tenth thick a shot from the
+    // shoulder started in the empty shaft behind it), the platform stopping short of it (`GATE_DEPTH`).
+    gates: [b(HALF - GATE_DEPTH, out, -HALF, HALF, pit, pit + OPENING), b(-HALF, HALF, out, out + WALL, low, low + OPENING), b(-HALF, HALF, -out - WALL, -out, top, top + OPENING)],
     heads: [
       // At P-2 the corridor's ceiling is the opening's head: none of its own (zero high, left out).
       b(out, out + WALL, -HALF, HALF, pit + OPENING, Math.max(pit + OPENING, P2.ceiling)),
@@ -129,10 +133,11 @@ export const ALCHEMIA_LIFT_MECHANISM: readonly StaticProp[] = (() => {
   const p = ALCHEMIA_LIFT;
   // The platform starts at the hall's floor (its second level), as before stage 5c.
   const low = p.levels[1];
-  const platform = box(p.centre.x - HALF, p.centre.x + HALF, p.centre.z - HALF, p.centre.z + HALF, low - PLATFORM, low);
+  const platform = box(p.centre.x - HALF, p.centre.x + HALF - GATE_DEPTH, p.centre.z - HALF, p.centre.z + HALF, low - PLATFORM, low);
   return [
     { ...block(platform, "metal"), mechanism: { kind: "platform", key: p.key, levels: p.levels, speed: SPEED } },
     ...p.gates.map((g, level): StaticProp => ({ ...block(g, "glass"), mechanism: { kind: "gate", elevator: p.key, level, travel: OPENING } })),
-    ...p.buttons.map((at, level): StaticProp => ({ center: at, view: { kind: "block", size: BUTTON, material: "glass" }, solid: false, mechanism: { kind: "button", elevator: p.key, level } })),
+    // Static: drawn merged with the interiors' blocks (ADR-0038), one draw call for the three (stage 5c added P-2's).
+    ...p.buttons.map((at, level): StaticProp => ({ center: at, view: { kind: "block", size: BUTTON, material: "glass", interior: true }, solid: false, mechanism: { kind: "button", elevator: p.key, level } })),
   ];
 })();
