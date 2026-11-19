@@ -82,7 +82,7 @@ const mask = (c: number): string => `vec4(${[0, 1, 2, 3].map((i) => (i === c ? "
  * A GLSL chooser over a code: `name(code)` gives the layer's vec4 (channel mask) in `mask`, and
  * returns vec2(1 / metres, amp). Selects, not branches: the texture is read once outside.
  */
-const chooser = (name: string, layers: readonly DetailLayer[]): string => {
+export const chooser = (name: string, layers: readonly DetailLayer[]): string => {
   const lines = layers.map((l, i) => `  if (code < ${f(i + 0.5)}) { mask = ${mask(l.channel)}; return vec2(${f(1 / l.metres)}, ${f(l.amp)}); }`);
   const last = layers[layers.length - 1] as DetailLayer;
   return `vec2 ${name}(float code, out vec4 mask) {\n${lines.join("\n")}\n  mask = ${mask(last.channel)};\n  return vec2(${f(1 / last.metres)}, ${f(last.amp)});\n}`;

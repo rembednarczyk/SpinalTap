@@ -21,7 +21,7 @@ Status: Przyjęty (19.11), decyzja użytkownika z 18.11: „rozpoczniesz duży p
 
 ## Etapy
 1. Infrastruktura, fasady i grunt mapy (ten ADR, pierwszy PR).
-2. Zestaw miasta i Alchemia (etap 8 ADR-0074): warstwa z kodu w wierzchołkach elementów Alchemii, beton, szkło i drewno.
+2. Zestaw miasta i Alchemia (etap 8 ADR-0074). Zrobione: paleta zestawu nazywa swatche, więc `npr/detail-kit.ts` daje im warstwy (ściany i obramienia beton, cegła cegłę, dach papę, blacha, rdza i kontenery blachę falistą, rośliny darń; szkło, neony, lakier, drzwi i drobny wystrój bez warstwy). Shader odczytuje swatch z komórki palety (górna trzecia tekstury zestawu) i kod z tekstury 16 × 16 budowanej przy wczytaniu zestawu, warstwę kładzie na płaszczyźnie ściany (`facePlane`). Działa na wszystkim, co rysuje zestaw: bloki, Alchemia, W-3, meble i pojazdy.
 3. Więcej warstw z odniesień Lublina: tynk boniowany parterów, klinkier, cegła licowa bloków z lat 60., granitowa kostka Starego Miasta jako ziarno pod proceduralnym wzorem, papa z kruszywem.
 4. Dane z mapy: `roof:material` i `building:material` = `concrete`/`metal`/`glass` w imporcie, gdy OSM je ma.
 
