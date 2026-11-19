@@ -22,6 +22,7 @@ import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "
 import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
 import { frontGreenPieces } from "./front-green";
+import { SHOP_BUILDS, SHOP_PIECES } from "./shops";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -47,6 +48,22 @@ export { slabOf as storeySlabOf } from "./storey";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
 export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
+export {
+  GLASS_IN as SHOP_GLASS_IN,
+  RING_WAYS as SHOP_RING_WAYS,
+  SHOPS as GALLERY_SHOPS,
+  SHOPFRONT_HEAD,
+  SHOP_DOOR,
+  type ShopDef as GalleryShopDef,
+  type ShopState as GalleryShopState,
+  type ShopTrade as GalleryShopTrade,
+  isOpen as galleryShopOpen,
+  shopAt as galleryShopAt,
+  shopCeiling as galleryShopCeiling,
+  shopFloor as galleryShopFloor,
+  shopFrame as galleryShopFrame,
+} from "./shops-plan";
+export { GALLERY_CROWD, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
 export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
@@ -90,7 +107,13 @@ const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces()];
 export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...MALL_OUT, ...FRONT, ...MALL_IN, ...LIFT_NE];
+export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...MALL_OUT, ...FRONT, ...MALL_IN, ...LIFT_NE, ...SHOP_PIECES];
+
+/**
+ * The gallery's shops on P1 and P2 (ADR-0093 O2): a prop each, its partitions, shopfront, fittings
+ * and the boxes of the game's models in it (a walker in a shop gets its prisms, not the floor's).
+ */
+export const SHOP_SOLID_PROPS: readonly StaticProp[] = SHOP_BUILDS.map((b) => solidProp([...b.pieces, ...b.solids.map((p) => ({ ...p, solid: true }))]));
 
 /**
  * P-2's solids (stage 5a), the last of Alchemia's: its store's shell with the earth beside it, its
@@ -150,8 +173,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...SHELTER_PROPS,
   // Stage 5e after 5d1's: the car lift from P-1's north cabin down to P-2's lane.
   ...CAR_LIFT_PROPS,
-  // The gallery round the atrium (ADR-0093 O1) last.
+  // The gallery round the atrium (ADR-0093 O1).
   ...MALL_PROPS,
+  // Its shops on P1 and P2 (O2) last, so every id above stays.
+  ...SHOP_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

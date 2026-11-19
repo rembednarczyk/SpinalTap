@@ -136,7 +136,7 @@ const TRACE: Readonly<Record<Fit["shop"]["trade"], string>> = {
 /** The fittings of a shop's sales floor by its trade (open or shut alike: a shut one is dark). */
 export const fitTrade = (k: Fit, L: Layout, w: number, s: number): void => {
   const t = k.shop.trade;
-  const trace = k.shop.state === "open" ? TRACE[t] : "none";
+  const trace = k.shop.state === "open" || k.shop.state === "grille" ? TRACE[t] : "none";
   counter(k, L, trace, t === "arms" || t === "pawn" || t === "crypto");
   const wallRack = (r: Slot | null, backAt: "u0" | "u1", key: number) => {
     if (!r) return;
@@ -160,8 +160,10 @@ export const fitTrade = (k: Fit, L: Layout, w: number, s: number): void => {
     const wd = L.window;
     if (t === "clothing") mannequins(k, wd);
     else if (t === "florist") flowers(k, wd, 20);
-    else if (t === "synth-food" && wd.u1 - wd.u0 >= 1.0) row(k, slot(wd.u0, wd.u1, 0.13, 0.89), "vending-machine", 1.05, "in", (i) => i);
+    else if (t === "synth-food" && wd.u1 - wd.u0 >= 1.0) row(k, slot(wd.u0, wd.u1, 0.2, 0.96), "vending-machine", 1.05, "in", (i) => i);
     else if (t === "vr" || t === "tattoo") screen(k, slot(wd.u0, wd.u1, 0.3, 0.34), 1.0, 2.3);
+    // The exchange's cash machines in its window, their fronts to the customers inside.
+    else if (t === "crypto") row(k, slot(wd.u0, wd.u1, 0.15, 0.75), "atm", 0.9, "in", () => 0);
     else glassCase(k, wd, 20);
   }
   if (L.back) {
@@ -175,8 +177,6 @@ export const fitTrade = (k: Fit, L: Layout, w: number, s: number): void => {
     for (let u = top.u0 + 0.1, i = 0; u < top.u1 - 0.3; u += 0.45, i++) if (shopHash(k.shop.id, 45, i) > 0.3) draw(k, slot(u, u + 0.3, s - 0.3, s - 0.05), 2.75, 2.9 + shopHash(k.shop.id, i, 45) * 0.2, "goods");
     for (const [i, u] of [L.counter.u0 + 0.35, L.counter.u1 - 0.35].entries()) cartons(k, { u, v: s - 0.3 }, 2, 40 + i);
   }
-  if (t === "pawn" && L.rightRack) model(k, "atm", w - 0.5, L.rightRack.v0 - 0.55, "-u");
-  if (t === "crypto") model(k, "atm", L.side ? 0.5 : w - 0.5, L.side ? 1.0 : 0.95, L.side ? "+u" : "-u");
   if (trace === "spill") {
     const at = { u: (L.aisle.u0 + L.aisle.u1) / 2 + 0.4, v: L.counter.v0 - 0.4 };
     draw(k, slot(at.u - 0.25, at.u + 0.15, at.v - 0.2, at.v + 0.2), 0, 0.12, "carton");
