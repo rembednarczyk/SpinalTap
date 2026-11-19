@@ -1,0 +1,1 @@
+- Pawilon na rogu Bajkowskiego i Lubartowskiej ma jasną elewację z arkadami, ciepłe światło w łukach i napis ALCHEMIA nad nimi, jak na planszy (ADR-0074, B2).

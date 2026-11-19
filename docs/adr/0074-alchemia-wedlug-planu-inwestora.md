@@ -348,7 +348,11 @@ Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dot
   - **Rysunek i liczenie.** Front jest rysowany w siatce kondygnacji (`alchemia-tiers`), a w symulacji to osobny, ostatni prop Alchemii. Identyfikatory brył i złote hashe się nie zmieniają. Budżet każdej siatki Alchemii w testach wynosi 16 000 trójkątów.
 - **Etapy.**
   - **B1.** Front nad P−1: skrzydła, L2 na słupach, L3 z napisem, zielony stok, usunięte pergole, budżet 16 000, przegląd kuratora.
-  - **B2.** Pawilon trójkątny jako budynek z arkadami: ten sam obrys, jasna elewacja, łuki na parterze z ciepłym światłem, napis ALCHEMIA nad nimi. Drabina i Ren zostają.
+  - **B2 (zrobione, `pavilion-shape.ts`).** Pawilon trójkątny jako budynek z arkadami. Obrys, wysokości, aneks, drabina, Ren i neon na dachu zostają bez zmian, więc symulacja też.
+    - Zamiast szklanej ściany z ramą na każdym boku stoi jasny tynk z łukami: przęsło 1,8 m, filar 0,9 m, łuk zaczyna się na 1,9 m.
+    - W łukach, 0,25 m w głębi, świeci ciepłe szkło restauracji.
+    - Nad łukami na obu bokach od ulic jest napis ALCHEMIA ciepłymi literami.
+    - Zastępnik z daleka ma ten sam podział (ciepły pas, tynk nad nim). Jego ściana stoi za szkłem łuków, bo w swoim bloku widać go też z bliska.
   - **B3.** Skrzydło północne: kondygnacje schodzące z L2 nad food hallem na północ do T1 i T2 oraz wzdłuż Świętoduskiej, z wylotem P−2 pod nim.
   - **B4.** Detale z planszy: zaokrąglone płyty, ekrany i hologramy, pnącza na krawędziach, parasole i drzewa na tarasach, fontanna z hologramem i kioski na placu, portal rampy z zielonym światłem, maszty, balustrady zamiast pełnego parapetu przy wylocie P−2.
 - **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).

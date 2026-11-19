@@ -22,6 +22,9 @@ const SWATCH: Readonly<Record<PavilionLook, string>> = {
   metal: "metal",
   board: "sign-back",
   neon: "neon-cyan",
+  // The arcade of B2 (19.11): pale plaster, ALCHEMIA in warm letters over the arches.
+  plaster: "trim-light",
+  lettering: "win-warm",
 };
 
 /** The pavilion into Alchemia's outside sink. */
