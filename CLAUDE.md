@@ -46,6 +46,16 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Zanim zaproponujesz albo zbudujesz rozwiązanie na prośbę użytkownika, poszukaj gotowego wzorca: wzorca projektowego, algorytmu, standardu branżowego albo przyjętej praktyki w grach i silnikach (np. wzorce GoF i z „Game Programming Patterns”, ECS, nawigacja po siatce i polach przepływu, LOD, standardy OSM/GIS). Podaj nazwę wzorca i źródło, dopasuj do niego nasze rozwiązanie i opisz, czym się od niego różnimy i dlaczego.
 - Dotyczy to też briefów dla agentów i ADR-ów: brief i ADR wymieniają wzorzec, na którym opiera się zmiana, albo piszą wprost, że takiego nie ma.
 
+## Lokacje i wnętrza
+- Każde nowe albo przerabiane miejsce (pomieszczenie, budynek, plac, wnętrze zadania) robimy według `docs/zasady-lokacji.md`. Najważniejsze punkty:
+  - gęsto, w trzech warstwach (architektura, duże obiekty, drobiazg);
+  - kontrast techniki i biedy;
+  - ostre sztuczne światło;
+  - ślad świeżej obecności;
+  - schody i windy w trzonach, jak w prawdziwych budynkach;
+  - rysunek i bryła o tym samym kształcie;
+  - modele gry przed własnymi pudełkami.
+
 ## Testy (ADR-0046)
 - Logikę i UI sprawdzaj testami sesji bez renderera (`packages/app/test`, fałszywy `RenderPort`) i testami komponentów (`packages/ui/test`). Przeglądarka tylko do rozruchu, rysowania (migawka NPR, budżety, modele), układu HUD na telefonie i dotyku.
 - Testy krokują symulację (`freeze` + `step`) i czekają na stan gry, nie na zegar.
