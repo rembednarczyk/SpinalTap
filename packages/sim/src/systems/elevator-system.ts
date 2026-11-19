@@ -18,8 +18,9 @@ export const restingLevel = (lift: Lift): number | null => {
 };
 
 /**
- * A call button was pressed (ADR-0020). Standing on the platform, it rides to the next level
- * (back down from the top). From the landing, it calls the platform there; if it is already
+ * A call button was pressed (ADR-0020). Standing on the platform, it rides to the next level the
+ * way it last went, and back from an end (Alchemia's three: the hall, T0, the hall, P-2, the hall);
+ * with two levels, to the other. From the landing, it calls the platform there; if it is already
  * there, nothing happens.
  */
 export const callElevator = (ctx: SimContext, button: Interactable, by: Entity): void => {
@@ -29,7 +30,13 @@ export const callElevator = (ctx: SimContext, button: Interactable, by: Entity):
   if (!lift) return;
   const resting = restingLevel(lift);
   const riding = overFootprint(lift.solid, by.position.x, by.position.z) && Math.abs(by.position.y - lift.solid.max.y) < RIDE_EPS;
-  if (riding && resting !== null) lift.elevator.target = (resting + 1) % lift.elevator.levels.length;
+  if (riding && resting !== null) {
+    const el = lift.elevator;
+    let dir: 1 | -1 = el.dir ?? 1;
+    if (resting + dir < 0 || resting + dir >= el.levels.length) dir = dir === 1 ? -1 : 1;
+    el.dir = dir;
+    el.target = resting + dir;
+  }
   else if (!riding) lift.elevator.target = call.level;
 };
 

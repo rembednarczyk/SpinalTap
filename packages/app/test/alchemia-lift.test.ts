@@ -25,8 +25,8 @@ const start = () => {
 };
 
 const C = ALCHEMIA_LIFT.centre;
-const [LOW, TOP] = ALCHEMIA_LIFT.levels;
-const [IN_HALL, ON_T0] = ALCHEMIA_LIFT.doors;
+const [PIT, LOW, TOP] = ALCHEMIA_LIFT.levels;
+const [IN_P2, IN_HALL, ON_T0] = ALCHEMIA_LIFT.doors;
 /** Steps of a ride from one level to the other (2.5 m/s, ADR-0020), and a few for the gate. */
 const RIDE = Math.ceil(((TOP - LOW) / 2.5) * 60) + 15;
 
@@ -41,7 +41,7 @@ const walkAt = (session: GameSession, to: { x: number; z: number }, n: number): 
 };
 const near = (p: { x: number; z: number }, q: { x: number; z: number }, d: number) => Math.hypot(p.x - q.x, p.z - q.z) < d;
 
-describe("the lift of Alchemia, T0 to the food hall (ADR-0074 stage 1)", () => {
+describe("the lift of Alchemia, T0 to the food hall and P-2 (ADR-0074 stages 1, 5c)", () => {
   it("takes her up from the hall's floor to the car park and back down, unhurt", () => {
     const { session } = start();
     teleport(session, IN_HALL.x, IN_HALL.z, Math.PI, 0, LOW);
@@ -64,6 +64,27 @@ describe("the lift of Alchemia, T0 to the food hall (ADR-0074 stage 1)", () => {
     expect(p.position.y).toBeCloseTo(LOW, 2);
     walkAt(session, IN_HALL, 150);
     expect(near(p.position, IN_HALL, 0.6)).toBe(true);
+    expect(p.health!.current).toBe(hp);
+  });
+
+  it("rides on the way it went and back from an end: the hall, T0, the hall, P-2, out into P-2's corridor (stage 5c)", () => {
+    const { session } = start();
+    teleport(session, IN_HALL.x, IN_HALL.z, Math.PI, 0, LOW);
+    steps(session, 3);
+    walkAt(session, C, 90);
+    const p = session.sim.player()!;
+    const hp = p.health!.current;
+    const ride = (to: number) => {
+      steps(session, 1, frame({ interact: true }));
+      steps(session, Math.ceil((Math.abs(TOP - PIT) / 2.5) * 60) + 15);
+      expect(p.position.y).toBeCloseTo(to, 2);
+    };
+    ride(TOP);
+    ride(LOW);
+    ride(PIT);
+    walkAt(session, IN_P2, 150);
+    expect(near(p.position, IN_P2, 0.6)).toBe(true);
+    expect(p.position.y).toBeCloseTo(PIT, 1);
     expect(p.health!.current).toBe(hp);
   });
 

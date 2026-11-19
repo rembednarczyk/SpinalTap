@@ -85,6 +85,13 @@ export const P2_ROOMS: readonly (Rect & { readonly bottom: number; readonly top:
 ];
 
 /** The store's, the annex's and the corridor's floors, ceilings and walls. */
+/**
+ * Where the lift's shaft meets the corridor at P-2 (stage 5c, `lift.ts`: x 412.3..414.7, z
+ * 32.4..34.8, its middle z 33.6): the corridor's west wall and its ceiling leave the shaft's span,
+ * the shaft's own walls and its gate at P-2 close it, so the platform runs clear of both.
+ */
+const LIFT_SHAFT = { maxX: 414.7, z0: 32.4, z1: 34.8 } as const;
+
 const shellPieces = (): Piece[] => {
   const k = P2_CORRIDOR;
   const a = P2_ANNEX;
@@ -101,7 +108,9 @@ const shellPieces = (): Piece[] => {
     ceiling(a.minX, a.maxX, a.minZ, s.minZ),
     ceiling(P2.minX, s.minX, s.minZ, P2.maxZ),
     ceiling(s.maxX, a.maxX, s.minZ, P2.maxZ),
-    ceiling(k.minX, k.maxX, k.minZ, PORTAL.z0),
+    ceiling(LIFT_SHAFT.maxX, k.maxX, k.minZ, PORTAL.z0),
+    ceiling(k.minX, LIFT_SHAFT.maxX, k.minZ, LIFT_SHAFT.z0),
+    ceiling(k.minX, LIFT_SHAFT.maxX, LIFT_SHAFT.z1, PORTAL.z0),
     // The store's west and south walls, its east one up to the annex, its north one up to the flight's.
     wall(P2.minX, P2.minX + W, P2.minZ, P2.maxZ),
     wall(P2.minX + W, P2.maxX, P2.minZ, P2.minZ + W),
@@ -111,7 +120,9 @@ const shellPieces = (): Piece[] => {
     wall(a.minX, a.maxX, a.minZ, a.minZ + W),
     wall(a.maxX - W, a.maxX, a.minZ + W, a.maxZ),
     wall(k.maxX - W, k.maxX, k.minZ, PORTAL.z0),
-    wall(k.minX, k.minX + W, k.minZ, PORTAL.z0),
+    // The corridor's west wall, out of the lift's shaft (stage 5c): the shaft's walls and gate close it there.
+    wall(k.minX, k.minX + W, k.minZ, LIFT_SHAFT.z0),
+    wall(k.minX, k.minX + W, LIFT_SHAFT.z1, PORTAL.z0),
   ];
 };
 

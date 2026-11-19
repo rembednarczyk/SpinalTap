@@ -47,6 +47,8 @@ export interface Elevator {
   target: number;
   /** Placed for the player after spawning. */
   settled: boolean;
+  /** Which way a rider last went (1 up, -1 down): a ride goes on that way, and back from an end. Not saved. */
+  dir?: 1 | -1;
 }
 
 /** A barrier closing the shaft at an upper level while the platform is elsewhere. */

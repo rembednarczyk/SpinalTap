@@ -2,7 +2,7 @@ import type { GroundPoint } from "@seki/core";
 import type { GroundCut } from "../../world/ground";
 import type { StaticProp } from "../builders";
 import { FOODHALL_CUT, FOODHALL_STAIR_CUT, ROOF_PLANTERS, shellPieces } from "./foodhall";
-import { ALCHEMIA_LIFT_MECHANISM, liftPieces } from "./lift";
+import { ALCHEMIA_LIFT_MECHANISM, LIFT_SHAFT_CUT, liftPieces } from "./lift";
 import { HALL, type Piece, box, piece, solidProp } from "./plan";
 import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
@@ -120,7 +120,8 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
 ];
 
 /** The ground dug out under Alchemia. */
-export const ALCHEMIA_CUTS: readonly GroundCut[] = [FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT];
+// The lift's shaft (stage 5c) before the hall's cut it lies in, as the hall's stairs: the first cut over a point is its floor.
+export const ALCHEMIA_CUTS: readonly GroundCut[] = [LIFT_SHAFT_CUT, FOODHALL_STAIR_CUT, FOODHALL_CUT, P1_RAMP_CUT, P1_STAIR_CUT, P2_CUT];
 
 /** The rooms of Alchemia in the ground, its terrain whole over them (stage 4: P-1 with P-2's store under it; stage 5a: P-2's corridor). */
 export const ALCHEMIA_VAULTS: readonly GroundVault[] = [P1_VAULT, METRO_DOOR_VAULT, P2_VAULT];
