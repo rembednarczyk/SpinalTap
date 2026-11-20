@@ -66,7 +66,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     }
   });
 
-  it("draws the front's screens as dark panels with lit bands, and the green roof's lawns on its paving (stage 7, B1)", () => {
+  it("draws the green roof's lawns on its paving (stage 7, B1)", () => {
     // The first vertex's uv of the pieces of a kind: every box's vertices share its swatch.
     const uvOf = (pieces: typeof ALCHEMIA_PIECES) => {
       // The lawns are on the green tiers' roof since 15.11: their own mesh.
@@ -75,11 +75,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
       return [s.uvs[0], s.uvs[1]];
     };
     const kind = (k: string) => ALCHEMIA_PIECES.filter((p) => p.kind === k);
-    // A screen: a dark panel, lit bands on its face.
-    const screen = alchemiaGeometry(kitData, kind("screen")).tiers;
-    const screenUvs = new Set<string>();
-    for (let i = 0; i < screen.uvs.length; i += 2) screenUvs.add(`${screen.uvs[i]},${screen.uvs[i + 1]}`);
-    for (const c of ["glass-dark", "win-teal", "neon-pink"]) expect(screenUvs.has(swatchUv(kitData, c).join(",")), c).toBe(true);
+    // The screens' lit bands of B1 went with C4: their pictures are the signs' mesh's (`alchemia-front-signs.test.ts`).
     // The tiers' lawns went with them (ADR-0093 O1); the green roof's come with stage O4.
     const slab = kind("roof").filter((p) => (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) > 100);
     expect(uvOf(slab)).toEqual([...swatchUv(kitData, "trim-light")]);

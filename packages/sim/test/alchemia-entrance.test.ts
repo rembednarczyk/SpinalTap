@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type Vec3 } from "@seki/core";
-import { MAIN_DOORS, MAIN_WAY_X, MALL, MALL_LEVELS, P1_RAMP, P1_STAIR, PAVILION_CORNERS, Simulation, WORLD_NAV, groundY } from "../src";
+import { MAIN_DOORS, MAIN_WAY_X, MALL, MALL_LEVELS, P1_RAMP, P1_STAIR, PAVILION_CORNERS, PLAZA_TOP, Simulation, WORLD_NAV, groundY } from "../src";
 import { routeAcrossLevels } from "../src/world/nav";
 import { lineOfSight } from "../src/world/hitscan";
 import { teleportPlayer } from "./helpers";
@@ -19,10 +19,10 @@ const FOOTWAY = { x: MAIN_WAY_X, z: P1_RAMP.top - 2.5 } as const;
 const GALLERY = { x: MAIN_WAY_X, z: 37.6 } as const;
 const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
 
-/** A world with the player at (x, z) on the ground facing north, nobody else in it. */
-const start = (x: number, z: number): Simulation => {
+/** A world with the player at (x, z) on the ground (or on `y`) facing north, nobody else in it. */
+const start = (x: number, z: number, y = groundY(x, z)): Simulation => {
   const sim = Simulation.create({ seed: 3 });
-  teleportPlayer(sim, { x, y: groundY(x, z) + 0.05, z }, 0);
+  teleportPlayer(sim, { x, y: y + 0.05, z }, 0);
   sim.step();
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   return sim;
@@ -66,7 +66,8 @@ describe("the main entrance from Bajkowskiego (ADR-0093 O2b)", () => {
   });
 
   it("takes the player from under the arcade north, east over the ramp's covered part onto the way and in, in about 10 s", () => {
-    const sim = start(407.5, 0.5);
+    // The arcade's walk is the square's podium since ADR-0074 C5 (two steps down north into the passage).
+    const sim = start(407.5, 0.5, PLAZA_TOP);
     const run = runThrough(sim, [
       { x: 407.5, z: P1_RAMP.covered + 1.4 },
       { x: MAIN_WAY_X, z: P1_RAMP.covered + 1.4 },

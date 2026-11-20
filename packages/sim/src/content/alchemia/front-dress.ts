@@ -1,7 +1,6 @@
 import { P1_RAMP, p1RampY } from "./parking";
 import { type Piece, box, piece } from "./plan";
-import { FOUNTAIN, FRONT_KIOSKS, L2_TOP, L3, L3_TOP } from "./front";
-import { groundY } from "../lublin/terrain";
+import { L2_TOP, L3, L3_TOP } from "./front";
 
 /*
  * The board's details on the front (ADR-0074 B4, decisions of 19.11): umbrellas over tables on L3's roof, tall
@@ -41,54 +40,6 @@ const rampLights = (): Piece[] => {
   return out;
 };
 
-/**
- * The fountain on the square before the west wing (the board's, with its hologram): a basin knee
- * high of four solid walls, its water, and over it a figure of light in stacked rings round a core.
- */
-const fountain = (): Piece[] => {
-  const f = FOUNTAIN;
-  const cx = (f.minX + f.maxX) / 2;
-  const cz = (f.minZ + f.maxZ) / 2;
-  const low = Math.min(groundY(f.minX, f.minZ), groundY(f.maxX, f.minZ), groundY(f.minX, f.maxZ), groundY(f.maxX, f.maxZ));
-  const top = Math.max(groundY(f.minX, f.minZ), groundY(f.maxX, f.minZ), groundY(f.minX, f.maxZ), groundY(f.maxX, f.maxZ)) + 0.5;
-  const T = 0.25;
-  const out: Piece[] = [
-    piece(box(f.minX, f.maxX, f.minZ, f.minZ + T, low - 0.2, top), "parapet", false),
-    piece(box(f.minX, f.maxX, f.maxZ - T, f.maxZ, low - 0.2, top), "parapet", false),
-    piece(box(f.minX, f.minX + T, f.minZ + T, f.maxZ - T, low - 0.2, top), "parapet", false),
-    piece(box(f.maxX - T, f.maxX, f.minZ + T, f.maxZ - T, low - 0.2, top), "parapet", false),
-    piece(box(f.minX + T, f.maxX - T, f.minZ + T, f.maxZ - T, low - 0.2, top - 0.12), "water", false),
-    piece(box(cx - 0.06, cx + 0.06, cz - 0.06, cz + 0.06, top - 0.12, top + 2.4), "led", false, false),
-  ];
-  for (let k = 0; k < 5; k++) {
-    const r = 0.55 - k * 0.07;
-    const y = top + 0.4 + k * 0.42;
-    out.push(piece(box(cx - r, cx + r, cz - r, cz + r, y, y + 0.03), "led", false, false));
-  }
-  return out;
-};
-
-/** A kiosk's height to its roof, its awning's reach over its counter, the lit window's band. */
-const KIOSK = { height: 2.5, awning: 0.7, window: { y0: 1.0, y1: 1.9 } } as const;
-
-/**
- * The kiosks before the front (the board's booths): a solid box standing on the slope's low side,
- * a lit window over the counter on the street's side, an awning over it, a strip of light round the
- * roof's edge. Solid: walkers go round them.
- */
-const kiosks = (): Piece[] =>
-  FRONT_KIOSKS.flatMap((k) => {
-    const low = Math.min(groundY(k.minX, k.minZ), groundY(k.maxX, k.minZ), groundY(k.minX, k.maxZ), groundY(k.maxX, k.maxZ));
-    const high = Math.max(groundY(k.minX, k.minZ), groundY(k.maxX, k.minZ), groundY(k.minX, k.maxZ), groundY(k.maxX, k.maxZ));
-    const top = high + KIOSK.height;
-    return [
-      piece(box(k.minX, k.maxX, k.minZ, k.maxZ, low - 0.1, top), "wall", false),
-      piece(box(k.minX - 0.1, k.maxX + 0.1, k.minZ - 0.1, k.maxZ + 0.1, top, top + 0.12), "roof", false),
-      piece(box(k.minX + 0.2, k.maxX - 0.2, k.minZ - 0.03, k.minZ, high + KIOSK.window.y0, high + KIOSK.window.y1), "glass", false, false),
-      piece(box(k.minX, k.maxX, k.minZ - KIOSK.awning, k.minZ, high + KIOSK.window.y1 + 0.1, high + KIOSK.window.y1 + 0.22), "umbrella", false, false),
-      piece(box(k.minX - 0.12, k.maxX + 0.12, k.minZ - 0.12, k.maxZ + 0.12, top + 0.12, top + 0.18), "led", false, false),
-    ];
-  });
-
 /** Every detail of B4 on the front. */
-export const frontDressPieces = (): Piece[] => [...umbrellas(), ...sideScreens(), ...rampLights(), ...fountain(), ...kiosks()];
+// The fountain and the kiosks before the front went to the square of C5 (`front-plaza.ts`), round and to the board.
+export const frontDressPieces = (): Piece[] => [...umbrellas(), ...sideScreens(), ...rampLights()];

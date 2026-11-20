@@ -425,7 +425,7 @@ Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dot
   - **L1, skrzydło wschodnie.** x 424–436, z 13,5…22,5. Stoi między pawilonem trójkątnym a pawilonem metra B, poza okapem metra i 1,1 m od węzła wyjścia z klatki P−1, z ekranem od południa. Przejście od klatki na Lubartowską zostaje pod gołym niebem.
   - **L2.** Dwie płyty na słupach nad pasażem T0: x 394–422, z 4…32 oraz x 422–436, z 13,5…32. Spód płyty leży na 1,95, czyli co najmniej 2,9 m nad gruntem pasażu. Ekran wisi na południowej ścianie L2. Pod płytą zostają rampa P−1 (otwarta do z 11, dalej pod płytą), domek klatki P−1, rabaty przy rampie i wejście do metra B. Okap metra jest wolny, bo spód L2 leży nad jego pasmem.
   - **Słupy.** Siedem słupów 0,6 m poza rampą, klatką, węzłami grafu na T0 i drogą od klatki do Lubartowskiej.
-  - **L3.** x 398–428, z 12…32, ze skrzynią napisu na ścianie południowej i dwoma masztami na dachu. Napis to neon ALCHEMIA w cyjanie nad CENTRUM HANDLOWE w różu, a nowe litery R, U, D, O i W są w `neon-letters.ts`.
+  - **L3.** x 398–428, z 12…32, ze skrzynią napisu na ścianie południowej i dwoma masztami na dachu. Napis to neon ALCHEMIA w cyjanie nad CENTRUM HANDLOWE w różu, a nowe litery R, U, D, O i W są w `neon-letters.ts` (od C4 skrzynia świetlna z literami atlasu znaków, „Etap C4”).
   - **Dachy.** Front cofa się od ulicy: skrzydła od z −2, L2 od z 4, L3 od z 12. Na dachach L2 i L3 rosną żywopłoty, a każda płyta ma pas LED.
   - **Plac T0 z pergolami** (etap 7) zniknął razem z girlandami. Zostały rabaty przy rampie. Meble mapy omijają obrysy skrzydeł, stopni i słupów (`FRONT_FOOTPRINTS` w `street-props.ts`), a latarnie znikają spod L2.
   - **Rysunek i liczenie.** Front jest rysowany w siatce kondygnacji (`alchemia-tiers`), a w symulacji to osobny, ostatni prop Alchemii. Identyfikatory brył i złote hashe się nie zmieniają. Budżet każdej siatki Alchemii w testach wynosi 16 000 trójkątów.
@@ -513,6 +513,76 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
   - gzyms z pasem światła;
   - krzewy z gry na dachu, bez zasłon na elewacji.
 - **Pawilon na rogu** wraca do szkła z planu inwestora (rysunek sprzed B2), bo arkady ma teraz dom w osi frontu.
+
+### Etap C4: napis, holo-ekrany i ekrany z obrazem (20.11)
+- **Wzorzec.** Szyld świetlny galerii handlowej (lightbox z literami podświetlanymi od środka, ang. *illuminated sign* / *channel letters*) i ekrany LED na fasadzie (*digital billboard*: pokaz spotów po kilka sekund, cięcie przejściem). Holo-ekrany to efekt addytywny, jak holo-reklamy miasta (ADR-0044, ADR-0030): światło dodaje się do tła, czerń nic nie zasłania, więc panel jest półprzezroczysty, bez sortowania i bez zapisu głębi. Źródło: plansza `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`, praktyka oznakowania galerii (szyld nazwy nad wejściem, ekrany LED na podium).
+- **Gdzie rysuje.** Całe światło frontu leży w siatce szyldów komórki mapy (`map-signs`, `front-signs.ts`), jak nazwy metra (ADR-0071 etap 3): bez nowego wywołania rysowania i bez nowej siatki. Bryły pod nim (skrzynia, ramy, emitery, ciemne panele ekranów) są w siatce kondygnacji (`front-sign-geometry.ts`). Animacja tylko w shaderze, z czasu materiału szyldów (krok klatki gry), bez losowości.
+- **Tylko z bliska.** Siatka szyldów komórki świeci do 240–500 m, a front Alchemii znika 135 m od środka hali. Rodzaj szyldu powiększony o `NEAR_ONLY.kind` (16) gaśnie między 75 a 92 m od oka. Najdalsze światło frontu leży 42 m od środka hali, więc gaśnie, zanim zniknie budynek (test).
+- **Skrzynia napisu.** `FRONT_SIGN` podniesiona i wysunięta przed krawędź płyty L3: x 403–423, z 11,15–11,55, y 8,4–11,7, czyli od 1,9 m nad tarasem L2 do metra nad dachem L3. Dawna skrzynia (y 7,1–10,0) stała pod belką płyty, a linia wzroku z placu nad krawędzią i żywopłotem L2 trafia w ścianę L3 ok. 8,8 m nad ziemią, więc z placu było widać tylko górę liter ALCHEMIA, a CENTRUM HANDLOWE wcale.
+  - Skrzynia ma 0,4 m grubości, jasną ramę 0,16 m wysuniętą 6 cm przed lico i pas cyjanu wzdłuż górnej krawędzi (linia z planszy nad literami).
+  - Lico świeci słabo od środka, z jaśniejszym brzegiem przy ramie (rodzaj `venue`).
+  - Litery z atlasu znaków (ADR-0064), białe z dwoma pierścieniami cyjanowej poświaty, szersze o 10% niż czcionka atlasu: ALCHEMIA ok. 1,3 m wysokości wersalików, CENTRUM HANDLOWE ok. 0,5 m, obie linie podobnej szerokości jak na planszy. Neon z prostokątnych rurek (B1) zniknął.
+  - Skrzynia jest tylko rysunkiem (`solid: false`): nikt do niej nie dochodzi, a nad dachem nie przybywa bryła (skan przesłaniania liczy tylko bryły).
+- **Holo-ekrany.** Dwa pionowe panele na tarasie L2 przy końcach L3, 0,9 m przed jej krawędzią: zachodni różowy (x 399,4–402,0) i wschodni cyjanowy (x 424,1–427,1). Sięgają 3,2 i 3 m nad dach L3, jak na planszy; zachodni wystaje ponad drzewa tarasu L2 (C2). Treść to program hologramu obrazu ekranu (`screen-glsl.ts`): stojąca figura ze światła, która „oddycha”, obracając się, deszcz znaków, paski u stóp, niebieskawa rama, linie skanowania i rzadkie przesunięcie rzędów (bez niego przy ograniczonych błyskach). Czarne tło nic nie dodaje, więc panel jest półprzezroczysty. Emiter na tarasie to obudowa z pasem światła, dwa cienkie słupki i belka nad panelem. Wszystko tylko rysowane.
+- **Ekrany z obrazem.** Pięć ekranów na zewnątrz (front skrzydła wschodniego L1, ściana L2 nad wylotem rampy, boki L3 i ekran nad wejściem głównym) ma ciemny panel w siatce kondygnacji, bez dawnych pasów, a na nim obraz z shadera (`screen-glsl.ts`, rodzaj `screen`): co 8 s następny spot z trzech (nocne miasto z wieżami i księżycem, logo z pierścieniem i paskami tekstu, figura w pierścieniach), cięcie świetlnym przejściem (bez niego przy ograniczonych błyskach), rzędy diod. Sąsiednie ekrany zaczynają od innego spotu. U dołu pas podpisu z nazwą marki świata (LUBLIN 2077, SEKI, NEO RAMEN, ALCHEMIA, CEBULARZ), bez tekstów dla gracza. Boczne ekrany L3 patrzą od L3, na zachód i wschód (dawne pasy rysowały się na stronie przy ścianie).
+- **Odstępstwa od planszy.**
+  - Skrzynia wystaje metr nad dach L3, bo L3 ma 4,2 m, a z placu musi być czytelna. Na planszy cała ściana najwyższego piętra jest szyldem, a widok jest z góry.
+  - Litery mają czcionkę atlasu (wąską), poszerzoną o 10%. Na planszy to szeroki krój geometryczny.
+  - Lico skrzyni jest ciemne z poświatą, jak tło napisu na planszy, a jasne są litery i rama.
+- **Symulacja.** Skrzynia przestała być bryłą, więc prop frontu ma o jeden graniastosłup mniej. Identyfikatory brył i złote hashe się nie zmieniają. Zieleń omija nową skrzynię jak starą.
+- **Budżet.** Wywołania rysowania i aktywne siatki scen `npr-perf` bez zmian (przed i po na tej samej maszynie): `alchemia-tpp` 283 i 113, `alchemia-t2-tpp` 222 i 77, `alchemia-p1` 197 i 74, `alchemia-p2` 207 i 76, `zielona-budowa-tpp` 153 i 70. Siatka kondygnacji 16 638 → 15 486 trójkątów (bez rurek liter i pasów ekranów, ze skrzynią i emiterami), siatka szyldów komórki 3:0 +230. Migawka NPR bez zmian (Neon Koi jest dalej niż 92 m).
+- **Testy.** `alchemia-front-signs.test.ts` (engine): skrzynia, litery w ramie, holo-ekrany, obraz na zewnętrznej stronie każdego ekranu, wygaszanie przed zniknięciem budynku, ciemne panele bez pasów. Test pasów ekranów w `alchemia.test.ts` usunięty, a test skrzyni w `alchemia-front.test.ts` (sim) poprawiony świadomie.
+
+### Etap C5: plac przed frontem (19.11, gałąź `feat/alchemia-c5-plac`)
+- **Wzorzec:** plac przed wejściem budynku jako „people place” (J. Gehl, „Life Between Buildings”, 1971, i „Cities for People”, 2010; Project for Public Spaces, „How to Turn a Place Around”, 2000): aktywne krawędzie (sklepy pod arkadą, kioski), miejsca do siedzenia (krzesła, obręcz fontanny, ławka, same schody), jedzenie i woda. Różnice: plac jest podniesiony na płycie nad gruntem jak na planszy, a nie zrównany z ulicą, a jedzenie sprzedają kioski, nie parter budynku.
+- **Podium** (`front-plaza.ts`): płyta od zachodniego narożnika domu z arkadami do parapetu rampy, x 394–409,7, z −7,4…1, z posadzką podcienia arkad. Wierzch −0,64, czyli trzy podstopnie nad kostką przejścia pod L2 (−1,12; kostka placu jest rysowana 8 cm nad gruntem, `SURFACE_LIFT.square`). Teren opada na zachód, więc podium stoi 0,46 m nad gruntem przy rampie i 1,22 m przy zielonym stoku. NMT bez zmian, bez `PADS`.
+- **Schody** (bryły, 0,16 × 0,30 m, §6):
+  - na południe do Bajkowskiego pięć stopni na całej szerokości, do z −8,9, czyli do krawędzi kostki placu przed chodnikiem;
+  - za rogiem na zachód do siedmiu stopni (z kostki wychodzi sześć), do stopy zielonego stoku (z −2), razem z południowymi jedno L;
+  - na północ dwa stopnie w dół do przejścia pod L2 na zachód od rampy, którym droga spod arkad idzie dalej do wejścia głównego (O2b), i trzeci tam, gdzie kostka przejścia leży niżej (opada wzdłuż niego o 6 cm).
+  - Podstopnie liczy się od kostki, bo ją widzi oko. Stopień zostaje wszędzie, gdzie wychodzi z kostki (sprawdzane co 10 cm), więc żaden podstopień nie przekracza 0,18 m. Na końcu stopnia, gdzie kostka podchodzi pod niego, ostatni podstopień maleje do zera, jak przy schodach na pochyłej ulicy. Dolnej granicy 0,15 m nie da się tam utrzymać bez zmiany NMT, a kostka może wejść kilka centymetrów na tył najniższego stopnia. Ciało stoi na terenie, 8 cm pod kostką, jak wszędzie w mieście, więc ostatni krok ruchu ma do 0,26 m (`STEP_HEIGHT` 0,45).
+- **Fontanna** okrągła jak na planszy, w miejscu kwadratowej z B4: średnica 3,2 m, środek (399,5; −5,2), u szczytu schodów, 1,6 m przed filarami arkad.
+  - Obręcz do kolan (0,42 m, siedzisko) z 20 łuków jako bryła; ten sam obrys ma rysunek i bryła, jak w `rounded.ts`.
+  - Woda jako bryła, a u stopy obręczy pas światła.
+  - W wodzie projektor, nad nim pionowy panel hologramu w cyjanowej ramie z jednym pasem przesuniętym w bok (pęknięty hologram, §3).
+- **Kioski z jedzeniem** (`front-plaza-cafe.ts`, `FRONT_KIOSKS` przebudowane): jeden u stopy schodów zachodnich z ladą do ulicy, drugi przy narożniku placu od Świętoduskiej z ladą do placu.
+  - Lada z oświetlonym jedzeniem w witrynie, ściany boczne i tylna, słupki przy ladzie, dach z pasami szyldu (czerwony i bursztynowy).
+  - Markiza nad ladą i z boku, opadająca od kiosku. Silnik rysuje ją jako pochyłą płachtę z ciepłym światłem pod krawędzią (`plaza-geometry.ts`).
+  - W środku blat z parującą płytą, menu na ekranie i światło pod dachem; na ladzie kubki, przed nią ulotki, za kioskiem kartony.
+  - Kiosk przy schodach bierze prąd z szafki ulicznej z gry kablem po ścianie (kontrast techniki i biedy, §3), a na jego dachu stoi donica.
+- **Stoliki:** cztery okrągłe stoliki z krzesłami pod parasolami. Dwa stoją na wschód od fontanny przy automatach, jeden na zachód od niej, jeden między kioskami.
+  - Parasol silnik rysuje jako niski stożek z falbaną i lampą pod spodem.
+  - Bryłą stolika jest ośmiokąt blatu do podłogi, a krzesła siedziskiem.
+  - Ślady sprzed chwili (§5): kubki z parą, karton z jedzeniem, krzesło przewrócone na plecy.
+- **Z modeli gry** (`FRONT_PLAZA_PROPS`, osobny widok mebli, ostatni w `WORLD_SCENERY`):
+  - dwa automaty z napojami przy parapecie rampy, przodem do podium;
+  - cztery kosze i ławka u stopy zielonego stoku;
+  - donice przy filarach arkad i donica z drzewem między kioskami;
+  - szafka uliczna;
+  - sprzedawcy w kioskach (postacie z gry jak w sklepach O2).
+  Bryły mebli to ich prostopadłościany (`modelBoxes`). Własne bryły z pudełek ma tylko to, czego gra nie ma: kiosk, stolik, krzesło, parasol i markiza.
+- **Tłum** (ADR-0060, `PLAZA_CROWD`): klienci w kolejkach przy kioskach, siedzący przy stolikach, jeden na obręczy fontanny i jeden przy automatach.
+- **Przesunięte, nie obudowane:**
+  - trawnik T0 przy Bajkowskiego (x 385–398, z −5,5…−1,5) zniknął z importu, bo na ortofoto miał 1% zieleni (przegląd T-245). Zieleń wraca jako donice i drzewo z gry;
+  - grządka przy zachodnim parapecie rampy zaczyna się u stopy schodów do przejścia (z 1,9, było −6,8);
+  - ławka mapy pod arkadą (404,8; 0) odpada, bo meble mapy omijają obrys podium i schodów (`FRONT_FOOTPRINTS`).
+- **Światło:** pasy w nosie krawędzi podium na południu i zachodzie i nad schodami do przejścia (§4: droga jaśniejsza). Do tego obręcz fontanny, hologram, witryny i szyldy kiosków, lampy pod parasolami i automaty. Na parapecie rampy wzdłuż podium stoją słupki i poręcz, tylko rysowane.
+- **Bryły i identyfikatory:** bryły placu leżą w propach po 8 m na końcu `ALCHEMIA_PROPS` (`FRONT_PLAZA_SOLID_PROPS`), więc identyfikatory wcześniejszych brył zostają. Bryła frontu traci tylko fontannę i kioski z B4. Złote hashe podłogi testowej się nie zmieniają.
+- **Rysunek:** plac należy do siatki kondygnacji (`alchemia-tiers`), więc nie dokłada siatek ani wywołań rysowania. Siatka ma 19 886 trójkątów przy budżecie testu 40 000. Meble gry są wypiekane w blokach mebli ulicy.
+  - Posadzka podium to farba kitu przyciemniona do mokrego kamienia planszy. Stopnie są jasne (§4: droga jaśniejsza).
+  - Hologram to obraz ze światła: blady cyjan z pasami w poprzek, jak ekrany frontu, a nie świecąca płyta.
+- **Sceny `npr-perf`** (wywołania i aktywne siatki, przed → po, budżety bez zmian): `alchemia-tpp` 283/113 → 283/113, `alchemia-t2-tpp` 222/77 → 222/77, `alchemia-p1` 197/74 → 197/74, `alchemia-p2` 207/76 → 207/76, `zielona-budowa-tpp` 153/70 → 153/70. Żadna scena nie patrzy na plac; zrzuty z placu są w raporcie etapu.
+- **Skan:** bez nowych i bez ubyłych miejsc (`scan:diff`: 3652 → 3652). Przesłanianie kościoła św. Józefa przez bryły Alchemii: 87 z 358 oczu (24,3% przy progu 25%), z placem i bez niego tyle samo, bo bryły placu sięgają najwyżej dachu kiosku.
+- **Zapis:** pobudka zapisu v35 z wykopu rampy (`PARKING_WAKE`) stała w (406; −3), czyli teraz w podium. Przeszła na kostkę u stopy schodów przy szczycie rampy (406; −9,6). Schemat bez zmian.
+- **Odstępstwa od planszy:**
+  - Na planszy schody mają sześć do siedmiu stopni na całej szerokości. Tu podium leży 0,48 m nad przejściem, bo inaczej droga spod arkad do wejścia miałaby więcej stopni, a NMT zostaje. Stopnie na wschodzie przechodzą więc w spadek terenu.
+  - Na planszy kiosk stoi przed schodami od ulicy. Tu stoi u stopy schodów zachodnich, bo schody południowe kończą się 1,1 m przed chodnikiem (krawędź placu z −9,2), a na chodnik nic nie wchodzi.
+  - Kawiarnia z parasolami stoi na planszy na wschód od rampy. Tam jest oś wejścia głównego O2b i pawilon, więc stoliki stoją na podium i przy kioskach.
+  - Automaty z planszy to wysokie szafy z neonem na dachu, a tu automaty z napojami z gry.
+- **Testy:**
+  - sim `alchemia-front-plaza.test.ts`: stopnie według reguł; krokowany gracz z chodnika po schodach na podium, pod arkadę, w dół do przejścia i do galerii P1, a także schodami zachodnimi i południowymi w obie strony; fontanna jako bryła; kioski, stoliki i meble z gry; chodnik, jezdnia, rampa i oś O2b wolne; tłum.
+  - engine `alchemia-plaza.test.ts`: plac w siatce kondygnacji, stożki parasoli, markizy, kolory.
+  - Poprawione świadomie: liczniki propów od końca (`FRONT_PLAZA_SOLID_PROPS`), start spod arkady w `alchemia-entrance` na podium, widoki mebli w `street-furniture`, trawniki w `corrections-alchemia`.
 
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.

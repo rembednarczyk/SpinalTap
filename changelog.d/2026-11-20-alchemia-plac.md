@@ -1,0 +1,1 @@
+- Przed frontem Alchemii od Bajkowskiego stoi plac jak na planszy: podium ze schodami, okrągła fontanna z hologramem, kioski z jedzeniem pod markizami, stoliki pod parasolami i automaty z napojami.

@@ -580,7 +580,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
 
 ### G-254 Drony liczą czas z zegara klatki (latają w pauzie)
-- Status: zgłoszone (2.11, weryfikator ADR-0058 etap 7)
+- Status: nie do naprawy: decyzja użytkownika 18.11 rano, drony mogą latać w pauzie; wcześniej: zgłoszone (2.11, weryfikator ADR-0058 etap 7)
 - Ważność: S4 · Zasięg: `packages/engine/src/renderer/drones/*` biorą `dt` klatki renderera, nie czas świata; w pauzie drony dalej lecą (tak samo tłum renderera)
 - Poprawka: czas dronów (i tłumu) z czasu świata przez `RenderPort`, zatrzymany w pauzie; test
 - Pakiet właściciela: packages/engine (renderer)
@@ -2198,12 +2198,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nie potwierdzone (artefakt sondy, 17.11); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim (ruch, W-3)
 - 17.11 (orkiestrator, tryb bez agentów): w grze się nie odtwarza. Skok jest tylko wtedy, gdy gracz zostaje postawiony na stojąco w kolektorze przy x 2474-2476 (teleport sondy; tam nad stropem leży pokład 5 z BRIDGE_DECKS nabrzeze-0-1). Gra tego nie daje: do kolektora wchodzi się w kucki (W3_CULVERT_ENTRY), pod stropem nie da się wstać (puszczone kucanie zostawia crouched), chód w kucki i na stojąco przez x 2481-2468 przy z 406,6/407,2/407,8 trzyma podłogę −30,2 (u wylotu −30,05), a zapis i wczytanie w x 2472,5-2477 zostawiają ją na −30,2 w kucki. Sondy: g904.test.ts, g904b, g904c (usunięte po pomiarze).
-
-### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
-- Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
-- Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
-- Status: zgłoszone
-- Pakiet właściciela: packages/sim
 
 ### G-924 Wejście ochrony (600; -8) w zamkniętej komórce: posiłki i oddział pościgu stoją
 - Ważność: S3 · Zasięg: posiłki ciepła i pościg Tessen na Starym Mieście

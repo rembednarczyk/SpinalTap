@@ -1,5 +1,6 @@
 import { groundY } from "../lublin/terrain";
 import { P1_RAMP } from "./parking";
+import { PLAZA_FLOOR } from "./front-plaza";
 import { type Piece, box, piece } from "./plan";
 
 /**
@@ -17,12 +18,13 @@ import { type Piece, box, piece } from "./plan";
 const cm = (v: number): number => Math.round(v * 100) / 100;
 
 /**
- * The beds along the trench's parapets: west the whole open length, east 8 m (to z 8 until ADR-0093
- * O2b), short of the map's lamp on the main entrance's way's east edge (422.8; 3.5): with the bed
- * beside it the way was 3.8 m wide there.
+ * The beds along the trench's parapets: west from the foot of the square's steps down into the
+ * passage (C5: the podium before the arcade runs to the parapet, the bed began at z -6.8 before),
+ * east 8 m (to z 8 until ADR-0093 O2b), short of the map's lamp on the main entrance's way's east
+ * edge (422.8; 3.5): with the bed beside it the way was 3.8 m wide there.
  */
 export const PARAPET_BEDS = [
-  { x0: P1_RAMP.minX - 0.3 - 0.8, x1: P1_RAMP.minX - 0.3, z0: -6.8, z1: 11 },
+  { x0: P1_RAMP.minX - 0.3 - 0.8, x1: P1_RAMP.minX - 0.3, z0: PLAZA_FLOOR.maxZ, z1: 11 },
   { x0: P1_RAMP.maxX + 0.3, x1: P1_RAMP.maxX + 0.3 + 0.5, z0: -6.8, z1: 1.2 },
 ] as const;
 const BED_HEIGHT = 0.45;
