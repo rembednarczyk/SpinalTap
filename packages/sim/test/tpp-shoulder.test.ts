@@ -158,19 +158,20 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
             if (!((ring >= 0.5 && ring <= 0.8) || (ring >= 1.4 && ring <= 1.8))) continue;
             const x = l.centre.x + i * 0.05;
             const z = l.centre.z + j * 0.05;
-            if (!free(x, y, z)) continue;
             for (const yaw of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) {
               const p = crouchedAt(x, y, z, yaw);
               const eye = eyeOf(p);
               const o = aimOrigin(p, "TPP");
-              if (inSolid(eye) || (!across(eye) && !across(o))) continue;
-              if (!lineOfSight(sim.world, eye, o, false) && !inSolid(o) && hitscan(sim.world, o, { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) }, 30, -1).distance > 1) leaks.push(`${l.key} y ${y} at ${i * 0.05},${j * 0.05} yaw ${yaw.toFixed(2)}`);
+              if (!across(eye) && !across(o)) continue;
+              // Where a body stands (32 rays) asked last, of a leak only: the same leaks in a third of the time (10 of its 20 s on CI).
+              const past = !lineOfSight(sim.world, eye, o, false) && !inSolid(o) && hitscan(sim.world, o, { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) }, 30, -1).distance > 1;
+              if (past && !inSolid(eye) && free(x, y, z)) leaks.push(`${l.key} y ${y} at ${i * 0.05},${j * 0.05} yaw ${yaw.toFixed(2)}`);
             }
           }
         }
       }
     }
-    // 1933 before G-939: the shafts' walls and gates 0.1 thick, less than the shot's start reaches past a face (0.17).
+    // 1933 before G-939 (1845 with those lifts since C5): the shafts' walls and gates 0.1 thick, less than the shot's start reaches past a face (0.17).
     expect(leaks).toEqual([]);
   });
 });
