@@ -94,6 +94,11 @@ const leaves: Readonly<Record<DoorModel, (sink: MeshSink, w: number, h: number, 
     block(sink, 0, 0, z, w, h, DOOR_FRAME.leafDepth, DARK);
     block(sink, w / 2 - 0.16, 1.2, z + 0.05, 0.12, 0.2, 0.03, glow("#00e5ff"));
   },
+  // ADR-0096 stage 6: the fire exit's steel double door with its push bar (the model of `extra-props.glb` stands in for it).
+  exit: (sink, w, h, z) => {
+    for (const s of [-1, 1]) block(sink, (s * w) / 4, 0, z, w / 2 - 0.01, h, DOOR_FRAME.leafDepth, STEEL);
+    block(sink, 0, 1.0, z + 0.06, w * 0.85, 0.06, 0.05, STEEL);
+  },
   shutter: (sink, w, h, z) => {
     block(sink, 0, 0, z, w, h, 0.04, STEEL);
     for (let y = 0.3; y < h - 0.1; y += 0.3) block(sink, 0, y, z + 0.02, w, 0.03, 0.02, DARK);

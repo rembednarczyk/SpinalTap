@@ -67,7 +67,7 @@ EXTRAS = [
     # A roof's dish on its deck (ADR-0096 rule 4): 3.4 m to the top of the dish.
     ('ex-dish', ('sketchfab-satellite-comms', 'satellite_comms.glb'), None, ['roof-dish'], 0, 0, 3.4),
     # A steel double door at a back wall (ADR-0096 rule 7): 2.1 m with its frame, face to +Z.
-    ('ex-exit-door', ('sketchfab-fire-escape-doors', 'fire_escape__exit_doors.glb'), None, ['exit-door'], 90, 0, 2.1),
+    ('ex-exit-door', ('sketchfab-fire-escape-doors', 'fire_escape__exit_doors.glb'), None, ['door-exit'], 90, 0, 2.1),
 ]
 
 
