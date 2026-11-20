@@ -213,7 +213,7 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
     b,
     root,
     { height: 1.5, shoulder: 0.15, hip: 0.16, chest: 0.15, waist: 0.15, limb: 1.05, female: true },
-    { skin: "skin", top: "umeJacket", bottom: "umeLegs", shoes: "sekiShoes", arms: "umeJacket" },
+    { skin: "skin", top: "umeJacket", bottom: "umeLegs", shoes: "sekiShoes", arms: "umeJacket", jacket: "umeJacket" },
   );
   b.sphere(0.17 * sk.s, "umeHair", sk.head, 0, 0.03, -0.012, [1, 0.9, 1]);
   b.sphere(0.07, "umeHair", sk.head, 0, 0.1 * sk.s, -0.07 * sk.s);
@@ -239,7 +239,7 @@ export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: str
     b,
     root,
     { height: 1.72, shoulder: 0.18, hip: 0.15, chest: 0.16, waist: 0.15, limb: 1.05, female: false },
-    { skin: "fixerSkin", top: "moriJacket", bottom: "fixerPants", shoes: "shades", arms: "moriJacket", face: false },
+    { skin: "fixerSkin", top: "moriJacket", bottom: "fixerPants", shoes: "shades", arms: "moriJacket", jacket: "moriJacket", face: false },
   );
   b.lathe(
     [

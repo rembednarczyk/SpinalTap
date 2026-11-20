@@ -20,6 +20,8 @@ export interface Look {
   readonly shoes: PresetName;
   /** Upper arm / forearm material; cyber arms add joints. */
   readonly arms: PresetName | "cyber";
+  /** A jacket from the shoulders to the hips over the trousers' waist, in this material (never a coat, user 20.11). */
+  readonly jacket?: PresetName;
   readonly face?: boolean;
 }
 
@@ -101,6 +103,23 @@ const buildTorso = (b: RigBuilder, body: TransformNode, build: Build, look: Look
     body,
     { depth: 0.72, tessellation: 20 },
   );
+  if (look.jacket) {
+    b.lathe(
+      [
+        [0.001, 0.86 * s],
+        [build.hip * 1.12, 0.86 * s],
+        [build.hip * 1.1, 0.95 * s],
+        [build.waist * 1.1, 1.1 * s],
+        [build.chest * 1.08, 1.3 * s],
+        [build.shoulder * 0.9, 1.42 * s],
+        [0.075, 1.5 * s],
+        [0.001, 1.51 * s],
+      ],
+      look.jacket,
+      body,
+      { depth: 0.74, tessellation: 20 },
+    );
+  }
 };
 
 /** Neck and head: egg-shaped skull, narrow jaw. */
