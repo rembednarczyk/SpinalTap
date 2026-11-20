@@ -13,6 +13,7 @@ import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
+import { plazaPiece } from "./plaza-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
@@ -289,6 +290,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (p.inside && shopPiece(sink, data, p)) continue;
     // The food hall on P3 and Fumiko's second place on P0 (O3): by their kitchens.
     if (p.inside && foodhallPiece(sink, data, p)) continue;
+    // The square's umbrellas and awnings (C5): cones and sloping sheets.
+    if (plazaPiece(sink, data, p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
