@@ -49,7 +49,7 @@ const start = () => {
   return session;
 };
 
-const cars = (session: GameSession): Car[] => [...session.sim.world].filter((e): e is Car => e.vehicle !== undefined);
+const cars = (session: GameSession): Car[] => [...session.sim.world.with("vehicle")];
 
 /** Do two cars' footprints overlap (their rectangles, by the separating axes)? */
 const overlap = (a: Car, b: Car): boolean => {
@@ -81,10 +81,23 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
     const into: string[] = [];
     const offRamp: string[] = [];
     let before = new Map<number, { x: number; y: number; z: number }>();
-    /** Each route's cars seen on the ramp (in, out). */
+    /** Each route's cars seen on the ramp (in, out), and the last of the four to get onto it. */
     const rampIds = [new Set<number>(), new Set<number>()] as const;
+    let fourth: number | null = null;
+    const cabin = (c: (typeof P1_CABINS)[number], p: { x: number; z: number }) => p.x > c.minX && p.x < c.maxX && p.z > c.minZ && p.z < c.maxZ;
+    // In: along Bajkowskiego west of the driveway, then all the way into the south cabin.
+    const came = () => [...done, ...lives.values()].filter((l) => l.route === IN && l.seen.some((p) => p.z < -12 && p.x < 405) && l.seen.some((p) => cabin(P1_CABINS[0]!, p)));
+    // Out: from under the deck (its north cabin, P-1's floor or the ramp's covered part, out of the street's sight) up the
+    // ramp, south down Lubartowska and never onto the deptak north of Bajkowskiego.
+    const underDeck = (p: { x: number; z: number }) =>
+      cabin(P1_CABINS[1]!, p) || (p.x > P1.minX && p.x < P1.maxX && p.z > P1_RAMP.covered && p.z < P1.maxZ && p.x < P1_RAMP.maxX);
+    const went = () => [...done, ...lives.values()].filter((l) => l.route === OUT && underDeck(l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - SOUTH.x, p.z - SOUTH.z) < 3));
+    const onRampBox = (p: { x: number; z: number }) => p.x > P1_RAMP.minX && p.x < P1_RAMP.maxX && p.z > P1_RAMP.top && p.z < P1_RAMP.foot;
     for (let i = 0; i < 60 * 70; i++) {
       session.step(EMPTY_INPUT);
+      // Without the walkers and gangers T0's chunks bring in at the first step: no car gives them way here (every car's
+      // pose at every step the same with them and without), and their minds and steps were half of this test's time.
+      if (i === 0) for (const b of [...session.sim.world.with("body")]) if (!b.player) session.sim.world.remove(b);
       const all = cars(session);
       const ramp = all.filter((c) => c.vehicle.route === IN || c.vehicle.route === OUT);
       const now = new Map(ramp.map((c) => [c.id, { ...c.position }]));
@@ -99,7 +112,8 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
         lives.delete(id);
       }
       for (const c of ramp) {
-        if (c.position.x > P1_RAMP.minX && c.position.x < P1_RAMP.maxX && c.position.z > P1_RAMP.top && c.position.z < P1_RAMP.foot) rampIds[c.vehicle.route === IN ? 0 : 1].add(c.id);
+        if (onRampBox(c.position)) rampIds[c.vehicle.route === IN ? 0 : 1].add(c.id);
+        if (fourth === null && rampIds[0].size + rampIds[1].size === 4) fourth = c.id;
         const life = lives.get(c.id) ?? { route: c.vehicle.route, first: c.vehicle.s, last: c.vehicle.s, seen: [] };
         life.last = c.vehicle.s;
         life.seen.push({ ...c.position });
@@ -109,22 +123,19 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
         if (onRamp && Math.abs(c.position.y - p1RampY(c.position.z)) > 0.01) offRamp.push(`${i} ${c.position.z.toFixed(1)}: ${c.position.y.toFixed(2)}`);
       }
       before = now;
+      // Waits for the state, not the clock (ADR-0046): one in and one out all their way, both of each route's cars
+      // onto the ramp, and the last of them off it again (gone or out of its trench).
+      const last = fourth === null ? undefined : now.get(fourth);
+      if (fourth !== null && (last === undefined || !onRampBox(last)) && came().length > 0 && went().length > 0) break;
     }
     done.push(...lives.values());
+    lives.clear();
     expect(into).toEqual([]);
     expect(offRamp).toEqual([]);
     expect(comesOrGoes).toEqual([]);
-    const cabin = (c: (typeof P1_CABINS)[number], p: { x: number; z: number }) => p.x > c.minX && p.x < c.maxX && p.z > c.minZ && p.z < c.maxZ;
-    // In: along Bajkowskiego west of the driveway, then all the way into the south cabin.
-    const came = done.filter((l) => l.route === IN && l.seen.some((p) => p.z < -12 && p.x < 405) && l.seen.some((p) => cabin(P1_CABINS[0]!, p)));
-    expect(came.length).toBeGreaterThan(0);
-    // Out: from under the deck (its north cabin, P-1's floor or the ramp's covered part, out of the street's sight) up the
-    // ramp, south down Lubartowska and never onto the deptak north of Bajkowskiego.
-    const underDeck = (p: { x: number; z: number }) =>
-      cabin(P1_CABINS[1]!, p) || (p.x > P1.minX && p.x < P1.maxX && p.z > P1_RAMP.covered && p.z < P1.maxZ && p.x < P1_RAMP.maxX);
-    const went = done.filter((l) => l.route === OUT && underDeck(l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - SOUTH.x, p.z - SOUTH.z) < 3));
+    expect(came().length).toBeGreaterThan(0);
     expect(done.filter((l) => l.route === OUT).flatMap((l) => l.seen.filter((p) => p.x > 434 && p.z > -14))).toEqual([]);
-    expect(went.length).toBeGreaterThan(0);
+    expect(went().length).toBeGreaterThan(0);
     // Two cars a route (C7): both of each drive the ramp.
     expect([TRAFFIC_ROUTES[IN]!.vehicles, TRAFFIC_ROUTES[OUT]!.vehicles]).toEqual([2, 2]);
     expect(rampIds.map((s) => s.size)).toEqual([2, 2]);
