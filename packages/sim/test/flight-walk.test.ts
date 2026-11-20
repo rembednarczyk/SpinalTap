@@ -170,6 +170,9 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
   });
 
   it("keeps the flight's sides a wall: a body pushed into them from 4 m off never steps up more than a step", () => {
+    // From here on without the city's gangers (the Hebi of Grodzka and Panasa, ADR-0091, 65-240 m off): the
+    // pushes are the subject, and the gangers' thinking through their 19 800 steps was 60% of this test's time.
+    for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
     const bad: string[] = [];
     for (let seg = 1; seg <= 3; seg++) {
       const [a, b] = [LINE[seg]!, LINE[seg + 1]!];
