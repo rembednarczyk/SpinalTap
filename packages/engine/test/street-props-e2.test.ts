@@ -69,11 +69,11 @@ const corners = (positions: Float32Array | number[]) => {
 const KINDS = ["atm", "hydrant", "food-cart", "container"] as const;
 
 describe("street furniture models of ADR-0058 stage 2 (street-props.glb)", () => {
-  it("has a light model for each new kind, the parked bike and scooter and a planter, each inside its solid", () => {
+  it("has a model for each new kind, the parked bike and scooter and a planter, each inside its solid", () => {
     for (const kind of [...KINDS, "planter", "parked-bike", "parked-scooter"]) {
       const models = props.byStyle.get(kind) ?? [];
       expect(models.length, kind).toBeGreaterThan(0);
-      for (const m of models) expect(triangleCount(m), m.key).toBeLessThanOrEqual(1000);
+      for (const m of models) expect(triangleCount(m), m.key).toBeLessThanOrEqual(6000);
     }
     expect(props.byStyle.get("container")!.map((m) => m.key)).toEqual(["st-container-rust", "st-container-dumpster"]);
     for (const kind of KINDS) {

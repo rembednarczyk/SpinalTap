@@ -22,6 +22,26 @@ def read_glb(path):
     return j, blob
 
 
+def kept_models(path, keys):
+    """The models `keys` as they stand in the file at `path`, with their node extras: a model whose
+    source did not come down (a pack's host over its download quota) is carried over unchanged, the
+    quantized attributes read back exactly, so the file can be rebuilt from the sources at hand."""
+    j, blob = read_glb(path)
+    out, extras = [], {}
+    for n in j['nodes']:
+        if n.get('name') not in keys:
+            continue
+        prim = j['meshes'][n['mesh']]['primitives'][0]
+        a = prim['attributes']
+        out.append({'key': n['name'], 'pos': accessor(j, blob, a['POSITION']).astype(np.float32), 'nor': accessor(j, blob, a['NORMAL']),
+                    'uv': accessor(j, blob, a['TEXCOORD_0']), 'ind': accessor(j, blob, prim['indices']).reshape(-1).astype(np.uint32)})
+        extras[n['name']] = n.get('extras', {})
+    missing = set(keys) - set(extras)
+    if missing:
+        raise SystemExit(f'no source for {sorted(missing)} and none of them in {path} to keep')
+    return out, extras
+
+
 def read_gltf(path):
     """A .gltf with one buffer, as a data URI or a file next to it (never fetched from anywhere else)."""
     j = json.load(open(path, encoding='utf-8'))

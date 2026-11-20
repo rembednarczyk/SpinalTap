@@ -1,0 +1,1 @@
+- Meble ulicy mają więcej szczegółu: automaty, biletomaty, kamery, wózki z jedzeniem, kontenery, latarnie papierowe, skutery, towar na straganach, słupy z kablami i robopsy są bliżej oryginalnych modeli. Kapsuła do spania ma pełne wnętrze. Koziołek to teraz koza stająca dęba jak w herbie Lublina, z rogami i bródką.

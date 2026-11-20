@@ -61,8 +61,9 @@ const make = (quality: "high" | "low", withProps: CityProps | null) => {
 };
 
 describe("street-props.glb (ADR-0063)", () => {
-  it("is small, on the city kit's palette, every model light and credited", () => {
-    expect(streetBytes.byteLength).toBeLessThan(512 * 1024);
+  it("is under 2 MiB, on the city kit's palette, every model up to 6 thousand triangles and credited", () => {
+    // Near models up to the originals' detail (the user's decision of 20.11), the phones draw procedural furniture.
+    expect(streetBytes.byteLength).toBeLessThan(2 * 1024 * 1024);
     expect(street.swatches).toEqual(props.swatches);
     expect([...street.models.keys()].sort()).toEqual([
       "st-atm",
@@ -80,7 +81,7 @@ describe("street-props.glb (ADR-0063)", () => {
       "st-vending",
       "st-vending-ramen",
     ]);
-    for (const m of street.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(1500);
+    for (const m of street.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(6000);
   });
 
   it("refuses two files with the same model", () => {
@@ -106,7 +107,7 @@ describe("street-props.glb (ADR-0063)", () => {
     expect(cam.size.y).toBeLessThan(4.5);
     const lantern = lanternModel(props)!;
     const stall = { prop: "market-stall" as const, x: 0, y: 0, z: 0, yaw: 0, shape: 0, scale: 1 };
-    expect(triangleCount(lantern)).toBeLessThanOrEqual(250);
+    expect(triangleCount(lantern)).toBeLessThanOrEqual(600);
     for (const xf of lanternXforms(stall, lantern)) {
       const { positions } = transformProp(lantern, xf);
       for (let i = 0; i < positions.length; i += 3) {

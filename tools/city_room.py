@@ -35,8 +35,8 @@ SCALE = 0.2
 FLOOR = 2.7
 SIDE_WALL = -9.15
 # An interior's budget (ADR-0063): the room is one mesh seen from inside, a building's worth of triangles at most.
-TARGET_TRIS = 6000
-MAX_TRIS = 8000
+TARGET_TRIS = 13000
+MAX_TRIS = 14500
 
 
 def room_role(rgb):

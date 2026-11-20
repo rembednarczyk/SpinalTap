@@ -17,7 +17,7 @@ tools/city_ccby.py (ADR-0063) go into the same file.
 import io, json, os, zlib
 import numpy as np
 from PIL import Image
-from city_kit_gltf import png_bytes, scene_triangles, write_glb
+from city_kit_gltf import kept_models, png_bytes, scene_triangles, write_glb
 from city_kit_palette import GRID, SW, SWATCHES, hsv, kenney_building_role, palette_images, swatch_uv
 
 # Unpacked Kenney kits under --props: <source id>/x/Models/GLB format (tools/assets/fetch.mjs).
@@ -203,7 +203,19 @@ def source_path(props_dir, quaternius_dir, source, name):
 
 def build_props(props_dir, quaternius_dir, ccby_dir, out_dir):
     out, extras = [], {}
+    dst = os.path.join(out_dir, 'city-props.glb')
+    # A pack whose host is over its download quota: its models carried over from the file unchanged.
+    missing = {key for key, source, name, *_ in PROPS if not os.path.exists(source_path(props_dir, quaternius_dir, source, name)[1])}
+    kept = {}
+    if missing:
+        print('kept from the file, their source missing:', ', '.join(sorted(missing)))
+        models, kept_extras = kept_models(dst, missing)
+        kept = {m['key']: (m, kept_extras[m['key']]) for m in models}
     for key, source, name, styles, yaw, scale, opts in PROPS:
+        if key in kept:
+            m, extras[key] = kept[key]
+            out.append(m)
+            continue
         folder, path = source_path(props_dir, quaternius_dir, source, name)
         # Images of a Quaternius model sit in the model's folder or the kit's Textures/.
         m = bake_prop(key, path, os.path.dirname(path) if source == 'quaternius' else folder, 'quaternius' if source == 'quaternius' else 'kenney', yaw, scale, opts)
@@ -218,7 +230,6 @@ def build_props(props_dir, quaternius_dir, ccby_dir, out_dir):
     out += ccby
     extras.update(ccby_extras)
     albedo, glow = palette_images()
-    dst = os.path.join(out_dir, 'city-props.glb')
     write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
     print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))
     return json.dumps(extras)
