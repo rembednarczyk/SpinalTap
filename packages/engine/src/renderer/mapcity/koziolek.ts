@@ -96,10 +96,24 @@ export const sweep = (sink: MeshSink, pts: readonly SweepPoint[], color: Rgba, s
   }
 };
 
+/**
+ * How finely the goat is swept: round its trunk, along each span of a spine and round a limb. The
+ * phones take the coarse one (LOD by quality, `docs/zasady-lokacji.md` §9): the same shape in a
+ * quarter of the triangles, within the deptak's phone ceiling (`tools/perf-budgets.json`).
+ */
+export interface GoatDetail {
+  readonly trunkSides: number;
+  readonly trunkSteps: number;
+  readonly limbSides: number;
+  readonly limbSteps: number;
+}
+export const GOAT_FULL: GoatDetail = { trunkSides: 14, trunkSteps: 4, limbSides: 8, limbSteps: 3 };
+export const GOAT_PHONE: GoatDetail = { trunkSides: 7, trunkSteps: 2, limbSides: 4, limbSteps: 1 };
+
 /** A limb along its bones, its radius from `r0` at the first to `r1` at the last, smooth. */
-const limb = (sink: MeshSink, bones: readonly Vec[], r0: number, r1: number, color: Rgba, sides = 8): void => {
+const limb = (sink: MeshSink, d: GoatDetail, bones: readonly Vec[], r0: number, r1: number, color: Rgba, fine = true): void => {
   const pts = bones.map((p, i) => ({ p, rx: r0 + ((r1 - r0) * i) / (bones.length - 1), ry: r0 + ((r1 - r0) * i) / (bones.length - 1) }));
-  sweep(sink, smoothSpine(pts, 3), color, sides);
+  sweep(sink, smoothSpine(pts, d.limbSteps), color, fine ? d.limbSides : Math.max(3, d.limbSides - 2));
 };
 
 /** Polished bronze, a little warm: the goats' noses and horns rubbed bright by hands. */
@@ -126,22 +140,22 @@ const TRUNK: readonly SweepPoint[] = [
 ];
 
 /** Adds the goat on its plinth to the sink. */
-export const koziolek = (sink: MeshSink): void => {
+export const koziolek = (sink: MeshSink, d: GoatDetail = GOAT_FULL): void => {
   block(sink, 0, -0.2, 0, 0.9, 0.6, 0.6, GRANITE);
-  sweep(sink, smoothSpine(TRUNK, 4), BRONZE, 14);
+  sweep(sink, smoothSpine(TRUNK, d.trunkSteps), BRONZE, d.trunkSides);
   const y = KOZIOLEK_PLINTH;
   for (const sx of [-1, 1]) {
     // Hind legs: hip, stifle forward, hock back, the hoof on the plinth.
-    limb(sink, [v3(sx * 0.06, 0.62, -0.1), v3(sx * 0.07, 0.52, -0.03), v3(sx * 0.065, y + 0.06, -0.12), v3(sx * 0.06, y + 0.012, -0.07)], 0.045, 0.018, BRONZE);
+    limb(sink, d, [v3(sx * 0.06, 0.62, -0.1), v3(sx * 0.07, 0.52, -0.03), v3(sx * 0.065, y + 0.06, -0.12), v3(sx * 0.06, y + 0.012, -0.07)], 0.045, 0.018, BRONZE);
     // Forelegs folded at the chest: shoulder, elbow forward, the knee bent and the cannon hanging.
-    limb(sink, [v3(sx * 0.065, 0.86, 0.02), v3(sx * 0.07, 0.8, 0.12), v3(sx * 0.065, 0.86, 0.2), v3(sx * 0.06, 0.79, 0.23)], 0.032, 0.015, BRONZE);
+    limb(sink, d, [v3(sx * 0.065, 0.86, 0.02), v3(sx * 0.07, 0.8, 0.12), v3(sx * 0.065, 0.86, 0.2), v3(sx * 0.06, 0.79, 0.23)], 0.032, 0.015, BRONZE);
     // Horns: up off the poll and swept back in a curve, tapering, rubbed bright.
-    limb(sink, [v3(sx * 0.025, 1.12, 0.09), v3(sx * 0.035, 1.165, 0.06), v3(sx * 0.055, 1.185, 0.0), v3(sx * 0.07, 1.165, -0.055), v3(sx * 0.075, 1.12, -0.07)], 0.016, 0.004, RUBBED, 6);
+    limb(sink, d, [v3(sx * 0.025, 1.12, 0.09), v3(sx * 0.035, 1.165, 0.06), v3(sx * 0.055, 1.185, 0.0), v3(sx * 0.07, 1.165, -0.055), v3(sx * 0.075, 1.12, -0.07)], 0.016, 0.004, RUBBED, false);
     // Ears out to the side under the horns.
-    limb(sink, [v3(sx * 0.04, 1.1, 0.085), v3(sx * 0.075, 1.09, 0.075), v3(sx * 0.1, 1.075, 0.07)], 0.014, 0.005, BRONZE, 6);
+    limb(sink, d, [v3(sx * 0.04, 1.1, 0.085), v3(sx * 0.075, 1.09, 0.075), v3(sx * 0.1, 1.075, 0.07)], 0.014, 0.005, BRONZE, false);
   }
   // The beard under the chin, the tail cocked up over the rump, the muzzle rubbed bright.
-  limb(sink, [v3(0, 1.03, 0.19), v3(0, 1.0, 0.195), v3(0, 0.97, 0.185)], 0.014, 0.004, BRONZE, 6);
-  limb(sink, [v3(0, 0.6, -0.16), v3(0, 0.64, -0.2), v3(0, 0.69, -0.21)], 0.018, 0.006, BRONZE, 6);
-  limb(sink, [v3(0, 1.055, 0.215), v3(0, 1.052, 0.238)], 0.02, 0.008, RUBBED, 8);
+  limb(sink, d, [v3(0, 1.03, 0.19), v3(0, 1.0, 0.195), v3(0, 0.97, 0.185)], 0.014, 0.004, BRONZE, false);
+  limb(sink, d, [v3(0, 0.6, -0.16), v3(0, 0.64, -0.2), v3(0, 0.69, -0.21)], 0.018, 0.006, BRONZE, false);
+  limb(sink, d, [v3(0, 1.055, 0.215), v3(0, 1.052, 0.238)], 0.02, 0.008, RUBBED);
 };

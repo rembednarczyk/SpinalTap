@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KOZIOLEK_PLINTH } from "../src/renderer/mapcity/koziolek";
+import { nearModel } from "../src/renderer/mapcity/prop-models";
 import { monument } from "../src/renderer/mapcity/prop-civic";
 import { MONUMENT_SHAPE } from "../src/renderer/mapcity/prop-shapes";
 
@@ -42,5 +43,15 @@ describe("the Koziołek (comic realism)", () => {
     const low = bronze.filter((p) => p.y < KOZIOLEK_PLINTH + 0.04);
     expect(low.some((p) => p.x > 0.03)).toBe(true);
     expect(low.some((p) => p.x < -0.03)).toBe(true);
+  });
+
+  it("is coarser on phones, the same goat in about a quarter of the triangles (LOD by quality)", () => {
+    const phone = nearModel("monument", MONUMENT_SHAPE.koziolek, "low");
+    const full = nearModel("monument", MONUMENT_SHAPE.koziolek, "high");
+    expect(full.indices.length).toBe(goat.indices.length);
+    expect(phone.indices.length / 3).toBeLessThan(600);
+    expect(phone.indices.length).toBeLessThan(full.indices.length / 3);
+    const top = (m: typeof phone) => Math.max(...Array.from({ length: m.positions.length / 3 }, (_, i) => m.positions[i * 3 + 1]!));
+    expect(top(phone)).toBeCloseTo(top(full), 1);
   });
 });

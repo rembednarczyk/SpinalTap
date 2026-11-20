@@ -12,7 +12,8 @@ import { figureStandIn } from "./figure-models";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
-import { PROP_SHAPES } from "./prop-shapes";
+import { MONUMENT_SHAPE, PROP_SHAPES } from "./prop-shapes";
+import { GOAT_PHONE, koziolek } from "./koziolek";
 import { aFrameSign, advertisingColumn, bench, bikeStation, bollard, bollardChain, bollardChainLow, bollardLow, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
 
 export type { PropLight, PropModel };
@@ -106,6 +107,14 @@ export const propModel = (kind: StreetPropKind, shape: number): PropModel => {
 
 let lowBollard: MeshSink | null = null;
 const phoneTrees = new Map<number, MeshSink>();
+let phoneGoat: MeshSink | null = null;
+
+/** The phones' Koziołek on its plinth: the same goat, coarser (`GOAT_PHONE`). */
+const phoneKoziolek = (): MeshSink => {
+  const sink = new MeshSink();
+  koziolek(sink, GOAT_PHONE);
+  return sink;
+};
 /**
  * The phones' near tree (quality `low`): the game's original tree of the species, a few hundred
  * triangles, whatever the tree's style (LOD by quality, `docs/zasady-lokacji.md` §9). The leafy
@@ -127,6 +136,8 @@ const phoneTree = (shape: number): MeshSink => {
 export const nearModel = (kind: StreetPropKind, shape: number, quality: RenderQuality): MeshSink => {
   if (kind === "bollard" && quality === "low") return (lowBollard ??= bollardLow());
   if (kind === "tree" && quality === "low") return phoneTree(shape);
+  // The Koziołek in its coarse sweep on phones (LOD by quality, as the trees).
+  if ((kind === "monument" || kind === "artwork") && shape === MONUMENT_SHAPE.koziolek && quality === "low") return (phoneGoat ??= phoneKoziolek());
   return propModel(kind, shape).sink;
 };
 
