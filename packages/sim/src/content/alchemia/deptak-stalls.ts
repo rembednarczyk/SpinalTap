@@ -9,7 +9,7 @@ import { type Piece, box, piece } from "./plan";
  * the board `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg` has them: lit, full of goods, a
  * seller behind each counter and people before the kiosks. The stalls and kiosks themselves are the
  * map's furniture (`lublin-props.todo.json`, `lubartowska-deptak.*`); this adds what stands at them,
- * in the three layers of `docs/zasady-lokacji.md` §2: the game's crates of goods between the
+ * in the three layers of `docs/zasady-lokacji.md` §2: a stack of crates of produce between the
  * vegetable stalls (big objects), and on the counters crates of produce, buckets of flowers, holo
  * price tags over cardboard, a lamp under each canopy fed by a cable taped to the trolleybus's pole
  * (§3, the contrast of technique and poverty), cartons, flyers and the seller's tea still steaming
@@ -107,7 +107,7 @@ const vegetablePieces = (p: StreetPropItem): Piece[] => {
 };
 
 /** Every drawn piece at the deptak's stalls. */
-export const deptakStallPieces = (): Piece[] => DEPTAK_STALLS.flatMap((p, i) => [...counterPieces(p, i), ...(i === 0 ? flowerPieces(p) : vegetablePieces(p))]);
+export const deptakStallPieces = (): Piece[] => [...DEPTAK_STALLS.flatMap((p, i) => [...counterPieces(p, i), ...(i === 0 ? flowerPieces(p) : vegetablePieces(p))]), ...stackPieces()];
 
 /** A seller of the game's still figures behind each stall's counter. */
 const sellers = (): StreetPropItem[] =>
@@ -117,18 +117,24 @@ const sellers = (): StreetPropItem[] =>
   });
 
 /**
- * The game's crates of produce (`market-goods`) between the two vegetable stalls, on the setts by the
- * trolleybus's pole: the stock waiting to go on the counters.
+ * A stack of crates of produce between the two vegetable stalls, on the setts by the trolleybus's
+ * pole: the stock waiting to go on the counters. Drawn crates (O4's), not the game's `market-goods`:
+ * its furniture block by the deptak has no market goods, and one would cost the block a mesh and a
+ * draw call more (the scene at Zielona 5A sees that block from afar, `npr-perf`).
  */
-const crates = (): StreetPropItem[] => {
+const stackPieces = (): Piece[] => {
   const [a, b] = [DEPTAK_STALLS[1], DEPTAK_STALLS[2]];
   if (!a || !b) return [];
-  const [x, z] = [cm((a.x + b.x) / 2 + 0.05), cm((a.z + b.z) / 2 + 0.15)];
-  return [{ prop: "market-goods", x, y: cm(Math.min(a.y, b.y)), z, yaw: Math.PI / 2, variant: 1 }];
+  const [x, z, y] = [cm((a.x + b.x) / 2 + 0.05), cm((a.z + b.z) / 2 + 0.15), cm(Math.min(a.y, b.y))];
+  const crate = (dz: number, k: number): Piece[] => [
+    piece(box(x - 0.3, x + 0.3, cm(z + dz - 0.2), cm(z + dz + 0.2), cm(y + k * 0.3 - 0.05), cm(y + (k + 1) * 0.3)), "crate", false),
+    piece(box(x - 0.26, x + 0.26, cm(z + dz - 0.16), cm(z + dz + 0.16), cm(y + (k + 1) * 0.3), cm(y + (k + 1) * 0.3 + 0.07)), "goods", false, false),
+  ];
+  return [...crate(-0.25, 0), ...crate(0.25, 0), ...crate(0, 1)];
 };
 
-/** The game's models at the deptak's stalls: the sellers, the crates of produce. */
-export const DEPTAK_PROPS: readonly StreetPropItem[] = [...sellers(), ...crates()];
+/** The game's models at the deptak's stalls: the sellers. */
+export const DEPTAK_PROPS: readonly StreetPropItem[] = sellers();
 
 const spot = (at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], group: string): CrowdSpot => ({ chunk: CHUNK, at, yaw, does, group });
 

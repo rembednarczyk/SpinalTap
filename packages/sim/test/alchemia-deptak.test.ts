@@ -76,7 +76,9 @@ describe("the deptak's stalls dressed (ADR-0074 C7)", () => {
   it("dresses each stall in three layers: crates of produce on the counter, a holo tag, a lamp; cartons, a cable, a flyer; the seller's tea steaming", () => {
     const kinds = new Set(DRAWN.map((p) => p.kind));
     for (const k of ["crate", "goods", "flower", "holo", "lamp", "carton", "cable", "paper", "cup", "steam"] as const) expect(kinds.has(k), k).toBe(true);
-    expect(DEPTAK_PROPS.some((p) => p.prop === "market-goods")).toBe(true);
+    // A stack of crates between the vegetable stalls, solid (drawn crates: a `market-goods` model would cost its furniture block a mesh).
+    expect(SOLIDS.filter((p) => p.kind === "crate")).toHaveLength(3);
+    expect(DEPTAK_PROPS.every((p) => p.prop === "figure")).toBe(true);
     // The cables hang over heads: from the trolleybus's pole at 2.6 m to the canopy.
     for (const c of DRAWN.filter((p) => p.kind === "cable")) expect(c.box.y1 - groundY((c.box.x0 + c.box.x1) / 2, (c.box.z0 + c.box.z1) / 2)).toBeGreaterThan(2.1);
   });
@@ -105,7 +107,7 @@ describe("the deptak's stalls dressed (ADR-0074 C7)", () => {
   it("puts its solids in props of their own, the last of Alchemia's, and its models in the last view of the scenery", () => {
     expect(ALCHEMIA_PROPS.slice(-DEPTAK_SOLID_PROPS.length)).toEqual(DEPTAK_SOLID_PROPS);
     const prisms = DEPTAK_SOLID_PROPS.reduce((n, p) => n + (p.prisms?.length ?? 0), 0);
-    expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length + 1);
+    expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length);
     expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: C7_PROPS });
   });
 
