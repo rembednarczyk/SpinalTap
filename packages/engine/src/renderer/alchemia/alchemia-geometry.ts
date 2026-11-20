@@ -6,7 +6,8 @@ import { frontSignGeometry } from "./front-sign-geometry";
 import { deptakSignGeometry } from "./deptak-sign-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { LAWN, LEAF, band, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { ivyCurtain } from "./ivy-curtain";
 import { venueSigns } from "./venue-signs";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
 import { shopPiece, shopSigns } from "./shop-geometry";
@@ -228,11 +229,9 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece):
   // The front's slabs (its storeys' rooms under them since ADR-0093 O5): the beam a ring, the ceiling the slab's underside.
   else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, undefined, true);
   else if (p.kind === "parapet") railing(sink, data, pts, b.y0, b.y1);
-  else if (p.kind === "green" && pts.length === 4) {
-    // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.
-    band(sink, pts, b.y0, b.y1, swatchUv(data, "paint"), undefined, LEAF);
-    lid(sink, pts, b.y1, 1, swatchUv(data, "paint"), LEAF);
-  } else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
+  // A curtain of green over a slab's edge (C2): ivy, its mass over the edge and its strands of leaves (20.11).
+  else if (p.kind === "green" && pts.length === 4) ivyCurtain(sink, swatchUv(data, "paint"), pts, b.y0, b.y1);
+  else prismOutline(sink, data, pts, b.y0, b.y1, swatchOf(p));
   return true;
 };
 
