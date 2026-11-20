@@ -3,7 +3,7 @@
 **Projekt:** cyberpunkowy sandbox 3D (web), FPP z przełączaniem na TPP, stylistyka anime / cel-shading (referencja: Ghost in the Shell).
 **Bohaterka:** kobieta po wypadku bez pamięci własnego imienia; fixer nazywa ją **Seki Senshi**. Wątek główny to odzyskiwanie tożsamości.
 **Tryb wytwarzania:** agentic development (zespół wyspecjalizowanych agentów pracujących w rozłącznych pakietach).
-**Status dokumentu:** v1, baza do iteracji. Decyzje otwarte oznaczone jako `[DECYZJA]`.
+**Status dokumentu:** v1, baza do iteracji. Decyzje otwarte oznaczone jako `[DECYZJA]`; stan z 20.11: wszystkie decyzje startowe rozstrzygnięte w ADR-ach (sekcja 16), kamienie milowe M0–M2 w main, M3 do aktu II (sekcja 14).
 
 ---
 
@@ -52,20 +52,20 @@ Pełny open-world to zakres osobo-lat. Dlatego fundamentem jest **pionowy wycine
 | Build | Vite + pnpm workspaces | Szybki HMR; workspaces wymuszają granice pakietów. |
 | Silnik 3D | Babylon.js (`@babylonjs/core`, `loaders`, `materials`) | Code-first, pełny silnik w TS: fizyka, audio, GUI 3D, LOD, WebGPU w standardzie. |
 | Fizyka | Havok (`@babylonjs/havok`, WASM) | Wysoka wydajność, oficjalna integracja z Babylonem. |
-| ECS | `miniplex` | Ergonomiczny, TS-native, czytelny dla agentów. `[DECYZJA]` escape hatch na wydajność: `bitecs`. |
+| ECS | `miniplex` | Ergonomiczny, TS-native, czytelny dla agentów. Rozstrzygnięte: miniplex bez `bitecs` (ADR-0002). |
 | UI / HUD | React + Zustand | HUD i menu poza silnikiem; Zustand lekki i testowalny. |
 | Narracja | `inkjs` + format **ink** | Dialogi i rozgałęzienia jako dane, oddzielone od kodu. |
 | Zdarzenia | mały typowany event bus (`nanoevents` lub własny) | Odsprzęganie systemów, UI, audio. |
 | AI NPC | drzewa zachowań (`mistreevous`) + FSM | Testowalne, czytelne dla agenta narracyjnego. |
 | RNG | własny `mulberry32` z ziarnem | Zero zależności, pełna kontrola nad determinizmem. |
-| Stany złożone | `[DECYZJA]` XState dla questów/dialogów | Wizualizowalne i testowalne FSM; waży więcej niż ręczny automat. |
+| Stany złożone | automat ręczny (ADR-0005; XState odrzucony) | Wizualizowalne i testowalne FSM; XState ważył więcej niż ręczny automat. |
 | Assety | glTF / glb + Draco/meshopt, tekstury KTX2/Basis | Kompresja pod web, mniejszy transfer i pamięć. |
 | Persystencja | IndexedDB (`idb`) | Zapisy lokalne z wersjonowaniem schematu. |
 | Testy jedn./integr. | Vitest + coverage v8 | Szybkie, headless, wysokie pokrycie taniej logiki. |
 | Testy E2E | Playwright | Smoke build, uruchomienie sceny, migawki klatek referencyjnych. |
 | Egzekwowanie granic | dependency-cruiser (+ eslint) | Reguły kierunku zależności jako bramka CI. |
 
-`[DECYZJA]` cel renderowania: WebGL2 (szeroka kompatybilność) kontra WebGPU (wydajność, węższe wsparcie). Rekomendacja: WebGL2 jako baza, WebGPU za flagą.
+Cel renderowania: WebGL2 jako baza (rozstrzygnięte w ADR-0004), WebGPU ewentualnie za flagą.
 
 ---
 
@@ -237,7 +237,7 @@ Stylistyka z referencji nie jest darmowa w żadnym silniku real-time. To osobny 
 
 ### Składniki
 1. **Toon / cel shading** — custom material (Babylon `NodeMaterial` lub `ShaderMaterial`). Ramp lighting: oświetlenie kwantyzowane do kilku pasów zamiast gładkiego gradientu.
-2. **Outline (kontur)** — dwie techniki do rozważenia: inverted-hull (zduplikowana siatka wypchnięta po normalnych, renderowana od tyłu) albo post-process na bazie wykrywania krawędzi (depth + normal edge detection). `[DECYZJA]` inverted-hull daje czystszą kreskę na postaciach, post-process lepiej skaluje na całą scenę.
+2. **Outline (kontur)** — dwie techniki do rozważenia: inverted-hull (zduplikowana siatka wypchnięta po normalnych, renderowana od tyłu) albo post-process na bazie wykrywania krawędzi (depth + normal edge detection). Rozstrzygnięte w ADR-0003: inverted-hull na postaciach (czystsza kreska), kontur sceny z G-bufora.
 3. **Rim light** — podświetlenie krawędzi sylwetki, buduje charakterystyczny look anime pod kontrę.
 4. **Paleta i grading** — post-process color grading pod stonowaną, lekko wyblakłą paletę z referencji.
 
@@ -303,7 +303,7 @@ Testowalność jest wbudowana w architekturę (porty, czysta domena, determinizm
 4. Budżety wydajności.
 
 ### Wydajność jako bramka CI
-Instrumentacja Babylona (frame time, draw calls, liczba aktywnych siatek) mierzona na scenie referencyjnej. Przekroczenie budżetu to czerwony build. Progi `[DECYZJA]` ustalane po pierwszym profilowaniu M0.
+Instrumentacja Babylona (frame time, draw calls, liczba aktywnych siatek) mierzona na scenie referencyjnej. Przekroczenie budżetu to czerwony build. Progi w `tools/perf-budgets.json` (ADR-0007, podniesione o 40% dla telefonu docelowego w ADR-0079); czas klatki pod SwiftShaderem jest raportem (ADR-0046).
 
 ### Znane ograniczenie
 Pełna wizualna regresja 3D jest trudna i kosztowna. Migawki na stałej kamerze łagodzą, ale nie zastępują przeglądu wizualnego przy zmianach pipeline'u NPR.
@@ -380,22 +380,27 @@ Raport pokrycia, raport wydajności, migawki NPR dołączane do PR. To daje mier
 ### M0 — pionowy wycinek (fundament)
 Jeden mały dystrykt. Gracz chodzi w FPP i TPP, jedno starcie bojowe, jeden NPC z dialogiem ink, jeden krok questa głównego, zapis i odczyt stanu, shader NPR na bohaterce i jednym NPC.
 **Kryterium akceptacji:** pętla działa od wejścia gracza do zapisu, przechodząc przez wszystkie warstwy; wszystkie bramki CI zielone.
+**Stan (20.11):** zrobione.
 
 ### M1 — pętla rdzenia
 Głębia walki, cyberware i aktywne zdolności, ekwipunek, ekonomia, pętla zleceń fixera.
 **Kryterium:** gracz wykonuje zlecenie, zdobywa eddies, kupuje i instaluje cyberware, zmiana wpływa na walkę.
+**Stan (20.11):** zrobione (ADR-0010, rozwój postaci ADR-0059).
 
 ### M2 — systemy sandboxa
 World streaming i chunking, frakcje i reputacja, harmonogramy i AI NPC, kolejne dystrykty.
 **Kryterium:** przemieszczanie między dystryktami bez przeładowania całości; NPC reagują na reputację.
+**Stan (20.11):** zrobione (ADR-0011, Lublin z danych ADR-0042, reakcje mieszkańców ADR-0070, terytoria gangów ADR-0091).
 
 ### M3 — wątek główny
 Pełne spięcie fabuły Seki Senshi: odzyskiwanie wspomnień, progresja diegetyczna, zakończenia zależne od wyborów.
 **Kryterium:** wątek główny przechodzi od startu do zakończenia; stan narracji poprawnie w zapisach.
+**Stan (20.11):** akty I i II w main (ADR-0012, ADR-0023), akt III otwarty.
 
 ### M4 — skala treści i polish
 Więcej zleceń i lokacji, dopracowanie NPR, optymalizacja wydajności, balans.
 **Kryterium:** budżety wydajności dotrzymane przy docelowej gęstości sceny.
+**Stan (20.11):** w toku (backlog, sekcja „Następne”).
 
 ---
 
@@ -423,6 +428,8 @@ Więcej zleceń i lokacji, dopracowanie NPR, optymalizacja wydajności, balans.
 6. Format i kompresja assetów: Draco vs meshopt, progi KTX2.
 7. Budżety wydajności: wartości progowe po profilowaniu M0.
 
+Rozstrzygnięcia: 2 → miniplex (ADR-0002), 3 → inverted-hull (ADR-0003), 4 → WebGL2 (ADR-0004), 5 → automat ręczny (ADR-0005), 6 → modele glb z kwantyzacją `KHR_mesh_quantization` i paletą zamiast tekstur (ADR-0022, ADR-0058, `packages/app/public/city/README.md`), 7 → ADR-0007 i `tools/perf-budgets.json`.
+
 ---
 
 ## 17. Następne kroki
@@ -434,3 +441,5 @@ Więcej zleceń i lokacji, dopracowanie NPR, optymalizacja wydajności, balans.
 5. Szkielet M0: świat ECS z jednym systemem ruchu, adapter Babylon renderujący jedną scenę, kamera FPP/TPP, zapis round-trip.
 6. Pierwszy plik `.ink` z jednym dialogiem NPC spiętym z jednym krokiem questa.
 7. Preset NPR na bohaterce plus migawka referencyjna jako strażnik wyglądu.
+
+Stan (20.11): kroki 1–7 zrobione z M0; bieżące prace są w [backlogu](backlog.md).
