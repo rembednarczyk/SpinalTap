@@ -142,3 +142,14 @@ Decyzja użytkownika z 1.11 („assety z regułami rozstawienia przed nowymi dzi
 
 ## Dopisek 20.11: komiksowy realizm
 Wymóg „modele low-poly” przestaje obowiązywać (decyzja użytkownika z 20.11, `docs/zasady-lokacji.md` §9). Model ma mieć prawdziwy kształt i detal. Paleta i płaskie materiały zostają, bo to styl rysowania. Uproszczona wersja jest dozwolona tylko jako LOD z daleka i na telefonie. Bramkami są wywołania rysowania, aktywne siatki i czas klatki na telefonie.
+
+## Wdrożenie 20.11: limity trójkątów w górę, Koziołek
+- **Decyzja użytkownika (20.11):** „podbić trójkąty do tego realizmu i upewnić się, że używamy wszystkich, których mamy, bez zbytniego upraszczania (również koziołki)”, potem „zwiększ te limity”.
+- **Limity wypiekania:** model bliski do 6 tys. trójkątów zamiast 1,5 tys. (ulica, targ, słup i robopies), pokój-kapsuła do 14,5 tys. zamiast 8 tys. Cele: automat z ramenem 1370 → 4500, wózek z jedzeniem 961 → 5370, kontenery 674 → 3949, kamera 689 → 3174, biletomaty 887 → 3001 i 893 → 2083 (pełny oryginał), latarnia papierowa 201 → 573, skuter 325 → 1491, towar targowy do 1705, słup 1385 → 3732, robopies 1381 → 3961, kapsuła 5893 → 12049. Drzwi, automat z napojami, bankomat i donica już miały pełny szczegół oryginału.
+- **Telefon** (jakość `low`) tych modeli nie rysuje (`PropPoles`: meble proceduralne zamiast modeli, bez słupów i robopsów), więc jego sufit trójkątów zostaje.
+- **Źródła poza zasięgiem:** paczki Quaterniusa z Google Drive były ponad limitem pobrań. `kept_models` (`tools/city_kit_gltf.py`) przenosi z pliku bez zmian modele, których źródła brak (hydrant, rower, klimatyzatory, anteny, rury), więc plik da się odbudować z tego, co jest pod ręką. Te modele czekają na kolejne pobranie.
+- **Pliki:** ulica 501 → 1525 KiB, rekwizyty fasad 477 → 655 KiB, targ 236 → 362 KiB, pokój 326 → 542 KiB.
+- **Pomiar** (`npr-perf`, te same kroki, stare i nowe pliki): wywołania rysowania i aktywne siatki bez zmian w każdej scenie; trójkąty klatki: reference 6,11 → 6,21 mln, krakowskie-tpp 7,31 → 7,48, rynek-tpp 5,95 → 6,13, podzamcze-tpp 5,79 → 6,30 (targ), alchemia-tpp 8,53 → 8,73, w3-zewnatrz 3,70 → 3,97; phone-low 1,191 i phone-w3-hala 0,262 mln bez zmian. Migawka NPR bez zmian.
+- **Koziołek** (`mapcity/koziolek.ts`): zamiast elipsoidy na patykach koza stająca dęba jak w herbie Lublina, z rogami, uszami, bródką i ogonkiem, front do przechodnia (ADR-0094 etap 4). Wzorzec: walce uogólnione (przeciąg przekroju wzdłuż osi). Ok. 1,9 tys. trójkątów, także na telefonie (kilka sztuk w mieście).
+- **Nieużyte źródła** (14 z 52 w `sources.json`, m.in. Street Asset Pack, Asian Shop Pack, neony, Cyberpunk Robot, Mini-ATM, Satellite Comms, Fire Escape Doors): osobny etap, każde z rolą w mieście albo z decyzją, że odpada.
+- **Drony i auta** bez zmian: flota jeżdżąca i drony wysyłają bufor co klatkę, a pula zbliżeń aut (wyżej) już daje 4 tys. z bliska.
