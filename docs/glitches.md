@@ -2255,8 +2255,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-948 Budka sieciowa planu na Placu Łokietka na drodze treści deptaka
 - Ważność: S4 · Zasięg: Plac Łokietka (430; −100)
 - Opis: Kontrola plan-prop-under-game (PR #803): ręczny punkt planu street.net-booths#1 leży na drodze treści z deptaka do Bramy Krakowskiej, więc import zawsze go zdejmuje. Poprawka: przesunąć punkt poza drogę albo usunąć z planu.
-- Status: zgłoszone
+- Status: w PR #804 (20.11, gałąź fix/g948-budka-lokietka, df0c962), przegląd kuratora w toku; wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim (content/lublin plan)
+
+### G-949 Automat planu na Placu Łokietka na drodze do Bramy Krakowskiej, niewidoczny dla skanu
+- Ważność: S4 · Zasięg: Plac Łokietka (440; −100)
+- Opis: Znalezisko przy G-948: ręczny punkt planu street.vending-machines (440; −100) leży na drodze treści GATE_WALK; import przesuwa go na (439,6; −101), a gra go zdejmuje. Kontrola plan-prop-under-game go nie widzi, bo element przesunięty o więcej niż 0,1 m nie pasuje do punktu (MATCH). Poprawka: przenieść punkt poza drogę i poszerzyć dopasowanie kontroli o przesunięcie importu.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
