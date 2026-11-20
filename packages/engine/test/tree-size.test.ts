@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { bake, toWorld } from "../src/renderer/mapcity/prop-batch";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { tree } from "../src/renderer/mapcity/prop-green";
+import { TREE_STYLES, treeSpeciesOf, treeStyleAt } from "../src/renderer/mapcity/prop-shapes";
 
 const top = (shape: number): number => {
   const p = tree(shape).positions;
@@ -28,22 +29,36 @@ const girth = (shape: number): number => {
 };
 
 describe("tree sizes (G-422)", () => {
-  it("draws each species' crown up to the top the importer sizes it by", () => {
-    for (let s = 0; s < TREE_SPECIES; s++) expect(top(s)).toBeCloseTo(TREE_TOP[s]!, 1);
+  it("draws each species' crown, in either style, up to the top the importer sizes it by", () => {
+    for (let m = 0; m < TREE_SPECIES * TREE_STYLES; m++) expect(top(m)).toBeCloseTo(TREE_TOP[treeSpeciesOf(m)]!, 1);
   });
 
-  it("keeps each species' crown within the reach the importer clears of the walls", () => {
-    for (let s = 0; s < TREE_SPECIES; s++) {
-      expect(reach(s)).toBeLessThanOrEqual(TREE_CROWN[s]!);
-      expect(reach(s)).toBeGreaterThan(TREE_CROWN[s]! - 0.3);
+  it("keeps each species' crown, in either style, within the reach the importer clears of the walls", () => {
+    for (let m = 0; m < TREE_SPECIES * TREE_STYLES; m++) {
+      const s = treeSpeciesOf(m);
+      expect(reach(m)).toBeLessThanOrEqual(TREE_CROWN[s]!);
+      expect(reach(m)).toBeGreaterThan(TREE_CROWN[s]! - 0.3);
     }
+  });
+
+  it("mixes the original trees in with the leafy ones, about a third, by the tree's place (20.11)", () => {
+    let classic = 0;
+    let n = 0;
+    for (let x = -200; x < 200; x += 7.3)
+      for (let z = -200; z < 200; z += 6.1) {
+        classic += treeStyleAt(x, z);
+        n++;
+      }
+    expect(classic / n).toBeGreaterThan(0.28);
+    expect(classic / n).toBeLessThan(0.42);
+    expect(treeStyleAt(12.34, -56.78)).toBe(treeStyleAt(12.34, -56.78));
   });
 
   it("draws a measured tree as tall as its height", () => {
     for (const seed of [0, 1, 2, 4097]) {
       const variant = measuredTreeVariant(seed, 18.5);
       const [p] = toWorld([{ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant }], { x: 0, y: 0, z: 0 });
-      expect(p!.shape).toBe(seed % 3);
+      expect(treeSpeciesOf(p!.shape)).toBe(seed % 3);
       expect(top(p!.shape) * p!.scale).toBeCloseTo(treeHeight(variant), 1);
       expect(Math.abs(treeHeight(variant) - 18.5)).toBeLessThan(0.1);
     }
@@ -54,7 +69,7 @@ describe("tree sizes (G-422)", () => {
       for (const species of [TREE_KIND.oak, TREE_KIND.poplar]) {
         const variant = withTreeSpecies(measuredTreeVariant(seed, 20), species);
         const [p] = toWorld([{ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant }], { x: 0, y: 0, z: 0 });
-        expect(p!.shape).toBe(species);
+        expect(treeSpeciesOf(p!.shape)).toBe(species);
         expect(top(p!.shape) * p!.scale).toBeCloseTo(treeHeight(variant), 1);
       }
     }
