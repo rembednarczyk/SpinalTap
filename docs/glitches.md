@@ -2245,6 +2245,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
+### G-942 Schody placu przed Alchemią schodzą na goły grunt przed chodnikiem Bajkowskiego
+- Ważność: S4 · Zasięg: lokalny, Alchemia, x 383,6–404,3, z −9,05…−11,2
+- Opis: Między krawędzią placu T0 (z −9,05…−9,3) a kostką chodnika w232464426 (z −10,2…−11,2) leży pas gołego gruntu 1,15–1,9 m (ok. 32 m²); na ortofoto 100% kostki. Pas był przed C5 (ground-strip-gap krakowskie-2-1 400,-10 w bazie), od C5 (#793) schodzą na niego schody południowe placu. Przegląd kuratora 20.11.
+- Status: nowy (20.11)
+- Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
+- Test przyjęcia: brak próbki co 0,1 m w x 383,6–404,3 między krawędzią placu a pasem chodnika bez nawierzchni; klucz ground-strip-gap krakowskie-2-1 400,-10 znika z bazy; NMT bez zmian
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
