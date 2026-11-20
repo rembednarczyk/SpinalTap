@@ -103,8 +103,8 @@ export const LANTERN = { size: 0.28, tall: 0.36, drop: 0.25 } as const;
 /**
  * The benches (the game's, `bench`: variant 1 with a back, 0 the long ława), facing `yaw` (0 north):
  * two pairs facing each other across the west pergola's floor (its middle open, a way through), a
- * row facing the atrium under the north one, two under the south one, one before the flowers by the
- * hall's lift.
+ * row facing the atrium under the north one, two under the south one (one of them facing the way
+ * onto L3's roof since ADR-0093 O5), one before the flowers by the hall's lift.
  */
 export const ROOF_BENCHES: readonly { readonly x: number; readonly z: number; readonly yaw: number; readonly variant: number }[] = [
   { x: 402.5, z: 50.2, yaw: 0, variant: 1 },
@@ -113,7 +113,8 @@ export const ROOF_BENCHES: readonly { readonly x: number; readonly z: number; re
   { x: 406.1, z: 53.9, yaw: Math.PI, variant: 1 },
   { x: 418.2, z: 55.4, yaw: Math.PI, variant: 1 },
   { x: 422.8, z: 55.4, yaw: Math.PI, variant: 0 },
-  { x: 421.6, z: 33.9, yaw: 0, variant: 1 },
+  // Moved north off the way onto L3's roof (ADR-0093 O5, the gap in the balustrade at x 420.2-423.2), facing it; at z 33.9 until then.
+  { x: 421.75, z: 36.55, yaw: Math.PI, variant: 1 },
   { x: 425.6, z: 33.9, yaw: 0, variant: 0 },
   { x: 417.05, z: 36.85, yaw: 0, variant: 0 },
 ];

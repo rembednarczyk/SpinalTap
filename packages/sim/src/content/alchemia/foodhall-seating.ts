@@ -29,9 +29,9 @@ interface Group {
 
 /**
  * The groups, each 1.6 m across (bench 0.35, table 0.7, a hand between): two in the west strip and
- * three in the east one, their aisle to the counters 1.6-1.7 m; two in the south strip between the
- * hall's lift's lobby and Sachiko's kiosk, at right angles to the glass; one in the corner before
- * Fumiko's bar.
+ * three in the east one, their aisle to the counters 1.6-1.7 m; one in the south strip between the
+ * hall's lift's lobby and the door into L3 (ADR-0093 O5), at right angles to the glass, and its pair
+ * moved through that door into L3's dining room; one in the corner before Fumiko's bar.
  */
 export const TABLE_GROUPS: readonly Group[] = [
   { x0: 406.0, x1: 407.6, z0: 40.2, z1: 43.0, along: "z" },
@@ -39,8 +39,9 @@ export const TABLE_GROUPS: readonly Group[] = [
   { x0: 428.3, x1: 429.9, z0: 38.0, z1: 40.8, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 42.4, z1: 45.2, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 46.6, z1: 48.8, along: "z" },
-  { x0: 416.0, x1: 417.6, z0: 32.6, z1: 35.8, along: "z" },
-  { x0: 419.2, x1: 420.8, z0: 32.6, z1: 35.8, along: "z" },
+  // West of the door into L3 (ADR-0093 O5; x 416.0-417.6 until then), and the second moved through it into L3's dining room.
+  { x0: 415.0, x1: 416.6, z0: 32.6, z1: 35.8, along: "z" },
+  { x0: 412.0, x1: 414.8, z0: 13.6, z1: 15.2, along: "x" },
   { x0: 405.6, x1: 407.6, z0: 54.35, z1: 55.95, along: "x" },
 ];
 
@@ -78,8 +79,8 @@ const traces = (): Piece[] => [
   ...bowl(406.8, 41.0, true),
   ...bowl(406.8, 41.6, false),
   ...bowl(429.1, 43.4, true),
-  ...bowl(416.8, 34.0, true),
-  ...bowl(420.0, 33.3, false),
+  ...bowl(415.8, 34.0, true),
+  ...bowl(413.1, 14.4, false),
   ...bowl(406.4, 55.15, true),
   piece(box(406.6, 406.75, 46.0, 46.08, F + TABLE, F + TABLE + 0.12), "cup", true, false),
   // A drink knocked over and spreading on the east table, the cup on its side by it.
@@ -92,8 +93,8 @@ const traces = (): Piece[] => [
     [406.9, 43.4],
     [405.5, 44.1],
     [429.0, 41.7],
-    [417.8, 36.2],
-    [420.8, 35.9],
+    [415.7, 36.3],
+    [414.9, 16.0],
     [407.9, 52.4],
   ].map(([x, z]) => piece(box(x! - 0.12, x! + 0.12, z! - 0.16, z! + 0.16, F + 0.003, F + 0.008), "paper", true, false)),
 ];
@@ -173,5 +174,6 @@ export const FOODHALL_PROPS: readonly StreetPropItem[] = [
   { prop: "vending-machine", x: 435.0, y: F, z: 52.45, yaw: -Math.PI / 2, variant: 2 },
   { prop: "vending-machine", x: 435.0, y: F, z: 53.5, yaw: -Math.PI / 2, variant: 5 },
   { prop: "waste-bin", x: 407.9, y: F, z: 43.8, yaw: 0, variant: 1 },
-  { prop: "waste-bin", x: 418.4, y: F, z: 32.5, yaw: 0, variant: 2 },
+  // Off the door into L3 (ADR-0093 O5; at x 418.4, z 32.5 until then).
+  { prop: "waste-bin", x: 416.95, y: F, z: 36.55, yaw: 0, variant: 2 },
 ];

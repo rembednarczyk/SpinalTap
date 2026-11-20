@@ -139,3 +139,14 @@ export const balustrade = (
   });
   return out;
 };
+
+/**
+ * A thin wall `thick` deep whose outer face runs from `p` to `q` (inwards on its left, as an edge of a
+ * counter-clockwise outline), from `y0` to `y1`: a lintel of glass over a door (ADR-0093 O5), its first
+ * edge its outer face, as the engine draws a pane's frame.
+ */
+export const wallStrip = (p: GroundPoint, q: GroundPoint, thick: number, y0: number, y1: number, kind: PieceKind, solid = true): Piece => {
+  const len = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+  const [nx, nz] = [(-(q.z - p.z) / len) * thick, ((q.x - p.x) / len) * thick];
+  return outlined([p, q, { x: q.x + nx, z: q.z + nz }, { x: p.x + nx, z: p.z + nz }], y0, y1, kind, solid);
+};

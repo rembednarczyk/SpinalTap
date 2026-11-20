@@ -6,11 +6,9 @@ import { type BoxFace, type CityKitData, type GeometrySink, hexRgb, swatchUv } f
  * balustrade as a convex outline (`Piece.outline`, rounded corners), the engine draws them as the
  * board shows them.
  * - A slab: light concrete with a deep edge beam under it and a thick strip of light along it.
- * - Glass: no pane (the kit's glass is opaque), but white mullions on the glass line and, a room's
- *   depth inside, the lit back of the room with people and tables against it: the board's shops
- *   and restaurants seen through floor-to-ceiling glass. Pattern: the "fake interior" of a lit
- *   window (interior mapping, J. van Dongen 2008) built as geometry, a backdrop plane a fixed depth
- *   behind the facade, because the kit's material has no parallax.
+ * - Glass: no pane (the kit's glass is opaque), its frame only (`paneFrame`), the storey's real rooms
+ *   seen through it (ADR-0093 O5; a lit backdrop with people and tables a room's depth inside, the
+ *   "fake interior" of interior mapping, until then).
  * - A balustrade: posts and two rails along the outline's edge.
  * Pure data, no Babylon.
  */
@@ -76,10 +74,9 @@ export const insetConvex = (pts: readonly P2[], d: number): P2[] => {
   });
 };
 
-/** Faces nobody sees: a post's top and foot, a rail's ends (its neighbours' go on) and its underside, a figure's sole. */
+/** Faces nobody sees: a post's top and foot, a rail's ends (its neighbours' go on) and its underside. */
 const UPRIGHT: ReadonlySet<BoxFace> = new Set(["+y", "-y"]);
 const RAIL_HIDDEN: ReadonlySet<BoxFace> = new Set(["+x", "-x", "-y"]);
-const SOLE: ReadonlySet<BoxFace> = new Set(["-y"]);
 
 /** An oriented box along the ground direction (ux, uz) at `c`: length, height, depth. */
 const post = (sink: GeometrySink, c: Vec3, ux: number, uz: number, half: readonly [number, number, number], uv: readonly [number, number], skip?: ReadonlySet<BoxFace>): void => {
@@ -95,13 +92,26 @@ const LED_OUT = 0.05;
  * A rounded slab: its prism down to the beam's foot (the room's ceiling), the light along the beam;
  * `dark` edges (a joint with the next piece of a ring of slabs, ADR-0093 O1) without it.
  */
-export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark?: (i: number) => boolean): void => {
+export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark?: (i: number) => boolean, ring = false): void => {
   const uv = swatchUv(data, swatch);
   band(sink, pts, y0 - BEAM, y1, uv);
   lid(sink, pts, y1, 1, uv);
-  lid(sink, pts, y0 - BEAM, -1, uv);
+  if (ring) {
+    // A storey with rooms under it (the front's since ADR-0093 O5): the beam a ring along the edge, its inner face and its foot,
+    // the ceiling the slab's own underside, so the rooms' lamps and services under it show.
+    const inner = insetConvex(pts, BEAM_RING);
+    band(sink, [...inner].reverse(), y0 - BEAM, y0, uv);
+    pts.forEach((p, i) => {
+      const q = pts[(i + 1) % pts.length]!;
+      const [a, b] = [inner[i]!, inner[(i + 1) % pts.length]!];
+      sink.quad(at(q, y0 - BEAM), at(b, y0 - BEAM), at(a, y0 - BEAM), at(p, y0 - BEAM), { x: 0, y: -1, z: 0 }, uv);
+    });
+    lid(sink, inner, y0, -1, uv);
+  } else lid(sink, pts, y0 - BEAM, -1, uv);
   band(sink, insetConvex(pts, -LED_OUT), y0 - BEAM + 0.05, y0 - BEAM + 0.05 + LED_HIGH, swatchUv(data, led), dark);
 };
+/** The beam's ring's breadth in from a slab's edge: its overhang past the glass and a hand. */
+const BEAM_RING = 0.35;
 
 /** A plain prism of an outline (a soffit). */
 export const prismOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string): void => {
@@ -111,72 +121,9 @@ export const prismOutline = (sink: GeometrySink, data: CityKitData, pts: readonl
   lid(sink, pts, y0, -1, uv);
 };
 
-/** A room's depth behind the glass, a mullion's pitch and side, the frame bands' heights. */
-const ROOM = 1.6;
-const MULLION_EVERY = 3.0;
+/** A mullion's side, the frame's head band. */
 const MULLION = 0.09;
 const TRANSOM = 0.18;
-/** The highest a storey's room is: a deeper glass stands in the ground (the front's wings), its floor this far under its top. */
-const ROOM_HIGH = 3.6;
-/** Someone or a table behind the glass every this far along it. */
-const FIGURE_EVERY = 2.9;
-
-/** A cheap hash of a position: what stands where behind the glass, the same every time. */
-const hash = (x: number, z: number): number => {
-  const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
-  return h - Math.floor(h);
-};
-
-/** A person standing at `c` facing along the glass: body and head, dark against the lit room. */
-const person = (sink: GeometrySink, data: CityKitData, c: P2, floor: number, ux: number, uz: number, tall: number): void => {
-  const uv = swatchUv(data, "dark");
-  post(sink, { x: c.x, y: floor + tall * 0.42, z: c.z }, ux, uz, [0.22, tall * 0.42, 0.14], uv, SOLE);
-  post(sink, { x: c.x, y: floor + tall * 0.92, z: c.z }, ux, uz, [0.11, tall * 0.08, 0.11], uv, SOLE);
-};
-
-/** A table with its top at elbow height. */
-const table = (sink: GeometrySink, data: CityKitData, c: P2, floor: number, ux: number, uz: number): void => {
-  post(sink, { x: c.x, y: floor + 0.37, z: c.z }, ux, uz, [0.06, 0.37, 0.06], swatchUv(data, "dark"), UPRIGHT);
-  post(sink, { x: c.x, y: floor + 0.76, z: c.z }, ux, uz, [0.45, 0.03, 0.35], swatchUv(data, "trim-light"));
-};
-
-/**
- * A storey's glass on `pts` from `y0` to `y1` as the board's: mullions and frame bands on the glass
- * line, the lit room a depth inside with its floor, people and tables; `hidden` edges (inside a
- * neighbour) get nothing.
- */
-export const glassFacade = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, hidden: (i: number) => boolean): void => {
-  const floor = Math.max(y0, y1 - ROOM_HIGH);
-  const frame = swatchUv(data, "trim-light");
-  const back = insetConvex(pts, ROOM);
-  // The room's back, lit; its ceiling's dark band under the slab.
-  band(sink, back, floor, y1 - 0.45, swatchUv(data, "win-warm"), hidden);
-  band(sink, back, y1 - 0.45, y1, swatchUv(data, "glass-dark"), hidden);
-  lid(sink, pts, floor + 0.01, 1, swatchUv(data, "roof"));
-  // The frame: a sill and a head on the glass line.
-  band(sink, pts, floor, floor + 0.12, frame, hidden);
-  band(sink, pts, y1 - TRANSOM, y1, frame, hidden);
-  let carry = 0;
-  pts.forEach((p, i) => {
-    const q = pts[(i + 1) % pts.length]!;
-    const len = Math.hypot(q.x - p.x, q.z - p.z);
-    if (len < 1e-6 || hidden(i)) return;
-    const [ux, uz] = [(q.x - p.x) / len, (q.z - p.z) / len];
-    // Mullions along the edge at a steady pitch round the corners.
-    for (let s = MULLION_EVERY - carry; s < len; s += MULLION_EVERY) {
-      post(sink, { x: p.x + ux * s, y: (floor + y1) / 2, z: p.z + uz * s }, ux, uz, [MULLION / 2, (y1 - floor) / 2, MULLION / 2], frame, UPRIGHT);
-    }
-    carry = (carry + len) % MULLION_EVERY;
-    // Who and what stands behind it, half a room in.
-    if (len < 1.5) return;
-    for (let s = FIGURE_EVERY / 2; s < len - 0.6; s += FIGURE_EVERY) {
-      const c = { x: p.x + ux * s - uz * ROOM * 0.55, z: p.z + uz * s + ux * ROOM * 0.55 };
-      const h = hash(c.x, c.z);
-      if (h < 0.4) person(sink, data, c, floor, ux, uz, 1.6 + h * 0.5);
-      else if (h < 0.7) table(sink, data, c, floor, ux, uz);
-    }
-  });
-};
 
 /** A balustrade's posts' pitch. */
 const POST_EVERY = 2.0;

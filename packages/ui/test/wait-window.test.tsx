@@ -145,7 +145,7 @@ describe("the pause menu's Wait", () => {
     expect(i.openWait).toHaveBeenCalledTimes(1);
   });
 
-  it("is off with a short reason in a fight, an alarm or a pursuit", () => {
+  it("is off with a short reason in a fight, an alarm, a pursuit or a gang's warning", () => {
     const { i, store } = mount({ screen: "paused", waitBlocked: "combat" });
     const wait = screen.getByRole("button", { name: "Wait" }) as HTMLButtonElement;
     expect(wait.disabled).toBe(true);
@@ -157,6 +157,8 @@ describe("the pause menu's Wait", () => {
     expect(screen.getByTestId("wait-reason").textContent).toBe("Not while you are hunted.");
     act(() => store.setState({ waitBlocked: "alarm" }));
     expect(screen.getByTestId("wait-reason").textContent).toBe("Not with the alarm raised.");
+    act(() => store.setState({ waitBlocked: "warned" }));
+    expect(screen.getByTestId("wait-reason").textContent).toBe("Not with a gang warning you: put the weapon away or walk off.");
   });
 
   it("is off with Tessen's squad after her (ADR-0082, 17.11), in English and in Polish", () => {

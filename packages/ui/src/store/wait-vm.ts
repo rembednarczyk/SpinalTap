@@ -1,5 +1,5 @@
-/** Why the player cannot let the hours pass now: a fight, a raised alarm, a pursuit, Tessen's squad after her, or something under way. */
-export type WaitBlock = "combat" | "alarm" | "wanted" | "hunt" | "busy";
+/** Why the player cannot let the hours pass now: a fight, a gang's warning, a raised alarm, a pursuit, Tessen's squad after her, or something under way. */
+export type WaitBlock = "combat" | "warned" | "alarm" | "wanted" | "hunt" | "busy";
 
 /** The open wait window: the game clock (seconds since 00:00 of day 1) when it opened. */
 export interface WaitVm {

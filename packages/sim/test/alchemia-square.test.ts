@@ -9,7 +9,7 @@ import {
   SHOP_SOLID_PROPS,
   FOODHALL_SOLID_PROPS,
   ROOF_SOLID_PROPS,
-  FRONT_PLAZA_SOLID_PROPS, DEPTAK_SOLID_PROPS,
+  FRONT_PLAZA_SOLID_PROPS, DEPTAK_SOLID_PROPS, FRONT_O5_PROPS,
   P2_PROPS,
   P2_ROBOTS,
   SHELTER_PROPS,
@@ -23,6 +23,7 @@ import {
   frontPieces,
   gangerEntity,
   groundY,
+  ARCADE_FRONT,
 } from "../src";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { teleportPlayer } from "./helpers";
@@ -50,10 +51,12 @@ const t0Nodes = ALCHEMIA_NAV.nodes.filter((n) => n.at.z < FOODHALL.minZ + 0.5 &&
 describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
   it("keeps the beds along the trench, the pergolas gone with the square (19.11)", () => {
     expect(square.length).toBeGreaterThan(8);
-    expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ)).toEqual([]);
+    // On T0 (the lanterns over L2's café and L3's tables, ADR-0093 O5, hang storeys over it; those in the arcade's bays, O5, under its house).
+    const inArcade = (b: { x0: number; x1: number; z0: number; z1: number }) => b.x0 >= ARCADE_FRONT.minX && b.x1 <= ARCADE_FRONT.maxX && b.z0 >= ARCADE_FRONT.minZ && b.z1 <= ARCADE_FRONT.maxZ;
+    expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ && p.box.y0 < 2 && !inArcade(p.box))).toEqual([]);
     // Its solids are still one prop of Alchemia's, the last before stage 10's passage, P-2's (stage 5a), the front's (B1), P-2's robots (5b), the shelter, the car lift and the gallery (ADR-0093 O1, which took the tiers' two away).
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
-    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length]!;
+    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length]!;
     expect(beds.prisms).toHaveLength(square.filter((p) => p.solid).length);
   });
 
