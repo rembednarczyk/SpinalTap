@@ -1,11 +1,10 @@
-import { type StreetPropKind, barrierVariant, siteCraneVariant, siteFenceVariant, siteScaffoldVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
+import { type StreetPropKind, TREE_SPECIES, barrierVariant, siteCraneVariant, siteFenceVariant, siteScaffoldVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 import { MeshSink } from "../mesh-sink";
 import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
-import { PHONE_LEAVES } from "./tree-plan";
 import { doorOfShape } from "./prop-door";
 import { barrierModel } from "./barrier-models";
 import { siteModel } from "./construction";
@@ -107,17 +106,23 @@ export const propModel = (kind: StreetPropKind, shape: number): PropModel => {
 
 let lowBollard: MeshSink | null = null;
 const phoneTrees = new Map<number, MeshSink>();
-/** The phones' near tree: the same tree with fewer, bigger leaves (comic realism, LOD by quality, `docs/zasady-lokacji.md` §9). */
+/**
+ * The phones' near tree (quality `low`): the game's original tree of the species, a few hundred
+ * triangles, whatever the tree's style (LOD by quality, `docs/zasady-lokacji.md` §9). The leafy
+ * tree, even with fewer leaves, took the phone scenes over their triangle ceilings
+ * (`tools/perf-budgets.json`: W-3 515 thousand of 270, the deptak 1.66 million of 1.2).
+ */
 const phoneTree = (shape: number): MeshSink => {
-  let m = phoneTrees.get(shape);
-  if (!m) phoneTrees.set(shape, (m = tree(shape, PHONE_LEAVES)));
+  const classic = (shape % TREE_SPECIES) + TREE_SPECIES;
+  let m = phoneTrees.get(classic);
+  if (!m) phoneTrees.set(classic, (m = tree(classic)));
   return m;
 };
 
 /**
  * The mesh a near block bakes for a piece: its detailed model, but for the phones' bollards
  * (quality `low`), which take the post of about a hundred vertices (`bollardLow`), and their
- * trees, with fewer and bigger leaves.
+ * trees, the original ones.
  */
 export const nearModel = (kind: StreetPropKind, shape: number, quality: RenderQuality): MeshSink => {
   if (kind === "bollard" && quality === "low") return (lowBollard ??= bollardLow());

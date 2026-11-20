@@ -2,6 +2,7 @@ import { TREE_SPECIES } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { farTree, tree } from "../src/renderer/mapcity/prop-green";
 import { hexColor } from "../src/renderer/mesh-sink";
+import { nearModel } from "../src/renderer/mapcity/prop-models";
 
 /*
  * Street trees in comic realism (the user's decision of 20.11, `docs/zasady-lokacji.md` §9): the
@@ -54,5 +55,15 @@ describe("street trees in comic realism (20.11)", () => {
 
   it("keeps the blob crown only for the far tree, a fraction of the near one", () => {
     for (let s = 0; s < TREE_SPECIES; s++) expect(farTree(s).indices.length * 20).toBeLessThan(tree(s).indices.length);
+  });
+});
+
+describe("the phones' near trees (quality low)", () => {
+  it("are the original trees, a fraction of the leafy ones, under the phone scenes' triangle ceilings", () => {
+    for (let s = 0; s < TREE_SPECIES; s++) {
+      const phone = nearModel("tree", s, "low");
+      expect(phone.indices.length * 5).toBeLessThan(tree(s).indices.length);
+      expect(phone.positions).toEqual(tree(s + TREE_SPECIES).positions);
+    }
   });
 });

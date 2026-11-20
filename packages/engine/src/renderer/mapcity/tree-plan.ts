@@ -127,13 +127,12 @@ const leaf = (sink: MeshSink, p: Vec, out: Vec, size: number, colour: Rgba): voi
   sink.quad([at(-0.6, 0), at(0.15, 0.55), at(1, 0), at(0.15, -0.55)], out, colour);
 };
 
-/** How many leaves a cluster tries and how big they are: the full tree's, and the phones' (quality `low`, ADR-0079) with fewer and bigger leaves. */
+/** How many leaves a cluster tries and how big they are. */
 export interface LeafDensity {
   readonly perCluster: number;
   readonly leaf: number;
 }
 export const FULL_LEAVES: LeafDensity = { perCluster: PER_CLUSTER, leaf: LEAF };
-export const PHONE_LEAVES: LeafDensity = { perCluster: 13, leaf: LEAF * 1.6 };
 
 /** The leaves: a cluster on every tip and on every fill point, each leaf kept inside the crown. */
 const foliage = (sink: MeshSink, crowns: readonly Crown[], centres: readonly Vec[], density: LeafDensity): void => {
