@@ -5,6 +5,7 @@ import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type Tr
 import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
 import { createMinimapTracker } from "../minimap";
+import { createCrimeMarkers, crimeObjective } from "../crime-markers";
 import { contractEntryId, describeObjective, shownEntryId } from "../objective";
 import { questMark } from "../quest-target";
 import { createWeaponHud } from "../weapon-hud";
@@ -76,6 +77,8 @@ export class HudSync implements ContractIntents {
   private readonly journal = createJournalCache();
   // Up on a level counts from Lublin's ground there (ADR-0045).
   private readonly minimap = createMinimapTracker((x, z) => ground(x, z).y);
+  /** The street's crimes on the map (ADR-0091 stage 6). */
+  private readonly crimes = createCrimeMarkers();
   private readonly weaponHud = createWeaponHud();
   private lastAbilityVm: AbilityVm | null = null;
   /** Last district the player was seen in; a change raises a toast. */
@@ -121,7 +124,9 @@ export class HudSync implements ContractIntents {
     const loot = this.deps.panels.loot();
     const player = sim.player();
     const locale = this.deps.ui.getState().settings.locale;
-    const { title, objective } = describeObjective(sim.domain, locale, sim.tick);
+    const crimeMarkers = this.crimes(sim.seed, sim.domain, player?.position ?? null);
+    const followed = crimeMarkers.find((c) => c.tracked);
+    const { title, objective } = followed ? crimeObjective(followed, locale, player?.position ?? null) : describeObjective(sim.domain, locale, sim.tick);
     const hp = player?.health?.current ?? 0;
     const maxHp = player?.health?.max ?? 100;
     patchUi(this.deps.ui, {
@@ -164,6 +169,7 @@ export class HudSync implements ContractIntents {
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),
       ...this.minimapFrame(sim),
+      crimeMarkers,
       ...this.wave1Frame(sim, player),
     });
   }

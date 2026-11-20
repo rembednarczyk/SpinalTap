@@ -31,7 +31,7 @@ krakowskie-2-0 353,-96
 krakowskie-2-0 329,-90
 krakowskie-2-0 305,-88
 krakowskie-2-0 280,-82
-krakowskie-2-0 253,-74
+krakowskie-2-0 255,-75
 krakowskie-2-0 330,-47
 krakowskie-2-0 301,-38
 krakowskie-2-0 401,-26

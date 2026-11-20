@@ -8,6 +8,7 @@ import { useUi } from "../use-ui";
 import { MetroLayer } from "../metro/metro-layer";
 import { liftDistricts } from "../metro/metro-labels";
 import { type CityMapView, useMapView } from "./use-map-view";
+import { CityCrimes, CrimeCard } from "./crime-layer";
 
 /** Names on the map tab by zoom: streets and landmarks only close enough to read them; the metro layer names its own stations. */
 const kindsAt = (span: number, metro: boolean): ReadonlySet<MapLabelKind> => {
@@ -61,6 +62,10 @@ export const CityMapPanel = () => {
   const player = useUi((s) => s.mapPlayer);
   const markers = useUi((s) => s.mapMarkers);
   const showMarkers = useUi((s) => s.settings.mapMarkers);
+  const crimes = useUi((s) => s.crimeMarkers);
+  // The crime whose card is open (ADR-0091 stage 6); gone with its board.
+  const [picked, setPicked] = useState<string | null>(null);
+  const pickedCrime = crimes.find((c) => c.id === picked) ?? null;
   const t = useT();
   const city = useMemo(() => (map ? indexCity(map) : EMPTY_CITY), [map]);
   const { view, zoomIn, zoomOut, centre, handlers } = useMapView({ x: player?.x ?? 0, z: player?.z ?? 0, span: 420 });
@@ -81,6 +86,7 @@ export const CityMapPanel = () => {
         <CityLabels city={named} window={null} prefix="citymap" kinds={kinds} size={size} />
         {metro && <MetroLayer metro={metro} k={k} />}
         {showMarkers && markers.map((m) => <Marker key={m.id} m={m} k={k} />)}
+        {showMarkers && <CityCrimes crimes={crimes} k={k} onPick={setPicked} />}
         {player && <Player p={player} k={k} />}
       </svg>
       <div className="citymap__tools">
@@ -106,6 +112,7 @@ export const CityMapPanel = () => {
           </button>
         ))}
       </div>
+      {showMarkers && pickedCrime && <CrimeCard crime={pickedCrime} onClose={() => setPicked(null)} />}
       <div className="citymap__credit" data-testid="map-attribution">
         {t("map.attribution")}
       </div>

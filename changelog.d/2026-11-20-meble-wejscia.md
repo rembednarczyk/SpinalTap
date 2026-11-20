@@ -1,0 +1,1 @@
+- Ogródki, stragany, ławki i inne meble nie stoją już przed wejściami: drzwi Trybunału do Trasy Podziemnej, bramy i przejazdy oraz wejścia lokali są wolne.

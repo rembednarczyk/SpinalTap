@@ -1,0 +1,1 @@
+- Zieleń zwisająca z tarasów Alchemii to teraz bluszcz: gęsta masa przy krawędzi płyty i pędy z liśćmi o różnej długości zamiast zielonych pudeł.
