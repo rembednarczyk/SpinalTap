@@ -12,6 +12,7 @@ import {
   ARKADY_OSM_ID,
   ARKADY_OUTLINE,
   ARKADY_PAVEMENT,
+  ARKADY_PIECES,
   ARKADY_PROP,
   ARKADY_RESTAURANTS,
   CONTRACT_ITEM_SPOTS,
@@ -33,6 +34,7 @@ import { STEP_HEIGHT } from "../src/systems/movement-system";
 import { chunkBuildings } from "../src/content/lublin/city";
 import { SITE_PLANS } from "../src/content/contract-plans";
 import { MAP_CHUNKS, PADS, RAMPS, rawHeight } from "../src/content/lublin/sites";
+import { surfaceY } from "../src/content/lublin/terrain";
 
 /** The middles of the arcade's piers from the south corner on the PZGiK orthophoto (5 cm/px, ±0.15 m, review of #357). */
 const ORTHO_PIERS = [2.95, 6.25, 9.9, 13.6, 17.2, 20.8, 24.55, 28.25, 31.75, 35.4, 39.1, 42.95, 46.4];
@@ -124,6 +126,20 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
         expect(b.y1 - groundY(p.x, p.z), `a ${a.toFixed(2)}, c ${c.toFixed(2)}`).toBeLessThanOrEqual(STEP_HEIGHT);
       }
     }
+  });
+
+  it("draws the pavement and the landing over the map's paving round them, their solids on the ground walked (the user's 20.11)", () => {
+    const drawn = ARKADY_PIECES.slice(ARKADY_BUILDING.length);
+    expect(drawn).toHaveLength(ARKADY_PAVEMENT.length);
+    drawn.forEach(({ box: b }, i) => {
+      expect(b.y1 - ARKADY_PAVEMENT[i]!.box.y1).toBeCloseTo(0.08, 6);
+      for (let a = b.x0 + 0.05; a <= b.x1 - 0.05 + 1e-9; a += 0.25) {
+        for (const c of [b.z0 + 0.05, b.z1 - 0.05]) {
+          const p = arkadyPoint(a, c);
+          expect(surfaceY(p.x, p.z), `a ${a.toFixed(2)}, c ${c}`).toBeLessThan(b.y1 + 0.05);
+        }
+      }
+    });
   });
 
   it("keeps the arcade's floor level on T2 under its paving, from its first pier to its north end", () => {
