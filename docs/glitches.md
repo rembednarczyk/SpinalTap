@@ -2263,6 +2263,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Znalezisko przy G-948: ręczny punkt planu street.vending-machines (440; −100) leży na drodze treści GATE_WALK; import przesuwa go na (439,6; −101), a gra go zdejmuje. Kontrola plan-prop-under-game go nie widzi, bo element przesunięty o więcej niż 0,1 m nie pasuje do punktu (MATCH). Poprawka: przenieść punkt poza drogę i poszerzyć dopasowanie kontroli o przesunięcie importu.
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/lublin plan), tools/glitch-scan
+- Kurator (przegląd G-948): street.vending-machines#3 leży na osi GATE_WALK (0,00 m), clearSpot przesuwa go o 1,08 m na (439,6; −101), nadal 1,03 m od osi, więc clearOfGame = false. Poprawka kontroli: dopasować punkt ręczny do najbliższego elementu tego samego rodzaju w LUBLIN_STREET_PROPS w promieniu 1,5 m, obecność w WORLD_STREET_PROPS sprawdzać dla niego z MATCH 0,1 m (baza 13 = 12 z G-947 + krakowskie-2-0 440,-100; wynik stały dla 1,5–3 m). Punkt przenieść dalej niż 1,5 m od osi, np. na zachodni bruk przy słupkach Królewskiej.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
