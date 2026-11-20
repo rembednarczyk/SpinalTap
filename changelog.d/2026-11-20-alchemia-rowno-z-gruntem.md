@@ -1,0 +1,1 @@
+Alchemia stoi równo z podłożem: stopnie rampy wschodniej i schodów na T2 leżą na kostce placu, a nie pod nią (G-445), chodnik Arkad nie znika w kostce przy krawędziach, ekran skrzydła L1 przy Lubartowskiej stoi na cokole zamiast wisieć nad chodnikiem, a drzewo w donicy na placu przed frontem ma pod sobą bryłę donicy (kontrola skanu `alchemia-off-ground`).

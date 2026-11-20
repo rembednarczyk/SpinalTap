@@ -1,5 +1,6 @@
 import { SpatialHash, type Vec3 } from "@seki/core";
 import type { World } from "miniplex";
+import type { Aabb } from "./collision";
 import type { Entity } from "./components";
 import { type Collider, type SolidEntity, collidersOf } from "./solids";
 
@@ -20,8 +21,8 @@ export class SolidIndex {
   private readonly grid = new SpatialHash<SolidEntity>(CELL);
   private kinematic: SolidEntity[] = [];
   private readonly parts = new WeakMap<SolidEntity, readonly Collider[]>();
-  /** Queries answered and solids handed back, for the cost check in tests (ADR-0046). */
-  readonly stats = { queries: 0, candidates: 0 };
+  /** Queries answered and solids handed back, and of `collidersNear` its queries and colliders, for the cost checks in tests (ADR-0046). */
+  readonly stats = { queries: 0, candidates: 0, colliderQueries: 0, colliders: 0 };
 
   constructor(private readonly world: World<Entity>) {
     const solids = world.with("solid");
@@ -73,13 +74,23 @@ export class SolidIndex {
     return this.grid.someAlong(a.x, a.z, b.x, b.z, ALONG_PAD, take) || this.kinematic.some(take);
   }
 
-  /** Colliders of the solids near the rectangle, in creation order (static parts cached, kinematic boxes fresh). */
+  /**
+   * Colliders whose own boxes meet the rectangle, in creation order (static parts cached,
+   * kinematic boxes fresh). The grid hands back the solids whose boxes meet it; a building of
+   * prisms is one solid, its box round all of them, so each part is checked on its own box too
+   * (Ericson, "Real-Time Collision Detection", 7.1 and 6.1: the grid's cell, then the object's
+   * bounding volume, then its parts'). Every part of those solids stays at hand for a point off
+   * the rectangle (`collidersAt`): the colliders of before, in their order.
+   */
   collidersNear(minX: number, minZ: number, maxX: number, maxZ: number): Collider[] {
     const solids = this.near(minX, minZ, maxX, maxZ).sort((p, q) => p.id - q.id);
+    const each: (readonly Collider[])[] = [];
     const out: Collider[] = [];
     for (const s of solids) {
       if (s.velocity) {
-        out.push({ box: s.solid, slope: s.slope, prism: null });
+        const c = { box: s.solid, slope: s.slope, prism: null };
+        each.push([c]);
+        if (meets(c.box, minX, minZ, maxX, maxZ)) out.push(c);
         continue;
       }
       let parts = this.parts.get(s);
@@ -87,11 +98,43 @@ export class SolidIndex {
         parts = collidersOf([s]);
         this.parts.set(s, parts);
       }
-      for (const c of parts) out.push(c);
+      each.push(parts);
+      for (const c of parts) if (meets(c.box, minX, minZ, maxX, maxZ)) out.push(c);
     }
+    (out as Near)[NEARBY] = { minX, minZ, maxX, maxZ, each, all: null };
+    this.stats.colliderQueries++;
+    this.stats.colliders += out.length;
     return out;
   }
 }
+
+const meets = (b: Aabb, minX: number, minZ: number, maxX: number, maxZ: number): boolean => b.max.x >= minX && b.min.x <= maxX && b.max.z >= minZ && b.min.z <= maxZ;
+
+/** The rectangle a list of `collidersNear` was asked for, the colliders of each of its solids, and all of them once asked for. */
+interface Nearby {
+  readonly minX: number;
+  readonly minZ: number;
+  readonly maxX: number;
+  readonly maxZ: number;
+  readonly each: readonly (readonly Collider[])[];
+  all: readonly Collider[] | null;
+}
+const NEARBY = Symbol("nearby");
+/** A list of `collidersNear`, with what it was gathered for. */
+type Near = readonly Collider[] & { [NEARBY]?: Nearby };
+
+/**
+ * The colliders of `solids` that may be over the point (x, z), `margin` round: `solids` itself
+ * when that is within the rectangle it was gathered for (or it is no list of `collidersNear`),
+ * else every part of its solids, in the same order. A foothold felt for beside a thin top
+ * (`supported`, G-372) goes down a flight tread by tread, off the rectangle of the body.
+ */
+export const collidersAt = (solids: readonly Collider[], x: number, z: number, margin: number): readonly Collider[] => {
+  const n = (solids as Near)[NEARBY];
+  if (!n || (x - margin >= n.minX && x + margin <= n.maxX && z - margin >= n.minZ && z + margin <= n.maxZ)) return solids;
+  n.all ??= n.each.flat();
+  return n.all;
+};
 
 const indices = new WeakMap<World<Entity>, SolidIndex>();
 
