@@ -78,6 +78,12 @@ export const MAKE = {
 /** `generate` of the committed raw data over every chunk, as `pnpm osm:build` runs it. */
 export const generatedCity = (): Generated => cached("generate");
 
+/**
+ * `generatedCity`, its process not waited for when the city is not kept yet: a test file may start
+ * it before its first test that reads the city and await it there (the glitch scan's `fill-on-green`).
+ */
+export const loadGeneratedCity = (): Promise<Generated> => CACHE.load<Generated>("generate");
+
 /** `generateProps` of the plan over the committed tables, with no node tags, boards or market. */
 export const cityProps = (): PropsOut => cached("props");
 

@@ -77,7 +77,7 @@ import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
 import { lanePlaceOnGreen } from "./lane-place-on-green";
 import { lawnStripOnPaving, mapLawns } from "./lawn-strip-on-paving";
 import { groundUnderPlinth, steepWayCut } from "./terrain-cuts";
-import { generatedCity } from "../../osm-import/test/city.ts";
+import { loadGeneratedCity } from "../../osm-import/test/city.ts";
 import { cityLanduseWorld, landuseBare } from "./landuse-bare";
 import { duplicateSolids } from "./building-duplicate";
 import { edgeBuildingsDropped, offMapAreas, osmBuildings } from "./edge-buildings";
@@ -2292,27 +2292,27 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   /** A `landuse-bare` sample the orthophoto's cover shows green or light paving: what the import lays a lawn or paving on (ADR-0077 step 1.1, `bare-on-cover.ts`). */
   "bare-on-cover": () => bareOnCover(landuseBare(cityLanduseWorld(SOURCE_OSM)), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under the paving the bare ground rule laid: a lawn taken for a square (ADR-0077 step 1.2, T-285, `fill-on-green.ts`). */
-  "fill-on-green": () => fillOnGreen(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  "fill-on-green": async () => fillOnGreen((await loadGeneratedCity()).stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's green under a carriageway or pavement past the map's bands by a node where a one-way street's lanes split or join: a lane laid onto a lawn (G-825, `lane-place-on-green.ts`). */
   "lane-place-on-green": () =>
     lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's paving or asphalt under grass no lawn of the map holds nor the bare ground rule laid, 0.6-3.3 m from a carriageway: a strip to a lawn laid as the lawn's over the kerb's pavement (G-825, `lawn-strip-on-paving.ts`). */
-  "lawn-strip-on-paving": () =>
+  "lawn-strip-on-paving": async () =>
     lawnStripOnPaving(
       MAP_CHUNKS,
       mapLawns(SOURCE_OSM),
-      generatedCity().stats.flatMap((c) => c.fills.filter((f) => f.surface === "grass").map((f) => Array.from({ length: f.outline.length >> 1 }, (_, k) => ({ x: f.outline[2 * k]!, z: f.outline[2 * k + 1]! })))),
+      (await loadGeneratedCity()).stats.flatMap((c) => c.fills.filter((f) => f.surface === "grass").map((f) => Array.from({ length: f.outline.length >> 1 }, (_, k) => ({ x: f.outline[2 * k]!, z: f.outline[2 * k + 1]! })))),
       MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined),
     ),
   /** A run under 5 m of grass or square 0.3 m past a carriageway's edge with the other of the two on both sides: a strip by the kerb whose surface flips every few metres (G-825 r4, `kerb-fill-flicker.ts`). */
   "kerb-fill-flicker": () => kerbFillFlicker(MAP_CHUNKS),
   /** A 0.5 m sample under a lawn the bare ground rule laid that the leaf-off flight shows as paving under crowns: a pavement under trees taken for a tree's bed (G-764, `fill-on-green.ts`). */
-  "lawn-on-leafoff-paving": () => lawnOnLeafOffPaving(generatedCity().stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
+  "lawn-on-leafoff-paving": async () => lawnOnLeafOffPaving((await loadGeneratedCity()).stats, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A piece the bare ground rule laid whose triangles cover other than its area by over 0.01 m²: a ring touching itself (G-764, `fill-area.ts`). */
-  "fill-area-mismatch": () => fillAreaMismatch(generatedCity().stats),
+  "fill-area-mismatch": async () => fillAreaMismatch((await loadGeneratedCity()).stats),
   /** A hole under 0.5 m² between the pieces the bare ground rule laid that nothing else covers: dark terrain between two fills (G-769, `fill-gap.ts`). */
-  "fill-gap": () => {
-    const city = generatedCity();
+  "fill-gap": async () => {
+    const city = await loadGeneratedCity();
     return fillGap(city.stats, city.chunks);
   },
   /** A 0.5 m sample of a piece laid in a pedestrian street's frontage inside a building site of the map (`fill-construction.ts`, G-866). */
@@ -2887,6 +2887,8 @@ describe("the glitch scan (ADR-0054)", () => {
  */
 /** The kinds computed in a process of their own (`scan-cache.ts`). */
 const MADE: readonly MadeKind[] = ["walk-blocked"];
+/** The kinds that read the whole generated city (`loadGeneratedCity`), computed cold in a process of its own in 5-6 s. */
+const ON_CITY: readonly string[] = ["fill-on-green", "lawn-strip-on-paving", "lawn-on-leafoff-paving", "fill-area-mismatch", "fill-gap"];
 
 describe("the glitch scan against its baseline (ADR-0054)", () => {
   const mode = process.env.GLITCH_BASELINE;
@@ -2911,12 +2913,14 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   const title = (k: string) => `finds no new place of ${k} (baseline/${k}.txt)`;
-  // The kinds computed in a process of their own start it here, cold, for the kinds' tests before
-  // theirs to run meanwhile: only when their test runs (not filtered out with `-t`).
+  // The kinds computed in a process of their own, and the generated city, start it here, cold, for
+  // the kinds' tests before theirs to run meanwhile: only when their test runs (not filtered out with `-t`).
   // Vitest takes the hook's fixtures from a pattern in its first argument, the suite in its second.
   // eslint-disable-next-line no-empty-pattern
   beforeAll(({}, suite) => {
-    for (const k of MADE) if (suite.tasks.some((t) => t.name === title(k) && t.mode === "run")) startMade(k);
+    const runs = (k: string) => suite.tasks.some((t) => t.name === title(k) && t.mode === "run");
+    for (const k of MADE) if (runs(k)) startMade(k);
+    if (ON_CITY.some(runs)) loadGeneratedCity().catch(() => undefined);
   });
   for (const [k, check] of Object.entries(CHECKS)) {
     it(title(k), async () => {
