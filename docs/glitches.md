@@ -2278,12 +2278,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (systems/traffic-system.ts)
 
-### G-953 Auto ruchu przejeżdża przez przechodnia
-- Ważność: S3 · Zasięg: ruch uliczny w całym mieście (traffic-system.ts, pushOut)
-- Opis: Znalezisko przy G-951 (20.11): pushOut spycha tylko gracza; przechodzień (NPC) na pasie nie ma żadnej reakcji, a auto w ruchu przejeżdża przez niego. G-951 (PR #812) blokuje tylko pojawienie się auta w ciele.
-- Status: w PR (20.11, gałąź fix/g953-auto-przez-przechodnia, 0daef3c); wcześniej: zgłoszone
-- Pakiet właściciela: packages/sim (systems/traffic-system.ts, ruch przechodniów)
-
 ### G-954 Auto ruchu hamuje przed ciałem nad lub pod pasem
 - Ważność: S4 · Zasięg: ruch uliczny pod pomostami i przy rampie P−1 (lookAhead, pushOut gracza)
 - Opis: Znalezisko przy G-953 (20.11): lookAhead nie sprawdza wysokości, więc auto staje przed ciałem stojącym 4 m nad pasem w obrysie (sonda); na rampie P−1 może hamować przed ludźmi z parkingu nad nią. pushOut gracza też nie patrzy na wysokość (gracza nad lub pod autem może zepchnąć).

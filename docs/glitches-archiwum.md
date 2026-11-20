@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-953 Auto ruchu przejeżdża przez przechodnia
+- Ważność: S3 · Zasięg: ruch uliczny w całym mieście (traffic-system.ts, pushOut)
+- Opis: Znalezisko przy G-951 (20.11): pushOut spycha tylko gracza; przechodzień (NPC) na pasie nie ma żadnej reakcji, a auto w ruchu przejeżdża przez niego. G-951 (PR #812) blokuje tylko pojawienie się auta w ciele.
+- Status: naprawione (20.11, #815 scalony); wcześniej: w PR (20.11, gałąź fix/g953-auto-przez-przechodnia, 0daef3c); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts, ruch przechodniów)
+
 ### G-951 Auto rampy P−1 pojawia się w ciele gracza poza jego wzrokiem i go spycha
 - Ważność: S3 · Zasięg: rampa P−1 Alchemii, trasa 109 (ruch uliczny comeAndGo)
 - Opis: Pomiar agenta testu ramp-pass (20.11): ziarno 77, gracz x 411,05, z 8, kurs 0, krok 2720: auto 3003488 powstaje 0,55 m od osi gracza, w obrysie (szerokość 0,91 + promień 0,38), a ruch spycha gracza o 0,69 m na zachód. comeAndGo i crowded w traffic-system.ts nie sprawdzają gracza. Bliskie G-492. Poprawka: punkt pojawienia się auta poza obrysem ciał (gracza i NPC) albo odłożenie pojawienia.
