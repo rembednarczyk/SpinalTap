@@ -22,10 +22,19 @@
 .end__stats { margin: 0; font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); }
 .end__lead { margin: 0; font-size: 15px; }
 .end__credits { margin: 0; font-size: 12px; color: var(--ink-dim); }
-.end .menu__item { min-height: 44px; }
+.screen--end > .end { flex-shrink: 1; min-height: 0; }
+/* The way back stays in sight while the card scrolls. */
+.end .menu__item { position: sticky; bottom: 0; flex-shrink: 0; min-height: 44px; background: rgba(6, 10, 16, 0.98); }
 
 @media (max-height: 500px) {
-  .end { gap: 5px; padding: 12px 16px; }
-  .end__heading { font-size: 19px; }
-  .end__choices { font-size: 13px; line-height: 1.3; }
+  .end { width: min(760px, 100%); gap: 4px; padding: 10px 16px; }
+  .end__heading { font-size: 18px; }
+  .end__acts { flex-direction: row; gap: 18px; }
+  .end__act { flex-direction: column; gap: 0; font-size: 13px; }
+  .end__act-ending { text-align: left; }
+  .end__section { margin: 2px 0 0; font-size: 12px; }
+  .end__choices { columns: 2; column-gap: 26px; font-size: 12px; line-height: 1.3; }
+  .end__lead { font-size: 13px; }
+  .end__credits { display: none; }
+  .end .menu__item { min-height: 44px; padding: 6px 12px; font-size: 16px; }
 }
