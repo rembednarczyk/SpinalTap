@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityId } from "@seki/core";
 import { ACTIVITY_STILL_SPEED, SCHEDULES, SIM_HZ, Simulation, spotNear } from "../src";
-import { byKey, run, teleportPlayer } from "./helpers";
+import { byKey, input, run, teleportPlayer } from "./helpers";
 
 /*
  * G-732: a figure never walks while seated. From a seated stop of its daily plan to the next
@@ -44,6 +44,9 @@ describe("G-732: nobody walks seated", () => {
     const sim = Simulation.create({ seed: 7 });
     // By the seat, so its chunk is loaded with the figure in it.
     teleportPlayer(sim, spotNear(seat.x + 3, seat.z + 3), 0);
+    // Gun away: drawn on the Hebi's ground, a patrol walking by warns her, the minutes skipped run
+    // the warning out and its shots scare the sleeper off his seat (G-944).
+    if (!sim.player()!.combatant?.holstered) sim.step(input({ toggleWeapon: true }));
     run(sim, SIM_HZ);
     skipTo(sim, (at - 3 + 1440) % 1440);
     run(sim, SIM_HZ);
