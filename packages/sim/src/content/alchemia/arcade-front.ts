@@ -57,6 +57,8 @@ export const arcadeFrontPieces = (): Piece[] => {
         const z = A.minZ + ARCADE_WALK / 2 + 0.3;
         return [piece(box(c - 0.2, c + 0.2, z - 0.2, z + 0.2, A.ceiling - 0.95, A.ceiling - 0.45), "lantern", false, false), piece(box(c - 0.01, c + 0.01, z - 0.01, z + 0.01, A.ceiling - 0.45, A.ceiling), "cable", false, false)];
       }),
+    // A lit band over the shops' windows and doors on the wing's glass under the arcade (ADR-0093 O5), warm: their signs' board.
+    piece(box(A.minX + 0.4, A.minX + ARCADE_WALK * 3.2, A.minZ + ARCADE_WALK - 0.06, A.minZ + ARCADE_WALK, A.ceiling - 0.62, A.ceiling - 0.32), "lightbox", false, false),
     // The strip of light along its roof's edge, as every terrace's on the board.
     piece(box(A.minX - 0.12, A.maxX + 0.12, A.minZ - 0.19, A.minZ - 0.15, A.top - SLAB - CORNICE + 0.08, A.top - SLAB - CORNICE + 0.2), "led", false, false),
   ];
