@@ -79,6 +79,14 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   steam: "win-white",
   carton: "fabric-amber",
   paper: "paint",
+  // The square before the front (C5): dark wet paving, the hologram's glow, the kiosks' awnings (drawn sloping, `plaza-geometry.ts`), lit food, sign bands, the café's chairs.
+  paving: "wall-dark",
+  holo: "win-teal",
+  awning: "trim-light",
+  food: "win-warm",
+  "sign-red": "neon-red",
+  "sign-amber": "neon-amber",
+  chair: "dark",
 };
 
 /** The front's glass is lit up to this much over the floor (ADR-0074 §6: the front warm at night). */
@@ -95,7 +103,7 @@ const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: st
 };
 
 /** Kinds that stand on a floor or the ground: nobody sees their bottom. */
-const ON_FLOOR: ReadonlySet<AlchemiaPieceKind> = new Set(["wall", "glass", "green", "parapet", "partition", "counter", "table", "bench", "step", "memorial", "column", "charger", "machine", "lawn"]);
+const ON_FLOOR: ReadonlySet<AlchemiaPieceKind> = new Set(["wall", "glass", "green", "parapet", "partition", "counter", "table", "bench", "step", "memorial", "column", "charger", "machine", "lawn", "paving"]);
 
 /**
  * The faces of a piece nobody sees: the bottom of one on a floor (not glass hanging as a lintel, which

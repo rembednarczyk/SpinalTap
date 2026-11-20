@@ -5,6 +5,8 @@ import { type Rectangle, balustrade, outerCorners, roundedOutline } from "./roun
 import { FRONT_OVERHANG, MALL, MALL_LEVELS } from "./mall-plan";
 import { slabOf, storey as tierStorey } from "./storey";
 import { ARCADE_FOOTPRINTS, ARCADE_FRONT, ARCADE_WALK, arcadeFrontPieces } from "./arcade-front";
+import { FOUNTAIN, PLAZA_FLOOR } from "./front-plaza";
+import { PLAZA_FOOTPRINTS, PLAZA_KIOSKS } from "./front-plaza-cafe";
 
 /*
  * Alchemia's front on Bajkowskiego (ADR-0074, "Bryła na całym terenie", stage B1, decisions of
@@ -171,18 +173,10 @@ const hedges = (): Piece[] => [
   piece(box(L3.minX + 1, L3.maxX - 1, L3.maxZ - 0.8, L3.maxZ - 0.3, L3_TOP, L3_TOP + 0.6), "green", false),
 ];
 
-/** The fountain on the square before the west wing (B4): its basin's outline, the board's hologram over it. */
-export const FOUNTAIN: Rect = { minX: 397.9, maxX: 401.1, minZ: -7.1, maxZ: -3.9 };
-
-/**
- * The kiosks on the square before the front (B4, the board's booths by the fountain): one west of
- * the fountain towards Świętoduska, one east of it on the way to the ramp, their counters to the
- * street (south).
- */
-export const FRONT_KIOSKS: readonly Rect[] = [
-  { minX: 390.6, maxX: 392.6, minZ: -6.2, maxZ: -4.6 },
-  { minX: 402.4, maxX: 404.4, minZ: -6.6, maxZ: -5.0 },
-];
+/** The round fountain and the kiosks on the square before the front (B4, rebuilt to the board in C5): `front-plaza.ts`, `front-plaza-cafe.ts`. */
+export { FOUNTAIN } from "./front-plaza";
+/** The kiosks' outlines. */
+export const FRONT_KIOSKS: readonly Rect[] = PLAZA_KIOSKS.map((k) => k.rect);
 
 /**
  * What of the front stands on T0, in plan: the wings, the green steps and the passage's columns. The
@@ -193,9 +187,11 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
   EAST_WING,
   { minX: GREEN_STEPS[GREEN_STEPS.length - 1]!.x0, maxX: WEST_WING[0]!.minX, minZ: STEPS_Z.z0, maxZ: STEPS_Z.z1 },
   ...PASSAGE_COLUMNS.map((c) => ({ minX: c.x - COLUMN / 2, maxX: c.x + COLUMN / 2, minZ: c.z - COLUMN / 2, maxZ: c.z + COLUMN / 2 })),
-  FOUNTAIN,
-  ...FRONT_KIOSKS,
   ...ARCADE_FOOTPRINTS,
+  // The square before it (C5): its podium with the stairs round it, the fountain on it, the kiosks and the café's tables.
+  PLAZA_FLOOR,
+  FOUNTAIN,
+  ...PLAZA_FOOTPRINTS,
 ];
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */

@@ -101,7 +101,17 @@ export type PieceKind =
   | "cup"
   | "steam"
   | "carton"
-  | "paper";
+  | "paper"
+  // The square before the front (C5, 19.11): its podium's paving, the fountain's hologram, the kiosks'
+  // awnings (drawn sloping from their outline's first edge down), lit food under glass and sign bands,
+  // the café's chairs.
+  | "paving"
+  | "holo"
+  | "awning"
+  | "food"
+  | "sign-red"
+  | "sign-amber"
+  | "chair";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {
