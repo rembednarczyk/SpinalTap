@@ -2251,6 +2251,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/lublin plan, lublin-props.todo.json), tools/osm-import
 - Naprawa po scaleniu O5 (feat/alchemia-o5-front zmienia front i tarasy L2), punkty rozstawić wtedy na nowym układzie; przegląd kuratora.
+- O5 scalony (#805, 20.11): kurator potwierdził, że O5 nie zmienia liczby miejsc plan-prop-under-game (13 → 13). Naprawa po scaleniu #804 (te same pliki planu i tablic).
 
 ### G-948 Budka sieciowa planu na Placu Łokietka na drodze treści deptaka
 - Ważność: S4 · Zasięg: Plac Łokietka (430; −100)
