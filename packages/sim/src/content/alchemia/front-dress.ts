@@ -1,6 +1,6 @@
 import { P1_RAMP, p1RampY } from "./parking";
 import { type Piece, box, piece } from "./plan";
-import { L2_TOP, L3, L3_TOP } from "./front";
+import { L2_SLABS, L2_TOP, L3, L3_TOP } from "./front";
 
 /*
  * The board's details on the front (ADR-0074 B4, decisions of 19.11): umbrellas over tables on L3's roof, tall
@@ -42,6 +42,22 @@ const rampLights = (): Piece[] => {
   return out;
 };
 
+/**
+ * Strings of paper lanterns over the hedges of L2's and L3's south terraces (ADR-0093 O5: one walks out
+ * there; the board's terraces lit at night): a post in the hedge every 4 m, a cable between their tops,
+ * a lantern every metre, warm, over every head.
+ */
+const festoons = (): Piece[] =>
+  [
+    { x0: 396.0, x1: 420.5, z: L2_SLABS[0]!.minZ + 0.55, y: L2_TOP },
+    { x0: L3.minX + 1.5, x1: L3.maxX - 1.5, z: L3.minZ + 0.55, y: L3_TOP },
+  ].flatMap(({ x0, x1, z, y }) => {
+    const out: Piece[] = [piece(box(x0, x1, z - 0.01, z + 0.01, y + 2.28, y + 2.3), "cable", false, false)];
+    for (let x = x0; x <= x1 + 1e-6; x += (x1 - x0) / Math.round((x1 - x0) / 4)) out.push(piece(box(x - 0.04, x + 0.04, z - 0.04, z + 0.04, y + 0.6, y + 2.35), "pergola", false, false));
+    for (let x = x0 + 0.5; x < x1 - 0.3; x += 1.0) out.push(piece(box(x - 0.14, x + 0.14, z - 0.14, z + 0.14, y + 1.85, y + 2.18), "lantern", false, false));
+    return out;
+  });
+
 /** Every detail of B4 on the front. */
 // The fountain and the kiosks before the front went to the square of C5 (`front-plaza.ts`), round and to the board.
-export const frontDressPieces = (): Piece[] => [...umbrellas(), ...sideScreens(), ...rampLights()];
+export const frontDressPieces = (): Piece[] => [...umbrellas(), ...sideScreens(), ...rampLights(), ...festoons()];
