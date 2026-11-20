@@ -1,0 +1,1 @@
+Zielony dach galerii Alchemii: dziedziniec wokół otworu atrium z grządkami na podniesionych donicach, ścieżkami z płyt, trzema pergolami z rubinowymi lampionami, ławkami, drzewami i krzewami z gry, techniką dachu obok ogródka mieszkańców i ludźmi na ławkach (ADR-0093 O4).
