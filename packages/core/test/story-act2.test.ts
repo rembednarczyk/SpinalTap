@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACT_THREE_EPILOGUE,
   ACT_TWO_ENDINGS,
   ACT_TWO_ENDING_FLAG,
   ACT_TWO_OPENING,
   CLEANERS_DOWN,
   EMPTY_STORY,
+  END_SCREEN,
   KAGAMI_AMBUSH_FLAG,
   KAGAMI_CLEANER_KEYS,
   KAGAMI_JOB_FLAG,
@@ -18,6 +20,7 @@ import {
   activeMainStep,
   createCharacter,
   deriveStats,
+  endScreenDue,
   endingFlag,
   evaluateCondition,
   evaluateQuests,
@@ -133,5 +136,14 @@ describe("scenes that play on their own", () => {
   it("plays the mirror after the kagami ending", () => {
     const character = unlockMemory(createCharacter(), "mirror");
     expect(pendingScene({ character, flags: [seenFlag(ACT_TWO_OPENING)], quests })).toBe("recall_mirror");
+  });
+});
+
+describe("the end screen (ADR-0095 stage 2)", () => {
+  it("is due once the epilogue has played, until it is seen", () => {
+    expect(endScreenDue({ flags: [] })).toBe(false);
+    expect(endScreenDue({ flags: [seenFlag(ACT_THREE_EPILOGUE)] })).toBe(true);
+    expect(endScreenDue({ flags: [seenFlag(ACT_THREE_EPILOGUE), seenFlag(END_SCREEN)] })).toBe(false);
+    expect(seenFlag(END_SCREEN)).toBe("seen:end_screen");
   });
 });

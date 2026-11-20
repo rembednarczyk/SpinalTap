@@ -180,7 +180,8 @@ export type UiIntents = SessionIntents &
   HackIntents &
   MetroIntents &
   RadioIntents &
-  WaitIntents;
+  WaitIntents &
+  EndScreenIntents;
 
 // ---- Wave 2 (ADR-0035) ----
 
@@ -201,6 +202,11 @@ export interface RadioIntents {
   nextRadioStation(): void;
 }
 
+
+/** The end screen after the main thread's epilogue (ADR-0095 stage 2): back to the city. */
+export interface EndScreenIntents {
+  closeEndScreen(): void;
+}
 
 /** Waiting: the window that lets game hours pass, from the pause menu or its key (the `wait` command). */
 export interface WaitIntents {

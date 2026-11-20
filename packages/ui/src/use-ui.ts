@@ -8,6 +8,7 @@ import type {
   GraphicsIntents,
   JournalIntents,
   DialogueIntents,
+  EndScreenIntents,
   HackIntents,
   LootIntents,
   MetroIntents,
@@ -54,3 +55,4 @@ export const useHackIntents = (): HackIntents => useUiContext().intents;
 export const useMetroIntents = (): MetroIntents => useUiContext().intents;
 export const useRadioIntents = (): RadioIntents => useUiContext().intents;
 export const useWaitIntents = (): WaitIntents => useUiContext().intents;
+export const useEndScreenIntents = (): EndScreenIntents => useUiContext().intents;

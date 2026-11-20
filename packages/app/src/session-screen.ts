@@ -20,8 +20,8 @@ export class SessionScreen {
 
   /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    const { dialogue, shop, loot, character, phone, hack, metro, wait } = this.deps.controllers();
-    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding || wait.isOpen;
+    const { dialogue, shop, loot, character, phone, hack, metro, wait, endScreen } = this.deps.controllers();
+    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding || wait.isOpen || endScreen.isOpen;
     return this.screen === "playing" && !panel;
   }
 
@@ -31,7 +31,8 @@ export class SessionScreen {
    */
   get running(): boolean {
     const c = this.deps.controllers();
-    return this.screen === "playing" && !c.character.isOpen && !c.wait.isOpen;
+    // The end screen stands the game, as the wait window does.
+    return this.screen === "playing" && !c.character.isOpen && !c.wait.isOpen && !c.endScreen.isOpen;
   }
 
   /** The character menu is open; the app draws the preview instead of the game. */

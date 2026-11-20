@@ -63,6 +63,7 @@ import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroRideV
 import type { MetroMapVm } from "./metro-vm";
 import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
 import { NO_WAIT, type WaitUiState } from "./wait-vm";
+import { type EndScreenUiState, NO_END_SCREEN } from "./end-screen-vm";
 import { DEFAULT_GRAPHICS, type GraphicsUiState, type SettingsUiState } from "./settings-vm";
 
 export * from "./hud-vm";
@@ -72,6 +73,7 @@ export * from "./wave2-vm";
 export * from "./metro-vm";
 export * from "./difficulty-vm";
 export * from "./wait-vm";
+export * from "./end-screen-vm";
 export * from "./settings-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
@@ -293,7 +295,8 @@ export type UiState = SessionUiState &
   GraphicsUiState &
   MetroUiState &
   BodyUiState &
-  WaitUiState;
+  WaitUiState &
+  EndScreenUiState;
 
 export const initialUiState: UiState = {
   screen: "title",
@@ -394,6 +397,7 @@ export const initialUiState: UiState = {
   dash: null,
   disguise: null,
   ...NO_WAIT,
+  ...NO_END_SCREEN,
   ...DEFAULT_GRAPHICS,
 };
 

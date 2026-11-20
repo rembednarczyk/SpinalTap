@@ -205,5 +205,11 @@ export const ACT_TWO_OPENING = "act2_opening";
 /** Act III's opening (ADR-0095) and its epilogue, once the ending is reached. */
 export const ACT_THREE_OPENING = "act3_opening";
 export const ACT_THREE_EPILOGUE = "act3_epilogue";
+/** The end screen after the epilogue (ADR-0095 stage 2): once, then the game goes on. */
+export const END_SCREEN = "end_screen";
 
 export const seenFlag = (scene: string): string => `seen:${scene}`;
+
+/** Is the end screen due: the epilogue played and the screen not yet seen (it survives a save as a flag). */
+export const endScreenDue = (domain: { readonly flags: Flags }): boolean =>
+  hasFlag(domain.flags, seenFlag(ACT_THREE_EPILOGUE)) && !hasFlag(domain.flags, seenFlag(END_SCREEN));

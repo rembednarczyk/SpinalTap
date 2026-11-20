@@ -20,6 +20,7 @@ import { PhonePanel } from "./phone/phone";
 import { MetroMap, MetroRide } from "./metro/metro-panel";
 import { RadioKey } from "./radio/radio";
 import { WaitPanel } from "./wait/wait-panel";
+import { EndScreen } from "./ending/end-screen";
 import { UiScaleRoot } from "./scale/use-ui-scale";
 
 /**
@@ -47,7 +48,7 @@ const Accessibility = () => {
 
 const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version: string | undefined }) => {
   const screen = useUi((s) => s.screen);
-  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null || s.wait !== null);
+  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null || s.wait !== null || s.endScreen !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
   const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
   const t = useT();
@@ -71,6 +72,7 @@ const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version:
       {screen === "playing" && <MetroRide />}
       {screen === "playing" && <RadioKey />}
       {screen === "playing" && <WaitPanel />}
+      {screen === "playing" && <EndScreen />}
       {screen === "title" && <TitleScreen version={version} />}
       {screen === "loading" && <LoadingScreen />}
       {screen === "paused" && <PauseMenu />}
