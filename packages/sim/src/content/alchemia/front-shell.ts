@@ -194,7 +194,7 @@ const lightPanels = (): Piece[] => {
         if (!rooms.some(inside)) continue;
         if (closed.some((r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)) continue;
         if (risersBoxes.some((b) => b.y0 < top && b.y1 > floor && x > b.x0 - 0.6 && x < b.x1 + 0.6 && z > b.z0 - 0.4 && z < b.z1 + 0.4)) continue;
-        out.push(piece(box(x - 0.45, x + 0.45, z - 0.22, z + 0.22, top - 0.04, top - 0.01), "ceiling-light", false, false));
+        out.push(piece(box(x - 0.6, x + 0.6, z - 0.3, z + 0.3, top - 0.04, top - 0.01), "ceiling-light", false, false));
       }
     }
   }
@@ -206,21 +206,26 @@ const lightPanels = (): Piece[] => {
  * board's warm bands behind the glass (the fake rooms' lit backs until O5). Drawn with the storeys.
  */
 const COVE_IN = 0.45;
+const COVE_WIDE = 0.45;
 const coves = (): Piece[] => {
-  const strip = (x0: number, x1: number, z0: number, z1: number, top: number): Piece => piece(box(x0, x1, z0, z1, top - 0.06, top - 0.01), "ceiling-light", false, false);
+  /** A strip along x (at z `at`, inwards by `dir` in z) or along z (at x `at`, inwards by `dir` in x), `a0`..`a1` along it. */
+  const strip = (axis: "x" | "z", at: number, dir: 1 | -1, a0: number, a1: number, top: number): Piece => {
+    const [s0, s1] = [at, at + dir * COVE_WIDE].sort((p, q) => p - q) as [number, number];
+    return piece(axis === "x" ? box(a0, a1, s0, s1, top - 0.06, top - 0.01) : box(s0, s1, a0, a1, top - 0.06, top - 0.01), "ceiling-light", false, false);
+  };
   const [c2, c3] = [FRONT_CEILINGS.l2, FRONT_CEILINGS.l3];
   const i = FRONT_GLASS + COVE_IN;
   return [
     // L2: its south glass over the square east of the house with arcades, its spine's east glass, its east bar's south and east glass, its west glass.
-    strip(ARCADE_FRONT.maxX + 0.4, A.maxX - 1.7, A.minZ + i, A.minZ + i + 0.12, c2),
-    strip(A.maxX - i - 0.12, A.maxX - i, A.minZ + 1.7, B.minZ, c2),
-    strip(B.minX + 0.4, B.maxX - 1.7, B.minZ + i, B.minZ + i + 0.12, c2),
-    strip(B.maxX - i - 0.12, B.maxX - i, B.minZ + 1.7, B.maxZ - 0.4, c2),
-    strip(A.minX + i, A.minX + i + 0.12, A.minZ + 1.7, 30.0, c2),
+    strip("x", A.minZ + i, 1, ARCADE_FRONT.maxX + 0.4, A.maxX - 1.7, c2),
+    strip("z", A.maxX - i, -1, A.minZ + 1.7, B.minZ, c2),
+    strip("x", B.minZ + i, 1, B.minX + 0.4, B.maxX - 1.7, c2),
+    strip("z", B.maxX - i, -1, B.minZ + 1.7, B.maxZ - 0.4, c2),
+    strip("z", A.minX + i, 1, A.minZ + 1.7, 30.0, c2),
     // L3: its south glass behind the sign, its east and west glass.
-    strip(L3.minX + 1.7, L3.maxX - 1.7, L3.minZ + i, L3.minZ + i + 0.12, c3),
-    strip(L3.maxX - i - 0.12, L3.maxX - i, L3.minZ + 1.7, L3.maxZ - 0.4, c3),
-    strip(L3.minX + i, L3.minX + i + 0.12, L3.minZ + 1.7, 30.0, c3),
+    strip("x", L3.minZ + i, 1, L3.minX + 1.7, L3.maxX - 1.7, c3),
+    strip("z", L3.maxX - i, -1, L3.minZ + 1.7, L3.maxZ - 0.4, c3),
+    strip("z", L3.minX + i, 1, L3.minZ + 1.7, 30.0, c3),
   ];
 };
 
