@@ -1,8 +1,8 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ARCADE_FRONT, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ARCADE_FRONT, ATRIUM, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
-import { neonText } from "./neon-letters";
+import { frontSignGeometry } from "./front-sign-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
@@ -56,7 +56,7 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   pallet: "trim-light",
   rail: "metal",
   beacon: "neon-amber",
-  // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box under its letters.
+  // The front on Bajkowskiego (B1): the screens' cold light, the sign's dark box (C4: drawn by `front-sign-geometry.ts`).
   screen: "win-teal",
   sign: "dark",
   umbrella: "fabric-teal",
@@ -164,23 +164,6 @@ const frontFrame = (sink: GeometrySink, data: CityKitData): void => {
   // The floor, seen through the way in from afar too (the ground under the hall is dug out).
   const I = FOODHALL_INNER;
   boxOf(sink, data, { x0: I.minX, x1: I.maxX, z0: I.minZ, z1: I.maxZ, y0: FOODHALL.floor - 0.02, y1: FOODHALL.floor + 0.005 }, "trim-light");
-};
-
-/**
- * The letters on the front's sign (B1, 19.11), on its south face towards Bajkowskiego: ALCHEMIA in
- * cyan over CENTRUM HANDLOWE in pink, neon tubes a hand proud of the dark box (the mall's own sign,
- * the same in every language).
- */
-const frontSignLetters = (sink: GeometrySink, data: CityKitData): void => {
-  const b = FRONT_SIGN;
-  const mid = (b.x0 + b.x1) / 2;
-  const face = b.z0;
-  const line = (text: string, height: number, foot: number, swatch: string) => {
-    for (const s of neonText(text, height)) boxOf(sink, data, { x0: mid + s.x0, x1: mid + s.x1, z0: face - 0.08, z1: face, y0: foot + s.y0, y1: foot + s.y1 }, swatch);
-  };
-  const h = b.y1 - b.y0;
-  line("ALCHEMIA", h * 0.45, b.y0 + h * 0.42, "neon-cyan");
-  line("CENTRUM HANDLOWE", h * 0.2, b.y0 + h * 0.1, "neon-pink");
 };
 
 /**
@@ -312,7 +295,14 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
       if (b.y1 > lit) boxOf(sink, data, { ...b, y0: Math.max(b.y0, lit) }, "glass-dark");
       continue;
     }
-    // The front's screens (B1): a dark panel with lit bands across it, a picture on a display, not a lit box.
+    // The front's sign (C4): a lightbox with its frame (`front-sign-geometry.ts`), its light in the signs' mesh.
+    if (p.kind === "sign") continue;
+    // The screens outside (C4): a dark panel, its picture in the signs' mesh (`front-signs.ts`).
+    if (p.kind === "screen" && !p.inside) {
+      boxOf(sink, data, b, "glass-dark");
+      continue;
+    }
+    // The shelter's screens (5d1): a dark panel with lit bands across it, a picture on a display, not a lit box.
     if (p.kind === "screen") {
       boxOf(sink, data, b, "glass-dark");
       const alongX = b.x1 - b.x0 >= b.z1 - b.z0;
@@ -353,7 +343,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   parkingOutside(outside, data);
   p2Outside(outside, data);
   roofPaving(outside, data);
-  frontSignLetters(tiers, data);
+  frontSignGeometry(tiers, data);
   greenSlope(tiers, data);
   arcadeFrontGeometry(tiers, data);
   foodhallGeometry(inside, data);

@@ -87,9 +87,15 @@ describe("Alchemia's front over P-1 (B1)", () => {
   });
 
   it("faces its sign to Bajkowskiego on L3's south face, a prop of its own the last of Alchemia's", () => {
-    expect(FRONT_SIGN.z1).toBeLessThanOrEqual(L3.minZ);
+    // In front of L3's slab and its edge (0.3 m out of the glass), as the board's lightbox (C4).
+    expect(FRONT_SIGN.z1).toBeLessThanOrEqual(L3.minZ - 0.3);
     expect(FRONT_SIGN.y0).toBeGreaterThan(L2_TOP);
-    expect(FRONT_SIGN.y1).toBeLessThan(L3_TOP);
+    // C4 lifted it: its foot over the line of sight from the square across L2's hedge (some 8.8 m up
+    // on L3's face), its top a metre over the roof's edge (it stood under the slab's beam, L3_TOP - 0.7,
+    // and showed from the square only the top of ALCHEMIA). Drawn only: no solid over the roof.
+    expect(FRONT_SIGN.y0).toBeGreaterThan(8.3);
+    expect(FRONT_SIGN.y1).toBeLessThanOrEqual(L3_TOP + 1.0);
+    expect(frontPieces().find((p) => p.kind === "sign")!.solid).toBe(false);
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
     expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
   });
