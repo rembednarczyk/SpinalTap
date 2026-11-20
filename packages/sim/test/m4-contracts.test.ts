@@ -319,9 +319,9 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(shots).toHaveLength(0);
     const restored = reload(sim);
     expect(hash(restored)).toBe(hash(sim));
-    // Until the wave has hurt Oyaji (the game's state, not a clock): with seed 5 some 1000 steps
-    // after the job since the pavilion's stash left the market's 40 m (ADR-0074 stage 3: one id
-    // fewer, 659 steps before), a hang guard well past that.
+    // Until the wave has hurt Oyaji (the game's state, not a clock): with seed 5 some 520 steps
+    // after the job since the raids turn up on the gallery's P2 (ADR-0093 O3: 1170 from T1 up to his
+    // shop on P3, 1000 to it on T1's level before), a hang guard well past that.
     let n = 0;
     while (n < 3000 && (byKey(sim, "oyaji")?.health?.current ?? 0) >= OYAJI_MAX_HP) {
       sim.step();
