@@ -36,6 +36,14 @@ const CABIN_MODELS = [
   ["hatchback", 25],
   ["taxi", 15],
 ] as const;
+/**
+ * Cars on each of the ramp's routes at the city's full share and busiest hour (C7 of the board 1:1,
+ * 20.11: the board's ramp has a car at its mouth and more under the deck; one a route left the ramp
+ * empty most of a night, 0.45 of a car at 22:00). Each route's count scales with the hour and the
+ * density as every lane's (`vehicleCount`); the routes are short, so two keep a car in or out every
+ * ten seconds or so at rush hour.
+ */
+export const RAMP_CARS = 2;
 /** A car stands in a cabin this far from its back wall (its middle, m): its tail clear of the shutter. */
 const IN_CABIN = 2.8;
 const midZ = (c: (typeof P1_CABINS)[number]): number => (c.minZ + c.maxZ) / 2;
@@ -132,7 +140,7 @@ const join = (id: string, from: TrafficRoute, pieces: readonly Piece[]): Traffic
     points,
     length: len,
     speed: Math.round((len / time) * 100) / 100,
-    vehicles: 1,
+    vehicles: RAMP_CARS,
     stops: [],
     turns: [...own.map((r): Range => [r[0], r[1]]), ...turns].sort(byStart),
     arcs: arcs.sort(byStart),
