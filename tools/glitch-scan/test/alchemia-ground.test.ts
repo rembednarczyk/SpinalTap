@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type FootPiece, type OffGroundWorld, alchemiaOffGround, boxPiece } from "./alchemia-ground";
+import { alchemiaOffGroundInGame } from "./alchemia-ground-world";
 
 const flat = () => 0;
 const world = (pieces: FootPiece[], ground: OffGroundWorld["ground"] = flat, models: FootPiece[] = [], supports: FootPiece[] = []): OffGroundWorld => ({ pieces, models, supports, ground });
@@ -53,5 +54,9 @@ describe("alchemia-off-ground (the user's 20.11)", () => {
 
   it("reads no ground where it is dug out under a room", () => {
     expect(alchemiaOffGround(world([boxPiece(0, 4, 0, 4, 1, 1.3, "roof")], () => null))).toEqual([]);
+  });
+
+  it("finds none in the game's Alchemia (baseline 0)", () => {
+    expect(alchemiaOffGroundInGame().map((f) => `${f.at} ${f.what}`)).toEqual([]);
   });
 });
