@@ -9,7 +9,8 @@
  *
  * The key is every input of the makers: the modules `scan-make.ts` loads, followed through their
  * imports (`moduleClosure`, as the map tables' inputs are), and the data they read (`MAKER_DATA`).
- * The scan starts a cold kind's process before its first test (`startMade`) and awaits it there.
+ * One process computes every such kind (`SCAN_MAKERS.kinds`: the city's modules, 4-5 s of their
+ * own, loaded once). The scan starts it before its first test (`startMade`) and awaits it in the kinds'.
  */
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -49,8 +50,11 @@ const CACHE = processCache({
   argv: (name, file, arg) => ["--experimental-transform-types", "--disable-warning=ExperimentalWarning", "--import", RESOLVE, MAKE, name, file, arg],
 });
 
-/** The kind's findings over the city (`arg` ""), or over a part of it, from its own process. */
-export const madeFindings = (kind: MadeKind, arg = ""): Promise<Finding[]> => CACHE.load<Finding[]>(kind, arg);
+/** The kind's findings over the whole city, from the process of every kind (`SCAN_MAKERS.kinds`). */
+export const madeFindings = async (kind: MadeKind): Promise<Finding[]> => (await CACHE.load<Record<MadeKind, Finding[]>>("kinds"))[kind];
 
-/** Starts the kind's process, if its findings are not kept yet, for a test to await later: a failure comes there. */
-export const startMade = (kind: MadeKind, arg = ""): void => void madeFindings(kind, arg).catch(() => undefined);
+/** `walk-blocked`'s findings in the chunks of `ids` (comma-separated), from a process of their own. */
+export const madeWalkBlocked = (ids: string): Promise<Finding[]> => CACHE.load<Finding[]>("walk-blocked", ids);
+
+/** Starts the process of every kind, if their findings are not kept yet, for a test to await later: a failure comes there. */
+export const startMade = (): void => void CACHE.load("kinds").catch(() => undefined);

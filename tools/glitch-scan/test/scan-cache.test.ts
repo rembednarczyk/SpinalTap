@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { madeFindings, makerInputs } from "./scan-cache";
+import { madeWalkBlocked, makerInputs } from "./scan-cache";
 
 // The process starts before this one loads the city's modules, cold as in CI, and runs meanwhile.
 const CHUNK = "podzamcze-1-0";
-const made = madeFindings("walk-blocked", CHUNK);
+const made = madeWalkBlocked(CHUNK);
 made.catch(() => undefined);
 const { SCAN_MAKERS } = await import("./scan-makers");
 
@@ -26,6 +26,8 @@ describe("the scan's kinds from a process of their own (scan-cache.ts)", () => {
       "tools/glitch-scan/test/scan-make.ts",
       "tools/glitch-scan/test/walk-blocked.ts",
       "tools/glitch-scan/test/walk-world.ts",
+      "tools/glitch-scan/test/patrol-pieces.ts",
+      "packages/engine/src/renderer/drones/patrol-pool.ts",
       "packages/sim/src/world/walk.ts",
       "packages/sim/src/content/lublin/podzamcze.generated.ts",
       "packages/core/src/index.ts",

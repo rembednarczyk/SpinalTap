@@ -14,10 +14,8 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { streetAxes } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
-import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
-import { planPatrolLanes } from "../../../packages/engine/src/renderer/drones/patrol-lanes";
-import { PATROL_STREETS, cityPatrolWorld, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
+import { cityPatrolWorld } from "../../../packages/engine/src/renderer/drones/patrol-world";
 import { decalChecks } from "./decal-pieces";
 import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
@@ -131,7 +129,7 @@ import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
 import { madeFindings, startMade } from "./scan-cache";
-import { type MadeKind, readSourceOsm } from "./scan-makers";
+import { type MadeKind, cityPatrolLanes, readSourceOsm } from "./scan-makers";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { cityCrownsOffSurface } from "./landmark-crowns";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
@@ -633,8 +631,7 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
   let memo: readonly PatrolLane[] | null = null;
-  // Under the canyon drones' lanes, as the renderer plans them.
-  return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY))));
+  return () => (memo ??= cityPatrolLanes());
 })();
 
 /** The paving as the renderer drapes it over the terrain (`pool-paving.ts`), once. */
@@ -2386,6 +2383,8 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
+  /** `patrolChecks`' pool against the paving, computed in a process of its own (`scan-cache.ts`): 5 s under coverage. */
+  "drone-low-pool": () => madeFindings("drone-low-pool"),
   /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
@@ -2886,7 +2885,7 @@ describe("the glitch scan (ADR-0054)", () => {
  * that kind's file.
  */
 /** The kinds computed in a process of their own (`scan-cache.ts`). */
-const MADE: readonly MadeKind[] = ["walk-blocked"];
+const MADE: readonly MadeKind[] = ["walk-blocked", "drone-low-pool"];
 /** The kinds that read the whole generated city (`loadGeneratedCity`), computed cold in a process of its own in 5-6 s. */
 const ON_CITY: readonly string[] = ["fill-on-green", "lawn-strip-on-paving", "lawn-on-leafoff-paving", "fill-area-mismatch", "fill-gap"];
 
@@ -2919,7 +2918,7 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
   // eslint-disable-next-line no-empty-pattern
   beforeAll(({}, suite) => {
     const runs = (k: string) => suite.tasks.some((t) => t.name === title(k) && t.mode === "run");
-    for (const k of MADE) if (runs(k)) startMade(k);
+    if (MADE.some(runs)) startMade();
     if (ON_CITY.some(runs)) loadGeneratedCity().catch(() => undefined);
   });
   for (const [k, check] of Object.entries(CHECKS)) {
