@@ -39,7 +39,7 @@ E2 = [
               'ATM_CUBE_ACCEPT': 'neon-green', 'ATM_CUBE_DECLINE': 'neon-red', 'ATM_CUBE_CARDSLOT': 'neon-cyan', 'ATM_CUBE_CASHSLOT': 'dark'}}),
     # Quaternius' fire hydrant in the palette's crimson cloth, the nearest to red (it reads magenta; a red
     # swatch needs the palette rebaked): the solid is a post 0.17 m round, 0.9 m tall.
-    ('st-hydrant', 'quaternius-zombie-kit', 'Environment/glTF/FireHydrant.gltf', ['hydrant'], 0, (0.31, 0.9, 0.24), 300, {'paint': {'brick': 'fabric-magenta'}}),
+    ('st-hydrant', 'quaternius-zombie-kit', 'Environment/glTF/FireHydrant.gltf', ['hydrant'], 0, (0.31, 0.9, 0.24), 1000, {'paint': {'brick': 'fabric-magenta'}}),
     # A planter: Kenney's large wooden pot with a bush and red flowers (no solid; the procedural one is 1.2 m).
     ('st-planter', 'kenney-nature-kit', 'x/Models/GLTF format/pot_large.glb', ['planter'], 0, (1.2, 1.15, 1.05), 2500,
      {'parts': [('x/Models/GLTF format/plant_bushDetailed.glb', 1.7, (0, 0.13, 0)), ('x/Models/GLTF format/flower_redA.glb', 1.6, (0.12, 0.15, 0.05)),
@@ -47,7 +47,7 @@ E2 = [
       'roles': {'wood': 'rust', 'woodBarkDark': 'dark', 'grass': 'plant', 'colorRed': 'fabric-magenta', 'colorPurple': 'neon-violet'}}),
     # Parked at the racks, across the hoops: a city bike (Quaternius) and a scooter (lyricsz), 1.66 m long
     # (the rack's solid is 1.66 m deep); the bike's thin tubes need more triangles than its size suggests.
-    ('st-bike', 'quaternius-public-transport', 'OBJ/Bicycle.obj', ['parked-bike'], 0, (0.5, 1.0, 1.66), 500,
+    ('st-bike', 'quaternius-public-transport', 'OBJ/Bicycle.obj', ['parked-bike'], 0, (0.5, 1.0, 1.66), 3000,
      {'obj': {'Bike': 'fabric-teal', 'Handle': 'dark', 'Wheel': 'tyre', 'Material.003': 'trim'}, 'wheels': ('tyre', 0.03)}),
     ('st-scooter', 'oga-lyricsz-bike', 'x/bike.obj', ['parked-scooter'], 90, (0.7, 1.1, 1.66), 1500,
      {'obj': {'Material.001': 'fabric-magenta', 'Material.002': 'tyre'}}),

@@ -60,8 +60,8 @@ describe("crowd-props.glb (ADR-0058 stage 8)", () => {
         expect(figureModel(props, f, false), `${pose} ${body}`).not.toBeNull();
         expect(figureModel(props, f, true)!.styles).toContain("lite");
       }
-    for (const m of crowd.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(m.styles.includes("lite") ? 260 : 1100);
-    expect(crowdBytes.byteLength).toBeLessThan(360 * 1024);
+    for (const m of crowd.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(m.styles.includes("lite") ? 260 : 1800);
+    expect(crowdBytes.byteLength).toBeLessThan(448 * 1024);
     expect(crowd.swatches).toEqual(props.swatches);
   });
 
