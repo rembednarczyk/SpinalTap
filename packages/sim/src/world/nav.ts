@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { NavGraph } from "../content/builders";
 import type { Entity } from "./components";
+import { type Segment, type Swept, rememberedAt } from "./attach-memo";
 import { lineOfSight } from "./hitscan";
 
 /**
@@ -9,7 +10,8 @@ import { lineOfSight } from "./hitscan";
  * district (the foot and the head of each flight of stairs, a few points on the floor around
  * them), searched with Dijkstra. No navmesh: on its own level an NPC still walks straight at
  * its goal, the graph only answers "which way up (or down)". Everything is a pure function of
- * the world and the graph, so it is deterministic and holds no state between steps.
+ * the world and the graph, so it is deterministic; the only memory kept between steps, where a
+ * point joins the graph (`attach-memo.ts`), gives what it would make anew.
  */
 
 /** A target this far above or below is on another level. */
@@ -76,8 +78,8 @@ const prepare = (graph: NavGraph): Prepared => {
   return p;
 };
 
-/** Nodes a character standing at `from` can walk to directly, with the cost of getting there. */
-const attach = (world: World<Entity>, p: Prepared, from: Vec3): Map<number, number> => {
+/** Nodes a character standing at `from` can walk to directly, with the cost of getting there, and the walk tests it cast. */
+const attachSwept = (world: World<Entity>, p: Prepared, from: Vec3): Swept<ReadonlyMap<number, number>> => {
   const out = new Map<number, number>();
   // On a flight of stairs both of its ends are in reach, whatever the height between them; over
   // or under it they are not (the street over a metro's second flight, G-368).
@@ -92,12 +94,19 @@ const attach = (world: World<Entity>, p: Prepared, from: Vec3): Map<number, numb
       if (at && (id === e.a || id === e.b)) out.set(i, dist(from, at));
     });
   }
+  const knee = raise(from, KNEE);
+  const cast: Segment[] = [];
   p.at.forEach((at, i) => {
     if (out.has(i) || Math.abs(at.y - from.y) >= SAME_LEVEL || flat(at, from) > REACH) return;
-    if (lineOfSight(world, raise(from, KNEE), raise(at, KNEE))) out.set(i, dist(from, at));
+    const to = raise(at, KNEE);
+    cast.push({ a: knee, b: to });
+    if (lineOfSight(world, knee, to)) out.set(i, dist(from, at));
   });
-  return out;
+  return { value: out, cast };
 };
+
+/** `attachSwept`'s nodes, remembered for the point while no solid moved across its sight lines (`attach-memo.ts`). */
+const attach = (world: World<Entity>, p: Prepared, from: Vec3): ReadonlyMap<number, number> => rememberedAt(world, p, from, () => attachSwept(world, p, from));
 
 interface Search {
   /** Cheapest way from the start to each node; Infinity where unreachable. */
@@ -161,7 +170,8 @@ const search = (world: World<Entity>, p: Prepared, from: Vec3): Search => {
   const prev = new Array<number>(n).fill(-1);
   const done = new Array<boolean>(n).fill(false);
   const frontier = new Frontier();
-  for (const [i, c] of attach(world, p, from)) cost[i] = c;
+  // Not remembered: the walker it starts from moves every step (no point of a chase came twice).
+  for (const [i, c] of attachSwept(world, p, from).value) cost[i] = c;
   cost.forEach((c, i) => {
     if (c < Infinity) frontier.push(c, i);
   });

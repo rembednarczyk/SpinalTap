@@ -17,6 +17,7 @@ const ALONG_PAD = 1e-3;
  */
 export class SolidIndex {
   private dirty = true;
+  private changes = 0;
   private readonly grid = new SpatialHash<SolidEntity>(CELL);
   private kinematic: SolidEntity[] = [];
   private readonly parts = new WeakMap<SolidEntity, readonly Collider[]>();
@@ -27,9 +28,11 @@ export class SolidIndex {
     const solids = world.with("solid");
     solids.onEntityAdded.subscribe(() => {
       this.dirty = true;
+      this.changes++;
     });
     solids.onEntityRemoved.subscribe(() => {
       this.dirty = true;
+      this.changes++;
     });
   }
 
@@ -41,6 +44,20 @@ export class SolidIndex {
       if (e.velocity) this.kinematic.push(e);
       else this.grid.insert(e, e.solid.min.x, e.solid.min.z, e.solid.max.x, e.solid.max.z);
     }
+  }
+
+  /**
+   * How many times a solid entered or left the world: the same number, the same solids (static ones
+   * never change shape, so only the kinematic boxes are left to compare: `kinematicSolids`).
+   */
+  get generation(): number {
+    return this.changes;
+  }
+
+  /** The kinematic solids every query hands back, in the order it does. */
+  kinematicSolids(): readonly SolidEntity[] {
+    if (this.dirty) this.rebuild();
+    return this.kinematic;
   }
 
   /** Solids whose box may overlap the rectangle on the XZ plane (static ones only when `staticOnly`): the static ones in the world's order, then the kinematic. */
