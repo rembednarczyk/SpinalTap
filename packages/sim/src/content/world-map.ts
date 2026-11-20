@@ -12,7 +12,7 @@ import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS }
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, FRONT_GREEN_PROPS, FRONT_PLAZA_PROPS, P1_CARS, P2_CARS, type P1Car, p1CarView, p2CarView } from "./alchemia";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, C7_PROPS, FRONT_GREEN_PROPS, FRONT_PLAZA_PROPS, P1_CARS, P2_CARS, type P1Car, p1CarView, p2CarView } from "./alchemia";
 import { ALCHEMIA_NAV } from "./alchemia/nav";
 import { METRO_DOOR_LINK } from "./alchemia/metro-door";
 import type { GroundCut } from "../world/ground";
@@ -200,6 +200,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: ALCHEMIA_ROOF_PROPS }, at: { x: 0, y: 0, z: 0 } },
   // The square before the front (C5, 19.11): the game's drinks machines, bins, bench, planters, tree and the kiosks' sellers, last.
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: FRONT_PLAZA_PROPS }, at: { x: 0, y: 0, z: 0 } },
+  // The deptak's stalls' sellers and crates and the people on the front's terraces (C7, 20.11), last.
+  { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: C7_PROPS }, at: { x: 0, y: 0, z: 0 } },
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */

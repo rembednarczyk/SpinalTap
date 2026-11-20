@@ -3,6 +3,7 @@ import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ARCADE_FRONT, ATRIUM, MALL, MALL
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { frontSignGeometry } from "./front-sign-geometry";
+import { deptakSignGeometry } from "./deptak-sign-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
@@ -344,6 +345,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   p2Outside(outside, data);
   roofPaving(outside, data);
   frontSignGeometry(tiers, data);
+  deptakSignGeometry(tiers, data);
   greenSlope(tiers, data);
   arcadeFrontGeometry(tiers, data);
   foodhallGeometry(inside, data);

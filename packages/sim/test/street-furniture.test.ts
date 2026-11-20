@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SITE_CABIN, type StreetPropItem, figureLayout, isSitting, seatAt, siteCabinStacked } from "@seki/core";
-import { CROWD_SPOTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, FRONT_GREEN_PROPS, FRONT_PLAZA_PROPS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
+import { CROWD_SPOTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, FRONT_GREEN_PROPS, FRONT_PLAZA_PROPS, C7_PROPS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
 import { SOLID_FURNITURE, distanceToPiece, furniturePrisms, turnLocal } from "../src/content/lublin/furniture";
 import { seatGroups } from "../src/content/lublin/seats";
 import { STREET_ID_BASE } from "../src/world/streaming";
@@ -19,8 +19,8 @@ describe("street furniture in the game (ADR-0050)", () => {
     // The map's barriers (ADR-0077) come in views of their own (`barriers.test.ts`), Alchemia's roof green on its roofs (`alchemia-green.test.ts`),
     // its gallery's shops' machines and sellers on its floors (ADR-0093 O2, `alchemia-shops.test.ts`) with its food hall's and P0's fountain's models (O3),
     // its green roof's trees, benches and lamps on the roof (O4, `alchemia-roof.test.ts`), the square before its front with its
-    // podium (ADR-0074 C5, `alchemia-front-plaza.test.ts`).
-    const alchemia = new Set<readonly unknown[]>([FRONT_GREEN_PROPS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, FRONT_PLAZA_PROPS]);
+    // podium (ADR-0074 C5, `alchemia-front-plaza.test.ts`), the deptak's stalls' sellers and crates and the front's terraces' people (C7, `alchemia-deptak.test.ts`).
+    const alchemia = new Set<readonly unknown[]>([FRONT_GREEN_PROPS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, FRONT_PLAZA_PROPS, C7_PROPS]);
     const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props" && !alchemia.has(s.view.items) && !s.view.items.some((i) => i.prop === "barrier"));
     expect(views).toHaveLength(WORLD_CHUNKS.filter((c) => c.street).length);
     let total = 0;
