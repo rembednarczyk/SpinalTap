@@ -30,6 +30,7 @@ import type { SitePlan } from "./construction-site.ts";
 import type * as GameDoors from "./game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "./props-roads.ts";
 import { addDoors, loadEntrances } from "./props-doors.ts";
+import { buildingAddresses } from "./props-addresses.ts";
 import type * as CrowdClear from "./crowd-clear.ts";
 import { type FiguresOut, addFigures } from "./props-figures.ts";
 
@@ -89,7 +90,7 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // Read once for every pass of the plan.
   // The map's entrances: the doors (below) take them, and the furniture keeps their fronts clear (ADR-0094 stage 1).
   const entrances = loadEntrances();
-  const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors(), entrances: [...entrances.map((e) => e.p), ...doors.passageMouths()] }];
+  const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors(), entrances: [...entrances.map((e) => e.p), ...doors.passageMouths()], addresses: buildingAddresses(chunks, buildingTags) }];
   const place = (p: typeof plan) => placeProps(p, chunks, tags, boards, market, kerbRule);
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
   // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree

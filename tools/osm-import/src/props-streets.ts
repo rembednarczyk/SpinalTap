@@ -128,40 +128,6 @@ const atKerb = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] =>
     return [{ prop, p: { x: p.x + n.x * (d + 0.5), z: p.z + n.z * (d + 0.5) }, yaw: yawOf(-n.x, -n.z), key }];
   });
 
-/** A point of pavement on a corner of a junction, the first of 8 directions and 3 radii from `turn`. */
-const corner = (site: Site, p: Pt, turn: number): Pt | null => {
-  for (const r of [6, 8, 10, 4.5]) {
-    for (let i = 0; i < 8; i++) {
-      const a = ((turn % 8) + i) * (Math.PI / 4) + Math.PI / 8;
-      const q = { x: p.x + Math.sin(a) * r, z: p.z + Math.cos(a) * r };
-      if (site.surfaceAt(q) === "walk") return q;
-    }
-  }
-  return null;
-};
-
-/** Name plates at junctions of differently named streets, on the corner's pavement. */
-const namePlates = (site: Site, item: PlanItem): Placed[] => {
-  const names = new Map<string, { p: Pt; names: Set<string> }>();
-  for (const s of site.streets) {
-    if (!s.name) continue;
-    for (const p of s.line) {
-      const k = `${Math.round(p.x)}:${Math.round(p.z)}`;
-      const e = names.get(k) ?? { p, names: new Set<string>() };
-      e.names.add(s.name);
-      names.set(k, e);
-    }
-  }
-  const junctions = [...names.entries()].filter(([, e]) => e.names.size >= 2).sort((a, b) => fnv(a[0]) - fnv(b[0]));
-  const out: Placed[] = [];
-  for (const [k, e] of junctions) {
-    if (out.length >= (item.count ?? 0)) break;
-    const q = corner(site, e.p, fnv(k));
-    if (q) out.push({ prop: "street-plate", p: q, yaw: yawOf(e.p.x - q.x, e.p.z - q.z), key: `${item.id}:${k}` });
-  }
-  return out;
-};
-
 /** A bin beside every bus stop and then every bench with no bin within 30 m. */
 const bins = (site: Site, item: PlanItem, placed: readonly Placed[], facing: (x: Placed) => number): Placed[] => {
   const have: Pt[] = placed.filter((x) => x.prop === "waste-bin").map((x) => x.p);
@@ -188,8 +154,6 @@ export const placeStreetGroup = (site: Site, item: PlanItem, placed: readonly Pl
       return manholes(site, item);
     case "street-cabinet":
       return atKerb(site, item, "street-cabinet");
-    case "street-plate":
-      return namePlates(site, item);
     case "waste-bin":
       return bins(site, item, placed, facing);
     default:
