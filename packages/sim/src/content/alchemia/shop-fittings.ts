@@ -87,7 +87,8 @@ export const shopLayout = (w: number, s: number, corner: boolean, W: number): La
   }
   const counter = slot(0.6, w - 0.75, s - 2.1, s - 1.35);
   const mid = (2.4 + counter.u1) / 2;
-  const islands = w - 0.9 - 2.9 >= 0.6 ? [slot(2.9, w - 0.9, 1.0, 2.1), ...(s >= 7 ? [slot(2.9, w - 0.9, 3.0, 4.1)] : [])] : [];
+  // No island where it would leave the customer under a metre before the counter (a shallower unit of the front's, ADR-0093 O5).
+  const islands = w - 0.9 - 2.9 >= 0.6 && counter.v0 - 2.1 >= 0.95 ? [slot(2.9, w - 0.9, 1.0, 2.1), ...(s >= 7 ? [slot(2.9, w - 0.9, 3.0, 4.1)] : [])] : [];
   return {
     door: { u0: 0.75, u1: 0.75 + SHOP_DOOR },
     aisle: slot(0.6, 2.4, 0, counter.v0),

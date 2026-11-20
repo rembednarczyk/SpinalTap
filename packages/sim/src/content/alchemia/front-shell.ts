@@ -28,7 +28,7 @@ const FOOT = -3;
 const acrossZ = (s: { readonly x0: number; readonly x1: number }, z: number): Rectangle => ({ x0: s.x0, x1: s.x1, z0: z - 0.5, z1: z + 0.5 });
 const acrossX = (x: number, s: { readonly z0: number; readonly z1: number }): Rectangle => ({ x0: x - 0.5, x1: x + 0.5, z0: s.z0, z1: s.z1 });
 
-/** Over a door the glass on to the slab: its outer face on the storey's outline, which way out by the side. */
+/** Over a door the glass on to the slab: its outer face on the storey's outline, which way out by the side, its head `FRONT_DOOR_TOP` over its threshold. */
 const lintel = (side: "n" | "s" | "e" | "w", a0: number, a1: number, at: number, floor: number, top: number): Piece => {
   const y0 = floor + FRONT_DOOR_TOP;
   const y1 = top - SLAB;
@@ -48,7 +48,8 @@ export const frontGlass = (): Piece[] => [
     acrossX(W1.maxX, L1_DOORS.east),
   ]),
   ...storeyGlass(W2, F.l1 - 0.05, L1_TOP, FRONT_GLASS, storeyCorners(W2, L1_LEVEL), [{ x0: W2.minX + 0.05, x1: W2.maxX - 0.05, z0: W2.minZ - 0.4, z1: W2.minZ + 0.4 }, acrossZ(L1_DOORS.north, W2.maxZ)]),
-  lintel("s", L1_DOORS.arcade.x0, L1_DOORS.arcade.x1, W1.minZ, F.l1, L1_TOP),
+  // Its threshold the arcade's podium, a few steps over the floor: the door's head over that.
+  lintel("s", L1_DOORS.arcade.x0, L1_DOORS.arcade.x1, W1.minZ, PLAZA_TOP, L1_TOP),
   lintel("e", L1_DOORS.east.z0, L1_DOORS.east.z1, W1.maxX, F.l1, L1_TOP),
   lintel("n", L1_DOORS.north.x0, L1_DOORS.north.x1, W2.maxZ, F.l1, L1_TOP),
   // L1's east wing: its unit's door onto the walk to Lubartowska.
@@ -160,7 +161,7 @@ const risers = (): Piece[] => {
     prism([...arc(e("e", "n"), 0), ...arc(e("w", "n"), 90)], F.l1e - 0.05, L1_TOP - SLAB),
     prism([p(400.0, 30.3), p(400.0, 31.8), ...arc(l2nw, 90)], F.l2 - 0.05, L2_TOP - SLAB),
     prism([p(400.0, 30.0), p(400.0, 31.8), ...arc(l3nw, 90), p(398.2, 30.0)], F.l3 - 0.05, L3_TOP - SLAB),
-    piece(box(400.0, 405.8, 30.0, 32.0, F.l3 - 0.05, L3_TOP - SLAB), "wall", false),
+    piece(box(400.0, 406.3, 30.0, 32.0, F.l3 - 0.05, L3_TOP - SLAB), "wall", false),
   ];
 };
 

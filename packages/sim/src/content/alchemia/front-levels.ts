@@ -11,9 +11,9 @@ import { MALL_GLASS_THICK, MALL_LEVELS, MALL_SLAB } from "./mall-plan";
 /**
  * The floors. L1's west wing over the terrain's highest paving in it (-1.16 drawn at its south-east
  * corner, the terrain under it -1.24..-2.4), its east wing over its own (-0.90): level floors on the
- * slope, a few steps up from the ground at their doors. L2 and L3 lie on the gallery's P2 and P3.
+ * slope, whole risers of the rules (0.15-0.18 m) over the ground at their doors. L2 and L3 lie on the gallery's P2 and P3.
  */
-export const FRONT_FLOORS = { l1: -1.1, l1e: -0.8, l2: MALL_LEVELS.p2, l3: MALL_LEVELS.p3 } as const;
+export const FRONT_FLOORS = { l1: -1.152, l1e: -0.8, l2: MALL_LEVELS.p2, l3: MALL_LEVELS.p3 } as const;
 export type FrontFloor = keyof typeof FRONT_FLOORS;
 
 /**
@@ -47,7 +47,7 @@ export const GALLERY_FRONT_DOOR = { x0: 417.2, x1: 421.2 } as const;
  */
 export const L1_DOORS = {
   arcade: { x0: 400.4, x1: 402.2 },
-  east: { z0: 11.2, z1: 12.7 },
+  east: { z0: 10.8, z1: 12.3 },
   north: { x0: 400.4, x1: 402.2 },
 } as const;
 /** L1's east wing's door onto the walk to Lubartowska: its unit's shop door (`front-shops.ts`, KONBINI), in its east glass (x 436). */

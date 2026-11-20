@@ -25,7 +25,7 @@ const E = Math.PI / 2;
 const W = -Math.PI / 2;
 
 /** The bar along the gallery's glass west of its door: its counter, the barkeeper's flap at its west end, the back bar at the glass. */
-export const SKY_BAR = { x0: 405.8, x1: 416.4, counter: { x0: 406.6, x1: 415.6, z0: 28.2, z1: 29.0 }, back: { z0: 31.3, z1: 31.85 } } as const;
+export const SKY_BAR = { x0: 406.3, x1: 416.4, counter: { x0: 408.4, x1: 415.6, z0: 28.2, z1: 29.0 }, back: { z0: 31.3, z1: 31.85 } } as const;
 /** The grill in the north-east corner: its partition west (x 422), its counter on its south side. */
 export const YAKITORI = { x0: 422.2, x1: 427.8, z0: 27.0, z1: 32.0, counter: { z0: 27.0, z1: 27.8 } } as const;
 
@@ -36,8 +36,9 @@ const bar = (): Piece[] => {
   const out: Piece[] = [
     inBox(k.x0, k.x1, k.z0, k.z1, F - 0.05, F + 1.1, "counter", true),
     inBox(k.x0 - 0.05, k.x1 + 0.05, k.z0 - 0.08, k.z1 + 0.02, F + 1.1, F + 1.14, "table"),
-    // The wall from the north-west corner's closet to the glass: the closet behind NOODLE BOX's and ARCADIA's row.
-    inBox(b.x0, b.x0 + 0.2, 30.0, 32.0, F - 0.05, C, "partition", true),
+    // Its return north at its west end to the barkeeper's flap (0.8 m, staff only) by the back bar; NOODLE BOX's and ARCADIA's
+    // doors open onto the floor west of it.
+    inBox(k.x0, k.x0 + 0.8, k.z1, b.back.z0 - 0.8, F - 0.05, F + 1.1, "counter", true),
     // The back bar: shelves of bottles to the ceiling's pipes, its box solid.
     solidOnly(b.x0 + 0.3, b.x1 - 0.2, b.back.z0, b.back.z1, F - 0.05, F + 2.3),
     inBox(b.x0 + 0.3, b.x1 - 0.2, b.back.z1 - 0.04, b.back.z1, F, F + 2.3, "rack"),
@@ -52,9 +53,9 @@ const bar = (): Piece[] => {
     }
   }
   // Taps and glasses on the counter, one left half full; stools before it, one pushed back.
-  for (let x = 408.0; x < 414.5; x += 1.6) out.push(inBox(x, x + 0.08, 28.55, 28.65, F + 1.14, F + 1.5, "machine"));
+  for (let x = 409.4; x < 414.8; x += 1.6) out.push(inBox(x, x + 0.08, 28.55, 28.65, F + 1.14, F + 1.5, "machine"));
   out.push(...cupAt(409.3, 28.4, F + 1.14, false), ...cupAt(413.1, 28.5, F + 1.14, true), ...cupAt(414.6, 28.35, F + 1.14, false));
-  for (let x = 407.2; x < k.x1 - 0.2; x += 0.95) {
+  for (let x = 408.9; x < k.x1 - 0.2; x += 0.95) {
     const back = x > 411 && x < 412 ? 0.35 : 0;
     out.push(inBox(x - 0.17, x + 0.17, 27.35 - back, 27.69 - back, F + 0.71, F + 0.75, "bench"), inBox(x - 0.03, x + 0.03, 27.49 - back, 27.55 - back, F, F + 0.71, "bench"));
     out.push(solidOnly(x - 0.17, x + 0.17, 27.35 - back, 27.69 - back, F - 0.05, F + 0.75));
@@ -143,7 +144,7 @@ export const L3_PROPS: readonly StreetPropItem[] = [
 
 /** The bar's and the grill's names in neon over them, facing the dining room. */
 export const L3_SIGNS: readonly VenueSign[] = [
-  { text: "SKY BAR", axis: "x", at: SKY_BAR.back.z0 - 0.05, a0: 406.6, a1: 409.4, y0: F + 2.45, y1: F + 2.95, out: -1, color: "neon-cyan" },
+  { text: "SKY BAR", axis: "x", at: SKY_BAR.back.z0 - 0.05, a0: 412.8, a1: 416.0, y0: F + 2.45, y1: F + 2.95, out: -1, color: "neon-cyan" },
   { text: "YAKITORI", axis: "x", at: YAKITORI.counter.z0 + 0.02, a0: 422.8, a1: 427.2, y0: F + 2.8, y1: F + 3.2, out: -1, color: "neon-red" },
 ];
 
@@ -157,7 +158,7 @@ const onBench = (i: number, side: "a" | "b", along: number): CrowdSpot => {
 
 /** L3's still crowd (ADR-0060): at the bar, at the grill, at the tables, at the glass by the south door looking over the square. */
 export const L3_CROWD: readonly CrowdSpot[] = [
-  spot({ x: 408.4, y: F, z: 27.6 }, N, ["drink"]),
+  spot({ x: 410.35, y: F, z: 27.2 }, N, ["drink"]),
   spot({ x: 413.9, y: F, z: 27.4 }, N, ["drink", "talk"]),
   spot({ x: 424.0, y: F, z: 26.4 }, N, ["eat"]),
   onBench(0, "a", 0.8),

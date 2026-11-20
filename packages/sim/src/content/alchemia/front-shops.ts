@@ -30,10 +30,10 @@ const L1E: readonly ShopDef[] = [{ id: "l1e-1", floor: "l1e", rect: r(427.9, 435
  * gallery's door south to the glass over the square.
  */
 const L2: readonly ShopDef[] = [
-  { id: "l2-s1", floor: "l2", rect: r(394.2, 400.0, 10.6, 17.6), front: "n", trade: "electronics", state: "open", sign: "CYBERDECK", back: true },
-  { id: "l2-s2", floor: "l2", rect: r(400.0, 405.6, 10.6, 17.6), front: "n", trade: "vr", state: "grille", sign: "NEUROVIA", back: true, door: "r" },
-  { id: "l2-s3", floor: "l2", rect: r(405.6, 411.1, 10.6, 17.6), front: "n", trade: "implants", state: "open", sign: "SYNAPSE", back: true },
-  { id: "l2-s4", floor: "l2", rect: r(411.1, 416.6, 10.6, 17.6), front: "n", trade: "crypto", state: "open", sign: "BITBANK", back: true, door: "r" },
+  { id: "l2-s1", floor: "l2", rect: r(394.2, 400.0, 10.7, 17.6), front: "n", trade: "electronics", state: "open", sign: "CYBERDECK", back: true },
+  { id: "l2-s2", floor: "l2", rect: r(400.0, 405.6, 10.7, 17.6), front: "n", trade: "vr", state: "grille", sign: "NEUROVIA", back: true, door: "r" },
+  { id: "l2-s3", floor: "l2", rect: r(405.6, 411.1, 10.7, 17.6), front: "n", trade: "implants", state: "open", sign: "SYNAPSE", back: true },
+  { id: "l2-s4", floor: "l2", rect: r(411.1, 416.6, 10.7, 17.6), front: "n", trade: "crypto", state: "open", sign: "BITBANK", back: true, door: "r" },
   // Short of the rounded north-west corner, a wall across its back.
   { id: "l2-n1", floor: "l2", rect: r(394.2, 400.0, 21.6, 30.3), front: "s", trade: "clothing", state: "open", sign: "SHIBUYA", back: true },
   { id: "l2-n2", floor: "l2", rect: r(400.0, 405.6, 21.6, 32.0), front: "s", trade: "pawn", state: "vacant", sign: "", door: "r" },
@@ -44,8 +44,8 @@ const L2: readonly ShopDef[] = [
 
 /** L3, the food hall's floor: two units on its west side facing the dining room, past its rounded corners. */
 const L3: readonly ShopDef[] = [
-  { id: "l3-w1", floor: "l3", rect: r(398.2, 405.6, 17.6, 23.8), front: "e", trade: "synth-food", state: "open", sign: "NOODLE BOX" },
-  { id: "l3-w2", floor: "l3", rect: r(398.2, 405.6, 23.8, 30.0), front: "e", trade: "vr", state: "open", sign: "ARCADIA", door: "r" },
+  { id: "l3-w1", floor: "l3", rect: r(398.2, 406.1, 17.6, 23.8), front: "e", trade: "synth-food", state: "open", sign: "NOODLE BOX" },
+  { id: "l3-w2", floor: "l3", rect: r(398.2, 406.1, 23.8, 30.0), front: "e", trade: "vr", state: "open", sign: "ARCADIA", door: "r" },
 ];
 
 /** TOKYO DRIP's unit on L2 (ADR-0093 O5), between BONSAI and the spine: its def stays among the gallery's (`shops-plan.ts`). */
