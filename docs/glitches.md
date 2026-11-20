@@ -2252,25 +2252,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: sim (content/alchemia/lift.ts, mall-plan.ts)
 - Test przyjęcia: packages/sim/test/tpp-shoulder.test.ts (galleryLeaks ≤ 11)
 
-### G-940 Drzwi klatki P−1 Alchemii wychodzą na trawnik
-- Ważność: S4 · Zasięg: lokalny, Alchemia, (426; 9–12,4)
-- Opis: Po O2b (#786) domek klatki P−1 (T-238) stoi na zachodnich ok. 28 m² trawnika T-241/trawnik-wschod (x 424–434, z 9–21). Przed drzwiami (x 425,3–426,7, z 12,4) jest 3,2 m trawy, krawędź grafu t0-axis → p1-stair-out (426; 11,2) też biegnie po trawie. Komentarz T0_LAWNS w imporcie (trawnik omija drzwi klatki) już nie jest prawdziwy. Przegląd kuratora 19.11.
-- Status: w PR #788; wcześniej: w naprawie (gałąź fix/g940-g941-alchemia-nawierzchnia); wcześniej: nowy (19.11)
-- Pakiet właściciela: tools/osm-import (T0_LAWNS), regeneracja tablic
-- Test przyjęcia: pas 1,5 m przed drzwiami domku i krawędź t0-axis→p1-stair-out leżą na square
-- Proponowana kontrola skanu door-approach-unpaved: pas 1,5 m × szerokość drzwi przed drzwiami domków klatek, pawilonów i wejść scen na grass albo bez nawierzchni (baza po O2b w Alchemii 1).
-- Wiersz topografii: T-330.
-- Poboczne z naprawy: węzeł grafu alchemia-p1-stair-east (428,9; 11,2) leży na trawniku, krawędź stair-out → stair-east ok. 0,9 m po trawie; węzeł stracił sens (domek przylega do skrzydła L1), do usunięcia w parking-nav.ts (sim).
-
-### G-941 Oś wejścia głównego Alchemii na gołym gruncie klina przy pawilonie
-- Ważność: S4 · Zasięg: lokalny, Alchemia, (422–423,5; −9,4…0)
-- Opis: Między krawędzią placu T0 (422,0; −8,8)–(423,5; 6,0) a bokiem NW pawilonu T-230 leży klin bez nawierzchni (istniał przed O2b, O2b odsłania ok. 15 m²). Leży na nim wschodni skraj osi wejścia (do 1,8 m przy z −8) i pas LED x 422,8 na z −8,5…−0,8; u wylotu osi pas ok. 0,5 m bez nawierzchni (z −9,35…−8,8) między chodnikiem w232464426 a placem. Przegląd kuratora 19.11.
-- Status: w PR #788; wcześniej: w naprawie (gałąź fix/g940-g941-alchemia-nawierzchnia); wcześniej: nowy (19.11)
-- Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
-- Test przyjęcia: pasy LED i oś x 419–423 od pasma chodnika do z 0 w całości na nawierzchni
-- Proponowana kontrola skanu nav-edge-bare: odcinek krawędzi grafu poziomów na terenie, który ponad 0,5 m biegnie bez nawierzchni (w Alchemii po O2b co najmniej 1).
-- Wiersz topografii: T-331.
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
