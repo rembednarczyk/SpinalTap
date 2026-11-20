@@ -1,3 +1,2 @@
 # alchemia-off-ground: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-2-1 385,-7
-krakowskie-2-1 429,13

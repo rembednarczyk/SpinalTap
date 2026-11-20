@@ -75,6 +75,15 @@ describe("Alchemia's front over P-1 (B1)", () => {
     }
   });
 
+  it("stands the east wing's screen on a plinth of its outline down into the ground (the user's 20.11)", () => {
+    const pieces = frontPieces();
+    const screen = pieces.find((p) => p.kind === "screen" && p.box.z1 === EAST_WING.minZ)!;
+    const s = screen.box;
+    const plinth = pieces.find((p) => p !== screen && p.box.x0 === s.x0 && p.box.x1 === s.x1 && p.box.z0 === s.z0 && p.box.z1 === s.z1 && p.box.y1 === s.y0);
+    expect(plinth, "a plinth under the screen").toBeDefined();
+    for (let x = s.x0; x <= s.x1; x += 0.5) expect(plinth!.box.y0).toBeLessThan(groundY(x, s.z0) - 0.3);
+  });
+
   it("leaves the passage under L2 2.9 m and more over its ground", () => {
     const soffit = L1_TOP - 0.35;
     for (let x = 405; x <= 435; x += 2) {

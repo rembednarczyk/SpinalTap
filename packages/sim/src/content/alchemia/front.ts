@@ -149,9 +149,14 @@ const greenSteps = (): Piece[] =>
     piece(box(s.x0, s.x1, STEPS_Z.z0 - 0.04, STEPS_Z.z0, s.top - 0.14, s.top - 0.06), "led", false, false),
   ]);
 
-/** The screens on the west wing's front and on L2's south face over the passage. */
+/**
+ * The screens on the east wing's front and on L2's south face over the passage. The east wing's
+ * stands on the walk to Lubartowska on a dark plinth of its own outline down into the ground (as a
+ * street LED wall's), not 0.4-0.8 m over the walk (the user's 20.11, `alchemia-off-ground`).
+ */
 const screens = (): Piece[] => [
   piece(box(EAST_WING.minX + 1, 435, EAST_WING.minZ - 0.06, EAST_WING.minZ, -0.4, 1.7), "screen", false, false),
+  piece(box(EAST_WING.minX + 1, 435, EAST_WING.minZ - 0.06, EAST_WING.minZ, FOOT, -0.4), "frame", false, false),
   // On L2's south face over the ramp's mouth, east of the house with arcades (C3).
   piece(box(ARCADE_FRONT.maxX + 2, ARCADE_FRONT.maxX + 10, L2_SLABS[0]!.minZ - 0.06, L2_SLABS[0]!.minZ, L1_TOP + 0.5, L2_TOP - 0.8), "screen", false, false),
 ];
