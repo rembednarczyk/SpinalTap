@@ -2245,13 +2245,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
-### G-939 Galeria Alchemii: strzał zza barku startuje za cienką ścianą szybu windy hali i trzonu NE
-- Ważność: S4 · Zasięg: Alchemia, galeria P1–P3 (szyb windy hali x 412,3–414,7, z 32,4–34,8; trzon NE)
-- Opis: Miara G-275 (tests/tpp-shoulder) po dodaniu galerii jako wnętrza ADR-0061 (O2): 11 miejsc, w których przykucnięty i celujący gracz zaczyna strzał za ścianą. Ściany szybu windy hali i bramka na P1 (od T0) mają 0,1 m (lift.ts WALL), mniej niż wysunięcie barku za lico (0,16 m); przy bramce na P1 strzał z kabiny startuje na pasie T0. Przy trzonie NE pokój galerii zahacza o wnętrze trzonu, a za jego wschodnią ścianą jest wnęka do narożnika szkła. Szkło fasady poprawione w PR #785 (0,2 m, 770 → 0). Poprawka: bramka na P1 jak na P−2 (wypełnia grubość ściany, platforma krótsza, GATE_DEPTH), ściany szybu 0,2 m albo pokoje galerii bez szybu i trzonu, potem baza galerii w teście z 11 do 0.
-- Status: w PR #789; wcześniej: w naprawie (gałąź fix/g939-szyb-windy); wcześniej: nowy (19.11, z O2)
-- Pakiet właściciela: sim (content/alchemia/lift.ts, mall-plan.ts)
-- Test przyjęcia: packages/sim/test/tpp-shoulder.test.ts (galleryLeaks ≤ 11)
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
