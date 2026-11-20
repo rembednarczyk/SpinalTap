@@ -25,7 +25,7 @@ export interface GarmentAssetSpec {
 }
 
 export const GARMENT_ASSETS = {
-  // "Kimi || Desktop Mate Model" by Toriss (VRoid Hub), the long techwear jacket.
+  // "Kimi || Desktop Mate Model" by Toriss (VRoid Hub), the techwear jacket, cut at the hips (no coats, user 20.11).
   "jacket-techwear": { url: "./garments/jacket-techwear.glb", covers: ["torso", "tie", "skin"] },
 } as const satisfies Partial<Record<GarmentMeshId, GarmentAssetSpec>>;
 
