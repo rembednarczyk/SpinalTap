@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type DomainText, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type DomainText, type ItemCategory, type PrepareStage, type ItemDefId, type ItemIconKey, type ItemRef, type Locale, type MicroEventKind, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
@@ -147,6 +147,25 @@ export interface MapMarkerVm {
   readonly z: number;
   /** A target shown as an area around (x, z) instead of a point, metres (ADR-0035). */
   readonly radius?: number;
+}
+
+/**
+ * A crime of the street's board on the map (ADR-0091 stage 6), like the NCPD's blue icons in
+ * Cyberpunk 2077: on the city map everywhere from the board's start, its kind and pay only within
+ * `near` (300 m); on the minimap only near or followed.
+ */
+export interface CrimeMarkerVm {
+  readonly id: string;
+  readonly x: number;
+  readonly z: number;
+  /** The crime's kind (`crime.kind.*`). */
+  readonly kind: MicroEventKind;
+  /** Within 300 m of the player: kind and pay shown. */
+  readonly near: boolean;
+  /** What foiling it pays now (€$), null when not near. */
+  readonly reward: number | null;
+  /** The one crime the player follows. */
+  readonly tracked: boolean;
 }
 
 export interface MapPlayerVm {

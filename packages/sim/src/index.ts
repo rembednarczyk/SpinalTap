@@ -144,4 +144,4 @@ export { phoneKnot } from "./world/street";
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./simulation";
 export type { SessionState, SimContext, System, TakedownRun } from "./world/context";
 export { shopOpen } from "./world/trade-commands";
-export { type BoardCrime, CRIME_LEAVE, CRIME_REACH, crimeBoard, crimeHidden, nextCrime, openCrimes } from "./world/street-crimes";
+export { type BoardCrime, CRIME_LEAVE, CRIME_REACH, boardOpen, crimeBoard, crimeHidden, crimeReward, nextCrime, openCrimes } from "./world/street-crimes";

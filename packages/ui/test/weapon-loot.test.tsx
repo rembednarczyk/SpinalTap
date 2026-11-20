@@ -62,6 +62,7 @@ const intents = (): UiIntents => ({
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
   trackQuest: vi.fn(),
+  trackCrime: vi.fn(),
   openWait: vi.fn(),
   closeWait: vi.fn(),
   waitHours: vi.fn(),
