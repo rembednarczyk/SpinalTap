@@ -128,6 +128,9 @@ const streetWindow = (k: Fit, sales: { w: number; s: number }): void => {
   const head = shopHead(k.shop);
   draw(k, slot(0.3, k.f.w - 0.3, GLASS + 0.08, GLASS + 0.2), head - 0.14, head - 0.08, "lamp");
   if (k.shop.sales === undefined) draw(k, slot(W + 0.25, sales.w - W - 0.25, sales.s - 0.04, sales.s), 0.5, head - 0.15, "lightbox");
+  // The window display's backdrop lit behind it (a shop window's light box), the door's side open.
+  const L = shopLayout(sales.w, sales.s, k.shop.sales !== undefined, W);
+  if (L.window) draw(k, slot(L.window.u0, L.window.u1, L.window.v1 + 0.02, L.window.v1 + 0.06), 0.15, head - 0.1, "lightbox");
 };
 
 /** A vacant unit's floor: what the last tenant left (cartons, a ladder, a paint pot, a cable from the ceiling) and somebody's coffee (§5). */

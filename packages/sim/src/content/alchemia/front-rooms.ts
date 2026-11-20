@@ -48,6 +48,9 @@ const l1Arcade = (): Piece[] => [
   ...litterAt("l1-north-door", 401.3, 26.4, L1, 3),
   ...cartonsAt("l1-bay", 398.8, 26.5, L1, 3),
   ...cartonsAt("l1-bay-2", 399.5, 26.7, L1, 1),
+  // An advert lit across NIGHT SILK's side on the arcade, seen from the square through the arches (its frame dark, the picture warm).
+  inBox(400.2, 400.26, 1.7, 7.9, L1 + 0.3, L1 + 2.55, "machine"),
+  inBox(400.26, 400.28, 1.8, 7.8, L1 + 0.4, L1 + 2.45, "lightbox"),
   // A cup steaming on the bench, a cable taped across the ceiling to the cabinet (§3, §5).
   ...cupAt(403.45, 17.5, L1 + 0.45, true),
   inBox(403.5, 403.55, 23.3, 23.7, L1 + 1.15, C1, "cable"),
@@ -128,7 +131,7 @@ const l2Arcade = (): Piece[] => [
   ...litterAt("l2-door", 419.2, 30.6, L2, 5),
   ...litterAt("l2-corner", 427.0, 15.5, L2, 4),
   // The window bar along the east bar's south glass, over the walk to Lubartowska (the board's people at L2's lit glass).
-  ...windowBar("l2-window", SE_BAR.x0, SE_BAR.x1, SE_BAR.z, 1, L2),
+  ...windowBar("l2-window", SE_BAR.x0, SE_BAR.x1, SE_BAR.z, 1, L2, C2),
   // On the spine's walls (the units' sides): ad screens, flyers pasted over flyers, a cable taped up to a screen (§3).
   inBox(416.6, 416.66, 12.2, 15.6, L2 + 1.3, L2 + 2.7, "machine"),
   inBox(416.66, 416.68, 12.3, 15.5, L2 + 1.36, L2 + 2.64, "display"),

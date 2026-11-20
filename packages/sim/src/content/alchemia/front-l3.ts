@@ -131,7 +131,7 @@ const GLASS_IN_SOUTH = 12.2;
 export const l3Pieces = (): Piece[] => [
   ...bar(),
   ...grill(),
-  ...WINDOW_BARS.flatMap(([key, x0, x1]) => windowBar(key, x0, x1, GLASS_IN_SOUTH, 1, F)),
+  ...WINDOW_BARS.flatMap(([key, x0, x1]) => windowBar(key, x0, x1, GLASS_IN_SOUTH, 1, F, C)),
   ...L3_GROUPS.flatMap(group),
   ...servicesRun(416.6, 420.0, 12.8, 31.6, C, 3.0),
   ...servicesRun(405.8, 427.6, 23.2, 25.2, C, 3.0),

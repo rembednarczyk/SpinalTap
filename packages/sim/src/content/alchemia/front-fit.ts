@@ -102,7 +102,7 @@ export const drawnOnly = (pieces: readonly Piece[]): Piece[] => pieces.filter((p
  * every 0.9 m on the room's side (`room` +1 north of the glass at `z`, -1 south), cups on it. Its seats
  * for still figures: `barSeats`.
  */
-export const windowBar = (key: string, x0: number, x1: number, z: number, room: 1 | -1, y: number): Piece[] => {
+export const windowBar = (key: string, x0: number, x1: number, z: number, room: 1 | -1, y: number, ceiling: number): Piece[] => {
   const [c0, c1] = [z + room * 0.05, z + room * 0.5].sort((a, b) => a - b) as [number, number];
   const out: Piece[] = [
     inBox(x0, x1, c0, c1, y - 0.05, y + 1.05, "counter", true),
@@ -110,6 +110,13 @@ export const windowBar = (key: string, x0: number, x1: number, z: number, room: 
     // The lightbox on its glass side, seen from the street.
     room > 0 ? inBox(x0, x1, c0 - 0.03, c0, y + 0.1, y + 0.95, "lightbox") : inBox(x0, x1, c1, c1 + 0.03, y + 0.1, y + 0.95, "lightbox"),
   ];
+  // Pendant lamps low over the counter and lit menu boards hung over it facing the glass: warm, the first thing the street sees.
+  const mid = (c0 + c1) / 2;
+  for (let x = x0 + 0.6; x < x1 - 0.3; x += 1.2) out.push(inBox(x - 0.16, x + 0.16, mid - 0.16, mid + 0.16, y + 1.5, y + 1.92, "lantern"), inBox(x - 0.01, x + 0.01, mid - 0.01, mid + 0.01, y + 1.92, ceiling, "cable"));
+  for (let x = x0 + 1.2; x + 1.4 < x1; x += 3.2) {
+    out.push(room > 0 ? inBox(x, x + 1.4, c0 + 0.2, c0 + 0.26, y + 2.05, y + 2.7, "lightbox") : inBox(x, x + 1.4, c1 - 0.26, c1 - 0.2, y + 2.05, y + 2.7, "lightbox"));
+    out.push(inBox(x + 0.1, x + 0.12, c0 + 0.22, c0 + 0.24, y + 2.7, ceiling, "cable"), inBox(x + 1.28, x + 1.3, c0 + 0.22, c0 + 0.24, y + 2.7, ceiling, "cable"));
+  }
   for (const s of barSeats(x0, x1, z, room)) {
     out.push(inBox(s.x - 0.17, s.x + 0.17, s.z - 0.17, s.z + 0.17, y + 0.71, y + 0.75, "bench"), inBox(s.x - 0.03, s.x + 0.03, s.z - 0.03, s.z + 0.03, y, y + 0.71, "bench"));
     out.push(solidOnly(s.x - 0.17, s.x + 0.17, s.z - 0.17, s.z + 0.17, y - 0.05, y + 0.75));
