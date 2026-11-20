@@ -44,6 +44,9 @@ W `createSystems()` po sterowaniu gracza, przed ruchem pieszych i ruchem aut. Ka
 
 Budżet: jedno auto gracza z pełną fizyką. Auta ruchu ulicznego zostają kinematyczne (bez zmian w `traffic-system`); auto zaparkowane albo porzucone przez gracza zasypia po zatrzymaniu (bez podkroków) i budzi się przy uderzeniu albo wejściu.
 
+### 2a. Układ współrzędnych i znaki
+Babylon jest lewoskrętny, a modele w nim mają oś Z glTF zanegowaną (`KitModel`). Fizyka auta nie liczy w układzie renderera: liczy w układzie świata `sim` (oś y w górę, kurs `yaw = atan2(dx, dz)`, czyli przód przy kursie 0 to +z), a renderer przenosi stan auta tak jak resztę stanu gry. Wewnątrz auta obowiązuje jeden lokalny układ nadwozia (y w górę, z do przodu, x w bok), a przejścia świat ↔ nadwozie, iloczyny wektorowe, momenty, kąt skrętu, przechył i pochylenie liczy jeden moduł (`world/vehicle/frame.ts`). Żaden inny plik nie odwraca znaków na własną rękę. Konwencja: dodatni skręt kieruje auto w lewo patrząc od kierowcy, dodatnie pochylenie to nos w dół, dodatni przechył to nadwozie na prawą burtę. Test znaków (pkt 5) pilnuje jej na stałe.
+
 ### 3. Gra wokół auta
 - **Skąd auto**: zaparkowane auta z rozstawienia (`parked`) i auta ruchu ulicznego jako źródło. Wejście do zaparkowanego to włamanie (zamek jak drzwi z ADR-0058 etap 9, szansa wykrycia, przestępstwo), wejście do auta z ruchu to porwanie z kierowcą wyciąganym ze środka (przestępstwo cięższe). Własne auto w fabule później (garaż na Podzamczu).
 - **Wsiadanie i wysiadanie**: interakcja przy drzwiach (`interaction-system`), animacja i kamera przejścia, wysiadanie po stronie wolnej od brył. W aucie broń tylko z jednej ręki przez okno (później).
@@ -51,7 +54,7 @@ Budżet: jedno auto gracza z pełną fizyką. Auta ruchu ulicznego zostają kine
 - **Kamera** (`engine/camera`, osobna część za fasadą `BabylonRenderer`): za autem na sprężynie z tłumieniem i opóźnieniem obrotu, z przodu (zderzak), kokpit; pole widzenia rośnie z prędkością; drgania z nierówności.
 - **HUD** (`ui`, nowy wąski interfejs intencji i hak): prędkościomierz, obrotomierz z odcięciem, bieg, wskaźniki ABS i TC, uszkodzenia; na telefonie pedały i kierownica dotykowa lub przechył telefonu (opcja).
 - **Dźwięk** (`engine/audio`): silnik z obrotów i obciążenia (warstwy próbek), pisk opon z poślizgu, uderzenia z energii.
-- **Telemetria** (tryb deweloperski, jak aplikacje AC): linie Babylon nad kołami (obciążenie, kąt znoszenia, poślizg, ugięcie), panel z wykresem przyczepności w czasie; włączana parametrem adresu.
+- **Telemetria** (tryb deweloperski, jak aplikacje AC): `sim` oddaje w migawce auta dane każdego koła (punkt styku, normalna, ugięcie, obciążenie `Fz`, kąt znoszenia, poślizg wzdłużny, siły `Fx`, `Fy`), a osobna część renderera (`engine/src/renderer/vehicle-telemetry.ts`) rysuje je narzędziami Babylona: `RayHelper` dla promieni zawieszenia, linie (`LinesMesh`, jak w `PhysicsViewer`) dla wektorów sił, kolor od poślizgu. Do tego panel z wykresem przyczepności w czasie i Inspector Babylona, który w trybie debug już działa. Włączana parametrem adresu, w zwykłej grze nie istnieje (bez siatek i wywołań rysowania).
 - **Model auta**: auto gracza z wersji zbliżenia (`-hi`, 4 tys. trójkątów); koła muszą być osobnymi siatkami do obrotu i skrętu. Dziś są zespawane z nadwoziem, więc nowy krok wypieku wycina je z modelu źródłowego Blenderem bez okna (decyzja z 20.11) i zapisuje pozycje osi w `extras`.
 
 ### 4. Wejścia
@@ -65,16 +68,25 @@ Na płaskiej podłodze testowej i na kawałku Lublina, krokowane `step`:
 - płyta poślizgowa (skidpad) promień 40 m: przyspieszenie boczne w ustalonym przedziale, kąt znoszenia przy szczycie przyczepności 6–10°;
 - przechył i nurkowanie: znak i rząd wielkości zgodny z przesunięciem obciążenia `ΔFz = m·a·h/t`;
 - energia: auto toczące się bez gazu traci prędkość tylko przez opory (bez przyrostu);
+- znaki (pkt 2a): hamowanie pochyla nos w dół, gaz unosi nos, w zakręcie w lewo nadwozie przechyla się na prawą burtę, a dodatni skręt skręca auto w lewo; to samo w migawce dla renderera (obrót siatki zgodny z obrotem bryły);
 - determinizm: dwa przebiegi tej samej jazdy dają ten sam stan bajt w bajt; złoty hash podłogi testowej zmienia się tylko w etapie, który dodaje auto do podłogi;
 - kolizje: wjazd w ścianę i słupek bez tunelowania przy 150 km/h (podkroki i wykrycie ciągłe po drodze środka masy).
 W przeglądarce tylko kamera, HUD na telefonie, dotyk i budżet rysowania (`npr-perf` dostaje scenę jazdy).
 
+### 6. Havok tylko dla fizyki kosmetycznej (opcja)
+Notatka o Babylonie z 20.11 (Havok przez `HavokPlugin`, `setSubTimeStep`, gotowy pojazd promieniowy) nie zmienia decyzji z pkt 2, ale sprawdzona na naszej wersji (Babylon 9.32) daje trzy ustalenia:
+- `setSubTimeStep` działa tylko w pętli fizyki Babylona, a podkroki 240 Hz są w stałym kroku `sim`; renderer już interpoluje stan.
+- W `@babylonjs/core` 9.32 nie ma klasy `PhysicsRaycastVehicle` (fizyka v2 ma kontroler postaci i więzy); gotowego pojazdu nie dostajemy.
+- `@babylonjs/havok` nie jest w zależnościach.
+
+Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywkę: pachołki i barierki rozrzucone po uderzeniu auta, kartony i worki z zapleczy (ADR-0096), odłamki karoserii. Ich położenie nie idzie do zapisu, przestępstw, AI ani testów, więc liczy je renderer, a `sim` tylko zgłasza zdarzenie (`vehicle-hit` z punktem i energią). Decyzja przy etapie 5, z pomiarem rozmiaru modułu WASM i czasu na telefonie; pakiet przypięty w lockfile jak narzędzia wypieku (decyzja z 20.11).
+
 ## Etapy (osobne PR-y)
 1. Ten ADR, kontrakty w `core` (`VehicleSpec`, `DriveInput`, komendy), dane jednego auta (sportowe z `veh-cyber`).
-2. Bryła sztywna i zawieszenie promieniowe na płaskiej podłodze i terenie, opona liniowa, podkroki 240 Hz, wejście z klawiatury, kamera za autem, telemetria; testy postoju, przechyłu, energii, determinizmu.
+2. Bryła sztywna i zawieszenie promieniowe na płaskiej podłodze i terenie, opona liniowa, podkroki 240 Hz, moduł układu nadwozia (pkt 2a), wejście z klawiatury, kamera za autem, telemetria `RayHelper`; testy znaków, postoju, przechyłu, energii, determinizmu.
 3. Opona Pacejki z relaksacją, elipsa przyczepności, dynamika kół, hamulce i ręczny; testy płyty poślizgowej i hamowania.
 4. Napęd: silnik, sprzęgło, skrzynia automatyczna i sekwencyjna, szpera; aero; testy przyspieszenia i prędkości maksymalnej.
-5. Kolizje z bryłami miasta, autami ruchu i pieszymi; uszkodzenia; przestępstwa i reakcje.
+5. Kolizje z bryłami miasta, autami ruchu i pieszymi; uszkodzenia; przestępstwa i reakcje; decyzja o Havoku dla fizyki kosmetycznej (pkt 6).
 6. Gra: wejście i wyjście, włamanie i porwanie, HUD, dźwięk, zapis (wersja schematu), wysiadanie; koła jako osobne siatki z Blendera.
 7. Wejścia: pad, kierownica, dotyk; wspomagania i ustawienia; scena jazdy w `npr-perf`.
 8. Kolejne auta (tabela `VehicleSpec` dla modeli z `vehicle-props.glb`), strojenie i porównanie z danymi prawdziwych aut.
