@@ -2259,6 +2259,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (T0_LAWNS), regeneracja tablic
 - Test przyjęcia: pas 1,5 m przed drzwiami domku i krawędź t0-axis→p1-stair-out leżą na square
 - Proponowana kontrola skanu door-approach-unpaved: pas 1,5 m × szerokość drzwi przed drzwiami domków klatek, pawilonów i wejść scen na grass albo bez nawierzchni (baza po O2b w Alchemii 1).
+- Wiersz topografii: T-330.
 
 ### G-941 Oś wejścia głównego Alchemii na gołym gruncie klina przy pawilonie
 - Ważność: S4 · Zasięg: lokalny, Alchemia, (422–423,5; −9,4…0)
@@ -2267,6 +2268,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
 - Test przyjęcia: pasy LED i oś x 419–423 od pasma chodnika do z 0 w całości na nawierzchni
 - Proponowana kontrola skanu nav-edge-bare: odcinek krawędzi grafu poziomów na terenie, który ponad 0,5 m biegnie bez nawierzchni (w Alchemii po O2b co najmniej 1).
+- Wiersz topografii: T-331.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
