@@ -273,10 +273,11 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
     };
     const at = () => sim.player()!.position;
     // From the spine's south end south into the glass over the square: stopped by it, on L2's floor.
-    teleportPlayer(sim, { x: 419, y: F.l2, z: 7 }, Math.PI);
+    teleportPlayer(sim, { x: 417.4, y: F.l2, z: 7 }, Math.PI);
     sim.step();
-    walk(419, 2, 120);
-    expect(at().z).toBeGreaterThan(L2_SLABS[0]!.minZ);
+    walk(417.4, 2, 120);
+    expect(at().z).toBeGreaterThan(L2_SLABS[0]!.minZ + FRONT_GLASS);
+    expect(at().z).toBeLessThan(L2_SLABS[0]!.minZ + 0.7);
     expect(at().y).toBeCloseTo(F.l2, 1);
     // Into NIGHT SILK from the arcade under the house with arcades, down its steps to its counter.
     const silk = FRONT_SHOP_BUILDS.find((q) => q.shop.id === "l1-1")!;

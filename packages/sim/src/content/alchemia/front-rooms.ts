@@ -115,6 +115,16 @@ const l2Arcade = (): Piece[] => [
   ...litterAt("l2-door", 419.2, 30.6, L2, 5),
   ...litterAt("l2-corner", 427.0, 15.5, L2, 4),
   ...cupAt(430.3, 14.45, L2 + 0.45, true),
+  // On the spine's walls (the units' sides): ad screens, flyers pasted over flyers, a cable taped up to a screen (§3).
+  inBox(416.6, 416.66, 12.2, 15.6, L2 + 1.3, L2 + 2.7, "machine"),
+  inBox(416.66, 416.68, 12.3, 15.5, L2 + 1.36, L2 + 2.64, "display"),
+  inBox(416.6, 416.66, 24.0, 27.4, L2 + 1.3, L2 + 2.7, "machine"),
+  inBox(416.66, 416.68, 24.1, 27.3, L2 + 1.36, L2 + 2.64, "display"),
+  inBox(416.62, 416.64, 26.0, 26.04, L2 + 2.7, C2, "cable"),
+  ...[22.4, 23.0, 28.3, 28.8, 29.6, 30.4].map((z, i) => inBox(421.76, 421.8, z, z + 0.42, L2 + 1.0 + (i % 3) * 0.25, L2 + 1.6 + (i % 3) * 0.25, "paper")),
+  ...[10.9, 11.4, 16.2].map((z, i) => inBox(416.6, 416.64, z, z + 0.42, L2 + 1.1 + i * 0.2, L2 + 1.7 + i * 0.2, "paper")),
+  // Lanterns over the bench at the spine's south end by the glass over the square: seen from the square under the screen.
+  ...[418.2, 419.4, 420.6].flatMap((x) => [inBox(x - 0.17, x + 0.17, 5.4, 5.74, L2 + 2.3, L2 + 2.65, "lantern"), inBox(x - 0.01, x + 0.01, 5.56, 5.58, L2 + 2.65, C2, "cable")]),
 ];
 const L2_PROPS: readonly StreetPropItem[] = [
   model("bench", 408.0, L2, 19.6, N, 0),
@@ -123,6 +133,7 @@ const L2_PROPS: readonly StreetPropItem[] = [
   model("shrubs", 395.4, L2 + 0.45, 19.6, 0.7, 0x412),
   model("planter", 420.4, L2, 7.0, 0, 9),
   model("shrubs", 420.4, L2 + 0.45, 7.0, 2.3, 0x51a),
+  model("bench", 419.4, L2, 4.75, S, 1),
   // The corner south-east of the cross: drinks, cash, a bench and a planter by its glass.
   model("vending-machine", 423.4, L2, 14.1, N, 2),
   model("vending-machine", 424.5, L2, 14.1, N, 7),
@@ -153,7 +164,7 @@ export const FRONT_ROOM_CROWD: readonly CrowdSpot[] = [
   spot({ x: CAFE_TABLES_X[1] + 0.62, y: L2, z: CAFE_ROWS[0] }, W, ["sit"]),
   spot({ x: CAFE_TABLES_X[4] - 0.62, y: L2, z: CAFE_ROWS[1] }, E, ["sit"]),
   spot({ x: CAFE_TABLES_X[6] + 0.62, y: L2, z: CAFE_ROWS[0] }, W, ["sit"]),
-  spot({ x: 419.1, y: L2, z: 5.0 }, S, ["lean", "phone"]),
+  spot({ x: 417.4, y: L2, z: 5.3 }, S, ["lean", "phone"]),
   spot({ x: 410.6, y: L2, z: 20.6 }, W, ["talk"]),
   spot({ x: 423.95, y: L2, z: 15.1 }, N, ["phone"]),
   spot({ x: 419.6, y: L2, z: 25.4 }, E, ["phone", "talk"]),
