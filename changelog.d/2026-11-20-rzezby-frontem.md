@@ -1,0 +1,1 @@
+- Koziołki stoją plecami do kamienic i przodem do przechodniów, a pomniki i rzeźby patrzą na plac albo wzdłuż ulicy, nigdy w ścianę. Ogródki i potykacze nie zastawiają widoku na pomnik.
