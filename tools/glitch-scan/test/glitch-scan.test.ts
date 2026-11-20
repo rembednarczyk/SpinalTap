@@ -53,6 +53,7 @@ import { barrierCoverChecks } from "./barrier-cover";
 import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
+import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { cutOnRoadInGame } from "./cut-on-road";
@@ -1562,6 +1563,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "alchemia-mall-footprint": () => mallFootprint(),
   /** A piece of the gallery over y 13.5, past its roof's stair houses (review of O1). */
   "alchemia-mall-height": () => mallHeight(),
+  /**
+   * A glowing sign (the map's signs, venues' boards, holograms and adverts; the game's neons, the
+   * deptak's, the front's and the gallery's) nearer than 20 m across the plan to the memorial of
+   * Plac Ofiar Getta or a stumbling stone of the map (ADR-0074 §6, the curator's reviews of Alchemia).
+   */
+  "memorial-neon-clear": () => {
+    const places = remembrances(SOURCE_OSM.nodes.values());
+    return memorialNeonClear(places, glowsInGame(places));
+  },
+  /** A model of the game's on the gallery's green roof (a tree, a park lamp) whose drawn top stands over y 18.5 (review of ADR-0093 O4). */
+  "alchemia-roof-model-height": () => roofModelHeight(),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
