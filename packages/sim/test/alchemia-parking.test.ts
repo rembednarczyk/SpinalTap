@@ -197,10 +197,15 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
     return null;
   };
 
-  it("an alerted brawler on the car park gets to the player on the deck, and one on the deck to her on the car park", () => {
+  // One chase a test (20.11): the four took 9.5-10 s with coverage locally and up to 20 s on a slow runner of CI,
+  // over the time gate (ADR-0046, ADR-0083); the same chases, seeds and limits as before.
+  it.each([3, 11])("an alerted brawler on the car park gets to the player on the deck (seed %i)", (seed) => {
     // From the square before the front: its podium stands on the car park's ground there since ADR-0074 C5.
-    for (const seed of [3, 11]) expect(chase({ x: 406, y: PLAZA_TOP, z: -4 }, { x: 402, y: F, z: 15 }, 40, seed), `down, seed ${seed}`).not.toBeNull();
-    for (const seed of [3, 11]) expect(chase({ x: 402, y: F, z: 15 }, onGround(428, 10), 40, seed), `up, seed ${seed}`).not.toBeNull();
+    expect(chase({ x: 406, y: PLAZA_TOP, z: -4 }, { x: 402, y: F, z: 15 }, 40, seed)).not.toBeNull();
+  });
+
+  it.each([3, 11])("an alerted brawler on the deck gets to the player on the car park (seed %i)", (seed) => {
+    expect(chase({ x: 402, y: F, z: 15 }, onGround(428, 10), 40, seed)).not.toBeNull();
   });
 
   it("an alerted brawler in the hall gets to the player on the apron through the door, and back", () => {
