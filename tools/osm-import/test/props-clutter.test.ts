@@ -6,6 +6,7 @@ import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podza
 import { LUBLIN_PROP_TABLE } from "../../../packages/sim/src/content/lublin/props.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { backMix } from "../src/props-clutter.ts";
+import { nearStreet } from "../src/props-streets.ts";
 import { Site } from "../src/props-site.ts";
 
 /*
@@ -50,6 +51,8 @@ describe("the odds and ends by their venues (ADR-0096 stage 2)", () => {
     for (const p of refuse) {
       expect(site.surfaceAt(p), `${p.x},${p.z}`).not.toBe("building");
       expect(site.onPath(p), `${p.x},${p.z}`).toBe(false);
+      // A back yard, not a street: not on the Old Town's lanes either (Jezuicka, Przechodnia).
+      expect(nearStreet(site.streets, p, 3.9), `${p.x},${p.z}`).toBe(false);
       // A wall within a metre and a half (the pieces are turned a little, dropped, not set square).
       const near = Array.from({ length: 16 }, (_, k) => (k * Math.PI) / 8).some((a) => [0.5, 1, 1.5].some((d) => site.surfaceAt({ x: p.x + Math.sin(a) * d, z: p.z + Math.cos(a) * d }) === "building"));
       expect(near, `${p.x},${p.z}`).toBe(true);

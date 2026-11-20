@@ -3,8 +3,8 @@
  * venues, as ADR-0094 puts the gardens and boards (anchors and clear zones; CityEngine's rules per
  * element; no randomness: venues in the order of a hash of their names, the pieces' mix and turn from
  * that hash):
- * - **The back of a restaurant** (rule 1): a kitchen's refuse waits behind the house, not on its
- *   street. From the venue's door straight through its building (and the row behind it, up to 40 m)
+ * - **The back of a restaurant** (rule 1): a kitchen's refuse waits behind the house, not on a
+ *   street (4 m from any street's axis, the pedestrians' lanes too). From the venue's door straight through its building (and the row behind it, up to 40 m)
  *   to the first open ground beyond: there, against that wall, two to four pieces side by side (bin
  *   bags, boxes, a boarded bin or a barrel, now and then a bottle or a cup), each on open paving off
  *   the paths, the car lanes, the doors' clear zones and the solids placed before.
@@ -21,7 +21,7 @@ import { type Clearances, open } from "./props-food.ts";
 import type { Placed } from "./props-gen.ts";
 import { fnv, yawOf } from "./props-place.ts";
 import type { Site } from "./props-site.ts";
-import { nearTraffic } from "./props-streets.ts";
+import { nearStreet, nearTraffic } from "./props-streets.ts";
 
 /** The venues with a kitchen whose refuse goes out the back (`VenueKind`). */
 export const KITCHEN_VENUES: ReadonlySet<string> = new Set(["restaurant", "cafe", "fast-food", "bar", "pub"]);
@@ -33,6 +33,12 @@ const OFF_WALL = 0.5;
 const SPACING = 0.8;
 /** How far the pieces keep from a car street's axis (m): a yard, not a kerb. */
 const TRAFFIC_REACH = 4;
+/**
+ * And from any street's axis, the pedestrians' lanes and living streets too (m): the way through a
+ * building of the Old Town often comes out on the next lane (Jezuicka, Przechodnia, Szambelańska),
+ * which is a street, not a back yard.
+ */
+const STREET_REACH = 4;
 /** A piece's footprint, sampled: its centre and 0.3 m round it, so no corner of a wall cuts into it. */
 const FOOT: readonly (readonly [number, number])[] = [[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]];
 /** A cash machine's face off the wall (m): its body is set into it, the screen proud. */
@@ -77,7 +83,7 @@ export const backMix = (text: string): number[] => {
 
 /** A spot a piece may stand on: open paving off the paths and car lanes, clear of doors and solids. */
 const free = (site: Site, clear: Clearances, zones: EntranceZones, q: Pt): boolean =>
-  FOOT.every(([dx, dz]) => open(site, { x: q.x + dx, z: q.z + dz })) && !site.onPath(q) && clear.clear(q) && zones.clear(q, KIND) && !nearTraffic(site, q, TRAFFIC_REACH);
+  FOOT.every(([dx, dz]) => open(site, { x: q.x + dx, z: q.z + dz })) && !site.onPath(q) && clear.clear(q) && zones.clear(q, KIND) && !nearTraffic(site, q, TRAFFIC_REACH) && !nearStreet(site.streets, q, STREET_REACH);
 
 /** The pieces behind one venue, against its back wall, or none. */
 export const backClutter = (site: Site, clear: Clearances, zones: EntranceZones, board: BoardSpan): Placed[] => {
