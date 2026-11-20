@@ -161,8 +161,18 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     if (act2 === "hebi") expect(delta("hebi")).toBe(15);
     if (act2 === "kagami") expect([delta("kagami"), delta("fixers")]).toEqual([20, 10]);
     else expect(d.reputation.kagami).toBeLessThanOrEqual(-20);
+    // Act III (ADR-0095) starts at once: its opening, by the act-II ending, plays on its own.
+    for (let i = 0; i < 30 && !ui.getState().dialogue; i++) steps(session, 1);
+    expect(allText(ui)).toContain(act2 === "street" ? "Pan Sato zniknął" : act2 === "hebi" ? "każda kopia archiwum" : "Kalibracja dziś na Zamku");
+    finishDialogue(session, ui);
     expect(ui.getState().dialogue).toBeNull();
-    expect(objective(ui)).toContain("Kaito has more contracts");
+    expect(objective(ui)).toBe(
+      act2 === "street"
+        ? "People from the archive are vanishing. Talk to grandma Ume (the deptak by the clinic)"
+        : act2 === "hebi"
+          ? "Copies of the archive call one address at night. Talk to Ren on Alchemia's roof"
+          : "Kurosawa calls you in for calibration. Meet him on the Castle's courtyard",
+    );
 
     // The ending survives a save and a load, and the people of the act remember it.
     expect(await session.saves.saveAsync("act2")).toBe(true);
@@ -179,7 +189,8 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     } else {
       goTo(after.session, REN_ROOF);
       talkTo(after.session, "ren");
-      expect(allText(after.ui)).toContain(act2 === "street" ? "Ume chodzi od drzwi do drzwi" : "Hebi biorą już zamówienia");
+      // After the "hebi" ending Ren already has act III's trail (ADR-0095).
+      expect(allText(after.ui)).toContain(act2 === "street" ? "Ume chodzi od drzwi do drzwi" : "raz na noc wysyła pakiet");
     }
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAST_KEYS, type ViewDescriptor, contractEscortKey } from "@seki/core";
+import { ACT_TWO_ENDING_FLAG, CAST_KEYS, type ViewDescriptor, contractEscortKey, endingFlag } from "@seki/core";
 import { CAST_OF_SPAWN, ENCOUNTERS, KANAL_PATROL_ACTORS, castViewOf, ground } from "../src";
 import { GAME_ACTORS } from "../src/content/street-props";
 import { actorEntity, escortEntity } from "../src/world/factory";
@@ -34,8 +34,13 @@ describe("the cast in the views (ADR-0076)", () => {
     for (const key of Object.keys(CAST_OF_SPAWN)) expect(placed.has(key), key).toBe(true);
     // Mika comes with every escort job, under the job's key.
     expect(new Set([...Object.values(CAST_OF_SPAWN), "mika"])).toEqual(new Set(CAST_KEYS));
-    // One spawn key per name: two bodies of one character would be the same look twice.
-    expect(Object.values(CAST_OF_SPAWN).length).toBe(CAST_KEYS.length - 1);
+    // One spawn key per name: two bodies of one character would be the same look twice. Kurosawa
+    // is the one exception (ADR-0095): his body of act II (Alchemia) goes at the act-II ending, and
+    // the one of act III (the Castle) comes only with the "kagami" ending, so they never stand at once.
+    expect(Object.values(CAST_OF_SPAWN).length).toBe(CAST_KEYS.length);
+    const when = (key: string) => ACTORS.find((a) => a.spawn.key === key)?.when;
+    expect(when("kurosawa")?.none).toContain(ACT_TWO_ENDING_FLAG);
+    expect(when("kurosawa-castle")?.all).toContain(endingFlag("kagami"));
   });
 
   it("names the defector of an escort job Mika, whatever the job (ADR-0076 stage 2)", () => {
