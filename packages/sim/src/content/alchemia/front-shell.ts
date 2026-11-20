@@ -86,7 +86,8 @@ const arcadeBack = (): Piece => piece(box(ARCADE_BACK.x0, ARCADE_BACK.x1, ARCADE
 /** A wing's level floor: its glass's outline from the ground under it up to the floor (a plinth seen through the glass's foot). */
 const floorOf = (r: Rect, level: readonly Rect[], y: number): Piece => {
   const corners: Corners = storeyCorners(r, level);
-  return outlined(roundedOutline(slabOf(r), -OVER, corners, undefined, cornerRadius(slabOf(r))), FOOT, y, "floor");
+  // As the gallery's floors (a slab's pale concrete, `swatchOf`), not P-1's dark deck.
+  return outlined(roundedOutline(slabOf(r), -OVER, corners, undefined, cornerRadius(slabOf(r))), FOOT, y, "roof");
 };
 
 /**
