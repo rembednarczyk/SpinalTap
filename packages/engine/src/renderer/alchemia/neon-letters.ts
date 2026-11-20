@@ -1,6 +1,7 @@
 /**
  * Block letters of neon tube for Alchemia's sign on the pavilion's roof (ADR-0074 stage 3) and
- * Tessen's over W-3's wagon gate (ADR-0082 stage 4) and the front's ALCHEMIA CENTRUM HANDLOWE (B1):
+ * Tessen's over W-3's wagon gate (ADR-0082 stage 4), the house with arcades' (C3) and the gallery's shops' names
+ * (the front's ALCHEMIA CENTRUM HANDLOWE of B1 is the glyph atlas's letters on a lightbox since C4, `front-signs.ts`):
  * proper names and the mall's own sign, the same in every language, as straight strokes the kit's glow swatches can draw in the same mesh
  * as their building (no glyph atlas, no draw call of its own). Pure data.
  */

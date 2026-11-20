@@ -7,6 +7,7 @@ import type { CityProps } from "../city-props";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { planPavilionSigns } from "../metro/pavilion-signs";
+import { planAlchemiaSigns } from "../alchemia/front-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planGround } from "./cell-ground";
@@ -85,6 +86,8 @@ export class CellBuilder {
     if (!signs.empty) planPavilionSigns(signs, cell.bounds);
     // So do the building sites' beacons and boards (ADR-0087 stage 2), the boards in the player's language.
     if (!signs.empty) planSiteSigns(signs, cell.bounds, this.deps.siteTexts(), lite);
+    // So does the light of Alchemia's front (ADR-0074 C4): its sign's letters, the holograms, the screens' pictures.
+    if (!signs.empty) planAlchemiaSigns(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       // The neon's streaks shine in the puddles of the ground under them (ADR-0084).
