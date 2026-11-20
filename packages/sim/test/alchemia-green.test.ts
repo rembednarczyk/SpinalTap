@@ -59,7 +59,8 @@ describe("Alchemia's green (C2)", () => {
     const trunks = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "frame" && p.box.x1 - p.box.x0 < 0.5 && p.box.z1 - p.box.z0 < 0.5 && p.box.y1 - p.box.y0 > 0.8);
     expect(trunks).toEqual([]);
     const onL2 = FRONT_GREEN_PROPS.filter((p) => p.prop === "tree" && Math.abs(p.y - L2_TOP - 0.45) < 1e-6);
-    expect(onL2.length).toBe(2);
+    // Two on its south terrace, two on its east one (moved off L1's east wing's roof under L2's glass in ADR-0093 O5).
+    expect(onL2.length).toBe(4);
     expect(FRONT_GREEN_PROPS.filter((p) => p.prop === "tree").length).toBeGreaterThanOrEqual(6);
   });
 

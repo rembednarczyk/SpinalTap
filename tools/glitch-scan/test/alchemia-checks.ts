@@ -11,8 +11,15 @@ import {
   ARKADY_PIECES,
   ARKADY_PROP,
   KEPT_OSM,
-  SHOP_PIECES,
-  SHOP_SOLIDS,
+  EAST_WING,
+  FRONT_CEILINGS,
+  FRONT_FLOORS,
+  FRONT_ROOM_PIECES,
+  FRONT_SHOP_BUILDS,
+  L2_SLABS,
+  L3,
+  SHOP_BUILDS,
+  WEST_WING,
   type AlchemiaBox,
   type AlchemiaPiece,
   arkadyLocal,
@@ -211,7 +218,15 @@ export const keptInGame = (): KeptInputs => {
  * its green roof's beds, pergolas and services (O4). Not the game's models on it (the trees, the park
  * lamps): those are street furniture, a tree grows over the gallery's height as on any roof.
  */
-const galleryPieces = (): AlchemiaPiece[] => [...mallOutsidePieces(), ...mallInsidePieces(), ...liftPieces(ALCHEMIA_LIFT_NE), ...SHOP_PIECES, ...SHOP_SOLIDS, ...ALCHEMIA_ROOF_PIECES];
+/** The gallery's own units (TOKYO DRIP moved to the front's L2 in ADR-0093 O5: `frontFootprint`'s). */
+const GALLERY_SHOPS = SHOP_BUILDS.filter((b) => b.shop.floor === "p0" || b.shop.floor === "p1" || b.shop.floor === "p2");
+const galleryPieces = (): AlchemiaPiece[] => [
+  ...mallOutsidePieces(),
+  ...mallInsidePieces(),
+  ...liftPieces(ALCHEMIA_LIFT_NE),
+  ...GALLERY_SHOPS.flatMap((b) => [...b.pieces, ...b.solids]),
+  ...ALCHEMIA_ROOF_PIECES,
+];
 
 /** The gallery's plot: the body's outline and its slabs' overhang on the west, north and east (the front stands against its south face). */
 export const GALLERY_PLOT = { x0: 399.7, x1: 436.3, z0: 32, z1: 58.3 } as const;
@@ -227,6 +242,36 @@ export const mallFootprint = (pieces: readonly AlchemiaPiece[] = galleryPieces()
     const b = p.box;
     const off = b.x0 < GALLERY_PLOT.x0 - 1e-6 || b.x1 > GALLERY_PLOT.x1 + 1e-6 || b.z0 < GALLERY_PLOT.z0 - 1e-6 || b.z1 > GALLERY_PLOT.z1 + 1e-6;
     return off ? [{ at: near((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2), what: `${p.kind} x ${b.x0.toFixed(2)}..${b.x1.toFixed(2)}, z ${b.z0.toFixed(2)}..${b.z1.toFixed(2)} off the gallery's plot` }] : [];
+  });
+
+/**
+ * The front's storeys as volumes (ADR-0093 O5): each bar's outline, from its floor to its ceiling. Its
+ * rooms are the inside of storeys whose outline and height stay as they were (the curator's T-329,
+ * the church of St Joseph's sight lines): nothing of them out of one.
+ */
+export const FRONT_VOLUMES: readonly (AlchemiaBox & { readonly key: string })[] = [
+  ...WEST_WING.map((r, i) => ({ key: `l1-${i}`, x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ, y0: FRONT_FLOORS.l1, y1: FRONT_CEILINGS.l1 })),
+  { key: "l1e", x0: EAST_WING.minX, x1: EAST_WING.maxX, z0: EAST_WING.minZ, z1: EAST_WING.maxZ, y0: FRONT_FLOORS.l1e, y1: FRONT_CEILINGS.l1e },
+  ...L2_SLABS.map((r, i) => ({ key: `l2-${i}`, x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ, y0: FRONT_FLOORS.l2, y1: FRONT_CEILINGS.l2 })),
+  { key: "l3", x0: L3.minX, x1: L3.maxX, z0: L3.minZ, z1: L3.maxZ, y0: FRONT_FLOORS.l3, y1: FRONT_CEILINGS.l3 },
+];
+const frontPieces = (): AlchemiaPiece[] => [...FRONT_ROOM_PIECES, ...[...FRONT_SHOP_BUILDS, ...SHOP_BUILDS.filter((b) => !GALLERY_SHOPS.includes(b))].flatMap((b) => [...b.pieces, ...b.solids])];
+
+/**
+ * `alchemia-front-footprint` (ADR-0093 O5): a piece of the front's rooms (their units, arcades, café,
+ * bar, grill, tables, steps in) out of every storey's outline and height, through its glass into the
+ * street, a terrace or the floor over it. Baseline 0.
+ */
+export const frontFootprint = (pieces: readonly AlchemiaPiece[] = frontPieces()): Finding[] =>
+  pieces.flatMap((p) => {
+    const b = p.box;
+    const e = 0.01;
+    // Every point of its footprint (a metre apart and its corners) in a storey that holds its height: a run along the arcade
+    // crosses from one bar of a storey into the next.
+    const [nx, nz] = [Math.ceil(b.x1 - b.x0), Math.ceil(b.z1 - b.z0)];
+    const points = Array.from({ length: (nx + 1) * (nz + 1) }, (_, k) => [b.x0 + ((b.x1 - b.x0) * Math.floor(k / (nz + 1))) / nx, b.z0 + ((b.z1 - b.z0) * (k % (nz + 1))) / nz] as const);
+    const inside = points.every(([x, z]) => FRONT_VOLUMES.some((v) => x >= v.x0 - e && x <= v.x1 + e && z >= v.z0 - e && z <= v.z1 + e && b.y0 >= v.y0 - 0.06 && b.y1 <= v.y1 + e));
+    return inside ? [] : [{ at: near((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2), what: `${p.kind} x ${b.x0.toFixed(2)}..${b.x1.toFixed(2)}, z ${b.z0.toFixed(2)}..${b.z1.toFixed(2)}, y ${b.y0.toFixed(2)}..${b.y1.toFixed(2)} out of the front's storeys` }];
   });
 
 /** `alchemia-mall-height` (the same review): a piece of the gallery over y 13.5, past the T row's height (T-329). Baseline 0. */

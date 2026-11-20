@@ -13,6 +13,7 @@ import {
   FUMIKO_WINDOW,
   FUMIKO_WINDOW_SPOT,
   GALLERY,
+  MALL,
   MALL_FLOORS,
   MALL_LEVELS,
   NE_CORE,
@@ -96,7 +97,8 @@ describe("the food hall on P3 (ADR-0093 O3)", () => {
       expect(inside, u.id).toEqual([]);
     }
     // The still crowd at the counters and on the benches and stools, in reach (a sitter on its seat's solid).
-    for (const c of FOODHALL_CROWD) {
+    // Those at the tables moved through the door into L3 (ADR-0093 O5) are the front's test's (`alchemia-front-rooms.test.ts`).
+    for (const c of FOODHALL_CROWD.filter((q) => q.at.z > MALL.z0)) {
       expect(c.at.y).toBe(L.p3);
       expect(P3.near(REACHED, c.at.x, c.at.z, c.does.includes("sit") ? 1.0 : 0.3), `${c.at.x},${c.at.z}`).toBe(true);
     }

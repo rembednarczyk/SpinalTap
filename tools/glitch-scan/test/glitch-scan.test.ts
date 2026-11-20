@@ -51,7 +51,7 @@ import { figureChecks } from "./figure-pieces";
 import { type ScanDoor, barrierChecks, facadeDoor } from "./barrier-pieces";
 import { barrierCoverChecks } from "./barrier-cover";
 import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
-import { alchemiaHidesLandmarks, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
+import { alchemiaHidesLandmarks, frontFootprint, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
 import { stairFootUnpaved } from "./stair-foot";
@@ -1566,6 +1566,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "alchemia-mall-footprint": () => mallFootprint(),
   /** A piece of the gallery over y 13.5, past its roof's stair houses (review of O1). */
   "alchemia-mall-height": () => mallHeight(),
+  /** A piece of the front's rooms (ADR-0093 O5: its units, arcades, café, bar, steps in) out of its storeys' outlines and heights. */
+  "alchemia-front-footprint": () => frontFootprint(),
   /**
    * A glowing sign (the map's signs, venues' boards, holograms and adverts; the game's neons, the
    * deptak's, the front's and the gallery's) nearer than 20 m across the plan to the memorial of
