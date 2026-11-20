@@ -173,9 +173,10 @@ export const FRONT_TREES: readonly { readonly x: number; readonly z: number; rea
     // North on it, past L3's east door: further south their crowns hid L3's and L2's lit glass from the square.
     { x: L3.maxX + 2.8, z: east.maxZ - 4.8, y: L2_TOP, seed: 41, tree: true },
     { x: east.maxX - 2.2, z: east.maxZ - 2.0, y: L2_TOP, seed: 77, tree: true },
-    // Off the masts at its back (ADR-0093 O5: a tree stood on each).
-    { x: L3.minX + 4.5, z: L3.maxZ - 5, y: L3_TOP, seed: 113, tree: true },
-    { x: L3.maxX - 5, z: L3.maxZ - 5, y: L3_TOP, seed: 151, tree: true },
+    // Behind the masts at its back (ADR-0093 O5: a tree stood on each), where they stood seen from the square (further in, the
+    // east one's crown hid the hologram and the sky over L3 from it).
+    { x: L3.minX + 2.5, z: L3.maxZ - 1.6, y: L3_TOP, seed: 113, tree: true },
+    { x: L3.maxX - 2.5, z: L3.maxZ - 1.6, y: L3_TOP, seed: 151, tree: true },
   ];
 })();
 const roofTrees = (): StreetPropItem[] => FRONT_TREES.flatMap((t) => (t.tree ? tree(t.x, t.z, t.y, t.seed) : planted(t.x, t.z, t.y, t.seed)));
