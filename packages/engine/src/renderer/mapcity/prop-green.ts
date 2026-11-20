@@ -51,48 +51,20 @@ const CROWNS: Readonly<Record<number, readonly (readonly [number, number, number
   ],
 };
 
-/** A limb from the trunk into the crown: from `dy` under the trunk's top to (x, top + up, z), of radius r. */
-type Limb = readonly [dy: number, x: number, up: number, z: number, r: number];
-
-/** A species' trunk: its height to the crown, its radius, the far tree's square trunk and the limbs. */
+/** A species' trunk: its height to the crown, its radius and the far tree's square trunk. */
 interface Trunk {
   readonly h: number;
   readonly r: number;
   readonly far: number;
-  readonly limbs: readonly Limb[];
 }
 
-const TWO_LIMBS: readonly Limb[] = [
-  [0.4, 0.8, 1.1, 0.3, 0.09],
-  [0.6, -0.7, 0.9, -0.4, 0.08],
-];
-
 const TRUNK: Readonly<Record<number, Trunk>> = {
-  [TREE_SHAPE.lime]: { h: 3.6, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  [TREE_SHAPE.maple]: { h: 3.3, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  [TREE_SHAPE.chestnut]: { h: 3.1, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  // A short, thick bole branching low into four heavy limbs (the simulation's trunk: `TREE_GIRTH`).
-  [TREE_SHAPE.oak]: {
-    h: 2.8,
-    r: 0.42,
-    far: 0.5,
-    limbs: [
-      [0.3, 2.0, 1.4, 0.6, 0.16],
-      [0.5, -1.9, 1.2, -0.7, 0.15],
-      [0.2, 0.5, 1.6, -1.8, 0.14],
-      [0.4, -0.4, 1.5, 1.7, 0.13],
-    ],
-  },
-  [TREE_SHAPE.poplar]: {
-    h: 3.4,
-    r: 0.45,
-    far: 0.52,
-    limbs: [
-      [0.4, 1.0, 1.6, 0.3, 0.15],
-      [0.6, -0.9, 1.4, -0.5, 0.14],
-      [0.3, 0.2, 2.0, -0.9, 0.12],
-    ],
-  },
+  [TREE_SHAPE.lime]: { h: 3.6, r: 0.26, far: 0.3 },
+  [TREE_SHAPE.maple]: { h: 3.3, r: 0.26, far: 0.3 },
+  [TREE_SHAPE.chestnut]: { h: 3.1, r: 0.26, far: 0.3 },
+  // A short, thick bole branching low (the simulation's trunk: `TREE_GIRTH`).
+  [TREE_SHAPE.oak]: { h: 2.8, r: 0.42, far: 0.5 },
+  [TREE_SHAPE.poplar]: { h: 3.4, r: 0.45, far: 0.52 },
 };
 
 const trunkOf = (shape: number): Trunk => TRUNK[shape] ?? TRUNK[TREE_SHAPE.lime]!;
