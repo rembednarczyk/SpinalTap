@@ -36,7 +36,7 @@ HEBI: Do starego idziemy przez plac, jak zawsze. Po co zmieniać coś, co dział
 -> END
 
 === hook_protect_2 ===
-Mail na terminalu Hany. Od: nieznany. Temat: Oyaji. „Hebi zejdą ścieżką od Świętoduskiej. Z tarasu na dachu widać całą ścieżkę wzdłuż straganów, a oni nigdy nie patrzą w górę”.
+Mail na terminalu Hany. Od: nieznany. Temat: Oyaji. „Hebi wejdą przez galerię: drzwiami trzonów na drugim piętrze, potem ostatnimi schodami ruchomymi do food hallu. Z ogrodu na dachu widać całe atrium, a oni nigdy nie patrzą w górę”.
 -> END
 
 // escort: Mika's way from the yard to the boat.

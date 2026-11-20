@@ -1,0 +1,1 @@
+- Wskazówka do zadania ochrony Oyajiego mówi teraz, że Hebi wchodzą przez galerię na drugim piętrze, a nie ścieżką od Świętoduskiej.
