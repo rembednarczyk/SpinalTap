@@ -341,6 +341,18 @@ const stepsAcross = (ground: GroundField, from: { x: number; y: number; z: numbe
 
 const near = { x: 0, z: 0 };
 
+/** Rounding a sloped top may take past its ends (m): far less than any height the raster tells apart. */
+const TOP_SLACK = 1e-9;
+
+/** The lowest and highest `colliderTop` of a collider anywhere on its footprint, a sloped one's widened by `TOP_SLACK`. */
+const topSpan = (c: Collider): readonly [number, number] => {
+  if (c.prism) return [c.prism.top, c.prism.top];
+  const b = c.box;
+  if (!c.slope) return [b.max.y, b.max.y];
+  const low = b.min.y + c.slope.low;
+  return [Math.min(low, b.max.y) - TOP_SLACK, Math.max(low, b.max.y) + TOP_SLACK];
+};
+
 /** The cells of a box widened by `margin` in the window, a row: what the raster goes through for a solid. */
 const boxCells = (c: Collider, margin: number, x0: number, z0: number, cells: number): number => {
   const [ix0, ix1] = cellRange(c.box.min.x - margin, c.box.max.x + margin, x0, cells);
@@ -369,8 +381,11 @@ function* openFloor(open: Uint8Array, solids: readonly Collider[], base: Float64
     const b = c.box;
     const [ix0, ix1] = cellRange(b.min.x, b.max.x, x0, cells);
     const [iz0, iz1] = cellRange(b.min.z, b.max.z, z0, cells);
+    // A top nowhere at the floor's height (most solids of a window: walls, slabs of other floors) opens no cell; its rows count as before.
+    const [lo, hi] = topSpan(c);
+    const level = hi >= floor - SNAP_DOWN && lo <= floor + STEP_HEIGHT;
     for (let iz = iz0; iz <= iz1; iz++) {
-      for (let ix = ix0; ix <= ix1; ix++) {
+      for (let ix = ix0; ix <= ix1 && level; ix++) {
         const x = centre(ix, x0);
         const z = centre(iz, z0);
         if (c.prism && !overCollider(c, x, z)) continue;
@@ -403,14 +418,17 @@ function* closeSolids(open: Uint8Array, solids: readonly Collider[], base: Float
     if (!relative && (b.min.y >= floor + BODY_HEIGHT || b.max.y <= floor + STEP_HEIGHT)) continue;
     const [ix0, ix1] = cellRange(b.min.x - CLEARANCE, b.max.x + CLEARANCE, x0, cells);
     const [iz0, iz1] = cellRange(b.min.z - CLEARANCE, b.max.z + CLEARANCE, z0, cells);
+    const hi = topSpan(c)[1];
     for (let iz = iz0; iz <= iz1; iz++) {
       const z = centre(iz, z0);
       for (let ix = ix0; ix <= ix1; ix++) {
+        // The cheap tests first: over the head, or no top over a step anywhere (on the ground floor
+        // most of the window's solids are one or the other), and the footprint is not looked at.
+        const ref = relative ? (base[iz * cells + ix] ?? 0) : floor;
+        if ((relative && b.min.y >= ref + BODY_HEIGHT) || hi <= ref + STEP_HEIGHT) continue;
         const x = centre(ix, x0);
         const q = closestXZ(c, x, z, near);
         if ((x - q.x) ** 2 + (z - q.z) ** 2 >= r2) continue;
-        const ref = relative ? (base[iz * cells + ix] ?? 0) : floor;
-        if (relative && b.min.y >= ref + BODY_HEIGHT) continue;
         if (colliderTop(c, q.x, q.z) > ref + STEP_HEIGHT) open[iz * cells + ix] = 0;
       }
       done += Math.max(0, ix1 - ix0 + 1);
