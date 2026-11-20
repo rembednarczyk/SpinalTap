@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { ALCHEMIA_MEMORIAL, ALCHEMIA_PIECES, type AlchemiaPiece } from "../../../packages/sim/src/content/alchemia";
+import type { StreetPropItem } from "../../../packages/core/src";
+import { ALCHEMIA_MEMORIAL, ALCHEMIA_PIECES, ALCHEMIA_ROOF_PROPS, type AlchemiaPiece } from "../../../packages/sim/src/content/alchemia";
 import { ARCADE_FRONT } from "../../../packages/sim/src/content/alchemia/arcade-front";
 import { W3_GATE } from "../../../packages/sim/src/content/tessen-w3/site";
 import { WORLD_CHUNKS, WORLD_DEVICES } from "../../../packages/sim/src/content/world-map";
@@ -17,6 +18,8 @@ import { pavilionFaces } from "../../../packages/engine/src/renderer/alchemia/pa
 import { shopSigns } from "../../../packages/engine/src/renderer/alchemia/shop-geometry";
 import { type AcrossAt, SPAN_MAX, findSpans } from "../../../packages/engine/src/renderer/mapcity/canyon-plan";
 import { planCanyonSigns } from "../../../packages/engine/src/renderer/mapcity/canyon-signs";
+import { propModel } from "../../../packages/engine/src/renderer/mapcity/prop-models";
+import { scaleOf, shapeOf } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { isLandmarkFrame, landmarkAt, withLandmark } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { planLandmarkSigns } from "../../../packages/engine/src/renderer/mapcity/landmarks/landmark-signs";
@@ -32,7 +35,7 @@ import { geoToWorld } from "../../osm-import/src/project.ts";
 /**
  * The glitch scan's checks of Alchemia's landmarks proposed by the topography's curator in the
  * reviews of ADR-0074 and ADR-0093: the memorial of Plac Ofiar Getta and the stumbling stones kept
- * clear of neon (§6 of ADR-0074).
+ * clear of neon (§6 of ADR-0074), the game's models on the gallery's green roof under a height (O4).
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -266,3 +269,34 @@ export const gameNeonGlows = (): Glow[] => {
 
 /** Every glowing sign the check looks at, the map's only within reach of the places. */
 export const glowsInGame = (places: readonly Remembrance[]): Glow[] => [...mapSignGlows(places), ...alchemiaSignGlows(), ...gameNeonGlows()];
+
+/** Nothing of the game's models on the gallery's green roof higher (y): its tallest trees top out at 18.04 (ADR-0093 O4). */
+export const ROOF_MODEL_TOP = 18.5;
+
+const TOPS = new Map<string, number>();
+
+/** How high the renderer draws a street prop over its foot (m): its kind's model's top, at the piece's size. */
+export const drawnHeight = (i: StreetPropItem): number => {
+  const shape = shapeOf(i.prop, i.variant);
+  const key = `${i.prop}:${shape}`;
+  let top = TOPS.get(key);
+  if (top === undefined) {
+    const p = propModel(i.prop, shape).sink.positions;
+    top = 0;
+    for (let k = 1; k < p.length; k += 3) top = Math.max(top, p[k]!);
+    TOPS.set(key, top);
+  }
+  return top * scaleOf(i.prop, i.variant);
+};
+
+/**
+ * `alchemia-roof-model-height` (the curator's review of ADR-0093 O4): a model of the game's on the
+ * gallery's green roof (`ALCHEMIA_ROOF_PROPS`: trees, shrubs, park lamps, benches) whose drawn top
+ * stands over y 18.5, which `alchemia-mall-height` leaves out (a tree grows over the gallery's
+ * height as on any roof). Baseline 0.
+ */
+export const roofModelHeight = (items: readonly StreetPropItem[] = ALCHEMIA_ROOF_PROPS): Finding[] =>
+  items.flatMap((i) => {
+    const top = i.y + drawnHeight(i);
+    return top > ROOF_MODEL_TOP + 1e-6 ? [{ at: near(i.x, i.z), what: `${i.prop} up to y ${top.toFixed(2)}` }] : [];
+  });

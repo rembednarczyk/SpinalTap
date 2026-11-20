@@ -53,7 +53,7 @@ import { barrierCoverChecks } from "./barrier-cover";
 import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
-import { glowsInGame, memorialNeonClear, remembrances } from "./alchemia-landmark-checks";
+import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { cutOnRoadInGame } from "./cut-on-road";
@@ -1572,6 +1572,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const places = remembrances(SOURCE_OSM.nodes.values());
     return memorialNeonClear(places, glowsInGame(places));
   },
+  /** A model of the game's on the gallery's green roof (a tree, a park lamp) whose drawn top stands over y 18.5 (review of ADR-0093 O4). */
+  "alchemia-roof-model-height": () => roofModelHeight(),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
