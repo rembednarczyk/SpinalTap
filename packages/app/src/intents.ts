@@ -86,6 +86,7 @@ const STARTS: Keys<StartSaveIntents> = { startW3Slice: true };
 /** The journal has no controller: following an entry is one command to the simulation. */
 const journalIntents = (sim: SimRef): JournalIntents => ({
   trackQuest: (questId) => sim().enqueue({ type: "track-quest", questId }),
+  trackCrime: (id) => sim().enqueue({ type: "track-street-crime", id }),
 });
 
 /** Each controller's part of the UI intents, spread into one object. */

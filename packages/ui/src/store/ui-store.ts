@@ -41,6 +41,7 @@ import {
   type AbilityVm,
   type CharacterStatsVm,
   type CharacterTab,
+  type CrimeMarkerVm,
   DEFAULT_SETTINGS,
   type DialogueVm,
   EMPTY_JOURNAL,
@@ -231,6 +232,8 @@ export interface MapUiState {
   readonly map: MapVm | null;
   readonly mapPlayer: MapPlayerVm | null;
   readonly mapMarkers: readonly MapMarkerVm[];
+  /** The street's crimes in progress (ADR-0091 stage 6). */
+  readonly crimeMarkers: readonly CrimeMarkerVm[];
   /** Where the enemies last saw the player (silhouette on the minimap), null when nobody looks. */
   readonly lastKnown: { readonly x: number; readonly z: number } | null;
   /** Civilians phoning a crime in, as minimap markers. */
@@ -358,6 +361,7 @@ export const initialUiState: UiState = {
   map: null,
   mapPlayer: null,
   mapMarkers: [],
+  crimeMarkers: [],
   settings: DEFAULT_SETTINGS,
   controls: [],
   hint: null,

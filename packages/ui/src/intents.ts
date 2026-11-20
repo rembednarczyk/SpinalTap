@@ -145,6 +145,8 @@ export interface ContractIntents {
 export interface JournalIntents {
   /** Follow this entry (a quest id or `contract-<id>`) on the HUD; null lets the game pick. */
   trackQuest(questId: string | null): void;
+  /** Follow this crime of the street's board on the map (ADR-0091 stage 6); null stops. Lets go of the pinned entry. */
+  trackCrime(id: string | null): void;
 }
 
 /** Scanner, quickhacks and the breach minigame (ADR-0028). */

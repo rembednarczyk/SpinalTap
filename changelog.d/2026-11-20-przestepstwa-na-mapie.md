@@ -1,0 +1,1 @@
+- Przestępstwa na ulicach są na mapie miasta jako niebieskie odznaki. Dotknięcie pokazuje, co się dzieje i ile płaci Tessen (z bliska, do 300 m), i pozwala śledzić jedno przestępstwo. Minimapa pokazuje przestępstwa w pobliżu i śledzone, a po udaremnieniu albo porażce pojawia się komunikat.

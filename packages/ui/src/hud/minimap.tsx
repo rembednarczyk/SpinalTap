@@ -1,10 +1,11 @@
 import { memo, useMemo } from "react";
 import "../citymap/citymap.css";
-import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
+import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, CrimeMarkerVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { useT } from "../i18n/use-t";
 import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
 import { MetroEntranceIcons } from "../metro/metro-layer";
+import { CrimeIcon } from "../citymap/crime-layer";
 
 /** Metres from the player to the edge of the minimap. */
 export const MINIMAP_RANGE = 32;
@@ -129,6 +130,18 @@ const Witness = ({ at, view }: { at: { x: number; z: number }; view: MapView }) 
   );
 };
 
+/** A crime of the street's board within 300 m or followed (ADR-0091 stage 6): its badge, at the edge when out of range. */
+const Crime = ({ crime, view }: { crime: CrimeMarkerVm; view: MapView }) => {
+  const o = markerOffset(crime, view);
+  const t = useT();
+  return (
+    <g className={`crime crime--mini${crime.tracked ? " crime--tracked" : ""}${o.edge ? " minimap__marker--edge" : ""}`} transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-crime">
+      <title>{crime.near ? t(`crime.kind.${crime.kind}`) : t("map.marker.crime")}</title>
+      <CrimeIcon tracked={crime.tracked} />
+    </g>
+  );
+};
+
 /** Where the enemies last saw the player: a hollow silhouette (Deus Ex style). */
 const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
   const o = markerOffset(at, view);
@@ -156,6 +169,7 @@ export const Minimap = () => {
   const lastKnown = useUi((s) => s.lastKnown);
   const zoom = useUi((s) => s.mapZoom);
   const showMarkers = useUi((s) => s.settings.mapMarkers);
+  const crimes = useUi((s) => s.crimeMarkers);
   const city = useMemo(() => (map ? indexCity(map) : null), [map]);
   const cx = player ? Math.round(player.x / CITY_CELL) : 0;
   const cz = player ? Math.round(player.z / CITY_CELL) : 0;
@@ -172,6 +186,7 @@ export const Minimap = () => {
           <District map={map} city={city} window={window} />
         </g>
         {showMarkers && markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
+        {showMarkers && crimes.filter((c) => c.near || c.tracked).map((c) => <Crime key={c.id} crime={c} view={view} />)}
         {lastKnown && <Silhouette at={lastKnown} view={view} />}
         {witnesses.map((w) => (
           <Witness key={w.id} at={w} view={view} />
