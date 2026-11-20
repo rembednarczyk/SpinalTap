@@ -51,6 +51,8 @@ const l1Arcade = (): Piece[] => [
   // An advert lit across NIGHT SILK's side on the arcade, seen from the square through the arches (its frame dark, the picture warm).
   inBox(400.2, 400.26, 1.7, 7.9, L1 + 0.3, L1 + 2.55, "machine"),
   inBox(400.26, 400.28, 1.8, 7.8, L1 + 0.4, L1 + 2.45, "lightbox"),
+  // A lightbox over the arcade's door inside its glass (the arcade's name's board), its face to the arches.
+  inBox(400.5, 402.1, 1.3, 1.36, L1 + 2.82, C1 - 0.06, "lightbox"),
   // A lit totem with the arcade's units by its door from the arcade, its face south to the arches.
   inBox(402.45, 403.55, 2.86, 3.02, L1 - 0.05, L1 + 2.6, "machine", true),
   inBox(402.5, 403.5, 2.84, 2.86, L1 + 0.3, L1 + 2.5, "lightbox"),
