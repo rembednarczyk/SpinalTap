@@ -120,14 +120,17 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
 
 /**
  * A street unit's light seen from the street (ADR-0093 O5, the board's lit shops behind the front's
- * glass): a strip of lamps along its window under the fascia and a lightbox across its sales floor's
- * back wall over the counter (its brand's backdrop), warm.
+ * glass): a strip of lamps along its window under the fascia, a lightbox across its sales floor's
+ * back wall over the counter (its brand's backdrop), one on its side wall by the door and one behind
+ * its window display, warm.
  */
 const streetWindow = (k: Fit, sales: { w: number; s: number }): void => {
   const W = k.wall;
   const head = shopHead(k.shop);
   draw(k, slot(0.3, k.f.w - 0.3, GLASS + 0.08, GLASS + 0.2), head - 0.14, head - 0.08, "lamp");
   if (k.shop.sales === undefined) draw(k, slot(W + 0.25, sales.w - W - 0.25, sales.s - 0.04, sales.s), 0.5, head - 0.15, "lightbox");
+  // Its side wall by the door lit (seen from the street through the door), behind the wall rack there.
+  draw(k, slot(W, W + 0.03, 0.4, sales.s - 0.2), 0.3, head - 0.2, "lightbox");
   // The window display's backdrop lit behind it (a shop window's light box), the door's side open.
   const L = shopLayout(sales.w, sales.s, k.shop.sales !== undefined, W);
   if (L.window) draw(k, slot(L.window.u0, L.window.u1, L.window.v1 + 0.02, L.window.v1 + 0.06), 0.15, head - 0.1, "lightbox");
