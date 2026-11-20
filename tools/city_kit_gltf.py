@@ -97,16 +97,17 @@ def node_matrix(n):
     return m
 
 
-def scene_triangles(path):
+def scene_triangles(path, keep=None):
     """World-space triangles of a glTF scene: positions [T,3,3], normals [T,3,3], material index [T],
-    UVs per corner [T,3,2] (NaN without TEXCOORD_0), the glTF json and its binary buffer."""
+    UVs per corner [T,3,2] (NaN without TEXCOORD_0), the glTF json and its binary buffer. With `keep`,
+    only the meshes of the nodes whose name it accepts (one model out of a pack)."""
     j, blob = read_model(path)
     out = {'p': [], 'n': [], 'mat': [], 'uv': []}
 
     def visit(ni, parent):
         node = j['nodes'][ni]
         m = parent @ node_matrix(node)
-        if 'mesh' in node:
+        if 'mesh' in node and (keep is None or keep(node.get('name', ''))):
             for pr in j['meshes'][node['mesh']]['primitives']:
                 P = accessor(j, blob, pr['attributes']['POSITION'])
                 N = accessor(j, blob, pr['attributes']['NORMAL']) if 'NORMAL' in pr['attributes'] else None

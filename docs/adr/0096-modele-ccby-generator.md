@@ -1,0 +1,44 @@
+# ADR-0096: Nieużyte modele CC-BY w mieście z deterministycznym generatorem
+
+Status: Przyjęty (20.11, prośba użytkownika: „użyj tych nieużytych modeli w grze, pamiętaj, aby zrobić pod to deterministyczny generator”; decyzje rekomendowane). Etapy osobnymi PR-ami.
+
+## Kontekst
+`tools/assets/sources.json` ma 13 źródeł z Sketchfaba (CC-BY 4.0), pobranych i sprawdzonych (sha256), których nie czyta żaden skrypt wypieku. Podgląd brył (20.11) pokazał, co w nich jest:
+- **Street Asset Pack** (vmatthew): bariery betonowe (czerwona, szara), barierki metalowe (całe i pogięte), pachołek, beczka, kosz z deskami, dwa worki na śmieci, kartony, kubki, butelki, szkło. Znaki drogowe są amerykańskie (STOP, ustąp pierwszeństwa), więc odpadają.
+- **Asian Shop Pack** (abhayexe): ok. 20 witryn sklepów (rama, szyba, drzwi, kaseton) i markizy.
+- **Taiwan style Signboard** (Solarliu): ok. 30 szyldów wysięgnikowych na stalowych ramach i wspornikach.
+- Pojedyncze: szyld baru (LukeMarsh201), pionowy neon (Alex Bes), szyld LED na wysięgniku (YD Visual), zestaw płaskich neonów do tła (YD Visual), bankomat ścienny (Blender3D), duża antena satelitarna na podeście (Duane's Mind), drzwi ewakuacyjne z ramą i drążkiem (blue man group), robot w pozie T (Doink), mieszkanie (Jiaxing) i sypialnia z neonami (dylanheyes).
+
+## Wzorzec
+Ten sam co ADR-0094: generator reguł w `tools/osm-import` (props), kotwice i strefy wolne, stała kolejność kroków, w kroku kolejność z `fnv(klucz)`, bez losowości (CityEngine CGA: reguła na element miasta; „Make It Home”: strefa dostępu, której mebel nie zastawia). Wybór wariantu modelu z hasha miejsca (`propHash(pointSeed)`, jak dziś bankomaty i automaty), więc ten sam stan danych daje te same modele w tych samych miejscach. Modele wypieczone na paletę jak reszta mebli (ADR-0058, ADR-0063): bez nowych wywołań rysowania, wersja na telefon tylko tam, gdzie mebel jest rysowany na `low`.
+
+Różnice: tekstury z napisami (płaskie neony, szyldy z Tajwanu, szyld baru) nie przechodzą przez paletę. Bryła szyldu bierze nazwę lokalu z atlasu nazw gry (ADR-0056 i szyldy lokali), a nie obraz z paczki.
+
+## Decyzja
+Reguły (kotwica → co, gdzie, ile):
+1. **Zaplecze lokalu** (`fast_food`, `restaurant`, `cafe`, `bar`, `pub` z `venues.ts`): ściana budynku lokalu od podwórza albo boczna, najbliższa jego szyldowi i poza strefami wolnymi wejść (ADR-0094 §2). Przy ścianie 1–3 worki na śmieci, kartony, czasem beczka; liczba i dobór z hasha lokalu. Przy kontenerach (`container`) worki obok.
+2. **Budowa** (ADR-0087, ogrodzenie `site-fence`) i jezdnia przy niej: pachołki w odstępie 1,5 m wzdłuż ogrodzenia od strony jezdni, bariery betonowe na rogach ogrodzenia, barierki metalowe przy bramie budowy (`site-gate`); pogięte warianty z hasha, co najwyżej 1 na 4.
+3. **Bank i bankomat** (`amenity=bank`, `amenity=atm` w OSM, bez wolnostojącego `atm` z planu): bankomat ścienny na fasadzie budynku banku, 1,1 m nad chodnikiem, obok wejścia poza jego strefą wolną.
+4. **Dach** (płaski, budynek od 5 kondygnacji): antena satelitarna, co najwyżej jedna na budynek z hasha (ok. 1 na 6 budynków), w narożniku dachu poza nadbudówkami (ADR-0051) i attyką, czaszą na południe.
+5. **Szyld wysięgnikowy** lokalu: rama z paczki z Tajwanu, szyld LED albo pionowy neon jako wariant szyldu lokalu (wybór z hasha lokalu, warstwa 2077), z nazwą lokalu z atlasu. Stare Miasto zostaje oszczędne (ADR-0058).
+6. **Witryna**: parter sklepu w warstwie 2077 (Lubartowska, Podzamcze, Nabrzeże) dostaje witrynę z Asian Shop Pack dopasowaną do szerokości lokalu; Stare Miasto i Krakowskie bez zmian.
+7. **Drzwi ewakuacyjne**: ściana od podwórza budynku usługowego albo handlowego bez wejścia OSM po tej stronie, jedne drzwi na budynek.
+8. **Wnętrza i robot**: mieszkanie i sypialnia jako wnętrza (ADR-0061) z planu zadań; robot jako manekin w witrynie kliniki Moriego.
+
+Kontrola: każdy etap ma testy reguł w `tools/osm-import/test` (kotwica, strefy wolne, liczba, determinizm: dwa przebiegi równe) i, gdzie się da, rodzaj skanu glitchy (np. `prop-blocks-entrance` obejmuje nowe meble). Kredyty: każdy model z `credit` w `packages/ui/src/credits/credits.ts` i w README katalogu `city`.
+
+## Etapy
+1. Wypiek `tools/city_extras.py` → `extra-props.glb`: modele z 13 źródeł rozcięte na pojedyncze rzeczy, na palecie, do 6 tys. trójkątów (wnętrza i robot z własnym limitem), kredyty, testy pliku.
+2. Zaplecza lokali, budowy, bankomaty ścienne (reguły 1–3), z bryłami w symulacji tam, gdzie mebel stoi na chodniku.
+3. Anteny na dachach (reguła 4).
+4. Szyldy wysięgnikowe (reguła 5).
+5. Witryny (reguła 6).
+6. Drzwi ewakuacyjne (reguła 7).
+7. Wnętrza i robot (reguła 8).
+
+Każdy etap: `pnpm osm:props`, `scan:diff`, przegląd topografii, `npr-perf` (wywołania, siatki, trójkąty telefonu), zrzuty przed i po.
+
+## Konsekwencje
+- Więcej drobiazgu w strefach, gdzie gra była pusta (zaplecza, budowy, dachy), zgodnie z zasadami lokacji (trzy warstwy, ślad świeżej obecności).
+- Rośnie liczba trójkątów; wywołania rysowania nie, bo modele idą do istniejących siatek bloków.
+- `props.generated.ts` i baza skanu zmieniają się w etapach 2–6.

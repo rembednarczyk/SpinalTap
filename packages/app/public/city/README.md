@@ -338,3 +338,16 @@ python3 -I -B tools/city_kit.py --crowd /tmp/city-assets --out packages/app/publ
 ```
 
 Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów wszystkich plików).
+
+## extra-props.glb (ADR-0096)
+
+Dodatkowe rekwizyty CC-BY 4.0 rozstawiane generatorem reguł (`tools/osm-import`, ADR-0096), wypiekane
+`python3 -I tools/city_kit.py --extras DIR --out DIR` (`tools/city_extras.py`). Ten sam podpis jest na
+ekranie „Autorzy” (`packages/ui/src/credits/credits.ts`), węzeł modelu ma `extras.credit`.
+
+| Klucze w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `ex-barrier-*`, `ex-railing-*`, `ex-cone`, `ex-barrel`, `ex-bin-boarded`, `ex-bag-*`, `ex-box-*`, `ex-bottle`, `ex-cup`, `ex-hydrant` | Street Asset Pack | [vmatthew](https://sketchfab.com/vmatthew) | [Sketchfab](https://sketchfab.com/3d-models/street-asset-pack-f3eb47d02e2e4ab290e66752fa354b48) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | rozcięty na pojedyncze rzeczy po nazwach węzłów, bez znaków drogowych; kolory z tekstur sprowadzone do palety; hydrant i pogięta barierka uproszczone do 6 tys. trójkątów; wyskalowane do prawdziwej wysokości |
+| `ex-atm-wall` | Simple Mini-ATM | [Blender3D](https://sketchfab.com/Blender3D) | [Sketchfab](https://sketchfab.com/3d-models/simple-mini-atm-297bb83c296b49cf93bfbf157f9ca431) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | obrócony ekranem do przodu, kolory do palety, 0,85 m |
+| `ex-dish` | Satellite Comms | [Duane's Mind](https://sketchfab.com/duanesmind) | [Sketchfab](https://sketchfab.com/3d-models/satellite-comms-4be56951da39429a963ee12140bbff57) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | z 17 do 3,4 m (antena dachowa), uproszczony do 6 tys. trójkątów, kolory do palety |
+| `ex-exit-door` | Fire Escape / Exit Doors | [blue man group](https://sketchfab.com/bloobloo) | [Sketchfab](https://sketchfab.com/3d-models/fire-escape-exit-doors-4ad9f395571a4dfaadce33dfeccc7a53) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 2,1 m z ramą, kolory do palety |

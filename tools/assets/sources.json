@@ -581,7 +581,7 @@
       "files": [
         { "path": "fire_escape__exit_doors.glb", "url": "https://drive.usercontent.google.com/download?id=1LJDh3Km2s_RRqUxtBUI6bBL1BbYzcmY6&export=download&confirm=t", "sha256": "dff2d7db487098ed74d1dd70266548b86c5b9dd0e0efb44a747a69467d4120e8" }
       ],
-      "used": []
+      "used": ["ex-exit-door"]
     },
     {
       "id": "sketchfab-japanese-neon-sign-set",
@@ -623,7 +623,7 @@
       "files": [
         { "path": "simple_mini-atm.glb", "url": "https://drive.usercontent.google.com/download?id=1THKh1oaGPmCmz2LX59BndHBZFe1CX4Fy&export=download&confirm=t", "sha256": "c90ad813d4f04397c055411e7fdd3484a39ba1dcc94dd53ee72c1e99e590e052" }
       ],
-      "used": []
+      "used": ["ex-atm-wall"]
     },
     {
       "id": "sketchfab-neon-bedroom",
@@ -665,7 +665,7 @@
       "files": [
         { "path": "satellite_comms.glb", "url": "https://drive.usercontent.google.com/download?id=1ND3LpM-eRoTakUZaMsGpts0NArRZjiz0&export=download&confirm=t", "sha256": "80b8d0d0a16b842025b9e976e3c62a0795cc76844848af1af31c7cd053473697" }
       ],
-      "used": []
+      "used": ["ex-dish"]
     },
     {
       "id": "sketchfab-shipping-container",
@@ -693,7 +693,7 @@
       "files": [
         { "path": "street_asset_pack.glb", "url": "https://drive.usercontent.google.com/download?id=1l4rQWRlRdP6W0h5e_Z28rFs3DM2lUvLt&export=download&confirm=t", "sha256": "ec45a543bcdda0c64fd95629fe9e94c788d5e84c76e418b7e904c5474ae0f1c8" }
       ],
-      "used": []
+      "used": ["ex-barrier-concrete", "ex-barrier-red", "ex-railing-a", "ex-railing-a-bent", "ex-railing-b", "ex-railing-b-bent", "ex-cone", "ex-barrel", "ex-bin-boarded", "ex-bag-a", "ex-bag-b", "ex-box-a", "ex-box-b", "ex-bottle", "ex-cup", "ex-hydrant"]
     },
     {
       "id": "sketchfab-taiwan-signboard",

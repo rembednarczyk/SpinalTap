@@ -1,0 +1,1 @@
+- Nowe modele z Sketchfaba (CC-BY 4.0) w grze: na ulicach pojawia się drugi rodzaj hydrantu. Bariery, pachołki, worki na śmieci, bankomat ścienny, antena dachowa i drzwi ewakuacyjne są gotowe do rozstawienia przez generator w kolejnych etapach; autorzy w menu „Autorzy”.
