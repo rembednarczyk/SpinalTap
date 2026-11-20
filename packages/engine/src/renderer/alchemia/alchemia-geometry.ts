@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ALCHEMIA_UNITS, ARCADE_FRONT, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ARCADE_FRONT, ATRIUM, FRONT_SIGN, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { neonText } from "./neon-letters";
@@ -8,6 +8,7 @@ import { ledOfSlab } from "./rounded-slab";
 import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
 import { shopPiece, shopSigns } from "./shop-geometry";
+import { foodhallGeometry, foodhallPiece } from "./foodhall-geometry";
 import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
@@ -16,7 +17,7 @@ import { parkingOutside } from "./parking-geometry";
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
  * texture: the simulation's boxes (`ALCHEMIA_PIECES`) coloured by their kind, and what only the
- * eye needs: the front's frame, the units' signs (proper names, drawn without words), the ceiling's
+ * eye needs: the front's frame, the food hall's signs (proper names in neon, `foodhall-geometry.ts`), the ceiling's
  * light strips. Two sinks: outside (the shell, the green roof, the lift's kiosk, the terraces'
  * steps, T2 with its stairs and the Arkady of stage 2, the pavilion on the corner of stage 3, P-1's ramp trench and stair house of stage 4,
  * the beds along the ramp of stage 7, the green tiers and the front's storeys over P-1 of 19.11), drawn from afar, and inside (units, counters, tables, the stairs, the lights), drawn near
@@ -78,22 +79,6 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   steam: "win-white",
   carton: "fabric-amber",
   paper: "paint",
-};
-
-/** The signs' neon by the unit's kitchen: the kit's glow swatches. */
-const SIGN: Readonly<Record<string, string>> = {
-  ramen: "neon-red",
-  okonomiyaki: "neon-amber",
-  "umbrellas-tea": "neon-cyan",
-  coffee: "win-warm",
-  arms: "neon-green",
-  thai: "neon-violet",
-  korean: "neon-pink",
-  greek: "neon-blue",
-  georgian: "neon-red",
-  wok: "neon-amber",
-  burger: "neon-pink",
-  kiosk: "win-teal",
 };
 
 /** The front's glass is lit up to this much over the floor (ADR-0074 §6: the front warm at night). */
@@ -162,24 +147,6 @@ const frontFrame = (sink: GeometrySink, data: CityKitData): void => {
   boxOf(sink, data, { x0: I.minX, x1: I.maxX, z0: I.minZ, z1: I.maxZ, y0: FOODHALL.floor - 0.02, y1: FOODHALL.floor + 0.005 }, "trim-light");
 };
 
-/** A sign over each open unit's counter: a lit band in its kitchen's colour, under the ceiling. */
-const unitSigns = (sink: GeometrySink, data: CityKitData): void => {
-  const [y0, y1] = [FOODHALL.ceiling - 0.55, FOODHALL.ceiling - 0.2];
-  for (const u of ALCHEMIA_UNITS) {
-    if (u.shut) continue;
-    const q = u.rect;
-    const s = SIGN[u.cuisine] ?? "neon-cyan";
-    if (u.open === "n" || u.open === "s") {
-      const z = u.open === "n" ? q.maxZ - 0.15 : q.minZ + 0.05;
-      if (u.id === "fumiko") continue;
-      boxOf(sink, data, { x0: q.minX + 0.4, x1: q.maxX - 0.4, z0: z, z1: z + 0.1, y0, y1 }, s);
-    } else {
-      const x = u.open === "e" ? q.maxX - 0.15 : q.minX + 0.05;
-      boxOf(sink, data, { x0: x, x1: x + 0.1, z0: q.minZ + 0.4, z1: q.maxZ - 0.4, y0, y1 }, s);
-    }
-  }
-};
-
 /**
  * The letters on the front's sign (B1, 19.11), on its south face towards Bajkowskiego: ALCHEMIA in
  * cyan over CENTRUM HANDLOWE in pink, neon tubes a hand proud of the dark box (the mall's own sign,
@@ -198,8 +165,8 @@ const frontSignLetters = (sink: GeometrySink, data: CityKitData): void => {
 };
 
 /**
- * The ceiling's light strips round the atrium (open to the sky over the tables since ADR-0093 O1),
- * under the gallery's P1 over the aisles: warm (ADR-0074 §6).
+ * The ceiling's light strips round the atrium on P0 (open to the sky since ADR-0093 O1, its fountain
+ * in it since O3), under the gallery's P1 over the walkways: warm (ADR-0074 §6).
  */
 const ceilingLights = (sink: GeometrySink, data: CityKitData): void => {
   const y = FOODHALL.ceiling - 0.04;
@@ -312,6 +279,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (p.kind === "escalator") continue;
     // The gallery's shops (ADR-0093 O2): by their trade, their shopfronts as frames.
     if (p.inside && shopPiece(sink, data, p)) continue;
+    // The food hall on P3 and Fumiko's second place on P0 (O3): by their kitchens.
+    if (p.inside && foodhallPiece(sink, data, p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -362,7 +331,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   frontSignLetters(tiers, data);
   greenSlope(tiers, data);
   arcadeFrontGeometry(tiers, data);
-  unitSigns(inside, data);
+  foodhallGeometry(inside, data);
   ceilingLights(inside, data);
   escalatorGeometry(inside, data);
   shopSigns(inside, data);

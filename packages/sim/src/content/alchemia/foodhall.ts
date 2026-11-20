@@ -1,18 +1,19 @@
 import type { GroundCut } from "../../world/ground";
 import type { Rect } from "../builders";
 import { P1_HALL_DOOR } from "./parking";
-import { ATRIUM } from "./mall-plan";
+import { ATRIUM, NE_CORE, NE_LIFT_SHAFT, stairwell } from "./mall-plan";
 import { HALL, HALL_INNER, type Piece, SINK, box, piece } from "./plan";
 
 /**
- * The food hall of Alchemia under the upper terrace (ADR-0074 §1, stage 1): a box of 36 × 26 m dug
+ * The food hall of Alchemia under the upper terrace (ADR-0074 §1, stage 1), P0 of the gallery since
+ * ADR-0093 (its shops since O3, the food hall gone up to P3): a box of 36 × 26 m dug
  * into the slope between the car park (T0, its green roof) and the square in front of it (T1, its
  * floor), its front of glass onto T1. The ground under its outline is dug to its floor (a
  * `GroundCut`, as under a metro pavilion): no terrain shows inside, and the terrace's ground round
  * it is its walls' earth. Its roof is a slab level with the car park, walked on from there.
  *
  * Its stairs (the stair core by the lift, ADR-0074 §4) rise west along the back wall from the back
- * door by Sachiko's kiosk to a landing level with the roof, under a stair house on the roof whose
+ * door by the way in from P-1 to a landing level with the roof, under a stair house on the roof whose
  * door opens south onto the car park. The lift beside it is `lift.ts`.
  */
 
@@ -24,22 +25,24 @@ const R = HALL.roof;
 
 /** A hole in the front wall: from its west to its east side, from the floor up to `top` over it. */
 export interface FrontOpening {
-  readonly id: "fumiko-hatch" | "fumiko-door" | "entrance" | "oyaji-door";
+  readonly id: "fumiko-hatch" | "fumiko-door" | "entrance" | "east-door";
   readonly x0: number;
   readonly x1: number;
   readonly top: number;
 }
 
 /**
- * The front's openings onto T1: Fumiko's hatch over her counter and her door, the way in (6 m),
- * Oyaji's back door. The rest of the front is glass on a frame (ADR-0071's glass: opaque, the
- * inside's light in it).
+ * The front's openings onto T1: the hatch over the counter of Fumiko's second place and its door
+ * (ADR-0093 O3: her bar went up to the food hall on P3), the way in (6 m), and since O3 the east door
+ * into the north-east core's corridor, where Oyaji's back door was (his shop on P3 now, the core
+ * down to P0 in its corner). The rest of the front is glass on a frame (ADR-0071's glass: opaque,
+ * the inside's light in it).
  */
 export const FRONT_OPENINGS: readonly FrontOpening[] = [
   { id: "fumiko-hatch", x0: 401.0, x1: 405.6, top: 2.4 },
   { id: "fumiko-door", x0: 405.8, x1: 406.8, top: 2.3 },
   { id: "entrance", x0: 413.0, x1: 419.0, top: 3.2 },
-  { id: "oyaji-door", x0: 431.0, x1: 432.4, top: 2.3 },
+  { id: "east-door", x0: 425.6, x1: 427.1, top: 2.3 },
 ];
 
 export const opening = (id: FrontOpening["id"]): FrontOpening => FRONT_OPENINGS.find((o) => o.id === id)!;
@@ -58,7 +61,7 @@ export const STAIR_RISE = (R - F) / STAIR.risers;
 export const STAIR_HEAD_X = STAIR.footX - (STAIR.risers - 1) * STAIR.going;
 /**
  * The flight is open to the hall along its lower nine steps (up to 1.5 m, a drop a body takes): the
- * back door from the hall, by Sachiko's kiosk. Over them the partition shuts the stairs off.
+ * back door from the hall, by the door from P-1. Over them the partition shuts the stairs off.
  */
 export const BACK_DOOR = { minX: STAIR.footX - 9 * STAIR.going, maxX: 412.3 } as const;
 
@@ -90,21 +93,34 @@ export const FOODHALL_CUT: GroundCut = { bounds: { minX: HALL.minX, maxX: HALL.m
  */
 export const FOODHALL_STAIR_CUT: GroundCut = { bounds: { minX: I.minX, maxX: STAIR.footX, minZ: I.minZ, maxZ: STAIR.maxZ }, floor: F };
 
-/** The hall as an interior of ADR-0061: inside its walls, from the floor to the ceiling. */
-export const FOODHALL_ROOM: Rect & { readonly bottom: number; readonly top: number } = { ...I, bottom: F, top: C };
+/** P0, the hall's floor, as a room of the gallery's interior (ADR-0061): inside its walls, from the floor to the ceiling. */
+export const P0_ROOM: Rect & { readonly bottom: number; readonly top: number } = { ...I, bottom: F, top: C };
 
-/** The front wall: glass between the openings, a lintel of glass over each up to the ceiling. */
+/**
+ * Where the north-east core stands against the front (ADR-0093 O3, down to P0): the glass only 0.2
+ * deep there, so the core's north lane keeps its 1.5 m (its inner face the core's north wall).
+ */
+const CORE_FRONT = { x0: NE_CORE.x0 - 0.2, x1: NE_CORE.x1 + 0.2, z0: NE_CORE.z1 } as const;
+
+/** The front wall: glass between the openings, a lintel of glass over each up to the ceiling; thin by the core. */
 const front = (): Piece[] => {
-  const z0 = HALL.maxZ - W;
   const z1 = HALL.maxZ;
   const out: Piece[] = [];
+  const pane = (x0: number, x1: number, y0: number): void => {
+    const cuts = [x0, ...[CORE_FRONT.x0, CORE_FRONT.x1].filter((x) => x > x0 + 1e-6 && x < x1 - 1e-6), x1];
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      const [a, b] = [cuts[i]!, cuts[i + 1]!];
+      const byCore = a >= CORE_FRONT.x0 - 1e-6 && b <= CORE_FRONT.x1 + 1e-6;
+      out.push(piece(box(a, b, byCore ? CORE_FRONT.z0 : HALL.maxZ - W, z1, y0, C), "glass", false));
+    }
+  };
   let x: number = HALL.minX;
   for (const o of [...FRONT_OPENINGS].sort((a, b) => a.x0 - b.x0)) {
-    if (o.x0 > x) out.push(piece(box(x, o.x0, z0, z1, F - SINK, C), "glass", false));
-    out.push(piece(box(o.x0, o.x1, z0, z1, F + o.top, C), "glass", false));
+    if (o.x0 > x) pane(x, o.x0, F - SINK);
+    pane(o.x0, o.x1, F + o.top);
     x = o.x1;
   }
-  out.push(piece(box(x, HALL.maxX, z0, z1, F - SINK, C), "glass", false));
+  pane(x, HALL.maxX, F - SINK);
   return out;
 };
 
@@ -117,12 +133,16 @@ const walls = (): Piece[] => [
   piece(box(HALL.maxX - W, HALL.maxX, HALL.minZ + W, HALL.maxZ - W, F - SINK, C), "wall", false),
 ];
 
+/** The north-east core's stairwell and its lift's shaft through P1's floor (ADR-0093 O3: both from P0). */
+const NE_HOLES: readonly Rect[] = [stairwell(NE_CORE), NE_LIFT_SHAFT].map((r) => ({ minX: r.x0, maxX: r.x1, minZ: r.z0, maxZ: r.z1 }));
+
 /**
- * The roof slab round its holes (the stair's, the lift's, the gallery's atrium since ADR-0093 O1): the
- * gallery's P1 floor, under its glass (`mall.ts`), so no parapet round it any more.
+ * The roof slab round its holes (the stair's, the lift's, the gallery's atrium since ADR-0093 O1, the
+ * north-east core's and its lift's since O3): the gallery's P1 floor, under its glass (`mall.ts`), so
+ * no parapet round it any more.
  */
 const roof = (): Piece[] =>
-  [STAIR_HOLE, LIFT_HOLE, ATRIUM_HOLE]
+  [STAIR_HOLE, LIFT_HOLE, ATRIUM_HOLE, ...NE_HOLES]
     .reduce<Rect[]>(
       (parts, h) =>
         parts.flatMap((r): Rect[] => {

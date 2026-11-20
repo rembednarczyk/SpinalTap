@@ -1,9 +1,9 @@
-import type { GroundPoint } from "@seki/core";
+import type { GroundPoint, StreetPropItem } from "@seki/core";
 import type { GroundCut } from "../../world/ground";
 import type { StaticProp } from "../builders";
 import { FOODHALL_CUT, FOODHALL_STAIR_CUT, shellPieces } from "./foodhall";
 import { ALCHEMIA_LIFT_MECHANISM, ALCHEMIA_LIFT_NE, ALCHEMIA_LIFT_NE_MECHANISM, LIFT_SHAFT_CUT, liftPieces } from "./lift";
-import { HALL, type Piece, box, piece, solidProp } from "./plan";
+import { HALL, type Piece, solidProp, tiledSolidProps } from "./plan";
 import { terracePieces } from "./terraces";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
@@ -23,7 +23,11 @@ import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
 import { frontGreenPieces } from "./front-green";
 import { entrancePieces } from "./entrance";
-import { SHOP_BUILDS, SHOP_PIECES } from "./shops";
+import { SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, modelBoxes } from "./shops";
+import { FOODHALL_PROPS, seatingPieces } from "./foodhall-seating";
+import { kitchenPieces } from "./foodhall-kitchens";
+import { fumikoWindowPieces } from "./fumiko-p0";
+import { LANDMARK_PROPS, landmarkPieces } from "./landmark";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -66,12 +70,17 @@ export {
   shopFrame as galleryShopFrame,
 } from "./shops-plan";
 export { GALLERY_CROWD, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
+export { FOODHALL_PROPS, FUMIKO_STOOLS, TABLE_GROUPS, groupParts, seatingPieces } from "./foodhall-seating";
+export { kitchenPieces } from "./foodhall-kitchens";
+export { FUMIKO_WINDOW, FUMIKO_WINDOW_SPOT, FUMIKO_WINDOW_YAW, beforeHatch, fumikoWindowPieces } from "./fumiko-p0";
+export { FOUNTAIN_P0, LANDMARK_PROPS, landmarkPieces } from "./landmark";
 export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
 /**
  * Alchemia by the investor's plan (ADR-0074): the food hall with its units, stairs and lift, its
- * green roof and the terraces round it (stage 1); the lower square T2 with its stairs and the
+ * green roof and the terraces round it (stage 1; the gallery round its atrium since ADR-0093, its
+ * food hall on P3 and its shops on P0..P2); the lower square T2 with its stairs and the
  * Arkady rebuilt on it (stage 2); the triangular pavilion on the corner with Ren on its roof
  * (stage 3, `pavilion.ts`); P-1 under the car park (stage 4, `parking.ts`) and P-2 under it (stage 5a, `p2.ts`); T0's square with its
  * pergolas, lanterns and beds and the lawns of the green roof (stage 7, `square.ts`). Everything is drawn by the engine
@@ -80,16 +89,14 @@ export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_
  */
 
 /**
- * The shared tables in the middle of the hall, either side of its aisle, with their benches; 1.6 m
- * north of where they stood until ADR-0093 O1, off the escalators along the atrium's south edge.
+ * The food hall's seating (ADR-0093 O3: on P3 with its units; the shared tables in the middle of the
+ * hall's floor until then), its units' kitchens, Fumiko's second place on P0 with its hatch onto T1,
+ * and P0's landmark in the atrium.
  */
-const TABLES: readonly Piece[] = [410.5, 419.5].flatMap((x) =>
-  [43.6, 47.6].flatMap((z) => [
-    piece(box(x, x + 6, z, z + 1, HALL.floor - 0.05, HALL.floor + 0.75), "table", true),
-    piece(box(x, x + 6, z - 0.85, z - 0.45, HALL.floor - 0.05, HALL.floor + 0.45), "bench", true),
-    piece(box(x, x + 6, z + 1.45, z + 1.85, HALL.floor - 0.05, HALL.floor + 0.45), "bench", true),
-  ]),
-);
+const SEATING = seatingPieces();
+const KITCHENS = kitchenPieces();
+const FUMIKO_P0 = fumikoWindowPieces();
+const LANDMARK = landmarkPieces();
 
 const SHELL = shellPieces();
 const UNITS = unitPieces();
@@ -109,7 +116,26 @@ const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), .
 export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
-export const ALCHEMIA_PIECES: readonly Piece[] = [...SHELL, ...UNITS, ...TABLES, ...LIFT, ...terracePieces(), ...PLAZA, ...SQUARE, ...MALL_OUT, ...FRONT, ...MALL_IN, ...LIFT_NE, ...SHOP_PIECES];
+export const ALCHEMIA_PIECES: readonly Piece[] = [
+  ...SHELL,
+  ...UNITS,
+  ...SEATING,
+  ...LIFT,
+  ...terracePieces(),
+  ...PLAZA,
+  ...SQUARE,
+  ...MALL_OUT,
+  ...FRONT,
+  ...MALL_IN,
+  ...LIFT_NE,
+  ...SHOP_PIECES,
+  ...KITCHENS,
+  ...FUMIKO_P0,
+  ...LANDMARK,
+];
+
+/** The game's models of the food hall and of P0's landmark (ADR-0093 O3), drawn with the shops' (one street-props view). */
+export const ALCHEMIA_HALL_PROPS: readonly StreetPropItem[] = [...SHOP_PROPS, ...FOODHALL_PROPS, ...LANDMARK_PROPS];
 
 /**
  * The gallery's shops on P1 and P2 (ADR-0093 O2): a prop each, its partitions, shopfront, fittings
@@ -142,13 +168,28 @@ export const CAR_LIFT_PROPS: readonly StaticProp[] = [solidProp(CAR_LIFT_PIECES)
  */
 export const MALL_PROPS: readonly StaticProp[] = [...mallSolidProps(MALL_OUT, LIFT_NE), ...ALCHEMIA_LIFT_NE_MECHANISM];
 
-/** Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the Arkady. */
+/**
+ * The food hall's kitchens on P3 a prop per tile, Fumiko's second place and P0's landmark (ADR-0093
+ * O3), the boxes of the game's models in both last: Alchemia's last solids.
+ */
+export const FOODHALL_SOLID_PROPS: readonly StaticProp[] = [
+  ...tiledSolidProps(KITCHENS, 12),
+  solidProp(FUMIKO_P0),
+  solidProp(LANDMARK),
+  solidProp(modelBoxes([...FOODHALL_PROPS, ...LANDMARK_PROPS])),
+];
+
+/**
+ * Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the
+ * Arkady. The units' two props and the tables' one hold the food hall on P3 since ADR-0093 O3 (its
+ * units, north and south of z 45, and its seating), so the ids after them stay as they were.
+ */
 export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(SHELL.filter((p) => p.kind !== "step")),
   solidProp(SHELL.filter((p) => p.kind === "step")),
-  solidProp(UNITS.filter((p) => p.box.z0 >= HALL.maxZ - 8.5)),
-  solidProp(UNITS.filter((p) => p.box.z0 < HALL.maxZ - 8.5)),
-  solidProp(TABLES),
+  solidProp(UNITS.filter((p) => p.box.z0 >= 45)),
+  solidProp(UNITS.filter((p) => p.box.z0 < 45)),
+  solidProp(SEATING),
   solidProp(LIFT),
   ...ALCHEMIA_LIFT_MECHANISM,
   // Stage 2 after stage 1's, so their ids (from ROOM_ID_BASE, in this order) stay as they were. The
@@ -177,8 +218,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...CAR_LIFT_PROPS,
   // The gallery round the atrium (ADR-0093 O1).
   ...MALL_PROPS,
-  // Its shops on P1 and P2 (O2) last, so every id above stays.
+  // Its shops on P1 and P2 (O2), then P0's (O3), so every id above stays.
   ...SHOP_SOLID_PROPS,
+  // The food hall's kitchens, Fumiko's second place and P0's landmark (O3) last.
+  ...FOODHALL_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

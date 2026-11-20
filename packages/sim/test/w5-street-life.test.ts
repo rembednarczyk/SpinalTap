@@ -4,6 +4,8 @@ import {
   CONTRACT_SITE_SPAWNS,
   HIDEO_BUS_STOP,
   KANAL_SPOTS,
+  FUMIKO_WINDOW_SPOT,
+  beforeHatch,
   beforeKeeper,
   SCHEDULES,
   STALL_KEEPERS,
@@ -30,11 +32,8 @@ import { AWAY, byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /** The covered footbridge over Grodzka, which Hideo walks under on his way to the bus. */
 const FOOTBRIDGE = { x: 659, z: 74 };
-/** Where Fumiko's customers stand: on T1 before the hatch of her ramen bar in the food hall (ADR-0074). */
-const atFumiko = (): Vec3 => {
-  const p = beforeKeeper("fumiko");
-  return ground(p.x, p.z);
-};
+/** Where Fumiko's customers stand: before her bar in the food hall on P3 (ADR-0093 O3; on T1 before its hatch until then). */
+const atFumiko = (): Vec3 => beforeKeeper("fumiko");
 const SOLIDS: readonly StaticProp[] = WORLD_CHUNKS.flatMap((c) => c.props).filter((p) => p.solid && p.view.kind === "block" && !p.mechanism);
 /** A character's radius, with a little room to spare. */
 const BODY = 0.4;
@@ -205,6 +204,18 @@ describe("Fumiko's ramen stall (ADR-0026)", () => {
     sim.enqueue({ type: "use-item", ref: { stack: "ramen" } });
     sim.step();
     expect(player.health.current).toBe(70);
+  });
+
+  it("after midnight serves across the hatch of her second place on P0 onto T1 (ADR-0093 O3)", () => {
+    const sim = withEddies(100);
+    skipTo(sim, hm(2));
+    teleportPlayer(sim, beforeHatch(), 0);
+    run(sim, 2);
+    const fumiko = byKey(sim, "fumiko")!;
+    expect(Math.hypot(fumiko.position.x - FUMIKO_WINDOW_SPOT.x, fumiko.position.z - FUMIKO_WINDOW_SPOT.z)).toBeLessThan(0.1);
+    const started = collect<{ kind: string; shopId?: string; dialogueId: string }>(sim, "InteractionStarted");
+    sim.step(input({ interact: true }));
+    expect(started).toEqual([expect.objectContaining({ kind: "shop", shopId: "yatai", dialogueId: "fumiko" })]);
   });
 
   it("is closed by day: the prompt says so and the counter refuses to sell", () => {

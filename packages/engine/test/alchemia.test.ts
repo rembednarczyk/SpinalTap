@@ -17,10 +17,12 @@ import { builtRoofOver } from "../src/renderer/built-roofs";
 const ALCHEMIA_TRIANGLES = 40000;
 /**
  * The inside's mesh with the gallery's shops (ADR-0093 O2: 24 units on P1 and P2, their shelves of
- * goods some 40 thousand triangles of it; the user's decision of 19.11, triangles free, the gates the
- * draw calls and active meshes of `npr-perf`, which the shops leave as they were: they are in this mesh).
+ * goods some 40 thousand triangles of it; O3: P0's 12 shops, the food hall's kitchens, seating and
+ * signs on P3, Fumiko's second place and P0's fountain, 52 342 -> 83 378; the user's decision of 19.11,
+ * triangles free, the gates the draw calls and active meshes of `npr-perf`, which the shops and the
+ * food hall leave as they were: they are in this mesh).
  */
-const INSIDE_TRIANGLES = 60000;
+const INSIDE_TRIANGLES = 90000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));

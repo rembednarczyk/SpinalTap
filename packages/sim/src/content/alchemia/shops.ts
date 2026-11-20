@@ -3,9 +3,10 @@ import type { CrowdSpot } from "../crowd-spot";
 import { furniturePrisms } from "../lublin/furniture";
 import { type Piece, box, piece } from "./plan";
 import { MALL_LEVELS } from "./mall-plan";
+import { FOUNTAIN_P0 } from "./landmark";
 import { type Fit, type Layout, type Slot, cartons, ceiling, cup, draw, litter, model, newFit, shelves, shopHash, shopLayout } from "./shop-fittings";
 import { fitTrade } from "./shop-trades";
-import { SHOPS, SHOPFRONT_HEAD, SHOP_DOOR_TOP, SHOP_WALL, type ShopDef, isOpen } from "./shops-plan";
+import { SHOPS, SHOPFRONT_HEAD, SHOP_DOOR_TOP, type ShopDef, isOpen } from "./shops-plan";
 
 /*
  * The gallery's shops built (ADR-0093 O2, `docs/zasady-lokacji.md`): each unit's shell (its shopfront
@@ -16,7 +17,6 @@ import { SHOPS, SHOPFRONT_HEAD, SHOP_DOOR_TOP, SHOP_WALL, type ShopDef, isOpen }
  * tenant left. Deterministic: a hash of the shop and the place.
  */
 
-const W = SHOP_WALL;
 const slot = (u0: number, u1: number, v0: number, v1: number): Slot => ({ u0, u1, v0, v1 });
 /** The shopfront's glass is this thick, on the gallery's edge. */
 const GLASS = 0.1;
@@ -53,6 +53,7 @@ const wallWithDoor = (k: Fit, full: Slot, alongU: boolean, g0: number, g1: numbe
 /** The shell: partitions, the shopfront with its door and fascia, the back room's wall, the state's shutter, grille or paper. */
 const shell = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
   const { w, d } = k.f;
+  const W = k.wall;
   const top = k.c - k.y;
   const shop = k.shop;
   draw(k, slot(0, W, GLASS, d), 0, top, "partition", true);
@@ -91,6 +92,7 @@ const shell = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
 /** The back room: stock on shelves along the glass, cartons stacked, a lamp; the servers of the technical trades' (`shop-trades.ts`). */
 const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
   const { w, d } = k.f;
+  const W = k.wall;
   const top = k.c - k.y;
   if (k.shop.sales !== undefined) {
     const u0 = sales.w + W;
@@ -113,6 +115,7 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
 /** A vacant unit's floor: what the last tenant left (cartons, a ladder, a paint pot, a cable from the ceiling) and somebody's coffee (§5). */
 const vacant = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
   const top = k.c - k.y;
+  const W = k.wall;
   cartons(k, { u: sales.w - 0.8, v: sales.s - 0.7 }, 3, 90);
   cartons(k, { u: sales.w - 1.5, v: sales.s - 0.6 }, 2, 91);
   cartons(k, { u: 0.6, v: sales.s - 0.5 }, 1, 92);
@@ -127,9 +130,9 @@ const vacant = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
   litter(k, { u: (L.door.u0 + L.door.u1) / 2, v: 0.8 }, 6, 93);
 };
 
-/** The game's models of a shop as solids: the boxes of their furniture (their yaw a quarter turn's multiple). */
-const modelSolids = (k: Fit): Piece[] =>
-  k.props.flatMap((p) =>
+/** The game's models as solids: the boxes of their furniture (their yaw a quarter turn's multiple). */
+export const modelBoxes = (props: readonly StreetPropItem[]): Piece[] =>
+  props.flatMap((p) =>
     furniturePrisms(p).map((q) => {
       const xs = q.points.map((c) => p.x + c.x);
       const zs = q.points.map((c) => p.z + c.z);
@@ -141,7 +144,7 @@ const modelSolids = (k: Fit): Piece[] =>
 export const buildShop = (shop: ShopDef): ShopBuild => {
   const k = newFit(shop);
   const sales = salesOf(shop, k.f.w, k.f.d);
-  const L = shopLayout(sales.w, sales.s, shop.sales !== undefined);
+  const L = shopLayout(sales.w, sales.s, shop.sales !== undefined, k.wall);
   shell(k, L, sales);
   const open = isOpen(shop);
   if (shop.state !== "shut") {
@@ -160,7 +163,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
   return {
     shop,
     pieces: k.pieces,
-    solids: [...k.solids, ...modelSolids(k)],
+    solids: [...k.solids, ...modelBoxes(k.props)],
     props: k.props,
     layout: shop.state === "shut" ? null : L,
     sales,
@@ -170,7 +173,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
   };
 };
 
-/** Every shop of P1 and P2 built, in `SHOPS`' order. */
+/** Every shop of P1, P2 and P0 built, in `SHOPS`' order. */
 export const SHOP_BUILDS: readonly ShopBuild[] = SHOPS.map(buildShop);
 
 /** The shops' drawn pieces (inside the gallery: drawn near only, in the inside's mesh). */
@@ -185,8 +188,8 @@ const spot = (at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]
 
 /**
  * The gallery's still crowd (ADR-0060): a customer at the counter of every other open shop (by the
- * hash of the shop), and a few people leaning on the atrium's balustrade on P1 and P2, out of the
- * escalators' landings and the gallery's nodes.
+ * hash of the shop), a few people leaning on the atrium's balustrade on P1 and P2, out of the
+ * escalators' landings and the gallery's nodes, and a few by P0's fountain (O3).
  */
 export const GALLERY_CROWD: readonly CrowdSpot[] = [
   ...SHOP_BUILDS.flatMap((b) => {
@@ -197,4 +200,8 @@ export const GALLERY_CROWD: readonly CrowdSpot[] = [
   spot({ x: 410.4, y: MALL_LEVELS.p1, z: 46.5 }, Math.PI / 2, ["lean"]),
   spot({ x: 425.6, y: MALL_LEVELS.p2, z: 47.5 }, -Math.PI / 2, ["lean", "smoke"]),
   spot({ x: 413.5, y: MALL_LEVELS.p2, z: 50.6 }, Math.PI, ["phone"]),
+  // P0's (O3): one on the bench by the fountain, one at its rim, one waiting by it with a phone.
+  spot({ x: (FOUNTAIN_P0.minX + FOUNTAIN_P0.maxX) / 2 - 0.5, y: MALL_LEVELS.p0, z: FOUNTAIN_P0.maxZ + 0.9 }, 0, ["sit"]),
+  spot({ x: FOUNTAIN_P0.minX - 0.55, y: MALL_LEVELS.p0, z: (FOUNTAIN_P0.minZ + FOUNTAIN_P0.maxZ) / 2 }, Math.PI / 2, ["talk", "phone"]),
+  spot({ x: FOUNTAIN_P0.maxX + 1.0, y: MALL_LEVELS.p0, z: FOUNTAIN_P0.minZ - 0.8 }, -Math.PI / 4, ["phone", "smoke"]),
 ];

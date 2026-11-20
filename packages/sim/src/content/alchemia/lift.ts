@@ -3,7 +3,7 @@ import type { GroundCut } from "../../world/ground";
 import type { StaticProp } from "../builders";
 import { LIFT_HOLE } from "./foodhall";
 import { P2 } from "./p2";
-import { MALL_LEVELS } from "./mall-plan";
+import { MALL_LEVELS, NE_LIFT_AT } from "./mall-plan";
 import { type Box, HALL, type Piece, box, piece } from "./plan";
 
 /**
@@ -17,11 +17,16 @@ import { type Box, HALL, type Piece, box, piece } from "./plan";
  * lift (G-289), so nobody stands on a gate's top or gets into the shaft from outside.
  */
 
-const HALF = 1.1;
-const WALL = 0.1;
+/** The shaft inside, half its width; its walls' outer faces stay at `HALF + WALL` (1.2, the slabs' holes). */
+const HALF = 1.0;
+/**
+ * Thicker than a crouched, aimed shot's start reaches past a face beside a body (G-939: 0.55 m over the
+ * shoulder less the body's 0.38): at 0.1 such a shot, in the cab or by the shaft, started on the wall's far side.
+ */
+const WALL = 0.2;
+/** How far the heads, the cap and the gates stand out of the walls' outer faces. */
+const FRAME = 0.1;
 const OPENING = 2.3;
-/** How far P-2's gate reaches into the shaft from its east face: the platform is this much short of it. */
-const GATE_DEPTH = 0.2;
 const LINTEL = 0.25;
 const HEAD = 0.3;
 const CAP = 0.15;
@@ -85,6 +90,7 @@ const plan = (key: string, c: GroundPoint, levels: readonly [number, ...number[]
   const b = (x0: number, x1: number, z0: number, z1: number, y0: number, y1: number): Box => box(c.x + x0, c.x + x1, c.z + z0, c.z + z1, y0, y1);
   const opens = (side: LiftSide) => levels.filter((_, i) => sides[i] === side);
   const headOf = (y: number) => (y === top ? head : y + OPENING + HEAD);
+  const front = out + FRAME;
   return {
     key,
     centre: c,
@@ -101,23 +107,24 @@ const plan = (key: string, c: GroundPoint, levels: readonly [number, ...number[]
       ...between(pit, head, opens("n")).map(([y0, y1]) => b(-HALF, HALF, HALF, out, y0, y1)),
       ...between(pit, head, opens("s")).map(([y0, y1]) => b(-HALF, HALF, -out, -HALF, y0, y1)),
     ],
-    // At P-2 the gate fills the corridor's wall's thickness (G-275: by a gate a tenth thick a shot from the
-    // shoulder started in the empty shaft behind it), the platform stopping short of it (`GATE_DEPTH`).
+    // Each gate fills its wall's thickness (G-275 at P-2, G-939 at the others: by a gate a tenth thick a shot
+    // from the shoulder started in the empty shaft behind it or outside it), north and south out to its head,
+    // P-2's across its whole east face (the wall stops there from corner to corner).
     gates: levels.map((y, i) =>
-      sides[i] === "e" ? b(HALF - GATE_DEPTH, out, -HALF, HALF, y, y + OPENING) : sides[i] === "n" ? b(-HALF, HALF, out, out + WALL, y, y + OPENING) : b(-HALF, HALF, -out - WALL, -out, y, y + OPENING),
+      sides[i] === "e" ? b(HALF, out, -out, out, y, y + OPENING) : sides[i] === "n" ? b(-HALF, HALF, HALF, front, y, y + OPENING) : b(-HALF, HALF, -front, -HALF, y, y + OPENING),
     ),
     heads: levels.map((y, i) =>
       // At P-2 the corridor's ceiling is the opening's head: none of its own (zero high, left out).
       sides[i] === "e"
-        ? b(out, out + WALL, -HALF, HALF, y + OPENING, Math.max(y + OPENING, p2Ceiling ?? y + OPENING))
+        ? b(out, front, -HALF, HALF, y + OPENING, Math.max(y + OPENING, p2Ceiling ?? y + OPENING))
         : sides[i] === "n"
-          ? b(-HALF, HALF, out, out + WALL, y + OPENING, headOf(y))
-          : b(-HALF, HALF, -out - WALL, -out, y + OPENING, headOf(y)),
+          ? b(-HALF, HALF, out, front, y + OPENING, headOf(y))
+          : b(-HALF, HALF, -front, -out, y + OPENING, headOf(y)),
     ),
-    cap: b(-out, out, -out - WALL, out + WALL, head, head + CAP),
+    cap: b(-out, out, -front, front, head, head + CAP),
     buttons: levels.map((y, i) =>
       sides[i] === "e"
-        ? { x: c.x + out + WALL + 0.35, y: y + BUTTON_Y, z: c.z + out + 0.3 }
+        ? { x: c.x + front + 0.35, y: y + BUTTON_Y, z: c.z + out + 0.3 }
         : sides[i] === "n"
           ? { x: c.x + out + BUTTON.x / 2, y: y + BUTTON_Y, z: c.z + out + 0.25 }
           : { x: c.x + out + BUTTON.x / 2, y: y + BUTTON_Y, z: c.z - out - 0.35 },
@@ -137,14 +144,15 @@ export const ALCHEMIA_LIFT: FoodhallLift = plan(
 );
 
 /**
- * The gallery's second lift (ADR-0093 O1) in its north-east core, beside the stairs: from P1 to the
- * roof, opening south onto the gallery's east side. P0's corner under it is Oyaji's shop (O3 moves it).
+ * The gallery's second lift (ADR-0093 O1) in its north-east core, beside the stairs: from P0 (since
+ * O3, which moved Oyaji's shop out of P0's corner) to the roof, opening south onto the gallery's east
+ * side. Through P1's floor, the hall's old roof, in a hole of its own (`foodhall.ts`).
  */
 export const ALCHEMIA_LIFT_NE: FoodhallLift = plan(
   "alchemia-lift-ne",
-  { x: 430.2, z: 53.2 },
-  [HALL.roof, MALL_LEVELS.p2, MALL_LEVELS.p3, MALL_LEVELS.roof],
-  ["s", "s", "s", "s"],
+  NE_LIFT_AT,
+  [HALL.floor, HALL.roof, MALL_LEVELS.p2, MALL_LEVELS.p3, MALL_LEVELS.roof],
+  ["s", "s", "s", "s", "s"],
 );
 
 /** The shaft under the hall's floor, dug down to its pit (stage 5c): the platform goes down to P-2 through it. */
@@ -177,7 +185,7 @@ const block = (b: Box, material: "metal" | "glass"): Pick<StaticProp, "center" |
 /** The moving parts of a lift (ADR-0020): the platform (resting at `rest`), a gate at each level and a call button at each. */
 export const liftMechanism = (p: FoodhallLift, rest: number): StaticProp[] => {
   const low = p.levels[rest] ?? p.levels[0];
-  const platform = box(p.centre.x - HALF, p.centre.x + HALF - GATE_DEPTH, p.centre.z - HALF, p.centre.z + HALF, low - PLATFORM, low);
+  const platform = box(p.centre.x - HALF, p.centre.x + HALF, p.centre.z - HALF, p.centre.z + HALF, low - PLATFORM, low);
   return [
     { ...block(platform, "metal"), mechanism: { kind: "platform", key: p.key, levels: p.levels, speed: SPEED } },
     ...p.gates.map((g, level): StaticProp => ({ ...block(g, "glass"), mechanism: { kind: "gate", elevator: p.key, level, travel: OPENING } })),
@@ -188,5 +196,5 @@ export const liftMechanism = (p: FoodhallLift, rest: number): StaticProp[] => {
 
 /** The food hall's lift: the platform starts at the hall's floor (its second level), as before stage 5c. */
 export const ALCHEMIA_LIFT_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT, 1);
-/** The north-east core's: at P1. */
-export const ALCHEMIA_LIFT_NE_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT_NE, 0);
+/** The north-east core's: at P1 (its second level since O3), as before. */
+export const ALCHEMIA_LIFT_NE_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT_NE, 1);

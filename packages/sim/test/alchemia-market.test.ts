@@ -5,7 +5,9 @@ import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_MARKET_ACTORS,
   FOODHALL,
+  ESCALATORS,
   MALL_FLOORS,
+  escalatorHead,
   P1,
   P1_ROOMS,
   P2,
@@ -95,16 +97,22 @@ const floorAt = (p: Vec3): number => {
 
 const where = (p: Vec3): string => `(${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)})`;
 
-/** Points every half metre along a daily plan's paths. */
+/**
+ * On a flight of the escalators or at its ends (ADR-0093 O3: Fumiko's way between P3 and P0): walked
+ * on its treads, not on a floor (`alchemia-food-court.test.ts` has her way on them).
+ */
+const onEscalator = (q: Vec3): boolean =>
+  ESCALATORS.some((e) => q.z > e.lane.z0 - 0.01 && q.z < e.lane.z1 + 0.01 && q.x > Math.min(e.x0, escalatorHead(e)) - 0.6 && q.x < Math.max(e.x0, escalatorHead(e)) + 0.6);
+
+/** Points every half metre along a daily plan's paths (but on the escalators' flights). */
 const planPoints = (def: ScheduleDef): Vec3[] =>
   def.stops.flatMap((stop) =>
     stop.path.slice(1).flatMap((b, k) => {
       const a = stop.path[k]!;
       const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.5));
-      return Array.from({ length: n + 1 }, (_, j) => {
-        const q = { x: a.x + ((b.x - a.x) * j) / n, y: a.y + ((b.y - a.y) * j) / n, z: a.z + ((b.z - a.z) * j) / n };
-        return { ...q, y: floorAt(q) };
-      });
+      return Array.from({ length: n + 1 }, (_, j) => ({ x: a.x + ((b.x - a.x) * j) / n, y: a.y + ((b.y - a.y) * j) / n, z: a.z + ((b.z - a.z) * j) / n }))
+        .filter((q) => !onEscalator(q))
+        .map((q) => ({ ...q, y: floorAt(q) }));
     }),
   );
 

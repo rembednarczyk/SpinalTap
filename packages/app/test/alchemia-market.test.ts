@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type InputFrame, SAVE_SCHEMA_VERSION } from "@seki/core";
 import { ALCHEMIA_WAKE, MOVED_STASHES, OLD_MARKET_WAKE, PAVILION_STASHES, checksum } from "@seki/persistence";
-import { FOODHALL, STALL_KEEPERS, TARG_OVERPASS_STASH, TARG_ROOF_STASH, beforeKeeper, chunkAt, groundY, opening } from "@seki/sim";
+import { FOODHALL, STALL_KEEPERS, TARG_OVERPASS_STASH, TARG_ROOF_STASH, beforeHatch, beforeKeeper, chunkAt, groundY, opening } from "@seki/sim";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
 /**
- * The market in Alchemia's food hall (ADR-0074 stage 1), headless: Seki walks from T1 to each
+ * The market in Alchemia's food hall (ADR-0074 stage 1; on P3 since ADR-0093 O3), headless: Seki walks from T1 to each
  * keeper's counter and each answers, Oyaji and Fumiko trade; the hours hold (Fumiko's bar shut by
- * day, Oyaji's shop after 22:00, Kenta's and Goro's units after midnight) (Ren on the pavilion's
+ * day, she on her stool on T1, Oyaji's shop after 22:00, Kenta's and Goro's units after midnight) (Ren on the pavilion's
  * roof: `alchemia-pavilion.test.ts`);
  * a game saved on the old hall's roof terrace (v32) and one saved in the old market on Aleja
  * Tysiąclecia (v28) load with Seki safe on the ground and the people at their new places.
@@ -28,27 +28,48 @@ const walkAt = (session: GameSession, to: { x: number; z: number }, n: number, n
   }
 };
 
-/** The way from T1 before the hall to a keeper's counter: in through the way in, but to Fumiko's hatch on T1. */
-const wayTo = (key: Keeper): { x: number; z: number }[] => {
+/**
+ * The way from T1 before the hall to a keeper's counter in the food hall on P3 (ADR-0093 O3): in
+ * through the way in, round P0's fountain to the escalators' foot, up the three criss-cross flights,
+ * off the top landing onto the gallery's south side, then round the tables to the counter.
+ */
+const UP_TO_P3: readonly { x: number; z: number }[] = [
+  { x: ENTRANCE, z: 55 },
+  { x: 416, z: 51.6 },
+  { x: 426.3, z: 51.4 },
+  { x: 425.8, z: 40.75 },
+  { x: 416.4, z: 40.75 },
+  { x: 416.4, z: 42.35 },
+  { x: 425.3, z: 42.35 },
+  { x: 425.3, z: 40.75 },
+  { x: 416.6, z: 40.75 },
+  { x: 416.6, z: 39.2 },
+];
+/** On P3, from the gallery's south side by the escalators' landing round the tables to a keeper's counter. */
+const onP3To = (key: Keeper): { x: number; z: number }[] => {
   const before = beforeKeeper(key);
-  if (key === "fumiko") return [before];
-  // Round the first escalator's head, under the gallery's P1 landing (ADR-0093 O1: it stands along the atrium's south edge),
-  // along the back aisle and up to her counter from the south.
-  if (key === "sachiko") return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, { x: 416.8, z: 42 }, { x: 416.7, z: 39.2 }, { x: 413, z: 38.9 }, { x: 409, z: 34.9 }, before];
-  if (key === "oyaji") return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, { x: 428, z: 48.5 }, before];
-  return [{ x: ENTRANCE, z: 55 }, { x: 418, z: 50 }, before];
+  const hub = { x: 416.6, z: 39.2 };
+  if (key === "kenta" || key === "goro") return [hub, { x: 409.2, z: 39.2 }, { x: 409.2, z: 51.5 }, { x: before.x, z: 51.5 }, before];
+  if (key === "fumiko") return [hub, { x: 409.2, z: 39.2 }, { x: 409.2, z: 48.8 }, { x: 405.3, z: 49.6 }, before];
+  if (key === "sachiko") return [hub, { x: before.x, z: 38.6 }, before];
+  return [hub, { x: 426.6, z: 38.6 }, { x: 426.6, z: before.z }, before];
 };
 
-/** From T1, walked to the keeper and turned to face the counter; the hall's people but the keepers out of the way. */
-const walkToKeeper = (session: GameSession, key: Keeper): void => {
-  teleport(session, ENTRANCE, 63, Math.PI);
-  steps(session, 2);
-  for (const g of [...session.sim.world.with("ai")]) session.sim.world.remove(g);
-  for (const p of wayTo(key)) walkAt(session, p, 600);
+/** Turned to face a keeper. */
+const face = (session: GameSession, key: Keeper): void => {
   const k = STALL_KEEPERS[key];
   const me = session.sim.player()!;
   const want = Math.atan2(k.x - me.position.x, k.z - me.position.z);
   steps(session, 2, { ...EMPTY_INPUT, lookYaw: Math.atan2(Math.sin(want - me.yaw), Math.cos(want - me.yaw)) });
+};
+
+/** From T1, walked up to P3 and on to the keeper, turned to face the counter; the hall's people but the keepers out of the way. */
+const walkToKeeper = (session: GameSession, key: Keeper): void => {
+  teleport(session, ENTRANCE, 63, Math.PI);
+  steps(session, 2);
+  for (const g of [...session.sim.world.with("ai")]) session.sim.world.remove(g);
+  for (const p of [...UP_TO_P3, ...onP3To(key)]) walkAt(session, p, 600);
+  face(session, key);
 };
 
 describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
@@ -56,15 +77,16 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     const { session, ui } = setup();
     session.newGame();
     // A new game is in the evening (21:00): Oyaji's shop is open till 22, Fumiko's bar from 16, the hall till midnight.
-    const expected: Readonly<Record<Keeper, RegExp>> = { sachiko: /Sachiko/, kenta: /Kenta/, fumiko: /Fumiko/, goro: /Goro/, oyaji: /Oyaji's stall/ };
+    // Up from T1 to P3 once (ADR-0093 O3: the climb takes a game half-hour), then from counter to counter along P3, Oyaji's first.
+    const expected: Readonly<Record<Keeper, RegExp>> = { oyaji: /Oyaji's stall/, sachiko: /Sachiko/, kenta: /Kenta/, goro: /Goro/, fumiko: /Fumiko/ };
+    walkToKeeper(session, "oyaji");
     for (const key of Object.keys(expected) as Keeper[]) {
-      walkToKeeper(session, key);
+      for (const p of onP3To(key)) walkAt(session, p, 600);
+      face(session, key);
       const p = session.sim.player()!.position;
       expect(Math.hypot(p.x - beforeKeeper(key).x, p.z - beforeKeeper(key).z), key).toBeLessThan(0.5);
       expect(ui.getState().prompt ?? "", key).toMatch(expected[key]);
-    }
-    for (const key of ["oyaji", "fumiko"] as const) {
-      walkToKeeper(session, key);
+      if (key !== "oyaji" && key !== "fumiko") continue;
       steps(session, 1, frame({ interact: true }));
       expect(ui.getState().shopOpen, key).toBe(true);
       session.intents.closeShop();
@@ -85,9 +107,11 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     const kenta = [...session.sim.world].find((e) => e.key === "kenta")!;
     expect(Math.hypot(kenta.position.x - STALL_KEEPERS.kenta.x, kenta.position.z - STALL_KEEPERS.kenta.z)).toBeGreaterThan(1.5);
     session.sim.enqueue({ type: "wait", minutes: 10 * 60 }); // past 10:00
-    walkToKeeper(session, "fumiko");
     steps(session, 60 * 5);
-    walkToKeeper(session, "fumiko");
+    // By day she sits on her stool before the hatch of her second place on P0, on T1 (ADR-0093 O3).
+    const stool = beforeHatch(1.2, 1.4);
+    teleport(session, stool.x, stool.z + 1.3, Math.PI);
+    steps(session, 2);
     expect(ui.getState().prompt ?? "").toMatch(/closed/i);
     expect(Math.hypot(kenta.position.x - STALL_KEEPERS.kenta.x, kenta.position.z - STALL_KEEPERS.kenta.z)).toBeLessThan(0.5);
   });

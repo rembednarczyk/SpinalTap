@@ -46,8 +46,17 @@ const goTo = (sim: Simulation, p: Vec3) => {
  */
 const NEAR_STALL: Vec3 = beforeKeeper("oyaji", 3);
 const ON_PLOT: Vec3 = ground(410, 28);
-/** On T1 beside Oyaji's back door, where he sits out the night and his prompt is in reach. */
-const byDoor = (): Vec3 => ground(OYAJI_DOOR.x, OYAJI_DOOR.z + 1.4);
+/**
+ * Before Oyaji's counter on P3 by its south end, where he sits out the night behind his grille and
+ * his prompt is in reach (ADR-0093 O3; on T1 beside his back door until then).
+ */
+const byDoor = (): Vec3 => ({ x: OYAJI_DOOR.x - 2.3, y: OYAJI_DOOR.y, z: OYAJI_DOOR.z });
+/** Where a body stands as its plan has it: on P3's slab its feet a hair off the floor's height (the prism's top, in floats). */
+const expectAt = (p: Vec3, q: Vec3): void => {
+  expect(p.x).toBeCloseTo(q.x, 9);
+  expect(p.y).toBeCloseTo(q.y, 9);
+  expect(p.z).toBeCloseTo(q.z, 9);
+};
 
 /** Skips time to the given minute of the day (today or tomorrow), in one step. */
 const skipTo = (sim: Simulation, minute: number) => {
@@ -104,7 +113,8 @@ describe("daily plans", () => {
   it("walk a straight path from the previous stop and then stand facing the stop's way", () => {
     const def = plan("oyaji");
     expect(scheduledPose(def, clockAt(21))).toMatchObject({ stop: 0, position: OYAJI_STALL, arrived: true });
-    const walking = scheduledPose(def, clockAt(22, 1));
+    // Forty seconds on (his way to the grille is 1.7 m since ADR-0093 O3).
+    const walking = scheduledPose(def, clockAt(22, 0, 40));
     expect(walking.arrived).toBe(false);
     expect(dist(walking.position, OYAJI_STALL)).toBeGreaterThan(0.5);
     expect(dist(walking.position, OYAJI_DOOR)).toBeGreaterThan(0.5);
@@ -138,13 +148,13 @@ describe("daily plans in a loaded chunk", () => {
     const oyaji = byKey(sim, "oyaji")!;
     const prompts = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     const started = collect<{ dialogueId: string }>(sim, "InteractionStarted");
-    expect(oyaji.position).toEqual(OYAJI_STALL);
+    expectAt(oyaji.position, OYAJI_STALL);
     expect(oyaji.interactable?.dialogueId).not.toBe("oyaji_closed");
 
     skipTo(sim, OYAJI_HOURS.close - 1);
     teleportPlayer(sim, ON_PLOT);
     run(sim, 60);
-    expect(oyaji.position).toEqual(OYAJI_STALL);
+    expectAt(oyaji.position, OYAJI_STALL);
     expect(oyaji.interactable?.dialogueId).toBe("oyaji_closed");
     // Walks, does not jump: never far from where his plan is at each step.
     let worst = 0;
@@ -167,7 +177,7 @@ describe("daily plans in a loaded chunk", () => {
     skipTo(sim, OYAJI_HOURS.open - 1);
     goTo(sim, byDoor());
     const prompts = collect<{ targetId: number | null; prompt: string | null }>(sim, "InteractionFocusChanged");
-    expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_DOOR);
+    expectAt(byKey(sim, "oyaji")!.position, OYAJI_DOOR);
     run(sim, 2);
     expect(sim.session.focusPrompt).toBe("prompt.closed.oyaji");
     run(sim, 60);
@@ -200,20 +210,20 @@ describe("daily plans and streaming", () => {
     const sim = Simulation.create({ seed: 1 });
     goTo(sim, ON_PLOT);
     goTo(sim, NEAR_STALL);
-    expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_STALL);
+    expectAt(byKey(sim, "oyaji")!.position, OYAJI_STALL);
     goTo(sim, ON_PLOT);
     // Out on Plac Litewski, far from the market.
     goTo(sim, AWAY);
     expect(sim.streamer.isLoaded(MARKET_CHUNK)).toBe(false);
-    expect(sim.streamer.dormantSnapshots().find((s) => s.key === "oyaji")?.position).toEqual(OYAJI_STALL);
+    expectAt(sim.streamer.dormantSnapshots().find((s) => s.key === "oyaji")!.position, OYAJI_STALL);
 
     // Time passes while the market sleeps; it is past midnight when Seki comes back.
     run(sim, 60);
     skipTo(sim, hm(0, 40));
     goTo(sim, ON_PLOT);
     const oyaji = byKey(sim, "oyaji")!;
-    expect(oyaji.position).toEqual(OYAJI_DOOR);
-    expect(oyaji.prevPosition).toEqual(OYAJI_DOOR);
+    expectAt(oyaji.position, OYAJI_DOOR);
+    expectAt(oyaji.prevPosition, OYAJI_DOOR);
     expect(oyaji.yaw).toBe(stopOf("oyaji", 1).yaw);
     expect(oyaji.interactable?.dialogueId).toBe("oyaji_closed");
   });
@@ -222,7 +232,7 @@ describe("daily plans and streaming", () => {
     const sim = Simulation.create({ seed: 1 });
     skipTo(sim, hm(23, 30));
     goTo(sim, ON_PLOT);
-    expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_DOOR);
+    expectAt(byKey(sim, "oyaji")!.position, OYAJI_DOOR);
     const hebi = byKey(sim, "hebi-lookout")!;
     // Where his plan is, on the ground under its line (the square behind Alchemia slopes, ADR-0063).
     const pose = scheduledPose(plan("hebi-lookout"), sim.clock).position;
@@ -238,13 +248,15 @@ describe("daily plans and streaming", () => {
 
 describe("daily plans: saves and determinism", () => {
   it("a game saved mid-walk continues exactly like the original", () => {
+    // Fumiko on her way down from her bar on P3 to her hatch on P0 after midnight (ADR-0093 O3): Oyaji's to his grille is 1.7 m.
     const sim = Simulation.create({ seed: 9 });
     goTo(sim, ON_PLOT);
-    skipTo(sim, OYAJI_HOURS.close);
+    skipTo(sim, hm(0));
     run(sim, 120);
-    const oyaji = byKey(sim, "oyaji")!;
-    expect(dist(oyaji.position, OYAJI_STALL)).toBeGreaterThan(0.3);
-    expect(dist(oyaji.position, OYAJI_DOOR)).toBeGreaterThan(0.3);
+    const fumiko = byKey(sim, "fumiko")!;
+    const [bar, hatch] = [last(stopOf("fumiko", 2).path), last(stopOf("fumiko", 0).path)];
+    expect(dist(fumiko.position, bar)).toBeGreaterThan(0.3);
+    expect(dist(fumiko.position, hatch)).toBeGreaterThan(0.3);
     const restored = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")));
     expect(hash(restored)).toBe(hash(sim));
     for (let i = 0; i < 1500; i++) {
@@ -252,7 +264,7 @@ describe("daily plans: saves and determinism", () => {
       restored.step();
     }
     expect(hash(restored)).toBe(hash(sim));
-    expect(byKey(restored, "oyaji")!.position).toEqual(byKey(sim, "oyaji")!.position);
+    expect(byKey(restored, "fumiko")!.position).toEqual(byKey(sim, "fumiko")!.position);
   });
 
   it("the same run across closing time and the night patrol gives the same state twice", () => {

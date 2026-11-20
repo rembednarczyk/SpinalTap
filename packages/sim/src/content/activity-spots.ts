@@ -1,6 +1,6 @@
 import type { ActivityId, Vec3 } from "@seki/core";
 import type { ActivitySpot, SpotKind } from "../world/activity-types";
-import { atUnit } from "./alchemia/units";
+import { beforeHatch } from "./alchemia/fumiko-p0";
 import { HALL } from "./alchemia/plan";
 import { againstWall, spotNear } from "./lublin/places";
 import { MAP_CHUNKS } from "./lublin/sites";
@@ -130,14 +130,14 @@ const KANAL: readonly ActivitySpot[] = [
 const onT1 = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
   spotAt(id, kind, { x, y: groundY(x, z), z }, yaw, only);
 
-/** On Fumiko's stools before her hatch: `across` from its middle. */
+/** On Fumiko's stools before the hatch of her second place on P0 (ADR-0093 O3): `across` from its middle. */
 const stool = (id: string, across: number): ActivitySpot => {
-  const p = atUnit("fumiko", 1.2, across);
+  const p = beforeHatch(1.2, across);
   return onT1(id, "bar", p.x, p.z, SOUTH);
 };
 
 /**
- * The market in Alchemia (ADR-0074): Fumiko's stools on T1 before the hatch of her ramen bar, and
+ * The market in Alchemia (ADR-0074): Fumiko's stools on T1 before the hatch of her second place, and
  * the hall's front of glass to lean on either side of its way in. The units inside have their
  * still crowd (`alchemia/crowd.ts`): passers-by keep to T1.
  */

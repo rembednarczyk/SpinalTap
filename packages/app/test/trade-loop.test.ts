@@ -3,13 +3,16 @@ import { type AudioCue, type AudioPort, type Vec3, EMPTY_INPUT, type InputFrame,
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { FOODHALL, beforeKeeper, ground } from "@seki/sim";
+import { beforeKeeper, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** In the food hall a few metres before Oyaji's counter (ADR-0074), on its floor. */
-const STALLS = beforeKeeper("oyaji", 4);
-/** Where to stand to talk to Oyaji: before his counter by day, beside him on T1 outside his back door at night. */
-const byOyaji = (p: Vec3): Vec3 => (p.z > FOODHALL.maxZ ? ground(p.x, p.z + 1.4) : beforeKeeper("oyaji"));
+/** In the food hall a few metres before Oyaji's counter (ADR-0074; on P3 since ADR-0093 O3), on its floor. */
+const STALLS = beforeKeeper("oyaji", 2.4);
+/**
+ * Where to stand to talk to Oyaji: before his counter in the food hall on P3, level with him (ADR-0093
+ * O3), by day at it and at night behind his grille by its south end (until O3 on T1 by his back door).
+ */
+const byOyaji = (p: Vec3): Vec3 => ({ x: beforeKeeper("oyaji").x + 0.3, y: p.y, z: p.z });
 
 const render: RenderPort = {
   spawn() {},
@@ -165,7 +168,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     const oyaji = [...session.sim.world].find((e) => e.key === "oyaji")!;
     teleport(session, byOyaji(oyaji.position).x, byOyaji(oyaji.position).z, 0, 0, byOyaji(oyaji.position).y);
     steps(session, 2);
-    // He walks out through his back room to his back door on T1 at 22:00: there by now.
+    // He steps back from the counter at 22:00 and sits behind his grille (ADR-0093 O3): there by now.
     steps(session, 60 * 30);
     teleport(session, byOyaji(oyaji.position).x, byOyaji(oyaji.position).z, 0, 0, byOyaji(oyaji.position).y);
     steps(session, 2);

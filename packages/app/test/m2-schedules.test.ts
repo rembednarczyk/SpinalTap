@@ -113,8 +113,8 @@ describe("M2: day clock and schedules through the game loop", () => {
     wait(session, 90); // 22:30
     frames(session, 60 * 10);
     const door = oyajiDoor();
-    // On T1 beside him at his back door (ADR-0074).
-    goTo(session, door.x, door.z + 1.4, door.y);
+    // Before his counter, by him behind his grille in the food hall on P3 (ADR-0093 O3; on T1 by his back door until then).
+    goTo(session, door.x - 2.3, door.z, door.y);
     expect(ui.getState().prompt).toBe("Oyaji's stall: closed until 8:00");
     frames(session, 1, true);
     const dialogue = ui.getState().dialogue;
