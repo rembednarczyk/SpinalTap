@@ -132,6 +132,10 @@ export const l3Pieces = (): Piece[] => [
   ...bar(),
   ...grill(),
   ...WINDOW_BARS.flatMap(([key, x0, x1]) => windowBar(key, x0, x1, GLASS_IN_SOUTH, 1, F, C)),
+  // A lit menu board hung over the east window bar's east end, over the heads, its face to the street right of the sign.
+  inBox(423.6, 427.0, 13.36, 13.42, F + 2.35, F + 3.5, "lightbox"),
+  inBox(423.7, 423.72, 13.38, 13.4, F + 3.5, C, "cable"),
+  inBox(426.88, 426.9, 13.38, 13.4, F + 3.5, C, "cable"),
   // A lit menu stand in the south-east corner past the window bar, its face to the street.
   inBox(426.1, 427.4, 13.82, 13.92, F - 0.05, F + 3.3, "machine", true),
   inBox(426.15, 427.35, 13.8, 13.82, F + 0.25, F + 3.2, "lightbox"),
