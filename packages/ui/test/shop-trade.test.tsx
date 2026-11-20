@@ -66,6 +66,7 @@ const intents = (): UiIntents => ({
   openWait: vi.fn(),
   closeWait: vi.fn(),
   waitHours: vi.fn(),
+  closeEndScreen: vi.fn(),
 });
 
 const piece = (key: string, defId: TradeItemVm["defId"], name: string, patch: Partial<TradeItemVm> = {}): TradeItemVm => ({
