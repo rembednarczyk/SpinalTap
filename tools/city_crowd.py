@@ -40,9 +40,9 @@ TUCK = 50
 # Two hairstyles of each body, by the pack's numbers.
 HAIR = {'a': (1, 3), 'b': (1, 3)}
 ROLES = {'Skin': 'brick', 'Shirt': 'fabric-teal', 'Pants': 'trim', 'Shoes': 'tyre', 'Hair': 'dark', 'HairTie': 'fabric-magenta'}
-FULL = 1100
+FULL = 1800
 LITE = 260
-MAX_TRIS = 1500
+MAX_TRIS = 2200
 # The head: the skin this far (pack units) under the top of a standing or sitting figure, above its neck.
 HEAD = 0.62
 

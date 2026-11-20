@@ -177,7 +177,8 @@ describe("street-props.glb (ADR-0063)", () => {
       // A post or a mast added as a box is 10 triangles; anything less is a scrap the clustering left.
       expect(Math.min(...sizes), `${m.key}: ${sizes.join(",")}`).toBeGreaterThanOrEqual(10);
     }
-    expect(parts(street.models.get("st-bike")!).length).toBeLessThanOrEqual(3);
+    // The whole of Quaternius' bike (20.11): the five parts of its source, none a scrap.
+    expect(parts(street.models.get("st-bike")!).length).toBeLessThanOrEqual(5);
     const cart = street.models.get("st-food-cart")!;
     const at = (k: number) => [...cart.positions].filter((_, i) => i % 3 === k);
     const xs = at(0);

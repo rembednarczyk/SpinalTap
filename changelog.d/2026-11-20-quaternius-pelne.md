@@ -1,0 +1,1 @@
+- Hydranty, rowery przy stojakach, trolejbus i kobiety w tłumie mają pełny kształt modeli źródłowych zamiast uproszczonego (np. rower z kołami ze szprychami: ok. 2,7 tys. trójkątów zamiast 0,76 tys.).
