@@ -6,7 +6,7 @@ import { type GroundField, groundOf } from "../world/ground";
 import { type Collider, circleTouches, closestXZ, collidersOf, colliderTop, overCollider, pushCircleOut, rayCollider } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
-import { solidIndexOf } from "../world/solid-index";
+import { collidersAt, solidIndexOf } from "../world/solid-index";
 import { worldTimeScale } from "./ability-system";
 import { NOISE_LANDING, hearNoise } from "./ai/ganger-hearing";
 import { offTheBank, ontoDeckSide } from "./bank";
@@ -51,7 +51,7 @@ const blocks = (solids: readonly Collider[], field: GroundField, c: Collider, x:
  */
 export const groundAt = (solids: readonly Collider[], field: GroundField, x: number, z: number, feet: number): number => {
   let ground = field.heightAt(x, z, feet + STEP_HEIGHT);
-  for (const c of solids) {
+  for (const c of collidersAt(solids, x, z, EDGE_MARGIN)) {
     if (!overCollider(c, x, z, EDGE_MARGIN)) continue;
     const top = colliderTop(c, x, z);
     if (top > ground && top <= feet + STEP_HEIGHT && foothold(solids, field, c, x, z, top)) ground = top;
@@ -110,7 +110,8 @@ const across = (c: Collider): Across => {
  */
 const supported = (solids: readonly Collider[], field: GroundField, self: Collider, x: number, z: number, top: number, hops: number): boolean => {
   if (field.heightAt(x, z, top + STEP_HEIGHT) >= top - STEP_HEIGHT) return true;
-  for (const c of solids) {
+  // Down a flight the point leaves the body's rectangle: the solids' every part there (20.11).
+  for (const c of collidersAt(solids, x, z, EDGE_MARGIN)) {
     if (c === self || c.box.min.y > top + STEP_HEIGHT || !overCollider(c, x, z, EDGE_MARGIN)) continue;
     const t = colliderTop(c, x, z);
     if (t < top - STEP_HEIGHT) continue;
@@ -139,7 +140,7 @@ const foothold = (solids: readonly Collider[], field: GroundField, c: Collider, 
 /** Lowest underside above a head at `head` over the point, or Infinity: a jump stops there. */
 const ceilingAt = (solids: readonly Collider[], x: number, z: number, head: number): number => {
   let ceiling = Infinity;
-  for (const c of solids) {
+  for (const c of collidersAt(solids, x, z, 0)) {
     if (c.box.min.y >= head - 1e-6 && c.box.min.y < ceiling && overCollider(c, x, z)) ceiling = c.box.min.y;
   }
   return ceiling;
