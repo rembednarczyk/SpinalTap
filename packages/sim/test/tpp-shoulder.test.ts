@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type Entity, CAPSULE_INTERIOR_ROOM, INTERIORS, Simulation, TPP_SHOULDER_OFFSET, aimOrigin, eyeOf, ground, hitscan, lineOfSight, rayGeometry } from "../src";
+import type { Vec3 } from "@seki/core";
+import { type Entity, ALCHEMIA_LIFT, ALCHEMIA_LIFT_NE, CAPSULE_INTERIOR_ROOM, INTERIORS, Simulation, TPP_SHOULDER_OFFSET, aimOrigin, eyeOf, ground, hitscan, lineOfSight, rayGeometry } from "../src";
+import { BODY } from "../src/world/factory";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 type Hit = { targetId: number };
@@ -130,7 +132,45 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     // round). Its storeys are the gallery's P0..P2 and the food hall's P3 since O3. 11 stood in the hall's
     // lift's shaft at P1's gate (walls and gate 0.1 thick) and by the north-east core's east wall on P2 and
     // P3: G-939. The core down to P0 (O3) brought three more on P1; the services' riser filling the corner
-    // east of it (`mall.ts`) took all nine. The 5 left are the shaft's.
-    expect(galleryLeaks).toBeLessThanOrEqual(5);
+    // east of it (`mall.ts`) took all nine. The 5 left stood in the shaft by P1's gate, gone with its walls
+    // and gates 0.2 thick (G-939, the test below).
+    expect(galleryLeaks).toBe(0);
+  });
+
+  it("by Alchemia's lifts, in the shaft or out by it at any level, crouched and aimed, never start past the shaft's walls or gates (G-939)", () => {
+    const sim = Simulation.create({ seed: 11 });
+    const dirs = [{ x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }, { x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 }];
+    const inSolid = (p: Vec3) => dirs.every((d) => (rayGeometry(sim.world, p, d, 0.05) ?? 1) < 1e-4);
+    // Where a body stands: nothing within its radius round its knees or its chest.
+    const free = (x: number, y: number, z: number) =>
+      [0.4, 0.9].every((h) => Array.from({ length: 16 }, (_, a) => (a * Math.PI) / 8).every((a) => (rayGeometry(sim.world, { x, y: y + h, z }, { x: Math.cos(a), y: 0, z: Math.sin(a) }, BODY.radius) ?? 1) >= BODY.radius - 0.005));
+    const leaks: string[] = [];
+    for (const l of [ALCHEMIA_LIFT, ALCHEMIA_LIFT_NE]) {
+      teleportPlayer(sim, { x: l.centre.x + 3, y: l.levels[1]!, z: l.centre.z + 3 }, 0, 0);
+      run(sim, 20);
+      const r = l.half + l.wall;
+      const across = (p: Vec3) => Math.abs(p.x - l.centre.x) < r && Math.abs(p.z - l.centre.z) < r;
+      for (const y of l.levels) {
+        // A grid over the band a body reaches inside the shaft and the one round it outside, both ways along each wall.
+        for (let i = -36; i <= 36; i++) {
+          for (let j = -36; j <= 36; j++) {
+            const ring = Math.max(Math.abs(i), Math.abs(j)) * 0.05;
+            if (!((ring >= 0.5 && ring <= 0.8) || (ring >= 1.4 && ring <= 1.8))) continue;
+            const x = l.centre.x + i * 0.05;
+            const z = l.centre.z + j * 0.05;
+            if (!free(x, y, z)) continue;
+            for (const yaw of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) {
+              const p = crouchedAt(x, y, z, yaw);
+              const eye = eyeOf(p);
+              const o = aimOrigin(p, "TPP");
+              if (inSolid(eye) || (!across(eye) && !across(o))) continue;
+              if (!lineOfSight(sim.world, eye, o, false) && !inSolid(o) && hitscan(sim.world, o, { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) }, 30, -1).distance > 1) leaks.push(`${l.key} y ${y} at ${i * 0.05},${j * 0.05} yaw ${yaw.toFixed(2)}`);
+            }
+          }
+        }
+      }
+    }
+    // 1933 before G-939: the shafts' walls and gates 0.1 thick, less than the shot's start reaches past a face (0.17).
+    expect(leaks).toEqual([]);
   });
 });
