@@ -146,7 +146,8 @@ const TARG: readonly ActivitySpot[] = [
   stool("targ-yatai-bar-2", 0),
   onT1("targ-front-wall", "wall", 410, HALL.maxZ + 0.55, NORTH),
   onT1("targ-front-wall-2", "wall", 422.5, HALL.maxZ + 0.55, NORTH, ["smoke", "phone"]),
-  onT1("targ-front-wall-3", "wall", 427.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
+  // Clear of P0's east door (x 425.6-427.1, ADR-0093 O3): at 427.5 it stood by its jamb.
+  onT1("targ-front-wall-3", "wall", 428.5, HALL.maxZ + 0.55, NORTH, ["lean", "phone"]),
 ];
 
 /** W-3: the vending machine by the tower's office door, the hall's west wall by the quay, the basin's railing, row N's east wall. */

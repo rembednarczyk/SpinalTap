@@ -2,6 +2,46 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-939 Galeria Alchemii: strzał zza barku startuje za cienką ścianą szybu windy hali i trzonu NE
+- Ważność: S4 · Zasięg: Alchemia, galeria P1–P3 (szyb windy hali x 412,3–414,7, z 32,4–34,8; trzon NE)
+- Opis: Miara G-275 (tests/tpp-shoulder) po dodaniu galerii jako wnętrza ADR-0061 (O2): 11 miejsc, w których przykucnięty i celujący gracz zaczyna strzał za ścianą. Ściany szybu windy hali i bramka na P1 (od T0) mają 0,1 m (lift.ts WALL), mniej niż wysunięcie barku za lico (0,16 m); przy bramce na P1 strzał z kabiny startuje na pasie T0. Przy trzonie NE pokój galerii zahacza o wnętrze trzonu, a za jego wschodnią ścianą jest wnęka do narożnika szkła. Szkło fasady poprawione w PR #785 (0,2 m, 770 → 0). Poprawka: bramka na P1 jak na P−2 (wypełnia grubość ściany, platforma krótsza, GATE_DEPTH), ściany szybu 0,2 m albo pokoje galerii bez szybu i trzonu, potem baza galerii w teście z 11 do 0.
+- Status: naprawione (20.11, 789 scalony); wcześniej: w PR #789; wcześniej: w naprawie (gałąź fix/g939-szyb-windy); wcześniej: nowy (19.11, z O2)
+- Pakiet właściciela: sim (content/alchemia/lift.ts, mall-plan.ts)
+- Test przyjęcia: packages/sim/test/tpp-shoulder.test.ts (galleryLeaks ≤ 11)
+
+### G-941 Oś wejścia głównego Alchemii na gołym gruncie klina przy pawilonie
+- Ważność: S4 · Zasięg: lokalny, Alchemia, (422–423,5; −9,4…0)
+- Opis: Między krawędzią placu T0 (422,0; −8,8)–(423,5; 6,0) a bokiem NW pawilonu T-230 leży klin bez nawierzchni (istniał przed O2b, O2b odsłania ok. 15 m²). Leży na nim wschodni skraj osi wejścia (do 1,8 m przy z −8) i pas LED x 422,8 na z −8,5…−0,8; u wylotu osi pas ok. 0,5 m bez nawierzchni (z −9,35…−8,8) między chodnikiem w232464426 a placem. Przegląd kuratora 19.11.
+- Status: naprawione (20.11, 788 scalony); wcześniej: w PR #788; wcześniej: w naprawie (gałąź fix/g940-g941-alchemia-nawierzchnia); wcześniej: nowy (19.11)
+- Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
+- Test przyjęcia: pasy LED i oś x 419–423 od pasma chodnika do z 0 w całości na nawierzchni
+- Proponowana kontrola skanu nav-edge-bare: odcinek krawędzi grafu poziomów na terenie, który ponad 0,5 m biegnie bez nawierzchni (w Alchemii po O2b co najmniej 1).
+- Wiersz topografii: T-331.
+
+### G-940 Drzwi klatki P−1 Alchemii wychodzą na trawnik
+- Ważność: S4 · Zasięg: lokalny, Alchemia, (426; 9–12,4)
+- Opis: Po O2b (#786) domek klatki P−1 (T-238) stoi na zachodnich ok. 28 m² trawnika T-241/trawnik-wschod (x 424–434, z 9–21). Przed drzwiami (x 425,3–426,7, z 12,4) jest 3,2 m trawy, krawędź grafu t0-axis → p1-stair-out (426; 11,2) też biegnie po trawie. Komentarz T0_LAWNS w imporcie (trawnik omija drzwi klatki) już nie jest prawdziwy. Przegląd kuratora 19.11.
+- Status: naprawione (20.11, 788 scalony); wcześniej: w PR #788; wcześniej: w naprawie (gałąź fix/g940-g941-alchemia-nawierzchnia); wcześniej: nowy (19.11)
+- Pakiet właściciela: tools/osm-import (T0_LAWNS), regeneracja tablic
+- Test przyjęcia: pas 1,5 m przed drzwiami domku i krawędź t0-axis→p1-stair-out leżą na square
+- Proponowana kontrola skanu door-approach-unpaved: pas 1,5 m × szerokość drzwi przed drzwiami domków klatek, pawilonów i wejść scen na grass albo bez nawierzchni (baza po O2b w Alchemii 1).
+- Wiersz topografii: T-330.
+- Poboczne z naprawy: węzeł grafu alchemia-p1-stair-east (428,9; 11,2) leży na trawniku, krawędź stair-out → stair-east ok. 0,9 m po trawie; węzeł stracił sens (domek przylega do skrzydła L1), do usunięcia w parking-nav.ts (sim).
+
+### G-938 Strzały napastników do ofiary prowokują patrol Rynku przeciw graczowi
+- Ważność: S2 · Zasięg: Stare Miasto przy Bramie Krakowskiej (przestępstwo przy 528; −58), każde przestępstwo z bronią w zasięgu alarmu grupy terytorium
+- Opis: Napastnicy Hebi strzelają do ofiary; alertNearbyGangers alarmuje członków terytorium w promieniu strzału, a territory-system uznaje zaalarmowanego członka za prowokację (TerritoryProvoked alarm dla rynek, grodzka-bridge, panasa-lane). Patrol hebi-rynek-noc strzela potem do gracza, który nic nie zrobił (19 strzałów w 15 s, ślad na main 19.11, save-load-crowd-panic seed 13). Poprawka: strzał członka gangu, który nie walczy z graczem, nie alarmuje jego gangu przeciw graczowi albo alarm bez winy gracza nie prowokuje terytorium.
+- Status: naprawione (19.11, #757 scalony); wcześniej: w PR #757; wcześniej: nowy
+- Pakiet właściciela: packages/sim (combat-system alertNearbyGangers, territory-system)
+- Test przyjęcia: test sim: napad przy patrolu, napastnicy strzelają do ofiary, patrol nie strzela do gracza i gang nie jest sprowokowany
+
+### G-908 Droga cicha rurociągiem i dachem W-3 bez zagrożeń
+- Ważność: S4 · Zasięg: trasa most, rurociąg, dach N, właz
+- Opis: Playtest 17.11: cała trasa bez strażnika, kamery i obserwatora (ADR-0082 zakłada dwie kamery dachu (2530; 440), (2556; 440) i obserwatora w kabinie), ok. 2 minut gry w ciszy. Odtworzenie: od Genzō przez (2484; 409,5), drabina (2444; 438,6), rurociąg +10, tor (2501; 438,6) do włazu (2564; 439,3). Upload 40 s w martwym kącie pewny.
+- Status: naprawione (18.11, #736 scalony); wcześniej: w PR #736; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- Kamery dachu N, obserwator w kabinie, strefa z polem floor. Otwarte: obserwator po alarmie na tor suwnicy (ADR §1 p. 4), kwestia Genzō w m4-doki.ink.
+
 ### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
 - Status: naprawione (18.11, #728 scalony); wcześniej: w PR #728 (18.11); wcześniej: zgłoszone (2.11, weryfikator G-219)
 - Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GAME_SECONDS_PER_REAL_SECOND } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_PROPS, MALL_PROPS, SHOP_SOLID_PROPS, FOODHALL_SOLID_PROPS, FRONT_PLAZA_SOLID_PROPS, CAR_LIFT_PIECES, CAR_LIFT_PROPS, CAR_LIFT_TRAVEL, P1, P1_CABINS, P1_CAR_LIFT, P1_PIECES, P2, P2_PALLETS, P2_ROBOT, P2_SHELL_PIECES, P2_STORE_PIECES, Simulation, type AlchemiaBox } from "../src";
+import { ALCHEMIA_PIECES, ALCHEMIA_PROPS, MALL_PROPS, SHOP_SOLID_PROPS, FOODHALL_SOLID_PROPS, ROOF_SOLID_PROPS, FRONT_PLAZA_SOLID_PROPS, CAR_LIFT_PIECES, CAR_LIFT_PROPS, CAR_LIFT_TRAVEL, P1, P1_CABINS, P1_CAR_LIFT, P1_PIECES, P2, P2_PALLETS, P2_ROBOT, P2_SHELL_PIECES, P2_STORE_PIECES, Simulation, type AlchemiaBox } from "../src";
 import { shuttleProgress } from "../src/systems/shuttle-system";
 import { teleportPlayer } from "./helpers";
 
@@ -36,7 +36,8 @@ describe("the car lift from P-1's cabins to P-2 (ADR-0074 stage 5e)", () => {
 
   it("is the last of Alchemia's props, its platform and car riding up y by the clock, together", () => {
     // The gallery round the atrium (ADR-0093 O1) comes after it, its shops (O2) after the gallery, the food hall's fittings (O3) last.
-    const after = MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length;
+    // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
+    const after = MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length;
     expect(ALCHEMIA_PROPS.slice(-CAR_LIFT_PROPS.length - after, -after)).toEqual(CAR_LIFT_PROPS);
     const riders = CAR_LIFT_PROPS.filter((p) => p.mechanism?.kind === "shuttle");
     expect(riders).toHaveLength(3);

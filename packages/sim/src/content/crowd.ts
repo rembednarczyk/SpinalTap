@@ -16,6 +16,7 @@ import { TRAFFIC_ROUTES } from "./traffic";
 import { streetSegments } from "./traffic-ramp";
 import { FOODHALL_CROWD, PARKING_CROWD } from "./alchemia/crowd";
 import { GALLERY_CROWD } from "./alchemia/shops";
+import { ROOF_CROWD } from "./alchemia/roof-garden";
 import { PLAZA_CROWD } from "./alchemia/front-plaza-cafe";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
@@ -405,6 +406,8 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   ...PARKING_CROWD,
   // And in the gallery's shops and at its atrium's balustrade (ADR-0093 O2).
   ...GALLERY_CROWD,
+  // And on its green roof's benches and at the atrium's balustrade there (O4).
+  ...ROOF_CROWD,
   spot(DOCKS_CHUNK, inDocks(2530, 444.6), WEST, ["smoke", "lean"]),
   spot(DOCKS_CHUNK, inDocks(2585, 444.5), NORTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(2580, 410), NORTH, ["lean", "smoke"]),
