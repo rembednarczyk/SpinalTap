@@ -56,6 +56,7 @@ import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-ch
 import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
 import { stairFootUnpaved } from "./stair-foot";
 import { cityStairWorld } from "./stair-foot-world";
+import { planPropsInGame } from "./plan-prop-under-game";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { cutOnRoadInGame } from "./cut-on-road";
@@ -1582,6 +1583,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * or lawn: no pavement, square or floor where the stairs end (the curator's review of C5, `stair-foot.ts`).
    */
   "stair-foot-unpaved": () => stairFootUnpaved(cityStairWorld()),
+  /**
+   * A point of the furniture plan laid by hand (`inOsm: false`) whose piece the map places and the
+   * game always drops, a set piece, block, character or way of its own on its spot: a dead point of
+   * the plan (the curator's review of C5, `plan-prop-under-game.ts`).
+   */
+  "plan-prop-under-game": () => planPropsInGame(),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
