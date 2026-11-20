@@ -1,4 +1,4 @@
-import type { GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
+import { type GroundPoint, SURFACE_LIFT, type Vec3, type ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "../builders";
 import { KRAKOWSKIE_CHUNKS } from "../lublin/krakowskie.generated";
 import { mapHeight } from "../lublin/shape";
@@ -271,8 +271,15 @@ const pavement = (): Piece[] => [
 export const ARKADY_BUILDING: readonly Piece[] = [...groundFloor(), ...upperFloor(), ...glazing()];
 /** The pavement and the landing round it, in its frame. */
 export const ARKADY_PAVEMENT: readonly Piece[] = pavement();
+/**
+ * The pavement and the landing as drawn: as the map's paving round them (T2's and Lubartowska's
+ * `square`), `SURFACE_LIFT` over the ground bodies walk (ADR-0045). Drawn at the walked height, their
+ * edges sank that far into that paving (the user's 20.11, `alchemia-off-ground`); the solids stay on
+ * it, so the step off the north end onto the street stays under `STEP_HEIGHT` (G-778).
+ */
+const PAVEMENT_DRAWN: readonly Piece[] = ARKADY_PAVEMENT.map((p) => ({ ...p, box: { ...p.box, y1: p.box.y1 + SURFACE_LIFT.square } }));
 /** Every drawn piece of the Arkady, in the building's frame. */
-export const ARKADY_PIECES: readonly Piece[] = [...ARKADY_BUILDING, ...ARKADY_PAVEMENT];
+export const ARKADY_PIECES: readonly Piece[] = [...ARKADY_BUILDING, ...PAVEMENT_DRAWN];
 
 /** A box of the building's frame as a prism round `c` (world). */
 const prismOf = (b: Box, c: Vec3): PrismDef => ({
