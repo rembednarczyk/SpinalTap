@@ -2245,6 +2245,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
+### G-944 Hideo po dojściu do domu na Bramowej wstaje i krąży
+- Ważność: S3 · Zasięg: Stare Miasto, Bramowa, dom Hideo (droga „dom” z schedules.ts)
+- Opis: Pomiar agenta G-943 na main (przed #800 i po nim): Hideo dochodzi do domu na Bramowej, siada albo zasypia, po czym wstaje i krąży ok. 20 m przez ok. 3 minuty gry, potem znów śpi. Oczekiwane: po dojściu zostaje w domu do następnego punktu harmonogramu.
+- Status: w naprawie
+- Pakiet właściciela: packages/sim (content/schedules.ts, systemy harmonogramu)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
