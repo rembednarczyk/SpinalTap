@@ -36,7 +36,7 @@ import {
   w3,
   HANA_SPOT,
 } from "../src";
-import { byKey, collect, input, run, standInFront, teleportPlayer, debriefExtras } from "./helpers";
+import { byKey, collect, input, run, standInFront, teleportPlayer, debriefExtras, untilCrew } from "./helpers";
 
 /**
  * Sector W-3 on the docks' ground (ADR-0082): `at` is a point of W-3 (world x and z, y over its
@@ -427,6 +427,7 @@ describe("no sniper outside the docks", () => {
       const site = CONTRACT_SITE_SPAWNS[c.siteId][0]!;
       teleportPlayer(sim, w(site.x + 1, site.z), 0);
       sim.step();
+      untilCrew(sim, c);
       const types = crew(sim, c).map((e) => e.enemy?.type);
       expect(types).toHaveLength(c.targets);
       expect(types.every((t) => t?.startsWith("hebi_"))).toBe(true);

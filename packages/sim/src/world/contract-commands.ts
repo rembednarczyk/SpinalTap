@@ -26,7 +26,8 @@ import { HACK_RANGE } from "../systems/contract-system";
 import { deadFlag } from "../systems/death-system";
 import { SIM_HZ } from "../step-rate";
 import type { SimContext } from "./context";
-import { applyReputationCause, clearContract, raiseProgress, takeBackJobItems } from "./domain-ops";
+import { applyReputationCause, clearContract, raiseFlag, raiseProgress, takeBackJobItems } from "./domain-ops";
+import { arrivalTick, onWayFlag } from "./contract-plan";
 import { briefJob } from "./job-brief";
 import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./street";
 import { grantXp } from "./progression-ops";
@@ -80,6 +81,8 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
   const { hooks: _found, ...log } = domain.contracts;
   ctx.state.domain = { ...domain, contracts: { ...log, active: contract, tally: freshTally(ctx.tick) } };
   if (kind === "protect") patchUpProtectee(ctx);
+  // A crew on its way is not there yet: up before the streamer spawns it (`contractPlanSystem` lowers it).
+  if (arrivalTick(contract, ctx.tick) !== undefined) raiseFlag(ctx, onWayFlag(contract.id));
   ctx.streamer.registerContract(ctx.world, ctx.state.domain.flags, domain.contracts.completed, contract);
   ctx.bus.emit("ContractAccepted", { contract });
   ctx.bus.emit("ContractBonusChanged", { contractId: contract.id, condition: CONTRACT_BONUS[kind], kept: true });

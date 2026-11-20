@@ -2,7 +2,7 @@ import { type Contract, contractKind, contractTag, hasFlag, hasModifier, inHours
 import { hooksOfKind } from "../content/contract-hooks";
 import { W3_SMOKER } from "../content/tessen-w3";
 import type { SimContext, System } from "../world/context";
-import { ambushFlag, dayFlag, offPostFlag, smokeFlag } from "../world/contract-plan";
+import { ambushFlag, arrivalTick, dayFlag, offPostFlag, onWayFlag, smokeFlag } from "../world/contract-plan";
 import { lowerFlag, raiseFlag } from "../world/domain-ops";
 import { contractSmokerKey } from "../world/quiet-way-templates";
 
@@ -31,6 +31,9 @@ const smokerDown = (ctx: SimContext, c: Contract): boolean => {
 };
 
 const followClock = (ctx: SimContext, c: Contract): void => {
+  // The crew on its way turns up at its tick (only lowered: a save from before the delays has its crew there already).
+  const arrives = arrivalTick(c, ctx.state.domain.contracts.tally?.startTick ?? ctx.tick);
+  if (arrives !== undefined && ctx.tick >= arrives && hasFlag(ctx.state.domain.flags, onWayFlag(c.id))) lowerFlag(ctx, onWayFlag(c.id));
   const minute = minuteOfDay(ctx.state.domain.clock);
   const fighting = crewAlerted(ctx, c);
   if (hasModifier(c, "night_only")) setFlag(ctx, dayFlag(c.id), !fighting && !inHours(minute, NIGHT_FROM, NIGHT_TO));
@@ -48,7 +51,8 @@ const followClock = (ctx: SimContext, c: Contract): void => {
 /**
  * The plan of a varied contract over time (ADR-0034), after the contract system: the targets of
  * a night-only job are away by day, a guard with a rotation gap leaves his post in it (neither
- * while the crew fights), and once the job is done the ambush by the way out moves in. The
+ * while the crew fights), a raid on its way turns up after its site's delay (ADR-0093 O3), and
+ * once the job is done the ambush by the way out moves in. The
  * streamer follows the flags. Without a contract the flags of the last one come down.
  */
 export const contractPlanSystem: System = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type Vec3, contractTag } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, HANA_SPOT, Simulation, contractSpawnYaw } from "../src";
-import { byKey, teleportPlayer } from "./helpers";
+import { byKey, teleportPlayer, untilCrew } from "./helpers";
 
 
 describe("contract crews face the way trouble comes from (audit W11)", () => {
@@ -18,6 +18,8 @@ describe("contract crews face the way trouble comes from (audit W11)", () => {
       sim.step();
       const c = sim.domain.contracts.active!;
       sites.add(c.siteId);
+      // On its way first (ADR-0093 O3): it turns up at the gallery's cores on P2.
+      untilCrew(sim, c);
       const oyaji = byKey(sim, "oyaji")!.position;
       const wave = [...sim.world.with("ai")].filter((e) => e.tag === contractTag(c.id));
       expect(wave.length).toBeGreaterThan(0);

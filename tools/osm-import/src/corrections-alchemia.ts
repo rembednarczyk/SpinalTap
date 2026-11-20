@@ -82,7 +82,7 @@ const CAR_PARK: readonly Pt[] = [
  * along its notch's edge but along the triangular pavilion's north-west side (`PAVILION_OUTLINE` in
  * sim's `alchemia/pavilion.ts`, the annex standing out of it) to its west corner (423.3; −8.7), and
  * down into the footway w232464426's band along Bajkowskiego, back to the car park's edge under the
- * driveway. The notch was bare ground between the square and the pavilion, with a strip of it
+ * driveway and west of it along the band to the car park's corner by Bajkowskiego. The notch was bare ground between the square and the pavilion, with a strip of it
  * between the band and the square, and the main entrance's way (ADR-0093 O2b) runs over both
  * (G-941, T-331). The import rounds the corners to 0.1 m, so they stand a few centimetres under the
  * pavilion's walls and in the band (which it cuts the square off), not short of them.
@@ -98,8 +98,13 @@ const T0_SQUARE: readonly Pt[] = [
   { x: 423.3, z: -8.7 },
   { x: 423.3, z: -9.2 },
   { x: 418.3, z: -9.5 },
-  // Under the driveway, on the car park's edge as the import rounds it: west of it the edge stays.
+  // Under the driveway, on the car park's edge as the import rounds it, so the driveway's edges stay.
   { x: 414.3, z: -8.9 },
+  // West of it into the band again: the car park's edge stopped 1.15–1.9 m short of it, setts on the
+  // orthophoto, and the front square's south stairs (ADR-0074 C5) come down there (G-942, T-333).
+  { x: 409.7, z: -8.9 },
+  { x: 409.7, z: -10.2 },
+  { x: 383.4, z: -11.6 },
 ];
 
 /** A lawn: a rectangle with its corners cut by `c` (m), counter-clockwise. */

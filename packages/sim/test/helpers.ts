@@ -1,4 +1,4 @@
-import { EMPTY_INPUT, type InputFrame, type Vec3 } from "@seki/core";
+import { type Contract, EMPTY_INPUT, type InputFrame, type Vec3, contractTag } from "@seki/core";
 import { type Entity, Simulation, type SimulationOptions, ground } from "../src";
 
 export const input = (partial: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...partial });
@@ -132,4 +132,15 @@ export const standInFront = (sim: Simulation, e: Entity, metres: number): void =
   const yaw = e.ai?.watch?.yaw ?? e.yaw;
   const [dx, dz] = [Math.sin(yaw), Math.cos(yaw)];
   teleportPlayer(sim, { x: e.position.x + dx * metres, y: e.position.y, z: e.position.z + dz * metres }, Math.atan2(-dx, -dz));
+};
+
+/**
+ * Steps until the job's crew is all in the world: a raid on its way turns up after its site's delay
+ * (`SitePlan.delay`, ADR-0093 O3). The steps it took; a guard of a minute.
+ */
+export const untilCrew = (sim: Simulation, c: Contract, frame: InputFrame = EMPTY_INPUT): number => {
+  const here = () => [...sim.world].filter((e) => e.tag === contractTag(c.id)).length >= c.targets;
+  let n = 0;
+  for (; n < 60 * 60 && !here(); n++) sim.step(frame);
+  return n;
 };

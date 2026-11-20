@@ -191,6 +191,24 @@ const firstStep = (p: Prepared, s: Search, end: number, from: Vec3): Vec3 | null
   return null;
 };
 
+/**
+ * The search from one point, for a walker that asks for both its way up and its firing position from
+ * where it stands this step (`levelSearch`): made once, not once a question. Only for the world as it
+ * stands: a kinematic solid (a lift, a gate) moved since makes another.
+ */
+export interface LevelSearch {
+  readonly graph: NavGraph;
+  readonly from: Vec3;
+  readonly search: Search;
+}
+
+/** The search from `from` through the graph (null without nodes), to hand to the questions asked from there this step. */
+export const levelSearch = (world: World<Entity>, graph: NavGraph, from: Vec3): LevelSearch | null =>
+  graph.nodes.length === 0 ? null : { graph, from: { ...from }, search: search(world, prepare(graph), from) };
+
+const searchOf = (world: World<Entity>, p: Prepared, from: Vec3, near: LevelSearch | undefined): Search =>
+  near && near.graph === p.graph && near.from.x === from.x && near.from.y === from.y && near.from.z === from.z ? near.search : search(world, p, from);
+
 export interface RouteStep {
   /** Point to walk towards this step. */
   readonly next: Vec3;
@@ -202,10 +220,10 @@ export interface RouteStep {
  * The way from `from` to `to` on another level through the graph, or null when the graph
  * does not connect them (a roof reached by a ladder: NPCs do not climb).
  */
-export const routeAcrossLevels = (world: World<Entity>, graph: NavGraph, from: Vec3, to: Vec3): RouteStep | null => {
+export const routeAcrossLevels = (world: World<Entity>, graph: NavGraph, from: Vec3, to: Vec3, near?: LevelSearch): RouteStep | null => {
   if (graph.nodes.length === 0) return null;
   const p = prepare(graph);
-  const s = search(world, p, from);
+  const s = searchOf(world, p, from, near);
   let end = -1;
   let total = Infinity;
   for (const [i, c] of attach(world, p, to)) {
@@ -224,21 +242,22 @@ export const routeAcrossLevels = (world: World<Entity>, graph: NavGraph, from: V
  * The nearest node (by the way there) from which a shooter standing on it sees `target`'s
  * chest within `range`: a firing position. Null when there is none.
  */
-export const firingPosition = (world: World<Entity>, graph: NavGraph, from: Vec3, target: Vec3, range: number): RouteStep | null => {
+export const firingPosition = (world: World<Entity>, graph: NavGraph, from: Vec3, target: Vec3, range: number, near?: LevelSearch): RouteStep | null => {
   if (graph.nodes.length === 0) return null;
   const p = prepare(graph);
-  const s = search(world, p, from);
-  let end = -1;
-  let endCost = Infinity;
+  const s = searchOf(world, p, from, near);
+  // The cheapest node by the way there (the lowest index on a tie) that sees the target: the nodes
+  // in that order up to the first that does. The scan by index, the same node, cast a sight line
+  // from every node cheaper than the last one seeing, most of those in range; a wave of four after
+  // Oyaji, from T1 up to P3 (ADR-0093 O3), asked it each a step.
+  const order: number[] = [];
   p.at.forEach((at, i) => {
-    const c = s.cost[i] ?? Infinity;
-    if (c >= endCost || flat(at, target) > range - FIRING_MARGIN) return;
-    if (lineOfSight(world, raise(at, EYE), raise(target, CHEST))) {
-      end = i;
-      endCost = c;
-    }
+    if ((s.cost[i] ?? Infinity) < Infinity && flat(at, target) <= range - FIRING_MARGIN) order.push(i);
   });
+  order.sort((a, b) => s.cost[a]! - s.cost[b]! || a - b);
+  const end = order.find((i) => lineOfSight(world, raise(p.at[i]!, EYE), raise(target, CHEST))) ?? -1;
   if (end < 0) return null;
+  const endCost = s.cost[end]!;
   const step = firstStep(p, s, end, from);
   if (step) return { next: step, cost: endCost };
   // Standing on it already: hold there, unless the shot is the node's and not from here. Within
