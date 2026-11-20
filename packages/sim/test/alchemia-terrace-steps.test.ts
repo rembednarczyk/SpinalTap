@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ALCHEMIA_PIECES, T2_STAIRS } from "../src/content/alchemia";
 import { terracePieces } from "../src/content/alchemia/terrace-steps";
 import { EAST_RAMP, EAST_STEPS_HALF } from "../src/content/alchemia/terraces";
 import { groundY, surfaceY } from "../src/content/lublin/terrain";
@@ -22,5 +23,12 @@ describe("the east ramp's steps on the ground (ADR-0074 stage 1, G-445, the user
         }
       }
     }
+  });
+
+  it("stands the steps of T2's stairs over the square's paving under them (the user's 20.11)", () => {
+    const r = T2_STAIRS;
+    const steps = ALCHEMIA_PIECES.filter((p) => p.kind === "step" && p.box.z0 >= r.a.z - 1e-6 && p.box.z1 <= r.b.z + 1e-6 && Math.abs((p.box.x0 + p.box.x1) / 2 - r.a.x) < 0.1);
+    expect(steps).toHaveLength(15);
+    for (const { box: b } of steps) for (let x = b.x0; x <= b.x1 + 1e-9; x += 0.5) expect(surfaceY(x, b.z0), `top at ${x}, ${b.z0}`).toBeLessThan(b.y1);
   });
 });

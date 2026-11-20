@@ -1,4 +1,4 @@
-import type { GroundPoint } from "@seki/core";
+import { type GroundPoint, SURFACE_LIFT } from "@seki/core";
 import { KRAKOWSKIE_CHUNKS } from "../lublin/krakowskie.generated";
 import { STARE_MIASTO_CHUNKS } from "../lublin/stare-miasto.generated";
 import type { GroundRect, Pad, Ramp } from "../lublin/shape";
@@ -97,13 +97,18 @@ const MEMORIAL_BED: Box = box(428.3, 431.7, 110.4, 114.6, T2 - 0.3, T2 + 0.3);
 /** The square's green along its west edge: knee-high beds (seats too). */
 const BEDS: readonly Box[] = [box(424.6, 429, 93, 98, T2 - 0.3, T2 + 0.45), box(432.5, 436, 117, 120.5, T2 - 0.3, T2 + 0.45)];
 
-/** The stairs' steps (drawn; bodies walk the even grade) and the seats down each side of them (solid). */
+/**
+ * The stairs' steps (drawn; bodies walk the even grade) and the seats down each side of them (solid).
+ * A tread's top 2 cm over the square's paving at its upper edge (the map's `square` lies
+ * `SURFACE_LIFT` over the ground): level with the ground there, the paving covered its back (the
+ * user's 20.11, `alchemia-off-ground`).
+ */
 const stairPieces = (): Piece[] => {
   const out: Piece[] = [];
   const r = T2_STAIRS;
   const half = r.width / 2;
   for (let z = r.a.z; z < r.b.z - 1e-6; z += 1) {
-    out.push(piece(box(r.a.x - half + 1, r.a.x + half - 1, z, z + 1, stairsY(z + 1) - 0.3, stairsY(z) + 0.02), "step", false, false));
+    out.push(piece(box(r.a.x - half + 1, r.a.x + half - 1, z, z + 1, stairsY(z + 1) - 0.3, stairsY(z) + SURFACE_LIFT.square + 0.02), "step", false, false));
   }
   for (const x of [r.a.x - half, r.a.x + half - 1]) {
     for (let z = r.a.z + 1; z < r.b.z - 1; z += 2) out.push(piece(box(x, x + 1, z, z + 1.6, stairsY(z + 1.6) - 0.3, stairsY(z) + 0.45), "bench", false));
