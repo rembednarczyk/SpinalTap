@@ -2,6 +2,59 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-958 Zebry pocięte granicą kawałka mapy i ścinki zebr bez pasów
+- Ważność: S3 · Zasięg: 4 zebry przecięte granicą chunku i 5 ścinków (krakowskie, podzamcze, stare-miasto, nabrzeże)
+- Opis: Pomiar orkiestratora 20.11 (sonda w scratchpadzie zebra/): 123 kawałki zebr (surface crossing) to 119 przejść. Każdy kawałek rysuje pasy z własnego obróconego prostokąta (planCrossing w crossing-plan.ts), więc przejście pocięte granicą chunku ma dwa niezależne rzędy pasów, a ścinek węższy niż 1 m dostaje sam asfalt bez pasów. (1) Pocięte granicą: (383,5; −20) krakowskie-2-0 + 2-1 (Bajkowskiego przy Alchemii; obok trzeci kawałek (383,8–386,9; −23,7…−21,1) przesunięty o 0,3 m i obrócony, z przerwą 0,4 m, oraz pasek 3,0 × 0,7 m bez pasów); (570; 160) stare-miasto-0-1 + podzamcze-0-0; (920; 472,5) podzamcze-1-1 + 2-1; (2500; 204,2) nabrzeże-0-0 + 1-0. (2) Ścinki trójkątne na granicach chunków bez reszty przejścia: (1119,1–1120; 264,3–274,1) podzamcze-2-0, pasek 0,9 m bez pasów; (−102,9…−98,2; −270…−268,4) krakowskie-0-0; trzy trójkąty podzamcze-0-0 przy x 520 (z 182,7–196,1). Poprawka: pasy z całego przejścia (scalić kawałki tego samego przejścia przed rysowaniem albo nieść oś i szerokość przejścia z importu), ścinki bez reszty przejścia usunąć z importu; nowa kontrola skanu (crossing-split / crossing-sliver).
+- Status: naprawione (20.11, #819 scalony); wcześniej: w PR #819; wcześniej: zgłoszone
+- Pakiet właściciela: tools/osm-import (crossing-bands, zebra-fit), packages/engine (mapcity/crossing-plan.ts)
+- 20.11: poprawka w PR #819: kawałek przecięty granicą chunku niesie pierścień całego pasa (pole zebra), renderer liczy ramę pasów z całego pasa i przycina do kawałka. Do zrobienia osobno: przesunięty trzeci kawałek na Bajkowskiego (383.8–386.9; −23.7…−21.1) i osierocone drzazgi (podzamcze 1119–1120; 264–274, krakowskie-0-0 −102.9…−98.2; −270…−268.4, trójkąty przy x 520).
+
+### G-948 Budka sieciowa planu na Placu Łokietka na drodze treści deptaka
+- Ważność: S4 · Zasięg: Plac Łokietka (430; −100)
+- Opis: Kontrola plan-prop-under-game (PR #803): ręczny punkt planu street.net-booths#1 leży na drodze treści z deptaka do Bramy Krakowskiej, więc import zawsze go zdejmuje. Poprawka: przesunąć punkt poza drogę albo usunąć z planu.
+- Status: naprawione (20.11, #804 scalony); wcześniej: w PR #804 (20.11, gałąź fix/g948-budka-lokietka, df0c962), przegląd kuratora w toku; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan)
+
+### G-953 Auto ruchu przejeżdża przez przechodnia
+- Ważność: S3 · Zasięg: ruch uliczny w całym mieście (traffic-system.ts, pushOut)
+- Opis: Znalezisko przy G-951 (20.11): pushOut spycha tylko gracza; przechodzień (NPC) na pasie nie ma żadnej reakcji, a auto w ruchu przejeżdża przez niego. G-951 (PR #812) blokuje tylko pojawienie się auta w ciele.
+- Status: naprawione (20.11, #815 scalony); wcześniej: w PR (20.11, gałąź fix/g953-auto-przez-przechodnia, 0daef3c); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts, ruch przechodniów)
+
+### G-951 Auto rampy P−1 pojawia się w ciele gracza poza jego wzrokiem i go spycha
+- Ważność: S3 · Zasięg: rampa P−1 Alchemii, trasa 109 (ruch uliczny comeAndGo)
+- Opis: Pomiar agenta testu ramp-pass (20.11): ziarno 77, gracz x 411,05, z 8, kurs 0, krok 2720: auto 3003488 powstaje 0,55 m od osi gracza, w obrysie (szerokość 0,91 + promień 0,38), a ruch spycha gracza o 0,69 m na zachód. comeAndGo i crowded w traffic-system.ts nie sprawdzają gracza. Bliskie G-492. Poprawka: punkt pojawienia się auta poza obrysem ciał (gracza i NPC) albo odłożenie pojawienia.
+- Status: naprawione (20.11, #812 scalony); wcześniej: w PR #812 (20.11, gałąź fix/g951-auto-w-ciele, c9d2845); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts)
+
+### G-946 Czekanie w trakcie ostrzeżenia gangu prowokuje gang
+- Ważność: S2 · Zasięg: każdy posterunek gangu (TerritoryWarned), okno czekania
+- Opis: Godz. 12:00, gracz 3 m przed posterunkiem hebi-bramowa z wyciągniętą bronią: przychodzi TerritoryWarned (3 s świata), potem wait 60 min. Skoki czasu wyczerpują ostrzeżenie bez szansy na schowanie broni: 3 zdarzenia TerritoryProvoked, grudge 5, prowokacja na kilka godzin. waitBlock (packages/app/src/presenters/wait.ts) nie blokuje czekania przy trwającym ostrzeżeniu (warnedUntil). Znalezisko agenta G-944 (sonda w scratchpad g944-probe3.test.ts).
+- Status: naprawione (20.11, #802 scalony); wcześniej: w PR #802 (20.11, gałąź fix/g946-czekanie-ostrzezenie, 5295a17); wcześniej: w naprawie
+- Pakiet właściciela: packages/app (presenters/wait.ts) albo packages/sim (territory-system.ts)
+
+### G-944 Hideo po dojściu do domu na Bramowej wstaje i krąży
+- Ważność: S3 · Zasięg: Stare Miasto, Bramowa, dom Hideo (droga „dom” z schedules.ts)
+- Opis: Pomiar agenta G-943 na main (przed #800 i po nim): Hideo dochodzi do domu na Bramowej, siada albo zasypia, po czym wstaje i krąży ok. 20 m przez ok. 3 minuty gry, potem znów śpi. Oczekiwane: po dojściu zostaje w domu do następnego punktu harmonogramu.
+- Status: odrzucone (20.11): nie glitch, reakcja na strzały (ADR-0029). Hideo śpi w domu bez przerwy na 4 ziarnach i 5 ustawieniach gracza; objaw tylko w ustawieniu seated-walk.test.ts (gracz z wyciągniętą bronią 3 m od drzwi, wait po minucie): patrol hebi-bramowa ostrzega, kolejne skoki wyczerpują ostrzeżenie, gang strzela 19 m od domu, Hideo ucieka i wraca. Ze schowaną bronią 0 strzałów. Prawdziwa przyczyna w G-946; wcześniej: w naprawie
+- Pakiet właściciela: packages/sim (content/schedules.ts, systemy harmonogramu)
+
+### G-943 Szyldy i neony przy kamieniach pamięci i Stolpersteine
+- Ważność: S3 · Zasięg: 12 miejsc: Lubartowska przy Stolpersteine Cygielmanów (5), kamień Marii Rechtszaft (1), Stare Miasto przy kamieniu Beli Szpiro-Nisenbaum (5, w tym neon SAKE), neon Hebi w schronie pod T2 (14,2 m w poziomie od kamienia Placu Ofiar Getta, pod ziemią)
+- Opis: Nowa kontrola skanu memorial-neon-clear (świecący znak < 20 m w poziomie od kamienia pamięci albo memorial=stolperstein) przyjęła bazę 12 miejsc. §6 ADR-0074: przy kamieniu pamięci i Stolpersteine nie ma neonów ani reklam. Większość to szyldy i reklamy z generatora szyldów mapy (w66309795, w232362884, w232362885, w232674409, w66286368, w66286369, w66293690, w66293706), plus neon gry SAKE (546,-75) i neon Hebi dev:targ-neon (428,97) w schronie pod ziemią (do decyzji: liczyć tylko znaki nad ziemią albo przenieść).
+- Status: naprawione (20.11, #800 scalony); wcześniej: w naprawie (gałąź fix/g943-szyldy-przy-pamieci); wcześniej: nowy (20.11)
+- Pakiet właściciela: tools/osm-import / generator szyldów mapy (wykluczenie stref przy pamięci), sim (neon SAKE)
+- Test przyjęcia: memorial-neon-clear: baza z 12 do 0 (albo do 1 z uzasadnieniem dla neonu pod ziemią)
+
+### G-942 Schody placu przed Alchemią schodzą na goły grunt przed chodnikiem Bajkowskiego
+- Ważność: S4 · Zasięg: lokalny, Alchemia, x 383,6–404,3, z −9,05…−11,2
+- Opis: Między krawędzią placu T0 (z −9,05…−9,3) a kostką chodnika w232464426 (z −10,2…−11,2) leży pas gołego gruntu 1,15–1,9 m (ok. 32 m²); na ortofoto 100% kostki. Pas był przed C5 (ground-strip-gap krakowskie-2-1 400,-10 w bazie), od C5 (#793) schodzą na niego schody południowe placu. Przegląd kuratora 20.11.
+- Status: naprawione (20.11, 795 scalony); wcześniej: w PR #795; wcześniej: w naprawie (gałąź fix/g942-schody-placu); wcześniej: nowy (20.11)
+- Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
+- Test przyjęcia: brak próbki co 0,1 m w x 383,6–404,3 między krawędzią placu a pasem chodnika bez nawierzchni; klucz ground-strip-gap krakowskie-2-1 400,-10 znika z bazy; NMT bez zmian
+- Wiersz topografii: T-333 (T-332 zajęty).
+- Poboczne z naprawy: pasek ok. 7 cm gołego gruntu pod wjazdem na rampę (x 410–412, z −9,79…−9,86) i goły klin na zachód od narożnika parkingu (x ok. 380–383,6) do sprawdzenia na ortofoto.
+
 ### G-939 Galeria Alchemii: strzał zza barku startuje za cienką ścianą szybu windy hali i trzonu NE
 - Ważność: S4 · Zasięg: Alchemia, galeria P1–P3 (szyb windy hali x 412,3–414,7, z 32,4–34,8; trzon NE)
 - Opis: Miara G-275 (tests/tpp-shoulder) po dodaniu galerii jako wnętrza ADR-0061 (O2): 11 miejsc, w których przykucnięty i celujący gracz zaczyna strzał za ścianą. Ściany szybu windy hali i bramka na P1 (od T0) mają 0,1 m (lift.ts WALL), mniej niż wysunięcie barku za lico (0,16 m); przy bramce na P1 strzał z kabiny startuje na pasie T0. Przy trzonie NE pokój galerii zahacza o wnętrze trzonu, a za jego wschodnią ścianą jest wnęka do narożnika szkła. Szkło fasady poprawione w PR #785 (0,2 m, 770 → 0). Poprawka: bramka na P1 jak na P−2 (wypełnia grubość ściany, platforma krótsza, GATE_DEPTH), ściany szybu 0,2 m albo pokoje galerii bez szybu i trzonu, potem baza galerii w teście z 11 do 0.

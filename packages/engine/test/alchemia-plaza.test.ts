@@ -11,8 +11,13 @@ const file = (name: string): ArrayBuffer => {
 };
 const kitData = parseCityKit(file("city-kit.glb"));
 
-/** A mesh of Alchemia's at most (`alchemia.test.ts`: the user's decision of 19.11). */
-const ALCHEMIA_TRIANGLES = 40000;
+/**
+ * The tiers' mesh (the front's storeys, the square, the green): its curtains of green drawn as ivy since
+ * 20.11, strands of single leaves (some 76 thousand triangles on 270 curtains, the mesh some 24 thousand before
+ * them); the user's decision of 19.11, triangles free, the gates the draw calls and active meshes,
+ * which the ivy leaves as they were (it is in this mesh).
+ */
+const TIERS_TRIANGLES = 110000;
 
 /**
  * The square before Alchemia's front (ADR-0074 C5) in the engine: drawn with the front in the tiers'
@@ -33,7 +38,7 @@ describe("the square before Alchemia's front in the engine (ADR-0074 C5)", () =>
     expect(tris).toBeGreaterThan(1000);
     expect(all.outside.indices.length).toBe(without.outside.indices.length);
     expect(all.inside.indices.length).toBe(without.inside.indices.length);
-    expect(all.tiers.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
+    expect(all.tiers.indices.length / 3).toBeLessThanOrEqual(TIERS_TRIANGLES);
   });
 
   it("draws each umbrella's canopy as a cone over its rim, lighter than its underside, and each awning sloping down from its kiosk", () => {

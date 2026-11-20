@@ -2245,6 +2245,57 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
+### G-947 Ławki i pastorały planu na T0 przed Alchemią zdjęte przez bryły gry
+- Ważność: S3 · Zasięg: T0 przed frontem Alchemii (x 388–436, z −3…28)
+- Opis: Kontrola plan-prop-under-game (PR #803): 12 ręcznych punktów planu (inOsm: false) stoi tam, gdzie gra postawiła bryły C5 i O5, więc import je zawsze zdejmuje: ławki bench-west#0–3 (404,75; 0/6/12/18: podium C5, kolumna przejścia, skrzydło L1), bench-south#0–1 (388,5 i 394,5; −0,6: obrys frontu, podium), pastorały #1–4, #6, #7 ((401,5; −2,8), (388,5; 12), (406,6; 25), (412,5; 27,8), (435,4; 14), (429; 23,6)). Na T0 gra pokazuje 5 z 11 ławek i 3 z 9 pastorałów planu. Poprawka: przenieść punkty planu na wolne miejsca placu i tarasów albo usunąć z planu z wpisem w topografii.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan, lublin-props.todo.json), tools/osm-import
+- Naprawa po scaleniu O5 (feat/alchemia-o5-front zmienia front i tarasy L2), punkty rozstawić wtedy na nowym układzie; przegląd kuratora.
+- O5 scalony (#805, 20.11): kurator potwierdził, że O5 nie zmienia liczby miejsc plan-prop-under-game (13 → 13). Naprawa po scaleniu #804 (te same pliki planu i tablic).
+
+### G-949 Automat planu na Placu Łokietka na drodze do Bramy Krakowskiej, niewidoczny dla skanu
+- Ważność: S4 · Zasięg: Plac Łokietka (440; −100)
+- Opis: Znalezisko przy G-948: ręczny punkt planu street.vending-machines (440; −100) leży na drodze treści GATE_WALK; import przesuwa go na (439,6; −101), a gra go zdejmuje. Kontrola plan-prop-under-game go nie widzi, bo element przesunięty o więcej niż 0,1 m nie pasuje do punktu (MATCH). Poprawka: przenieść punkt poza drogę i poszerzyć dopasowanie kontroli o przesunięcie importu.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan), tools/glitch-scan
+- Kurator (przegląd G-948): street.vending-machines#3 leży na osi GATE_WALK (0,00 m), clearSpot przesuwa go o 1,08 m na (439,6; −101), nadal 1,03 m od osi, więc clearOfGame = false. Poprawka kontroli: dopasować punkt ręczny do najbliższego elementu tego samego rodzaju w LUBLIN_STREET_PROPS w promieniu 1,5 m, obecność w WORLD_STREET_PROPS sprawdzać dla niego z MATCH 0,1 m (baza 13 = 12 z G-947 + krakowskie-2-0 440,-100; wynik stały dla 1,5–3 m). Punkt przenieść dalej niż 1,5 m od osi, np. na zachodni bruk przy słupkach Królewskiej.
+
+### G-950 Szeroki raster pościgu liczony w całości w jednym kroku przy zmianie piętra
+- Ważność: S3 · Zasięg: pościgi po schodach i rampach (Alchemia: hala P0, rampa P−1)
+- Opis: Pomiar agenta perf pościgu (20.11): w pościgu do hali (ziarno 3) szeroki raster piętra −6,25 powstaje w plasterkach (gotowy w kroku 303), ale napastnik schodzi w tym czasie na −6,5 i raster idzie do kosza; napastnik stoi ok. 60 kroków u stóp schodów (241–301), potem wideWay liczy raster −6,5 w całości w jednym kroku. W parkingu na rampie szerokie rastry −5,75, −6, −6,25, −6,5 liczone w całości w jednym kroku każdy (kroki 643, 667, 691, 717). W grze skoki klatki jak G-643 i postój napastnika. Poprawka: piętro rastra zaokrąglone do pasma (np. jeden raster na bieg schodów) albo zawsze w plasterkach; zmiana zachowania, osobny PR z testem.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai (pościg, nav-share), packages/sim/src/world/nav.ts
+
+### G-952 Auto rampy szarpie po objechaniu gracza
+- Ważność: S4 · Zasięg: rampa P−1 Alchemii, trasa 109
+- Opis: Pomiar agenta testu ramp-pass (20.11): po objechaniu gracza (x 411,05, z 8, kurs π) auto trzy razy staje i rusza przy s 33,4 (kroki 743–775). Do zbadania: histereza odstępu od ciała albo zmiana pasa po objeździe.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts)
+
+### G-954 Auto ruchu hamuje przed ciałem nad lub pod pasem
+- Ważność: S4 · Zasięg: ruch uliczny pod pomostami i przy rampie P−1 (lookAhead, pushOut gracza)
+- Opis: Znalezisko przy G-953 (20.11): lookAhead nie sprawdza wysokości, więc auto staje przed ciałem stojącym 4 m nad pasem w obrysie (sonda); na rampie P−1 może hamować przed ludźmi z parkingu nad nią. pushOut gracza też nie patrzy na wysokość (gracza nad lub pod autem może zepchnąć).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts)
+
+### G-955 Chodnik Lubartowskiej zapada się w przejście rampy E Alchemii
+- Ważność: S4 · Zasięg: Krakowskie, chodnik Lubartowskiej x 442,5–445, z 29–36
+- Opis: Przegląd kuratora PR #816 (20.11): zachodnia krawędź chodnika (linia (442,6; 26,4)→(454,5; 61,5), 2,5 m) leży w komórce siatki między kolumną 442,5 (na rampie E) a 445 (na NMT): 0,38–0,50 m pod NMT, oś do 0,16 m, spadek w poprzek do 17%; #816 dokłada do 0,08 m. Poprawka: zagęścić siatkę pod wschodnim brzegiem rampy (siteGrid/flightGrid, FLIGHT_CELL), chodnik na NMT, uskok na ściankę oporową z balustradą wzdłuż x ok. 442,5 (wzorzec Arkad T-218, parapety P−1).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin teren, alchemia terraces)
+
+### G-956 Nierówne stopnie rampy E Alchemii
+- Ważność: S4 · Zasięg: rampa E Alchemii x 436,3–441,7, z 30–56
+- Opis: Przegląd kuratora PR #816: stopnie idą za gruntem chodzonym (rampa pod padami, over false; linia T0 z 32,5 i przejście T1 łamią spadek): 0,098 / 0,184 / 0,269 / 0,269, 12 × 0,168, potem 0,199–0,245 i 0,095; lokalny spadek do 26,9% przy projektowanych 16,8%. Poprawka: EAST_RAMP z over: true i początkiem na linii siatki z 32,5 (precedens T-219, schody T1 → T2).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/alchemia terraces, terrace-steps.ts)
+
+### G-957 Donice przy filarach arkad na placu C5 bez bryły
+- Ważność: S4 · Zasięg: plac C5 Alchemii, donice (397,22; −2,55) i (402,92; −2,55) na podium −0,64
+- Opis: Przegląd kuratora PR #816: dwie donice przy filarach arkad rysowane bez bryły, gracz przez nie przechodzi (zasada rysunek i bryła o tym samym kształcie). Donica przy x 397,22 stoi środkiem na filarze 2; drzwi NIGHT SILK i tak są za filarem, przęsło zwęża się z 2,10 do 1,88 m, wyjście z lokalu zostaje (sprawdzić test alchemia-front-rooms po zmianie).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/alchemia front-plaza)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
