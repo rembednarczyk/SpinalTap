@@ -164,8 +164,8 @@ const risers = (): Piece[] => {
   const e = (x: "w" | "e", z: "s" | "n") => centre(el, x, z);
   return [
     prism([p(396.2, 12.3), p(396.2, 13.8), ...arc(w1nw, 90)], F.l1 - 0.05, L1_TOP - SLAB),
-    // West of NIGHT SILK by the wing's south-west corner.
-    prism([p(w1sw.x, W1.minZ + FRONT_GLASS), p(395.8, W1.minZ + FRONT_GLASS), p(395.8, 8.4), p(W1.minX + FRONT_GLASS, 8.4), ...arc(w1sw, 180).slice(0, -1)], F.l1 - 0.05, L1_TOP - SLAB),
+    // West of NIGHT SILK by the wing's south-west corner: clad in a lit advert behind the first arch (the arcade's light, as the board's).
+    { ...prism([p(w1sw.x, W1.minZ + FRONT_GLASS), p(395.8, W1.minZ + FRONT_GLASS), p(395.8, 8.4), p(W1.minX + FRONT_GLASS, 8.4), ...arc(w1sw, 180).slice(0, -1)], F.l1 - 0.05, L1_TOP - SLAB), kind: "lightbox" },
     prism([p(e("w", "s").x, 13.7), p(e("e", "s").x, 13.7), ...arc(e("e", "s"), -90).slice(1), ...arc(e("w", "s"), 180).slice(0, -1)], F.l1e - 0.05, L1_TOP - SLAB),
     prism([...arc(e("e", "n"), 0), ...arc(e("w", "n"), 90)], F.l1e - 0.05, L1_TOP - SLAB),
     prism([p(400.0, 30.3), p(400.0, 31.8), ...arc(l2nw, 90)], F.l2 - 0.05, L2_TOP - SLAB),

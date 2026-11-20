@@ -54,8 +54,8 @@ const l1Arcade = (): Piece[] => [
   // A lightbox over the arcade's door inside its glass (the arcade's name's board), its face to the arches.
   inBox(400.5, 402.1, 1.3, 1.36, L1 + 2.82, C1 - 0.06, "lightbox"),
   // A lit totem with the arcade's units by its door from the arcade, its face south to the arches.
-  inBox(402.45, 403.55, 2.86, 3.02, L1 - 0.05, L1 + 2.6, "machine", true),
-  inBox(402.5, 403.5, 2.84, 2.86, L1 + 0.3, L1 + 2.5, "lightbox"),
+  inBox(402.45, 403.55, 2.25, 2.45, L1 - 0.05, L1 + 2.6, "machine", true),
+  inBox(402.5, 403.5, 2.23, 2.25, L1 + 0.3, L1 + 2.5, "lightbox"),
   // A cup steaming on the bench, a cable taped across the ceiling to the cabinet (§3, §5).
   ...cupAt(403.45, 17.5, L1 + 0.45, true),
   inBox(403.5, 403.55, 23.3, 23.7, L1 + 1.15, C1, "cable"),
