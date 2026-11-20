@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, ATRIUM, FOODHALL, FOODHALL_INNER, LIFT_HOLE, MALL_LEVELS, P2_CORRIDOR, STAIR_HOUSE } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, ATRIUM, FOODHALL, FOODHALL_INNER, FRONT_ROOMS, LIFT_HOLE, MALL_LEVELS, P2_CORRIDOR, STAIR_HOUSE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
@@ -13,7 +13,7 @@ import type { CarAt } from "./parking-traffic";
  * How near the eye Alchemia's outside is drawn (m from the middle of the hall or of the Arkady,
  * whichever is nearer), and the margin it goes off beyond that: from the streets round the plot and from behind the Ratusz (some 115 m), while the
  * street scenes of `npr-perf` (the Rynek's from 149 m) stay as they were. The inside is drawn only
- * within `INSIDE_DRAW` of the hall's walls (ADR-0074 §7).
+ * within `INSIDE_DRAW` of the hall's walls (ADR-0074 §7) or `FRONT_INSIDE_DRAW` of the front's storeys (ADR-0093 O5).
  */
 export const ALCHEMIA_DRAW = 135;
 const ALCHEMIA_HOLD = 10;
@@ -48,7 +48,9 @@ export const hallRoofOver = (x: number, y: number, z: number): boolean => {
   if (inRect(STAIR_HOUSE, x, z) && y < FOODHALL.roof + STAIR_HOUSE.height) return true;
   if (inRect(LIFT_HOLE, x, z) && y < ALCHEMIA_LIFT.head) return true;
   const atrium = x > ATRIUM.x0 && x < ATRIUM.x1 && z > ATRIUM.z0 && z < ATRIUM.z1;
-  return inRect(FOODHALL, x, z) && !atrium && y < MALL_LEVELS.roof;
+  if (inRect(FOODHALL, x, z) && !atrium && y < MALL_LEVELS.roof) return true;
+  // The front's storeys' rooms (ADR-0093 O5): under their slabs, not on the terraces over them.
+  return FRONT_ROOMS.some((r) => inRect(r, x, z) && y > r.bottom - 0.5 && y < r.top);
 };
 
 export interface AlchemiaDeps {
@@ -63,8 +65,16 @@ export interface AlchemiaDeps {
   readonly cars?: () => Iterable<CarAt>;
 }
 
+/**
+ * The front's storeys before the hall (ADR-0093 O5): their rooms are the inside's too, seen through
+ * their glass (its frame only) from the square before them and from Plac Łokietka by the Ratusz, so
+ * within `FRONT_INSIDE_DRAW` of them; past it (the Rynek's scene of `npr-perf` some 100 m off) not.
+ */
+const FRONT_BOX: Rect = { minX: 394, maxX: FOODHALL.maxX, minZ: -2, maxZ: FOODHALL.minZ };
+export const FRONT_INSIDE_DRAW = 75;
+const toRect = (r: Rect, e: Vec3): number => Math.hypot(Math.max(r.minX - e.x, 0, e.x - r.maxX), Math.max(r.minZ - e.z, 0, e.z - r.maxZ));
 /** Horizontal distance from the eye to the hall's outline; 0 inside. */
-const toHall = (e: Vec3): number => Math.hypot(Math.max(FOODHALL.minX - e.x, 0, e.x - FOODHALL.maxX), Math.max(FOODHALL.minZ - e.z, 0, e.z - FOODHALL.maxZ));
+const toHall = (e: Vec3): number => toRect(FOODHALL, e);
 
 /**
  * Alchemia on Plac Ofiar Getta (ADR-0074 stage 1), behind the `BabylonRenderer` facade: its
@@ -121,7 +131,8 @@ export class AlchemiaView {
     const near = toHall(e);
     const out = !deepInP2(e) && far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
     // Down in P-2 or the shelter the hall over it is behind its slabs: its inside off (its draw calls with it).
-    const inn = !eyeInP2(e) && near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
+    const hold = this.inside?.isEnabled(false) ? INSIDE_HOLD : 0;
+    const inn = !eyeInP2(e) && (near < INSIDE_DRAW + hold || toRect(FRONT_BOX, e) < FRONT_INSIDE_DRAW + hold);
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
     // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
