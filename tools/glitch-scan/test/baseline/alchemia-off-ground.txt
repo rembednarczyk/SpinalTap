@@ -1,0 +1,64 @@
+# alchemia-off-ground: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-1 385,-7
+krakowskie-2-1 429,13
+krakowskie-2-1 441,34
+krakowskie-2-1 442,35
+krakowskie-2-1 442,36
+krakowskie-2-1 442,37
+krakowskie-2-1 442,38
+krakowskie-2-1 442,39
+krakowskie-2-1 442,40
+krakowskie-2-1 442,41
+krakowskie-2-1 442,42
+krakowskie-2-1 442,43
+krakowskie-2-1 442,44
+krakowskie-2-1 436,45
+krakowskie-2-1 436,46
+krakowskie-2-1 436,47
+krakowskie-2-1 436,48
+krakowskie-2-1 436,49
+krakowskie-2-1 436,50
+krakowskie-2-1 436,51
+krakowskie-2-1 435,78
+krakowskie-2-1 452,78
+krakowskie-2-1 430,79
+krakowskie-2-1 430,80
+krakowskie-2-1 450,80
+krakowskie-2-1 453,80
+krakowskie-2-1 430,81
+krakowskie-2-1 432,82
+krakowskie-2-1 451,82 *2
+krakowskie-2-1 430,83
+krakowskie-2-1 430,84
+krakowskie-2-1 452,84
+krakowskie-2-1 430,85
+krakowskie-2-1 455,85
+krakowskie-2-1 430,86
+krakowskie-2-1 453,86
+krakowskie-2-1 432,87
+krakowskie-2-1 456,87
+krakowskie-2-1 430,88
+krakowskie-2-1 453,88
+krakowskie-2-1 430,89
+krakowskie-2-1 457,89
+krakowskie-2-1 432,90
+krakowskie-2-1 430,91
+krakowskie-2-1 430,92
+krakowskie-2-1 455,92
+krakowskie-2-1 455,93
+krakowskie-2-1 456,96 *2
+krakowskie-2-1 457,97
+krakowskie-2-1 458,99
+krakowskie-2-1 458,101
+stare-miasto-0-1 460,105 *2
+stare-miasto-0-1 460,107 *3
+stare-miasto-0-1 461,109 *2
+stare-miasto-0-1 462,112 *2
+stare-miasto-0-1 463,112 *2
+stare-miasto-0-1 464,114
+stare-miasto-0-1 463,115
+stare-miasto-0-1 465,115
+stare-miasto-0-1 464,116
+stare-miasto-0-1 463,117 *2
+stare-miasto-0-1 465,121 *2
+stare-miasto-0-1 466,121
