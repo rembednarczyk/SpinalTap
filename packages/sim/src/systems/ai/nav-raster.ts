@@ -3,6 +3,7 @@ import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
 import { offTheBank } from "../bank";
 import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
+import { type Made, type NavShareStore, recall, remember, through } from "./nav-memo";
 
 /*
  * The raster of a window of the steering (ADR-0025): which 0.5 m cells a body stands in, made from
@@ -104,6 +105,26 @@ function* terrainOf(ground: GroundField, x0: number, z0: number, reach: number, 
     yield cells;
   }
   return base;
+}
+
+/** Terrain passes a ground keeps (`terrainLayer`): a wide one is 1.2 MB. */
+const TERRAINS = 6;
+const terrains = new WeakMap<GroundField, Map<string, Made<Float64Array | null>>>();
+
+/**
+ * The terrain under a window (`terrainOf`), made once for every floor and set of solids rasterised
+ * in it: it depends only on the ground (immutable), the window and the reach. A ganger going down
+ * the stairs of Alchemia's car park made a raster at each quarter metre of a floor (`floorOf`),
+ * and the terrain pass was half of each (a wide one some 115 ms under coverage). A hit gives back
+ * the reports the making gave (`through`), so the slices of a wide raster, and the units of work
+ * counted, are what they were; the heights are only read (`Raster.base` and the builders).
+ */
+function* terrainLayer(ground: GroundField, x0: number, z0: number, reach: number, cells: number): Slices<Float64Array | null> {
+  let kept = terrains.get(ground);
+  if (!kept) terrains.set(ground, (kept = new Map()));
+  const map = kept;
+  const store: NavShareStore<Float64Array | null> = { get: (k) => recall(map, k), set: (k, made) => void remember(map, k, made, TERRAINS) };
+  return yield* through(store, `${x0}|${z0}|${reach}|${cells}`, () => terrainOf(ground, x0, z0, reach, cells));
 }
 
 /** A diagonal neighbour more than this higher is a wall: a step, or the steepest walkable slope over the diagonal if more. */
@@ -404,7 +425,7 @@ function* closeSolids(open: Uint8Array, solids: readonly Collider[], base: Float
 
 export function* rasterise(solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField, cells: number): Slices<Raster> {
   const open = new Uint8Array(cells * cells);
-  const base = yield* terrainOf(ground, x0, z0, reach, cells);
+  const base = yield* terrainLayer(ground, x0, z0, reach, cells);
   const flight = base && floor === 0 ? yield* flightsOf(ground, x0, z0, cells) : null;
   const ledges = base && floor === 0 && (flight || decksIn(ground, x0, z0, cells)) ? yield* ledgesOf(base, ground, x0, z0, cells) : null;
   const walls = floor === 0 && base ? new Uint8Array(cells * cells) : null;
