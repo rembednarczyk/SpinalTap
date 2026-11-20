@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-948 Budka sieciowa planu na Placu Łokietka na drodze treści deptaka
+- Ważność: S4 · Zasięg: Plac Łokietka (430; −100)
+- Opis: Kontrola plan-prop-under-game (PR #803): ręczny punkt planu street.net-booths#1 leży na drodze treści z deptaka do Bramy Krakowskiej, więc import zawsze go zdejmuje. Poprawka: przesunąć punkt poza drogę albo usunąć z planu.
+- Status: naprawione (20.11, #804 scalony); wcześniej: w PR #804 (20.11, gałąź fix/g948-budka-lokietka, df0c962), przegląd kuratora w toku; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan)
+
 ### G-953 Auto ruchu przejeżdża przez przechodnia
 - Ważność: S3 · Zasięg: ruch uliczny w całym mieście (traffic-system.ts, pushOut)
 - Opis: Znalezisko przy G-951 (20.11): pushOut spycha tylko gracza; przechodzień (NPC) na pasie nie ma żadnej reakcji, a auto w ruchu przejeżdża przez niego. G-951 (PR #812) blokuje tylko pojawienie się auta w ciele.
