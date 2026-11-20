@@ -13,7 +13,7 @@ import { venueBoardOn } from "./venue-plan";
  * The slots are baked into the cell's near mesh, so they cost vertices, not draw calls.
  */
 
-export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "antenna" | "awning" | "awning-flat";
+export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "dish-big" | "antenna" | "awning" | "awning-flat";
 
 /**
  * A spot for a prop. On a wall `at` is the wall under the middle of the prop's back (at its
@@ -96,6 +96,10 @@ export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { mo
     case "dish-roof":
       if (!onRoof(seed)) return [];
       return one("dish", () => facing(slot.at, slot.out, uniform(1.2)));
+    case "dish-big":
+      // ADR-0096 rule 4: one big roof in four by the hash of its spot, the model of `extra-props.glb`.
+      if (propHash(seed, 6) % 4 !== 0) return [];
+      return one("roof-dish", () => facing(slot.at, slot.out, uniform(1)));
     case "antenna":
       if (!onRoof(seed)) return [];
       return one("antenna", () => facing(slot.at, slot.out, uniform(0.9 + 0.4 * ((propHash(seed, 2) % 100) / 100))));

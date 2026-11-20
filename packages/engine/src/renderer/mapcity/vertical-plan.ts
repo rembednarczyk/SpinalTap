@@ -264,7 +264,14 @@ const rooftop = (sink: MeshSink, f: FacadeFrame, t: StackTier, rand: () => numbe
   place?.({ kind: "dish-roof", at: at(0.5, 0.85), out: front });
   place?.({ kind: "antenna", at: at(0.3, 0.15), out: front });
   place?.({ kind: "pipe-corner", at: at(0.75, 0.5), out: front });
+  // ADR-0096 rule 4: a ground station's dish on a roof of 8 m and more each way, its dish to the south.
+  if (t.u1 - t.u0 >= BIG_DISH_ROOF && t.v1 - t.v0 >= BIG_DISH_ROOF) place?.({ kind: "dish-big", at: at(0.72, 0.28), out: SOUTH });
 };
+
+/** The least side of a roof that takes the big dish (m): its deck is 2.3 x 2.6 m, with room round it. */
+const BIG_DISH_ROOF = 8;
+/** South in the world (+z is north on the map). */
+const SOUTH: Vec = { x: 0, y: 0, z: -1 };
 
 /** The detailed superstructure: tiers, a neon line under some tier tops, gear on the roof. */
 export const planNearVertical = (sink: MeshSink, f: FacadeFrame, place?: PropPlacer): void => {

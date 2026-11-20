@@ -1,0 +1,1 @@
+- Na kilkunastu dużych dachach nadbudów stoją anteny satelitarne na pomostach, czaszą na południe.
