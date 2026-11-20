@@ -1,6 +1,6 @@
 # ADR-0097: Prowadzenie aut: fizyka w stylu sim-racingu w deterministycznej symulacji
 
-Status: Propozycja (20.11, prośba użytkownika: „zaczynamy planować możliwość prowadzenia samochodów”, z planem fizyki w stylu Assetto Corsa do rozbudowy). Zmienia decyzję z 31.10 („samochody na później”): ruch aut na ulicach zostaje, jak jest, a gracz dostaje auto, które sam prowadzi.
+Status: Przyjęty (20.11, decyzja użytkownika: „przyjmuję ADR-0097”; prośba użytkownika: „zaczynamy planować możliwość prowadzenia samochodów”, z planem fizyki w stylu Assetto Corsa do rozbudowy). Zmienia decyzję z 31.10 („samochody na później”): ruch aut na ulicach zostaje, jak jest, a gracz dostaje auto, które sam prowadzi.
 
 ## Kontekst
 Plan użytkownika: silnik fizyki brył sztywnych (Rapier albo Cannon-es) obok renderera, własne koła promieniowe zamiast kół z kolizją, model opon Pacejki zamiast liniowego tarcia, zawieszenie z przechyłami i stabilizatorami, napęd z krzywą momentu, skrzynią, sprzęgłem i szperą, aerodynamika, stały krok 120–240 Hz niezależny od klatki, linie telemetrii jak aplikacje deweloperskie AC i wygładzanie skrętu dla klawiatury i pada.
