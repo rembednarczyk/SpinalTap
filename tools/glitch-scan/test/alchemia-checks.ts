@@ -2,6 +2,7 @@ import {
   ALCHEMIA_CENTRE,
   ALCHEMIA_LIFT_NE,
   ALCHEMIA_PIECES,
+  ALCHEMIA_ROOF_PIECES,
   ARKADY,
   P1_PIECES,
   P2_CUTTING_PIECES,
@@ -206,9 +207,11 @@ export const keptInGame = (): KeptInputs => {
 
 /**
  * The gallery round the atrium (ADR-0093 O1, O2): its body (slabs, glass, the roof's balustrades),
- * its galleries, escalators and cores, the north-east lift's shaft and its shops with their fittings.
+ * its galleries, escalators and cores, the north-east lift's shaft and its shops with their fittings;
+ * its green roof's beds, pergolas and services (O4). Not the game's models on it (the trees, the park
+ * lamps): those are street furniture, a tree grows over the gallery's height as on any roof.
  */
-const galleryPieces = (): AlchemiaPiece[] => [...mallOutsidePieces(), ...mallInsidePieces(), ...liftPieces(ALCHEMIA_LIFT_NE), ...SHOP_PIECES, ...SHOP_SOLIDS];
+const galleryPieces = (): AlchemiaPiece[] => [...mallOutsidePieces(), ...mallInsidePieces(), ...liftPieces(ALCHEMIA_LIFT_NE), ...SHOP_PIECES, ...SHOP_SOLIDS, ...ALCHEMIA_ROOF_PIECES];
 
 /** The gallery's plot: the body's outline and its slabs' overhang on the west, north and east (the front stands against its south face). */
 export const GALLERY_PLOT = { x0: 399.7, x1: 436.3, z0: 32, z1: 58.3 } as const;
