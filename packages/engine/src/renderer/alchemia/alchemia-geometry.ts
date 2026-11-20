@@ -14,6 +14,7 @@ import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 import { roofPaving, roofPiece } from "./roof-geometry";
+import { PAVING, plazaPiece } from "./plaza-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
@@ -88,8 +89,15 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   fan: "ac-grille",
   crate: "rust",
   laundry: "paint",
-  chair: "fabric-teal",
   can: "paint",
+  // The square before the front (C5): dark wet paving, the hologram's glow, the kiosks' awnings (drawn sloping, `plaza-geometry.ts`), lit food, sign bands, the café's chairs (the roof's are drawn by `roof-geometry.ts`).
+  paving: "wall-dark",
+  holo: "win-teal",
+  awning: "trim-light",
+  food: "win-warm",
+  "sign-red": "neon-red",
+  "sign-amber": "neon-amber",
+  chair: "dark",
 };
 
 /** The front's glass is lit up to this much over the floor (ADR-0074 §6: the front warm at night). */
@@ -106,7 +114,7 @@ const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: st
 };
 
 /** Kinds that stand on a floor or the ground: nobody sees their bottom. */
-const ON_FLOOR: ReadonlySet<AlchemiaPieceKind> = new Set(["wall", "glass", "green", "parapet", "partition", "counter", "table", "bench", "step", "memorial", "column", "charger", "machine", "lawn"]);
+const ON_FLOOR: ReadonlySet<AlchemiaPieceKind> = new Set(["wall", "glass", "green", "parapet", "partition", "counter", "table", "bench", "step", "memorial", "column", "charger", "machine", "lawn", "paving"]);
 
 /**
  * The faces of a piece nobody sees: the bottom of one on a floor (not glass hanging as a lintel, which
@@ -277,6 +285,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (p.inside && shopPiece(sink, data, p)) continue;
     // The food hall on P3 and Fumiko's second place on P0 (O3): by their kitchens.
     if (p.inside && foodhallPiece(sink, data, p)) continue;
+    // The square's umbrellas and awnings (C5): cones and sloping sheets.
+    if (plazaPiece(sink, data, p)) continue;
     if (outlinedPiece(sink, data, p, glass)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
@@ -323,8 +333,9 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
     const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
     const steel = p.kind === "step" && p.inside && onEscalator(b);
-    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
-    boxOf(sink, data, b, leaf ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
+    const paving = p.kind === "paving";
+    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : paving ? PAVING : undefined;
+    boxOf(sink, data, b, leaf || paving ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);

@@ -32,7 +32,7 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
   });
 
   // The generated chunk: the car park's asphalt and its aisles are gone, T0 is a square of setts
-  // with three lawns cut out of it, Lubartowska's lane line runs on past the old way out (447; 16).
+  // with two lawns cut out of it (the third, by Bajkowskiego, went with ADR-0074 C5), Lubartowska's lane line runs on past the old way out (447; 16).
   const chunk = KRAKOWSKIE_CHUNKS.find((c) => c.id === "krakowskie-2-1")!;
   const inside = (x: number, z: number, o: readonly number[]) => {
     let hit = false;

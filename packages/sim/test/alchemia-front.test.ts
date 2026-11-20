@@ -5,6 +5,7 @@ import {
   SHOP_SOLID_PROPS,
   FOODHALL_SOLID_PROPS,
   ROOF_SOLID_PROPS,
+  FRONT_PLAZA_SOLID_PROPS,
   EAST_WING,
   FRONT_SIGN,
   L1_TOP,
@@ -95,8 +96,8 @@ describe("Alchemia's front over P-1 (B1)", () => {
     expect(FRONT_SIGN.y0).toBeGreaterThan(8.3);
     expect(FRONT_SIGN.y1).toBeLessThanOrEqual(L3_TOP + 1.0);
     expect(frontPieces().find((p) => p.kind === "sign")!.solid).toBe(false);
-    // The green roof's solids (ADR-0093 O4) come after the food hall's, the last of Alchemia's.
-    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
+    // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
+    expect(ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length)!.prisms).toHaveLength([...frontPieces(), ...frontDressPieces()].filter((p) => p.solid).length);
   });
 
   it("stands its kiosks (B4) on the square before it, off the fountain, the ramp's trench and every solid of the map", () => {

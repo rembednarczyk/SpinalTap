@@ -119,11 +119,13 @@ const LAWN_REASON = "trawnik placu T0 Alchemii na miejscu parkingu w173531008 (d
 /**
  * T0's lawns (T-241): world rectangles with their corners cut. The east one begins east of P-1's
  * stair house (x 427.7 since ADR-0093 O2b, G-940): at x 424 its door opened onto 3.2 m of grass.
+ * The one by Bajkowskiego (x 385-398, z -5.5..-1.5) gave way to the square before the front (ADR-0074
+ * C5): its podium, stairs, kiosks and tables stand there on the paving, the game's planters and a
+ * tree in its place (on the orthophoto it was 1% green, T-245's review).
  */
 export const T0_LAWNS: readonly { readonly name: string; readonly ring: readonly Pt[] }[] = [
   { name: "trawnik-zachod", ring: lawn(391, 403.6, 3, 21, 1.5) },
   { name: "trawnik-wschod", ring: lawn(428, 434, 9, 21, 1.5) },
-  { name: "trawnik-bajkowskiego", ring: lawn(385, 398, -5.5, -1.5, 1) },
 ];
 
 const DRIVEWAY_REASON = "wjazd z jezdni Bajkowskiego na rampę P−1 Alchemii przez chodnik, z obniżonym krawężnikiem (przegląd PR #382, prośba użytkownika 7.11)";
@@ -159,9 +161,9 @@ const DRIVEWAY: readonly AddedArea[] = [
 
 /**
  * T0's square (T-241): the car park's outline paved as a square up to the pavilion (`T0_SQUARE`),
- * the deptak's setts, and three lawns in it, which the import cuts out of the paving as holes
- * (`openPavings`): west of the ramp's trench over P-1's deck, east of it from P-1's stair house to
- * metro B's pavilion, and one by Bajkowskiego west of the driveway. They keep clear of the trench's
+ * the deptak's setts, and two lawns in it, which the import cuts out of the paving as holes
+ * (`openPavings`): west of the ramp's trench over P-1's deck and east of it from P-1's stair house to
+ * metro B's pavilion (the third, by Bajkowskiego, went with ADR-0074 C5). They keep clear of the trench's
  * parapets and their beds, the pergolas' walks, the stair house's door and the level graph's way to
  * it from the main entrance's way (`mall-nav.ts`).
  */
