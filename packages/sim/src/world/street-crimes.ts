@@ -1,5 +1,6 @@
 import {
   type ContractSiteId,
+  type DomainState,
   type MicroEventKind,
   QUIET_DEAL_BONUS,
   TERRITORIES,
@@ -81,13 +82,34 @@ export const crimeBoard = (seed: number, slot: number, distrusted = false): read
 /** A crime is hidden in the district of a running contract's site (§3: not mixed with the job). */
 export const crimeHidden = (site: ContractSiteId | null, district: BoardCrime["district"]): boolean => site !== null && CONTRACT_SITE_BANDS[site] === district;
 
-const hidden = (ctx: SimContext, c: BoardCrime): boolean => crimeHidden(ctx.state.domain.contracts.active?.siteId ?? null, c.district);
+/**
+ * The board's crimes still open in a game: from the seed and the domain alone, so the map shows
+ * what the simulation runs (ADR-0091 stage 6). Not those done on this board, nor those in the
+ * district of a running contract's site.
+ */
+export const boardOpen = (seed: number, d: DomainState): readonly BoardCrime[] => {
+  const log = d.streetCrimes;
+  const site = d.contracts.active?.siteId ?? null;
+  return crimeBoard(seed, crimeSlot(d.clock), streetDistrusts(d.reputation.civilians)).filter((c) => !log.done.includes(c.id) && !crimeHidden(site, c.district));
+};
 
 /** The board's crimes the player may still run into now. */
-export const openCrimes = (ctx: SimContext): readonly BoardCrime[] => {
-  const log = ctx.state.domain.streetCrimes;
-  const distrusted = streetDistrusts(ctx.state.domain.reputation.civilians);
-  return crimeBoard(ctx.seed, crimeSlot(ctx.state.domain.clock), distrusted).filter((c) => !log.done.includes(c.id) && !hidden(ctx, c));
+export const openCrimes = (ctx: SimContext): readonly BoardCrime[] => boardOpen(ctx.seed, ctx.state.domain);
+
+/** What foiling `c` would pay now, as `closeCrime` pays it (a quiet deal's bonus aside): the map's offer. */
+export const crimeReward = (d: DomainState, c: BoardCrime): number =>
+  streetCrimePay(c.kind, bandLevel(d.progression.level, DISTRICT_BANDS[c.district]), d.streetCrimes.paidToday, d.reputation.tessen);
+
+/** Follows a crime of the open board (or none); one target on the HUD, so the journal's pin goes. */
+export const trackStreetCrime = (ctx: SimContext, cmd: { readonly id: string | null }): void => {
+  const d = ctx.state.domain;
+  if (cmd.id === null) {
+    if (d.streetCrimes.tracked !== null) ctx.state.domain = { ...d, streetCrimes: { ...d.streetCrimes, tracked: null } };
+    return;
+  }
+  if (!openCrimes(ctx).some((c) => c.id === cmd.id)) return;
+  const { trackedQuest: _pin, ...preferences } = d.preferences;
+  ctx.state.domain = { ...d, preferences, streetCrimes: { ...d.streetCrimes, tracked: cmd.id } };
 };
 
 /** The first board from `from` (up to `horizon` boards on) with a crime that passes `test`: tools and tests. */

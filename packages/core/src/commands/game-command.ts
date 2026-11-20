@@ -74,6 +74,12 @@ export type GameCommand =
   | { readonly type: "travel-metro"; readonly to: MetroStationId }
   /** Follow this journal entry on the HUD (a quest id or `contract-<id>`); null lets the game pick. */
   | { readonly type: "track-quest"; readonly questId: string | null }
+  /**
+   * Follow this crime of the street's board on the map (ADR-0091 stage 6: one at a time, a crime
+   * id of the open board); null stops. Following a crime lets go of the journal's pin and pinning
+   * an entry lets go of the crime: one target on the HUD.
+   */
+  | { readonly type: "track-street-crime"; readonly id: string | null }
   // Character progression (ADR-0059).
   /** Puts one unspent attribute point into `attribute`; refused without a point or at the cap. */
   | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId }

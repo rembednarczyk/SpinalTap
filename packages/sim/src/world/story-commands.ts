@@ -96,5 +96,8 @@ export const applyResolveEnding = (ctx: SimContext, cmd: Command<"resolve-ending
 export const trackQuest = (ctx: SimContext, cmd: Command<"track-quest">): void => {
   const { trackedQuest: _old, ...rest } = ctx.state.domain.preferences;
   const preferences = cmd.questId ? { ...rest, trackedQuest: cmd.questId } : rest;
-  ctx.state.domain = { ...ctx.state.domain, preferences };
+  // One target on the HUD (ADR-0091 stage 6): a pinned entry lets go of a followed crime.
+  const crimes = ctx.state.domain.streetCrimes;
+  const streetCrimes = cmd.questId && crimes.tracked !== null ? { ...crimes, tracked: null } : crimes;
+  ctx.state.domain = { ...ctx.state.domain, preferences, streetCrimes };
 };
