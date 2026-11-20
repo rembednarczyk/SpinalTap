@@ -14,13 +14,15 @@ import type { ScheduleDef } from "../world/components";
  * - `guards`: the mark's two bodyguards (`bodyguards`), a step from the mark;
  * - `twin`: the look-alike (`twin`; with `wrong_target` the two swap places);
  * - `lookout`: the extra guard of a `lockdown`, where the site is watched from the street;
- * - `ambush`: the crew waiting by the way out (`ambush`, or the `setup` twist).
+ * - `ambush`: the crew waiting by the way out (`ambush`, or the `setup` twist);
+ * - `delay`: seconds from the acceptance before the job's crew turns up (a raid on its way).
  */
 export interface SitePlan {
   readonly guards?: readonly [Vec3, Vec3];
   readonly twin?: Vec3;
   readonly lookout?: Vec3;
   readonly ambush?: readonly Vec3[];
+  readonly delay?: number;
 }
 
 const { east_lot: lot, koi_back: back, car_wash: wash, south_gate: gate } = KRAKOWSKIE_SITE_POINTS;
@@ -38,8 +40,11 @@ export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
     lookout: ground(444.6, 96.2),
     ambush: [{ x: 418.6, y: P2.floor, z: 66.0 }, ground(446.0, 99.6), ground(439.0, 101.0)],
   },
-  raid_north: { lookout: ground(431.5, 123) },
-  raid_east: { lookout: ground(445, 74) },
+  // The raids turn up at the gallery's cores on P2 (ADR-0093 O3) once they have climbed to there: Oyaji
+  // is hit some 18 s after the job is taken, as on T1's level before O3 (1020 steps), and the
+  // player running up from Hana's cart gets to P3 before them.
+  raid_north: { lookout: ground(431.5, 123), delay: 6.5 },
+  raid_east: { lookout: ground(445, 74), delay: 9.5 },
   // W-3 (ADR-0082): the pass office in the tower, the quay by the pier, the riverside path.
   tessen_office: { guards: [w3(2490, 0, 439), w3(2493, 0, 438.2)], lookout: w3(2492, 0, 432) },
   quay_terminal: { lookout: w3(2488, 0, 426), ambush: [w3(2497, 0, 424), w3(2493, 0, 420), w3(2498, 0, 433)] },

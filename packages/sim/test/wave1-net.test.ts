@@ -31,7 +31,7 @@ import {
   stateHash,
   worldTimeScale,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim, untilCrew } from "./helpers";
 import { scanName } from "../src/systems/scanner-system";
 
 /**
@@ -352,6 +352,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
       { contractId: c.id, condition: CONTRACT_BONUS.protect, kept: true },
       { contractId: c.id, condition: CONTRACT_BONUS.protect, kept: false },
     ]);
+    untilCrew(sim, c);
     for (const e of crew(sim, c)) e.health = { current: 0, max: 1 };
     sim.step();
     sim.enqueue({ type: "complete-contract" });
