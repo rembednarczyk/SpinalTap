@@ -21,17 +21,25 @@ const alertedNear = (sim: Simulation): boolean => {
 };
 
 /**
+ * A gang's warning running (decision 3 of 18.11): the seconds she has to put the gun away or walk
+ * off would run out in the jump, and the gang be provoked with no chance to answer (G-946).
+ */
+const gangWarning = (sim: Simulation): boolean => Object.values(sim.domain.gangStandings).some((s) => s?.warnedUntil !== undefined);
+
+/**
  * Why the hours cannot pass now, null when they can. The `wait` command itself refuses nothing
  * (ADR-0017: a cut, the world placed on its schedules), so the window is where the rules live:
- * no waiting out a fight, a contract's raised alarm, a pursuit or Tessen's squad after her (on its
- * way to its tick and 20 s past it, in the city, or gone back in the stretch of the day it went back
- * in: ADR-0082, 17.11), nor in a takedown, a conversation, on the metro or in the air.
+ * no waiting out a fight, a gang's warning, a contract's raised alarm, a pursuit or Tessen's squad
+ * after her (on its way to its tick and 20 s past it, in the city, or gone back in the stretch of
+ * the day it went back in: ADR-0082, 17.11), nor in a takedown, a conversation, on the metro or in
+ * the air.
  */
 export const waitBlock = (sim: Simulation, facts: WaitFacts): WaitBlock | null => {
   const { domain, session } = sim;
   const player = sim.player();
   if (!player || (player.health?.current ?? 0) <= 0 || session.gameOver) return "busy";
   if (facts.fighting || alertedNear(sim)) return "combat";
+  if (gangWarning(sim)) return "warned";
   const contract = domain.contracts.active;
   if (contract && domain.flags.includes(contractAlarmFlag(contract.id))) return "alarm";
   if (domain.heat.level > 0) return "wanted";

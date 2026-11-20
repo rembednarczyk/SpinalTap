@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioPort, EMPTY_INPUT, type RenderPort, SECONDS_PER_HOUR, START_HOUR, TESSEN_HUNT, formatClock, gameDayOf, tessenHuntFlag, tessenSquadFlag, textRef } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { CLINIC_WAKE_SPOT, SIM_HZ, TESSEN_SQUAD_BACK_PREFIX, TESSEN_SQUAD_LATE_SECONDS, gangerEntity, tessenSquadBackFlag } from "@seki/sim";
+import { CLINIC_WAKE_SPOT, SIM_HZ, ground, TESSEN_SQUAD_BACK_PREFIX, TESSEN_SQUAD_LATE_SECONDS, gangerEntity, tessenSquadBackFlag } from "@seki/sim";
 import { createUiStore, translateText } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -219,6 +219,57 @@ describe("waiting in the session", () => {
     hunted(over.session, [tessenSquadFlag(TESSEN_HUNT.squadMin, 1e7)], TESSEN_HUNT.days * 24 * SECONDS_PER_HOUR);
     over.session.intents.openWait();
     expect(over.ui.getState().wait).not.toBeNull();
+  });
+
+  /*
+   * G-946: a gang's warning (decision 3 of 18.11) gives her seconds to put the gun away or walk
+   * off. Waiting across it ran it out in the jump: the gang provoked, its grudge up, with no
+   * chance to answer. At noon by the Bramowa patrol's corner, 3 m in front of it, gun drawn.
+   */
+  it("with a gang's warning running it is refused; the gun put away and the warning over, she waits", () => {
+    const { session, ui } = setup();
+    session.intents.openWait();
+    session.intents.waitHours(15);
+    expect(ui.getState().clock).toBe("12:00");
+    const player = session.sim.player()!;
+    const put = (x: number, z: number, yaw: number) => {
+      player.position = { x, y: ground(x, z).y, z };
+      player.prevPosition = player.position;
+      player.yaw = yaw;
+    };
+    put(506, -66, Math.PI);
+    session.step(EMPTY_INPUT);
+    const g = [...session.sim.world].find((e) => e.key === "hebi-bramowa")!;
+    put(g.position.x + Math.sin(g.yaw) * 3, g.position.z + Math.cos(g.yaw) * 3, g.yaw + Math.PI);
+    const warned: unknown[] = [];
+    const provoked: unknown[] = [];
+    session.sim.bus.on("TerritoryWarned", (e) => warned.push(e));
+    session.sim.bus.on("TerritoryProvoked", (e) => provoked.push(e));
+    if (player.combatant!.holstered) session.step({ ...EMPTY_INPUT, toggleWeapon: true });
+    for (let i = 0; i < SIM_HZ && warned.length === 0; i++) session.step(EMPTY_INPUT);
+    expect(warned).toHaveLength(1);
+    const start = session.sim.clock.seconds;
+    session.intents.openWait();
+    expect(ui.getState().wait).toBeNull();
+    const toast = ui.getState().toasts.at(-1)!;
+    expect(toast).toMatchObject({ kind: "system", title: textRef("wait.blockedTitle"), text: textRef("wait.blocked.warned") });
+    expect(translateText("en", toast.text)).toBe("Not with a gang warning you: put the weapon away or walk off.");
+    expect(translateText("pl", toast.text)).toBe("Nie, gdy gang cię ostrzega: schowaj broń albo odejdź.");
+    session.intents.waitHours(1);
+    session.step(EMPTY_INPUT);
+    expect(session.sim.clock.seconds - start).toBeLessThan(60);
+    expect(provoked).toEqual([]);
+    // The gun away, the warning is over by the next step: the hour passes and the gang stays calm.
+    session.step({ ...EMPTY_INPUT, toggleWeapon: true });
+    for (let i = 0; i < SIM_HZ && Object.values(session.sim.domain.gangStandings).some((s) => s?.warnedUntil !== undefined); i++) session.step(EMPTY_INPUT);
+    session.pause();
+    expect(ui.getState().waitBlocked).toBeNull();
+    session.intents.openWait();
+    const before = session.sim.clock.seconds;
+    session.intents.waitHours(1);
+    expect(session.sim.clock.seconds - before).toBe(SECONDS_PER_HOUR);
+    session.step(EMPTY_INPUT);
+    expect(provoked).toEqual([]);
   });
 
   it("not over another panel: the phone open keeps it shut", () => {
