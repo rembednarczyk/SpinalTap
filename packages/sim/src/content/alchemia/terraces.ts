@@ -1,6 +1,6 @@
 import { KRAKOWSKIE_CHUNKS } from "../lublin/krakowskie.generated";
 import type { GroundRect, Pad, Ramp } from "../lublin/shape";
-import { HALL, T0, T1, type Piece, box, piece } from "./plan";
+import { HALL, T0, T1 } from "./plan";
 import { T2_PADS, T2_STAIRS } from "./plaza";
 
 /**
@@ -43,7 +43,15 @@ export const T0_LINE: GroundRect = { minX: HALL.minX - 4, maxX: HALL.maxX + 4, m
 const RAMP_FROM = HALL.minZ - 1;
 const RAMP_TO = HALL.maxZ - 2;
 export const WEST_RAMP: Ramp = { a: { x: HALL.minX - 3, z: RAMP_FROM }, b: { x: HALL.minX - 3, z: RAMP_TO }, ya: T0, yb: T1, width: 6, blend: 2, square: true };
-export const EAST_RAMP: Ramp = { a: { x: HALL.maxX + 3, z: RAMP_FROM }, b: { x: HALL.maxX + 3, z: RAMP_TO }, ya: T0, yb: T1, width: 6, blend: 2, square: true };
+/**
+ * The east one is 8 m wide on the terrain, 2 m more than its steps (G-445): on the 2.5 m grid the
+ * columns either side of the steps (x 435, in the hall's cut, and 442.5) lie on its slope, so the
+ * ground and the square's paving draped on that grid run level across the steps, not up a bank
+ * over their ends (to 0.38 m with a 6 m ramp).
+ */
+export const EAST_RAMP: Ramp = { a: { x: HALL.maxX + 3, z: RAMP_FROM }, b: { x: HALL.maxX + 3, z: RAMP_TO }, ya: T0, yb: T1, width: 8, blend: 2, square: true };
+/** Half the east ramp's steps across (their 6 m less 0.3 m each side). */
+export const EAST_STEPS_HALF = 2.7;
 
 export const ALCHEMIA_PADS: readonly Pad[] = [
   { rect: T1_RECT, y: T1, blend: 8, row: "T-207" },
@@ -59,16 +67,4 @@ export const ALCHEMIA_RAMPS: readonly Ramp[] = [WEST_RAMP, EAST_RAMP, T2_STAIRS]
 export const rampY = (r: Ramp, z: number): number => {
   const t = Math.max(0, Math.min(1, (z - r.a.z) / (r.b.z - r.a.z)));
   return r.ya + (r.yb - r.ya) * t;
-};
-
-/** The east ramp's steps: drawn, not solid (bodies walk its even slope), a metre of going each. */
-export const terracePieces = (): Piece[] => {
-  const out: Piece[] = [];
-  const r = EAST_RAMP;
-  const half = r.width / 2 - 0.3;
-  for (let z = r.a.z; z < r.b.z - 1e-6; z += 1) {
-    const top = rampY(r, z) + 0.02;
-    out.push(piece(box(r.a.x - half, r.a.x + half, z, z + 1, rampY(r, z + 1) - 0.3, top), "step", false, false));
-  }
-  return out;
 };
