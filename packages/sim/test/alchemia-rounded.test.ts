@@ -68,7 +68,8 @@ describe("Alchemia's rounded storeys (19.11)", () => {
     // out onto L2's terrace from L3 and onto L3's roof from the gallery's.
     const rails = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "parapet" && p.outline);
     expect(rails.filter((p) => p.solid).length).toBeGreaterThan(30);
-    expect(rails.filter((p) => !p.solid)).toEqual([]);
+    // But the house with arcades' roof's (C3), behind L2's hedge.
+    expect(rails.filter((p) => !p.solid).every((p) => p.box.z1 < 3.8 && p.box.x1 < 409.3)).toBe(true);
     for (const r of rails) expect(r.box.y1 - r.box.y0).toBeCloseTo(r.box.z0 >= MALL.z0 && r.box.x0 >= MALL.x0 - 0.4 ? MALL_RAIL : 1, 6);
   });
 });

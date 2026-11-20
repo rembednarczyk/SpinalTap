@@ -5,9 +5,9 @@ import { L2_TOP, L3_TOP } from "./front";
 /*
  * People on the front's terraces (C7 of the board 1:1, 20.11): the board
  * `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg` has its terraces full, people at the rails
- * looking down on the square and at the tables under L3's umbrellas. Nobody climbs there in the
- * game (no stairs lead to L2's terrace or L3's roof, `front-dress.ts`), so they are the game's still
- * figures (ADR-0058), drawn with the furniture's blocks, not the simulation's crowd: standing on the
+ * looking down on the square and at the tables under L3's umbrellas. One walks out there since
+ * ADR-0093 O5 (from L3 onto L2's terraces, from the gallery's green roof onto L3's), but they stay the
+ * game's still figures (ADR-0058), drawn with the furniture's blocks, not the simulation's crowd: standing on the
  * roofs' solid tops, behind the shrubs along the balustrades (`front-green.ts`), clear of the trees'
  * planters, the holograms' emitters and the umbrellas' tables (test). Placed by hand from the board,
  * each with its own look; the poses the figures' pack has standing (`stand`, `hips`, `smoke`).

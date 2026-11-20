@@ -128,10 +128,10 @@ const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r], open: read
 /** L3 standing on L2's roof: L2's balustrade does not run through it (nor along L2's own joint under it). */
 const UNDER_L3: Rectangle = { x0: L3.minX - 0.25, x1: L3.maxX + 0.25, z0: L3.minZ - 0.25, z1: L3.maxZ + 0.5 };
 
-/** The balustrade round the house with arcades' roof, on its three open sides (C3), solid as L2's terrace it opens onto. */
+/** The balustrade round the house with arcades' roof, on its three open sides (C3), drawn only: L2's hedge keeps one off its roof. */
 const arcadeRail = (): Piece[] => {
   const A = ARCADE_FRONT;
-  return balustrade({ x0: A.minX - 0.1, x1: A.maxX + 0.1, z0: A.minZ - 0.1, z1: A.maxZ }, -0.05, [false, false, false, false], A.top, PARAPET, true, [
+  return balustrade({ x0: A.minX - 0.1, x1: A.maxX + 0.1, z0: A.minZ - 0.1, z1: A.maxZ }, -0.05, [false, false, false, false], A.top, PARAPET, false, [
     { x0: A.minX - 1, x1: A.maxX + 1, z0: A.maxZ - 0.5, z1: A.maxZ + 1 },
   ]);
 };
@@ -178,13 +178,16 @@ const masts = (): Piece[] =>
 const columns = (): Piece[] => PASSAGE_COLUMNS.map((c) => piece(box(c.x - COLUMN / 2, c.x + COLUMN / 2, c.z - COLUMN / 2, c.z + COLUMN / 2, FOOT, L1_TOP - SOFFIT), "column", false));
 
 /**
- * Hedges along L2's and L3's south terraces, knee high, a step in from their edges. L2's east of the
- * house with arcades only, whose roof its terrace goes on over (one walks there since ADR-0093 O5);
- * L3's along its south edge behind the sign (on its north edge until O5, where its roof meets the
- * gallery's, a way from it now).
+ * Hedges along L2's and L3's south terraces, knee high, a step in from their edges: L2's on to its
+ * west balustrade, between its terrace (one walks there since ADR-0093 O5) and the house with arcades'
+ * roof; L3's along its south edge behind the sign (on its north edge until O5, where its roof meets
+ * the gallery's, a way from it now).
  */
 const hedges = (): Piece[] => [
-  piece(box(ARCADE_FRONT.maxX + 0.5, L2_SLABS[0]!.maxX - 1, L2_SLABS[0]!.minZ + 0.3, L2_SLABS[0]!.minZ + 0.8, L2_TOP, L2_TOP + 0.6), "green", false),
+  piece(box(L2_SLABS[0]!.minX + 1, L2_SLABS[0]!.maxX - 1, L2_SLABS[0]!.minZ + 0.3, L2_SLABS[0]!.minZ + 0.8, L2_TOP, L2_TOP + 0.6), "green", false),
+  // Its west end on to the balustrade: the house with arcades' roof stays the board's, behind the hedge (a balustrade round it
+  // solid would hide St Joseph's top from two more eyes of the street, `game-solid-landmark-occlusion`).
+  piece(box(L2_SLABS[0]!.minX + 0.1, L2_SLABS[0]!.minX + 1, L2_SLABS[0]!.minZ + 0.3, L2_SLABS[0]!.minZ + 0.8, L2_TOP, L2_TOP + 0.6), "green", false),
   piece(box(L3.minX + 1, L3.maxX - 1, L3.minZ + 0.3, L3.minZ + 0.8, L3_TOP, L3_TOP + 0.6), "green", false),
 ];
 

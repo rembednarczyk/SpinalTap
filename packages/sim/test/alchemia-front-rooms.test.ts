@@ -179,9 +179,10 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
   });
 
   it("walks out of L3 onto L2's terraces by its doors, and from the gallery's green roof onto L3's", () => {
-    // L2's south terrace through L3's south door, its east one through the east door, the house with arcades' roof beyond.
+    // L2's south terrace through L3's south door, its east one through the east door; the house with arcades' roof stays behind
+    // L2's hedge (its balustrade drawn only: solid, it hid St Joseph's top from two more eyes of the street).
     expect(R3.near(REACHED3, (L3_DOORS.south.x0 + L3_DOORS.south.x1) / 2, 8, 0.5), "south terrace").toBe(true);
-    expect(R3.near(REACHED3, 400, 0.5, 0.5), "the house with arcades' roof").toBe(true);
+    expect(R3.near(REACHED3, 400, 0.5, 0.5), "the house with arcades' roof").toBe(false);
     expect(R3.near(REACHED3, 432, 24, 0.5), "east terrace").toBe(true);
     // The terraces railed: none of the raster's cells off L2's slabs.
     const onL2 = (x: number, z: number) => L2_SLABS.some((r) => x > r.minX - 0.35 && x < r.maxX + 0.35 && z > r.minZ - 0.35 && z < r.maxZ + 0.35) || (x > 393.9 && x < 409.1 && z > -2.1 && z < 4);
