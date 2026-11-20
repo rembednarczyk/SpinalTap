@@ -167,6 +167,7 @@ Każdy etap przechodzi przegląd `topography-curator` ze zrzutami z osi: z Bajko
   - `game-solid-landmark-occlusion` (z przeglądu #312): bryły Alchemii zasłaniają najwyżej 25% szczytu zabytku z oczu na ulicach w promieniu 250 m. Baza 0, etap 1.
   - `pad-unregistered` (z przeglądu #327): każdy `PADS` ma wiersz T. Baza z pomiaru w etapie 1, potem tylko spada.
   - `underground-level-exit`: każde wnętrze podziemne ma co najmniej dwa wyjścia drożne w grafie poziomów. Baza 0, etap 4.
+  - `memorial-neon-clear` (z przeglądów kuratora, §6): świecący znak bliżej niż 20 m w poziomie od kamienia pamięci Placu Ofiar Getta albo od węzła OSM `memorial=stolperstein`. Liczą się szyldy, tablice venue, holo i reklamy mapy, neony gry i urządzeń, neony deptaka (C7), światło frontu (C4) i neonowe szyldy galerii, food hallu, pawilonu i domu z arkadami (`tools/glitch-scan/test/alchemia-landmark-checks.ts`). Baza z pomiaru 20.11: 12 miejsc, 11 przy Stolpersteine (szyldy mapy i neon SAKE) i neon Hebi w schronie pod T2 (14,2 m w poziomie od kamienia).
   - istniejące `metro-shaft-open`, `metro-entrance-blocked`, `building-underground-solid`, `interior-outside-building`, `interior-entrance-gap`, `bay-car-out-of-park` i `parked-car-*` bez wzrostu.
 
 ### 12. Etapy (osobne PR-y, w kolejności użytkownika)
