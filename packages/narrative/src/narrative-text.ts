@@ -54,6 +54,7 @@ export const SPEAKERS: Readonly<Record<string, Named | Keyed>> = {
   GLOS: { key: "speaker.glos" },
   // Observation hooks, the metro car and the radio (ADR-0032).
   HEBI: { name: "Hebi" },
+  ARCHIWISTKA: { key: "speaker.archiwistka" },
   GLOSNIK: { key: "speaker.glosnik" },
   PASAZER: { key: "speaker.pasazer" },
   PASAZERKA: { key: "speaker.pasazerka" },

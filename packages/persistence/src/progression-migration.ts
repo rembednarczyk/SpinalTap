@@ -19,6 +19,8 @@ const V17_QUEST_XP: Readonly<Record<string, { readonly steps: readonly number[];
   m0_first_contract: { steps: [100, 300, 250], quest: 600 },
   m3_echo: { steps: [150, 100, 150, 250], quest: 700 },
   m3_lustro: { steps: [600, 1000, 1000, 1500], quest: 3000 },
+  // Act III (ADR-0095) came later; no v16 save has it, but the table stays the quests' XP of today.
+  m3_zrodlo: { steps: [800, 1500, 2000], quest: 4000 },
 };
 
 /**

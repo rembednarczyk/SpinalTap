@@ -2,6 +2,9 @@ import type { CharacterState } from "../character/character";
 import { type Flags, hasFlag } from "../state/flags";
 import {
   ACT_ONE_ENDING_FLAG,
+  ACT_THREE_ENDING_FLAG,
+  ACT_THREE_EPILOGUE,
+  ACT_THREE_OPENING,
   ACT_TWO_ENDING_FLAG,
   ACT_TWO_OPENING,
   endingFlag,
@@ -177,17 +180,72 @@ export const QUEST_MIRROR: QuestDefinition = {
   ],
 };
 
-export const QUEST_DEFINITIONS: readonly QuestDefinition[] = [QUEST_FIRST_CONTRACT, QUEST_ECHO, QUEST_MIRROR];
+/** Raised by Ume, Ren or Kurosawa (by the act-II ending) when the trail leads to the Castle (ADR-0095). */
+export const CASTLE_LEAD_FLAG = "castle_lead";
+/** Raised by the archive's core at the Trinity Chapel's door the first time she plugs in. */
+export const CORE_REACHED_FLAG = "core_reached";
+/** Kagami's guards on the Castle's courtyard (keyed actors, ADR-0095). */
+export const KAGAMI_GUARD_KEYS = ["kagami-guard-1", "kagami-guard-2", "kagami-guard-3", "kagami-guard-4"] as const;
+
+/**
+ * Main thread, act III (ADR-0095). Starts after "Lustro"; the trail to the Castle comes from Ume,
+ * Ren or Kurosawa, by the act-II ending (branch and bottleneck: the three meet at the Trinity
+ * Chapel). The core gives back the one memory Kagami never recorded; after its flashback she
+ * decides the archive's fate there, and the act ends with that ending.
+ */
+export const QUEST_SOURCE: QuestDefinition = {
+  id: "m3_zrodlo",
+  xp: 4000,
+  title: "quest.m3_zrodlo.title",
+  main: true,
+  startsAfter: QUEST_MIRROR.id,
+  steps: [
+    {
+      id: "source_lead",
+      xp: 800,
+      objective: "quest.m3_zrodlo.source_lead",
+      target: { actor: "ume" },
+      variants: [
+        { when: { type: "flag", flag: endingFlag("hebi") }, objective: "quest.m3_zrodlo.source_lead.ren", target: { actor: "ren" } },
+        { when: { type: "flag", flag: endingFlag("kagami") }, objective: "quest.m3_zrodlo.source_lead.kurosawa", target: { actor: "kurosawa-castle" } },
+      ],
+      completeWhen: { type: "flag", flag: CASTLE_LEAD_FLAG },
+      rewards: [],
+    },
+    {
+      id: "chapel",
+      xp: 1500,
+      objective: "quest.m3_zrodlo.chapel",
+      target: { actor: "archivist" },
+      completeWhen: { type: "flag", flag: CORE_REACHED_FLAG },
+      rewards: [{ type: "memory", memoryId: "chapel" }],
+    },
+    {
+      id: "core_choice",
+      xp: 2000,
+      objective: "quest.m3_zrodlo.core_choice",
+      target: { actor: "archivist" },
+      completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("chapel") }, { type: "flag", flag: ACT_THREE_ENDING_FLAG }] },
+      rewards: [],
+    },
+  ],
+};
+
+export const QUEST_DEFINITIONS: readonly QuestDefinition[] = [QUEST_FIRST_CONTRACT, QUEST_ECHO, QUEST_MIRROR, QUEST_SOURCE];
 
 /**
  * The scene that should play on its own as soon as the player is free: an unplayed memory
- * flashback first, then the act-II opening once that act has started. Driven by domain state,
+ * flashback first, then the act-II opening once that act has started, then act III's opening and
+ * epilogue (ADR-0095). Driven by domain state,
  * so it survives a save. Returns the ink knot, or null.
  */
 export const pendingScene = (domain: { readonly character: CharacterState; readonly flags: Flags; readonly quests: QuestLog }): string | null => {
   const memory = pendingRecall(domain);
   if (memory) return recallDialogueId(memory);
   if (domain.quests[QUEST_MIRROR.id] && !hasFlag(domain.flags, seenFlag(ACT_TWO_OPENING))) return ACT_TWO_OPENING;
+  // Act III (ADR-0095): its opening once it started, its epilogue once its ending is reached.
+  if (domain.quests[QUEST_SOURCE.id] && !hasFlag(domain.flags, seenFlag(ACT_THREE_OPENING))) return ACT_THREE_OPENING;
+  if (hasFlag(domain.flags, ACT_THREE_ENDING_FLAG) && !hasFlag(domain.flags, seenFlag(ACT_THREE_EPILOGUE))) return ACT_THREE_EPILOGUE;
   return null;
 };
 

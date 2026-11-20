@@ -22,7 +22,7 @@ const lustro = (stepIndex: number, ending: EndingId, choices: Choices = {}, flag
     ...d,
     character: { ...d.character, alias: ending === "aya" ? "Aya" : "Seki Senshi" },
     quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "active", stepIndex } },
-    story: { choices: { ...ACT_ONE[ending], ...choices }, ending, act2Ending: null },
+    story: { choices: { ...ACT_ONE[ending], ...choices }, ending, act2Ending: null, act3Ending: null },
     flags: [`ending:${ending}`, ...flags],
   };
 };

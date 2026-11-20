@@ -61,14 +61,14 @@ const ACT_ONE: Readonly<Record<EndingId, Choices>> = {
 const lustro = (stepIndex: number, ending: EndingId, choices: Choices = {}, patch: Partial<DomainState> = {}): DomainState =>
   afterM0({
     quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "active", stepIndex } },
-    story: { choices: { ...ACT_ONE[ending], ...choices }, ending, act2Ending: null },
+    story: { choices: { ...ACT_ONE[ending], ...choices }, ending, act2Ending: null, act3Ending: null },
     ...patch,
     flags: [`ending:${ending}`, "seen:act2_opening", ...(patch.flags ?? [])],
   });
 const afterLustro = (act2Ending: ActTwoEndingId, patch: Partial<DomainState> = {}): DomainState =>
   afterM0({
     quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "completed" } },
-    story: { choices: { ...ACT_ONE.aya, archive: act2Ending }, ending: "aya", act2Ending },
+    story: { choices: { ...ACT_ONE.aya, archive: act2Ending }, ending: "aya", act2Ending, act3Ending: null },
     ...patch,
     flags: ["ending:aya", `ending:${act2Ending}`, "act2_ending", ...(patch.flags ?? [])],
   });
@@ -124,13 +124,13 @@ const SCENARIOS: readonly Scenario[] = [
   {
     name: "Mori, finale aya",
     knot: "mori",
-    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: null, act2Ending: null } }),
+    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: null, act2Ending: null, act3Ending: null } }),
     npcs: ["speaker.mori"],
   },
   {
     name: "Mori, finale seki",
     knot: "mori",
-    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: null, act2Ending: null } }),
+    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: null, act2Ending: null, act3Ending: null } }),
     npcs: ["speaker.mori"],
   },
   { name: "Hana, first offer", knot: "hana", domain: afterM0(), npcs: ["Hana"] },

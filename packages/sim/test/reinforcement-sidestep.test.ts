@@ -101,9 +101,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // here); without it, as v48, the runs hash to the goldens of before (the `v48` column).
   // Re-recorded for v50 (ADR-0074 stage 5d2, Hebi's stash in Alchemia's shelter; nothing of it
   // here): the version only; as v49 the runs hash to the goldens of before (the `v49` column).
-  for (const [seed, level, golden, v49, v48, v47, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "0360fe4a", "ddd30c98", "1c996967", "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
-    [5, 3, "78291878", "fd67e712", "54118583", "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
+  // Re-recorded for v51 (ADR-0095, act III's ending in the story, none here): without it, as v50,
+  // the runs hash to the goldens of before (the `v50` column), and the older columns as they were.
+  for (const [seed, level, golden, v50, v49, v48, v47, v40, v32, v31, v30, v28, v27] of [
+    [21, 2, "59506546", "0360fe4a", "ddd30c98", "1c996967", "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
+    [5, 3, "bd5316b8", "78291878", "fd67e712", "54118583", "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
@@ -123,9 +125,12 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
         expect({ n: e.security.n, side: first.get(e.id) }).toEqual({ n: e.security.n, side: e.security.n % 2 === 0 ? 1 : -1 });
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
-      const snap = beforeV41(sim.snapshot(null, "t", ""));
-      const now = sim.snapshot(null, "t", "");
-      expect(stateHash(now)).toBe(golden);
+      const v51 = sim.snapshot(null, "t", "");
+      expect(stateHash(v51)).toBe(golden);
+      const { act3Ending: _a3, ...story50 } = v51.domain.story;
+      const now = { ...v51, domain: { ...v51.domain, story: story50 } } as unknown as SaveSnapshot;
+      const snap = beforeV41(now);
+      expect(stateHash({ ...now, version: 50 } as unknown as SaveSnapshot)).toBe(v50);
       expect(stateHash({ ...now, version: 49 } as unknown as SaveSnapshot)).toBe(v49);
       const { streetCrimes: _c, ...d48 } = now.domain;
       expect(stateHash({ ...now, version: 48, domain: d48 } as unknown as SaveSnapshot)).toBe(v48);

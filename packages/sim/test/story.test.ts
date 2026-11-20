@@ -104,7 +104,7 @@ describe("main thread in the simulation", () => {
     sim.enqueue({ type: "story-choice", choice: "name", option: "silent" });
     sim.step();
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
-    expect(restored.domain.story).toEqual({ choices: { name: "silent" }, ending: null, act2Ending: null });
+    expect(restored.domain.story).toEqual({ choices: { name: "silent" }, ending: null, act2Ending: null, act3Ending: null });
     expect(stateHash(restored.snapshot(null, "x", ""))).toBe(stateHash(sim.snapshot(null, "x", "")));
   });
 });

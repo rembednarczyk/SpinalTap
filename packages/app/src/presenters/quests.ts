@@ -50,7 +50,7 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
       if (e.delta !== 0) toast("reputation", `${t(FACTIONS[e.faction])} ${e.delta > 0 ? "+" : ""}${e.delta}`, t("world.reputation"));
     }),
     bus.on("EndingReached", (e) => {
-      toast("quest", e.act === 2 ? t("quest.endAct2") : t("quest.endAct1"), t("quest.ending", { title: tx(e.title) }));
+      toast("quest", t(e.act === 3 ? "quest.endAct3" : e.act === 2 ? "quest.endAct2" : "quest.endAct1"), t("quest.ending", { title: tx(e.title) }));
       audio.play("quest-update");
     }),
     bus.on("MemoryUnlocked", (e) => {
