@@ -2299,8 +2299,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-958 Zebry pocięte granicą kawałka mapy i ścinki zebr bez pasów
 - Ważność: S3 · Zasięg: 4 zebry przecięte granicą chunku i 5 ścinków (krakowskie, podzamcze, stare-miasto, nabrzeże)
 - Opis: Pomiar orkiestratora 20.11 (sonda w scratchpadzie zebra/): 123 kawałki zebr (surface crossing) to 119 przejść. Każdy kawałek rysuje pasy z własnego obróconego prostokąta (planCrossing w crossing-plan.ts), więc przejście pocięte granicą chunku ma dwa niezależne rzędy pasów, a ścinek węższy niż 1 m dostaje sam asfalt bez pasów. (1) Pocięte granicą: (383,5; −20) krakowskie-2-0 + 2-1 (Bajkowskiego przy Alchemii; obok trzeci kawałek (383,8–386,9; −23,7…−21,1) przesunięty o 0,3 m i obrócony, z przerwą 0,4 m, oraz pasek 3,0 × 0,7 m bez pasów); (570; 160) stare-miasto-0-1 + podzamcze-0-0; (920; 472,5) podzamcze-1-1 + 2-1; (2500; 204,2) nabrzeże-0-0 + 1-0. (2) Ścinki trójkątne na granicach chunków bez reszty przejścia: (1119,1–1120; 264,3–274,1) podzamcze-2-0, pasek 0,9 m bez pasów; (−102,9…−98,2; −270…−268,4) krakowskie-0-0; trzy trójkąty podzamcze-0-0 przy x 520 (z 182,7–196,1). Poprawka: pasy z całego przejścia (scalić kawałki tego samego przejścia przed rysowaniem albo nieść oś i szerokość przejścia z importu), ścinki bez reszty przejścia usunąć z importu; nowa kontrola skanu (crossing-split / crossing-sliver).
-- Status: zgłoszone
+- Status: w PR #819; wcześniej: zgłoszone
 - Pakiet właściciela: tools/osm-import (crossing-bands, zebra-fit), packages/engine (mapcity/crossing-plan.ts)
+- 20.11: poprawka w PR #819: kawałek przecięty granicą chunku niesie pierścień całego pasa (pole zebra), renderer liczy ramę pasów z całego pasa i przycina do kawałka. Do zrobienia osobno: przesunięty trzeci kawałek na Bajkowskiego (383.8–386.9; −23.7…−21.1) i osierocone drzazgi (podzamcze 1119–1120; 264–274, krakowskie-0-0 −102.9…−98.2; −270…−268.4, trójkąty przy x 520).
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
