@@ -26,6 +26,8 @@ from city_kit_gltf import png_bytes, scene_triangles, write_glb
 from city_kit_palette import GRID, SWATCHES, palette_images, swatch_uv
 
 MAX_TRIS = 6000
+# Models that hang on a wall: their bottom this high over the foot (m), the origin staying on the ground.
+LIFT = {'ex-atm-wall': 0.8}
 
 STREET = ('sketchfab-street-asset-pack', 'street_asset_pack.glb')
 
@@ -60,7 +62,7 @@ EXTRAS = [
     ('ex-cup', STREET, exact('cup1_cup1_0'), ['litter'], 0, 0, 0.15),
     # A second hydrant beside Quaternius' (the hydrants' pool takes both, by position).
     ('ex-hydrant', STREET, exact('Hydrant_Hydrant_0'), ['hydrant'], 0, 0, 0.9),
-    # A cash machine set into a bank's wall (ADR-0096 rule 3), screen to +Z: 0.85 m tall.
+    # A cash machine set into a bank's wall (ADR-0096 rule 3), screen to +Z: 0.85 m tall, its bottom 0.8 m up (`LIFT`).
     ('ex-atm-wall', ('sketchfab-mini-atm', 'simple_mini-atm.glb'), None, ['atm-wall'], -90, -90, 0.85),
     # A roof's dish on its deck (ADR-0096 rule 4): 3.4 m to the top of the dish.
     ('ex-dish', ('sketchfab-satellite-comms', 'satellite_comms.glb'), None, ['roof-dish'], 0, 0, 3.4),
@@ -105,6 +107,7 @@ def build_extras(folder, out_dir):
     out, extras = [], {}
     for key, src, keep, styles, yaw, pitch, height in EXTRAS:
         P, roles, size = bake_extra(folder, src, keep, yaw, pitch, height)
+        P = P + np.array([0, LIFT.get(key, 0), 0])
         m = weld(key, P, flat_normals(P), roles, swatch_uv, MAX_TRIS)
         out.append(m)
         extras[key] = {'size': size, 'styles': styles, 'credit': src[0]}

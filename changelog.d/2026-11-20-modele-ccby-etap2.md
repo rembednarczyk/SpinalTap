@@ -1,0 +1,1 @@
+- Za restauracjami, barami i kawiarniami stoją worki na śmieci, kartony, kosze i beczki, a w ścianach banków są bankomaty. Rozstawia je generator według lokali z mapy, więc za każdym razem w tych samych miejscach.

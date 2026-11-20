@@ -39,7 +39,7 @@ const KEYS = [
 ];
 
 /** Real heights (m) the models were scaled to. */
-const HEIGHTS: Readonly<Record<string, number>> = { "ex-barrier-concrete": 0.81, "ex-cone": 0.75, "ex-hydrant": 0.9, "ex-atm-wall": 0.85, "ex-dish": 3.4, "ex-exit-door": 2.1 };
+const HEIGHTS: Readonly<Record<string, number>> = { "ex-barrier-concrete": 0.81, "ex-cone": 0.75, "ex-hydrant": 0.9, "ex-dish": 3.4, "ex-exit-door": 2.1 };
 
 describe("extra-props.glb (ADR-0096 stage 1)", () => {
   it("holds one model per thing, CC-BY with its credit, under the 6 thousand triangles and small", () => {
@@ -53,10 +53,11 @@ describe("extra-props.glb (ADR-0096 stage 1)", () => {
 
   it("stands each model on the ground at its real height", () => {
     for (const [key, h] of Object.entries(HEIGHTS)) expect(extras.models.get(key)!.size.y, key).toBeCloseTo(h, 2);
+    // On the ground, but the cash machine in a wall: its bottom 0.8 m up (`LIFT` of the bake).
     for (const m of extras.models.values()) {
       let lo = Infinity;
       for (let i = 1; i < m.positions.length; i += 3) lo = Math.min(lo, m.positions[i]!);
-      expect(lo, m.key).toBeCloseTo(0, 3);
+      expect(lo, m.key).toBeCloseTo(m.key === "ex-atm-wall" ? 0.8 : 0, 3);
     }
   });
 
