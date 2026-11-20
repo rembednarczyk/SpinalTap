@@ -214,8 +214,23 @@ export const aFrameSign = (): MeshSink => {
 };
 
 /** A post with Lublin's blue name plate (also the info boards). */
-export const streetPlate = (): MeshSink => {
+/** The shapes of a street's name plate: 0 on its own post, 1 on the wall of the corner building (ADR-0094 stage 3). */
+export const PLATE_SHAPE = { post: 0, wall: 1 } as const;
+
+/**
+ * A street's name plate: a blue enamel plate with the name's lit strip (2077). On its post, or flat
+ * on a wall at 2.7 m, its back on the facade (the piece's point is on the wall, its front +z).
+ */
+export const streetPlate = (shape: number = PLATE_SHAPE.post): MeshSink => {
   const sink = new MeshSink();
+  if (shape === PLATE_SHAPE.wall) {
+    sink.box(v3(0, 2.7, 0.02), 0.75, 0.24, 0.04, paint("#1f4f9a"));
+    sink.box(v3(0, 2.7, 0.042), 0.62, 0.08, 0.005, glow("#e8f2ff"));
+    // The white enamel rim of the Polish plates.
+    sink.box(v3(0, 2.7, 0.041), 0.71, 0.2, 0.002, paint("#e8ecef"));
+    sink.box(v3(0, 2.7, 0.0415), 0.67, 0.16, 0.002, paint("#1f4f9a"));
+    return sink;
+  }
   sink.prism(v3(0, -0.1, 0), 0.04, 2.8, 6, STEEL);
   sink.box(v3(0, 2.55, 0), 0.75, 0.24, 0.04, paint("#1f4f9a"));
   sink.box(v3(0, 2.55, 0.022), 0.62, 0.08, 0.005, glow("#e8f2ff"));
