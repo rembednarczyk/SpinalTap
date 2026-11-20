@@ -188,6 +188,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # 20.11: two shards of #804 and #806 ran every file 1.6 times slower than main's median, from
+      # the first minute to the last and as slow with one file running as with three, so the
+      # runner's cores, not the order of the files or the workers (main's shards: 0.65-1.25). The
+      # log says nothing of the machine: the CPU and its count beside the shard's time tell the
+      # next slow runner from a slower test.
+      - name: Runner's CPU
+        run: |
+          line="Unit shard ${{ matrix.shard }}: $(nproc) CPU, $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
+          echo "$line"; echo "$line" >> "$GITHUB_STEP_SUMMARY"
       # The default reporter prints failures in the log; the blob report feeds the merge; the
       # test-time reporter writes the time of every file for the time gate (job test-time); the
       # github-actions reporter puts each failure (test, message, file:line) as a short annotation
