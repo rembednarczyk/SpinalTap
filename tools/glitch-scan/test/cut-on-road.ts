@@ -1,4 +1,4 @@
-import { pointInRingEvenOdd } from "../../../packages/core/src";
+import { SpatialHash, pointInRingEvenOdd } from "../../../packages/core/src";
 import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import type { Line } from "../../osm-import/src/features.ts";
@@ -31,6 +31,8 @@ export interface CutOnRoadInput {
 
 /** Samples along a way (m). */
 const STEP = 0.25;
+/** Side of the bins of the footprints' boxes (m): a sample looks only at the footprints of its bin. */
+const BIN = 32;
 /** A solid rises out of the ground by more than this (m) to count: under it, it is a room in the ground. */
 const OUT = 0.05;
 
@@ -43,13 +45,14 @@ const replacedIds = (replaced: readonly ReplacedWay[]): ReadonlySet<string> => n
 export const cutOnRoad = (input: CutOnRoadInput): Finding[] => {
   const skip = replacedIds(input.replaced);
   const out: Finding[] = [];
-  const boxes = input.footprints.map((f) => ({
-    f,
-    minX: Math.min(...f.ring.map((p) => p.x)),
-    maxX: Math.max(...f.ring.map((p) => p.x)),
-    minZ: Math.min(...f.ring.map((p) => p.z)),
-    maxZ: Math.max(...f.ring.map((p) => p.z)),
-  }));
+  // The footprints by the bins their boxes touch, in their order: 326 thousand samples of the
+  // city's ways against 2216 footprints each took 9 s under coverage (PR #808).
+  const boxes = new SpatialHash<Footprint>(BIN);
+  for (const f of input.footprints) {
+    const xs = f.ring.map((p) => p.x);
+    const zs = f.ring.map((p) => p.z);
+    boxes.insert(f, Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs));
+  }
   for (const w of input.ways) {
     if (skip.has(w.id)) continue;
     const hit = new Map<string, { length: number; at: Pt }>();
@@ -59,7 +62,7 @@ export const cutOnRoad = (input: CutOnRoadInput): Finding[] => {
       const n = Math.max(1, Math.ceil(len / STEP));
       for (let k = 0; k < n; k++) {
         const p = { x: a.x + ((b.x - a.x) * (k + 0.5)) / n, z: a.z + ((b.z - a.z) * (k + 0.5)) / n };
-        const under = new Set(boxes.filter((q) => p.x >= q.minX && p.x <= q.maxX && p.z >= q.minZ && p.z <= q.maxZ && inRing(p, q.f.ring)).map((q) => q.f.name));
+        const under = new Set(boxes.at(p.x, p.z).flatMap((f) => (inRing(p, f.ring) ? [f.name] : [])));
         for (const name of under) {
           const h = hit.get(name) ?? { length: 0, at: p };
           hit.set(name, { length: h.length + len / n, at: h.at });
