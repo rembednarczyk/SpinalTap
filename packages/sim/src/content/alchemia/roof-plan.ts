@@ -35,8 +35,8 @@ export const ROOF_PATHS: readonly (Rectangle & { readonly key: string })[] = [
   { key: "lift-sw", x0: 412.2, x1: 414.8, z0: 34.95, z1: 37.5 },
   // North from the ring to the north-east core's house (its door in the west wall, z 55.5-57.0).
   { key: "core-ne", x0: 425.3, x1: 427.4, z0: 52.6, z1: 57.9 },
-  // East from the ring to the north-east lift's kiosk (its gate south, z 51.9).
-  { key: "lift-ne", x0: 427.7, x1: 431.6, z0: 49.7, z1: 51.85 },
+  // East from the ring to the north-east lift's kiosk (its gate south, z 51.8-52.0 since G-939: as thick as a wall).
+  { key: "lift-ne", x0: 427.7, x1: 431.6, z0: 49.7, z1: 51.8 },
   { key: "cross-w", x0: 400.3, x1: 408.3, z0: 46.7, z1: 48.6 },
   { key: "pergola-w", x0: 400.3, x1: 408.3, z0: 48.6, z1: 55.5 },
   { key: "pergola-n", x0: 415.6, x1: 425.3, z0: 52.6, z1: 56.3 },
