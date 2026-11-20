@@ -17,6 +17,7 @@ export const enWait = {
   "wait.keys": "← → hours · Enter waits · Esc closes",
   "wait.blockedTitle": "You cannot wait now",
   "wait.blocked.combat": "Not in a fight.",
+  "wait.blocked.warned": "Not with a gang warning you: put the weapon away or walk off.",
   "wait.blocked.alarm": "Not with the alarm raised.",
   "wait.blocked.wanted": "Not while you are hunted.",
   "wait.blocked.hunt": "Not with a Tessen squad on your trail.",

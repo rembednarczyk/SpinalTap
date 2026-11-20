@@ -18,6 +18,7 @@ export const plWait = {
   "wait.keys": "← → godziny · Enter czeka · Esc zamyka",
   "wait.blockedTitle": "Nie możesz teraz czekać",
   "wait.blocked.combat": "Nie w czasie walki.",
+  "wait.blocked.warned": "Nie, gdy gang cię ostrzega: schowaj broń albo odejdź.",
   "wait.blocked.alarm": "Nie przy podniesionym alarmie.",
   "wait.blocked.wanted": "Nie, gdy cię ścigają.",
   "wait.blocked.hunt": "Nie, gdy oddział Tessen jest na twoim tropie.",
