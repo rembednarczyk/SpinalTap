@@ -101,7 +101,18 @@ export type PieceKind =
   | "cup"
   | "steam"
   | "carton"
-  | "paper";
+  | "paper"
+  // The green roof (ADR-0093 O4): its raised beds and their flowers, the services (solar panels, the mast, the air handler's fans),
+  // the residents' garden (vegetable crates, washing, a camping chair, cans).
+  | "planter"
+  | "flower"
+  | "panel"
+  | "mast"
+  | "fan"
+  | "crate"
+  | "laundry"
+  | "chair"
+  | "can";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

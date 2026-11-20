@@ -8,6 +8,7 @@ import {
   MALL_PROPS,
   SHOP_SOLID_PROPS,
   FOODHALL_SOLID_PROPS,
+  ROOF_SOLID_PROPS,
   ALCHEMIA_T2,
   ALCHEMIA_VAULTS,
   FOODHALL,
@@ -223,7 +224,8 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
     }
     // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's before the front's (B1).
     // The gallery round the atrium (ADR-0093 O1) last.
-    const after = 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length;
+    // The green roof's solids (ADR-0093 O4) come after the food hall's, the last of Alchemia's.
+    const after = 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length;
     expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length - after, -after)).toEqual(P2_PROPS);
   });
 });

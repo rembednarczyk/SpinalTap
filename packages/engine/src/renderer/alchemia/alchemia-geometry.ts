@@ -79,6 +79,16 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   steam: "win-white",
   carton: "fabric-amber",
   paper: "paint",
+  // The green roof (ADR-0093 O4): its own part draws these (`roof-geometry.ts`); here only for the table's sake.
+  planter: "plant",
+  flower: "paint",
+  panel: "glass-blue",
+  mast: "metal",
+  fan: "ac-grille",
+  crate: "rust",
+  laundry: "paint",
+  chair: "fabric-teal",
+  can: "paint",
 };
 
 /** The front's glass is lit up to this much over the floor (ADR-0074 §6: the front warm at night). */
