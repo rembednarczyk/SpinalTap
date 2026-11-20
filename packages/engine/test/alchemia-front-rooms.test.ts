@@ -68,7 +68,7 @@ describe("Alchemia's front rooms in the drawing (ADR-0093 O5)", () => {
     }
   });
 
-  it("draws the inside from the square before the front, not from Bajkowskiego's far end", () => {
+  it("draws the inside from the square before the front and from Plac Łokietka, not past them", () => {
     const scene = new Scene(new NullEngine());
     const materials = new ToonMaterials(scene);
     const kit = new CityKit(scene, materials, null, data, { labels: false });
@@ -76,7 +76,12 @@ describe("Alchemia's front rooms in the drawing (ADR-0093 O5)", () => {
     const view = new AlchemiaView({ scene, materials, kit: () => kit, city: () => true, eye: () => eye });
     view.update();
     expect(view.stats.meshes).toBe(3);
-    eye.z = -60;
+    // By the Ratusz on Plac Łokietka (its rooms seen through the glass's frame), the inside on.
+    eye.z = -70;
+    view.update();
+    expect(view.stats.meshes).toBe(3);
+    // East of the front past it, the outside still on: the inside off (the Rynek's `npr-perf` scene is farther still).
+    [eye.x, eye.z] = [518, 20];
     view.update();
     expect(view.stats.meshes).toBe(2);
   });
