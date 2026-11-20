@@ -48,12 +48,12 @@ describe("zebra crossings (ADR-0042)", () => {
 });
 
 describe("a zebra cut by a chunk's edge (G-958)", () => {
-  /** Is (x, z) under a painted (not cyan) triangle of the sink? */
-  const painted = (sink: MeshSink, x: number, z: number): boolean => {
+  /** Is (x, z) under a painted triangle of the sink (white paint, or with `glow` the cyan edges)? */
+  const painted = (sink: MeshSink, x: number, z: number, glow = false): boolean => {
     const p = sink.positions;
     for (let t = 0; t + 2 < sink.indices.length; t += 3) {
       const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!];
-      if (sink.colors[a * 4 + 3]! < 0.25) continue;
+      if (sink.colors[a * 4 + 3]! < 0.25 !== glow) continue;
       const [ax, az, bx, bz, cx, cz] = [p[a * 3]!, p[a * 3 + 2]!, p[b * 3]!, p[b * 3 + 2]!, p[c * 3]!, p[c * 3 + 2]!];
       const d1 = (x - bx) * (az - bz) - (ax - bx) * (z - bz);
       const d2 = (x - cx) * (bz - cz) - (bx - cx) * (z - cz);
@@ -64,6 +64,8 @@ describe("a zebra cut by a chunk's edge (G-958)", () => {
   };
   /** Paint along the band's middle line across the road, every 5 cm (off the stripes' own edges). */
   const across = (sink: MeshSink): boolean[] => Array.from({ length: 139 }, (_, i) => painted(sink, 0.3, -3.45 + i * 0.05 + 0.012));
+  /** The cyan edge lines along both long sides of the band, every 5 cm. */
+  const edges = (sink: MeshSink): boolean[] => [-1.62, 1.62].flatMap((x) => Array.from({ length: 139 }, (_, i) => painted(sink, x, -3.45 + i * 0.05 + 0.012, true)));
   // The chunk's edge at z 1.2 cuts the band into a long piece and a short one.
   const south = [{ x: -1.5, z: -3.5 }, { x: 1.5, z: -3.5 }, { x: 1.5, z: 1.2 }, { x: -1.5, z: 1.2 }];
   const north = [{ x: -1.5, z: 1.2 }, { x: 1.5, z: 1.2 }, { x: 1.5, z: 3.5 }, { x: -1.5, z: 3.5 }];
@@ -75,6 +77,23 @@ describe("a zebra cut by a chunk's edge (G-958)", () => {
     planCrossing(pieces, south, () => 0, band);
     planCrossing(pieces, north, () => 0, band);
     expect(across(pieces)).toEqual(across(whole));
+  });
+
+  it("draws the cyan edge lines outside the band on: the pieces' together as the whole zebra's", () => {
+    const whole = new MeshSink();
+    planCrossing(whole, band, () => 0);
+    expect(edges(whole).filter(Boolean).length).toBeGreaterThan(200);
+    // A straight cut and a slanting one: either way the pieces' lines meet end to end.
+    const slant = [
+      [{ x: -1.5, z: -3.5 }, { x: 1.5, z: -3.5 }, { x: 1.5, z: 0.4 }, { x: -1.5, z: 1.9 }],
+      [{ x: -1.5, z: 1.9 }, { x: 1.5, z: 0.4 }, { x: 1.5, z: 3.5 }, { x: -1.5, z: 3.5 }],
+    ];
+    for (const [a, b] of [[south, north], slant] as const) {
+      const pieces = new MeshSink();
+      planCrossing(pieces, a!, () => 0, band);
+      planCrossing(pieces, b!, () => 0, band);
+      expect(edges(pieces)).toEqual(edges(whole));
+    }
   });
 
   it("without the band, the short piece stripes in its own frame, off the whole zebra's stripes", () => {
