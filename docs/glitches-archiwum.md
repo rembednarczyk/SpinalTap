@@ -2,6 +2,119 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
+- Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
+- Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.
+- Status: zamknięte (20.11, artefakt sondy 17.11); wcześniej: nie potwierdzone (artefakt sondy, 17.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (ruch, W-3)
+- 17.11 (orkiestrator, tryb bez agentów): w grze się nie odtwarza. Skok jest tylko wtedy, gdy gracz zostaje postawiony na stojąco w kolektorze przy x 2474-2476 (teleport sondy; tam nad stropem leży pokład 5 z BRIDGE_DECKS nabrzeze-0-1). Gra tego nie daje: do kolektora wchodzi się w kucki (W3_CULVERT_ENTRY), pod stropem nie da się wstać (puszczone kucanie zostawia crouched), chód w kucki i na stojąco przez x 2481-2468 przy z 406,6/407,2/407,8 trzyma podłogę −30,2 (u wylotu −30,05), a zapis i wczytanie w x 2472,5-2477 zostawiają ją na −30,2 w kucki. Sondy: g904.test.ts, g904b, g904c (usunięte po pomiarze).
+
+### G-900 Zapis w trakcie pościgu gubi zgłoszenie przestępstwa, które przychodzi chwilę później
+- Ważność: S3 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści
+- Opis: Łowca G-899: hebi-bramowa, gracz ucieka sprintem, ziarna 3, 4, 5, zapis w kroku 1005 od startu pościgu (gracz 51 m od walczącego). Po 16 krokach gra żywa ma domain.heat poziom 1 (frakcja hebi, searchLeft 20, cooldown 7,98) i reinforcements.sent 1; wczytana ma heat 0 i reinforcements undefined. Stan przed zapisem identyczny. Przypuszczalnie licznik zgłoszenia (telefon świadka, m.call w crowd, WITNESS_CALL_SECONDS w crime-system.ts) poza zapisem; może się pokrywać z G-891. Sondy: scratchpad g899-heat.txt.
+- Status: zamknięte (20.11, artefakt sondy 16.11); wcześniej: nie potwierdzone (artefakt sondy, 16.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim, packages/persistence
+- Naprawiacz 16.11: artefakt sondy, zapis bez calmForSave. Gra zapisuje przez SaveController.snapshot() → sim.calmForSave() → settleCalls (G-240), więc zgłoszenie w toku przychodzi w chwili zapisu w obu grach. Z calmForSave 0 rozjazdów heat w ok. 400 zapisach (Lublin, 576,-24, ziarno 3), bez niego sygnatura G-900 (289+16). Sonda: scratchpad g900/g900-probe2.test.ts. Skutek projektu: zapis w trakcie rozmowy świadka przyspiesza zgłoszenie najwyżej o 5 s.
+
+### G-899 Walczący z treści po wczytaniu w trakcie pościgu stoi jeden krok (velocity undefined, yaw o 0,1)
+- Ważność: S4 · Zasięg: zapis i wczytanie w trakcie pościgu walczącego z treści (np. hebi-grodzka)
+- Opis: Sonda weryfikatora #647: po wczytaniu w trakcie pościgu walczący z treści stoi jeden krok, velocity undefined, yaw różni się o 0,1; hash rozjeżdża się od pierwszego kroku (24 z 33 zapisów, tick 543). Tak samo na main. Sonda ręcznie zmieniała alerted i pozycję, więc do potwierdzenia przez łowcę (scratchpad v-g896-sl-*.json). Pokrewne G-883 (v41: prędkości).
+- Status: zamknięte (20.11, nie potwierdzone przez łowcę 16.11); wcześniej: nie potwierdzone (łowca 16.11); wcześniej: do potwierdzenia
+- Pakiet właściciela: packages/sim, packages/persistence
+- Łowca: 0 rozjazdów w ok. 700 zapisach (hebi-grodzka, hebi-bramowa, ziarna 3-5, strzał z 9 i 22 m, ucieczka sprintem). Sonda #647 daje 21 z 30 tylko po ręcznym przeniesieniu walczącego 130 m od posterunku. Hipoteza nieuzasadniona: zimna pamięć nawigacji (nav-memo, chase-queue) po wczytaniu w pościgu z objazdem bariery; tego wariantu nie sprawdzono. Pułapka sond: te same wejścia i yaw gracza obu symulacjom.
+- Ta sama pułapka sondy co w G-900: zapis bez calmForSave.
+
+### G-878 touch-layout scan card: .scan-note wjeżdża toast-in, pomiar w trakcie animacji jak G-852
+- Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts karta skanu
+- Opis: .scan-note dalej używa toast-in 200 ms (+30 px); test może mierzyć w trakcie animacji pod obciążeniem; znalezione przy G-852
+- Status: zamknięte (20.11, nie odtwarza się od 16.11); wcześniej: nie odtwarza się (16.11, partia s4-ui-tests); do zamknięcia przy przeglądzie, jeśli się nie pojawi; wcześniej: nowy
+- Pakiet właściciela: e2e
+- nie odtwarza się: .scan-note nie powstaje w teście karty skanu; hint-in 8 px przy zapasie 31-46 px; bez zmian w kodzie
+
+### G-254 Drony liczą czas z zegara klatki (latają w pauzie)
+- Status: zamknięte (20.11, nie do naprawy: decyzja użytkownika 18.11); wcześniej: nie do naprawy: decyzja użytkownika 18.11 rano, drony mogą latać w pauzie; wcześniej: zgłoszone (2.11, weryfikator ADR-0058 etap 7)
+- Ważność: S4 · Zasięg: `packages/engine/src/renderer/drones/*` biorą `dt` klatki renderera, nie czas świata; w pauzie drony dalej lecą (tak samo tłum renderera)
+- Poprawka: czas dronów (i tłumu) z czasu świata przez `RenderPort`, zatrzymany w pauzie; test
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-868 touch-layout:503 flaky: karta dzielnicy zakrywa minimapę o 16×74 px
+- Ważność: S4 · Zasięg: e2e/touch-layout.spec.ts:503, 844x390 i 800x370, en i pl
+- Opis: Pada sporadycznie, także na czystym main e839d94; przechodzi w retry. W śladzie porażki na ekranie tylko karta dzielnicy, przyczyna nieustalona.
+- Status: zamknięte (20.11, duplikat G-852, naprawionego w #608); wcześniej: duplikat G-852 (ten sam flaky touch-layout:503); prowadzone w G-852; wcześniej: nowy
+- Pakiet właściciela: packages/ui
+
+### G-863 Wypełnienia gołej ziemi odrzucane przez crossesItself po cięciu
+- Ważność: S4 · Zasięg: ok. 40 miejsc w mieście, największe (975,407) ok. 33 m², (373,-171) ok. 28 m²
+- Opis: Zgłoszone przez naprawiacza G-853 r2: wypełnienie jest odrzucane przez crossesItself i miejsce zostaje gołe; mechanizm z main. Klucz frontage-bare 370,-170.
+- Status: zamknięte (20.11, duplikat G-858); wcześniej: duplikat G-858 (to samo zgłoszenie z G-853 r2); prowadzone w G-858; wcześniej: nowy
+- Pakiet właściciela: tools/osm-import
+
+### G-891 Zakłócenia ulicy z wybuchu, alarmu i znalezienia ciała nie trafiają do zapisu
+- Ważność: S4 · Zasięg: zapis dokładnie w kroku zdarzenia
+- Opis: disturb() (sabotage-loud.ts:150, contract-system.ts:36, body-watch-system.ts:59) trafia do session.street.disturbances, których nie ma w zapisie; zapis w kroku wybuchu rozjeżdża hash od drugiego kroku. Znalezione przez weryfikatora W-3 3b (#633); klasa sprzed 3b.
+- Status: naprawione (16.11, #637 scalony); wcześniej: naprawiony (PR #637); wcześniej: w PR #637; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+- calmForSave czyści street.disturbances razem ze strachem tłumu (jak G-240); złote hashe bez zmian, bez v43; test w w3-sabotage-loud.test.ts
+
+### G-888 Po wczytaniu gracz ma health.max 100 do pierwszego kroku player-control
+- Ważność: S4 · Zasięg: wczytanie gry, apteczka w pierwszym kroku
+- Opis: W grze źródłowej max 103 (np. podłoga determinizmu, zapis w kroku 786); apteczka w pierwszym kroku po wczytaniu leczy do 100. player-control-system.ts:267, factory.ts:60. Znalezione przez weryfikatora G-883, jest też na bazie.
+- Status: naprawione (16.11, #636 scalony); wcześniej: naprawiony (PR #636); wcześniej: w PR #636; wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim
+
+### G-882 Efekty quickhacków (hackFx) nie trafiają do zapisu: po wczytaniu kamera po reboot_optics widzi od razu
+- Ważność: S3 · Zasięg: zapis w trakcie quickhacka
+- Opis: Znalezisko z W-3 etap 3: hackFx (np. blind z reboot_optics) nie jest zapisywany, więc wczytanie gry przywraca wzrok kamerze.
+- Status: naprawione (16.11, w main); wcześniej: naprawiony (main 16.11); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-881 barrier-detour-cost i traffic-bodies-shifted: podniesiony vi.mock w projekcie shared (isolate:false)
+- Ważność: S4 · Zasięg: packages/sim/test/barrier-detour-cost.test.ts, traffic-bodies-shifted.test.ts
+- Opis: Ten sam wzorzec co G-877: vi.mock nie sięga modułu już załadowanego w workerze; możliwa ta sama wada przy pewnej kolejności plików. Znalezione przy G-877.
+- Status: naprawione (16.11, #615 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-g881, 74d3cfe); wcześniej: nowy
+- Pakiet właściciela: packages/sim
+- Wada realna: po pliku ładującym ../src vi.mock nie docierał (0 odczytów zmockowanego TRAFFIC_ROUTES wobec 91 597), testy przechodziły bez sprawdzania; resetModules + doMock + dynamiczne importy, strażniki (pas przesunięty < 0,05 m, routeAcrossLevels zmockowane).
+
+### G-877 city-kit-loader.test.ts pada w workerze isolate:false, gdy city-kit-loader jest już w pamięci modułów
+- Ważność: S4 · Zasięg: packages/engine/test/city-kit-loader.test.ts, projekt shared
+- Opis: vi.mock city-kit nie działa, gdy moduł jest już załadowany w workerze (kolejność plików); znalezione przy G-865
+- Status: naprawione (16.11, #611 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-s4-ui-tests, f83ba80); wcześniej: nowy
+- Pakiet właściciela: packages/engine
+
+### G-876 Karta podsumowania na telefonie zakrywa buffy i .gear pod celem
+- Ważność: S4 · Zasięg: telefon, karta .debrief przy aktywnym buffie
+- Opis: Karta od 84 px pod celem leży na .buffs (84 px) i .touch-mode .gear (92 px); znalezione przy G-846
+- Status: naprawione (16.11, #611 scalony); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-s4-ui-tests, 7e83f9c; zależy od #607); wcześniej: nowy
+- Pakiet właściciela: packages/ui
+- gear na telefonie ma display:none; karta zakrywała buffy także na pulpicie 1024x600 @1, naprawione tą samą regułą
+
+### G-865 model-donors.test.ts wyczerpuje pamięć przy wspólnym przebiegu kilku pakietów
+- Ważność: S4 · Zasięg: packages/engine/test/model-donors.test.ts
+- Opis: Zgłoszone przez naprawiacza G-853 r2: test:rerun kilku pakietów naraz kończy się brakiem pamięci w tym pliku; sam przechodzi.
+- Status: naprawione (16.11, #608 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, 69b355a); wcześniej: nowy
+- Pakiet właściciela: packages/engine
+- przyczyna: NullEngine bez dispose w EngineStore, worker isolate:false (150 silników, 1722 MB po GC, OOM); setupFiles free-engines.ts; engine 1 worker: OOM -> 151/151; test:rerun engine ui app OK
+
+### G-852 touch-layout: karta dzielnicy raz zachodzi na minimapę przy 844×390 en
+- Ważność: S4 · Zasięg: e2e touch-layout, phone district card, skala 1
+- Opis: Jedno przecięcie 16×74 px przy obciążeniu maszyny, powtórka zielona; możliwy flake e2e albo wyścig układu przy wczytaniu karty (znalezione przy PR #587)
+- Status: naprawione (16.11, #608 scalony); wcześniej: naprawiony (main 16.11); wcześniej: w PR (gałąź ccr-ec2c4269-ilh8k8-test-reliability, e4d1d3f); wcześniej: nowy
+- Pakiet właściciela: e2e, packages/ui
+- 15.11 porządki rejestru: G-868 to duplikat; pada też na czystym main e839d94 (en i pl, 844x390 i 800x370), w śladzie tylko karta dzielnicy, przyczyna nieustalona.
+- przyczyna: pomiar karty w trakcie animacji wejścia trzymanej przez brak klatek (toast-in +30 px = 16×74); test czeka na Animation.finished; dowód: wjazd 20 s pada bez/przechodzi z; 10/10 repeat
+
+### G-846 Karta podsumowania zlecenia zakrywa komunikaty i cel, na 1024x600 wychodzi poza ekran
+- Ważność: S3 · Zasięg: HUD przy skali 1: desktop 1280x720 przecina komunikat; telefon przecina cel, drążek i komunikat; 1024x600 poza ekranem
+- Opis: Sonda e2e agenta skalowania 15.11; poza zakresem ADR-0085 (PR #587)
+- Status: naprawione (16.11, #607 scalony); wcześniej: naprawiony (main 16.11); wcześniej: naprawiony na ccr-ec2c4269-ilh8k8-g846 (c55aa4c, 9e1517b), w PR; wcześniej: nowy
+- Pakiet właściciela: packages/ui
+- Test: e2e/ui-scale.spec.ts contract card (70 kolizji na main → 0) + packages/ui/test/debrief-zone.test.tsx; hint poza kontrolą, środek karty na telefonie nie przewija się palcem
+
+### G-445 Rampa E Alchemii: kostka drapowana na siatce 2,5 m przebija stopnie
+- Status: naprawione (20.11, #816 scalony); wcześniej: w naprawie (gałąź fix/alchemia-rowno-z-gruntem, kontrola `alchemia-off-ground`); wcześniej: zgłoszone (7.11, naprawiacz rundy 3 PR #343)
+- Ważność: S4 · Zasięg: `drapedTriangles` (`DRAPE_GRID` 2,5 m) czyta teren przy x 435 (NMT w obrysie hali) i x 442,5 (wyższy grunt na wschód), więc paski kostki wychodzą ponad stopnie; poprawka: wyrównać teren pod obrysem hali przy ścianie E albo stopnie dopasowane do siatki drapowania
+- Pakiet właściciela: packages/sim (content Alchemii), packages/engine (renderer/mapcity)
+
 ### G-958 Zebry pocięte granicą kawałka mapy i ścinki zebr bez pasów
 - Ważność: S3 · Zasięg: 4 zebry przecięte granicą chunku i 5 ścinków (krakowskie, podzamcze, stare-miasto, nabrzeże)
 - Opis: Pomiar orkiestratora 20.11 (sonda w scratchpadzie zebra/): 123 kawałki zebr (surface crossing) to 119 przejść. Każdy kawałek rysuje pasy z własnego obróconego prostokąta (planCrossing w crossing-plan.ts), więc przejście pocięte granicą chunku ma dwa niezależne rzędy pasów, a ścinek węższy niż 1 m dostaje sam asfalt bez pasów. (1) Pocięte granicą: (383,5; −20) krakowskie-2-0 + 2-1 (Bajkowskiego przy Alchemii; obok trzeci kawałek (383,8–386,9; −23,7…−21,1) przesunięty o 0,3 m i obrócony, z przerwą 0,4 m, oraz pasek 3,0 × 0,7 m bez pasów); (570; 160) stare-miasto-0-1 + podzamcze-0-0; (920; 472,5) podzamcze-1-1 + 2-1; (2500; 204,2) nabrzeże-0-0 + 1-0. (2) Ścinki trójkątne na granicach chunków bez reszty przejścia: (1119,1–1120; 264,3–274,1) podzamcze-2-0, pasek 0,9 m bez pasów; (−102,9…−98,2; −270…−268,4) krakowskie-0-0; trzy trójkąty podzamcze-0-0 przy x 520 (z 182,7–196,1). Poprawka: pasy z całego przejścia (scalić kawałki tego samego przejścia przed rysowaniem albo nieść oś i szerokość przejścia z importu), ścinki bez reszty przejścia usunąć z importu; nowa kontrola skanu (crossing-split / crossing-sliver).
@@ -3532,3 +3645,93 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
 - Pakiet właściciela: packages/sim (złoty hash zmieniony świadomie), packages/engine (przepis)
 - Test przyjęcia: proponowana kontrola skanu `gate-mouth-off-axis` (środek wylotu dalej niż 0,5 m od środka czystej części frontu), baza 2 → 0; Krakowska do zmierzenia przed ustaleniem bazy
+
+## Naprawione przed archiwum wpisów (tabela z rejestru, do G-141)
+| ID | Glitch | PR |
+|---|---|---|
+| G-100 | Plamy blasku przez ściany (warstwa glow bez przesłon), odbicia ignorujące wysokość | #19 |
+| G-101 | Spód dachów czterospadowych w dali | #20 |
+| G-102 | Myjnia na placu przed ratuszem; wieża Trynitarska jako zwykła kamienica; brzegi fontann; ruch bez ustępowania na skrzyżowaniach | #21 |
+| G-103 | Piesi z placów na jezdniach; zebry niewidoczne pod brukiem | #22 |
+| G-104 | Jezdnia pod placami i chodnikami; brak oznakowania poziomego | #23 |
+| G-105 | Ulice jednokierunkowe jeżdżone w obie strony | #24 |
+| G-106 | Auta przez hale targu; zderzenia przy wjeździe na rondo Dmowskiego | #25 |
+| G-107 | Sygnalizatory, automaty i drzewa na jezdni; stragany na pasach parkingu | #26 |
+| G-108 | Dostawczaki przez ściany Rybnej i Ku Farze (bramy z OSM); piesi deptaków zawracający na ulicy | #27 |
+| G-109 | Stragany i szafki bez bryły; rzeźby w ścianach; jezdnia mostów w korycie Bystrzycy | #28 |
+| G-110 | Wrak, furgonetka i kontener zapadnięte w zbocze | #29 |
+| G-001 | Test migawki NPR przekracza 90 s na wolnym runnerze CI | #39 |
+| G-002 | Dostawczak jedzie przez bramę Ku Farze z zakazem wjazdu | #44 |
+| G-008 | Budynki z OSM wchodzą w sceny targu i doków | #33 |
+| G-009 | Auta zaparkowane przy krawężniku stoją na trawniku i chodniku | #31 |
+| G-010 | Brama przy północnej krawędzi mapy kończy się w pustce, posadzka wznosi się o 2,4 m | #31 |
+| G-011 | Meble wewnątrz budynków: reflektory w Wieży Trynitarskiej, Archikatedrze i przy Zamku, kioski w swoich budynkach, wiata w ścianie | #32 |
+| G-012 | Meble z bryłą nachodzą na siebie: kosze w pniach drzew na deptaku | #35 |
+| G-013 | Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony | #37 |
+| G-014 | Auta zaparkowane na przejściach dla pieszych | #32 |
+| G-015 | Auta zaparkowane tyłem do ruchu na ulicach jednokierunkowych | #34 |
+| G-017 | Wiaty przystanków z OSM jako trzypiętrowe bloki mieszkalne na Alei Tysiąclecia | #34 |
+| G-019 | Auto z jednokierunkowej pętli Cerkiewnej stoi na trzypasmowej jezdni Alei Tysiąclecia | #36 |
+| G-020 | Jezdnia zachodnia Alei Tysiąclecia ma 36 m bez pasa (literówka „Aleje” w OSM) | #38 |
+| G-021 | Szwy chunków ucinają krótkie kawałki ulic: dziury w pasach aut (Narutowicza, Lubartowska ×2) | #40 |
+| G-023 | Pasy aut kończą się bez zawrotki przy ulicach dla dostaw i na końcach ulic | #37 |
+| G-028 | Resynchronizacja przenosi auto w łuk zawrotki z pełną prędkością | #38 |
+| G-029 | Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI | #46 |
+| G-032 | Słupki przy ulicach stoją chaotycznie: łańcuchy celują w różne strony i nie łączą sąsiadów; słupki za małe | #45 |
+| G-033 | Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek | #46 |
+| G-034 | Kaito od początku w Neon Koi (decyzja użytkownika) | #46 |
+| G-035 | Wskaźniki zadań nie prowadzą do postaci z wątku: nie da się znaleźć babci Ume | #43 |
+| G-039 | Łańcuch słupków przechodzi przez podstawę latarni na Placu Łokietka | #45 |
+| G-018 | Pionowy pas czarnych kresek na bruku Placu Litewskiego | #47 |
+| G-030 | Poza Seki w klatce referencyjnej zależy od czasu zegarowego | #47 |
+| G-044 | Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej | #47 |
+| G-045 | Test `far-city.test.ts` przekracza 5 s pod obciążeniem | #47 |
+| G-047 | Karta skanu hackowania nie zmienia języka do zmiany celu | #47 |
+| G-006 | Skręty aut na skrzyżowaniach | #47 |
+| G-046 | Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia | #49 |
+| G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
+| G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
+| G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
+| G-031 | Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu | #57 |
+| G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
+| G-054 | `glitch-shots` mógł zapisać klatkę sprzed ułożenia miasta | #62 |
+| G-057 | Proceduralne wieże obok wieżyczek z OSM (Archikatedra, Dominikanie) | #69 |
+| G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
+| G-062 | Przejścia pod mostami zablokowane (Podwale, bulwar Bystrzycy) | #70 |
+| G-068 | AI nie widziało przejścia pod mostem | #71 |
+| G-064 | Targowiska bez straganów | #76 |
+| G-051 | Podpis muzeum na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej | #75 |
+| G-067 | Klasztor Dominikanów z proceduralnymi wieżami kościoła | #72 |
+| G-056 | Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe | #78 |
+| G-061 | Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona) | #74 |
+| G-076 | Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5) | #80 |
+| G-077 | Budynek podziemny zbudowany na powierzchni ul. Zamkowej | #80 |
+| G-058 | Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch) | #50 |
+| G-075 | Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru | #85 |
+| G-089 | Bramy z maxheight=below_default ze sklepieniem 4 m | #89 |
+| G-090 | Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy | #88 |
+| G-052 | Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200) | #87 |
+| G-094 | Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza | #90 |
+| G-125 | Ekranu opcji nie da się przewijać na telefonie | #94 |
+| G-087 | `stepRamps` tylko dla nazwanych schodów | #97 |
+| G-127 | Parterowy pawilon jako czterokondygnacyjna wieża (Bar Centralny przed Pedetem) | #103 |
+| G-097 | Teatr Osterwy jako kamienica mieszkalna | #104 |
+| G-116 | Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki) | #104 |
+| G-120 | Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową | #104 |
+| G-130 | Pojazdy zapadnięte pod nawierzchnię (wrak na deptaku przy Pedecie) | #107 |
+| G-140 | Zaparkowane auta na wjazdach i wylotach dróg serwisowych (Cerkiewna) | #110 |
+| G-114 | npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach | #113 |
+| G-139 | Smoke „title → new game”: gracz przechodzi 2,09 m przy szybkim starcie (skok kursora jako obrót) | #112 |
+| G-141 | Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu | #114 |
+| G-138 | Pasy ruchu na krawędziach mapy bez nawierzchni | #115 |
+| G-135 | Pointer lock wyłączony na stałe po odmowie bez gestu (Esc przed pierwszym kliknięciem) | #116 |
+| G-136 | Przejazd Bramy Grodzkiej poza osią frontów | #117 |
+| G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
+
+## Odrzucone przed archiwum wpisów
+- G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
+- G-040 Śmierć babci Ume blokuje krok ren_trail: odrzucone (Ume nie ma `health` w `district-m0.ts`, a NPC bez niego nie da się zranić ani zabić, `builders.ts:77`; krok nie może się zablokować)
+- Biała iglica i kreski nad rondem Dmowskiego: megawieże tła horyzontu (`far-city.ts`), celowe.
+- Krzewy przy schodach w Podzamczu, rzeźba w fontannie (1078, 175): tak jest w danych OSM.
+- Nakładka 26 m² budynków w69916021 i w1382552285: dane OSM, niewidoczna.
+- Czarny kadr w dokach (2555, 420): teleport testu do wnętrza bryły.
