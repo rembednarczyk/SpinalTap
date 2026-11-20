@@ -2251,6 +2251,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w PR #802 (20.11, gałąź fix/g946-czekanie-ostrzezenie, 5295a17); wcześniej: w naprawie
 - Pakiet właściciela: packages/app (presenters/wait.ts) albo packages/sim (territory-system.ts)
 
+### G-947 Ławki i pastorały planu na T0 przed Alchemią zdjęte przez bryły gry
+- Ważność: S3 · Zasięg: T0 przed frontem Alchemii (x 388–436, z −3…28)
+- Opis: Kontrola plan-prop-under-game (PR #803): 12 ręcznych punktów planu (inOsm: false) stoi tam, gdzie gra postawiła bryły C5 i O5, więc import je zawsze zdejmuje: ławki bench-west#0–3 (404,75; 0/6/12/18: podium C5, kolumna przejścia, skrzydło L1), bench-south#0–1 (388,5 i 394,5; −0,6: obrys frontu, podium), pastorały #1–4, #6, #7 ((401,5; −2,8), (388,5; 12), (406,6; 25), (412,5; 27,8), (435,4; 14), (429; 23,6)). Na T0 gra pokazuje 5 z 11 ławek i 3 z 9 pastorałów planu. Poprawka: przenieść punkty planu na wolne miejsca placu i tarasów albo usunąć z planu z wpisem w topografii.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan, lublin-props.todo.json), tools/osm-import
+- Naprawa po scaleniu O5 (feat/alchemia-o5-front zmienia front i tarasy L2), punkty rozstawić wtedy na nowym układzie; przegląd kuratora.
+
+### G-948 Budka sieciowa planu na Placu Łokietka na drodze treści deptaka
+- Ważność: S4 · Zasięg: Plac Łokietka (430; −100)
+- Opis: Kontrola plan-prop-under-game (PR #803): ręczny punkt planu street.net-booths#1 leży na drodze treści z deptaka do Bramy Krakowskiej, więc import zawsze go zdejmuje. Poprawka: przesunąć punkt poza drogę albo usunąć z planu.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin plan)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
