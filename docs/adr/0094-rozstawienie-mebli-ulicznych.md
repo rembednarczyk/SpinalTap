@@ -65,6 +65,7 @@ Testy narzędzia sprawdzają reguły na małych scenach i na całym mieście: Tr
 ## Etapy (osobne PR-y)
 1. Strefy wolne wejść (z wejść OSM, drzwi lokali i bram) dla wszystkich mebli oraz rodzaj skanu `prop-blocks-entrance`. Usuwa ogródek przed Trybunałem i podobne przypadki.
 2. Ogródki i potykacze zakotwiczone przy lokalach. Zastępują rozrzut po obszarze i krok na linii.
+   Zrobione 20.11 (`props-gardens.ts`, `props-aframes.ts`): ogródek przy pierwszym szyldzie restauracji, kawiarni, lodziarni, baru i pubu, plecami do fasady 1,8 m od niej, płotkiem do ulicy, przesuwany wzdłuż muru od drzwi lokalu poza ich strefą wolną, z pasem ruchu pieszego 1,8 m do krawężnika; potykacz 0,8 m od fasady, 2,7–4,5 m z boku drzwi lokalu albo sklepu, prostopadle do muru. Liczby z planu (obszary i linie) są limitami dzielnic, punkty OSM zostają. Wynik: 36 ogródków (było 30), żaden pod murami Trybunału, 30 potykaczy. Na deptaku wraca latarnia rzędu (243,2; −62,9), której miejsce zajmował ogródek z linii. Test: `tools/osm-import/test/props-gardens.test.ts` (pada na tabeli sprzed etapu). Rodzaj skanu `garden-without-venue` z §5 zastępuje na razie ten test.
 3. Tabliczki na początku ulicy, na ścianie budynku narożnego, z adresów OSM. Model tabliczki ściennej.
 4. Koziołki i pomniki: obrót według reguł, strefa oglądania pomnika, Sztukmistrz na linie nad Grodzką.
 5. Strefy chodnika dla reszty mebli (`PROP_ZONE`) i rodzaj skanu mebla poza strefą.
