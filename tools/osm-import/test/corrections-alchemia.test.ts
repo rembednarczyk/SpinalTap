@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ALCHEMIA_NAV, P1_STAIR } from "../../../packages/sim/src/content/alchemia/index.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { ALCHEMIA_AREAS, REPLACED_WAYS, T0_LAWNS, withoutReplaced } from "../src/corrections-alchemia.ts";
 import { pointInRing } from "../src/geometry.ts";
@@ -78,6 +79,30 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
       }
       expect(way, `x ${x}`).toEqual(["road", "footway", "road"]);
     }
+  });
+
+  /** Where `at` along a to b (0.02 steps, both ends) is not drawn as one of `want`: "x,z surface". */
+  const offAlong = (a: { x: number; z: number }, b: { x: number; z: number }, want: ReadonlySet<string>): string[] => {
+    const off: string[] = [];
+    for (let k = 0; k <= 50; k++) {
+      const [x, z] = [a.x + ((b.x - a.x) * k) / 50, a.z + ((b.z - a.z) * k) / 50];
+      const s = surfaceAt(x, z);
+      if (!want.has(s ?? "bare")) off.push(`${x.toFixed(2)},${z.toFixed(2)} ${s ?? "bare"}`);
+    }
+    return off;
+  };
+  const SQUARE: ReadonlySet<string> = new Set(["square"]);
+
+  // ADR-0093 O2b moved P-1's stair house east, onto the east lawn's west end: its door opened onto the grass.
+  it("keeps T0's setts 1.5 m before P-1's stair house's door and along the level graph's way to it from the main entrance's way (G-940)", () => {
+    const d = P1_STAIR.door;
+    const off: string[] = [];
+    for (let z = P1_STAIR.minZ - 1.5; z < P1_STAIR.minZ - 0.05; z += 0.25) off.push(...offAlong({ x: d.x0, z }, { x: d.x1, z }, SQUARE));
+    const at = new Map(ALCHEMIA_NAV.nodes.map((n) => [n.id, n.at]));
+    const [axis, door] = ["alchemia-t0-axis", "alchemia-p1-stair-out"];
+    expect(ALCHEMIA_NAV.edges.some((e) => (e.a === axis && e.b === door) || (e.a === door && e.b === axis))).toBe(true);
+    off.push(...offAlong(at.get(axis)!, at.get(door)!, SQUARE));
+    expect(off.slice(0, 20).join(" ")).toEqual("");
   });
 
   it("leaves out the replaced areas and lines by id, and the rest as mapped", () => {
