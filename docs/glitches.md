@@ -2251,6 +2251,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy (20.11)
 - Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
 - Test przyjęcia: brak próbki co 0,1 m w x 383,6–404,3 między krawędzią placu a pasem chodnika bez nawierzchni; klucz ground-strip-gap krakowskie-2-1 400,-10 znika z bazy; NMT bez zmian
+- Wiersz topografii: T-333 (T-332 zajęty).
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
