@@ -1,0 +1,1 @@
+- Drzewa w mieście mają pień, konary, gałęzie i korony z liści, a część zachowuje dawny wygląd z koronami z brył. Na telefonie zostają lżejsze dawne drzewa.
