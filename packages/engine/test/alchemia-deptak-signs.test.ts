@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_CENTRE, groundY } from "@seki/sim";
+import { ALCHEMIA_CENTRE, FRONT_SIGN, groundY } from "@seki/sim";
 import { LUBLIN_CHUNKS } from "@seki/sim/lublin";
 // @ts-expect-error The engine is typed for the browser; the test reads the kit off disk.
 import { readFileSync } from "node:fs";
@@ -9,6 +9,7 @@ import { deptakSignGeometry } from "../src/renderer/alchemia/deptak-sign-geometr
 import { DEPTAK_SIGNS, TENEMENT_WALLS, planDeptakSigns, signAt } from "../src/renderer/alchemia/deptak-signs";
 import { planAlchemiaSigns } from "../src/renderer/alchemia/front-signs";
 import { MAP_SIGN_KIND, NEAR_ONLY } from "../src/renderer/mapcity/sign-plan";
+import { cellKey } from "../src/renderer/mapcity/map-index";
 import { glyphCell } from "../src/renderer/mapcity/venue-plan";
 
 /**
@@ -126,6 +127,8 @@ describe("the deptak's neons (ADR-0074 C7)", () => {
       expect(toOutline(c)).toBeLessThan(3.7);
       expect(c.y - groundY(c.x, c.z)).toBeGreaterThan(2.5);
     }
+    // In the map's signs' cell of the front's sign (C4): one south of it brought its cell's signs into the frustum at Zielona 5A (npr-perf).
+    for (const s of DEPTAK_SIGNS) expect(cellKey(signAt(s).x, signAt(s).z)).toBe(cellKey((FRONT_SIGN.x0 + FRONT_SIGN.x1) / 2, (FRONT_SIGN.z0 + FRONT_SIGN.z1) / 2));
     // Some 60 m of the hall's middle at most: seen from the square before the front and the deptak.
     for (const s of DEPTAK_SIGNS) expect(Math.hypot(signAt(s).x - ALCHEMIA_CENTRE.x, signAt(s).z - ALCHEMIA_CENTRE.z)).toBeLessThan(65);
   });

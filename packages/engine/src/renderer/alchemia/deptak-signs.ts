@@ -8,7 +8,7 @@ import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 /*
  * The neons of the deptak on Lubartowska (ADR-0074 C7, the board `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`):
  * the board hangs them on the tenement across the deptak from Alchemia's front (w66286394, the east
- * frontage between Bajkowskiego and Olejna, OSM): an upright cyan SPOŻYWCZY low by its south end, a
+ * frontage between Bajkowskiego and Olejna, OSM): an upright cyan SPOŻYWCZY low on its bay, a
  * red SPOŻYWCZY board sticking out over the shop further on, an upright cyan ALCHEMIA high up beyond
  * it and a red PARKING CAŁODOBOWY board out of its top storey, pointing the way to the car park.
  * Pattern: the blade sign (a projecting sign, perpendicular to the facade, read along the street from
@@ -26,9 +26,14 @@ interface Wall {
   readonly a: { readonly x: number; readonly z: number };
   readonly b: { readonly x: number; readonly z: number };
 }
-/** Its south run, from the corner on Bajkowskiego's side to its bay, and its north run, from the bay to w364550281. */
+/**
+ * The front of its bay and its north run, from the bay to w364550281. All the signs hang north of
+ * z 0, in the map's signs' cell of Alchemia's front (`MAP_CELL` 128): south of it the cell's signs
+ * mesh, which the scene at Zielona 5A had out of its frustum, would come into it (`npr-perf`, one
+ * draw call and one mesh more there).
+ */
 export const TENEMENT_WALLS: readonly [Wall, Wall] = [
-  { a: { x: 452.7, z: -11.6 }, b: { x: 454.2, z: -4.0 } },
+  { a: { x: 454.5, z: -0.6 }, b: { x: 454.5, z: 2.1 } },
   { a: { x: 455.1, z: 2.0 }, b: { x: 456.1, z: 9.7 } },
 ];
 
@@ -66,12 +71,12 @@ const over = (wall: 0 | 1, z: number, h: number): number => Math.round((footY(wa
 const CYAN = "#38dcff";
 const RED = "#ff2a3c";
 
-/** The board's signs, south to north: the lower SPOŻYWCZY blade, the PARKING board over it on the top storey, the red SPOŻYWCZY board, the ALCHEMIA blade. */
+/** The board's signs, south to north: the lower SPOŻYWCZY blade on the bay, the PARKING board over it on the top storey, the red SPOŻYWCZY board, the ALCHEMIA blade. */
 export const DEPTAK_SIGNS: readonly DeptakSign[] = [
-  { kind: "blade", text: "SPOŻYWCZY", wall: 0, z: -8.6, y0: over(0, -8.6, 2.8), y1: over(0, -8.6, 6.4), out: [0.3, 1.1], tint: CYAN },
-  { kind: "board", lines: ["PARKING", "CAŁODOBOWY"], wall: 0, z: -6.4, y0: over(0, -6.4, 7.6), y1: over(0, -6.4, 9.1), out: [0.4, 3.6], tint: RED },
-  { kind: "board", lines: ["SPOŻYWCZY"], wall: 1, z: 4.2, y0: over(1, 4.2, 3.3), y1: over(1, 4.2, 4.05), out: [0.35, 3.0], tint: RED },
-  { kind: "blade", text: "ALCHEMIA", wall: 1, z: 8.4, y0: over(1, 8.4, 4.4), y1: over(1, 8.4, 9.9), out: [0.3, 1.25], tint: CYAN },
+  { kind: "blade", text: "SPOŻYWCZY", wall: 0, z: 0.5, y0: over(0, 0.5, 2.8), y1: over(0, 0.5, 6.4), out: [0.3, 1.1], tint: CYAN },
+  { kind: "board", lines: ["PARKING", "CAŁODOBOWY"], wall: 0, z: 1.5, y0: over(0, 1.5, 7.6), y1: over(0, 1.5, 9.1), out: [0.4, 3.6], tint: RED },
+  { kind: "board", lines: ["SPOŻYWCZY"], wall: 1, z: 4.6, y0: over(1, 4.6, 3.3), y1: over(1, 4.6, 4.05), out: [0.35, 3.0], tint: RED },
+  { kind: "blade", text: "ALCHEMIA", wall: 1, z: 8.6, y0: over(1, 8.6, 4.4), y1: over(1, 8.6, 9.9), out: [0.3, 1.25], tint: CYAN },
 ];
 
 const UV: readonly [Uv, Uv, Uv, Uv] = [
