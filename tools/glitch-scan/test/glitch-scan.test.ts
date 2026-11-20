@@ -152,6 +152,7 @@ import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
 import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
+import { ENTRANCE_ROOM, KEEPS_OFF_ENTRANCES } from "../../osm-import/src/props-entrances.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
@@ -749,6 +750,27 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       .flat()
       .filter((i) => i.prop !== "manhole" && i.prop !== "bollard" && furnitureRadius(i) > 0)
       .flatMap((i) => (cars.some((r) => fromStreetLane(r, i.x, i.z) < furnitureRadius(i) + 0.9) ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /**
+   * A piece people walk round (a café's garden, a board, a bench, a bin, a stall…) in the clear zone
+   * before a door (ADR-0094 stage 1): an entrance of the map, a passage's mouth (the gates, Trasa
+   * Podziemna's door in the Trybunał, the gateways) or a door of the game's interiors. The zone is
+   * `ENTRANCE_ROOM` round the door and the piece's own reach (`KEEPS_OFF_ENTRANCES`).
+   */
+  "prop-blocks-entrance": () => {
+    const doors = [
+      ...loadEntrances().map((e) => e.p),
+      ...PASSAGES.flatMap((p) => [p.from, p.to]),
+      ...[CLINIC_DOOR, KOI_DOOR].map((d) => ({ x: d.at.x, z: d.at.z })),
+    ];
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .flatMap((i) => {
+        const reach = KEEPS_OFF_ENTRANCES[i.prop];
+        if (reach === undefined) return [];
+        const d = doors.find((q) => Math.hypot(q.x - i.x, q.z - i.z) < ENTRANCE_ROOM + reach);
+        return d ? [{ at: near(i.x, i.z), what: `${i.prop} ${Math.hypot(d.x - i.x, d.z - i.z).toFixed(1)} m from a door at ${near(d.x, d.z)}` }] : [];
+      });
+  },
   /** A bulky free-standing piece reaching into a wall. */
   "furniture-in-wall": () =>
     Object.values(WORLD_STREET_PROPS)

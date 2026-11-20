@@ -62,6 +62,8 @@ const SLIDE = { step: 0.5, reach: 8 } as const;
 export interface MarketContext {
   readonly roads?: readonly Carriageway[];
   readonly doors?: readonly DoorSpan[];
+  /** The map's entrances (`loadEntrances`) and the passages' mouths: the furniture keeps their fronts clear (ADR-0094 stage 1). */
+  readonly entrances?: readonly Pt[];
 }
 
 /** What the rules keep clear of, gathered once from the chunks and the context. */
