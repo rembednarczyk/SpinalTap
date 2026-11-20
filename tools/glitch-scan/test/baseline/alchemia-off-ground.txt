@@ -1,24 +1,6 @@
 # alchemia-off-ground: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-2-1 385,-7
 krakowskie-2-1 429,13
-krakowskie-2-1 441,34
-krakowskie-2-1 442,35
-krakowskie-2-1 442,36
-krakowskie-2-1 442,37
-krakowskie-2-1 442,38
-krakowskie-2-1 442,39
-krakowskie-2-1 442,40
-krakowskie-2-1 442,41
-krakowskie-2-1 442,42
-krakowskie-2-1 442,43
-krakowskie-2-1 442,44
-krakowskie-2-1 436,45
-krakowskie-2-1 436,46
-krakowskie-2-1 436,47
-krakowskie-2-1 436,48
-krakowskie-2-1 436,49
-krakowskie-2-1 436,50
-krakowskie-2-1 436,51
 krakowskie-2-1 435,78
 krakowskie-2-1 452,78
 krakowskie-2-1 430,79
