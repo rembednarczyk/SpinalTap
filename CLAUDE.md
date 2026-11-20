@@ -54,7 +54,8 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
   - ślad świeżej obecności;
   - schody i windy w trzonach, jak w prawdziwych budynkach;
   - rysunek i bryła o tym samym kształcie;
-  - modele gry przed własnymi pudełkami.
+  - modele gry przed własnymi pudełkami;
+  - komiksowy realizm: kształt, proporcje i detal jak w rzeczywistości, komiks tylko w tuszu, świetle i palecie; bez brył zastępczych (kula zamiast korony, pudło zamiast bluszczu), uproszczenie tylko jako LOD z daleka i na telefonie.
 
 ## Testy (ADR-0046)
 - Logikę i UI sprawdzaj testami sesji bez renderera (`packages/app/test`, fałszywy `RenderPort`) i testami komponentów (`packages/ui/test`). Przeglądarka tylko do rozruchu, rysowania (migawka NPR, budżety, modele), układu HUD na telefonie i dotyku.

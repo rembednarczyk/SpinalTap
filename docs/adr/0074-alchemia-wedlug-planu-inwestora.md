@@ -127,7 +127,7 @@ Wnętrza w ziemi liczą `heightApart` zwykłym y (jak sklepienia po G-371). Na j
 ### 7. Budżety rysowania
 - **Nowa scena** `alchemia-tpp` w `e2e/npr-perf.spec.ts` (krok `freeze` + `step`, ADR-0046): gracz na T1 przed frontem food hallu, kamera na Arkady i zejście na T2. Etap 1 dodaje scenę z budżetem „pomiar plus kilka procent” w `tools/perf-budgets.json`. Etap 4 dodaje `alchemia-p1` (gracz na P−1 przy kabinach). Bramką są wywołania i aktywne siatki, czas klatki to raport.
 - **Koszt na element:** bryły zewnętrzne to 1 wywołanie (2 z G-buforem), włączone do 150 m. Każde wnętrze to osobny chunk albo siatka włączana tylko blisko (do ok. 45 m albo w środku), 1–2 wywołania. Roboty i auta w ruchu dzielą jedną siatkę (jak drony ADR-0058 etap 7), 1–2 wywołania. Sprzedawcy to istniejące postacie.
-- **Trójkąty:** budynek do ok. 8 tys., wnętrze do 8 tys., rekwizyt do 1,5 tys. (ADR-0063).
+- **Trójkąty:** budynek do ok. 8 tys., wnętrze do 8 tys., rekwizyt do 1,5 tys. (ADR-0063). Nieaktualne: budżety trójkątów zniesione decyzją użytkownika z 19.11, a od 20.11 obowiązuje komiksowy realizm (`docs/zasady-lokacji.md` §9). Bramkami są wywołania rysowania i aktywne siatki.
 - **Istniejące sceny** stoją dziś 166 m i dalej. Pawilon na rogu jest najbliżej Bramy Krakowskiej. Test silnika liczy odległości. Jeśli coś wejdzie w zasięg sceny, commit podaje pomiar przed i po, a podniesienie budżetu wymaga uzasadnienia i wpisu długu w ADR-0046. Migawkę NPR odświeżamy tylko wtedy, gdy zmiana jest w kadrze.
 
 ### 8. Zapis

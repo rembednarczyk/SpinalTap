@@ -42,6 +42,17 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 - **Budżety trójkątów (19.11):** decyzja użytkownika: budżety trójkątów na siatkę można podnosić dowolnie, a wcześniejsze cięcia detalu przywracać.
   - Drzewa i krzewy bierzemy z modeli gry, nie budujemy własnych pudełek.
   - Bramkami zostają wywołania rysowania i aktywne siatki oraz czas klatki na telefonie odniesienia. Limitów czasu testów to nie zmienia.
+- **Komiksowy realizm (20.11):** decyzja użytkownika: idziemy w komiksowy realizm. Kształty, proporcje i detal są jak w rzeczywistości, a komiks jest tylko w rysowaniu (tusz, płaskie światło, paleta). Reguła jest w `docs/zasady-lokacji.md` §9 i w `CLAUDE.md`.
+  - Przyczyny dawnych uproszczeń (drzewa jako kilka kul, bluszcz jako zielone pudła):
+    1. zdanie w zasadach lokacji „rendering NPR wymusza czytelne bryły, a nie fotorealizm”;
+    2. budżety trójkątów z ADR-0074 §7 i ADR-0063 (budynek 8 tys., rekwizyt 1,5 tys.), zniesione dopiero 19.11;
+    3. ADR-0047 z koronami drzew jako gładkimi bryłami „żeby tusz rysował tylko obrys”;
+    4. wymóg „modele low-poly” z ADR-0058;
+    5. zasada „modele gry przed własnymi pudełkami”, która przenosiła uproszczone drzewa gry dalej;
+    6. brak tekstur z alfą w zestawie miasta (jeden materiał na komórkę);
+    7. elementy symulacji jako graniastosłupy, które silnik rysował wprost.
+  - Teraz: model gry, który jest bryłą zastępczą, poprawiamy w modelu. Uproszczenie jest tylko LOD-em z daleka i na telefonie.
+  - Bramki budżetu bez zmian: wywołania rysowania, aktywne siatki, czas klatki na telefonie.
 - **Alchemia według planszy (19.11):** decyzja użytkownika: gruntowna przebudowa wnętrz i brył Alchemii według rzutu, schematu kondygnacji i aksonometrii z `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`.
   - Front zostaje, reszta może się zmienić w całości. Bryłę można powiększać.
   - To, co stoi na drodze, przesuwamy, a nie obudowujemy.
