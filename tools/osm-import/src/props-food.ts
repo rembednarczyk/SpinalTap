@@ -24,6 +24,7 @@ import type { Placed } from "./props-gen.ts";
 import { fnv, yawOf } from "./props-place.ts";
 import type { Carriageway, DoorSpan } from "./props-roads.ts";
 import type { Site } from "./props-site.ts";
+import type { Address } from "./props-plates.ts";
 import { nearTraffic } from "./props-streets.ts";
 
 /** A stock's key: its stall's key with this after it (a stall left out takes its stock along). */
@@ -64,6 +65,8 @@ export interface MarketContext {
   readonly doors?: readonly DoorSpan[];
   /** The map's entrances (`loadEntrances`) and the passages' mouths: the furniture keeps their fronts clear (ADR-0094 stage 1). */
   readonly entrances?: readonly Pt[];
+  /** The buildings' addresses (`addr:street`, `addr:housenumber`): where the streets start (ADR-0094 stage 3). */
+  readonly addresses?: readonly Address[];
 }
 
 /** What the rules keep clear of, gathered once from the chunks and the context. */

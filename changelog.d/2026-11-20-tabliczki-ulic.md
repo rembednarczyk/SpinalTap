@@ -1,0 +1,1 @@
+- Tabliczki z nazwami ulic wiszą na ścianach budynków narożnych na początku ulicy (tam, gdzie zaczyna się numeracja), zamiast stać na słupkach przy każdym skrzyżowaniu.

@@ -40,7 +40,7 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   "bike-station": () => plain(bikeStation()),
   "advertising-column": (s) => plain(advertisingColumn(s)),
   "a-frame-sign": () => plain(aFrameSign()),
-  "street-plate": () => plain(streetPlate()),
+  "street-plate": (s) => plain(streetPlate(s)),
   "street-cabinet": () => plain(streetCabinet()),
   manhole: () => plain(manhole()),
   "granite-block": () => plain(graniteBlock()),

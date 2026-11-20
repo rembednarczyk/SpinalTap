@@ -428,7 +428,7 @@ Stawki przy neutralnej reputacji u fixerów, przed mnożnikiem Genzō:
 
 ## Po playteście 17.11 (G-907, G-911)
 - **Zwłoka pościgu (G-911, #671):** oddział przychodzi 20–40 s po losowaniu, a nie w tym samym kroku. Przez ten czas flaga `tessen-hunt-squad:<liczność>@<tick>` mówi, że oddział jest w drodze: liczy się jako ten jeden naraz i nowego losowania nie ma. HUD pokazuje wtedy toast (`heat.tessenHunt`, także po wczytaniu). Liczność i zwłoka pochodzą z tego samego `deriveRandom` co losowanie, więc wczytanie daje to samo. Pole zapisu nie dochodzi.
-- **Czekanie w drodze (decyzja użytkownika 17.11):** póki oddział Tessen jest w drodze, czekanie jest zablokowane. Do zrobienia po G-922.
+- **Czekanie w drodze (decyzja użytkownika 17.11):** póki oddział Tessen jest w drodze, czekanie jest zablokowane (w main: blokada „hunt” w `app/src/presenters/wait.ts`, po G-922 naprawionym w #674).
 - **Droga cicha, etap 1 (G-907, #675):**
   - przy przyjęciu zlecenia Seki dostaje pendrive `w3_virus` w `keyItems` i dwa haki ze źródła `brief`: kolektor do piwnicy z kombinezonami w szatni i rurociąg na dach rzędu N z włazem; w szatni piwnicy jest szafka 14 z `tessen_overalls`, a wylot kolektora ma interakcję `prompt.culvert`;
   - odstępstwo od §1 p. 1: zamiast kodu furtki serwisowej jest hak rurociągu, bo furtka jest w grze otwarta. Decyzja użytkownika 17.11: furtka zostaje otwarta;

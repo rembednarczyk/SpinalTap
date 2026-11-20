@@ -147,9 +147,10 @@ export const knownKind = (kind: string): boolean => propOf(kind) !== null || kin
  * `PROP_SHAPES`: monument and artwork 0 obelisk, 1 figure on a plinth, 2 Koziołek, 3 abstract,
  * 4 stele with a tablet, 5 wayside shrine (all picked from the tags, `props-art.ts`);
  * flagpole 0 ordinary, 1 tall mast; tree 0 lime, 1 maple, 2 horse chestnut; bench 0 slatted
- * bench without a back, 1 with a back; advertising column 0 graphite, 1 the yellow one with a dome.
+ * bench without a back, 1 with a back; advertising column 0 graphite, 1 the yellow one with a dome;
+ * street plate 0 on a post, 1 on a wall (ADR-0094 stage 3).
  */
-export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 6, artwork: 6, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2 };
+export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 6, artwork: 6, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2, "street-plate": 2 };
 
 /** `hash` with its shape forced to `shape` (kept within 16 bits). */
 export const withShape = (hash: number, kind: StreetPropKind, shape: number): number => {
@@ -190,7 +191,7 @@ export const WALL_ROOM: Partial<Record<StreetPropKind, number>> = {
 export const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
 
 /** How far a piece may end up from its point in the plan (m), at most. */
-export const MAX_MOVE: Partial<Record<StreetPropKind, number>> = { hydrant: 3, "food-stall": 1, "market-goods": 0.1 };
+export const MAX_MOVE: Partial<Record<StreetPropKind, number>> = { hydrant: 3, "food-stall": 1, "market-goods": 0.1, "street-plate": 0.5 };
 
 /** Kinds of ADR-0058 stages 2 and 3 that never stand in the carriageway, even moved out of a wall. */
 export const KERB_SHY: ReadonlySet<StreetPropKind> = new Set(["atm", "hydrant", "food-cart", "container", "market-goods", "food-stall"]);
