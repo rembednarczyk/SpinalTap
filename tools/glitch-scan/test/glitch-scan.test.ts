@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
@@ -130,8 +130,8 @@ import { seamGaps } from "./seam-gap";
 import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
-import { walkBlocked } from "./walk-blocked";
-import { cityWalkWorld } from "./walk-world";
+import { madeFindings, startMade } from "./scan-cache";
+import { type MadeKind, readSourceOsm } from "./scan-makers";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { cityCrownsOffSurface } from "./landmark-crowns";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
@@ -151,7 +151,6 @@ import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
-import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
 import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
@@ -206,12 +205,7 @@ type Finding = { readonly at: string; readonly what: string };
 /** The scan's base, a file of known keys a kind (`src/scan-base.ts`). */
 const BASE = join(__dirname, "baseline");
 /** The map data the city is generated from (ADR-0042), for what the import may lose. */
-const OSM_DIR = join(__dirname, "../../../data/osm");
-const SOURCE_OSM = mergeOsm(
-  readdirSync(OSM_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
-);
+const SOURCE_OSM = readSourceOsm();
 /** The map's foot paths, not the sidewalks mapped along the streets (`crossing-off-path`). */
 const FOOT_PATHS = () =>
   [...SOURCE_OSM.ways.values()]
@@ -655,7 +649,7 @@ const DECK_PAINT = (() => {
   return () => (memo ??= deckPaint(mapGround(WORLD_SCENERY)));
 })();
 
-const CHECKS: Readonly<Record<string, () => Finding[]>> = {
+const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
    * Lane by lane, so a junction's join does not move the samples; the joins' arcs, straight on too,
@@ -1307,8 +1301,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * steeper than tg 35° off steps, along a way of the map whose axis is blocked there itself
    * (`walk-axes.ts`). Not the edges the model means: walls, barriers, a deck's sides over lower
    * ground, a way under a deck, T-147, Alchemia's terraces (`walk-blocked.ts`, `walk-world.ts`).
+   * Computed in a process of its own, out of the coverage's reach (`scan-cache.ts`).
    */
-  "walk-blocked": () => walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(SOURCE_OSM).lines)),
+  "walk-blocked": () => madeFindings("walk-blocked"),
   /**
    * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
@@ -2890,6 +2885,9 @@ describe("the glitch scan (ADR-0054)", () => {
  * The report and the base's files are written once the kinds have run: with `-t <kind>` only
  * that kind's file.
  */
+/** The kinds computed in a process of their own (`scan-cache.ts`). */
+const MADE: readonly MadeKind[] = ["walk-blocked"];
+
 describe("the glitch scan against its baseline (ADR-0054)", () => {
   const mode = process.env.GLITCH_BASELINE;
   const found: Record<string, Finding[]> = {};
@@ -2912,9 +2910,17 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
+  const title = (k: string) => `finds no new place of ${k} (baseline/${k}.txt)`;
+  // The kinds computed in a process of their own start it here, cold, for the kinds' tests before
+  // theirs to run meanwhile: only when their test runs (not filtered out with `-t`).
+  // Vitest takes the hook's fixtures from a pattern in its first argument, the suite in its second.
+  // eslint-disable-next-line no-empty-pattern
+  beforeAll(({}, suite) => {
+    for (const k of MADE) if (suite.tasks.some((t) => t.name === title(k) && t.mode === "run")) startMade(k);
+  });
   for (const [k, check] of Object.entries(CHECKS)) {
-    it(`finds no new place of ${k} (baseline/${k}.txt)`, () => {
-      found[k] = check();
+    it(title(k), async () => {
+      found[k] = await check();
       const keys = keysOf(k, found[k], MAP_CHUNKS);
       const base = readKind(BASE, k);
       const d = diffKind(k, base, keys);

@@ -60,3 +60,4 @@ Jedna kontrola przejścia po powierzchniach do chodzenia (`test/walk-blocked.ts`
 pnpm scan:walk-coverage           # klucze z bazy
 pnpm scan:walk-coverage report    # klucze ostatniego przebiegu skanu
 ```
+Kontrola liczy się w osobnym procesie node, poza pokryciem testu (`test/scan-cache.ts`, `test/scan-make.ts`, jak miasto w `tools/osm-import/test/city.ts`): pod pokryciem raster całego miasta szedł 7,4–8 s zamiast 2,6 s i na obciążonym CI przekraczał limit 20 s (PR #806). Proces startuje przed pierwszą kontrolą skanu, a wynik trafia do `node_modules/.cache/seki-scan` pod kluczem modułów, które ładuje (`moduleClosure`), i danych OSM. `test/scan-cache.test.ts` porównuje jego wynik na jednym fragmencie miasta z wynikiem w procesie testu.
