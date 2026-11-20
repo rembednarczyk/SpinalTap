@@ -35,6 +35,7 @@ import {
   groundY,
   ALCHEMIA_PAVILION,
   PAVILION_CORNERS,
+  FRONT_CROWD,
 } from "../src";
 import { circleTouchesPrism } from "../src/world/prism";
 import { run, teleportPlayer } from "./helpers";
@@ -162,7 +163,9 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
     const plans = ["oyaji", "fumiko", "kenta", "goro", "hebi-lookout"].flatMap((k) => planPoints(SCHEDULES[k]!));
     // The square's own standers (the chunk's benches elsewhere hold seated ones).
     // The hall's sitters are on its benches: a seat, not open floor.
-    const crowd = CROWD_SPOTS.filter((s) => s.chunk === ALCHEMIA_CHUNK && Math.hypot(s.at.x - 430, s.at.z - 70) < 45 && !s.does.includes("sit")).map((s) => s.at);
+    // The front's storeys' (ADR-0093 O5) on their floors: `alchemia-front-rooms.test.ts`.
+    const front = new Set(FRONT_CROWD);
+    const crowd = CROWD_SPOTS.filter((s) => s.chunk === ALCHEMIA_CHUNK && Math.hypot(s.at.x - 430, s.at.z - 70) < 45 && !s.does.includes("sit") && !front.has(s)).map((s) => s.at);
     const spots = ACTIVITY_SPOTS.filter((s) => s.id.startsWith("targ-")).map((s) => s.at);
     expect(crowd.length).toBeGreaterThanOrEqual(10);
     expect(spots.length).toBeGreaterThanOrEqual(5);

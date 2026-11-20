@@ -21,8 +21,9 @@ import { PLAZA_FOOTPRINTS, PLAZA_KIOSKS } from "./front-plaza-cafe";
  *   T0's, a covered passage;
  * - L3, the top storey, the sign ALCHEMIA CENTRUM HANDLOWE on its south face and masts on its roof.
  * Every roof lies on a floor of the gallery behind (ADR-0093 O1: L1 on P2's level, L2 on P3's, L3 on
- * its roof), every slab has its strip of light. They are scenery, solid boxes of lit glass, standing
- * against the gallery's south face.
+ * its roof), every slab has its strip of light. Solid boxes of lit glass against the gallery's south
+ * face until ADR-0093 O5; storeys of the gallery's arcade since, their glass a wall round their rooms
+ * (`front-shell.ts`), their doors in the gallery's glass on P2 and P3.
  */
 
 /** The storeys' roofs: L1 on the gallery's P2, L2 on its P3, L3 on its roof. */
@@ -104,26 +105,30 @@ const withGallery = (level: readonly Rect[]): Rectangle[] => [...level.map(rectO
 /** L2's underside over the passage, under its glass's rounded outline. */
 const soffit = (r: Rect): Piece => outlined(roundedOutline(slabOf(r), -OVER, outerCorners(rectOf(r), withGallery(L2_SLABS))), L1_TOP - SOFFIT, L1_TOP, "roof");
 
-/**
- * A storey of a level whose storeys are `level`: its glass from `bottom` up to the slab, the slab
- * with its overhang, the light along it, the outer corners rounded (19.11) as the tiers' are.
- */
-const storey = (r: Rect, bottom: number, top: number, level: readonly Rect[] = [r]): Piece[] => tierStorey(r, bottom, top, outerCorners(rectOf(r), withGallery(level)));
+/** The corners of a storey of a level whose storeys are `level`: the outer ones rounded (19.11), the joints and those against the gallery square. */
+export const storeyCorners = (r: Rect, level: readonly Rect[] = [r]) => outerCorners(rectOf(r), withGallery(level));
+
+/** A storey's slab with its overhang and the light along it (its glass: `front-shell.ts`, ADR-0093 O5). */
+const storey = (r: Rect, top: number, level: readonly Rect[] = [r]): Piece[] => tierStorey(r, top, storeyCorners(r, level));
 
 /**
- * The balustrade round a storey's roof, drawn only (nobody walks the front's roofs), open where the
- * green steps go down off L1 to the west.
+ * The balustrade round a terrace on a storey's roof, solid: since ADR-0093 O5 one walks out onto L2's
+ * terrace from L3 and onto L3's roof from the gallery's (drawn only until then, when nobody did), open
+ * along the gallery's south face, where the house with arcades' roof goes on, and over `open`.
  */
-const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r]): Piece[] =>
-  balustrade(slabOf(r), -0.05, outerCorners(rectOf(r), withGallery(level)), top, PARAPET, false, [
-    { x0: GREEN_STEPS[0]!.x0 - 1, x1: WEST_WING[0]!.minX + 0.5, z0: STEPS_Z.z0 - 0.5, z1: STEPS_Z.z1 },
+const roofRail = (r: Rect, top: number, level: readonly Rect[] = [r], open: readonly Rectangle[] = []): Piece[] =>
+  balustrade(slabOf(r), -0.05, storeyCorners(r, level), top, PARAPET, true, [
     // Along the gallery's south face: its roof's own balustrade stands there (ADR-0093 O1).
     { x0: MALL.x0 - 0.5, x1: MALL.x1 + 0.5, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 },
     // L2's terrace goes on over the house with arcades' roof (C3): no balustrade between them.
     { x0: ARCADE_FRONT.minX - 0.5, x1: ARCADE_FRONT.maxX + 0.5, z0: ARCADE_FRONT.maxZ - 1, z1: ARCADE_FRONT.maxZ + 0.6 },
+    ...open,
   ]);
 
-/** The balustrade round the house with arcades' roof, on its three open sides (C3). */
+/** L3 standing on L2's roof: L2's balustrade does not run through it (nor along L2's own joint under it). */
+const UNDER_L3: Rectangle = { x0: L3.minX - 0.25, x1: L3.maxX + 0.25, z0: L3.minZ - 0.25, z1: L3.maxZ + 0.5 };
+
+/** The balustrade round the house with arcades' roof, on its three open sides (C3), drawn only: L2's hedge keeps one off its roof. */
 const arcadeRail = (): Piece[] => {
   const A = ARCADE_FRONT;
   return balustrade({ x0: A.minX - 0.1, x1: A.maxX + 0.1, z0: A.minZ - 0.1, z1: A.maxZ }, -0.05, [false, false, false, false], A.top, PARAPET, false, [
@@ -172,10 +177,18 @@ const masts = (): Piece[] =>
 /** The passage's columns, from the ground to L2's underside. */
 const columns = (): Piece[] => PASSAGE_COLUMNS.map((c) => piece(box(c.x - COLUMN / 2, c.x + COLUMN / 2, c.z - COLUMN / 2, c.z + COLUMN / 2, FOOT, L1_TOP - SOFFIT), "column", false));
 
-/** Hedges along L2's and L3's south terraces, knee high, a step in from their edges. */
+/**
+ * Hedges along L2's and L3's south terraces, knee high, a step in from their edges: L2's on to its
+ * west balustrade, between its terrace (one walks there since ADR-0093 O5) and the house with arcades'
+ * roof; L3's along its south edge behind the sign (on its north edge until O5, where its roof meets
+ * the gallery's, a way from it now).
+ */
 const hedges = (): Piece[] => [
   piece(box(L2_SLABS[0]!.minX + 1, L2_SLABS[0]!.maxX - 1, L2_SLABS[0]!.minZ + 0.3, L2_SLABS[0]!.minZ + 0.8, L2_TOP, L2_TOP + 0.6), "green", false),
-  piece(box(L3.minX + 1, L3.maxX - 1, L3.maxZ - 0.8, L3.maxZ - 0.3, L3_TOP, L3_TOP + 0.6), "green", false),
+  // Its west end on to the balustrade: the house with arcades' roof stays the board's, behind the hedge (a balustrade round it
+  // solid would hide St Joseph's top from two more eyes of the street, `game-solid-landmark-occlusion`).
+  piece(box(L2_SLABS[0]!.minX + 0.1, L2_SLABS[0]!.minX + 1, L2_SLABS[0]!.minZ + 0.3, L2_SLABS[0]!.minZ + 0.8, L2_TOP, L2_TOP + 0.6), "green", false),
+  piece(box(L3.minX + 1, L3.maxX - 1, L3.minZ + 0.3, L3.minZ + 0.8, L3_TOP, L3_TOP + 0.6), "green", false),
 ];
 
 /** The round fountain and the kiosks on the square before the front (B4, rebuilt to the board in C5): `front-plaza.ts`, `front-plaza-cafe.ts`. */
@@ -201,13 +214,13 @@ export const FRONT_FOOTPRINTS: readonly Rect[] = [
 
 /** Every piece of the front, drawn with the tiers (their mesh): L1's wings, L2 on its columns, L3 with its sign. */
 export const frontPieces = (): Piece[] => [
-  // The west wing's roof is under the house with arcades and L2 all over: no balustrade.
-  ...WEST_WING.flatMap((r) => storey(r, FOOT, L1_TOP, L1_LEVEL)),
+  // The wings' roofs are under the house with arcades and L2 all over: no balustrade (the east wing's
+  // stood in L2's glass until ADR-0093 O5).
+  ...WEST_WING.flatMap((r) => storey(r, L1_TOP, L1_LEVEL)),
   ...greenSteps(),
-  ...storey(EAST_WING, FOOT, L1_TOP, L1_LEVEL),
-  ...roofRail(EAST_WING, L1_TOP, L1_LEVEL),
-  ...L2_SLABS.flatMap((r) => [soffit(r), ...storey(r, L1_TOP, L2_TOP, L2_SLABS), ...roofRail(r, L2_TOP, L2_SLABS)]),
-  ...storey(L3, L2_TOP, L3_TOP),
+  ...storey(EAST_WING, L1_TOP, L1_LEVEL),
+  ...L2_SLABS.flatMap((r) => [soffit(r), ...storey(r, L2_TOP, L2_SLABS), ...roofRail(r, L2_TOP, L2_SLABS, [UNDER_L3])]),
+  ...storey(L3, L3_TOP),
   ...roofRail(L3, L3_TOP),
   ...columns(),
   ...screens(),

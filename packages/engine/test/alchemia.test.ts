@@ -20,9 +20,10 @@ const ALCHEMIA_TRIANGLES = 40000;
  * goods some 40 thousand triangles of it; O3: P0's 12 shops, the food hall's kitchens, seating and
  * signs on P3, Fumiko's second place and P0's fountain, 52 342 -> 83 378; the user's decision of 19.11,
  * triangles free, the gates the draw calls and active meshes of `npr-perf`, which the shops and the
- * food hall leave as they were: they are in this mesh).
+ * food hall leave as they were: they are in this mesh; O5: the front's storeys as rooms, 18 units, the
+ * arcades, the café and L3's bar, grill and tables, 86 348 -> 135 738, the same decision).
  */
-const INSIDE_TRIANGLES = 90000;
+const INSIDE_TRIANGLES = 140000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -156,8 +157,15 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     expect(builtRoofOver(418, ALCHEMIA_T1 + 1.5, 45)).toBe(false);
     expect(builtRoofOver(420, MALL_LEVELS.roof + 1, 52)).toBe(false);
     expect(builtRoofOver(420, ALCHEMIA_T1 + 1.5, 65)).toBe(false);
-    expect(builtRoofOver(402, ALCHEMIA_T0 + 1, 15)).toBe(false);
+    // On the car park in the passage under L2 (in L1's west wing at x 402 since ADR-0093 O5, a room: dry there now).
+    expect(builtRoofOver(407.5, ALCHEMIA_T0 + 1, 9)).toBe(false);
+    expect(builtRoofOver(402, ALCHEMIA_T0 + 1, 15)).toBe(true);
     expect(builtRoofOver(402, P1.floor + 1.5, 15)).toBe(true);
+    // In L2's café and L3's dining room under their slabs; not on L2's terrace before L3, nor on L3's roof.
+    expect(builtRoofOver(405, MALL_LEVELS.p2 + 1.5, 7)).toBe(true);
+    expect(builtRoofOver(415, MALL_LEVELS.p3 + 1.5, 20)).toBe(true);
+    expect(builtRoofOver(405, MALL_LEVELS.p3 + 1.5, 8)).toBe(false);
+    expect(builtRoofOver(415, MALL_LEVELS.roof + 1.5, 20)).toBe(false);
   });
 
   it("lights the hall from its ceiling's fitting, never the ceiling itself: no glow on it seen from the floor (G-509)", () => {

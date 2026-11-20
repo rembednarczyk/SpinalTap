@@ -19,6 +19,7 @@ import { GALLERY_CROWD } from "./alchemia/shops";
 import { ROOF_CROWD } from "./alchemia/roof-garden";
 import { PLAZA_CROWD } from "./alchemia/front-plaza-cafe";
 import { DEPTAK_CROWD } from "./alchemia/deptak-stalls";
+import { FRONT_CROWD } from "./alchemia";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
 const MARKET_CHUNK = "krakowskie-2-1";
@@ -417,8 +418,10 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   ...SEAT_SPOTS,
   // On the square before Alchemia's front (C5): at its kiosks, at its tables, on the fountain's rim, last.
   ...PLAZA_CROWD,
-  // And at the deptak's kiosks and stalls on Lubartowska (C7), last.
+  // And at the deptak's kiosks and stalls on Lubartowska (C7).
   ...DEPTAK_CROWD,
+  // And in the front's arcades, units, café and bar (ADR-0093 O5), last.
+  ...FRONT_CROWD,
 ];
 
 /**

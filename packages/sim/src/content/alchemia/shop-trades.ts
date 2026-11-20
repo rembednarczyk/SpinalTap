@@ -178,9 +178,12 @@ export const fitTrade = (k: Fit, L: Layout, w: number, s: number): void => {
   } else if (!L.side) {
     // A shallow shop: cabinets high on the back wall over the seller's head (drawn only), a light under them, cartons at the counter's ends.
     const top = slot(L.counter.u0, L.counter.u1, s - 0.35, s);
-    draw(k, top, 1.95, 2.75, "rack");
+    // Lower under a low ceiling (L1's under L2's slab, ADR-0093 O5): the goods on them a hand under it.
+    const room = k.c - k.y;
+    const cab = Math.min(2.75, room - 0.45);
+    draw(k, top, 1.95, cab, "rack");
     draw(k, { ...top, v0: s - 0.33, v1: s - 0.27 }, 1.92, 1.95, "lamp");
-    for (let u = top.u0 + 0.1, i = 0; u < top.u1 - 0.3; u += 0.45, i++) if (shopHash(k.shop.id, 45, i) > 0.3) draw(k, slot(u, u + 0.3, s - 0.3, s - 0.05), 2.75, 2.9 + shopHash(k.shop.id, i, 45) * 0.2, "goods");
+    for (let u = top.u0 + 0.1, i = 0; u < top.u1 - 0.3; u += 0.45, i++) if (shopHash(k.shop.id, 45, i) > 0.3) draw(k, slot(u, u + 0.3, s - 0.3, s - 0.05), cab, Math.min(cab + 0.15 + shopHash(k.shop.id, i, 45) * 0.2, room - 0.05), "goods");
     for (const [i, u] of [L.counter.u0 + 0.35, L.counter.u1 - 0.35].entries()) cartons(k, { u, v: s - 0.3 }, 2, 40 + i);
   }
   if (trace === "spill") {

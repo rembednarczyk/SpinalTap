@@ -26,7 +26,8 @@ import {
 import { HALL, type Piece, box, outlined, solidProp, tiledSolidProps } from "./plan";
 import type { StaticProp } from "../builders";
 import type { GroundCut } from "../../world/ground";
-import { type Corners, type Rectangle, balustrade, roundedOutline } from "./rounded";
+import { type Corners, type Rectangle, balustrade, roundedOutline, wallStrip } from "./rounded";
+import { GALLERY_FRONT_DOOR, L3_ROOF_WAY } from "./front-levels";
 
 /*
  * The gallery's body (ADR-0093 O1): the slabs of P2, P3 and the roof as rings round the atrium (and
@@ -140,14 +141,22 @@ const glass = (y0: number, y1: number, gaps: readonly Rectangle[]): Piece[] => b
 /*
  * Under L2 (P2) and L3 (P3) the front's storeys stand against the south face, but the glass runs on
  * behind them all the same: without it a 0.2 m slot stayed between their boxes and the shops' backs,
- * and a crouched, aimed shoulder there started its shot in it (G-275's measure, ADR-0093 O2).
+ * and a crouched, aimed shoulder there started its shot in it (G-275's measure, ADR-0093 O2). Since
+ * O5 it is L2's and L3's wall there too, a door in it on each into the front's arcades.
  */
-/** The glass of P1..P3 with P1's doors' lintels. */
+/** The doors in the south glass on P2 and P3 into the front's L2 and L3 (ADR-0093 O5). */
+const FRONT_DOOR_GAP: Rectangle = { ...GALLERY_FRONT_DOOR, z0: MALL.z0 - 0.5, z1: MALL.z0 + 0.5 };
+/** Over such a door its glass on to the slab, its outer face on the body's line (the engine draws its frame). */
+const frontLintel = (y: number, top: number): Piece => wallStrip({ x: GALLERY_FRONT_DOOR.x0, z: MALL.z0 }, { x: GALLERY_FRONT_DOOR.x1, z: MALL.z0 }, PANE, y + DOOR_TOP, top - MALL_SLAB, "pane");
+
+/** The glass of P1..P3 with P1's doors' lintels, and P2's and P3's doors into the front with theirs (O5). */
 export const mallGlass = (): Piece[] => [
   ...glass(L.p1, L.p2 - MALL_SLAB, [STAIR_HOUSE_GAP, ...P1_DOORS.map((d) => d.gap)]),
   ...P1_DOORS.map((d) => outlined(roundedOutline(d.lintel, 0, [false, false, false, false]), L.p1 + DOOR_TOP, L.p2 - MALL_SLAB, "pane")),
-  ...glass(L.p2, L.p3 - MALL_SLAB, []),
-  ...glass(L.p3, L.roof - MALL_SLAB, []),
+  ...glass(L.p2, L.p3 - MALL_SLAB, [FRONT_DOOR_GAP]),
+  frontLintel(L.p2, L.p3),
+  ...glass(L.p3, L.roof - MALL_SLAB, [FRONT_DOOR_GAP]),
+  frontLintel(L.p3, L.roof),
 ];
 
 /** The balustrade round the atrium at `y`, a rail thick outside its hole, open where an escalator lands on the floor. */
@@ -160,8 +169,9 @@ const atriumRail = (y: number): Piece[] => {
   return balustrade(ATRIUM, 0.12, [false, false, false, false], y, MALL_RAIL, true, gaps).map((p) => ({ ...p, inside: true }));
 };
 
-/** Round the roof: on the slab's edge, a hand in. */
-const roofRail = (): Piece[] => balustrade(slabRect(MALL.z0 + FRONT_OVERHANG), -0.05, MALL_CORNERS, L.roof, MALL_RAIL, true, [], MALL_RADIUS);
+/** Round the roof: on the slab's edge, a hand in; open on the south over the way onto L3's roof (ADR-0093 O5). */
+const roofRail = (): Piece[] =>
+  balustrade(slabRect(MALL.z0 + FRONT_OVERHANG), -0.05, MALL_CORNERS, L.roof, MALL_RAIL, true, [{ ...L3_ROOF_WAY, z0: MALL.z0, z1: MALL.z0 + 1 }], MALL_RADIUS);
 
 /** The body's pieces drawn from afar: slabs, glass, the roof's balustrades. */
 export const mallOutsidePieces = (): Piece[] => [...mallSlabs(), ...mallGlass(), ...roofRail(), ...atriumRail(L.roof).map((p) => ({ ...p, inside: false }))];

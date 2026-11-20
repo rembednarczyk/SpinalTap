@@ -1,10 +1,10 @@
 import type { Vec3 } from "@seki/core";
-import { SHOPFRONT_HEAD, SHOP_BUILDS, type AlchemiaBox, type AlchemiaPiece, type GalleryShopDef, type GalleryShopTrade, type ShopBuild, galleryShopCeiling, galleryShopFloor, galleryShopFrame } from "@seki/sim";
+import { ALL_SHOP_BUILDS, type AlchemiaBox, type AlchemiaPiece, type GalleryShopDef, type GalleryShopTrade, type ShopBuild, galleryShopCeiling, galleryShopFloor, galleryShopFrame, galleryShopHead } from "@seki/sim";
 import { type BoxFace, type CityKitData, type GeometrySink, hexRgb, swatchUv } from "../city-kit-data";
 import { neonText, neonWidth } from "./neon-letters";
 
 /*
- * The gallery's shops (ADR-0093 O2) on the city kit's texture, in Alchemia's inside mesh (no mesh or
+ * The gallery's shops (ADR-0093 O2) and the front's (O5) on the city kit's texture, in Alchemia's inside mesh (no mesh or
  * draw call of their own): each shop's pieces coloured by its trade (`docs/zasady-lokacji.md` §4:
  * warm light for food, clothes and flowers, cold for the technical trades, green for the pharmacy
  * and money, red for guns), its goods tinted by a hash of their place, its shopfront as a frame of
@@ -50,7 +50,7 @@ const boxOf = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, swatch: st
 };
 
 /** Each shop's piece and which shop's it is. */
-const OWNER: ReadonlyMap<AlchemiaPiece, ShopBuild> = new Map(SHOP_BUILDS.flatMap((b) => b.pieces.map((p) => [p, b] as const)));
+const OWNER: ReadonlyMap<AlchemiaPiece, ShopBuild> = new Map(ALL_SHOP_BUILDS.flatMap((b) => b.pieces.map((p) => [p, b] as const)));
 
 /** A number in [0, 1) from a box's place: the goods' colour. */
 const placeHash = (b: AlchemiaBox): number => {
@@ -153,15 +153,16 @@ const frameOut = (s: GalleryShopDef): { x: number; z: number } => ({ x: s.front 
  * allows and no wider than the window: a shut shop's sign off, a dead letter in some of the rest (§3).
  */
 export const shopSigns = (sink: GeometrySink, data: CityKitData): void => {
-  for (const { shop } of SHOP_BUILDS) {
+  for (const { shop } of ALL_SHOP_BUILDS) {
     if (shop.state === "vacant" || shop.sign === "") continue;
     // The sign reads left to right for one facing the shop, whichever side its door is on.
     const f = galleryShopFrame({ ...shop, door: undefined } as GalleryShopDef);
     const win = shop.window ?? { u0: 0, u1: f.w };
     const y = galleryShopFloor(shop);
-    const band = galleryShopCeiling(shop) - (y + SHOPFRONT_HEAD);
+    const head = galleryShopHead(shop);
+    const band = galleryShopCeiling(shop) - (y + head);
     const height = Math.min(band * 0.55, 0.5, (win.u1 - win.u0 - 0.5) / Math.max(0.1, neonWidth(shop.sign, 1)));
-    const foot = y + SHOPFRONT_HEAD + (band - height) / 2;
+    const foot = y + head + (band - height) / 2;
     const mid = (win.u0 + win.u1) / 2;
     const letters = [...shop.sign].filter((c) => c !== " ").length;
     const dead = shop.state === "shut" ? -2 : Math.floor(placeHash({ x0: mid, x1: 0, z0: letters, z1: 0, y0: y, y1: 0 }) * letters * 3);
