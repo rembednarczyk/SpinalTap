@@ -21,7 +21,6 @@ const F = FRONT_FLOORS.l3;
 const C = FRONT_CEILINGS.l3;
 const N = 0;
 const S = Math.PI;
-const E = Math.PI / 2;
 const W = -Math.PI / 2;
 
 /** The bar along the gallery's glass west of its door: its counter, the barkeeper's flap at its west end, the back bar at the glass. */
