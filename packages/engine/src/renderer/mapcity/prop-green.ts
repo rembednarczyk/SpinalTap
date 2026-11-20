@@ -1,6 +1,7 @@
 import { MeshSink } from "../mesh-sink";
 import { blob, block, glow, paint, ring, tube, v3 } from "./prop-kit";
 import { TREE_SHAPE } from "./prop-shapes";
+import { type TreeForm, leafyTree } from "./tree-plan";
 
 /**
  * Greenery of the street furniture (ADR-0047): five tree silhouettes of the centre's lime
@@ -96,12 +97,23 @@ const TRUNK: Readonly<Record<number, Trunk>> = {
 
 const trunkOf = (shape: number): Trunk => TRUNK[shape] ?? TRUNK[TREE_SHAPE.lime]!;
 
+/** How many scaffold limbs a species has and how steep they rise (degrees): a lime's and a maple's oval, the chestnut's dome, the oak's spread, the poplar's climb. */
+const LIMBS: Readonly<Record<number, Pick<TreeForm, "limbs" | "rise">>> = {
+  [TREE_SHAPE.lime]: { limbs: 5, rise: [40, 62] },
+  [TREE_SHAPE.maple]: { limbs: 5, rise: [32, 55] },
+  [TREE_SHAPE.chestnut]: { limbs: 6, rise: [28, 50] },
+  [TREE_SHAPE.oak]: { limbs: 6, rise: [18, 40] },
+  [TREE_SHAPE.poplar]: { limbs: 5, rise: [55, 75] },
+};
+
+/**
+ * The near tree in comic realism (`tree-plan.ts`, the user's decision of 20.11): trunk, limbs,
+ * branches and a crown of leaf clusters within the species' crown ellipsoids.
+ */
 export const tree = (shape: number): MeshSink => {
   const sink = new MeshSink();
-  const { h, r, limbs } = trunkOf(shape);
-  sink.prism(v3(0, -0.3, 0), r, h + 0.3, 7, BARK, false, 0.15);
-  for (const [dy, x, up, z, lr] of limbs) tube(sink, v3(0, h - dy, 0), v3(x, h + up, z), lr, BARK, 5, 0.05);
-  for (const [x, y, z, rx, ry, rz, c] of CROWNS[shape] ?? CROWNS[0]!) blob(sink, v3(x, y, z), rx, ry, rz, paint(c), 8, 5);
+  const { h, r } = trunkOf(shape);
+  leafyTree(sink, { h, r, ...(LIMBS[shape] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[shape] ?? CROWNS[0]!, shape);
   // 2077: sensor bands on the city's maples.
   if (shape === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
   return sink;
