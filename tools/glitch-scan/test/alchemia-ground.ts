@@ -89,9 +89,7 @@ const hanging = (p: FootPiece, under: readonly FootPiece[], ground: OffGroundWor
   const y0 = p.prism.bottom;
   const tol = OFF_GROUND_TOLERANCE;
   // What holds it: a piece under its foot reaching up to it (from below, not one beside it at its level).
-  const holds = under.filter(
-    (q) => q.prism.bottom < y0 - 0.005 && q.prism.top >= y0 - tol,
-  );
+  const holds = under.filter((q) => q.prism.bottom < y0 - 0.005 && q.prism.top >= y0 - tol);
   const topAt = (x: number, z: number, g: number): number => {
     let s = g;
     for (const q of holds) if (overPrism(q.prism, x, z, 0.01)) s = Math.max(s, Math.min(q.prism.top, y0));
