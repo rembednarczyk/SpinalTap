@@ -1,6 +1,6 @@
 import { MeshSink } from "../mesh-sink";
 import { blob, block, glow, paint, ring, tube, v3 } from "./prop-kit";
-import { TREE_SHAPE } from "./prop-shapes";
+import { TREE_SHAPE, treeSpeciesOf, treeStyleOf } from "./prop-shapes";
 import { FULL_LEAVES, type LeafDensity, type TreeForm, leafyTree } from "./tree-plan";
 
 /**
@@ -79,20 +79,61 @@ const LIMBS: Readonly<Record<number, Pick<TreeForm, "limbs" | "rise">>> = {
 };
 
 /**
- * The near tree in comic realism (`tree-plan.ts`, the user's decision of 20.11): trunk, limbs,
- * branches and a crown of leaf clusters within the species' crown ellipsoids.
+ * A near tree of model `shape` (`species + TREE_SPECIES * style`, `treeStyleAt`): in comic realism
+ * (`tree-plan.ts`, the user's decision of 20.11; trunk, limbs, branches and a crown of leaf clusters
+ * within the species' crown ellipsoids), or the game's original one, mixed in for its look.
  */
 export const tree = (shape: number, density: LeafDensity = FULL_LEAVES): MeshSink => {
-  const sink = new MeshSink();
-  const { h, r } = trunkOf(shape);
-  leafyTree(sink, { h, r, ...(LIMBS[shape] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[shape] ?? CROWNS[0]!, shape, density);
+  const species = treeSpeciesOf(shape);
+  const sink = treeStyleOf(shape) === 1 ? classicTree(species) : new MeshSink();
+  if (treeStyleOf(shape) !== 1) {
+    const { h, r } = trunkOf(species);
+    leafyTree(sink, { h, r, ...(LIMBS[species] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[species] ?? CROWNS[0]!, species, density);
+  }
   // 2077: sensor bands on the city's maples.
-  if (shape === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
+  if (species === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
+  return sink;
+};
+
+/** A limb of the original tree from the trunk into the crown: from `dy` under the trunk's top to (x, top + up, z), of radius r. */
+type Limb = readonly [dy: number, x: number, up: number, z: number, r: number];
+
+const TWO_LIMBS: readonly Limb[] = [
+  [0.4, 0.8, 1.1, 0.3, 0.09],
+  [0.6, -0.7, 0.9, -0.4, 0.08],
+];
+
+/** The original tree's limbs: a short oak bole branching into four, the poplar into three, the rest into two. */
+const CLASSIC_LIMBS: Readonly<Record<number, readonly Limb[]>> = {
+  [TREE_SHAPE.oak]: [
+    [0.3, 2.0, 1.4, 0.6, 0.16],
+    [0.5, -1.9, 1.2, -0.7, 0.15],
+    [0.2, 0.5, 1.6, -1.8, 0.14],
+    [0.4, -0.4, 1.5, 1.7, 0.13],
+  ],
+  [TREE_SHAPE.poplar]: [
+    [0.4, 1.0, 1.6, 0.3, 0.15],
+    [0.6, -0.9, 1.4, -0.5, 0.14],
+    [0.3, 0.2, 2.0, -0.9, 0.12],
+  ],
+};
+
+/**
+ * The game's original tree, kept in the mix for its look (the user, 20.11): a trunk, two to four
+ * limbs and a crown of smooth low-poly blobs, so the ink draws only its outline (ADR-0047).
+ */
+const classicTree = (species: number): MeshSink => {
+  const sink = new MeshSink();
+  const { h, r } = trunkOf(species);
+  sink.prism(v3(0, -0.3, 0), r, h + 0.3, 7, BARK, false, 0.15);
+  for (const [dy, x, up, z, lr] of CLASSIC_LIMBS[species] ?? TWO_LIMBS) tube(sink, v3(0, h - dy, 0), v3(x, h + up, z), lr, BARK, 5, 0.05);
+  for (const [x, y, z, rx, ry, rz, c] of CROWNS[species] ?? CROWNS[0]!) blob(sink, v3(x, y, z), rx, ry, rz, paint(c), 8, 5);
   return sink;
 };
 
 /** The far tree: a trunk and one crown, a fraction of the vertices. */
-export const farTree = (shape: number): MeshSink => {
+export const farTree = (model: number): MeshSink => {
+  const shape = treeSpeciesOf(model);
   const sink = new MeshSink();
   const { h, far } = trunkOf(shape);
   sink.box(v3(0, h / 2 - 0.15, 0), far, h + 0.3, far, BARK, { bottom: false });

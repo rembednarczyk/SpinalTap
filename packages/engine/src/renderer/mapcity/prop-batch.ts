@@ -1,8 +1,8 @@
-import { DECAL_KINDS, SITE_KINDS, type StreetPropItem, type StreetPropKind, type Vec3 } from "@seki/core";
+import { DECAL_KINDS, SITE_KINDS, type StreetPropItem, type StreetPropKind, TREE_SPECIES, type Vec3 } from "@seki/core";
 import { type BollardChain, bollardChains } from "@seki/sim";
 import type { MeshSink } from "../mesh-sink";
 import type { PropLight } from "./prop-lamps";
-import { type CellBand, scaleOf, shapeOf, showsNear, spreadOf } from "./prop-shapes";
+import { type CellBand, scaleOf, shapeOf, showsNear, spreadOf, treeStyleAt } from "./prop-shapes";
 import { vertex } from "./sink-ops";
 
 /**
@@ -40,7 +40,7 @@ export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[]
     y: i.y + at.y,
     z: i.z + at.z,
     yaw: i.yaw,
-    shape: shapeOf(i.prop, i.variant),
+    shape: i.prop === "tree" ? shapeOf(i.prop, i.variant) + TREE_SPECIES * treeStyleAt(i.x + at.x, i.z + at.z) : shapeOf(i.prop, i.variant),
     scale: scaleOf(i.prop, i.variant),
     ...(spreadOf(i.prop, i.variant) < 1 ? { spread: spreadOf(i.prop, i.variant) } : {}),
     chains: bollardChains(i),

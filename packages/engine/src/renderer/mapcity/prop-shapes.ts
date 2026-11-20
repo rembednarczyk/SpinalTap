@@ -10,7 +10,7 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   monument: 6,
   artwork: 6,
   flagpole: 2,
-  tree: TREE_SPECIES,
+  tree: TREE_SPECIES * 2,
   bench: 2,
   "lamp-wall-lantern": 2,
   "waste-bin": 2,
@@ -34,6 +34,24 @@ export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3,
 export const TREE_SHAPE = TREE_KIND;
 
 export const shapeOf = (kind: StreetPropKind, variant: number): number => (kind === "tree" ? treeSpecies(variant) : variant % (PROP_SHAPES[kind] ?? 1));
+
+/**
+ * Street trees in two styles, mixed (the user's decision of 20.11): the leafy tree of comic realism
+ * (style 0) and the game's original tree of smooth crowns (style 1), its look kept in the mix. A
+ * tree's model is `species + TREE_SPECIES * style`. The style comes from the tree's place in the
+ * world (a hash of it to the decimetre), as the variant's 16 bits are all taken by species, size
+ * and spread; the save and the simulation do not see it.
+ */
+export const TREE_STYLES = 2;
+/** The share of trees in the original style. */
+export const CLASSIC_TREE_SHARE = 0.35;
+export const treeStyleAt = (x: number, z: number): number => {
+  const h = Math.sin(Math.round(x * 10) * 12.9898 + Math.round(z * 10) * 78.233) * 43758.5453;
+  return h - Math.floor(h) < CLASSIC_TREE_SHARE ? 1 : 0;
+};
+/** A tree model's species and style. */
+export const treeSpeciesOf = (shape: number): number => shape % TREE_SPECIES;
+export const treeStyleOf = (shape: number): number => Math.floor(shape / TREE_SPECIES);
 
 /** Size of a piece: trees by `treeScale` (G-422), shrubs 0.7 to 1.2, the rest 1. */
 export const scaleOf = (kind: StreetPropKind, variant: number): number => {
