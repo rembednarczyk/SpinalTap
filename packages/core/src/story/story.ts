@@ -23,6 +23,9 @@ export const STORY_CHOICES = {
   job: ["refused", "taken"],
   /** The Kagami archive on the overpass: back to the street, to Ren and Hebi, or to Kagami for her own recording. */
   archive: ["street", "hebi", "kagami"],
+  // Act III ("Źródło", ADR-0095). The ending follows from `core` alone.
+  /** The Kagami archive's core under the Trinity Chapel, Aya's original recording in it: wiped, let out into the city, or kept by her. */
+  core: ["erase", "release", "keep"],
 } as const;
 
 /** The choices of act I; only they decide its ending. */
@@ -88,14 +91,50 @@ export const ACT_TWO_ENDINGS = {
 
 export type ActTwoEndingId = keyof typeof ACT_TWO_ENDINGS;
 
+/** Act III ("Źródło", ADR-0095): what becomes of the Kagami archive's core. The ids are the options of `core`. */
+export const ACT_THREE_ENDINGS = {
+  /** "Silence": she wipes the archive, Aya's original with it. */
+  erase: {
+    id: "erase",
+    title: "ending.erase.title",
+    reputation: [
+      { faction: "kagami", delta: -30 },
+      { faction: "civilians", delta: 5 },
+    ],
+  },
+  /** "The city's echo": the archive goes out on the city's net; everyone gets their memories back, wanted or not. */
+  release: {
+    id: "release",
+    title: "ending.release.title",
+    reputation: [
+      { faction: "civilians", delta: 15 },
+      { faction: "hebi", delta: 5 },
+      { faction: "kagami", delta: -30 },
+    ],
+  },
+  /** "The keeper": she stays by the core and decides who gets what back. */
+  keep: {
+    id: "keep",
+    title: "ending.keep.title",
+    reputation: [
+      { faction: "kagami", delta: 20 },
+      { faction: "fixers", delta: 10 },
+      { faction: "civilians", delta: -10 },
+    ],
+  },
+} as const satisfies Record<(typeof STORY_CHOICES)["core"][number], ActTwoEnding>;
+
+export type ActThreeEndingId = keyof typeof ACT_THREE_ENDINGS;
+
 export interface StoryState {
   readonly choices: Readonly<Partial<Record<StoryChoiceId, StoryOption>>>;
   /** Act I. */
   readonly ending: EndingId | null;
   readonly act2Ending: ActTwoEndingId | null;
+  readonly act3Ending: ActThreeEndingId | null;
 }
 
-export const EMPTY_STORY: StoryState = { choices: {}, ending: null, act2Ending: null };
+export const EMPTY_STORY: StoryState = { choices: {}, ending: null, act2Ending: null, act3Ending: null };
 
 /** Flag raised by the sim once the act-I ending is resolved; the last quest step waits on it. */
 export const ACT_ONE_ENDING_FLAG = "act1_ending";
@@ -103,8 +142,11 @@ export const ACT_ONE_ENDING_FLAG = "act1_ending";
 /** Flag raised by the sim once the act-II ending is resolved. */
 export const ACT_TWO_ENDING_FLAG = "act2_ending";
 
+/** Flag raised by the sim once the act-III ending is resolved. */
+export const ACT_THREE_ENDING_FLAG = "act3_ending";
+
 /** Which ending was reached, as a flag (`ending:aya`), so quest steps and NPC presence can follow it. */
-export const endingFlag = (id: EndingId | ActTwoEndingId): string => `ending:${id}`;
+export const endingFlag = (id: EndingId | ActTwoEndingId | ActThreeEndingId): string => `ending:${id}`;
 
 export const isStoryChoiceId = (id: string): id is StoryChoiceId => Object.hasOwn(STORY_CHOICES, id);
 
@@ -114,6 +156,8 @@ export const isStoryOption = (choice: StoryChoiceId, option: string): option is 
 export const isEndingId = (id: string): id is EndingId => Object.hasOwn(ENDINGS, id);
 
 export const isActTwoEndingId = (id: string): id is ActTwoEndingId => Object.hasOwn(ACT_TWO_ENDINGS, id);
+
+export const isActThreeEndingId = (id: string): id is ActThreeEndingId => Object.hasOwn(ACT_THREE_ENDINGS, id);
 
 /** A choice is made once; the first answer sticks (replaying a scene cannot rewrite the past). */
 export const recordChoice = (story: StoryState, choice: StoryChoiceId, option: StoryOption): StoryState =>
@@ -136,8 +180,17 @@ export const resolveActTwoEnding = (choices: StoryState["choices"]): ActTwoEndin
 export const setActTwoEnding = (story: StoryState, act2Ending: ActTwoEndingId): StoryState =>
   story.act2Ending ? story : { ...story, act2Ending };
 
+/** Act III ends with what she does to the core; null until that choice is made. */
+export const resolveActThreeEnding = (choices: StoryState["choices"]): ActThreeEndingId | null => {
+  const core = choices.core;
+  return core !== undefined && isActThreeEndingId(core) ? core : null;
+};
+
+export const setActThreeEnding = (story: StoryState, act3Ending: ActThreeEndingId): StoryState =>
+  story.act3Ending ? story : { ...story, act3Ending };
+
 /** Memories that come with a playable flashback scene (ink knot `recall_<id>`), in story order. */
-export const RECALL_MEMORIES: readonly MemoryId[] = ["courier_case", "operating_table", "crash_night", "rooftop", "last_call", "mirror"];
+export const RECALL_MEMORIES: readonly MemoryId[] = ["courier_case", "operating_table", "crash_night", "rooftop", "last_call", "mirror", "chapel"];
 
 export const recalledFlag = (id: MemoryId): string => `recalled:${id}`;
 
@@ -149,5 +202,8 @@ export const pendingRecall = (domain: { readonly character: CharacterState; read
 
 /** Scenes that play once, on their own, when the player is free (ink knot of the same name). */
 export const ACT_TWO_OPENING = "act2_opening";
+/** Act III's opening (ADR-0095) and its epilogue, once the ending is reached. */
+export const ACT_THREE_OPENING = "act3_opening";
+export const ACT_THREE_EPILOGUE = "act3_epilogue";
 
 export const seenFlag = (scene: string): string => `seen:${scene}`;

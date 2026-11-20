@@ -84,12 +84,12 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     finishDialogue(b.session, b.ui, 0);
     playImplantFragment(b.session, b.ui, b.render, 0);
     playFinale(b.session, b.ui);
-    expect(b.session.sim.domain.story).toEqual({ choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: "aya", act2Ending: null });
+    expect(b.session.sim.domain.story).toEqual({ choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: "aya", act2Ending: null, act3Ending: null });
 
     // The earlier save still holds only the first choice, and continues from there.
     const c = setup(store);
     expect(await c.session.saves.loadAsync("mid")).toBe(true);
-    expect(c.session.sim.domain.story).toEqual({ choices: { case: "opened" }, ending: null, act2Ending: null });
+    expect(c.session.sim.domain.story).toEqual({ choices: { case: "opened" }, ending: null, act2Ending: null, act3Ending: null });
     expect(objective(c.ui)).toBe("Talk to Doctor Mori about what you saw (Mori's clinic)");
     playMoriFragment(c.session, c.ui, c.render, 1);
     playImplantFragment(c.session, c.ui, c.render, 1);

@@ -233,6 +233,10 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 { quest_step == "ren_trail":
     -> ren_trail
 }
+// Act III (ADR-0095, m3-zrodlo.ink): after the "street" ending the trail to the Castle starts with her.
+{ quest_step == "source_lead" && act2_ending == "street":
+    -> zrodlo_ume
+}
 { act2_ending == "street" && not has_flag("ume_archive"):
     UME: Pani Sato dostała chip z głosem męża. Słucha go co wieczór przy otwartym oknie.
     UME: Nie wiem, czy to jej pomaga. Ale przynajmniej ten głos należy do niej.

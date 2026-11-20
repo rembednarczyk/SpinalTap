@@ -198,6 +198,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("act1_ending", resolveEnding(domain.story.choices));
     this.story.variablesState.$("story_ending", domain.story.ending ?? "");
     this.story.variablesState.$("act2_ending", domain.story.act2Ending ?? "");
+    this.story.variablesState.$("act3_ending", domain.story.act3Ending ?? "");
     this.story.variablesState.$("game_hour", hourOf(domain.clock));
     this.story.variablesState.$("time_of_day", dayPhase(domain.clock));
     this.story.ChoosePathString(dialogueId);
@@ -309,5 +310,6 @@ export class NarrativeRuntime {
     });
     story.BindExternalFunction("end_act", () => this.emit({ type: "resolve-ending" }));
     story.BindExternalFunction("end_act2", () => this.emit({ type: "resolve-ending", act: 2 }));
+    story.BindExternalFunction("end_act3", () => this.emit({ type: "resolve-ending", act: 3 }));
   }
 }

@@ -176,6 +176,7 @@ export const enWorld = {
   "quest.failed": "Contract lost",
   "quest.endAct1": "End of Act I: Echo",
   "quest.endAct2": "End of Act II: Lustro",
+  "quest.endAct3": "End of Act III: Źródło",
   "quest.ending": "Ending: {title}",
   // The world around the player.
   "world.reputation": "Reputation",

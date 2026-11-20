@@ -280,7 +280,7 @@ Dialogi i rozgałęzienia pisane w **ink**, wykonywane przez `inkjs`. Pisarz pra
 - Motyw przewodni zgodny z referencją: pytanie o autentyczność wspomnień i tożsamości przy rozbudowanym cyberware.
 - Progresja diegetyczna: odblokowania zdolności podane jako odzyskane wspomnienia, spięte z questami głównego wątku.
 - Sandbox: zlecenia fixera jako pętla poboczna zasilająca ekonomię i reputację, z haczykami prowadzącymi do wątku głównego.
-- Akty: I „Echo” (moduł Kagami, trzy wspomnienia, zakończenia Aya / Seki, ADR-0012), II „Lustro” (Ren Odagiri, archiwum Kagami, zlecenie Kaito jako haczyk, zakończenia Archiwum ulicy / Wspólnicy / Kopia, ADR-0023).
+- Akty: I „Echo” (moduł Kagami, trzy wspomnienia, zakończenia Aya / Seki, ADR-0012), II „Lustro” (Ren Odagiri, archiwum Kagami, zlecenie Kaito jako haczyk, zakończenia Archiwum ulicy / Wspólnicy / Kopia, ADR-0023). III „Źródło” (Zamek i Kaplica Trójcy, rdzeń archiwum, wspomnienie spoza archiwum, zakończenia Cisza / Echo miasta / Strażniczka i epilog, ADR-0095).
 
 ---
 
@@ -395,7 +395,7 @@ World streaming i chunking, frakcje i reputacja, harmonogramy i AI NPC, kolejne 
 ### M3 — wątek główny
 Pełne spięcie fabuły Seki Senshi: odzyskiwanie wspomnień, progresja diegetyczna, zakończenia zależne od wyborów.
 **Kryterium:** wątek główny przechodzi od startu do zakończenia; stan narracji poprawnie w zapisach.
-**Stan (20.11):** akty I i II w main (ADR-0012, ADR-0023), akt III otwarty.
+**Stan (20.11):** akty I i II w main (ADR-0012, ADR-0023), akt III z epilogiem w PR (ADR-0095); zostaje ekran końca (etap 2) i wnętrze Kaplicy (etap 3).
 
 ### M4 — skala treści i polish
 Więcej zleceń i lokacji, dopracowanie NPR, optymalizacja wydajności, balans.

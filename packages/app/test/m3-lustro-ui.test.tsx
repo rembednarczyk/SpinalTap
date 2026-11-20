@@ -18,7 +18,7 @@ describe("act II on the overpass in the game", () => {
     run(() =>
       g.seki.jump({
         quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "active", stepIndex: 3 } },
-        story: { choices: { case: "opened", name: "spoken", crash: "wheel", rooftop: "together", job: "taken", voice: "listened" }, ending: "aya", act2Ending: null },
+        story: { choices: { case: "opened", name: "spoken", crash: "wheel", rooftop: "together", job: "taken", voice: "listened" }, ending: "aya", act2Ending: null, act3Ending: null },
         flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
       }),
     );

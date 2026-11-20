@@ -163,12 +163,17 @@ export const plDomain = {
   "memory.last_call.desc": "Wrak, dym i słuchawka w uchu. Głos Rena mówi dalej, a za nim siedzi ktoś inny. Wiesz już, jak brzmi podłożony głos, i ręka nie drży, kiedy ktoś krzyczy ci do ucha. Stabilność celowania +10%.",
   "memory.mirror.title": "Wspomnienie: lustro",
   "memory.mirror.desc": "Pełny zapis od Kagami: kuchnia z oknem na port, szkoła, pierwszy kurs. Wszystko się zgadza i niczego przy tym nie czujesz. Szansa na krytyk +5%, obrażenia +2.",
-  // Endings of act I and act II.
+  "memory.chapel.title": "Wspomnienie: kaplica",
+  "memory.chapel.desc": "Kaplica Trójcy, freski sprzed sześciuset lat i matka, która ściska cię za rękę. W kaplicy nie było zasięgu, więc nikt tego nie nagrał. Jedyne wspomnienie, którego Kagami nie ma. Pancerz +1, stabilność celowania +5%.",
+  // Endings of acts I, II and III.
   "ending.aya.title": "Aya",
   "ending.seki.title": "Seki Senshi",
   "ending.street.title": "Archiwum ulicy",
   "ending.hebi.title": "Wspólnicy",
   "ending.kagami.title": "Kopia",
+  "ending.erase.title": "Cisza",
+  "ending.release.title": "Echo miasta",
+  "ending.keep.title": "Strażniczka",
   // Factions.
   "faction.fixers": "Sieć Kaito",
   "faction.hebi": "Gang Hebi",
@@ -194,6 +199,12 @@ export const plDomain = {
   "quest.m3_lustro.overpass": "Kurosawa z Kagami czeka na placu za Alchemią, przy windzie. Zdecyduj, co stanie się z archiwum",
   "quest.m3_lustro.overpass.cleared": "Czyściciele Kagami leżą. Wróć do Rena na dach Alchemii",
   "quest.m3_lustro.overpass.ambush": "Czyściciele Kagami atakują na placu za Alchemią. Odeprzyj ich",
+  "quest.m3_zrodlo.title": "Źródło",
+  "quest.m3_zrodlo.source_lead": "Ludzie z archiwum znikają. Porozmawiaj z babcią Ume (deptak przy klinice)",
+  "quest.m3_zrodlo.source_lead.ren": "Kopie archiwum dzwonią nocą pod jeden adres. Porozmawiaj z Renem na dachu Alchemii",
+  "quest.m3_zrodlo.source_lead.kurosawa": "Kurosawa wzywa cię na kalibrację. Spotkaj się z nim na dziedzińcu Zamku",
+  "quest.m3_zrodlo.chapel": "Rdzeń archiwum Kagami stoi w Kaplicy Trójcy na Zamku. Porozmawiaj z archiwistką przy drzwiach",
+  "quest.m3_zrodlo.core_choice": "Wróć do archiwistki przy Kaplicy i zdecyduj, co stanie się z rdzeniem",
   // Contracts: kinds, sites, objectives, notes and bonus conditions.
   "contract.kind.eliminate": "Likwidacja",
   "contract.kind.delivery": "Kurs",

@@ -15,6 +15,8 @@ export const CAST_OF_SPAWN: Readonly<Record<string, CastKey>> = {
   genzo: "genzo",
   ren: "ren",
   kurosawa: "kurosawa",
+  // Act III on the Castle (ADR-0095): Kurosawa again, by the Trinity Chapel.
+  "kurosawa-castle": "kurosawa",
   fumiko: "fumiko",
   kenta: "kenta",
   goro: "goro",

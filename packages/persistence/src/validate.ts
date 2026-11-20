@@ -13,6 +13,7 @@ import {
   MIN_ITEM_LEVEL,
   isMemoryId,
   isEndingId,
+  isActThreeEndingId,
   isActTwoEndingId,
   isStoryChoiceId,
   isStoryOption,
@@ -97,6 +98,7 @@ export const findSchemaError = (s: Json): string | null => {
   }
   if (!(story.ending === null || (typeof story.ending === "string" && isEndingId(story.ending)))) return "story ending";
   if (!(story.act2Ending === null || (typeof story.act2Ending === "string" && isActTwoEndingId(story.act2Ending)))) return "story ending";
+  if (!(story.act3Ending === null || (typeof story.act3Ending === "string" && isActThreeEndingId(story.act3Ending)))) return "story ending";
   const clock = d.clock;
   if (!isObject(clock) || !Number.isInteger(clock.seconds) || (clock.seconds as number) < 0) return "clock";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";

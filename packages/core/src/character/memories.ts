@@ -63,6 +63,13 @@ export const MEMORY_CATALOG = {
     description: "memory.mirror.desc",
     modifiers: { critChance: 0.05, damageBonus: 2 },
   },
+  // Main thread, act III ("Źródło", ADR-0095): the one memory Kagami never recorded.
+  chapel: {
+    id: "chapel",
+    title: "memory.chapel.title",
+    description: "memory.chapel.desc",
+    modifiers: { armor: 1, aimStability: 0.05 },
+  },
 } as const satisfies Record<string, MemoryFragment>;
 
 export type MemoryId = keyof typeof MEMORY_CATALOG;

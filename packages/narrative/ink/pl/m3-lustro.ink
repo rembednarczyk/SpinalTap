@@ -47,6 +47,8 @@ Kazałaś sprzedać moduł komuś, kto lubi cudze życie. Ktoś je kupił w jede
 // Ren Odagiri on the roof terrace of Alchemia, over the market (present from ren_trail until the "kagami" ending; ADR-0063).
 === ren_odagiri ===
 {
+// Act III (ADR-0095, m3-zrodlo.ink): after the "hebi" ending the trail to the Castle starts with him.
+- quest_step == "source_lead" && act2_ending == "hebi": -> zrodlo_ren
 - act2_ending == "street": -> after_street
 - act2_ending == "hebi": -> after_hebi
 - quest_step == "meet_ren": -> first_meeting

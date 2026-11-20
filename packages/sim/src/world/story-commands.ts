@@ -1,5 +1,7 @@
 import {
   ACT_ONE_ENDING_FLAG,
+  ACT_THREE_ENDINGS,
+  ACT_THREE_ENDING_FLAG,
   ACT_TWO_ENDINGS,
   ACT_TWO_ENDING_FLAG,
   ENDINGS,
@@ -8,8 +10,10 @@ import {
   advanceClock,
   endingFlag,
   recordChoice,
+  resolveActThreeEnding,
   resolveActTwoEnding,
   resolveEnding,
+  setActThreeEnding,
   setActTwoEnding,
   setAlias,
   setEnding,
@@ -77,10 +81,30 @@ const resolveActTwo = (ctx: SimContext): void => {
   ctx.bus.emit("EndingReached", { act: 2, endingId: ending, title: def.title });
 };
 
-/** Closes act I once, or act II with `act: 2`. */
+/**
+ * Closes act III (ADR-0095): only after act II and the core's choice, once. The ending moves the
+ * factions it names; its epilogue then plays on its own (`pendingScene`).
+ */
+const resolveActThree = (ctx: SimContext): void => {
+  const domain = ctx.state.domain;
+  const ending = resolveActThreeEnding(domain.story.choices);
+  if (!domain.story.act2Ending || domain.story.act3Ending || !ending) return;
+  ctx.state.domain = { ...domain, story: setActThreeEnding(domain.story, ending) };
+  const def = ACT_THREE_ENDINGS[ending];
+  for (const { faction, delta } of def.reputation) adjustReputation(ctx, faction, delta);
+  raiseFlag(ctx, ACT_THREE_ENDING_FLAG);
+  raiseFlag(ctx, endingFlag(ending));
+  ctx.bus.emit("EndingReached", { act: 3, endingId: ending, title: def.title });
+};
+
+/** Closes act I once, or act II with `act: 2`, or act III with `act: 3`. */
 export const applyResolveEnding = (ctx: SimContext, cmd: Command<"resolve-ending">): void => {
   if (cmd.act === 2) {
     resolveActTwo(ctx);
+    return;
+  }
+  if (cmd.act === 3) {
+    resolveActThree(ctx);
     return;
   }
   const domain = ctx.state.domain;
