@@ -63,6 +63,6 @@ describe("memorial-neon-clear (ADR-0074 §6, the curator's reviews of Alchemia)"
 
   it("sees every source of the game's neons", () => {
     const sources = new Set([...alchemiaSignGlows(), ...gameNeonGlows()].filter((g) => g.points.length > 0).map((g) => g.source.replace(/^(neon|device) .*/, "$1")));
-    expect([...sources].sort()).toEqual(["Alchemia's front (C4)", "W-3's TESSEN", "device", "neon", "the arcade house's lettering", "the deptak's neons (C7)", "the food hall's signs (O3)", "the gallery's shop signs (O2)", "the pavilion's neon"].sort());
+    expect([...sources].sort()).toEqual(["Alchemia's front (C4)", "W-3's TESSEN", "device", "neon", "the arcade house's lettering", "the deptak's neons (C7)", "the food hall's signs (O3)", "the front's venue signs (O5)", "the gallery's shop signs (O2)", "the pavilion's neon"].sort());
   });
 });

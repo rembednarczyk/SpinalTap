@@ -17,6 +17,7 @@ import { planAlchemiaSigns } from "../../../packages/engine/src/renderer/alchemi
 import { neonWidth } from "../../../packages/engine/src/renderer/alchemia/neon-letters";
 import { pavilionFaces } from "../../../packages/engine/src/renderer/alchemia/pavilion-shape";
 import { shopSigns } from "../../../packages/engine/src/renderer/alchemia/shop-geometry";
+import { venueSigns } from "../../../packages/engine/src/renderer/alchemia/venue-signs";
 import { type AcrossAt, SPAN_MAX, findSpans } from "../../../packages/engine/src/renderer/mapcity/canyon-plan";
 import { planCanyonSigns } from "../../../packages/engine/src/renderer/mapcity/canyon-signs";
 import { propModel } from "../../../packages/engine/src/renderer/mapcity/prop-models";
@@ -238,7 +239,7 @@ const plate = (source: string, x: number, z: number, hx: number, hz: number, top
 
 /**
  * The neons of the game's own (`neon-letters.ts` and the neon views): the gallery's shops' names (O2)
- * and the food hall's (O3) in their lit tubes, the pavilion's ALCHEMIA, the arcade house's, W-3's
+ * and the food hall's (O3) in their lit tubes, the front's café, bar and grill (O5), the pavilion's ALCHEMIA, the arcade house's, W-3's
  * TESSEN, every neon sign of the world's props and the devices' neons.
  */
 export const gameNeonGlows = (): Glow[] => {
@@ -247,6 +248,8 @@ export const gameNeonGlows = (): Glow[] => {
   shopSigns(shops, data);
   const hall = new GeometrySink();
   foodhallGeometry(hall, data);
+  const venues = new GeometrySink();
+  venueSigns(venues, data);
   const pavilion: GroundPoint[] = [];
   pavilionFaces((c, _n, look) => {
     if (look === "neon") pavilion.push(...c.map((p) => ({ x: p.x, y: p.y, z: p.z })));
@@ -266,6 +269,7 @@ export const gameNeonGlows = (): Glow[] => {
   return [
     ...neonTriangles(shops, data, "the gallery's shop signs (O2)"),
     ...neonTriangles(hall, data, "the food hall's signs (O3)"),
+    ...neonTriangles(venues, data, "the front's venue signs (O5)"),
     { source: "the pavilion's neon", kind: "neon", points: pavilion },
     plate("the arcade house's lettering", (A.minX + A.maxX) / 2, A.minZ, arcadeHalf, 0.05),
     plate("W-3's TESSEN", W3_NEON.face, (W3_GATE.minZ + W3_GATE.maxZ) / 2, 0.1, w3Half),
