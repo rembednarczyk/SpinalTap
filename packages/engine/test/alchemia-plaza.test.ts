@@ -11,8 +11,6 @@ const file = (name: string): ArrayBuffer => {
 };
 const kitData = parseCityKit(file("city-kit.glb"));
 
-/** A mesh of Alchemia's at most (`alchemia.test.ts`: the user's decision of 19.11). */
-const ALCHEMIA_TRIANGLES = 40000;
 /**
  * The tiers' mesh (the front's storeys, the square, the green): its curtains of green drawn as ivy since
  * 20.11, strands of single leaves (some 76 thousand triangles on 270 curtains, the mesh some 24 thousand before
