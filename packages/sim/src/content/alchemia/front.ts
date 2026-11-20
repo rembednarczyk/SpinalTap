@@ -149,8 +149,13 @@ const screens = (): Piece[] => [
   piece(box(ARCADE_FRONT.maxX + 2, ARCADE_FRONT.maxX + 10, L2_SLABS[0]!.minZ - 0.06, L2_SLABS[0]!.minZ, L1_TOP + 0.5, L2_TOP - 0.8), "screen", false, false),
 ];
 
-/** The sign on L3's south face over the passage: its box, the letters are the engine's (proper name). */
-export const FRONT_SIGN: Box = box(403, 423, L3.minZ - 0.5, L3.minZ - 0.1, L2_TOP + 0.6, L3_TOP - 0.7);
+/**
+ * The sign on L3's south face over the passage (C4, the board's lightbox): its box, the letters are
+ * the engine's (proper name). In front of the slab's edge, its top a metre over the roof's: seen
+ * from the square over L2's terrace and its hedge, whose line of sight meets the face some 8.8 m up
+ * (under its foot until C4 the sign showed only the top of ALCHEMIA). Drawn only, nobody reaches it.
+ */
+export const FRONT_SIGN: Box = box(403, 423, L3.minZ - OVER - 0.55, L3.minZ - OVER - 0.15, L2_TOP + 1.9, L3_TOP + 1.0);
 
 /** Masts on L3's roof, thin: the board's antennas. */
 const masts = (): Piece[] =>
@@ -210,7 +215,7 @@ export const frontPieces = (): Piece[] => [
   ...roofRail(L3, L3_TOP),
   ...columns(),
   ...screens(),
-  piece(FRONT_SIGN, "sign", false),
+  piece(FRONT_SIGN, "sign", false, false),
   ...masts(),
   ...hedges(),
   ...arcadeFrontPieces(),
