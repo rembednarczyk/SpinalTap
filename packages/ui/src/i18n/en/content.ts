@@ -39,6 +39,7 @@ export const enContent = {
   "prompt.pickup.data": "Copy the Tessen data",
   "prompt.metro": "Ticket",
   "prompt.help": "Help",
+  "prompt.crime.talk": "Talk",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
   // Takedowns (ADR-0065, ADR-0075): the interact key grabs; in the grab it knocks out, the attack button kills.

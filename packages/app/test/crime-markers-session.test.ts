@@ -87,6 +87,13 @@ describe("street crimes on the map in the session (ADR-0091 stage 6)", () => {
     expect(shown).toContain("Too late / Mugging");
   });
 
+  it("says a job done for the gang (ADR-0091 stage 5c)", () => {
+    const { session, ui } = started();
+    session.bus.emit("EncounterEnded", { encounterId: "micro:extortion:950", outcome: "assisted" });
+    const shown = ui.getState().toasts.map((t) => `${String(t.title)} / ${String(t.text)}`);
+    expect(shown).toContain("Job done for Hebi / Extortion");
+  });
+
   it("reads a crime's kind from its run id, and nothing from other encounters", () => {
     expect(crimeKindOf("micro:droneTheft:812")).toBe("droneTheft");
     expect(crimeKindOf("micro:unknown:3")).toBeNull();

@@ -1,4 +1,4 @@
-import type { CrimeKind, CrowdState, EntityId, TerritoryId, Vec3 } from "@seki/core";
+import type { CityDistrictId, CrimeKind, CrowdState, EntityId, TerritoryId, Vec3 } from "@seki/core";
 import type { CharacterBody } from "./body";
 
 /**
@@ -114,6 +114,12 @@ export interface GangerAi {
    * Fixed by content, so it needs no saving.
    */
   readonly territory?: TerritoryId;
+  /**
+   * One of a gang's crime in progress in this district (ADR-0091 stage 5c): it tolerates the player
+   * as a member of the district's territory does, so she may walk up and talk to it (the gang's
+   * side), until she goes for it or one of its own (`alerted`). Transient, as the crime's people.
+   */
+  readonly crime?: CityDistrictId;
 }
 
 /** A gunner's fight between two steps (ADR-0089 stage 3), as `TacticSnapshot`. */
