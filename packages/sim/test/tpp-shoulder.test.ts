@@ -115,7 +115,7 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
             const o = aimOrigin(p, "TPP");
             // Past a wall, in the open on the other side, with a clear metre of flight from there.
             if (!lineOfSight(w, eye, o, false) && !inSolid(o) && hitscan(w, o, { x: Math.sin(s.yaw), y: 0, z: Math.cos(s.yaw) }, 30, -1).distance > 1) {
-              if (def.id === "alchemia-gallery") galleryLeaks++;
+              if (def.id === "alchemia-gallery" || def.id === "alchemia-foodhall") galleryLeaks++;
               else leaks++;
             }
           }
@@ -127,8 +127,10 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     expect(leaks).toBeLessThanOrEqual(8);
     // Alchemia's gallery (ADR-0093 O2) is measured on its own, a baseline that only falls: 770 with its
     // glass 0.12 thick and open behind the front's L2, none along the glass now (0.2 thick, closed all
-    // round). The 11 left stand in the hall's lift's shaft at P1's gate (walls and gate 0.1 thick) and by
-    // the north-east core: G-939.
-    expect(galleryLeaks).toBeLessThanOrEqual(11);
+    // round). Its storeys are the gallery's P0..P2 and the food hall's P3 since O3. 11 stood in the hall's
+    // lift's shaft at P1's gate (walls and gate 0.1 thick) and by the north-east core's east wall on P2 and
+    // P3: G-939. The core down to P0 (O3) brought three more on P1; the services' riser filling the corner
+    // east of it (`mall.ts`) took all nine. The 5 left are the shaft's.
+    expect(galleryLeaks).toBeLessThanOrEqual(5);
   });
 });

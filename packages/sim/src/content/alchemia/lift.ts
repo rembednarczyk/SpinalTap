@@ -3,7 +3,7 @@ import type { GroundCut } from "../../world/ground";
 import type { StaticProp } from "../builders";
 import { LIFT_HOLE } from "./foodhall";
 import { P2 } from "./p2";
-import { MALL_LEVELS } from "./mall-plan";
+import { MALL_LEVELS, NE_LIFT_AT } from "./mall-plan";
 import { type Box, HALL, type Piece, box, piece } from "./plan";
 
 /**
@@ -137,14 +137,15 @@ export const ALCHEMIA_LIFT: FoodhallLift = plan(
 );
 
 /**
- * The gallery's second lift (ADR-0093 O1) in its north-east core, beside the stairs: from P1 to the
- * roof, opening south onto the gallery's east side. P0's corner under it is Oyaji's shop (O3 moves it).
+ * The gallery's second lift (ADR-0093 O1) in its north-east core, beside the stairs: from P0 (since
+ * O3, which moved Oyaji's shop out of P0's corner) to the roof, opening south onto the gallery's east
+ * side. Through P1's floor, the hall's old roof, in a hole of its own (`foodhall.ts`).
  */
 export const ALCHEMIA_LIFT_NE: FoodhallLift = plan(
   "alchemia-lift-ne",
-  { x: 430.2, z: 53.2 },
-  [HALL.roof, MALL_LEVELS.p2, MALL_LEVELS.p3, MALL_LEVELS.roof],
-  ["s", "s", "s", "s"],
+  NE_LIFT_AT,
+  [HALL.floor, HALL.roof, MALL_LEVELS.p2, MALL_LEVELS.p3, MALL_LEVELS.roof],
+  ["s", "s", "s", "s", "s"],
 );
 
 /** The shaft under the hall's floor, dug down to its pit (stage 5c): the platform goes down to P-2 through it. */
@@ -188,5 +189,5 @@ export const liftMechanism = (p: FoodhallLift, rest: number): StaticProp[] => {
 
 /** The food hall's lift: the platform starts at the hall's floor (its second level), as before stage 5c. */
 export const ALCHEMIA_LIFT_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT, 1);
-/** The north-east core's: at P1. */
-export const ALCHEMIA_LIFT_NE_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT_NE, 0);
+/** The north-east core's: at P1 (its second level since O3), as before. */
+export const ALCHEMIA_LIFT_NE_MECHANISM: readonly StaticProp[] = liftMechanism(ALCHEMIA_LIFT_NE, 1);

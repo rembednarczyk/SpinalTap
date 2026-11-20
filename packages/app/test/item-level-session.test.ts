@@ -3,13 +3,16 @@ import { type AudioPort, type Vec3, EMPTY_INPUT, INITIAL_PROGRESSION, type Input
 import { STORY_SOURCE } from "@seki/narrative";
 import { MIGRATIONS, MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { FOODHALL, beforeKeeper, ground } from "@seki/sim";
+import { beforeKeeper, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
-/** In the food hall a few metres before Oyaji's counter (ADR-0074), on its floor. */
-const STALLS = beforeKeeper("oyaji", 4);
-/** Where to stand to talk to Oyaji: before his counter by day, beside him on T1 outside his back door at night. */
-const byOyaji = (p: Vec3): Vec3 => (p.z > FOODHALL.maxZ ? ground(p.x, p.z + 1.4) : beforeKeeper("oyaji"));
+/** In the food hall a few metres before Oyaji's counter (ADR-0074; on P3 since ADR-0093 O3), on its floor. */
+const STALLS = beforeKeeper("oyaji", 2.4);
+/**
+ * Where to stand to talk to Oyaji: before his counter in the food hall on P3, level with him (ADR-0093
+ * O3), by day at it and at night behind his grille by its south end (until O3 on T1 by his back door).
+ */
+const byOyaji = (p: Vec3): Vec3 => ({ x: beforeKeeper("oyaji").x + 0.3, y: p.y, z: p.z });
 
 const render: RenderPort = {
   spawn() {},

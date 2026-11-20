@@ -5,14 +5,17 @@ import { Scene, TransformNode, Vector3 } from "../src/babylon";
 import { AlchemiaGalleryCull, GALLERY_DRAW, inAlchemiaGallery } from "../src/renderer/alchemia/gallery-cull";
 
 /**
- * The gallery's lifts' gates and platforms over P0 (ADR-0093 O1) are hidden while the eye is down in
- * P-2: from its store the frustum took them up the shaft through the slabs and the ground.
+ * The gallery's lifts' gates and platforms from P0 up (ADR-0093 O1; P0's since O3, the north-east
+ * lift's down there) are hidden while the eye is down in P-2: from its store the frustum took them up
+ * the shaft through the slabs and the ground.
  */
 describe("Alchemia's gallery's moving meshes hidden from P-2 (ADR-0093 O1)", () => {
-  it("counts the lifts' gates over P0 as the gallery's, not the hall's or P-2's", () => {
+  it("counts the lifts' gates from P0 up as the gallery's, not P-2's", () => {
     const gates = [...ALCHEMIA_LIFT_MECHANISM, ...ALCHEMIA_LIFT_NE_MECHANISM].filter((p) => p.mechanism?.kind === "gate");
-    expect(gates.filter((g) => inAlchemiaGallery(g.center)).length).toBe(4 + 4);
-    expect(inAlchemiaGallery({ x: 413.5, y: -5.2, z: 35 })).toBe(false);
+    // The hall's lift's five from P0 to the roof, the north-east one's five from P0 (O3); not the hall's at P-2.
+    expect(gates.filter((g) => inAlchemiaGallery(g.center)).length).toBe(5 + 5);
+    expect(inAlchemiaGallery({ x: 413.5, y: -5.2, z: 35 })).toBe(true);
+    expect(inAlchemiaGallery({ x: 413.5, y: -8.05, z: 33.6 })).toBe(false);
   });
 
   it("hides them from P-2's store and shows them again from T1", () => {
@@ -20,8 +23,8 @@ describe("Alchemia's gallery's moving meshes hidden from P-2 (ADR-0093 O1)", () 
     const cull = new AlchemiaGalleryCull();
     const node = new TransformNode("gate", scene);
     cull.track(1, node, new Vector3(413.5, 3.45, 34.85));
-    const below = new TransformNode("hall", scene);
-    cull.track(2, below, new Vector3(413.5, -5.25, 34.85));
+    const below = new TransformNode("p2", scene);
+    cull.track(2, below, new Vector3(414.9, -8.05, 33.6));
     expect(cull.size).toBe(1);
     cull.update(new Vector3(413.5, -7.6, 8));
     expect(node.isEnabled(false)).toBe(false);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type InputFrame, SAVE_SCHEMA_VERSION, type Vec3 } from "@seki/core";
 import { PARKING_WAKE, checksum } from "@seki/persistence";
-import { FOODHALL, P1, P1_HALL_DOOR, P1_RAMP, P1_RAMP_WALK, P1_STAIR, STALL_KEEPERS, beforeKeeper, chunkAt, groundY, p1RampY } from "@seki/sim";
+import { FOODHALL, P1, P1_HALL_DOOR, P1_RAMP, P1_RAMP_WALK, P1_STAIR, chunkAt, groundY, p1RampY } from "@seki/sim";
 import { frame, setup, steps, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 
@@ -37,17 +37,13 @@ const start = () => {
 };
 
 describe("P-1 under Alchemia's car park (ADR-0074 stage 4)", () => {
-  it("lets her from Sachiko's kiosk through the door in the hall's back wall onto P-1, level, and counts it an interior", () => {
-    const { session, ui } = start();
-    teleport(session, beforeKeeper("sachiko").x, beforeKeeper("sachiko").z, -Math.PI / 2, 0, FOODHALL.floor);
+  it("lets her from the hall's back aisle through the door in its back wall onto P-1, level, and counts it an interior", () => {
+    const { session } = start();
+    // On P0's back aisle by the stairs, where Sachiko's kiosk stood until the food hall went up to P3 (ADR-0093 O3).
+    teleport(session, 411.3, 38.8, Math.PI, 0, FOODHALL.floor);
     steps(session, 2);
-    expect(session.sim.session.interior).toBe("alchemia-foodhall");
-    // Sachiko answers across her counter turned to the door.
-    const k = STALL_KEEPERS.sachiko;
+    expect(session.sim.session.interior).toBe("alchemia-gallery");
     const me = session.sim.player()!;
-    const want = Math.atan2(k.x - me.position.x, k.z - me.position.z);
-    steps(session, 2, { ...EMPTY_INPUT, lookYaw: Math.atan2(Math.sin(want - me.yaw), Math.cos(want - me.yaw)) });
-    expect(ui.getState().prompt ?? "").toMatch(/Sachiko/);
     const hp = me.health!.current;
     for (const p of [{ x: DOOR, z: FOODHALL.minZ + 1.2 }, { x: DOOR, z: FOODHALL.minZ - 1.5 }, { x: 402, z: 20 }]) walkAt(session, p, 600);
     expect(flat(at(session), { x: 402, z: 20 })).toBeLessThan(0.5);

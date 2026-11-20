@@ -40,7 +40,8 @@ const RING: readonly [string, number, number][] = [
  * the shops' partitions hide the lobby from the ring's south-east node.
  */
 const EAST: readonly [string, number, number] = ["e", 426.5, 50.65];
-const SHOP_FLOORS: ReadonlySet<string> = new Set(["g1", "g2"]);
+/** And on the food hall's P3 (O3): its east tables hide it from the south-east node too. */
+const SHOP_FLOORS: ReadonlySet<string> = new Set(["g1", "g2", "g3"]);
 
 const ringNodes = (): NavNode[] => [
   ...UPPER.flatMap(([f, y]) => RING.map(([k, x, z]) => node(`${f}-${k}`, x, y, z))),
@@ -80,9 +81,40 @@ const core = (c: StairCore): { nodes: NavNode[]; edges: NavEdge[] } => {
 };
 
 const CORES = STAIR_CORES.map(core);
-/** A core's door opens beside the ring's south-west node (the south-west core's) or in sight of its south-east one up the east gallery (the north-east's). */
+/**
+ * A core's door opens beside the ring's south-west node (the south-west core's) or in sight of its
+ * south-east one up the east gallery (the north-east's); on P0 (O3) beside the north-east node by the
+ * lift's lobby (`P0_NODES`).
+ */
 const coreToRing = (): NavEdge[] =>
-  STAIR_CORES.flatMap((c) => c.floors.map((y, i) => edge(`core-${c.key}-door-${i}`, `${UPPER.find(([, f]) => f === y)![0]}-${c.key === "sw" ? "sw" : "se"}`)));
+  STAIR_CORES.flatMap((c) =>
+    c.floors.map((y, i) => {
+      const f = UPPER.find(([, g]) => g === y);
+      return edge(`core-${c.key}-door-${i}`, f ? `${f[0]}-${c.key === "sw" ? "sw" : "se"}` : "g0-ne");
+    }),
+  );
+
+/**
+ * P0's walkway round the atrium (O3, its shops round it): a node by the north-east lift's lobby, before
+ * the core's corridor, in sight of the way in's aisle along the north side and of the escalators' foot
+ * along the east one. The east door from T1 opens into the core's corridor.
+ */
+const P0_NODES: readonly NavNode[] = [node("g0-ne", 426.5, L.p0, 51.2)];
+const P0_EDGES: readonly NavEdge[] = [edge("g0-ne", "hall-centre"), edge("g0-ne", "g0-east"), edge("t1-east-door", "core-ne-door-0")];
+
+/**
+ * The food hall on P3 (O3): the west gallery's north end and the aisles before the west and east
+ * units' counters, behind the tables (their customers in sight of no ring node past them).
+ */
+const P3_NODES: readonly NavNode[] = [
+  node("g3-w", 409.0, L.p3, 50.5),
+  node("g3-wa", 405.2, L.p3, 48.4),
+  node("g3-ea", 430.7, L.p3, 49.0),
+  // Before and behind the flap at the north end of Oyaji's counter: the Hebi's way in to him (his back door onto T1 on P0 until O3).
+  node("g3-oyaji-out", 427.2, L.p3, 36.0),
+  node("g3-oyaji-in", 429.6, L.p3, 36.0),
+];
+const P3_EDGES: readonly NavEdge[] = [edge("g3-sw", "g3-w"), edge("g3-w", "g3-wa"), edge("g3-e", "g3-ea"), edge("g3-se", "g3-oyaji-out"), edge("g3-oyaji-out", "g3-oyaji-in")];
 
 /** The escalators' ends: P0's foot, each landing's node in lane A and in lane B. */
 const [E1, E2, E3] = ESCALATORS as readonly [(typeof ESCALATORS)[number], (typeof ESCALATORS)[number], (typeof ESCALATORS)[number]];
@@ -158,6 +190,6 @@ const DOOR_EDGES: readonly NavEdge[] = [
 
 /** The gallery's graph, joined to the hall's (`nav.ts`) at its stair head, its back aisle and T0's nodes. */
 export const MALL_NAV: NavGraph = {
-  nodes: [...ringNodes(), ...CORES.flatMap((c) => c.nodes), ...ESCALATOR_NODES, ...DOOR_NODES],
-  edges: [...ringEdges(), ...CORES.flatMap((c) => c.edges), ...coreToRing(), ...ESCALATOR_EDGES, ...DOOR_EDGES],
+  nodes: [...ringNodes(), ...CORES.flatMap((c) => c.nodes), ...ESCALATOR_NODES, ...DOOR_NODES, ...P0_NODES, ...P3_NODES],
+  edges: [...ringEdges(), ...CORES.flatMap((c) => c.edges), ...coreToRing(), ...ESCALATOR_EDGES, ...DOOR_EDGES, ...P0_EDGES, ...P3_EDGES],
 };

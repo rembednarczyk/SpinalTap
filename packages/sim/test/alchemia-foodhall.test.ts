@@ -11,9 +11,9 @@ import {
   ALCHEMIA_PIECES,
   ALCHEMIA_T0,
   ALCHEMIA_T1,
-  ALCHEMIA_UNITS,
+  FUMIKO_WINDOW_SPOT,
+  beforeHatch,
   FOODHALL,
-  FOODHALL_INNER,
   METRO_ENTRANCES,
   STALL_KEEPERS,
   MALL_FLOORS,
@@ -55,6 +55,8 @@ const loaded = (() => {
 const F = FOODHALL.floor;
 const R = FOODHALL.roof;
 const node = (id: string) => ALCHEMIA_NAV.nodes.find((n) => n.id === id)!.at;
+/** On P0, the hall's floor, on the north walkway by the way in (its shops round it since ADR-0093 O3). */
+const IN_HALL: Vec3 = { x: 420, y: F, z: 51.6 };
 const up = (p: Vec3, dy: number): Vec3 => ({ ...p, y: p.y + dy });
 
 describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () => {
@@ -93,24 +95,8 @@ describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () =>
     expect(Math.abs(g.heightAt(397, FOODHALL.maxZ - 1) - ALCHEMIA_T1)).toBeLessThan(0.1);
   });
 
-  it("has twelve units, five of them with their keepers behind the counters inside", () => {
-    expect(ALCHEMIA_UNITS).toHaveLength(12);
-    const kept = ALCHEMIA_UNITS.filter((u) => u.keeper);
-    expect(kept.map((u) => u.keeper).sort()).toEqual(["fumiko", "goro", "kenta", "oyaji", "sachiko"]);
-    for (const u of kept) {
-      const p = STALL_KEEPERS[u.keeper!];
-      expect(p.x > u.rect.minX && p.x < u.rect.maxX && p.z > u.rect.minZ && p.z < u.rect.maxZ, u.id).toBe(true);
-      expect(p.y).toBe(F);
-    }
-    // Every unit inside the walls.
-    for (const u of ALCHEMIA_UNITS) {
-      expect(u.rect.minX).toBeGreaterThanOrEqual(FOODHALL_INNER.minX);
-      expect(u.rect.maxX).toBeLessThanOrEqual(FOODHALL_INNER.maxX);
-    }
-  });
-
-  it("counts as an interior inside its walls, not on its roof or on T1", () => {
-    expect(interiorAt({ x: 418, y: F, z: 45 })?.id).toBe("alchemia-foodhall");
+  it("counts as an interior of the gallery inside its walls (its shops' floor since ADR-0093 O3), not on T1", () => {
+    expect(interiorAt({ x: 418, y: F, z: 51 })?.id).toBe("alchemia-gallery");
     // Its roof is P1 of the gallery round the atrium since ADR-0093 (an interior of its own since O2).
     expect(interiorAt({ x: 418, y: R, z: 45 })?.id).toBe("alchemia-gallery");
     expect(interiorAt({ x: 418, y: ALCHEMIA_T1, z: 62 })).toBeNull();
@@ -123,17 +109,18 @@ describe("the food hall of Alchemia under its terrace (ADR-0074 stage 1)", () =>
     expect(heightApart(sim.world, { x: 418, y: F, z: 45 }, { x: 428, y: F, z: 40 })).toBe(0);
   });
 
-  it("sees in from T1 through the way in and Oyaji's back door, not through the glass", () => {
+  it("sees in from T1 through the way in and the east door, not through the glass", () => {
     const sim = loaded();
     const eye = (p: Vec3) => up(p, EYE_HEIGHT);
     const x = (opening("entrance").x0 + opening("entrance").x1) / 2;
-    expect(lineOfSight(sim.world, eye({ x, y: ALCHEMIA_T1, z: 64 }), eye({ x, y: F, z: 47 }))).toBe(true);
-    const back = (opening("oyaji-door").x0 + opening("oyaji-door").x1) / 2;
-    expect(lineOfSight(sim.world, eye({ x: back, y: ALCHEMIA_T1, z: 62 }), eye({ x: back, y: F, z: 55 }))).toBe(true);
+    expect(lineOfSight(sim.world, eye({ x, y: ALCHEMIA_T1, z: 64 }), eye({ x, y: F, z: 50 }))).toBe(true);
+    // The east door into the north-east core's corridor (ADR-0093 O3, where Oyaji's back door was).
+    const east = (opening("east-door").x0 + opening("east-door").x1) / 2;
+    expect(lineOfSight(sim.world, eye({ x: east, y: ALCHEMIA_T1, z: 62 }), eye({ x: east, y: F, z: 54 }))).toBe(true);
     // Through the glass beside the way in, to the same point inside: no.
     expect(lineOfSight(sim.world, eye({ x: x + 6.5, y: ALCHEMIA_T1, z: 64 }), eye({ x: x + 6.5, y: F, z: 49 }))).toBe(false);
-    // Fumiko across her hatch from the stools on T1.
-    expect(lineOfSight(sim.world, eye(beforeKeeper("fumiko")), eye(STALL_KEEPERS.fumiko))).toBe(true);
+    // Fumiko across the hatch of her second place on P0 from before it on T1 (O3).
+    expect(lineOfSight(sim.world, eye(beforeHatch()), eye(FUMIKO_WINDOW_SPOT))).toBe(true);
   });
 });
 
@@ -161,15 +148,15 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     }
   });
 
-  it("leads from T1, the car park and the roof to every keeper", () => {
+  it("leads from T1, the car park and the roof to every keeper in the food hall on P3, and to Fumiko's hatch on P0 (ADR-0093 O3)", () => {
     const sim = loaded();
     const starts = [node("alchemia-t1-west"), node("alchemia-t0-roof"), { x: 434.9, y: R, z: 50 }, { x: 397, y: groundY(397, 44), z: 44 }];
     for (const s of starts) {
-      // Before the counters; Fumiko and Oyaji behind theirs, through their own doors.
+      // Before the counters (behind Fumiko's by its flap: the floor's raster, `alchemia-food-court.test.ts`), and behind her hatch on P0 through its own door.
       for (const key of Object.keys(STALL_KEEPERS) as (keyof typeof STALL_KEEPERS)[]) {
-        const p = key === "fumiko" || key === "oyaji" ? STALL_KEEPERS[key] : beforeKeeper(key);
-        expect(routeAcrossLevels(sim.world, WORLD_NAV, s, p), `${s.x},${s.z} to ${key}`).not.toBeNull();
+        expect(routeAcrossLevels(sim.world, WORLD_NAV, s, beforeKeeper(key)), `${s.x},${s.z} to ${key}`).not.toBeNull();
       }
+      expect(routeAcrossLevels(sim.world, WORLD_NAV, s, FUMIKO_WINDOW_SPOT), `${s.x},${s.z} behind her hatch`).not.toBeNull();
     }
   });
 
@@ -191,18 +178,19 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
   };
   const onGround = (x: number, z: number): Vec3 => ({ x, y: groundY(x, z), z });
 
-  it("an alerted brawler on the car park gets to the player at Kenta's counter down the stairs", () => {
-    for (const seed of [3, 11]) expect(chase(onGround(428, 10), beforeKeeper("kenta"), 30, seed), `seed ${seed}`).not.toBeNull();
+  it("an alerted brawler on the car park gets to the player in the hall (P0) down the stairs", () => {
+    // Before Kenta's counter until ADR-0093 O3 took it up to P3: the hall's floor is P0's shops' now (`alchemia-food-court.test.ts` chases up there).
+    for (const seed of [3, 11]) expect(chase(onGround(428, 10), IN_HALL, 30, seed), `seed ${seed}`).not.toBeNull();
   });
 
   it("an alerted brawler on T1 gets to the player in the hall through the way in, and one in the hall to her on T1", () => {
-    expect(chase(onGround(397, 62), beforeKeeper("goro"), 20)).not.toBeNull();
-    expect(chase(beforeKeeper("goro"), onGround(430, 66), 20)).not.toBeNull();
+    expect(chase(onGround(397, 62), IN_HALL, 20)).not.toBeNull();
+    expect(chase(IN_HALL, onGround(430, 66), 20)).not.toBeNull();
   });
 
   it("an alerted brawler in the hall gets to the player on the green roof, up the stairs", () => {
     // On the roof's east strip, beside tier A (15.11).
-    expect(chase(beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }, 30)).not.toBeNull();
+    expect(chase(IN_HALL, { x: 434.9, y: FOODHALL.roof, z: 50 }, 30)).not.toBeNull();
   });
 
   it("the lift goes from P-2 by the hall's floor to the roof, its top door onto the car park, its bottom one into P-2's corridor (stage 5c)", () => {

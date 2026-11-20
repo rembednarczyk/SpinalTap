@@ -165,9 +165,9 @@ describe("the gallery's body round its atrium (ADR-0093 O1)", () => {
 });
 
 describe("the gallery's ways up (ADR-0093 O1)", () => {
-  it("serves every floor with a lift: the hall's from P-2 to the roof, the north-east core's from P1", () => {
+  it("serves every floor with a lift: the hall's from P-2 to the roof, the north-east core's from P0 (O3; from P1 until then)", () => {
     expect(ALCHEMIA_LIFT.levels.slice(1)).toEqual([L.p0, ...MALL_FLOORS.slice(1)]);
-    expect(ALCHEMIA_LIFT_NE.levels).toEqual(MALL_FLOORS.slice(1));
+    expect(ALCHEMIA_LIFT_NE.levels).toEqual(MALL_FLOORS);
     expect(ALCHEMIA_LIFT_NE.key).not.toBe(ALCHEMIA_LIFT.key);
     for (const l of [ALCHEMIA_LIFT, ALCHEMIA_LIFT_NE]) {
       // Nothing but the lift's own pieces in its shaft from its pit to its head: no slab across it.
@@ -198,7 +198,8 @@ describe("the gallery's ways up (ADR-0093 O1)", () => {
       ["P-1", { x: 409, y: L.p0, z: 27 }],
     ];
     const goals: [string, Vec3][] = [
-      ["P0", { x: 418, y: L.p0, z: 47 }],
+      // North of the fountain in the atrium (O3).
+      ["P0", { x: 418, y: L.p0, z: 51 }],
       ["P1", { x: 426.5, y: L.p1, z: 50 }],
       ["P2", { x: 409.5, y: L.p2, z: 50 }],
       ["P3", { x: 426.5, y: L.p3, z: 46 }],
@@ -267,10 +268,11 @@ describe("the gallery's ways up (ADR-0093 O1)", () => {
   };
 
   it("an alerted brawler in the hall gets to the player on P1 up the escalator", () => {
-    expect(chase(beforeKeeper("kenta"), { x: 434.9, y: L.p1, z: 50 }, 25)).not.toBeNull();
+    // On P0's north walkway (before Kenta's counter until O3 took it up to the food hall on P3).
+    expect(chase({ x: 420, y: L.p0, z: 51.6 }, { x: 434.9, y: L.p1, z: 50 }, 25)).not.toBeNull();
   });
 
-  it("an alerted brawler on the roof gets down the core and the escalators to the player at a counter in the hall", () => {
+  it("an alerted brawler on the roof gets down a core to the player at a counter of the food hall on P3 (O3)", () => {
     expect(chase({ x: 418, y: L.roof, z: 52 }, beforeKeeper("kenta"), 30)).not.toBeNull();
   });
 });

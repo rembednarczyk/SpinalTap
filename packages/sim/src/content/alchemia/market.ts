@@ -21,13 +21,13 @@ import { SHELTER } from "./shelter";
 
 /**
  * The market in Alchemia by the investor's plan (ADR-0074 §3, stage 1; once ADR-0063 stage 6):
- * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`);
- * Hana sells from her cart on the square in front of it (T1); Ren sleeps on the roof of the
+ * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`;
+ * on the gallery's P3 since ADR-0093 O3); Hana sells from her cart on the square in front of it (T1); Ren sleeps on the roof of the
  * triangular pavilion on the corner (stage 3), the Hebi bag by him; Kurosawa of Kagami
  * waits by the lift's kiosk on the car park. The Hebi keep their stash in the air-raid shelter under
  * T2 (stage 5d2; before it on T2 before the Arkady's south arches), their lookout by its hatch.
  *
- * World metres, every point on the ground, on the hall's floor or on the pavilion's roof.
+ * World metres, every point on the ground, on a floor of the gallery or on the pavilion's roof.
  */
 
 /** The keepers' units (`units.ts`): once the numbers of the five stalls. */
@@ -169,7 +169,7 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
   preset: "civilian",
   faction: "civilians",
   bystander: true,
-  // Behind a counter under the hall's roof: no umbrella (ADR-0041).
+  // Behind a counter under the gallery's roof: no umbrella (ADR-0041).
   indoor: true,
   ...(maxHp === undefined ? {} : { maxHp }),
   interactable,
@@ -199,8 +199,9 @@ type MarketSite = "hana_stall" | "hebi_stash" | "raid_north" | "raid_east";
 
 /**
  * Spawn points of the market jobs, four per site. A delivery spawns nobody; its points are round
- * Hana's cart, kept for symmetry. The raids come for Oyaji in the hall's north-east corner: up
- * from Świętoduska onto T1 at its west end, and across T1 from Lubartowska.
+ * Hana's cart, kept for symmetry. The raids come for Oyaji in the food hall's south-east corner on
+ * P3 (ADR-0093 O3; in the hall's north-east corner on T1's level until then): up from Świętoduska
+ * onto T1 at its west end, and across T1 from Lubartowska, then in and up the escalators.
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
@@ -211,7 +212,7 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec
 };
 
 /**
- * Which way each market crew looks when it turns up (audit W11): the raids at Oyaji's back door,
+ * Which way each market crew looks when it turns up (audit W11): the raids at Oyaji (up over the hall),
  * the stash guards west over the square they would be attacked from, the cart crew at Hana.
  */
 export const TARG_CONTRACT_SITE_FACING: Readonly<Record<MarketSite, Vec3>> = {
