@@ -73,7 +73,7 @@ export const planGround = (ground: MeshSink, water: MeshSink, entries: MapEntrie
   else if (g.surface === "crossing") {
     // The asphalt under the stripes: the ground is a partition (ADR-0078 step 3), the road's piece has a hole there. On a deck the road runs on under it.
     if (!g.deck) planSurface(ground, "road", g.ring, h, null, [], within);
-    planCrossing(ground, g.ring, h);
+    planCrossing(ground, g.ring, h, g.zebra);
   }
   else {
     const cells = within ?? cellsMeeting(g.bounds);

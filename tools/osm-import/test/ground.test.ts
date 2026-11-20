@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { CROSSING_ALONG, chunkGround, coveredByWater, crossingBand, cutSidewalk, lineBands, markedCrossing } from "../src/ground.ts";
+import { type Band, CROSSING_ALONG, chunkGround, coveredByWater, crossingBand, cutSidewalk, lineBands, markedCrossing } from "../src/ground.ts";
 
 const river: Line = { id: "w1", osmId: 1, tags: { waterway: "river" }, line: [{ x: 0, z: 0 }, { x: 50, z: 0 }, { x: 100, z: 0 }] };
 const bed = [{ x: -10, z: -20 }, { x: 110, z: -20 }, { x: 110, z: 20 }, { x: -10, z: 20 }];
@@ -235,5 +235,15 @@ describe("a way that comes back to a node of its own (G-654)", () => {
     expect(lineBands({ ...lollipop, line: lollipop.line.slice(0, 5) }, false)).toHaveLength(1);
     // A node twice in a row is one node, not a way coming back.
     expect(lineBands({ ...lollipop, line: [...lollipop.line.slice(0, 3), ...lollipop.line.slice(2, 5)] }, false)).toHaveLength(1);
+  });
+});
+
+describe("a zebra cut by a chunk's edge (G-958)", () => {
+  const zebra: Band = { surface: "crossing", ring: [{ x: 10, z: -3.5 }, { x: 13, z: -3.5 }, { x: 13, z: 3.5 }, { x: 10, z: 3.5 }], bridge: false, source: "n1" };
+  it("keeps its whole band on each piece the edge cuts, and none on a zebra the chunk holds whole", () => {
+    const south = chunkGround([zebra], { minX: 0, minZ: -100, maxX: 100, maxZ: 1.2 });
+    const north = chunkGround([zebra], { minX: 0, minZ: 1.2, maxX: 100, maxZ: 100 });
+    expect([...south, ...north].map((g) => g.zebra)).toEqual([[10, -3.5, 13, -3.5, 13, 3.5, 10, 3.5], [10, -3.5, 13, -3.5, 13, 3.5, 10, 3.5]]);
+    expect(chunkGround([zebra], { minX: 0, minZ: -100, maxX: 100, maxZ: 100 })[0]!.zebra).toBeUndefined();
   });
 });

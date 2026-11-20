@@ -29,6 +29,8 @@ export interface GroundEntry {
   readonly marking?: RoadMarkingKind;
   /** On a bridge (ADR-0053): the deck it is laid on. */
   readonly deck?: DeckAxis;
+  /** A zebra's piece cut by its chunk's edge: the whole band, whose frame stripes it (G-958). */
+  readonly zebra?: readonly P2[];
   readonly ring: readonly P2[];
   readonly y: number;
   readonly bounds: Box2;

@@ -46,3 +46,43 @@ describe("zebra crossings (ADR-0042)", () => {
     expect(sink.vertexCount).toBe(0);
   });
 });
+
+describe("a zebra cut by a chunk's edge (G-958)", () => {
+  /** Is (x, z) under a painted (not cyan) triangle of the sink? */
+  const painted = (sink: MeshSink, x: number, z: number): boolean => {
+    const p = sink.positions;
+    for (let t = 0; t + 2 < sink.indices.length; t += 3) {
+      const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!];
+      if (sink.colors[a * 4 + 3]! < 0.25) continue;
+      const [ax, az, bx, bz, cx, cz] = [p[a * 3]!, p[a * 3 + 2]!, p[b * 3]!, p[b * 3 + 2]!, p[c * 3]!, p[c * 3 + 2]!];
+      const d1 = (x - bx) * (az - bz) - (ax - bx) * (z - bz);
+      const d2 = (x - cx) * (bz - cz) - (bx - cx) * (z - cz);
+      const d3 = (x - ax) * (cz - az) - (cx - ax) * (z - az);
+      if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) return true;
+    }
+    return false;
+  };
+  /** Paint along the band's middle line across the road, every 5 cm (off the stripes' own edges). */
+  const across = (sink: MeshSink): boolean[] => Array.from({ length: 139 }, (_, i) => painted(sink, 0.3, -3.45 + i * 0.05 + 0.012));
+  // The chunk's edge at z 1.2 cuts the band into a long piece and a short one.
+  const south = [{ x: -1.5, z: -3.5 }, { x: 1.5, z: -3.5 }, { x: 1.5, z: 1.2 }, { x: -1.5, z: 1.2 }];
+  const north = [{ x: -1.5, z: 1.2 }, { x: 1.5, z: 1.2 }, { x: 1.5, z: 3.5 }, { x: -1.5, z: 3.5 }];
+
+  it("stripes both pieces in the whole band's frame: together the same stripes as the whole zebra", () => {
+    const whole = new MeshSink();
+    planCrossing(whole, band, () => 0);
+    const pieces = new MeshSink();
+    planCrossing(pieces, south, () => 0, band);
+    planCrossing(pieces, north, () => 0, band);
+    expect(across(pieces)).toEqual(across(whole));
+  });
+
+  it("without the band, the short piece stripes in its own frame, off the whole zebra's stripes", () => {
+    const whole = new MeshSink();
+    planCrossing(whole, band, () => 0);
+    const pieces = new MeshSink();
+    planCrossing(pieces, south, () => 0);
+    planCrossing(pieces, north, () => 0);
+    expect(across(pieces)).not.toEqual(across(whole));
+  });
+});
