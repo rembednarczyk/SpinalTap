@@ -382,7 +382,7 @@ const comeAndGo = (ctx: SimContext, live: Map<EntityId, Vehicle>, player: Entity
       if (!fresh && watched(ctx, player, { x: pose.x, y: focus.y, z: pose.z }, radius)) continue;
       if (crowded(live, route, s, lane)) continue;
       const v = vehicleEntity(ctx, route, i, s);
-      if (tooLateFor(live, v)) continue;
+      if (tooLateFor(live, v) || !clearOfBodies(ctx, pose, v.vehicle.half, v.vehicle.v)) continue;
       live.set(v.id, ctx.world.add(v) as Vehicle);
       ctx.streamer.streamedOut.delete(v.id);
     }
@@ -435,6 +435,26 @@ const tooLateFor = (live: ReadonlyMap<EntityId, Vehicle>, v: Vehicle): boolean =
     return met !== null && (cannotStop(v, met.a) || cannotStop(o, met.b));
   });
 
+/**
+ * Are a vehicle's footprint at `at` and the way it brakes in ahead of it clear of bodies, the
+ * player's and passers-by's (spawn-point validation)? One appearing round a body pushed it out of
+ * its footprint (G-951: out of the player's sight, so nothing else held it back); one appearing
+ * just behind it could not stop short of it. It comes at the next look, once they are clear.
+ */
+const clearOfBodies = (ctx: SimContext, at: { x: number; z: number; tx: number; tz: number }, half: VehicleState["half"], v: number): boolean => {
+  const ahead = half.l + STOP_GAP + (v * v) / (2 * BRAKE);
+  for (const b of ctx.world.with("body")) {
+    const r = b.body.radius;
+    const dx = b.position.x - at.x;
+    const dz = b.position.z - at.z;
+    if (Math.abs(dx) > ahead + r || Math.abs(dz) > ahead + r) continue;
+    const fwd = dx * at.tx + dz * at.tz;
+    const lat = dx * at.tz - dz * at.tx;
+    if (Math.abs(lat) < half.w + r + SIDE_MARGIN && fwd > -half.l - r - SIDE_MARGIN && fwd < ahead + r) return false;
+  }
+  return true;
+};
+
 /** Is the place a vehicle would jump back onto its timetable free: no other vehicle as close as `crowded` lets one appear by? */
 const freeFor = (live: ReadonlyMap<EntityId, Vehicle>, self: Vehicle, at: { x: number; z: number }): boolean =>
   [...live.values()].every((o) => o === self || flat(o.position, at) >= o.vehicle.half.l + 9);
@@ -463,8 +483,9 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   if (lag < -lane.length / 2) lag += lane.length;
   // Far off its timetable (the clock skipped ahead, a long hold-up): back on it where nobody sees.
   const turning = () => lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b) === true;
-  // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place.
-  if (Math.abs(lag) > RESYNC && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, lanePose(lane, tt.s))) {
+  // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place; nor round a body (G-951).
+  const back = Math.abs(lag) > RESYNC ? lanePose(lane, tt.s) : null;
+  if (back && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, back) && clearOfBodies(ctx, back, st.half, Math.min(st.v, tt.v))) {
     st.s = tt.s;
     lag = 0;
     // It lands at the speed of where it lands: braking from its old speed would take it through a turn round fast.
