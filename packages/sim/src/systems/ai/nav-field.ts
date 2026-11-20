@@ -169,11 +169,37 @@ function* growSteps(raster: Raster, source: number): Slices<Field> {
 }
 
 /** Settles cell `c` at distance `d`: its neighbours it lowers go into their buckets; how many. */
+/**
+ * Which of `STEPS` lead into cell `c` of a raster (`passable` with `out` false, bit i for step i),
+ * worked out once a cell and kept with the raster: a raster never changes, and a lazy field of the
+ * far window (G-928) asked `passable` for the same cells over and over, one field per goal.
+ */
+const inMasks = new WeakMap<Raster, Uint16Array>();
+const inMask = (raster: Raster, c: number): number => {
+  let m = inMasks.get(raster);
+  if (!m) {
+    m = new Uint16Array(raster.cells * raster.cells);
+    inMasks.set(raster, m);
+  }
+  let bits = m[c] ?? 0;
+  if (bits === 0) {
+    bits = 0x100;
+    for (let i = 0; i < STEPS.length; i++) {
+      const [dx, dz] = STEPS[i] ?? [0, 0];
+      if (passable(raster, c, dx, dz, false) >= 0) bits |= 1 << i;
+    }
+    m[c] = bits;
+  }
+  return bits;
+};
 const settle = (raster: Raster, dist: Int32Array, buckets: number[][], c: number, d: number): number => {
   let pushed = 0;
-  for (const [dx, dz, cost] of STEPS) {
-    const n = passable(raster, c, dx, dz, false);
-    if (n < 0) continue;
+  const bits = inMask(raster, c);
+  const cells = raster.cells;
+  for (let i = 0; i < STEPS.length; i++) {
+    if (!(bits & (1 << i))) continue;
+    const [dx, dz, cost] = STEPS[i] ?? [0, 0, 0];
+    const n = c + dz * cells + dx;
     const nd = d + cost;
     if (nd < (dist[n] ?? FAR)) {
       dist[n] = nd;
