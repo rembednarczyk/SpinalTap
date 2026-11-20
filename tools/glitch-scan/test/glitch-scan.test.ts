@@ -54,6 +54,8 @@ import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
+import { stairFootUnpaved } from "./stair-foot";
+import { cityStairWorld } from "./stair-foot-world";
 import { pavilionOnPaving, pavingInGame } from "./pavilion-checks";
 import { levelExitsInGame, undergroundLevelExits } from "./level-exit-checks";
 import { cutOnRoadInGame } from "./cut-on-road";
@@ -1574,6 +1576,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A model of the game's on the gallery's green roof (a tree, a park lamp) whose drawn top stands over y 18.5 (review of ADR-0093 O4). */
   "alchemia-roof-model-height": () => roofModelHeight(),
+  /**
+   * The strip a metre deep before the lowest step of a flight of the game's (the scenes' sloped
+   * flights, the metro's, Alchemia's steps) with a quarter of a square metre or more of bare ground
+   * or lawn: no pavement, square or floor where the stairs end (the curator's review of C5, `stair-foot.ts`).
+   */
+  "stair-foot-unpaved": () => stairFootUnpaved(cityStairWorld()),
   /** An interior of the game's own under the ground with fewer than two ways out in the level graph (ADR-0074 stage 4: P-1). */
   "underground-level-exit": () => undergroundLevelExits(levelExitsInGame()),
   /**
