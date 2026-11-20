@@ -2275,7 +2275,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-951 Auto rampy P−1 pojawia się w ciele gracza poza jego wzrokiem i go spycha
 - Ważność: S3 · Zasięg: rampa P−1 Alchemii, trasa 109 (ruch uliczny comeAndGo)
 - Opis: Pomiar agenta testu ramp-pass (20.11): ziarno 77, gracz x 411,05, z 8, kurs 0, krok 2720: auto 3003488 powstaje 0,55 m od osi gracza, w obrysie (szerokość 0,91 + promień 0,38), a ruch spycha gracza o 0,69 m na zachód. comeAndGo i crowded w traffic-system.ts nie sprawdzają gracza. Bliskie G-492. Poprawka: punkt pojawienia się auta poza obrysem ciał (gracza i NPC) albo odłożenie pojawienia.
-- Status: zgłoszone
+- Status: w PR #812 (20.11, gałąź fix/g951-auto-w-ciele, c9d2845); wcześniej: zgłoszone
 - Pakiet właściciela: packages/sim (systems/traffic-system.ts)
 
 ### G-952 Auto rampy szarpie po objechaniu gracza
@@ -2283,6 +2283,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Pomiar agenta testu ramp-pass (20.11): po objechaniu gracza (x 411,05, z 8, kurs π) auto trzy razy staje i rusza przy s 33,4 (kroki 743–775). Do zbadania: histereza odstępu od ciała albo zmiana pasa po objeździe.
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (systems/traffic-system.ts)
+
+### G-953 Auto ruchu przejeżdża przez przechodnia
+- Ważność: S3 · Zasięg: ruch uliczny w całym mieście (traffic-system.ts, pushOut)
+- Opis: Znalezisko przy G-951 (20.11): pushOut spycha tylko gracza; przechodzień (NPC) na pasie nie ma żadnej reakcji, a auto w ruchu przejeżdża przez niego. G-951 (PR #812) blokuje tylko pojawienie się auta w ciele.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts, ruch przechodniów)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
