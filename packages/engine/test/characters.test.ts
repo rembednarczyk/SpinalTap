@@ -38,6 +38,21 @@ describe.each(Object.entries(builders))("character %s", (name, build) => {
     }
   });
 
+  it("wears no coat: nothing on the torso's joint hangs past mid-thigh (user 20.11)", () => {
+    // Bind pose, root space: the hip pivot over the root, the knee a thigh under it.
+    const hip = rig.body.position.y + rig.legL.position.y;
+    const midThigh = hip + rig.kneeL.position.y / 2;
+    let lowest = Infinity;
+    for (const m of rig.meshes) {
+      const body = m.skeleton!.bones.findIndex((b) => b.getTransformNode() === rig.body);
+      const pos = m.getVerticesData(VertexBuffer.PositionKind)!;
+      const joint = m.getVerticesData(VertexBuffer.MatricesIndicesKind)!;
+      for (let i = 0; i < m.getTotalVertices(); i++) if (joint[i * 4] === body) lowest = Math.min(lowest, pos[i * 3 + 1]!);
+    }
+    expect(lowest).toBeLessThan(hip);
+    expect(lowest).toBeGreaterThan(midThigh);
+  });
+
   it("outlines the main body mesh", () => {
     expect(rig.meshes.some((m) => m.renderOutline)).toBe(true);
   });

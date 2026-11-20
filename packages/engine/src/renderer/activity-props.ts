@@ -55,7 +55,7 @@ export class ActivityProps {
         box(0.065, 0.12, 0.065, "umbrella", 0, -0.02, 0.04);
         break;
       case "bowl":
-        box(0.15, 0.06, 0.15, "umeCoat", 0, -0.01, 0.06);
+        box(0.15, 0.06, 0.15, "umeJacket", 0, -0.01, 0.06);
         break;
       case "broom":
         box(0.03, 1.25, 0.03, "fixerJacket", 0, -0.35, 0);

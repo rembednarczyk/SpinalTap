@@ -102,13 +102,13 @@ export const GARMENT_TINT: Readonly<Record<PaletteKey, string | null>> = {
 const TINTED: readonly GarmentSlot[] = ["torso", "legs"];
 
 /**
- * Which cloth of the procedural rigs a garment slot dresses (ADR-0036): tops, jackets and coats
+ * Which cloth of the procedural rigs a garment slot dresses (ADR-0036): tops and jackets
  * take the torso tint (with their sleeves), trousers the legs tint. Skin, hair, shoes and
  * cyberware keep their colours.
  */
 export const RIG_GARMENT_PRESETS: Readonly<Partial<Record<GarmentSlot, readonly PresetName[]>>> = {
-  torso: ["sekiTop", "heroineCoat", "fixerJacket", "gangerHood", "corpoUniform", "umeCoat", "moriCoat", "docCoat"],
-  legs: ["sekiPants", "heroineLegs", "fixerPants", "gangerPants"],
+  torso: ["sekiTop", "fixerJacket", "gangerHood", "corpoUniform", "umeJacket", "moriJacket"],
+  legs: ["sekiPants", "heroineLegs", "fixerPants", "gangerPants", "umeLegs"],
 };
 
 /** The tint a procedural rig's part takes from a look, or null to keep its preset colour. */
