@@ -5,7 +5,8 @@ import { drawGlyph } from "../signage";
 import { AD_BANNERS, AD_LANDSCAPE } from "./canyon-signs";
 import { LANDMARK_TEXTS } from "./landmarks/recipes";
 import { WATER_GLSL } from "../../npr/water-mask";
-import { MAP_SIGN_BLADES, MAP_SIGN_BOARDS } from "./sign-plan";
+import { MAP_SIGN_BLADES, MAP_SIGN_BOARDS, NEAR_ONLY } from "./sign-plan";
+import { SCREEN_GLSL } from "./screen-glsl";
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -39,9 +40,11 @@ void main(void) {
  * The map city's neon (ADR-0044), additive like the street signage (ADR-0030): atlas boards
  * and blades with a hum, the venues' boards and their names in neon letters (ADR-0064),
  * holo-ads with glyph rain, a ring logo or a figure (fresnel edges, scanlines, rare dropouts and slice glitches unless flashes are reduced), lit name plaques
- * from the names atlas, neon tubes and their streaks on the wet ground.
+ * from the names atlas, neon tubes and their streaks on the wet ground, and the pictures of big screens (`screen-glsl.ts`).
+ * A kind past `NEAR_ONLY` is drawn near only (Alchemia's front, ADR-0074 C4): it fades out before
+ * the building it hangs on goes (its mesh is drawn within some 135 m of its middle).
  */
-const FRAGMENT = /* glsl */ `
+export const MAP_SIGNS_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 varying vec4 vColor;
@@ -66,14 +69,21 @@ float noise(vec2 p) {
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 ${WATER_GLSL}
+${SCREEN_GLSL}
 void main(void) {
   float kind = floor(vMeta.y + 0.5);
+  float near = step(${NEAR_ONLY.kind - 0.5}, kind);
+  kind -= ${NEAR_ONLY.kind}.0 * near;
   float seed = vMeta.x;
   vec2 uv = vUV;
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 11.5) {
+  if (kind > 12.5) {
+    // A big screen's picture (ADR-0074 C4): lit as a whole, its picture its colour.
+    col = screenPicture(uv, seed, col, time, reduce);
+    a = 1.0;
+  } else if (kind > 11.5) {
     // A letter of a venue's name (ADR-0064): the middle of its cell in the glyph atlas, as wide as the letter.
     float cell = floor(seed);
     float adv = fract(seed);
@@ -181,6 +191,7 @@ void main(void) {
   float dist = length(cameraPosition - vWorld);
   float fog = 1.0 - exp(-pow(dist * fogDensity * 0.6, 2.0));
   a *= vColor.a * intensity * (1.0 - 0.85 * fog);
+  a *= 1.0 - near * smoothstep(${NEAR_ONLY.from.toFixed(1)}, ${NEAR_ONLY.to.toFixed(1)}, dist);
   gl_FragColor = vec4(col * a, a);
 }
 `;
@@ -360,7 +371,7 @@ export class MapSignMaterial {
    * `glyphSize` is the glyph atlas's side: 512 on the phone (ADR-0064), 1024 otherwise.
    */
   constructor(scene: Scene, atlas?: BaseTexture, glyphSize = 1024) {
-    const m = new ShaderMaterial("map-signs", scene, { vertexSource: VERTEX, fragmentSource: FRAGMENT }, {
+    const m = new ShaderMaterial("map-signs", scene, { vertexSource: VERTEX, fragmentSource: MAP_SIGNS_FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2", "uv3"],
       uniforms: ["viewProjection", "cameraPosition", "time", "intensity", "fogDensity", "reduce"],
       samplers: ["atlas", "names", "ads", "glyphs"],

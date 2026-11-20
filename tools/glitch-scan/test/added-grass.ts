@@ -39,7 +39,6 @@ const GREEN = ["green", "canopy"] as const;
 export const GRASS_OFF_GREEN_KNOWN: Readonly<Record<string, string>> = {
   "T-241/trawnik-zachod": "T-241: Plac T0's lawn on the car park, laid to the investor's plan (ADR-0074) on purpose",
   "T-241/trawnik-wschod": "T-241: Plac T0's lawn on the car park, laid to the investor's plan (ADR-0074) on purpose",
-  "T-241/trawnik-bajkowskiego": "T-241: Plac T0's lawn on the car park, laid to the investor's plan (ADR-0074) on purpose",
   "T-243/ck-zachod-trawnik": "T-243: the Centrum Kultury's roof lies some 3 m west on the orthophoto, over the lawn: the classifier's fault",
   "T-245/rabata-kolegium-poludnie": "T-245: the bed lies in the shadow of the Collegium's wall: the classifier's fault",
 };

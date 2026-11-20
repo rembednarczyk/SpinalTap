@@ -28,6 +28,7 @@ import {
   groundY,
   interiorAt,
   p1RampY,
+  PLAZA_TOP,
 } from "../src";
 import { lineOfSight } from "../src/world/hitscan";
 import { routeAcrossLevels } from "../src/world/nav";
@@ -171,7 +172,8 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
     const sim = loaded();
     const deck = { x: 402, y: F, z: 15 };
     // The hall's floor on P0's north walkway (before Kenta's counter until ADR-0093 O3), the food hall on P3 before it now.
-    const elsewhere = [onGround(405, -3), onGround(428, 10), { x: 420, y: F, z: 51.6 }, beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
+    // The car park west of the ramp's top is the square's podium since ADR-0074 C5.
+    const elsewhere = [{ x: 405, y: PLAZA_TOP, z: -3 }, onGround(428, 10), { x: 420, y: F, z: 51.6 }, beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
     for (const s of elsewhere) {
       expect(routeAcrossLevels(sim.world, WORLD_NAV, s, deck), `${s.x},${s.z} to the deck`).not.toBeNull();
       expect(routeAcrossLevels(sim.world, WORLD_NAV, deck, s), `the deck to ${s.x},${s.z}`).not.toBeNull();
@@ -196,7 +198,8 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
   };
 
   it("an alerted brawler on the car park gets to the player on the deck, and one on the deck to her on the car park", () => {
-    for (const seed of [3, 11]) expect(chase(onGround(406, -4), { x: 402, y: F, z: 15 }, 40, seed), `down, seed ${seed}`).not.toBeNull();
+    // From the square before the front: its podium stands on the car park's ground there since ADR-0074 C5.
+    for (const seed of [3, 11]) expect(chase({ x: 406, y: PLAZA_TOP, z: -4 }, { x: 402, y: F, z: 15 }, 40, seed), `down, seed ${seed}`).not.toBeNull();
     for (const seed of [3, 11]) expect(chase({ x: 402, y: F, z: 15 }, onGround(428, 10), 40, seed), `up, seed ${seed}`).not.toBeNull();
   });
 

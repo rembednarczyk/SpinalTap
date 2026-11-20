@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-942 Schody placu przed Alchemią schodzą na goły grunt przed chodnikiem Bajkowskiego
+- Ważność: S4 · Zasięg: lokalny, Alchemia, x 383,6–404,3, z −9,05…−11,2
+- Opis: Między krawędzią placu T0 (z −9,05…−9,3) a kostką chodnika w232464426 (z −10,2…−11,2) leży pas gołego gruntu 1,15–1,9 m (ok. 32 m²); na ortofoto 100% kostki. Pas był przed C5 (ground-strip-gap krakowskie-2-1 400,-10 w bazie), od C5 (#793) schodzą na niego schody południowe placu. Przegląd kuratora 20.11.
+- Status: naprawione (20.11, 795 scalony); wcześniej: w PR #795; wcześniej: w naprawie (gałąź fix/g942-schody-placu); wcześniej: nowy (20.11)
+- Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
+- Test przyjęcia: brak próbki co 0,1 m w x 383,6–404,3 między krawędzią placu a pasem chodnika bez nawierzchni; klucz ground-strip-gap krakowskie-2-1 400,-10 znika z bazy; NMT bez zmian
+- Wiersz topografii: T-333 (T-332 zajęty).
+- Poboczne z naprawy: pasek ok. 7 cm gołego gruntu pod wjazdem na rampę (x 410–412, z −9,79…−9,86) i goły klin na zachód od narożnika parkingu (x ok. 380–383,6) do sprawdzenia na ortofoto.
+
 ### G-939 Galeria Alchemii: strzał zza barku startuje za cienką ścianą szybu windy hali i trzonu NE
 - Ważność: S4 · Zasięg: Alchemia, galeria P1–P3 (szyb windy hali x 412,3–414,7, z 32,4–34,8; trzon NE)
 - Opis: Miara G-275 (tests/tpp-shoulder) po dodaniu galerii jako wnętrza ADR-0061 (O2): 11 miejsc, w których przykucnięty i celujący gracz zaczyna strzał za ścianą. Ściany szybu windy hali i bramka na P1 (od T0) mają 0,1 m (lift.ts WALL), mniej niż wysunięcie barku za lico (0,16 m); przy bramce na P1 strzał z kabiny startuje na pasie T0. Przy trzonie NE pokój galerii zahacza o wnętrze trzonu, a za jego wschodnią ścianą jest wnęka do narożnika szkła. Szkło fasady poprawione w PR #785 (0,2 m, 770 → 0). Poprawka: bramka na P1 jak na P−2 (wypełnia grubość ściany, platforma krótsza, GATE_DEPTH), ściany szybu 0,2 m albo pokoje galerii bez szybu i trzonu, potem baza galerii w teście z 11 do 0.

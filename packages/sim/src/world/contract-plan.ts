@@ -13,6 +13,7 @@ import { SITE_PLANS, drinkerSchedule } from "../content/contract-plans";
 import { hooksOfKind } from "../content/contract-hooks";
 import type { Entity } from "./components";
 import { gangerEntity } from "./factory";
+import { SIM_HZ } from "../step-rate";
 
 /**
  * How a contract's variation (ADR-0034) changes the spawned job: who stands where, who comes
@@ -26,6 +27,13 @@ export const dayFlag = (contractId: string): string => `plan:day:${contractId}`;
 export const offPostFlag = (contractId: string, post: number): string => `plan:off:${contractId}:${post}`;
 /** Raised while W-3's smoker stands by the service gate during the sabotage (19:00-23:00, G-929). */
 export const smokeFlag = (contractId: string): string => `plan:smoke:${contractId}`;
+/** Raised at the acceptance of a job whose crew is on its way (`SitePlan.delay`), lowered when it turns up. */
+export const onWayFlag = (contractId: string): string => `plan:way:${contractId}`;
+/** The tick a job's crew turns up at, for a site whose crew is on its way; undefined otherwise. */
+export const arrivalTick = (c: Contract, startTick: number): number | undefined => {
+  const delay = SITE_PLANS[c.siteId]?.delay;
+  return delay === undefined ? undefined : startTick + Math.round(delay * SIM_HZ);
+};
 /** Raised once the job is done and the crew by the way out moves in. */
 export const ambushFlag = (contractId: string): string => `plan:ambush:${contractId}`;
 /** Tag of the look-alike: not a target, so killing it is an extra kill. */
@@ -46,10 +54,11 @@ const ARMOR_HP = 40;
 
 const docksKind = (c: Contract): boolean => ["escort", "infiltrate", "hack"].includes(contractKind(c));
 
-/** Presence of target `i`: its own condition plus the variation's (night only, rotation gaps). */
+/** Presence of target `i`: its own condition plus the variation's (night only, rotation gaps) and the site's (a crew on its way). */
 export const targetPresence = (c: Contract, i: number, base?: Presence): Presence | undefined => {
   const none = [...(base?.none ?? [])];
   if (hasModifier(c, "night_only")) none.push(dayFlag(c.id));
+  if (SITE_PLANS[c.siteId]?.delay !== undefined) none.push(onWayFlag(c.id));
   for (const h of hooksOfKind(contractKind(c))) if (h.reveal.kind === "rotation_gap" && h.reveal.post === i) none.push(offPostFlag(c.id, i));
   if (none.length === 0) return base;
   return { ...(base?.all ? { all: base.all } : {}), none };

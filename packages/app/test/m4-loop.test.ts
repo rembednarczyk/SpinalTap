@@ -106,8 +106,9 @@ const talkToHana = (s: GameSession) => {
 const toasts = (ui: Ui) => ui.getState().toasts.map((t) => `${t.title}: ${t.text}`);
 
 /**
- * Stands 4 m south of the target and fires until it drops. Her health is topped up, as in the
- * story helpers: the raiders keep up with her level (ADR-0059) and would otherwise outlast her.
+ * Stands 4 m south of the target, on its floor, and fires until it drops. Her health is topped up,
+ * as in the story helpers: the raiders keep up with her level (ADR-0059) and would otherwise outlast
+ * her. On its floor: the raids turn up on the gallery's P2 (ADR-0093 O3), not on the ground.
  */
 const shootDown = (s: GameSession, key: string) => {
   for (let i = 0; i < 2000; i++) {
@@ -115,7 +116,7 @@ const shootDown = (s: GameSession, key: string) => {
     if (!t) return;
     const p = s.sim.player()!;
     if (p.health) p.health = { ...p.health, current: p.health.max };
-    teleport(s, t.position.x, t.position.z - 4, 0, 0.1);
+    teleport(s, t.position.x, t.position.z - 4, 0, 0.1, t.position.y);
     s.step(frame({ fire: true }));
   }
 };
@@ -182,7 +183,10 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     const protection = session.sim.domain.contracts.active!;
     expect(protection.kind).toBe("protect");
     expect(ui.getState().objective).toContain("Defend Oyaji");
-    const wave = [...session.sim.world].filter((e) => e.tag === contractTag(protection.id)).map((e) => e.key!);
+    // The raid is on its way up the gallery's cores: it turns up on P2 after its site's delay (ADR-0093 O3).
+    const raid = () => [...session.sim.world].filter((e) => e.tag === contractTag(protection.id)).map((e) => e.key!);
+    for (let i = 0; i < 60 * 20 && raid().length === 0; i++) steps(session, 1);
+    const wave = raid();
     expect(wave).toHaveLength(protection.targets);
     for (const key of wave) shootDown(session, key);
     steps(session, 1);

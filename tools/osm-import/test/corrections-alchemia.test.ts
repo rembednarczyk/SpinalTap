@@ -32,7 +32,7 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
   });
 
   // The generated chunk: the car park's asphalt and its aisles are gone, T0 is a square of setts
-  // with three lawns cut out of it, Lubartowska's lane line runs on past the old way out (447; 16).
+  // with two lawns cut out of it (the third, by Bajkowskiego, went with ADR-0074 C5), Lubartowska's lane line runs on past the old way out (447; 16).
   const chunk = KRAKOWSKIE_CHUNKS.find((c) => c.id === "krakowskie-2-1")!;
   const inside = (x: number, z: number, o: readonly number[]) => {
     let hit = false;
@@ -116,6 +116,22 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect(strips.length).toBeGreaterThan(20);
     for (const { box: b } of strips) for (const x of [b.x0, b.x1]) off.push(...offAlong({ x, z: b.z0 }, { x, z: b.z1 }, PAVED));
     expect(off.slice(0, 20).join(" ")).toEqual("");
+  });
+
+  // West of the ramp's driveway the square ended on the car park's edge (z −9.05…−9.3), 1.15–1.9 m short
+  // of the footway's band, setts on the orthophoto; the front square's south stairs (ADR-0074 C5) come down onto it.
+  // A sample counts as bare with bare ground 1 cm south of it too: the import rounds the square's edge cut off at the
+  // band, leaving a seam of a millimetre along it (as along G-941's edge east of the driveway), not a strip of ground.
+  it("paves T0 down to Bajkowskiego's footway west of the ramp's driveway, under the front square's stairs (G-942)", () => {
+    const bare = (x: number, z: number) => !PAVED.has(surfaceAt(x, z) ?? "bare") && !PAVED.has(surfaceAt(x, z - 0.01) ?? "bare");
+    const off: string[] = [];
+    for (let k = 0; k <= 207; k++) {
+      const x = 383.6 + k / 10;
+      let z = -8.9;
+      for (; z > -13 && surfaceAt(x, z) !== "footway"; z -= 0.05) if (bare(x, z)) off.push(`${x.toFixed(1)},${z.toFixed(2)} ${surfaceAt(x, z) ?? "bare"}`);
+      expect(z, `x ${x.toFixed(1)} reaches the footway`).toBeGreaterThan(-13);
+    }
+    expect(off.length, off.slice(0, 20).join(" ")).toBe(0);
   });
 
   it("leaves out the replaced areas and lines by id, and the rest as mapped", () => {

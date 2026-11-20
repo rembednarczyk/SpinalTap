@@ -2,7 +2,7 @@ import { MOST_UNSTICK_STEPS, type Vec3 } from "@seki/core";
 import { aboveGround, groundOf, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
-import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
+import { LEVEL_GAP, firingPosition, levelSearch, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, chaseDetour, detourStep, followDetour, cutOffNear, planDetour, straightWalk } from "./steering";
 import { CHASE_DRIFT, lentChase, planChase } from "./chase-plan";
 import { deckLanding } from "./deck-landing";
@@ -147,8 +147,10 @@ export class GangerWalk {
         return;
       }
     }
-    const route = routeAcrossLevels(ctx.world, ctx.streamer.nav, from, to);
-    const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, ctx.streamer.nav, from, to, self.ai.attackRange);
+    // One search from where it stands for both questions: it was made twice a step (ADR-0093 O3).
+    const near = levelSearch(ctx.world, ctx.streamer.nav, from) ?? undefined;
+    const route = routeAcrossLevels(ctx.world, ctx.streamer.nav, from, to, near);
+    const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, ctx.streamer.nav, from, to, self.ai.attackRange, near);
     const way = shot && (!route || shot.cost < route.cost) ? shot : route;
     if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
     else if (way) this.walkTo(way.next);

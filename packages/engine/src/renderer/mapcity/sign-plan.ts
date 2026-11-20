@@ -15,7 +15,15 @@ import { type Uv, quadUv } from "./sink-ops";
  * from the wall outwards), uv2 = (atlas cell, holo seed or name slot; kind), colour rgb = tint,
  * a = brightness.
  */
-export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6, ad: 7, beam: 8, mist: 9, strobe: 10, venue: 11, glyph: 12 } as const;
+export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6, ad: 7, beam: 8, mist: 9, strobe: 10, venue: 11, glyph: 12, screen: 13 } as const;
+
+/**
+ * A kind plus `kind` is drawn near only (ADR-0074 C4): Alchemia's front hangs its letters, holograms
+ * and screens' pictures in the cell's signs, which show for hundreds of metres, but its own mesh
+ * goes beyond some 135 m of the hall's middle, which its farthest light is 42 m off. They fade out between `from`
+ * and `to` metres off the eye, so nothing of them hangs in the air where the building is gone.
+ */
+export const NEAR_ONLY = { kind: 16, from: 75, to: 92 } as const;
 
 /** Atlas: eight upright blades (1:4) across the top half, eight boards (4:1) below. */
 export const MAP_SIGN_BLADES = ["APTEKA", "KAWA", "PIWO", "BAR", "24H", "HOTEL", "薬局", "ラーメン"] as const;

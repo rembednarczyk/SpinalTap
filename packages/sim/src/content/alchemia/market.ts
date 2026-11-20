@@ -17,6 +17,7 @@ import { ARKADY_FRAME, arkadyPoint, arkadySpanMid } from "./arkady";
 import { SOUTH, facing } from "./plan";
 import { onPavilionRoof } from "./pavilion";
 import { KEEPER_SPOTS, KEEPER_YAW, type KeeperKey } from "./units";
+import { MALL_LEVELS } from "./mall-plan";
 import { SHELTER } from "./shelter";
 
 /**
@@ -197,18 +198,27 @@ export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
 
 type MarketSite = "hana_stall" | "hebi_stash" | "raid_north" | "raid_east";
 
+/** A point on the gallery's P2. */
+const onP2 = (x: number, z: number): Vec3 => ({ x, y: MALL_LEVELS.p2, z });
+
 /**
  * Spawn points of the market jobs, four per site. A delivery spawns nobody; its points are round
  * Hana's cart, kept for symmetry. The raids come for Oyaji in the food hall's south-east corner on
- * P3 (ADR-0093 O3; in the hall's north-east corner on T1's level until then): up from Świętoduska
- * onto T1 at its west end, and across T1 from Lubartowska, then in and up the escalators.
+ * P3 (ADR-0093 O3; in the hall's north-east corner on T1's level until then) through the gallery:
+ * up the south-west core from the car park by Świętoduska, and up the north-east one from the east
+ * door on T1, the way from Lubartowska; they turn up at the cores' doors on P2, the last escalator
+ * still before them, after the climb to there (`SitePlan.delay`, `contract-plans.ts`). Not walked
+ * from T1 any more: the four climbed three floors on the level graph, some 20 s at twice a step's
+ * cost (the raid's tests four times as long as before O3); on the way up they are out of sight.
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
   // In the shelter's room round the stash (stage 5d2): by its cover, by the hatch's flight, by the bench, by the stash.
   hebi_stash: [inShelter(423.0, 90.6), inShelter(431.6, 94.2), inShelter(429.2, 86.2), inShelter(426.2, 95.2)],
-  raid_north: [ground(403, 72), ground(400.5, 74.5), ground(406, 74), ground(399, 70)],
-  raid_east: [ground(441, 66), ground(442.5, 63), ground(439.5, 69), ground(443, 68)],
+  // Out of the south-west core's door, in the passage to the west gallery.
+  raid_north: [onP2(401.2, 38.9), onP2(402.9, 39.0), onP2(404.6, 38.8), onP2(406.3, 39.0)],
+  // Out of the north-east core's door, two of them on in the north gallery's east end.
+  raid_east: [onP2(426.4, 56.2), onP2(426.4, 54.6), onP2(425.6, 52.2), onP2(427.2, 51.6)],
 };
 
 /**
