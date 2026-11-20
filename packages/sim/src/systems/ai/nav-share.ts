@@ -1,6 +1,9 @@
 import type { GroundField } from "../../world/ground";
 import type { Collider } from "../../world/solids";
-import type { Field, Raster, Slices } from "./nav-raster";
+import type { Field, Raster } from "./nav-raster";
+import type { NavShareStore } from "./nav-memo";
+
+export { type Made, type NavShareStore, recorded, replayed, through } from "./nav-memo";
 
 /**
  * A store of the steering's rasters and fields shared by every world of a process (ADR-0083 step
@@ -12,17 +15,6 @@ import type { Field, Raster, Slices } from "./nav-raster";
  * so a world's memo, its counts (`wideBuilds`) and the slices spread over its steps stay what they
  * were without the store: a pure speed-up.
  */
-
-/** What making a raster or growing a field gave: the units of work it reported, in order, and the result. */
-export interface Made<T> {
-  readonly yields: readonly number[];
-  readonly value: T;
-}
-
-export interface NavShareStore<T> {
-  get(key: string): Made<T> | undefined;
-  set(key: string, made: Made<T>): void;
-}
 
 export interface NavShare<R, F> {
   readonly rasters: NavShareStore<R>;
@@ -44,33 +36,6 @@ export const shareNav = (store: NavShare<Raster, Field> | null): NavShare<Raster
 
 /** The store installed, or null (the game). */
 export const navShare = (): NavShare<Raster, Field> | null => installed;
-
-/** Runs `steps`, passing on its reports, and gives them with the result. */
-export function* recorded<T>(steps: Slices<T>, yields: number[]): Slices<T> {
-  for (;;) {
-    const s = steps.next();
-    if (s.done) return s.value;
-    yields.push(s.value);
-    yield s.value;
-  }
-}
-
-/** The reports of a making done before, then its result: no work. */
-export function* replayed<T>(made: Made<T>): Slices<T> {
-  for (const u of made.yields) yield u;
-  return made.value;
-}
-
-/** Through a store: the made value when it has one under `key`, else `make` run and kept. */
-export function* through<T>(store: NavShareStore<T> | undefined, key: string, make: () => Slices<T>): Slices<T> {
-  if (!store) return yield* make();
-  const had = store.get(key);
-  if (had) return yield* replayed(had);
-  const yields: number[] = [];
-  const value = yield* recorded(make(), yields);
-  store.set(key, { yields, value });
-  return value;
-}
 
 const ids = new WeakMap<object, number>();
 let nextId = 1;
