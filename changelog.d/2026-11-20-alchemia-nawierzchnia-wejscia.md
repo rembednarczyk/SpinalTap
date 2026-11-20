@@ -1,0 +1,1 @@
+- Kostka placu przy wejściu głównym Alchemii dochodzi teraz do drzwi klatki parkingu i do ściany pawilonu, bez pasów gołej ziemi i trawy na drodze (G-940, G-941).
