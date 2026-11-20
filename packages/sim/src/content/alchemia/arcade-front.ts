@@ -49,6 +49,14 @@ export const arcadeFrontPieces = (): Piece[] => {
     piece(box(A.minX, A.maxX, A.minZ, A.maxZ, A.ceiling, A.top - SLAB), "plaster", false),
     piece(box(A.minX - 0.1, A.maxX + 0.1, A.minZ - 0.1, A.maxZ, A.top - SLAB, A.top), "roof", false),
     piece(box(A.minX - 0.15, A.maxX + 0.15, A.minZ - 0.15, A.minZ, A.top - SLAB - CORNICE, A.top - SLAB), "plaster", false, false),
+    // A paper lantern hung in every bay of the arcade over its walk (ADR-0093 O5): its shops lit under the arches, as the board's.
+    ...arcadePiers()
+      .slice(0, -1)
+      .flatMap((x) => {
+        const c = x + P.width + (A.maxX - A.minX - (ARCADE_BAYS + 1) * P.width) / ARCADE_BAYS / 2;
+        const z = A.minZ + ARCADE_WALK / 2 + 0.3;
+        return [piece(box(c - 0.2, c + 0.2, z - 0.2, z + 0.2, A.ceiling - 0.95, A.ceiling - 0.45), "lantern", false, false), piece(box(c - 0.01, c + 0.01, z - 0.01, z + 0.01, A.ceiling - 0.45, A.ceiling), "cable", false, false)];
+      }),
     // The strip of light along its roof's edge, as every terrace's on the board.
     piece(box(A.minX - 0.12, A.maxX + 0.12, A.minZ - 0.19, A.minZ - 0.15, A.top - SLAB - CORNICE + 0.08, A.top - SLAB - CORNICE + 0.2), "led", false, false),
   ];

@@ -170,8 +170,9 @@ export const FRONT_TREES: readonly { readonly x: number; readonly z: number; rea
     { x: l2.minX + 13, z: 8, y: L2_TOP, seed: 61, tree: false },
     { x: l2.maxX - 6, z: 8, y: L2_TOP, seed: 89, tree: false },
     // On L2's terrace east of L3, clear of its door (ADR-0093 O5): on L1's east wing's roof until then, inside L2's glass.
-    { x: L3.maxX + 2.5, z: east.minZ + 4, y: L2_TOP, seed: 41, tree: true },
-    { x: east.maxX - 2.4, z: east.maxZ - 2.6, y: L2_TOP, seed: 77, tree: true },
+    // North on it, past L3's east door: further south their crowns hid L3's and L2's lit glass from the square.
+    { x: L3.maxX + 2.8, z: east.maxZ - 4.8, y: L2_TOP, seed: 41, tree: true },
+    { x: east.maxX - 2.2, z: east.maxZ - 2.0, y: L2_TOP, seed: 77, tree: true },
     // Off the masts at its back (ADR-0093 O5: a tree stood on each).
     { x: L3.minX + 4.5, z: L3.maxZ - 5, y: L3_TOP, seed: 113, tree: true },
     { x: L3.maxX - 5, z: L3.maxZ - 5, y: L3_TOP, seed: 151, tree: true },

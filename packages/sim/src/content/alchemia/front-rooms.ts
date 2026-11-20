@@ -133,6 +133,9 @@ const l2Arcade = (): Piece[] => [
   ...cartonsAt("l2-delivery-2", 426.1, 21.0, L2, 2),
   ...litterAt("l2-door", 419.2, 30.6, L2, 5),
   ...litterAt("l2-corner", 427.0, 15.5, L2, 4),
+  // A lit menu stand in the corner past the window bar's east end, its face to the street.
+  inBox(433.9, 435.2, 14.42, 14.52, L2 - 0.05, L2 + 3.3, "machine", true),
+  inBox(433.95, 435.15, 14.4, 14.42, L2 + 0.25, L2 + 3.2, "lightbox"),
   // The window bar along the east bar's south glass, over the walk to Lubartowska (the board's people at L2's lit glass).
   ...windowBar("l2-window", SE_BAR.x0, SE_BAR.x1, SE_BAR.z, 1, L2, C2),
   // On the spine's walls (the units' sides): ad screens, flyers pasted over flyers, a cable taped up to a screen (§3).
