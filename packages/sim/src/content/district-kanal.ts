@@ -74,7 +74,7 @@ export const KANAL_SCENERY: readonly { readonly view: ViewDescriptor; readonly a
  * at KARAOKE by night; Tetsu keeps DENKI on the corner of the Rynek and Grodzka.
  */
 export const KANAL_SPOTS = {
-  hideoSake: spotNear(547.5, -71.5),
+  hideoSake: spotNear(559.6, -83.5),
   hideoHome: spotNear(492, -80),
   meiKaraoke: spotNear(556, -38.5),
   meiHome: spotNear(533, -50),
@@ -97,8 +97,10 @@ export const GRODZKA_WALK: readonly Vec3[] = [
 ].map(([x, z]) => ground(x as number, z as number));
 
 export const KANAL_PROPS: readonly StaticProp[] = [
-  // SAKE a metre south of the inner corner by PUB PERON, where the next house would cut it.
-  facadeNeon(546.56, -74.23, 2.8, 0.55, 2.8, "#ffb000", "SAKE"),
+  // SAKE on the Rynek's south-west row, on the Wieniawski house (Rynek 17, w66286362, by WIEJSKI RAJ),
+  // 3 m clear of its memorial plaques and over 20 m off the
+  // stumbling stones of the Nisenbaums by PUB PERON, where no neon hangs (ADR-0074 §6, G-943).
+  facadeNeon(558.4, -85.1, 2.8, 0.55, 2.8, "#ffb000", "SAKE"),
   facadeNeon(556, -36.5, 6.4, 0.55, 4.2, "#ff2e88", "KARAOKE"),
   facadeNeon(571, -29.5, 5.7, 0.55, 3.2, "#00e5ff", "DENKI"),
   // Over the Trybunał's door into Trasa Podziemna (ADR-0048), clear of the slanting facade.
@@ -117,7 +119,7 @@ export const KANAL_PROPS: readonly StaticProp[] = [
 export const KANAL_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
-    spawn: { key: "hideo", position: KANAL_SPOTS.hideoSake, yaw: againstWall(547.5, -71.5).yaw },
+    spawn: { key: "hideo", position: KANAL_SPOTS.hideoSake, yaw: againstWall(559.6, -83.5).yaw },
     preset: "civilian",
     faction: "civilians",
     bystander: true,

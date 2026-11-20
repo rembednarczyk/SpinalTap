@@ -46,6 +46,21 @@ describe("memorial-neon-clear (ADR-0074 §6, the curator's reviews of Alchemia)"
     expect(found[0]!.what).toMatch(/^Alchemia's front \(C4\) .*screen.* off the memorial/);
   });
 
+  it("counts a sign seen from the ground, not one under the ground at it (Hebi's neon in the shelter under T2)", () => {
+    const at = (y: number): Glow => ({ ...plate("a", M.x1 + 3, M.z0), points: plate("a", M.x1 + 3, M.z0).points.map((p) => ({ ...p, y })) });
+    const ground = () => -9.2;
+    expect(memorialNeonClear(places, [at(-9.2)], ground)).toHaveLength(1);
+    expect(memorialNeonClear(places, [at(-9.3)], ground)).toEqual([]);
+    // A sign without a known height counts, as does one reaching out of the ground.
+    expect(memorialNeonClear(places, [plate("b", M.x1 + 3, M.z0)], ground)).toHaveLength(1);
+    expect(memorialNeonClear(places, [{ ...at(-12), points: [...at(-12).points, { x: M.x1 + 3, y: -9, z: M.z0 }] }], ground)).toHaveLength(1);
+    // The game's own: the shelter's neon is 14.2 m off the memorial across the plan, its top 0.9 m under T2.
+    const hebi = gameNeonGlows().filter((g) => g.source === "device dev:targ-neon");
+    expect(hebi).toHaveLength(1);
+    expect(memorialNeonClear(places, hebi, () => -Infinity).map((f) => f.what)).toEqual(["device dev:targ-neon neon 14.2 m off the memorial of Plac Ofiar Getta"]);
+    expect(memorialNeonClear(places, hebi)).toEqual([]);
+  });
+
   it("sees every source of the game's neons", () => {
     const sources = new Set([...alchemiaSignGlows(), ...gameNeonGlows()].filter((g) => g.points.length > 0).map((g) => g.source.replace(/^(neon|device) .*/, "$1")));
     expect([...sources].sort()).toEqual(["Alchemia's front (C4)", "W-3's TESSEN", "device", "neon", "the arcade house's lettering", "the deptak's neons (C7)", "the food hall's signs (O3)", "the gallery's shop signs (O2)", "the pavilion's neon"].sort());
