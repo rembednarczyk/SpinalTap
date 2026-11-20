@@ -339,6 +339,8 @@ export const enWorld = {
   "crime.end.foiled": "Crime foiled",
   "crime.end.failed": "Too late",
   "crime.close": "Close",
+  "crime.objective.title": "Street crime",
+  "crime.objective": "{kind} · {metres} m",
   "map.link.stairs": "Stairs",
   "map.link.lift": "Lift",
   "map.link.ladder": "Ladder",

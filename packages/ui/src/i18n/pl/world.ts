@@ -337,6 +337,8 @@ export const plWorld = {
   "crime.end.foiled": "Przestępstwo udaremnione",
   "crime.end.failed": "Za późno",
   "crime.close": "Zamknij",
+  "crime.objective.title": "Przestępstwo na ulicy",
+  "crime.objective": "{kind} · {metres} m",
   "map.link.stairs": "Schody",
   "map.link.lift": "Winda",
   "map.link.ladder": "Drabina",

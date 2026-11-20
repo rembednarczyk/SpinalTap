@@ -1,6 +1,6 @@
-import type { DomainState } from "@seki/core";
 import { boardOpen, crimeReward } from "@seki/sim";
-import type { CrimeMarkerVm } from "@seki/ui";
+import { type CrimeMarkerVm, translate } from "@seki/ui";
+import type { DomainState, Locale } from "@seki/core";
 
 /*
  * The street's crimes on the map (ADR-0091 stage 6), as the NCPD's blue icons of Cyberpunk 2077:
@@ -34,4 +34,18 @@ export const createCrimeMarkers = () => {
     if (!same(last, next)) last = next;
     return last;
   };
+};
+
+/** Metres the objective's distance is rounded to, so the HUD line does not change every step. */
+const DISTANCE_STEP = 10;
+
+/**
+ * The HUD's objective while a crime is followed (ADR-0091 stage 6): it takes the place of the
+ * journal's, as a tracked NCPD crime does in Cyberpunk 2077 (following it let go of the pin).
+ */
+export const crimeObjective = (crime: CrimeMarkerVm, locale: Locale, player: { readonly x: number; readonly z: number } | null): { title: string; objective: string } => {
+  const kind = translate(locale, `crime.kind.${crime.kind}`);
+  if (!player) return { title: translate(locale, "crime.objective.title"), objective: kind };
+  const metres = Math.max(DISTANCE_STEP, Math.round(Math.hypot(crime.x - player.x, crime.z - player.z) / DISTANCE_STEP) * DISTANCE_STEP);
+  return { title: translate(locale, "crime.objective.title"), objective: translate(locale, "crime.objective", { kind, metres }) };
 };

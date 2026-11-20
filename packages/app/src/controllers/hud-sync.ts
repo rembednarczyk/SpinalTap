@@ -5,7 +5,7 @@ import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type Tr
 import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
 import { createMinimapTracker } from "../minimap";
-import { createCrimeMarkers } from "../crime-markers";
+import { createCrimeMarkers, crimeObjective } from "../crime-markers";
 import { contractEntryId, describeObjective, shownEntryId } from "../objective";
 import { questMark } from "../quest-target";
 import { createWeaponHud } from "../weapon-hud";
@@ -124,7 +124,9 @@ export class HudSync implements ContractIntents {
     const loot = this.deps.panels.loot();
     const player = sim.player();
     const locale = this.deps.ui.getState().settings.locale;
-    const { title, objective } = describeObjective(sim.domain, locale, sim.tick);
+    const crimeMarkers = this.crimes(sim.seed, sim.domain, player?.position ?? null);
+    const followed = crimeMarkers.find((c) => c.tracked);
+    const { title, objective } = followed ? crimeObjective(followed, locale, player?.position ?? null) : describeObjective(sim.domain, locale, sim.tick);
     const hp = player?.health?.current ?? 0;
     const maxHp = player?.health?.max ?? 100;
     patchUi(this.deps.ui, {
@@ -167,7 +169,7 @@ export class HudSync implements ContractIntents {
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),
       ...this.minimapFrame(sim),
-      crimeMarkers: this.crimes(sim.seed, sim.domain, player?.position ?? null),
+      crimeMarkers,
       ...this.wave1Frame(sim, player),
     });
   }

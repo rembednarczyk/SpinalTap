@@ -40,15 +40,21 @@ describe("street crimes on the map in the session (ADR-0091 stage 6)", () => {
     expect(shown.reward).toBeGreaterThan(0);
   });
 
-  it("follows a crime through the intent, and a pinned entry takes its place", () => {
+  it("follows a crime through the intent, as the HUD's objective, and a pinned entry takes its place", () => {
     const { session, ui } = started();
     const id = ui.getState().crimeMarkers[0]!.id;
     session.intents.trackCrime(id);
     steps(session, 1);
     expect(ui.getState().crimeMarkers.find((m) => m.id === id)?.tracked).toBe(true);
+    // The HUD's objective is the crime's, with how far it is (CP2077's tracked NCPD crime).
+    const crime = boardOpen(session.sim.seed, session.sim.domain).find((c) => c.id === id)!;
+    const kinds: Readonly<Record<string, string>> = { mugging: "Mugging", aid: "Someone collapsed", extortion: "Extortion", deal: "Drug deal", droneTheft: "Drone theft", kidnap: "Kidnapping" };
+    expect(ui.getState().questTitle).toBe("Street crime");
+    expect(ui.getState().objective).toMatch(new RegExp(`^${kinds[crime.kind]} · \\d+ m$`));
     session.intents.trackQuest("m0_first_contract");
     steps(session, 1);
     expect(ui.getState().crimeMarkers.some((m) => m.tracked)).toBe(false);
+    expect(ui.getState().questTitle).not.toBe("Street crime");
   });
 
   it("keeps a crime walked away from on the map, to come back to, without a word", () => {
