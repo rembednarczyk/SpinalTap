@@ -29,10 +29,12 @@ describe("Alchemia's rounded storeys (19.11)", () => {
     // Every slab has an outline; the front's round some corner.
     for (const s of slabs) expect(s.outline!.length, `${s.box.x0},${s.box.z0}`).toBeGreaterThanOrEqual(4);
     expect(frontSlabs.filter((s) => s.outline!.length > 4).length).toBeGreaterThanOrEqual(frontSlabs.length - 1);
-    const glass = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "glass" && p.outline);
-    expect(glass.length).toBe(frontSlabs.length);
+    // Since ADR-0093 O5 the glass is a wall 0.2 m deep round each storey's rooms (a solid box of its outline until then): its
+    // pieces run along a slab's outline, under the slab, within it.
+    const glass = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "pane" && p.outline && p.box.z1 <= MALL.z0 + 0.01);
+    expect(glass.length).toBeGreaterThan(frontSlabs.length * 4);
     for (const g of glass) {
-      const slab = frontSlabs.find((s) => Math.abs(s.box.y0 - g.box.y1) < 0.01 && g.outline!.every((p) => p.x >= s.box.x0 && p.x <= s.box.x1 && p.z >= s.box.z0 && p.z <= s.box.z1));
+      const slab = frontSlabs.find((s) => Math.abs(s.box.y0 - g.box.y1) < 0.01 && g.outline!.every((p) => p.x >= s.box.x0 - 1e-6 && p.x <= s.box.x1 + 1e-6 && p.z >= s.box.z0 - 1e-6 && p.z <= s.box.z1 + 1e-6));
       expect(slab, `${g.box.x0},${g.box.z0}`).toBeDefined();
     }
   });
@@ -61,11 +63,12 @@ describe("Alchemia's rounded storeys (19.11)", () => {
     expect(cut).toBeGreaterThanOrEqual(12);
   });
 
-  it("rails the gallery's roof with solid balustrades round its rounded edge and its atrium, the front's roofs with drawn ones", () => {
-    // Until ADR-0093 O1 the solid ones were the terraces of A and B.
+  it("rails the gallery's roof and the front's terraces with solid balustrades round their rounded edges", () => {
+    // Until ADR-0093 O1 the solid ones were the terraces of A and B; the front's were drawn only until O5, when one walks
+    // out onto L2's terrace from L3 and onto L3's roof from the gallery's.
     const rails = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "parapet" && p.outline);
-    expect(rails.filter((p) => p.solid).length).toBeGreaterThan(10);
-    expect(rails.filter((p) => !p.solid).length).toBeGreaterThan(20);
-    for (const r of rails) expect(r.box.y1 - r.box.y0).toBeCloseTo(r.solid ? MALL_RAIL : 1, 6);
+    expect(rails.filter((p) => p.solid).length).toBeGreaterThan(30);
+    expect(rails.filter((p) => !p.solid)).toEqual([]);
+    for (const r of rails) expect(r.box.y1 - r.box.y0).toBeCloseTo(r.box.z0 >= MALL.z0 && r.box.x0 >= MALL.x0 - 0.4 ? MALL_RAIL : 1, 6);
   });
 });

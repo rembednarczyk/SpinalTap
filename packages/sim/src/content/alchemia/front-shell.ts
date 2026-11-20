@@ -129,9 +129,43 @@ const steps = (): Piece[] => {
   ];
 };
 
+/** A quarter of the glass's inner arc (radius 1.5 m round `c`) from angle `a0` to `a0 + 90°`, counter-clockwise. */
+const arc = (c: GroundPoint, a0: number): GroundPoint[] =>
+  [0, 1, 2, 3, 4].map((k) => {
+    const a = ((a0 + k * 22.5) * Math.PI) / 180;
+    return { x: c.x + 1.5 * Math.cos(a), z: c.z + 1.5 * Math.sin(a) };
+  });
+/** The rounded corners' centres of the glass round a storey's bar `r` (its slab's corner radius in from its outline). */
+const centre = (r: Rect, x: "w" | "e", z: "s" | "n"): GroundPoint => {
+  const k = cornerRadius(slabOf(r)) - OVER;
+  return { x: x === "w" ? r.minX + k : r.maxX - k, z: z === "s" ? r.minZ + k : r.maxZ - k };
+};
+
+/**
+ * The sealed corners between the units and the glass's rounded corners (L1's two wings, L2's and
+ * L3's north-west ones) filled as the building's services' risers (the gallery's north-east one's,
+ * `mall.ts`): no slot one cannot reach, where a crouched, aimed shoulder by the partition before it
+ * would start its shot (G-275's measure).
+ */
+const risers = (): Piece[] => {
+  const prism = (pts: GroundPoint[], y0: number, y1: number): Piece => outlined(pts, y0, y1, "wall");
+  const p = (x: number, z: number): GroundPoint => ({ x, z });
+  const [w1nw, el, l2nw, l3nw] = [centre(W1, "w", "n"), EAST_WING, centre(A, "w", "n"), centre(L3, "w", "n")];
+  const e = (x: "w" | "e", z: "s" | "n") => centre(el, x, z);
+  return [
+    prism([p(396.2, 12.3), p(396.2, 13.8), ...arc(w1nw, 90)], F.l1 - 0.05, L1_TOP - SLAB),
+    prism([p(e("w", "s").x, 13.7), p(e("e", "s").x, 13.7), ...arc(e("e", "s"), -90).slice(1), ...arc(e("w", "s"), 180).slice(0, -1)], F.l1e - 0.05, L1_TOP - SLAB),
+    prism([...arc(e("e", "n"), 0), ...arc(e("w", "n"), 90)], F.l1e - 0.05, L1_TOP - SLAB),
+    prism([p(400.0, 30.3), p(400.0, 31.8), ...arc(l2nw, 90)], F.l2 - 0.05, L2_TOP - SLAB),
+    prism([p(400.0, 30.0), p(400.0, 31.8), ...arc(l3nw, 90), p(398.2, 30.0)], F.l3 - 0.05, L3_TOP - SLAB),
+    piece(box(400.0, 405.8, 30.0, 32.0, F.l3 - 0.05, L3_TOP - SLAB), "wall", false),
+  ];
+};
+
 /** The front's shell drawn from afar with the storeys: the glass, the house with arcades' back wall, the wings' floors, L3's patch, the steps outside. */
 export const frontShellPieces = (): Piece[] => [
   ...frontGlass(),
+  ...risers(),
   arcadeBack(),
   ...WEST_WING.map((r) => floorOf(r, L1_LEVEL, F.l1)),
   floorOf(EAST_WING, L1_LEVEL, F.l1e),
@@ -148,24 +182,28 @@ const room = (minX: number, maxX: number, minZ: number, maxZ: number, bottom: nu
 
 /**
  * The front's storeys as rooms of the gallery's interior (ADR-0061): inside the glass, from the floor to
- * the ceiling, each storey a cross of rectangles past its rounded corners (as the gallery's, `mall-plan.ts`).
+ * the ceiling, each storey a cross of rectangles past its rounded corners (as the gallery's, `mall-plan.ts`),
+ * their edges inside the glass or on a wall's far face, none a hand off a partition along it (where a
+ * crouched, aimed shoulder would start its shot past the partition, G-275's measure).
  */
 export const FRONT_ROOMS: readonly Room[] = (() => {
   const [c1, c2, c2e, c3] = [FRONT_CEILINGS.l1, FRONT_CEILINGS.l2, FRONT_CEILINGS.l1e, FRONT_CEILINGS.l3];
   return [
     // L1's west wing: its south bar past its three rounded corners, its north bar past its two.
-    room(394.2, 403.8, 2.7, 12.3, F.l1, c1),
+    room(394.2, 403.8, 3.0, 12.3, F.l1, c1),
     room(395.7, 402.3, 1.2, 13.8, F.l1, c1),
-    room(396.2, 403.8, 13.8, 25.8, F.l1, c1),
-    room(397.7, 402.3, 25.8, 27.3, F.l1, c1),
+    room(396.2, 403.8, 13.8, 25.5, F.l1, c1),
+    room(397.7, 402.3, 25.7, 27.3, F.l1, c1),
     // L1's east wing.
     room(427.9, 435.8, 15.2, 20.8, F.l1e, c2e),
     room(429.4, 434.3, 13.7, 22.3, F.l1e, c2e),
-    // L2: its west bar past its three rounded corners, its east one past its south-east one.
-    room(394.2, 421.8, 5.7, 30.3, F.l2, c2),
-    room(395.7, 420.3, 4.2, 31.8, F.l2, c2),
-    room(421.8, 435.8, 15.2, 31.8, F.l2, c2),
-    room(421.8, 434.3, 13.7, 15.2, F.l2, c2),
+    // L2: its west bar past its three rounded corners (the north-west one's riser), on to the gallery's glass east of it; its
+    // east bar past its south-east corner, from the inner face of the partition on the spine.
+    room(394.2, 421.8, 5.7, 30.0, F.l2, c2),
+    room(395.7, 420.3, 4.2, 30.0, F.l2, c2),
+    room(400.0, 421.8, 30.2, 32.0, F.l2, c2),
+    room(422.0, 435.8, 15.2, 32.0, F.l2, c2),
+    room(422.0, 434.3, 13.7, 15.2, F.l2, c2),
     // L3: past its rounded corners but the north-east one, against the gallery.
     room(398.2, 427.8, 13.7, 30.3, F.l3, c3),
     room(399.7, 427.8, 30.3, 31.8, F.l3, c3),

@@ -130,7 +130,8 @@ describe("Alchemia in the level graph (ADR-0074 §5)", () => {
     for (const n of ALCHEMIA_NAV.nodes) expect(ids.has(n.id), n.id).toBe(true);
     const g = loaded().streamer.ground;
     // P-1's nodes (stage 4) stand on its floor, ramp and stairs: `alchemia-parking.test.ts`; P-2's (stage 5a): `alchemia-p2.test.ts`; the shelter's (5d1): `alchemia-shelter.test.ts`.
-    for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-") && !n.id.startsWith("alchemia-p2-") && !n.id.startsWith("alchemia-shelter-"))) {
+    // The front's storeys' (ADR-0093 O5) on their floors and roofs: `alchemia-front-rooms.test.ts`.
+    for (const n of ALCHEMIA_NAV.nodes.filter((n) => !n.id.startsWith("alchemia-p1-") && !n.id.startsWith("alchemia-p2-") && !n.id.startsWith("alchemia-shelter-") && !/^alchemia-f(1|1e|2|3|r)-/.test(n.id))) {
       const inHall = n.at.x >= FOODHALL.minX && n.at.x <= FOODHALL.maxX && n.at.z >= FOODHALL.minZ && n.at.z <= FOODHALL.maxZ;
       // Over the hall the gallery's floors and its cores' mid landings (ADR-0093 O1; each node on a solid top: `alchemia-mall.test.ts`).
       const floors = [F, ...MALL_FLOORS, ...STAIR_CORES.flatMap((c) => c.floors.slice(0, -1).map((y, i) => (y + c.floors[i + 1]!) / 2))];

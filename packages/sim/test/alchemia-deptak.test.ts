@@ -24,7 +24,7 @@ import {
   stallSeller,
   surfaceY,
 } from "../src";
-import { C7_PROPS, DEPTAK_SOLID_PROPS, FRONT_GREEN_PROPS } from "../src/content/alchemia";
+import { C7_PROPS, DEPTAK_SOLID_PROPS, FRONT_O5_PROPS, FRONT_GREEN_PROPS } from "../src/content/alchemia";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { teleportPlayer } from "./helpers";
 
@@ -105,10 +105,12 @@ describe("the deptak's stalls dressed (ADR-0074 C7)", () => {
   });
 
   it("puts its solids in props of their own, the last of Alchemia's, and its models in the last view of the scenery", () => {
-    expect(ALCHEMIA_PROPS.slice(-DEPTAK_SOLID_PROPS.length)).toEqual(DEPTAK_SOLID_PROPS);
+    // The front's storeys as rooms (ADR-0093 O5) after them, the last.
+    expect(ALCHEMIA_PROPS.slice(-DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length, -FRONT_O5_PROPS.length)).toEqual(DEPTAK_SOLID_PROPS);
     const prisms = DEPTAK_SOLID_PROPS.reduce((n, p) => n + (p.prisms?.length ?? 0), 0);
     expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length);
-    expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: C7_PROPS });
+    // Before the front's rooms' models (ADR-0093 O5), the last.
+    expect(WORLD_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: C7_PROPS });
   });
 
   it("stands a customer of the crowd before each kiosk's window and each vegetable stall's counter, facing it", () => {

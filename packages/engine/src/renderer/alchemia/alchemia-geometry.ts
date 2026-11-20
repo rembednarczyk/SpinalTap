@@ -1,12 +1,13 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ARCADE_FRONT, ATRIUM, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
+import { ALCHEMIA_PIECES, ALCHEMIA_TIER_PIECES, ATRIUM, MALL, MALL_OVER, type AlchemiaBox, type AlchemiaPiece, type AlchemiaPieceKind, FOODHALL, FOODHALL_INNER, FRONT_OPENINGS } from "@seki/sim";
 import { type BoxFace, type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { arkadyGeometry } from "./arkady-geometry";
 import { frontSignGeometry } from "./front-sign-geometry";
 import { deptakSignGeometry } from "./deptak-sign-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { LAWN, LEAF, band, glassFacade, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, band, lid, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { venueSigns } from "./venue-signs";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
 import { shopPiece, shopSigns } from "./shop-geometry";
 import { foodhallGeometry, foodhallPiece } from "./foodhall-geometry";
@@ -190,37 +191,6 @@ const TIER_SET: ReadonlySet<AlchemiaPiece> = new Set(ALCHEMIA_TIER_PIECES);
 /** A storey's slab: a roof piece a slab thick, big enough to be a floor (not L2's underside, nor a planter). */
 const isSlab = (p: AlchemiaPiece): boolean => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30;
 
-type Outline = readonly { readonly x: number; readonly z: number }[];
-
-/** Is (x, z) inside a convex counter-clockwise outline? */
-const within = (pts: Outline, x: number, z: number): boolean =>
-  pts.every((p, i) => {
-    const q = pts[(i + 1) % pts.length]!;
-    return (q.x - p.x) * (z - p.z) - (q.z - p.z) * (x - p.x) >= 0;
-  });
-
-/** Inside the house with arcades' upper storey (C3): L2's glass behind it shows nothing. */
-const inArcade = (x: number, y: number, z: number): boolean => {
-  const A = ARCADE_FRONT;
-  return x > A.minX && x < A.maxX && z > A.minZ && z < A.maxZ + 0.6 && y > A.ceiling && y < A.top;
-};
-
-/** The edges of a storey's glass that stand inside another's (the joints between a storey's bars, a wing under the next storey up): nothing to draw on them. */
-const hiddenEdges = (p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): ((i: number) => boolean) => {
-  const pts = p.outline!;
-  const y = (p.box.y0 + p.box.y1) / 2;
-  const others = glass.filter((g) => g !== p && g.box.y0 < y && g.box.y1 > y);
-  return (i) => {
-    const a = pts[i]!;
-    const b = pts[(i + 1) % pts.length]!;
-    const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
-    // Half a metre out of the edge's middle.
-    const x = (a.x + b.x) / 2 + ((b.z - a.z) / len) * 0.5;
-    const z = (a.z + b.z) / 2 - ((b.x - a.x) / len) * 0.5;
-    return others.some((g) => within(g.outline!, x, z)) || inArcade(x, y, z);
-  };
-};
-
 /** A piece of the gallery's slabs (ADR-0093 O1): within its outline and overhang. */
 const ofMall = (p: AlchemiaPiece): boolean =>
   p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && p.box.x0 >= MALL.x0 - MALL_OVER - 0.01 && p.box.x1 <= MALL.x1 + MALL_OVER + 0.01 && p.box.z0 >= MALL.z0 - 0.01 && p.box.z1 <= MALL.z1 + MALL_OVER + 0.01;
@@ -241,21 +211,19 @@ const darkEdges = (pts: readonly { x: number; z: number }[]) => (i: number): boo
   return !(inAtrium || outside);
 };
 
-/** A piece of the storeys drawn from its outline (19.11, the board 1:1): false when it is not one. */
-const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece, glass: readonly AlchemiaPiece[]): boolean => {
+/**
+ * A piece of the storeys drawn from its outline (19.11, the board 1:1): false when it is not one. The
+ * front's glass is the gallery's since ADR-0093 O5 (`pane`, its frame only, its rooms behind it): the
+ * fake rooms drawn behind it until then went with the solid boxes of glass.
+ */
+const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece): boolean => {
   const pts = p.outline;
   if (!pts) return false;
   const b = p.box;
   if (TIER_SET.has(p) && ofMall(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, darkEdges(pts));
   else if (p.kind === "pane") paneFrame(sink, data, pts, b.y0, b.y1);
   else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led);
-  else if (p.kind === "glass") glassFacade(sink, data, pts, b.y0, b.y1, hiddenEdges(p, glass));
-  else if (p.kind === "parapet") {
-    // A roof's balustrade under the next storey up stands in its glass: not drawn.
-    const [x, z] = [pts.reduce((s, q) => s + q.x, 0) / pts.length, pts.reduce((s, q) => s + q.z, 0) / pts.length];
-    const y = (b.y0 + b.y1) / 2;
-    if (!glass.some((g) => g.box.y0 < y && g.box.y1 > y && within(g.outline!, x, z))) railing(sink, data, pts, b.y0, b.y1);
-  }
+  else if (p.kind === "parapet") railing(sink, data, pts, b.y0, b.y1);
   else if (p.kind === "green" && pts.length === 4) {
     // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.
     band(sink, pts, b.y0, b.y1, swatchUv(data, "paint"), undefined, LEAF);
@@ -272,7 +240,6 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   const steps = new Map(pieces.filter((p) => p.kind === "step").map((p) => [`${p.box.x0.toFixed(3)}:${p.box.x1.toFixed(3)}:${p.box.z0.toFixed(3)}:${p.box.z1.toFixed(3)}`, p] as const));
   // The storeys' slabs, drawn round-cornered with their strip of light (B4); the simulation's straight strips go.
   const slabs = pieces.filter((p) => TIER_SET.has(p) && isSlab(p)).map((p) => p.box);
-  const glass = pieces.filter((p) => p.kind === "glass" && p.outline);
   for (const p of pieces) {
     const sink = TIER_SET.has(p) ? tiers : p.inside ? inside : outside;
     const b = p.box;
@@ -288,7 +255,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (p.inside && foodhallPiece(sink, data, p)) continue;
     // The square's umbrellas and awnings (C5): cones and sloping sheets.
     if (plazaPiece(sink, data, p)) continue;
-    if (outlinedPiece(sink, data, p, glass)) continue;
+    if (outlinedPiece(sink, data, p)) continue;
     // The front's glass: lit warm from the floor to a hand over the doors, a dark band over it to the ceiling.
     if (p.kind === "glass" && b.x1 - b.x0 >= 0.3 && b.z0 >= FOODHALL.maxZ - FOODHALL.wall - 0.01 && b.y1 - b.y0 > 1) {
       const lit = Math.min(b.y1, FOODHALL.floor + LIT_GLASS);
@@ -352,5 +319,6 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   ceilingLights(inside, data);
   escalatorGeometry(inside, data);
   shopSigns(inside, data);
+  venueSigns(inside, data);
   return { outside, inside, tiers };
 };

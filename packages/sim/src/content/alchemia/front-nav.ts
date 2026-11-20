@@ -61,7 +61,8 @@ const EDGES: readonly NavEdge[] = [
   edge("f1-east-in", "f1-east-out", { minX: W1.maxX - 0.2, maxX: W1.maxX + 1.0, minZ: L1_DOORS.east.z0, maxZ: L1_DOORS.east.z1 }),
   edge("f1-east-in", "f1-north-in"),
   // Down the north flight onto T0's strip before the hall's stair house.
-  edge("f1-north-in", "t0-stair", { minX: L1_DOORS.north.x0, maxX: L1_DOORS.north.x1, minZ: W2.maxZ - 0.2, maxZ: W2.maxZ + 2.2 }),
+  // The way's rect reaches back over the node inside: a walker that has just reached it is on the way, not hunting round it.
+  edge("f1-north-in", "t0-stair", { minX: L1_DOORS.north.x0, maxX: L1_DOORS.north.x1, minZ: W2.maxZ - 1.3, maxZ: W2.maxZ + 2.2 }),
   edge("f1e-in", "f1e-out", { minX: EAST_WING.maxX - 0.2, maxX: EAST_WING.maxX + 0.7, minZ: L1E_DOOR.z0, maxZ: L1E_DOOR.z1 }),
   edge("f1e-out", "t0-east"),
   // From the gallery's south side on P2 through the passage and the door down the spine.

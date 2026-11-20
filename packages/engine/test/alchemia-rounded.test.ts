@@ -1,16 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ALCHEMIA_TIER_PIECES, MALL } from "@seki/sim";
-import { GeometrySink } from "../src/renderer/city-kit-data";
 import { ledOfSlab } from "../src/renderer/alchemia/rounded-slab";
-import { glassFacade, insetConvex } from "../src/renderer/alchemia/storey-facade";
-import { parseCityKit } from "../src/renderer/city-kit-data";
-// @ts-expect-error The engine is typed for the browser; the test reads the kit off disk.
-import { readFileSync } from "node:fs";
+import { insetConvex } from "../src/renderer/alchemia/storey-facade";
 
 /** The storeys' rounded slabs and their glass as the board shows them (ADR-0074 B4, 1:1 on 19.11). */
 describe("Alchemia's rounded storeys in the drawing", () => {
-  const bytes = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/city/city-kit.glb", import.meta.url));
-  const data = parseCityKit(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
   // The front's storeys' slabs; the gallery's (ADR-0093 O1) have no straight strips of their own to drop.
   const slabs = ALCHEMIA_TIER_PIECES.filter((p) => p.kind === "roof" && p.box.y1 - p.box.y0 <= 0.31 && (p.box.x1 - p.box.x0) * (p.box.z1 - p.box.z0) >= 30 && p.box.z0 < MALL.z0 - 0.01);
 
@@ -22,8 +16,9 @@ describe("Alchemia's rounded storeys in the drawing", () => {
   });
 
   it("insets a rounded outline evenly: every point of the inset a room's depth inside", () => {
-    const glass = ALCHEMIA_TIER_PIECES.find((p) => p.kind === "glass" && p.outline && p.outline.length > 8)!;
-    const pts = glass.outline!;
+    // A storey's rounded slab (its glass a solid box with the same outline until ADR-0093 O5, a wall round its rooms since).
+    const slab = slabs.find((p) => p.outline && p.outline.length > 8)!;
+    const pts = slab.outline!;
     const back = insetConvex(pts, 1.6);
     expect(back.length).toBe(pts.length);
     for (const b of back) {
@@ -38,16 +33,5 @@ describe("Alchemia's rounded storeys in the drawing", () => {
       );
       expect(d).toBeCloseTo(1.6, 1);
     }
-  });
-
-  it("draws a storey's glass with its room behind it, nothing on the edges hidden in a neighbour", () => {
-    const glass = ALCHEMIA_TIER_PIECES.find((p) => p.kind === "glass" && p.outline && p.outline.length > 8)!;
-    const all = new GeometrySink();
-    glassFacade(all, data, glass.outline!, glass.box.y0, glass.box.y1, () => false);
-    const none = new GeometrySink();
-    glassFacade(none, data, glass.outline!, glass.box.y0, glass.box.y1, () => true);
-    expect(all.indices.length).toBeGreaterThan(none.indices.length * 4);
-    // Only the room's floor is left when every edge is hidden.
-    expect(none.indices.length).toBe(Math.ceil(glass.outline!.length / 2) * 6);
   });
 });

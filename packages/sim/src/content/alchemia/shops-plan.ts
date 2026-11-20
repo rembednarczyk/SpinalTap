@@ -215,10 +215,10 @@ export const RING_WAYS: Readonly<Partial<Record<ShopDef["floor"], readonly Recta
 /** A partition's thickness, the shopfront's glass head and the door's head over the floor, the door's width. */
 export const SHOP_WALL = 0.15;
 /**
- * A shop's partitions: P0's (O3) 0.2 m, as a room's wall, so a crouched, aimed shoulder by one starts
- * its shot inside it (G-275); P1's and P2's as O2 built them.
+ * A shop's partitions: P0's (O3) and the front's (O5) 0.2 m, as a room's wall, so a crouched, aimed
+ * shoulder by one starts its shot inside it (G-275); P1's and P2's as O2 built them.
  */
-export const shopWall = (s: ShopDef): number => (s.floor === "p0" ? 0.2 : SHOP_WALL);
+export const shopWall = (s: ShopDef): number => (s.floor === "p1" || s.floor === "p2" ? SHOP_WALL : 0.2);
 export const SHOPFRONT_HEAD = 3.0;
 export const SHOP_DOOR_TOP = 2.4;
 export const SHOP_DOOR = 1.5;

@@ -277,6 +277,9 @@ export const FRONT_ROOM_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps(
   12,
 );
 
+/** Every solid of the front's storeys as rooms (O5), the last of `ALCHEMIA_PROPS`. */
+export const FRONT_O5_PROPS: readonly StaticProp[] = [...FRONT_STOREY_PROPS, ...FRONT_SHOP_SOLID_PROPS, ...FRONT_ROOM_SOLID_PROPS];
+
 /** The front's still crowd (O5): its units' customers, the arcades' and the café's people, L3's. */
 export const FRONT_CROWD: readonly CrowdSpot[] = [...shopCustomers(FRONT_SHOP_BUILDS), ...FRONT_ROOM_CROWD, ...L3_CROWD];
 
@@ -335,9 +338,7 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...DEPTAK_SOLID_PROPS,
   // The front's storeys as rooms (ADR-0093 O5): their slabs, glass, floors, balustrades and steps a prop per tile, their units a
   // prop each, their fittings and the terraces' planters a prop per tile, last.
-  ...FRONT_STOREY_PROPS,
-  ...FRONT_SHOP_SOLID_PROPS,
-  ...FRONT_ROOM_SOLID_PROPS,
+  ...FRONT_O5_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

@@ -42,7 +42,8 @@ const BEAM = 0.32;
 const STOREYS: readonly Storey[] = [
   ...L1_LEVEL.map((r): Storey => ({ r, bottom: -3, top: L1_TOP, corners: outerCorners(rect(r), L1_LEVEL.map(rect)), shrubs: true })),
   ...L2_SLABS.map((r): Storey => ({ r, bottom: L1_TOP, top: L2_TOP, corners: outerCorners(rect(r), [...L2_SLABS.map(rect), GALLERY_FACE]), shrubs: true })),
-  { r: L3, bottom: L2_TOP, top: L3_TOP, corners: outerCorners(rect(L3), [rect(L3), GALLERY_FACE]), shrubs: true },
+  // From its floor's slab: where it overhangs L2 (x 422-428, z 12-13.5, ADR-0093 O5) that is its own, and no green hangs under it.
+  { r: L3, bottom: L2_TOP - 0.35, top: L3_TOP, corners: outerCorners(rect(L3), [rect(L3), GALLERY_FACE]), shrubs: true },
   // The gallery's storeys round the atrium (ADR-0093 O1; tiers A and B until then): P1 under P2's slab, P2, P3 under the roof's.
   ...[
     [MALL_LEVELS.p1, MALL_LEVELS.p2],

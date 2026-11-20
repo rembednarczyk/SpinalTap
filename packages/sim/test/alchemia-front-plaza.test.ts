@@ -30,7 +30,7 @@ import {
   plazaCafeSolids,
   plazaFloorPieces,
 } from "../src";
-import { DEPTAK_SOLID_PROPS, FRONT_PLAZA_SOLID_PROPS } from "../src/content/alchemia";
+import { DEPTAK_SOLID_PROPS, FRONT_O5_PROPS, FRONT_PLAZA_SOLID_PROPS } from "../src/content/alchemia";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { lineOfSight } from "../src/world/hitscan";
 import { teleportPlayer } from "./helpers";
@@ -239,7 +239,8 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
     expect(PIECES.some((p) => p.kind === "carton")).toBe(true);
     expect(PIECES.some((p) => p.kind === "chair" && p.box.y1 - p.box.y0 < 0.05)).toBe(true);
     // Drawn with the street furniture, a view of the scenery before C7's (the deptak's stalls and the terraces' people, 20.11).
-    expect(WORLD_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
+    // Before the deptak's (C7) and the front's rooms' (ADR-0093 O5).
+    expect(WORLD_SCENERY.at(-3)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
   });
 
   it("keeps everything off Bajkowskiego's footway and carriageway, the ramp's trench and the main entrance's way, on the square's paving", () => {
@@ -265,7 +266,7 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
 
   it("puts its solids in props of their own, after every earlier one of Alchemia's (only C7's deptak's after them), so every id before them stays", () => {
     expect(FRONT_PLAZA_SOLID_PROPS.length).toBeGreaterThan(0);
-    expect(ALCHEMIA_PROPS.slice(-FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length, -DEPTAK_SOLID_PROPS.length)).toEqual(FRONT_PLAZA_SOLID_PROPS);
+    expect(ALCHEMIA_PROPS.slice(-FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length, -DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length)).toEqual(FRONT_PLAZA_SOLID_PROPS);
     const prisms = FRONT_PLAZA_SOLID_PROPS.reduce((n, p) => n + (p.prisms?.length ?? 0), 0);
     expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length);
   });
