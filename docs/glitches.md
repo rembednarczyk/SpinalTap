@@ -2248,7 +2248,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-943 Szyldy i neony przy kamieniach pamięci i Stolpersteine
 - Ważność: S3 · Zasięg: 12 miejsc: Lubartowska przy Stolpersteine Cygielmanów (5), kamień Marii Rechtszaft (1), Stare Miasto przy kamieniu Beli Szpiro-Nisenbaum (5, w tym neon SAKE), neon Hebi w schronie pod T2 (14,2 m w poziomie od kamienia Placu Ofiar Getta, pod ziemią)
 - Opis: Nowa kontrola skanu memorial-neon-clear (świecący znak < 20 m w poziomie od kamienia pamięci albo memorial=stolperstein) przyjęła bazę 12 miejsc. §6 ADR-0074: przy kamieniu pamięci i Stolpersteine nie ma neonów ani reklam. Większość to szyldy i reklamy z generatora szyldów mapy (w66309795, w232362884, w232362885, w232674409, w66286368, w66286369, w66293690, w66293706), plus neon gry SAKE (546,-75) i neon Hebi dev:targ-neon (428,97) w schronie pod ziemią (do decyzji: liczyć tylko znaki nad ziemią albo przenieść).
-- Status: nowy (20.11)
+- Status: w naprawie (gałąź fix/g943-szyldy-przy-pamieci); wcześniej: nowy (20.11)
 - Pakiet właściciela: tools/osm-import / generator szyldów mapy (wykluczenie stref przy pamięci), sim (neon SAKE)
 - Test przyjęcia: memorial-neon-clear: baza z 12 do 0 (albo do 1 z uzasadnieniem dla neonu pod ziemią)
 
