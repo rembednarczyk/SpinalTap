@@ -229,6 +229,19 @@ const coves = (): Piece[] => {
   ];
 };
 
+/**
+ * Luminous ceilings (a stretched membrane lit from above, warm) over L2's rooms along its glass over the
+ * square and over the walk to Lubartowska: the café's and the spine's south end, the window bar's corner.
+ * What the square sees of L2 over the screen's sides and the east wing, as the board's warm storeys.
+ */
+const luminousCeilings = (): Piece[] => {
+  const top = FRONT_CEILINGS.l2;
+  return [
+    piece(box(ARCADE_FRONT.maxX + 0.5, A.maxX - 1.9, A.minZ + 0.7, A.minZ + 3.4, top - 0.03, top - 0.005), "ceiling-light", false, false),
+    piece(box(B.minX + 0.3, B.maxX - 2.1, B.minZ + 0.7, B.minZ + 3.4, top - 0.03, top - 0.005), "ceiling-light", false, false),
+  ];
+};
+
 /** The units' floors that are the front's storeys. */
 const FRONT_STOREY_OF: Readonly<Record<string, true>> = { l1: true, l1e: true, l2: true, l3: true };
 
@@ -238,6 +251,7 @@ export const frontShellPieces = (): Piece[] => [
   ...risers(),
   ...lightPanels(),
   ...coves(),
+  ...luminousCeilings(),
   arcadeBack(),
   ...WEST_WING.map((r) => floorOf(r, L1_LEVEL, F.l1)),
   floorOf(EAST_WING, L1_LEVEL, F.l1e),

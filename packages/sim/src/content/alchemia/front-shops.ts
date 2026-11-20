@@ -18,7 +18,8 @@ const r = (x0: number, x1: number, z0: number, z1: number): Rectangle => ({ x0, 
  * the wing's glass, steps down inside it from the arcade's podium.
  */
 const L1: readonly ShopDef[] = [
-  { id: "l1-1", floor: "l1", rect: r(395.8, 400.2, 1.2, 8.4), front: "s", trade: "clothing", state: "open", sign: "NIGHT SILK", street: true },
+  // Its door on the east, its lit window display on the west under the first arches.
+  { id: "l1-1", floor: "l1", rect: r(395.8, 400.2, 1.2, 8.4), front: "s", trade: "clothing", state: "open", sign: "NIGHT SILK", street: true, door: "r" },
   { id: "l1-2", floor: "l1", rect: r(394.2, 400.2, 8.4, 12.3), front: "e", trade: "repair", state: "vacant", sign: "" },
   // Its back on the narrower north part's glass from z 14; south of it a sealed corner behind a wall.
   { id: "l1-3", floor: "l1", rect: r(396.2, 400.2, 12.3, 20.6), front: "e", trade: "pharmacy", state: "open", sign: "FARMA PLUS", back: true },

@@ -106,7 +106,8 @@ export const windowBar = (key: string, x0: number, x1: number, z: number, room: 
   const [c0, c1] = [z + room * 0.05, z + room * 0.5].sort((a, b) => a - b) as [number, number];
   const out: Piece[] = [
     inBox(x0, x1, c0, c1, y - 0.05, y + 1.05, "counter", true),
-    inBox(x0 - 0.02, x1 + 0.02, c0 - 0.03, c1 + 0.03, y + 1.05, y + 1.09, "table"),
+    // Its top backlit (an onyx bar's), warm: seen from the square and from over it.
+    inBox(x0 - 0.02, x1 + 0.02, c0 - 0.03, c1 + 0.03, y + 1.05, y + 1.09, "lightbox"),
     // The lightbox on its glass side, seen from the street.
     room > 0 ? inBox(x0, x1, c0 - 0.03, c0, y + 0.1, y + 0.95, "lightbox") : inBox(x0, x1, c1, c1 + 0.03, y + 0.1, y + 0.95, "lightbox"),
   ];
