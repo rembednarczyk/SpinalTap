@@ -1,3 +1,2 @@
 # memorial-neon-clear: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-2-1 428,97
-stare-miasto-0-0 546,-75
