@@ -67,7 +67,8 @@ VEHICLES = [
     ('veh-garbage', 'delivery', (KENNEY, 'x/Models/GLB format/garbage-truck.glb'), 0, {'kenney': True}),
     ('veh-trolleybus', 'trolleybus', BUS, -90, {
         'obj': {'Top': 'paint', 'Material': 'tyre', 'Bottom': 'wall-dark', 'Bumper': 'trim', 'Windows': 'glass-dark', 'Details': 'metal', 'Lights': 'lights'},
-        'lights': 'lights', 'roof': 'wall', 'lengthen': (0.22, 0.72)}),
+        # The whole of Quaternius' bus near (1530 triangles in Bus.obj; decision of the user of 20.11: the models as their originals).
+        'lights': 'lights', 'roof': 'wall', 'lengthen': (0.22, 0.72), 'near': 1600}),
 ]
 # The city kit's own cars (front -Z in the kit): their phone and far versions.
 KIT_CARS = [('car-sedan', 'sedan'), ('car-hatchback', 'hatchback'), ('car-taxi', 'taxi'), ('car-van', 'van'), ('car-delivery', 'delivery')]
@@ -335,10 +336,10 @@ def reduce(P, roles, target):
     return np.concatenate(outP + [Q]), outR + R
 
 
-def lods(key, P, roles, high_tris=None):
+def lods(key, P, roles, high_tris=None, near_tris=NEAR_TRIS):
     """The near, phone and far versions of a fitted model, and with `high_tris` its close-up `-hi`:
     (key, triangles, roles) each."""
-    near = reduce(P, roles, NEAR_TRIS)
+    near = reduce(P, roles, near_tris)
     lite = reduce(P, roles, LITE_TRIS)
     far = far_lod(P, roles)
     hi = [(f'{key}-hi', *reduce(P, roles, high_tris))] if high_tris else []
@@ -392,9 +393,10 @@ def build_vehicles(folder, out_dir):
         P, roles = source(folder, key, src, yaw, body, opts)
         credit = src[0] if is_ccby(src[0]) else None
         high = opts.get('high')
-        for k, Q, r in lods(key, P, roles, high):
+        near = opts.get('near', NEAR_TRIS)
+        for k, Q, r in lods(key, P, roles, high, near):
             style = f'veh-{body}' if k == key else 'veh-hi' if k.endswith('-hi') else 'veh-lite' if k.endswith('-lite') else 'veh-far'
-            emit(k, body, Q, r, [style], credit, int(high * MAX_OVER) if k.endswith('-hi') else MAX_TRIS)
+            emit(k, body, Q, r, [style], credit, int(high * MAX_OVER) if k.endswith('-hi') else max(MAX_TRIS, int(near * MAX_OVER)) if k == key else MAX_TRIS)
     for key, body in KIT_CARS:
         P, roles = kit_car(key)
         P = fit(P, body)

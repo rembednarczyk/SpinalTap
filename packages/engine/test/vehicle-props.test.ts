@@ -64,13 +64,13 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
     }
   });
 
-  it("is light: near up to 1000 triangles, the sports car's close-up up to 4500, the phone's up to 350, far ones under 200, a file under 880 KiB, on the props' palette", () => {
+  it("is light: near up to 1000 triangles (the trolleybus 1600), the sports car's close-up up to 4500, the phone's up to 350, far ones under 200, a file under 880 KiB, on the props' palette", () => {
     // Decision of the user of 19.11: the sports car at some 4 thousand triangles close up (`-hi`); the file grows with it (600 to 845 KiB).
     expect(vehicleBytes.byteLength).toBeLessThan(880 * 1024);
     expect(vehicles.swatches).toEqual(props.swatches);
     expect(triangleCount(vehicles.models.get("veh-cyber-hi")!)).toBeGreaterThan(3500);
     for (const m of vehicles.models.values()) {
-      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key.endsWith("-hi") ? 4500 : 1000;
+      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key.endsWith("-hi") ? 4500 : m.key === "veh-trolleybus" ? 1600 : 1000;
       expect(triangleCount(m), m.key).toBeLessThanOrEqual(cap);
       expect(m.key).toMatch(/^(veh|car)-[a-z-]+$/);
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
