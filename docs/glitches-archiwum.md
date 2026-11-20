@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-944 Hideo po dojściu do domu na Bramowej wstaje i krąży
+- Ważność: S3 · Zasięg: Stare Miasto, Bramowa, dom Hideo (droga „dom” z schedules.ts)
+- Opis: Pomiar agenta G-943 na main (przed #800 i po nim): Hideo dochodzi do domu na Bramowej, siada albo zasypia, po czym wstaje i krąży ok. 20 m przez ok. 3 minuty gry, potem znów śpi. Oczekiwane: po dojściu zostaje w domu do następnego punktu harmonogramu.
+- Status: odrzucone (20.11): nie glitch, reakcja na strzały (ADR-0029). Hideo śpi w domu bez przerwy na 4 ziarnach i 5 ustawieniach gracza; objaw tylko w ustawieniu seated-walk.test.ts (gracz z wyciągniętą bronią 3 m od drzwi, wait po minucie): patrol hebi-bramowa ostrzega, kolejne skoki wyczerpują ostrzeżenie, gang strzela 19 m od domu, Hideo ucieka i wraca. Ze schowaną bronią 0 strzałów. Prawdziwa przyczyna w G-946; wcześniej: w naprawie
+- Pakiet właściciela: packages/sim (content/schedules.ts, systemy harmonogramu)
+
 ### G-943 Szyldy i neony przy kamieniach pamięci i Stolpersteine
 - Ważność: S3 · Zasięg: 12 miejsc: Lubartowska przy Stolpersteine Cygielmanów (5), kamień Marii Rechtszaft (1), Stare Miasto przy kamieniu Beli Szpiro-Nisenbaum (5, w tym neon SAKE), neon Hebi w schronie pod T2 (14,2 m w poziomie od kamienia Placu Ofiar Getta, pod ziemią)
 - Opis: Nowa kontrola skanu memorial-neon-clear (świecący znak < 20 m w poziomie od kamienia pamięci albo memorial=stolperstein) przyjęła bazę 12 miejsc. §6 ADR-0074: przy kamieniu pamięci i Stolpersteine nie ma neonów ani reklam. Większość to szyldy i reklamy z generatora szyldów mapy (w66309795, w232362884, w232362885, w232674409, w66286368, w66286369, w66293690, w66293706), plus neon gry SAKE (546,-75) i neon Hebi dev:targ-neon (428,97) w schronie pod ziemią (do decyzji: liczyć tylko znaki nad ziemią albo przenieść).
