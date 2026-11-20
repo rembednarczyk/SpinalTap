@@ -231,7 +231,8 @@ const coves = (): Piece[] => {
 
 /**
  * Luminous ceilings (a stretched membrane lit from above, warm) over L2's rooms along its glass over the
- * square and over the walk to Lubartowska: the café's and the spine's south end, the window bar's corner.
+ * square and over the walk to Lubartowska (the café's and the spine's south end, the window bar's
+ * corner) and over L3's window bars.
  * What the square sees of L2 over the screen's sides and the east wing, as the board's warm storeys.
  */
 const luminousCeilings = (): Piece[] => {
@@ -239,6 +240,8 @@ const luminousCeilings = (): Piece[] => {
   return [
     piece(box(ARCADE_FRONT.maxX + 0.5, A.maxX - 1.9, A.minZ + 0.7, A.minZ + 3.4, top - 0.03, top - 0.005), "ceiling-light", false, false),
     piece(box(B.minX + 0.3, B.maxX - 2.1, B.minZ + 0.7, B.minZ + 3.4, top - 0.03, top - 0.005), "ceiling-light", false, false),
+    // L3's over its window bars along the south glass, seen from the square over L2's hedge east of the sign.
+    piece(box(L3.minX + 1.9, L3.maxX - 1.9, L3.minZ + 0.7, L3.minZ + 3.4, FRONT_CEILINGS.l3 - 0.03, FRONT_CEILINGS.l3 - 0.005), "ceiling-light", false, false),
   ];
 };
 
