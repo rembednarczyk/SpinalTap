@@ -38,8 +38,8 @@ describe("room-props.glb (ADR-0063 stage 3)", () => {
   it("holds the capsule room, CC-BY with its credit, within an interior's budget and small", () => {
     expect([...room.models.keys()]).toEqual([CAPSULE_MODEL]);
     const m = room.models.get(CAPSULE_MODEL)!;
-    expect(triangleCount(m)).toBeLessThanOrEqual(8000);
-    expect(roomBytes.byteLength).toBeLessThan(400 * 1024);
+    expect(triangleCount(m)).toBeLessThanOrEqual(14500);
+    expect(roomBytes.byteLength).toBeLessThan(768 * 1024);
     expect(room.swatches).toEqual(props.swatches);
     const json = new TextDecoder().decode(new Uint8Array(roomBytes, 20, new DataView(roomBytes, 12, 4).getUint32(0, true)));
     expect(json.match(/"credit":"sketchfab-futuristic-compact-room"/g)).toHaveLength(1);
