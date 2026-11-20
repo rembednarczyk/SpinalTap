@@ -147,6 +147,8 @@ const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), .
  * not drawn among them.
  */
 const FRONT_IN = [...frontShellInsidePieces(), ...frontRoomPieces(), ...l3Pieces()];
+/** The front's rooms' fittings (O5) with the solids not drawn among them: the glitch scan's `alchemia-front-footprint` measures them. */
+export const FRONT_ROOM_PIECES: readonly Piece[] = FRONT_IN;
 /** The front's units (O5), a prop each among the last of Alchemia's. */
 const FRONT_SHOP_PIECES = FRONT_SHOP_BUILDS.flatMap((b) => b.pieces);
 /** The square before the front (C5, 19.11): its podium, stairs and fountain, its kiosks and café; drawn with the front. */

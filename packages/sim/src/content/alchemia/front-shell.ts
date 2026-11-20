@@ -102,7 +102,9 @@ const flight = (along: "x" | "z", from: number, a0: number, a1: number, top: num
   for (let k = 1; k < n; k++) {
     const [s0, s1] = [from + (k - 1) * STEP_GOING, from + k * STEP_GOING];
     const y = top - k * rise;
-    out.push(piece(along === "x" ? box(s0, s1, a0, a1, FOOT, y) : box(a0, a1, s0, s1, FOOT, y), "step", inside));
+    // Down to the ground under the wings outside; inside, on the floor.
+    const y0 = inside ? ground - 0.05 : FOOT;
+    out.push(piece(along === "x" ? box(s0, s1, a0, a1, y0, y) : box(a0, a1, s0, s1, y0, y), "step", inside));
     // Cheek walls a hand over the treads either side where the flight stands high (over 0.5 m).
     if (cheeks && y - ground > 0.5) {
       for (const [c0, c1] of [[a0 - 0.15, a0], [a1, a1 + 0.15]] as const) out.push(piece(along === "x" ? box(s0, s1, c0, c1, FOOT, y + 0.95) : box(c0, c1, s0, s1, FOOT, y + 0.95), "parapet", inside));
