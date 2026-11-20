@@ -23,7 +23,7 @@ const inActTwo = (stepIndex: number, flags: string[] = [], at?: { x: number; y: 
     domain: {
       ...snap.domain,
       quests: { m0_first_contract: { status: "completed" }, [QUEST_ECHO.id]: { status: "completed" }, [QUEST_MIRROR.id]: { status: "active", stepIndex } },
-      story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: "aya", act2Ending: null },
+      story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: "aya", act2Ending: null, act3Ending: null },
       flags: ["act1_ending", endingFlag("aya"), ...flags].sort(),
     },
   });

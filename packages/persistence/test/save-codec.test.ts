@@ -115,7 +115,7 @@ describe("migrations", () => {
     const { story: _s, ...domain } = s.domain;
     const fresh = decodeSave("m2", wrap({ ...s, version: 4, domain }));
     expect(fresh.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(fresh.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
+    expect(fresh.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null, act3Ending: null });
     expect(fresh.domain.quests).toEqual(s.domain.quests);
 
     const done = { ...domain, quests: { m0_first_contract: { status: "completed" } } };
@@ -136,13 +136,13 @@ describe("migrations", () => {
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: m1 }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.reputation.clinic).toBe(0);
-    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null, act3Ending: null });
     expect(loaded.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
   });
 
   it("keeps story choices and the ending through the round trip", () => {
     const s = snapshot();
-    const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const, act2Ending: null };
+    const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const, act2Ending: null, act3Ending: null };
     const withStory = { ...s, domain: { ...s.domain, story } };
     expect(decodeSave("st", encodeSave(withStory)).domain.story).toEqual(story);
   });
@@ -444,7 +444,7 @@ describe("act II migration (v8 to v9, ADR-0023)", () => {
     const loaded = decodeSave("v8", wrap(v8Payload()));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.reputation.kagami).toBe(0);
-    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null, act3Ending: null });
     expect(loaded.domain.quests).toEqual(snapshot().domain.quests);
     expect(loaded.domain.flags).toEqual(["met_fixer"]);
   });
@@ -457,7 +457,7 @@ describe("act II migration (v8 to v9, ADR-0023)", () => {
     );
     expect(loaded.domain.quests).toEqual({ ...done, m3_lustro: { status: "active", stepIndex: 0 } });
     expect(loaded.domain.flags).toEqual(["act1_ending", "ending:seki", "met_fixer"]);
-    expect(loaded.domain.story).toEqual({ choices: { case: "sealed", name: "silent", crash: "ren" }, ending: "seki", act2Ending: null });
+    expect(loaded.domain.story).toEqual({ choices: { case: "sealed", name: "silent", crash: "ren" }, ending: "seki", act2Ending: null, act3Ending: null });
   });
 
   it("never restarts act II, keeps what is there and tolerates a missing domain", () => {
@@ -476,7 +476,7 @@ describe("act II migration (v8 to v9, ADR-0023)", () => {
 
   it("validates the act-II ending of a current save", () => {
     const s = snapshot();
-    const story = { choices: { archive: "hebi" as const, rooftop: "alone" as const }, ending: "aya" as const, act2Ending: "hebi" as const };
+    const story = { choices: { archive: "hebi" as const, rooftop: "alone" as const }, ending: "aya" as const, act2Ending: "hebi" as const, act3Ending: null };
     expect(decodeSave("st", encodeSave({ ...s, domain: { ...s.domain, story } })).domain.story).toEqual(story);
     const bad = { ...s, domain: { ...s.domain, story: { ...story, act2Ending: "aya" } } };
     expect(findSchemaError(bad as unknown as Record<string, unknown>)).toBe("story ending");

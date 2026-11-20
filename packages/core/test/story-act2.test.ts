@@ -114,7 +114,8 @@ describe("act II quest (Lustro)", () => {
     expect(step()?.id).toBe("overpass");
     advance(recalledFlag("last_call"));
     expect(log[QUEST_MIRROR.id]).toEqual({ status: "completed" });
-    expect(activeMainStep(log, QUEST_DEFINITIONS)).toBeNull();
+    // Act III (ADR-0095) takes over the main thread.
+    expect(activeMainStep(log, QUEST_DEFINITIONS)?.step.id).toBe("source_lead");
   });
 });
 

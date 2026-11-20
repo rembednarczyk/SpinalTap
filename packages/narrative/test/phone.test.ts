@@ -6,7 +6,7 @@ describe("phone texts (ADR-0029)", () => {
   it("has a knot for every fixer and situation the simulation sends", () => {
     const story = compileInk(STORY_SOURCE);
     // Phone texts call no external functions; the rest of the story does, so bind no-ops.
-    for (const name of ["has_flag", "set_alias", "change_rep", "set_flag", "has_memory", "accept_contract", "offer_contract", "story_choice", "complete_contract", "unlock_memory", "end_act", "end_act2", "deliver_contract", "assist_crime"])
+    for (const name of ["has_flag", "set_alias", "change_rep", "set_flag", "has_memory", "accept_contract", "offer_contract", "story_choice", "complete_contract", "unlock_memory", "end_act", "end_act2", "deliver_contract", "assist_crime", "end_act3"])
       story.BindExternalFunction(name, () => 0);
     for (const fixer of ["kaito", "hana", "genzo"])
       for (const situation of ["offer", "paid", "failed"]) {
@@ -20,7 +20,7 @@ describe("phone texts (ADR-0029)", () => {
   it("has Genzō's texts of W-3's loud way and of the batch shipped unnoticed, in both languages (G-912)", () => {
     for (const source of Object.values(STORY_SOURCES)) {
       const story = compileInk(source);
-      for (const name of ["has_flag", "set_alias", "change_rep", "set_flag", "has_memory", "accept_contract", "offer_contract", "story_choice", "complete_contract", "unlock_memory", "end_act", "end_act2", "deliver_contract", "assist_crime"])
+      for (const name of ["has_flag", "set_alias", "change_rep", "set_flag", "has_memory", "accept_contract", "offer_contract", "story_choice", "complete_contract", "unlock_memory", "end_act", "end_act2", "deliver_contract", "assist_crime", "end_act3"])
         story.BindExternalFunction(name, () => 0);
       for (const knot of ["phone_genzo_paid_loud", "phone_genzo_failed_shipped"]) {
         story.ChoosePathString(knot);

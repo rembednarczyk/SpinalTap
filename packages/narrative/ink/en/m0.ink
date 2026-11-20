@@ -234,6 +234,10 @@ KAITO: I hear you're doing something for Hana. Finish with her, then we'll talk.
 { quest_step == "ren_trail":
     -> ren_trail
 }
+// Act III (ADR-0095, m3-zrodlo.ink): after the "street" ending the trail to the Castle starts with her.
+{ quest_step == "source_lead" && act2_ending == "street":
+    -> zrodlo_ume
+}
 { act2_ending == "street" && not has_flag("ume_archive"):
     UME: Mrs. Sato got a chip with her husband's voice. She listens to it every evening by the open window.
     UME: I don't know if it helps her. But at least that voice belongs to her.

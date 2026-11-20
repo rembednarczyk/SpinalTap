@@ -12,6 +12,7 @@ export * from "./interiors";
 export * from "./interior-areas";
 export * from "./capsule-room";
 export * from "./alchemia";
+export { ARCHIVIST_SPOT, CASTLE_ACT3_ACTORS, KUROSAWA_CASTLE_SPOT } from "./castle-act3";
 export * from "./metro";
 export { FLIGHT, FLIGHT_HEADROOM, PLATFORM, PLATFORM_CAR, PLATFORM_DEPTH, type PlatformDef } from "./metro-platform";
 export * from "./encounters";

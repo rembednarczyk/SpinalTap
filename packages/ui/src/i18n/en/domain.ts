@@ -166,12 +166,17 @@ export const enDomain = {
   "memory.last_call.desc": "A wreck, smoke and an earpiece. Ren's voice keeps talking, and someone else sits behind it. Now you know what a planted voice sounds like, and your hand doesn't shake when someone shouts in your ear. Aim stability +10%.",
   "memory.mirror.title": "Memory: the mirror",
   "memory.mirror.desc": "The full recording from Kagami: a kitchen with a window on the port, school, the first run. It all adds up, and you feel nothing about any of it. Crit chance +5%, damage +2.",
-  // Endings of act I and act II.
+  "memory.chapel.title": "Memory: the chapel",
+  "memory.chapel.desc": "The Trinity Chapel, six-hundred-year-old frescoes and your mother squeezing your hand. There was no signal in the chapel, so nobody recorded it. The one memory Kagami doesn't have. Armour +1, aim stability +5%.",
+  // Endings of acts I, II and III.
   "ending.aya.title": "Aya",
   "ending.seki.title": "Seki Senshi",
   "ending.street.title": "The street's archive",
   "ending.hebi.title": "Partners",
   "ending.kagami.title": "The copy",
+  "ending.erase.title": "Silence",
+  "ending.release.title": "The city's echo",
+  "ending.keep.title": "The keeper",
   // Factions.
   "faction.fixers": "Kaito's network",
   "faction.hebi": "Hebi gang",
@@ -197,6 +202,12 @@ export const enDomain = {
   "quest.m3_lustro.overpass": "Kurosawa from Kagami is waiting on the square behind Alchemia, by the lift. Decide what happens to the archive",
   "quest.m3_lustro.overpass.cleared": "Kagami's cleaners are down. Go back up to Ren on Alchemia's roof",
   "quest.m3_lustro.overpass.ambush": "Kagami's cleaners are attacking on the square behind Alchemia. Fight them off",
+  "quest.m3_zrodlo.title": "Source",
+  "quest.m3_zrodlo.source_lead": "People from the archive are vanishing. Talk to grandma Ume (the deptak by the clinic)",
+  "quest.m3_zrodlo.source_lead.ren": "Copies of the archive call one address at night. Talk to Ren on Alchemia's roof",
+  "quest.m3_zrodlo.source_lead.kurosawa": "Kurosawa calls you in for calibration. Meet him on the Castle's courtyard",
+  "quest.m3_zrodlo.chapel": "The Kagami archive's core stands in the Trinity Chapel at the Castle. Talk to the archivist by the door",
+  "quest.m3_zrodlo.core_choice": "Go back to the archivist by the Chapel and decide what becomes of the core",
   // Contracts: kinds, sites, objectives, notes and bonus conditions.
   "contract.kind.eliminate": "Elimination",
   "contract.kind.delivery": "Run",

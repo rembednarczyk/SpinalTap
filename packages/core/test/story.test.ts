@@ -82,7 +82,8 @@ describe("memory flashbacks", () => {
     let c = createCharacter();
     for (const id of RECALL_MEMORIES) c = unlockMemory(c, id);
     const s = deriveStats(c);
-    expect(s.armor).toBe(base.armor + 2);
+    // The case (+2) and the chapel (+1, act III).
+    expect(s.armor).toBe(base.armor + 3);
     expect(s.critMultiplier).toBeCloseTo(base.critMultiplier + 0.25);
     expect(s.moveSpeed).toBeCloseTo(base.moveSpeed + 0.4);
   });
