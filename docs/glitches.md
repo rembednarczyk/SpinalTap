@@ -2245,12 +2245,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: P2 po tropie na parterze wraca na trasę antresoli w 60 s
 - 17.11 (orkiestrator, tryb bez agentów): sam powrót na trasę przez graf poziomów (routeAcrossLevels w HoldPosition) nie wystarcza. Sonda P2 (W3_PATROL_MEZZANINE, ziarno 3): z tropem do (2522; 416) schodzi i utyka na schodach w (2508,4; -27,6; 428,9), 1 m nad podłogą hali, z tropem na zawsze (head() bierze cel wprost, gdy heightApart > SAME_FLOOR, a pursueTo uznaje 1 m za to samo piętro, LEVEL_GAP 1,5 m); z tropem do (2510; 424) u stóp schodów nie rusza wcale. Naprawa wymaga zmian w ganger-walk (pursueTo/head na schodach) i pewnie zmienia złote hashe: osobna praca, nie drobiazg. Zmian nie wypchnięto.
 
-### G-946 Czekanie w trakcie ostrzeżenia gangu prowokuje gang
-- Ważność: S2 · Zasięg: każdy posterunek gangu (TerritoryWarned), okno czekania
-- Opis: Godz. 12:00, gracz 3 m przed posterunkiem hebi-bramowa z wyciągniętą bronią: przychodzi TerritoryWarned (3 s świata), potem wait 60 min. Skoki czasu wyczerpują ostrzeżenie bez szansy na schowanie broni: 3 zdarzenia TerritoryProvoked, grudge 5, prowokacja na kilka godzin. waitBlock (packages/app/src/presenters/wait.ts) nie blokuje czekania przy trwającym ostrzeżeniu (warnedUntil). Znalezisko agenta G-944 (sonda w scratchpad g944-probe3.test.ts).
-- Status: w PR #802 (20.11, gałąź fix/g946-czekanie-ostrzezenie, 5295a17); wcześniej: w naprawie
-- Pakiet właściciela: packages/app (presenters/wait.ts) albo packages/sim (territory-system.ts)
-
 ### G-947 Ławki i pastorały planu na T0 przed Alchemią zdjęte przez bryły gry
 - Ważność: S3 · Zasięg: T0 przed frontem Alchemii (x 388–436, z −3…28)
 - Opis: Kontrola plan-prop-under-game (PR #803): 12 ręcznych punktów planu (inOsm: false) stoi tam, gdzie gra postawiła bryły C5 i O5, więc import je zawsze zdejmuje: ławki bench-west#0–3 (404,75; 0/6/12/18: podium C5, kolumna przejścia, skrzydło L1), bench-south#0–1 (388,5 i 394,5; −0,6: obrys frontu, podium), pastorały #1–4, #6, #7 ((401,5; −2,8), (388,5; 12), (406,6; 25), (412,5; 27,8), (435,4; 14), (429; 23,6)). Na T0 gra pokazuje 5 z 11 ławek i 3 z 9 pastorałów planu. Poprawka: przenieść punkty planu na wolne miejsca placu i tarasów albo usunąć z planu z wpisem w topografii.

@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-946 Czekanie w trakcie ostrzeżenia gangu prowokuje gang
+- Ważność: S2 · Zasięg: każdy posterunek gangu (TerritoryWarned), okno czekania
+- Opis: Godz. 12:00, gracz 3 m przed posterunkiem hebi-bramowa z wyciągniętą bronią: przychodzi TerritoryWarned (3 s świata), potem wait 60 min. Skoki czasu wyczerpują ostrzeżenie bez szansy na schowanie broni: 3 zdarzenia TerritoryProvoked, grudge 5, prowokacja na kilka godzin. waitBlock (packages/app/src/presenters/wait.ts) nie blokuje czekania przy trwającym ostrzeżeniu (warnedUntil). Znalezisko agenta G-944 (sonda w scratchpad g944-probe3.test.ts).
+- Status: naprawione (20.11, #802 scalony); wcześniej: w PR #802 (20.11, gałąź fix/g946-czekanie-ostrzezenie, 5295a17); wcześniej: w naprawie
+- Pakiet właściciela: packages/app (presenters/wait.ts) albo packages/sim (territory-system.ts)
+
 ### G-944 Hideo po dojściu do domu na Bramowej wstaje i krąży
 - Ważność: S3 · Zasięg: Stare Miasto, Bramowa, dom Hideo (droga „dom” z schedules.ts)
 - Opis: Pomiar agenta G-943 na main (przed #800 i po nim): Hideo dochodzi do domu na Bramowej, siada albo zasypia, po czym wstaje i krąży ok. 20 m przez ok. 3 minuty gry, potem znów śpi. Oczekiwane: po dojściu zostaje w domu do następnego punktu harmonogramu.
