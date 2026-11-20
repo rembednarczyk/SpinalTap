@@ -106,6 +106,9 @@ describe("a car of Alchemia's ramp held up by Seki on its lane", () => {
     // Until the car has stood by her for 8 s (going round her or waiting), at most 50 s.
     for (let i = 0; i < 60 * 50 && near < 60 * 8; i++) {
       session.step(EMPTY_INPUT);
+      // Without the walkers and gangers T0's chunks bring in at the first step: no car gives them way here (every car's
+      // pose and hers at every step the same with them and without), and their minds and steps were a third of the time.
+      if (i === 0) for (const b of [...session.sim.world.with("body")]) if (!b.player) session.sim.world.remove(b);
       watch(`${i}`);
     }
     expect(near, "the car came up to her").toBeGreaterThan(0);
