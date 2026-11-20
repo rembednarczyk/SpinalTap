@@ -135,7 +135,7 @@ export class MapCity {
       this.grid.cellOf(cell).buildings.add(id);
       this.grid.touchUnder(ring, view);
     } else {
-      this.entries.addGround(id, { surface: view.surface, ring, y: at.y, bounds, cell, ...(view.deck ? { deck: view.deck } : {}) });
+      this.entries.addGround(id, { surface: view.surface, ring, y: at.y, bounds, cell, ...(view.deck ? { deck: view.deck } : {}), ...(view.zebra ? { zebra: toRing(view.zebra, at) } : {}) });
       this.grid.cellOf(cell).grounds.add(id);
     }
     // Neighbours' firewalls and kerbs depend on this one, and the spans across the street (ADR-0051).

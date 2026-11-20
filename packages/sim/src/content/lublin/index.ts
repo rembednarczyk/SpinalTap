@@ -67,7 +67,7 @@ export const buildingView = (b: LublinBuildingData, district?: LublinChunkData["
 };
 
 /** The `ground` view of a surface, positioned at the world origin (its points are world points). */
-export const groundView = (g: LublinGroundData): ViewDescriptor => ({ kind: "ground", surface: g.surface, outline: toPoints(g.outline) });
+export const groundView = (g: LublinGroundData): ViewDescriptor => ({ kind: "ground", surface: g.surface, outline: toPoints(g.outline), ...(g.zebra ? { zebra: toPoints(g.zebra) } : {}) });
 /** A line of road markings (ADR-0052), positioned at the world origin. */
 export const markingView = (m: LublinMarkingData): ViewDescriptor => ({ kind: "road-marking", marking: m.kind, line: toPoints(m.line) });
 

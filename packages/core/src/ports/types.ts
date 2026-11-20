@@ -207,6 +207,8 @@ export type ViewDescriptor =
        * deck's height (straight between the two, level across) instead of on the terrain.
        */
       readonly deck?: { readonly a: Vec3; readonly b: Vec3 };
+      /** A zebra's piece cut by its chunk's edge: the whole band it was cut from, for the stripes to line up across chunks (G-958). */
+      readonly zebra?: readonly GroundPoint[];
     }
   /**
    * The street furniture of a chunk (ADR-0047): lamps, benches, trees, bollards and the rest,

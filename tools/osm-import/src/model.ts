@@ -58,6 +58,8 @@ export interface GroundOut {
   readonly outline: readonly number[];
   /** Laid on a bridge, not on the terrain. */
   readonly bridge?: true;
+  /** A zebra's piece the chunk's edge cut from its band: the whole band's ring `[x0, z0, …]`, for its stripes to line up across the chunks (G-958). */
+  readonly zebra?: readonly number[];
   /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
   readonly deck?: readonly number[];
   /** Laid in a pedestrian street's frontage (`bare-fronts.ts`, G-853): no paving's edge the furniture reads. */

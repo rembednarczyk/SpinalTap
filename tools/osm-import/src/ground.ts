@@ -457,7 +457,10 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     for (const p of pieces) {
       if (p.length < 3) continue;
       const ring = ccw(p);
-      const g: GroundOut = { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck };
+      // A zebra cut by the chunk's edge keeps its whole band, so the renderer stripes every piece in one frame (G-958).
+      const cut = b.surface === "crossing" && Math.abs(signedArea(ring)) < Math.abs(signedArea(round(ccw(b.ring)))) - 0.5;
+      const zebra = cut ? { zebra: round(ccw(b.ring)).flatMap((q) => [q.x, q.z]) } : {};
+      const g: GroundOut = { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck, ...zebra };
       if (b.kerbStone) KERB_STONES.add(g);
       out.push({ g, order: ORDER[b.surface], source: b.source, k });
     }
