@@ -20,6 +20,7 @@ import { marketEntrances, marketStalls } from "./props-market.ts";
 import { EntranceZones, boardDoor } from "./props-entrances.ts";
 import { venueGardens } from "./props-gardens.ts";
 import { venueAFrames } from "./props-aframes.ts";
+import { startPlates } from "./props-plates.ts";
 import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
@@ -339,6 +340,8 @@ const OBSTACLE_REACH = Math.max(...Object.values(OBSTACLE));
  */
 const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string, tags: NodeTags): number | string | undefined => {
   if (prop === "flagpole") return item.kind === "flagpole-tall" ? 1 : 0;
+  // The plan's plates and boards stand on posts; only the streets' name plates hang on walls (ADR-0094 stage 3).
+  if (prop === "street-plate") return 0;
   if (prop === "advertising-column") return `${item.id} ${item.look ?? ""}`.toLowerCase().includes("żółty") ? 1 : 0;
   if (prop !== "monument" && prop !== "artwork") return undefined;
   const pick = artShape(key, tags.get(key), item.kind);
@@ -456,7 +459,11 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   for (const x of venueGardens(site, clear, zones, boards, placed, gardenCaps)) push({ ...x, from: VENUE_GARDENS });
   for (const x of venueAFrames(site, clear, zones, boards, placed, aFrameCaps)) push({ ...x, from: VENUE_A_FRAMES });
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
-  for (const item of deferred) for (const x of placeStreetGroup(site, item, placed, (q) => facingOf(site, q))) placed.push({ ...x, from: item.id });
+  // The streets' name plates at each street's start, on the corner walls (ADR-0094 stage 3).
+  for (const item of deferred) {
+    const group = item.kind === "street-plate" ? startPlates(site, item, market.addresses ?? []) : placeStreetGroup(site, item, placed, (q) => facingOf(site, q));
+    for (const x of group) placed.push({ ...x, from: item.id });
+  }
   // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.
   for (const x of foodStalls(site, clear, boards, placed)) placed.push({ ...x, from: FOOD_STALLS });
   return { placed, fromLine };
