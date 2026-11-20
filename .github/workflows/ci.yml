@@ -154,12 +154,21 @@ jobs:
             exit 1
           }
 
-  # G-376: one job ran the whole suite with coverage in 18.6 min against its 20 min limit. Two
+  # G-376: one job ran the whole suite with coverage in 18.6 min against its 20 min limit. The
   # shards run in parallel and write blob reports; the checks job merges them and applies the
   # coverage thresholds once, on the merged coverage (a shard alone covers only part of the code).
-  # A light pull request (ADR-0046) runs `vitest related` on its files, in the same two shards and
+  # A light pull request (ADR-0046) runs `vitest related` on its files, in the same shards and
   # without coverage; a shard Vitest gives no file passes (`--passWithNoTests`). No file with a
   # unit test (an e2e spec alone): no job.
+  # Three since 20.11: two shards took 12.0-17.4 and 11.5-19.2 min of the 20 on seven green runs
+  # of main, and #804 (`vitest related` reached almost every file) had shard 1 cancelled at 20 min
+  # with 456 of its about 460 files done, each 1.6 times slower than on main (a slow runner).
+  # Vitest splits by a hash of the path, not by time: the times of five of those runs split the
+  # same way give the heaviest shard 27-35 min of file time against 37-50 with two (about 10-13
+  # min of wall time against 14-19), and a fourth shard only 21-28 (the hash keeps the heaviest
+  # files together). `strategy.job-total` gives Vitest the number of shards; job checks merges
+  # every blob-*, and the time gate reads every unit-times-* of a run, from two shards or three
+  # (tools/test-time/src/artifacts.ts).
   unit:
     # No matrix value in the name, as with the e2e shards.
     name: Unit tests
@@ -170,7 +179,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -190,7 +199,7 @@ jobs:
           UNIT: ${{ needs.changes.outputs.unit }}
           UNIT_FILES: ${{ needs.changes.outputs.unit_files }}
         run: |
-          reporters=(--reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/2)
+          reporters=(--reporter=default --reporter=blob --reporter=github-actions --reporter=./tools/test-time/src/reporter.ts --shard=${{ matrix.shard }}/${{ strategy.job-total }})
           if [ "$UNIT" = "full" ]; then
             pnpm exec vitest run --coverage "${reporters[@]}"
             exit
