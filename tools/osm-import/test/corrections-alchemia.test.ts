@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ALCHEMIA_NAV, P1_STAIR } from "../../../packages/sim/src/content/alchemia/index.ts";
+import { ALCHEMIA_NAV, MAIN_WAY_X, P1_RAMP, P1_STAIR, entrancePieces } from "../../../packages/sim/src/content/alchemia/index.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
+import { groundY } from "../../../packages/sim/src/content/lublin/terrain.ts";
 import { ALCHEMIA_AREAS, REPLACED_WAYS, T0_LAWNS, withoutReplaced } from "../src/corrections-alchemia.ts";
 import { pointInRing } from "../src/geometry.ts";
 
@@ -92,6 +93,7 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     return off;
   };
   const SQUARE: ReadonlySet<string> = new Set(["square"]);
+  const PAVED: ReadonlySet<string> = new Set(["square", "footway", "sidewalk", "cobble"]);
 
   // ADR-0093 O2b moved P-1's stair house east, onto the east lawn's west end: its door opened onto the grass.
   it("keeps T0's setts 1.5 m before P-1's stair house's door and along the level graph's way to it from the main entrance's way (G-940)", () => {
@@ -102,6 +104,17 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     const [axis, door] = ["alchemia-t0-axis", "alchemia-p1-stair-out"];
     expect(ALCHEMIA_NAV.edges.some((e) => (e.a === axis && e.b === door) || (e.a === door && e.b === axis))).toBe(true);
     off.push(...offAlong(at.get(axis)!, at.get(door)!, SQUARE));
+    expect(off.slice(0, 20).join(" ")).toEqual("");
+  });
+
+  // The main entrance's way (ADR-0093 O2b) runs over the car park's notch by the pavilion, bare ground, and a strip
+  // of it was left between the footway's band and the square at the way's mouth.
+  it("paves the main entrance's way from Bajkowskiego's footway to z 0 and under its strips of light in the paving (G-941)", () => {
+    const off: string[] = [];
+    for (let x = MAIN_WAY_X - 2; x <= MAIN_WAY_X + 2 + 1e-6; x += 0.25) off.push(...offAlong({ x, z: P1_RAMP.top - 0.8 }, { x, z: 0 }, PAVED));
+    const strips = entrancePieces().filter((p) => p.kind === "led-green" && p.box.y1 < groundY(p.box.x0, p.box.z0) + 0.5);
+    expect(strips.length).toBeGreaterThan(20);
+    for (const { box: b } of strips) for (const x of [b.x0, b.x1]) off.push(...offAlong({ x, z: b.z0 }, { x, z: b.z1 }, PAVED));
     expect(off.slice(0, 20).join(" ")).toEqual("");
   });
 

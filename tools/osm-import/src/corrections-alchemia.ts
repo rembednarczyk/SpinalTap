@@ -77,6 +77,31 @@ const CAR_PARK: readonly Pt[] = [
   { x: 421.98, z: -8.82 },
 ];
 
+/**
+ * T0's square: the car park's outline to its east corner by Lubartowska (436.1; 4.42), then not
+ * along its notch's edge but along the triangular pavilion's north-west side (`PAVILION_OUTLINE` in
+ * sim's `alchemia/pavilion.ts`, the annex standing out of it) to its west corner (423.3; −8.7), and
+ * down into the footway w232464426's band along Bajkowskiego, back to the car park's edge under the
+ * driveway. The notch was bare ground between the square and the pavilion, with a strip of it
+ * between the band and the square, and the main entrance's way (ADR-0093 O2b) runs over both
+ * (G-941, T-331). The import rounds the corners to 0.1 m, so they stand a few centimetres under the
+ * pavilion's walls and in the band (which it cuts the square off), not short of them.
+ */
+const T0_SQUARE: readonly Pt[] = [
+  ...CAR_PARK.slice(0, 6),
+  { x: 435, z: 4.5 },
+  { x: 428.5, z: -2.8 },
+  { x: 428.5, z: 1 },
+  { x: 424.5, z: 1 },
+  { x: 424.5, z: -3.5 },
+  { x: 427.9, z: -3.5 },
+  { x: 423.3, z: -8.7 },
+  { x: 423.3, z: -9.2 },
+  { x: 418.3, z: -9.5 },
+  // Under the driveway, on the car park's edge as the import rounds it: west of it the edge stays.
+  { x: 414.3, z: -8.9 },
+];
+
 /** A lawn: a rectangle with its corners cut by `c` (m), counter-clockwise. */
 const lawn = (x0: number, x1: number, z0: number, z1: number, c: number): Pt[] => [
   { x: x0 + c, z: z0 },
@@ -133,18 +158,19 @@ const DRIVEWAY: readonly AddedArea[] = [
 ].map((d): AddedArea => ({ ...d, tags: { "area:highway": "service", surface: "asphalt" }, nodesOf: d.ring.map(() => null), reason: DRIVEWAY_REASON, ref: "T-241" }));
 
 /**
- * T0's square (T-241): the car park's outline paved as a square, the deptak's setts, and three lawns
- * in it, which the import cuts out of the paving as holes (`openPavings`): west of the ramp's trench
- * over P-1's deck, east of it from P-1's stair house to metro B's pavilion, and one by Bajkowskiego
- * west of the driveway. They keep clear of the trench's parapets and their beds, the pergolas' walks,
- * the stair house's door and the level graph's way to it from the main entrance's way (`mall-nav.ts`).
+ * T0's square (T-241): the car park's outline paved as a square up to the pavilion (`T0_SQUARE`),
+ * the deptak's setts, and three lawns in it, which the import cuts out of the paving as holes
+ * (`openPavings`): west of the ramp's trench over P-1's deck, east of it from P-1's stair house to
+ * metro B's pavilion, and one by Bajkowskiego west of the driveway. They keep clear of the trench's
+ * parapets and their beds, the pergolas' walks, the stair house's door and the level graph's way to
+ * it from the main entrance's way (`mall-nav.ts`).
  */
 export const ALCHEMIA_AREAS: readonly AddedArea[] = [
   {
     id: "T-241/plac-t0",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
-    ring: CAR_PARK,
-    nodesOf: CAR_PARK.map(() => "w173531008"),
+    ring: T0_SQUARE,
+    nodesOf: T0_SQUARE.map((_, k) => (k < 6 ? "w173531008" : null)),
     reason: "plac T0 Alchemii z kostki w obrysie dawnego parkingu w173531008, styl deptaku Krakowskiego Przedmieścia (decyzja użytkownika 7.11)",
     ref: "T-241",
   },
