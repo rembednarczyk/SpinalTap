@@ -134,12 +134,13 @@ describe("Alchemia's front light (ADR-0074 C4)", () => {
 
   it("draws the lightbox and the emitters in the tiers' mesh, the screens outside as dark panels without bands (C4)", () => {
     // C4: the screens outside lost their bands (their pictures are the signs' now).
-    const g = alchemiaGeometry(kitData, pictureScreens());
+    const screens = pictureScreens();
+    const g = alchemiaGeometry(kitData, screens);
     const outside = new Set<string>();
     for (const s of [g.tiers, g.outside, g.inside]) {
       for (let v = 0; v < s.positions.length / 3; v++) {
         const [x, y, z] = [s.positions[v * 3]!, s.positions[v * 3 + 1]!, s.positions[v * 3 + 2]!];
-        const on = pictureScreens().some(({ box: b }) => x > b.x0 - 0.03 && x < b.x1 + 0.03 && y > b.y0 - 0.03 && y < b.y1 + 0.03 && z > b.z0 - 0.03 && z < b.z1 + 0.03);
+        const on = screens.some(({ box: b }) => x > b.x0 - 0.03 && x < b.x1 + 0.03 && y > b.y0 - 0.03 && y < b.y1 + 0.03 && z > b.z0 - 0.03 && z < b.z1 + 0.03);
         if (on) outside.add(`${s.uvs[v * 2]},${s.uvs[v * 2 + 1]}`);
       }
     }
