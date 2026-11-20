@@ -158,6 +158,33 @@ describe("M3 acceptance: act III from the end of act II to each of its endings",
     expect(present(session, "kurosawa-castle")).toBe(false);
     expect(ui.getState().dialogue).toBeNull();
 
+    // The end screen (ADR-0095 stage 2): once, over the stood game, then back to the city.
+    const end = ui.getState().endScreen;
+    expect(end?.acts).toEqual([
+      { act: "endScreen.act1", ending: "ending.aya.title" },
+      { act: "endScreen.act2", ending: `ending.${act2}.title` },
+      { act: "endScreen.act3", ending: `ending.${act3}.title` },
+    ]);
+    expect(end?.choices).toEqual([
+      "story.choice.case.opened",
+      "story.choice.name.spoken",
+      "story.choice.crash.wheel",
+      "story.choice.rooftop.together",
+      "story.choice.voice.listened",
+      "story.choice.job.taken",
+      `story.choice.archive.${act2}`,
+      `story.choice.core.${act3}`,
+    ]);
+    expect(end?.memories).toBeGreaterThanOrEqual(1);
+    const tick = session.sim.tick;
+    steps(session, 3);
+    expect(session.sim.tick).toBe(tick);
+    session.intents.closeEndScreen();
+    expect(ui.getState().endScreen).toBeNull();
+    expect(session.sim.domain.flags).toContain("seen:end_screen");
+    steps(session, 3);
+    expect(ui.getState().endScreen).toBeNull();
+
     // The ending survives a save and a load.
     expect(await session.saves.saveAsync("act3")).toBe(true);
     const saved = session.saves.snapshot();
@@ -165,6 +192,8 @@ describe("M3 acceptance: act III from the end of act II to each of its endings",
     expect(await after.session.saves.loadAsync("act3")).toBe(true);
     const loaded: SaveSnapshot = after.session.saves.snapshot();
     expect(loaded.domain).toEqual(saved.domain);
+    steps(after.session, 2);
+    expect(after.ui.getState().endScreen).toBeNull();
     goTo(after.session, { ...ARCHIVIST_SPOT, x: ARCHIVIST_SPOT.x - 6 });
     talkTo(after.session, "archivist");
     expect(allText(after.ui)).toContain(act3 === "keep" ? "Rdzeń słucha teraz ciebie." : "Kaplica znowu jest cicha.");

@@ -1,0 +1,1 @@
+- Po epilogu wątku głównego pojawia się ekran końca: zakończenie każdego z trzech aktów, wybory, które do nich prowadziły, poziom, liczba zleceń i odzyskanych wspomnień. Przycisk „Wróć do miasta” (albo Esc, Enter) wraca do wolnej gry, a ekran nie pokazuje się drugi raz.

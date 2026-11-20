@@ -33,6 +33,7 @@ export class SessionLoop {
     c.radio.tick(1 / SIM_HZ);
     patchUi(ui, { scanning: screen.inControl && c.hack.scanning(input) });
     this.playPendingRecall();
+    this.showEndScreen();
     c.hints.step(screen.inControl, c.character.isOpen);
     c.autosave.step();
   }
@@ -61,5 +62,12 @@ export class SessionLoop {
     if (!scene || !isCalm(simulation)) return;
     simulation.session.dialogueActive = true;
     this.deps.controllers().dialogue.open(scene);
+  }
+
+  /** After the epilogue's conversation, the end screen once (ADR-0095 stage 2). */
+  private showEndScreen(): void {
+    const simulation = this.deps.sim();
+    if (!this.deps.screen.inControl || simulation.session.gameOver || !isCalm(simulation)) return;
+    this.deps.controllers().endScreen.showIfDue();
   }
 }

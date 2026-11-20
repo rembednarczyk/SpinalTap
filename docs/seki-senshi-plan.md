@@ -395,7 +395,7 @@ World streaming i chunking, frakcje i reputacja, harmonogramy i AI NPC, kolejne 
 ### M3 — wątek główny
 Pełne spięcie fabuły Seki Senshi: odzyskiwanie wspomnień, progresja diegetyczna, zakończenia zależne od wyborów.
 **Kryterium:** wątek główny przechodzi od startu do zakończenia; stan narracji poprawnie w zapisach.
-**Stan (20.11):** akty I i II w main (ADR-0012, ADR-0023), akt III z epilogiem w PR (ADR-0095); zostaje ekran końca (etap 2) i wnętrze Kaplicy (etap 3).
+**Stan (20.11):** akty I i II w main (ADR-0012, ADR-0023), akt III z epilogiem i ekranem końca w PR-ach (ADR-0095, etapy 1 i 2); zostaje wnętrze Kaplicy (etap 3).
 
 ### M4 — skala treści i polish
 Więcej zleceń i lokacji, dopracowanie NPR, optymalizacja wydajności, balans.

@@ -66,6 +66,7 @@ const intents = (): UiIntents => ({
   openWait: vi.fn(),
   closeWait: vi.fn(),
   waitHours: vi.fn(),
+  closeEndScreen: vi.fn(),
 });
 
 const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });

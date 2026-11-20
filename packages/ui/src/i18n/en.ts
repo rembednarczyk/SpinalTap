@@ -6,6 +6,7 @@ import { enContent } from "./en/content";
 import { enDifficulty } from "./en/difficulty";
 import { enProgression } from "./en/progression";
 import { enWait } from "./en/wait";
+import { enEnding } from "./en/ending";
 import { enSite } from "./en/site";
 
 /**
@@ -213,6 +214,7 @@ export const en = {
   ...enDifficulty,
   ...enProgression,
   ...enWait,
+  ...enEnding,
   ...enSite,
 } as const satisfies Readonly<Record<string, Message>>;
 

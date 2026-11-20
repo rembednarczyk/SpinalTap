@@ -32,3 +32,10 @@ Motyw przewodni gry (§9): czy wspomnienia i tożsamość przy rozbudowanym cybe
 ## Konsekwencje
 - Złoty hash podłogi zmienia się tylko przez kształt snapshotu (wersja 51 i `story.act3Ending`); nowe postacie stoją w chunkach Podzamcza, poza podłogą.
 - Kaplica jest prawdziwym zabytkiem z freskami rusko-bizantyjskimi z 1418 roku. Warstwa 2077 (serwer Kagami w środku) to odstępstwo celowe, wpis w `docs/topografia.md` przy etapie 3, gdy wnętrze powstanie.
+
+## Wdrożenie etapu 2 (20.11): ekran końca
+- Wzorzec: ekran podsumowania po napisach (jak „Your Choices” w grach Telltale i karta statystyk po finale CP2077), bez głosowania i porównań z innymi graczami.
+- `core`: `END_SCREEN` i `endScreenDue` (epilog obejrzany, `seen:end_screen` jeszcze nie). Flaga trafia do zapisu, więc schemat zostaje w wersji 51.
+- `app`: `EndScreenController` (pokazuje ekran raz, gdy gracz ma kontrolę, nie ma rozmowy i jest spokojnie; zamknięcie wysyła `set-flag`) i prezenter `presenters/end-screen.ts` (zakończenia aktów, wybory w kolejności `STORY_CHOICES`, poziom, zlecenia, wspomnienia). Gra stoi, gdy ekran jest otwarty, jak przy oknie czekania.
+- `ui`: `EndScreenVm` w magazynie, intencja `EndScreenIntents.closeEndScreen` z hakiem `useEndScreenIntents`, komponent `ending/end-screen.tsx`; teksty w `i18n/{en,pl}/ending.ts` (podsumowanie każdej opcji każdego wyboru).
+- Testy: komponent (`packages/ui/test/end-screen.test.tsx`), pętla aktu III (`m3-zrodlo-loop.test.ts`: ekran raz po epilogu, gra stoi, flaga przetrwa zapis), `endScreenDue` w `core`.
