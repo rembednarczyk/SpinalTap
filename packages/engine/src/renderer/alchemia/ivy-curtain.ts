@@ -19,14 +19,14 @@ type P2 = GroundPoint;
 type Tint = readonly [number, number, number];
 
 /** Old leaves (dark, glossy), the mass under them, and the young tips' light greens. */
-const OLD: readonly Tint[] = ["#2f5a2c", "#3a6a33", "#355f30", "#43733a", "#2c5230"].map(hexRgb);
-const YOUNG: readonly Tint[] = ["#5f9a46", "#6fa54c", "#55903f"].map(hexRgb);
-const MASS = hexRgb("#21401f");
+const OLD: readonly Tint[] = ["#3f7f3c", "#4a8a45", "#3a7038", "#55934a", "#427a3a"].map(hexRgb);
+const YOUNG: readonly Tint[] = ["#6fb050", "#7cbf55", "#63a548"].map(hexRgb);
+const MASS = hexRgb("#2f6030");
 
-/** A strand every so many metres along the edge, a leaf every so many down a strand, a leaf's half length. */
-export const IVY_STRAND_EVERY = 0.15;
-const LEAF_EVERY = 0.075;
-const LEAF = 0.065;
+/** A strand every so many metres along the edge, a leaf every so many down a strand, a leaf's half length (twice a real ivy leaf's: from the square the curtain reads as a mass of leaves, as on the board). */
+export const IVY_STRAND_EVERY = 0.11;
+const LEAF_EVERY = 0.07;
+const LEAF = 0.11;
 
 /** A number in [0, 1) from a point and a salt. */
 const hash = (x: number, y: number, z: number, salt: number): number => {
@@ -87,7 +87,7 @@ export const ivyCurtain = (sink: GeometrySink, uv: readonly [number, number], pt
   const t = { x: (b.x - a.x) / w, y: 0, z: (b.z - a.z) / w };
   const n = thick > 1e-6 ? { x: (oa.x - a.x) / thick, y: 0, z: (oa.z - a.z) / thick } : { x: t.z, y: 0, z: -t.x };
   const drop = y1 - y0;
-  mass(sink, uv, a, t, n, w, y1, Math.min(0.55, drop * 0.45));
+  mass(sink, uv, a, t, n, w, y1, Math.min(0.9, drop * 0.6));
   const strands = Math.max(2, Math.round(w / IVY_STRAND_EVERY));
   for (let i = 0; i < strands; i++) {
     const along = ((i + 0.2 + 0.6 * hash(a.x, i, a.z, 6)) / strands) * w;
