@@ -74,37 +74,49 @@ const inSolid = (c: Car): string[] => {
 };
 
 describe("a car of Alchemia's ramp held up by Seki on its lane", () => {
+  // Her heading: at z 8 facing the ramp's foot she sees all its way up from the north cabin, so no car comes into being
+  // there and drives up to her (none in 50 s since C7); one comes behind her back instead, as she faces up the ramp.
   it.each([
-    ["up", OUT, UP + 0.4, 4.5],
-    ["up", OUT, UP - 0.6, 8],
-    ["up", OUT, UP + 1.2, 6],
-    ["down", IN, DOWN, 6],
-    ["down", IN, DOWN + 0.8, 8],
-    ["down", IN, DOWN - 1, 4],
-  ] as const)("on the %s lane, its route %i, at x %f, z %f: round her within the walls or waits, then on", (_lane, route, x, z) => {
+    ["up", OUT, UP + 0.4, 4.5, 0],
+    ["up", OUT, UP - 0.6, 8, Math.PI],
+    ["up", OUT, UP + 1.2, 6, 0],
+    ["down", IN, DOWN, 6, 0],
+    ["down", IN, DOWN + 0.8, 8, 0],
+    ["down", IN, DOWN - 1, 4, 0],
+  ] as const)("on the %s lane, its route %i, at x %f, z %f: round her within the walls or waits, then on", (_lane, route, x, z, yaw) => {
     const session = start();
-    teleport(session, x, z, 0, 0, p1RampY(z));
+    teleport(session, x, z, yaw, 0, p1RampY(z));
     const r = TRAFFIC_ROUTES[route]!;
     const sHer = arcAt(r.points, x, z);
     const walls: string[] = [];
+    /**
+     * Each of the route's cars (two since C7) on its own: where it was the step before, whether it came up from behind her
+     * and its steps within 8 m of her. One `find` over the world followed whichever of them was last in its array, which
+     * changed with every entity taken out (the same poses gave 310 steps by her or 45), and one car's coming up from behind
+     * with the other's being past her made a pass neither drove.
+     */
+    const cars = new Map<number, { last: number; behind: boolean; near: number }>();
     let near = 0;
-    let behind = false;
     let passed = false;
-    let last = -Infinity;
-    const car = () => [...session.sim.world].find((e): e is Car => e.vehicle?.route === route);
     const watch = (tag: string) => {
-      const c = car();
-      if (!c) return;
-      walls.push(...inSolid(c).map((h) => `${tag}: ${h}`));
-      // A car round to its route's start again is a new one: it has to come up from behind her.
-      if (c.vehicle.s < last - 5) behind = false;
-      last = c.vehicle.s;
-      if (c.vehicle.s < sHer - 3) behind = true;
-      if (behind && c.vehicle.s > sHer + 3) passed = true;
-      if (Math.hypot(c.position.x - x, c.position.z - z) < 8) near++;
+      for (const c of session.sim.world.with("vehicle")) {
+        if (c.vehicle.route !== route) continue;
+        const seen = cars.get(c.id) ?? { last: -Infinity, behind: false, near: 0 };
+        cars.set(c.id, seen);
+        walls.push(...inSolid(c).map((h) => `${tag}: ${h}`));
+        // A car round to its route's start again is a new one: it has to come up from behind her.
+        if (c.vehicle.s < seen.last - 5) seen.behind = false;
+        seen.last = c.vehicle.s;
+        if (c.vehicle.s < sHer - 3) seen.behind = true;
+        if (seen.behind && c.vehicle.s > sHer + 3) passed = true;
+        if (Math.hypot(c.position.x - x, c.position.z - z) >= 8) continue;
+        seen.near++;
+        near++;
+      }
     };
-    // Until the car has stood by her for 8 s (going round her or waiting), at most 50 s.
-    for (let i = 0; i < 60 * 50 && near < 60 * 8; i++) {
+    // Until a car has gone round her (up from behind her and on past) or stood by her for 8 s (waiting), at most 50 s: the
+    // state, not the clock (ADR-0046); the steps after it were the other car doing the same.
+    for (let i = 0; i < 60 * 50 && !passed && ![...cars.values()].some((c) => c.near >= 60 * 8); i++) {
       session.step(EMPTY_INPUT);
       // Without the walkers and gangers T0's chunks bring in at the first step: no car gives them way here (every car's
       // pose and hers at every step the same with them and without), and their minds and steps were a third of the time.
