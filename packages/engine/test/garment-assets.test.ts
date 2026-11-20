@@ -120,8 +120,8 @@ describe("garment assets (ADR-0086)", () => {
         expect(left / all, m.name).toBeGreaterThan(0.2);
         expect(left / all, m.name).toBeLessThan(0.6);
       }
-      // One mesh of 5140 triangles on the bones of the model (its J_Bip_, and the J_Sec_ of the cloth it lies on), in the gang's green.
-      expect(jacket!.getIndices()!.length / 3).toBe(5140);
+      // One mesh of 4833 triangles (the jacket cut at the hips, user 20.11) on the bones of the model (its J_Bip_, and the J_Sec_ of the cloth it lies on), in the gang's green.
+      expect(jacket!.getIndices()!.length / 3).toBe(4833);
       const bones = new Set<string>();
       const idx = jacket!.getVerticesData(VertexBuffer.MatricesIndicesKind)!;
       const w = jacket!.getVerticesData(VertexBuffer.MatricesWeightsKind)!;
@@ -265,7 +265,14 @@ describe("garment assets (ADR-0086)", () => {
     const [a, b] = await Promise.all([assets.template("jacket-techwear"), assets.template("jacket-techwear")]);
     expect(a).toBe(b);
     expect(a!.geometry.bones.every((n) => n.startsWith("J_Bip_"))).toBe(true);
-    expect(a!.geometry.indices.length / 3).toBe(5140);
+    expect(a!.geometry.indices.length / 3).toBe(4833);
+    // A jacket, not a coat (user 20.11): its hem a hand under the hips bone, not at the knees (0.45 m under it until then).
+    const g = a!.geometry;
+    const hips = g.bind[g.bones.indexOf("J_Bip_C_Hips")]![1];
+    let hem = Infinity;
+    for (let i = 1; i < g.positions.length; i += 3) hem = Math.min(hem, g.positions[i]!);
+    expect(hips - hem).toBeGreaterThan(0.05);
+    expect(hips - hem).toBeLessThan(0.15);
     expect(a!.texture).not.toBeNull();
     // Kept for the toon material when the rest of the file went.
     expect(a!.texture!.getInternalTexture()).not.toBeNull();

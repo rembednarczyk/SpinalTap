@@ -205,7 +205,7 @@ export const buildCorpo = (scene: Scene, materials: ToonMaterials, name: string)
   return finish(root, b, sk, { aiming: true, armSpread: 0.14, gun });
 };
 
-/** Babcia Ume: small, long beige coat, grey bun, red umbrella (left at home indoors, ADR-0041). */
+/** Babcia Ume: small, beige jacket to the hips over dark trousers, grey bun, red umbrella (left at home indoors, ADR-0041). */
 export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: string, umbrella = true): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
@@ -213,7 +213,7 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
     b,
     root,
     { height: 1.5, shoulder: 0.15, hip: 0.16, chest: 0.15, waist: 0.15, limb: 1.05, female: true },
-    { skin: "skin", top: "umeCoat", bottom: "umeCoat", shoes: "sekiShoes", arms: "umeCoat", coat: "umeCoat" },
+    { skin: "skin", top: "umeJacket", bottom: "umeLegs", shoes: "sekiShoes", arms: "umeJacket", jacket: "umeJacket" },
   );
   b.sphere(0.17 * sk.s, "umeHair", sk.head, 0, 0.03, -0.012, [1, 0.9, 1]);
   b.sphere(0.07, "umeHair", sk.head, 0, 0.1 * sk.s, -0.07 * sk.s);
@@ -231,7 +231,7 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
   return rig;
 };
 
-/** Doktor Mori: cream surgical coat, white hair combed back, magnifier goggles. */
+/** Doktor Mori: cream surgical top to the hips, white hair combed back, magnifier goggles. */
 export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
@@ -239,7 +239,7 @@ export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: str
     b,
     root,
     { height: 1.72, shoulder: 0.18, hip: 0.15, chest: 0.16, waist: 0.15, limb: 1.05, female: false },
-    { skin: "fixerSkin", top: "moriCoat", bottom: "fixerPants", shoes: "shades", arms: "moriCoat", coat: "moriCoat", face: false },
+    { skin: "fixerSkin", top: "moriJacket", bottom: "fixerPants", shoes: "shades", arms: "moriJacket", jacket: "moriJacket", face: false },
   );
   b.lathe(
     [

@@ -76,7 +76,7 @@ const materialOf = (ctx: DressContext, mesh: AbstractMesh, v: ModelVariant, swap
 
 /**
  * A file's cloth to lend: whether the top or trousers (`slot`) of `cloth` may dress a model whose
- * own cloth is `own`, of the same VRoid base and the same cut (one UV layout). Kurosawa's coat
+ * own cloth is `own`, of the same VRoid base and the same cut (one UV layout). Kurosawa's hoodie
  * (`M00_006`) on Kaito's shirt (`M00_001`) would scatter its texels over the wrong faces.
  */
 export const lends = (cloth: ModelCloth, own: ModelCloth, slot: "torso" | "legs"): boolean =>

@@ -14,7 +14,7 @@
  *    within `TRANSFER_FULL`, blended out to `TRANSFER_REACH`), so it moves as the skin under it
  *    does: the garment's own weights come from another figure and let the shoulders and the
  *    armpits through when the arms come down from the bind pose (user notes of 19.11). The legs'
- *    skin lends none: a long coat's skirt keeps its own weights instead of parting with each leg.
+ *    skin lends none: a jacket's hem below the hips keeps its own weights instead of parting with each leg.
  */
 
 /** A garment as its file gives it: per vertex 3 floats of position and normal, 4 bone slots. */

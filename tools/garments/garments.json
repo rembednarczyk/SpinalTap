@@ -1,11 +1,12 @@
 {
-  "about": "Garments cut out of VRoid models into packages/app/public/garments (ADR-0086, way A) by tools/garments/garment_extract.py. A source is named by its sha256: the raw VRM is downloaded by hand from VRoid Hub (login required) and never committed; its page, author, terms and date are in tools/assets/sources.json.",
+  "about": "Garments cut out of VRoid models into packages/app/public/garments (ADR-0086, way A) by tools/garments/garment_extract.py. `hem` (metres, the source's frame) cuts a garment at that height: no coats in the game (user 20.11), a long jacket ends at the hips. A source is named by its sha256: the raw VRM is downloaded by hand from VRoid Hub (login required) and never committed; its page, author, terms and date are in tools/assets/sources.json.",
   "garments": [
     {
       "id": "jacket-techwear",
       "sha256": "8609f2a8053fb17d225f94b0e08078d38e4b59853aef53a7eb163bf3a224649a",
       "materials": ["N00_007_03_Tops_01_CLOTH_01", "N00_007_03_Tops_01_CLOTH_02", "N00_007_03_Tops_01_CLOTH_03"],
       "material": "Garment_jacket-techwear",
+      "hem": 0.86,
       "source": {
         "id": "vroid-hub-kimi",
         "title": "Kimi || Desktop Mate Model",

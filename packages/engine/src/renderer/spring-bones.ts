@@ -34,7 +34,7 @@ interface Joint {
   tail: Vector3;
   prevTail: Vector3;
   readonly settings: SpringSettings;
-  /** Cloth (`J_Sec_*`: a skirt, a coat's tails) rides the character's rise and fall whole (user notes of 18.11). */
+  /** Cloth (`J_Sec_*`: a skirt, a hood) rides the character's rise and fall whole (user notes of 18.11). */
   readonly cloth: boolean;
   /** Colliders this joint may hit (its group's, or all of them). */
   readonly candidates: readonly SpringCollider[];

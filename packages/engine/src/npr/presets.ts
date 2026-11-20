@@ -36,7 +36,6 @@ export const PRESETS = {
   // Heroine.
   skin: { base: "#f2dccd", ...CHAR },
   heroineHair: { base: "#3a2552", ...CHAR, rim: "#ff8fd0" },
-  heroineCoat: { base: "#2b3343", ...CHAR },
   heroineLegs: { base: "#1b1e29", ...CHAR },
   heroineVisor: { base: "#000000", emissive: "#5ff2ff", rimStrength: 0, outline: false },
   gun: { base: "#1d2026", gloss: 0.6, ...CHAR },
@@ -57,11 +56,12 @@ export const PRESETS = {
   // Enforcers (ADR-0036): an amber armband that glows a little.
   enforcerBand: { base: "#000000", emissive: "#ffb000", rimStrength: 0, outline: false },
   // Civilian.
-  umeCoat: { base: "#b9a68a", ...CHAR },
+  umeJacket: { base: "#b9a68a", ...CHAR },
+  // Her VRM's skirt (models/manifest.json).
+  umeLegs: { base: "#2a2522", ...CHAR },
   umeHair: { base: "#c9c9cf", ...CHAR },
   umbrella: { base: "#c23b4f", ...CHAR },
   // Ripperdoc.
-  docCoat: { base: "#aeb8bd", ...CHAR },
   docGoggles: { base: "#000000", emissive: "#39ffd0", rimStrength: 0, outline: false },
   // Anime cast (reference: 1990s cyberpunk cel animation).
   sekiHair: { base: "#151a2e", ...CHAR, rim: "#7fa6ff", rimStrength: 0.5 },
@@ -73,7 +73,7 @@ export const PRESETS = {
   cyberDark: { base: "#2b2f36", gloss: 0.5, ...CHAR },
   eyes: { base: "#10131b", rimStrength: 0, outline: false, fill: 0.3 },
   lips: { base: "#a2383f", rimStrength: 0, outline: false, fill: 0.55 },
-  moriCoat: { base: "#ddd3b4", ...CHAR },
+  moriJacket: { base: "#ddd3b4", ...CHAR },
   moriHair: { base: "#e8e6dc", ...CHAR },
   // Merged procedural characters: colour per vertex, baked from the part presets above.
   charVertexColor: { base: "#ffffff", ...CHAR },

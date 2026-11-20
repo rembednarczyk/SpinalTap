@@ -25,7 +25,7 @@ export interface GarmentAssetSpec {
 }
 
 export const GARMENT_ASSETS = {
-  // "Kimi || Desktop Mate Model" by Toriss (VRoid Hub), the long techwear jacket.
+  // "Kimi || Desktop Mate Model" by Toriss (VRoid Hub), the techwear jacket, cut at the hips (no coats, user 20.11).
   "jacket-techwear": { url: "./garments/jacket-techwear.glb", covers: ["torso", "tie", "skin"] },
 } as const satisfies Partial<Record<GarmentMeshId, GarmentAssetSpec>>;
 
@@ -97,7 +97,7 @@ const coverKindOf = (m: AbstractMesh): "torso" | "tie" | "skin" | null => {
 
 /**
  * The skin a garment may hide, by the bone it follows most: the arms and the torso. Not the legs
- * (under a long coat's skirt they show as it swings), the hands, the neck or the hips.
+ * (under a jacket's hem they show as it swings), the hands, the neck or the hips.
  */
 const HIDEABLE_SKIN = /(Spine|Chest|UpperChest|Shoulder|UpperArm|LowerArm)$/;
 
@@ -116,7 +116,7 @@ const hideableSkin = (m: AbstractMesh): ((v: number) => boolean) => {
 };
 
 /**
- * Bones whose skin lends a garment no weights (garment-fit.ts, step 3): the legs (a coat's skirt
+ * Bones whose skin lends a garment no weights (garment-fit.ts, step 3): the legs (a jacket's hem
  * would part with each of them), the hands and the fingers (the cuffs would bend with them), the
  * head (the collar would turn with it).
  */

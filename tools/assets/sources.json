@@ -102,7 +102,7 @@
       "manual": "Pobiera człowiek z VRoid Hub (logowanie pixiv); fetch.mjs pomija to źródło. Surowy VRM nie trafia do repo.",
       "file": "8653533936556512697.vrm",
       "sha256": "8609f2a8053fb17d225f94b0e08078d38e4b59853aef53a7eb163bf3a224649a",
-      "used": ["N00_007_03_Tops_01_CLOTH_01..03 -> packages/app/public/garments/jacket-techwear.glb (python3 -I tools/garments/garment_extract.py 8653533936556512697.vrm packages/app/public/garments/jacket-techwear.glb --recipe tools/garments/garments.json --id jacket-techwear)"]
+      "used": ["N00_007_03_Tops_01_CLOTH_01..03, cut at the hem of the recipe -> packages/app/public/garments/jacket-techwear.glb (python3 -I tools/garments/garment_extract.py 8653533936556512697.vrm packages/app/public/garments/jacket-techwear.glb --recipe tools/garments/garments.json --id jacket-techwear)"]
     },
     {
       "id": "quaternius-cyberpunk-kit",

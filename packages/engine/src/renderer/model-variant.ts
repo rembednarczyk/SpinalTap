@@ -1,4 +1,4 @@
-import { ACCENTS, BAGS, BOTTOMS, COATS, HAIR, SKIN, TOPS, lookStream, pick } from "./crowd-look";
+import { ACCENTS, BAGS, BOTTOMS, HAIR, SKIN, TOPS, WARM_JACKETS, lookStream, pick } from "./crowd-look";
 import { type Figure, UPRIGHT, clampFigure, figureText } from "./model-figure";
 
 /**
@@ -137,7 +137,7 @@ const seeded = (id: number, elders: boolean): ModelVariant => {
   const young = pick(rand, HAIR);
   const hair = age?.hair ?? young;
   const topRoll = rand();
-  const top = topRoll < 0.45 ? pick(rand, TOPS) : topRoll < 0.7 ? pick(rand, COATS) : null;
+  const top = topRoll < 0.45 ? pick(rand, TOPS) : topRoll < 0.7 ? pick(rand, WARM_JACKETS) : null;
   const bottomRoll = rand();
   const bottom = bottomRoll < 0.6 ? pick(rand, BOTTOMS) : null;
   const topFrom = rand() < 0.35 ? rand() : null;

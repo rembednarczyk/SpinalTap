@@ -4,11 +4,12 @@ import { mulberry32 } from "@seki/core";
  * The look of a resident of the city (ADR-0041) from its seed: build, hair, clothes and their
  * colours, a neon trim now and then, a bag, the umbrella's colour. Pure and stable: the same seed
  * is always the same person. Palettes after the night streets of a cyberpunk Japantown: dark
- * streetwear, a few warm coats, neon accents.
+ * streetwear, a few warm earthy jackets, neon accents. Nobody wears a coat (user 20.11): a top
+ * ends at the hips, a skirt above the knees.
  */
 
 export type HairStyle = "short" | "long" | "bun" | "hood" | "cap";
-export type Garment = "jacket" | "coat" | "skirt";
+export type Garment = "jacket" | "skirt";
 
 export interface CrowdColors {
   readonly skin: string;
@@ -40,7 +41,8 @@ export interface CrowdLook {
 export const SKIN = ["#f2dccd", "#ecc9ad", "#d9ad8a", "#b88463", "#8a5a3f", "#6a4330"] as const;
 export const HAIR = ["#151a2e", "#1b1b1f", "#2b211c", "#4a3326", "#6b4a2e", "#c9c9cf", "#b03a5a", "#3a7a9a", "#d8cfbd", "#7a2fd0"] as const;
 export const TOPS = ["#1d2027", "#2a2f3a", "#3a2433", "#24343a", "#46392c", "#6b2238", "#1f3b5a", "#5a5f68", "#c9c2b0", "#7a4a2a", "#2e4a2e", "#14161a", "#8a2a2a", "#3d3d55"] as const;
-export const COATS = ["#3b3328", "#6a5a44", "#1c1f26", "#4b2a2a", "#2c3a4a", "#8a7a62", "#232323"] as const;
+/** Warm earthy jackets, a third of the city: the colours its long coats had until 20.11. */
+export const WARM_JACKETS = ["#3b3328", "#6a5a44", "#1c1f26", "#4b2a2a", "#2c3a4a", "#8a7a62", "#232323"] as const;
 export const BOTTOMS = ["#15171c", "#23262d", "#33302b", "#2a3340", "#4a4e57", "#1c2a22", "#3a2a2a"] as const;
 const SHOES = ["#0e0f12", "#2a2522", "#d8d8d8", "#5a2a22", "#1a1f2a"] as const;
 export const ACCENTS = ["#ff3d8b", "#5ff2ff", "#ffbf4a", "#9a7dff", "#59ff9b", "#ff6a3d"] as const;
@@ -55,6 +57,11 @@ export const lookStream: (seed: number) => () => number = mulberry32;
 
 export const pick = <T>(rand: () => number, list: readonly T[]): T => list[Math.min(list.length - 1, Math.floor(rand() * list.length))] as T;
 
+/** The share of the crowd in a warm jacket. */
+const WARM_SHARE = 0.3;
+/** The share of women in a skirt, in a warm jacket or not. */
+const SKIRT_SHARE = 2 / 7;
+
 export const crowdLook = (seed: number): CrowdLook => {
   const rand = lookStream(seed ^ 0x51ed270b);
   const female = rand() < 0.5;
@@ -63,8 +70,12 @@ export const crowdLook = (seed: number): CrowdLook => {
   const hairRoll = rand();
   const hair: HairStyle = hairRoll < 0.12 ? "hood" : hairRoll < 0.24 ? "cap" : female ? (hairRoll < 0.62 ? "long" : hairRoll < 0.8 ? "bun" : "short") : hairRoll < 0.85 ? "short" : "long";
   const gRoll = rand();
-  const garment: Garment = gRoll < 0.3 ? "coat" : female && gRoll < 0.5 ? "skirt" : "jacket";
-  const top = garment === "coat" ? pick(rand, COATS) : pick(rand, TOPS);
+  // The coats' third (until 20.11) wears a warm jacket of the same colour, and a woman's skirt
+  // takes its part of it: everyone else keeps the garment and colours their seed always gave.
+  const warm = gRoll < WARM_SHARE;
+  const skirtRoll = warm ? gRoll / WARM_SHARE : (gRoll - WARM_SHARE) / (1 - WARM_SHARE);
+  const garment: Garment = female && skirtRoll < SKIRT_SHARE ? "skirt" : "jacket";
+  const top = warm ? pick(rand, WARM_JACKETS) : pick(rand, TOPS);
   return {
     height,
     width,
