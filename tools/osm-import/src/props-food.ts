@@ -130,7 +130,7 @@ const local = (p: Pt, yaw: number, x: number, z: number): Pt => {
 };
 
 /** Points of a rectangle of a piece's frame, every `STEP` metres. */
-const rect = (p: Pt, yaw: number, x0: number, x1: number, z0: number, z1: number): Pt[] => {
+export const rect = (p: Pt, yaw: number, x0: number, x1: number, z0: number, z1: number): Pt[] => {
   const out: Pt[] = [];
   for (let x = x0; x <= x1 + 1e-9; x += STEP) for (let z = z0; z <= z1 + 1e-9; z += STEP) out.push(local(p, yaw, x, z));
   return out;
@@ -140,10 +140,10 @@ const rect = (p: Pt, yaw: number, x0: number, x1: number, z0: number, z1: number
 const paved = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && site.surfaceAt(q) === "walk" && !site.onPath(q);
 
 /** Open ground in front of a facade: paving, or the bare ground the map leaves between a wall and its pavement; not a footpath. */
-const forecourt = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && (site.surfaceAt(q) === "walk" || site.surfaceAt(q) === null) && !site.onPath(q);
+export const forecourt = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && (site.surfaceAt(q) === "walk" || site.surfaceAt(q) === null) && !site.onPath(q);
 
 /** Ground a walker passes over: paving or bare ground in a chunk, not a road, a building, grass or water. */
-const open = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && (site.surfaceAt(q) === "walk" || site.surfaceAt(q) === null);
+export const open = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && (site.surfaceAt(q) === "walk" || site.surfaceAt(q) === null);
 
 /** The solids placed so far as items, for the walkway. */
 const asItems = (placed: readonly Placed[]): StreetPropItem[] => placed.map((x) => ({ prop: x.prop, x: x.p.x, y: 0, z: x.p.z, yaw: x.yaw ?? 0, variant: 0 }));
@@ -170,7 +170,7 @@ interface Near {
 const CELL = 16;
 
 /** The pieces placed so far in a grid of `CELL` m cells: the walkway asks only the cells round a footprint. */
-class Nearby {
+export class Nearby {
   private readonly cells = new Map<string, Near[]>();
 
   constructor(placed: readonly Placed[]) {
@@ -198,7 +198,7 @@ class Nearby {
  * Is the footprint `foot` clear of every stall's canvas by `canvasPad` and of every solid placed
  * before by `solidPad`, `host` aside?
  */
-const walkwayClear = (foot: readonly Pt[], near: Nearby, host: Placed | null, canvasPad: number, solidPad: number): boolean => {
+export const walkwayClear = (foot: readonly Pt[], near: Nearby, host: Placed | null, canvasPad: number, solidPad: number): boolean => {
   const c = foot[Math.floor(foot.length / 2)]!;
   for (const { placed: o, item } of near.around(c)) {
     if (o === host || Math.abs(o.p.x - c.x) > 12 || Math.abs(o.p.z - c.z) > 12) continue;
@@ -211,7 +211,7 @@ const walkwayClear = (foot: readonly Pt[], near: Nearby, host: Placed | null, ca
  * The site with only the streets near `box` (grown by `reach`), for `nearTraffic` over many samples
  * of one place: the city's streets are a thousand polylines.
  */
-const streetsNear = (site: Site, box: Rect, reach: number): Site => {
+export const streetsNear = (site: Site, box: Rect, reach: number): Site => {
   const near = (q: Pt) => q.x > box.minX - reach && q.x < box.maxX + reach && q.z > box.minZ - reach && q.z < box.maxZ + reach;
   const crosses = (line: readonly Pt[]) => {
     const b = ringBounds(line);
@@ -222,7 +222,7 @@ const streetsNear = (site: Site, box: Rect, reach: number): Site => {
 };
 
 /** The district of the chunk at p, or null outside them. */
-const districtAt = (site: Site, p: Pt): string | null => site.chunkAt(p)?.district ?? null;
+export const districtAt = (site: Site, p: Pt): string | null => site.chunkAt(p)?.district ?? null;
 
 /**
  * Stock beside the stalls of one market (`stalls`, the outline `ring` and its entrances `gates`):
@@ -276,7 +276,7 @@ const alongWall = (s: BoardSpan, p: Pt): number => {
 };
 
 /** Does a booth spanning [u0, u1] along `wall`'s line clear every board on that wall by `BOARD_ROOM`? */
-const offBoards = (wall: BoardSpan, boards: readonly BoardSpan[], u0: number, u1: number): boolean =>
+export const offBoards = (wall: BoardSpan, boards: readonly BoardSpan[], u0: number, u1: number): boolean =>
   boards.every((o) => {
     const sameWall = Math.abs(o.nx * wall.nx + o.nz * wall.nz) > 0.95 && Math.abs((o.a.x - wall.a.x) * wall.nx + (o.a.z - wall.a.z) * wall.nz) < 0.5;
     if (!sameWall) return true;
