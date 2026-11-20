@@ -36,6 +36,7 @@ export const plContent = {
   "prompt.pickup.data": "Zgraj dane Tessen",
   "prompt.metro": "Bilet",
   "prompt.help": "Pomóż",
+  "prompt.crime.talk": "Pogadaj",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
   // Obezwładnienia (ADR-0065, ADR-0075): klawisz interakcji chwyta; w chwycie ogłusza, a atak zabija.

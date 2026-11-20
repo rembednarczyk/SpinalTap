@@ -105,6 +105,10 @@ export interface MicroEventRun {
   readonly since?: number;
   /** One of its gang was alerted: a deal no longer pays its quiet bonus. */
   readonly alarmed?: boolean;
+  /** The player took the gang's side (ADR-0091 stage 5c): she keeps watch, the gang pays. */
+  readonly side?: "assist";
+  /** Steps of her watch within reach so far (the extortion's, the deal's). */
+  readonly watched?: number;
 }
 
 /** Something the street noticed this step (the payload of `Disturbance`). */

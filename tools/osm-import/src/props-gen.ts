@@ -21,6 +21,7 @@ import { EntranceZones, boardDoor } from "./props-entrances.ts";
 import { venueGardens } from "./props-gardens.ts";
 import { venueAFrames } from "./props-aframes.ts";
 import { startPlates } from "./props-plates.ts";
+import { sculptureFacing } from "./props-statues.ts";
 import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
@@ -358,6 +359,11 @@ export const facingOf = (site: Site, x: Placed): number => {
   const wall = x.prop === "lamp-wall-lantern" ? site.awayFromWall(x.p) : null;
   if (wall) return yawOf(wall.x, wall.z);
   if (x.yaw !== null) return x.yaw;
+  // A Koziołek, a monument, an artwork: never towards a wall (ADR-0094 stage 4).
+  if (x.prop === "monument" || x.prop === "artwork") {
+    const s = sculptureFacing(site, x.p) ?? towardsStreet(site, x.p);
+    if (s) return yawOf(s.x, s.z);
+  }
   const open = FACES_OPEN.has(x.prop) ? openFacing(site, x.p) : null;
   const street = FACES_OPEN.has(x.prop) || FACES_STREET.has(x.prop) ? towardsStreet(site, x.p) : null;
   const f = open ?? street;
@@ -366,6 +372,9 @@ export const facingOf = (site: Site, x: Placed): number => {
 
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
+
+/** How far before a monument's front the middle of its viewing ground lies (m): with a door's zone round it, some 1 to 5 m out. */
+const VIEWING = 3;
 
 /** The rule's name in `perItem` for the venues' gardens (ADR-0094 stage 2). */
 export const VENUE_GARDENS = "rule.venue-gardens";
@@ -456,8 +465,13 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
     }
   }
   // The cafés' gardens by their venues (ADR-0094 stage 2), before the street groups' bins and plates.
-  for (const x of venueGardens(site, clear, zones, boards, placed, gardenCaps)) push({ ...x, from: VENUE_GARDENS });
-  for (const x of venueAFrames(site, clear, zones, boards, placed, aFrameCaps)) push({ ...x, from: VENUE_A_FRAMES });
+  // The ground before a monument's or an artwork's front, where it is seen from, stays clear of gardens and boards (ADR-0094 stage 4).
+  const viewing = zones.with(placed.filter((x) => x.prop === "monument" || x.prop === "artwork").map((x) => {
+    const yaw = facingOf(site, x);
+    return { x: x.p.x + Math.sin(yaw) * VIEWING, z: x.p.z + Math.cos(yaw) * VIEWING };
+  }));
+  for (const x of venueGardens(site, clear, viewing, boards, placed, gardenCaps)) push({ ...x, from: VENUE_GARDENS });
+  for (const x of venueAFrames(site, clear, viewing, boards, placed, aFrameCaps)) push({ ...x, from: VENUE_A_FRAMES });
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
   // The streets' name plates at each street's start, on the corner walls (ADR-0094 stage 3).
   for (const item of deferred) {

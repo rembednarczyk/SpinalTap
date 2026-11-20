@@ -47,11 +47,18 @@ export const boardDoor = (b: BoardSpan): Pt => ({ x: (b.a.x + b.b.x) / 2, z: (b.
 /** The doors' clear zones of a district, and the test of a piece against them. */
 export class EntranceZones {
   private readonly doors = new SpatialHash<Pt>(8);
+  private readonly points: readonly Pt[];
   readonly size: number;
 
   constructor(doors: readonly Pt[]) {
     for (const d of doors) this.doors.insertPoint(d, d.x, d.z);
+    this.points = doors;
     this.size = doors.length;
+  }
+
+  /** These zones and more: a monument's viewing ground before its front is kept clear the same way (ADR-0094 stage 4). */
+  with(more: readonly Pt[]): EntranceZones {
+    return new EntranceZones([...this.points, ...more]);
   }
 
   /** Is a piece of `prop` at `p` off every door's zone (a piece that does not keep off them always is)? */

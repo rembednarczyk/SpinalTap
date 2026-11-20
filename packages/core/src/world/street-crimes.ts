@@ -28,6 +28,22 @@ export const CRIME_GETAWAY_SECONDS = { droneTheft: 60, kidnap: 45 } as const;
 /** Standing with Tessen for each crime foiled. */
 export const TESSEN_FOIL_STANDING = 3;
 
+/**
+ * The gang's side (ADR-0091 stage 5c, dark jobs, decision 8 of 18.11): the kinds a gang runs and
+ * lets the player in on, and the game seconds she keeps watch within `ASSIST_WATCH` metres before it
+ * is done (the drone's and the van's own getaway for those two: the thieves fly it off, the van
+ * drives away, and that is the job done).
+ */
+export const ASSIST_SECONDS = { extortion: 30, deal: 40, droneTheft: CRIME_GETAWAY_SECONDS.droneTheft, kidnap: CRIME_GETAWAY_SECONDS.kidnap } as const;
+export type AssistKind = keyof typeof ASSIST_SECONDS;
+export const ASSIST_WATCH = 15;
+
+/** Can the player take the gang's side in a crime of this kind (not a mugging, not an aid)? */
+export const assistable = (kind: MicroEventKind): kind is AssistKind => kind in ASSIST_SECONDS;
+
+/** What helping the gang does to her standings (§3: +3 with the gang, −3 with Tessen and with the street). */
+export const ASSIST_STANDING = { gang: 3, tessen: -3, civilians: -3 } as const;
+
 export interface StreetCrimeLog {
   /** The board the log is of. */
   readonly slot: number;
@@ -58,6 +74,12 @@ export const streetCrimePay = (kind: MicroEventKind, level: number, paidToday: n
   const full = Math.round(MICRO_EVENT_REWARD[kind].eddies * (1 + 0.1 * (Math.max(1, level) - 1)));
   return paidToday < DAILY_FULL_REWARDS ? full : Math.round(full * LATE_SHARE);
 };
+
+/**
+ * What the gang pays for its crime helped: the same stake as Tessen's for one foiled and the same
+ * day's count (one board pays once, whichever side), but no matter how Tessen holds her.
+ */
+export const assistPay = (kind: AssistKind, level: number, paidToday: number): number => streetCrimePay(kind, level, paidToday, 0);
 
 /** The log once `id` is over, paid (`paid`) or not. */
 export const closeStreetCrime = (log: StreetCrimeLog, id: string, paid: boolean): StreetCrimeLog => ({

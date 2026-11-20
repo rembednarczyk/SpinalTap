@@ -771,6 +771,19 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
         return d ? [{ at: near(i.x, i.z), what: `${i.prop} ${Math.hypot(d.x - i.x, d.z - i.z).toFixed(1)} m from a door at ${near(d.x, d.z)}` }] : [];
       });
   },
+  /**
+   * A Koziołek, a monument or an artwork facing a wall (ADR-0094 stage 4): a building within 5 m in
+   * front of it, along its front. The Koziołki stand with their backs to the tenements, the monuments
+   * face the open space.
+   */
+  "statue-faces-wall": () =>
+    Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "monument" || i.prop === "artwork")
+      .flatMap((i) => {
+        const hit = [1, 2, 3, 4, 5].find((t) => inBuilding(i.x + Math.sin(i.yaw) * t, i.z + Math.cos(i.yaw) * t));
+        return hit === undefined ? [] : [{ at: near(i.x, i.z), what: `${i.prop} facing a wall ${hit} m ahead` }];
+      }),
   /** A bulky free-standing piece reaching into a wall. */
   "furniture-in-wall": () =>
     Object.values(WORLD_STREET_PROPS)

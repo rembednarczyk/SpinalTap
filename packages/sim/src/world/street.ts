@@ -77,7 +77,8 @@ export const playerEngaged = (ctx: SimContext, player: Entity): boolean => {
  * lies knocked out (ADR-0065), so the report of it covers its body too.
  */
 export const noteViolence = (ctx: SimContext, target: Entity, engagedBefore: boolean, at: Vec3, body?: EntityId): void => {
-  if (engagedBefore || target.player) return;
+  // One of a gang's crime in progress (ADR-0091 stage 5c) lets her walk up, but stopping it is no assault.
+  if (engagedBefore || target.player || target.ai?.crime) return;
   target.wronged = true;
   offend(ctx, "assault", at, body, target.id);
 };

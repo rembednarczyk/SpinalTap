@@ -1,4 +1,5 @@
 import {
+  ASSIST_STANDING,
   type ContractSiteId,
   type DomainState,
   type MicroEventKind,
@@ -6,6 +7,8 @@ import {
   TERRITORIES,
   TESSEN_FOIL_STANDING,
   advanceStreetCrimes,
+  assistPay,
+  assistable,
   bandLevel,
   closeStreetCrime,
   crimeSlot,
@@ -152,11 +155,32 @@ export const crimeInReach = (ctx: SimContext, player: Entity): BoardCrime | null
 const heldBy = (district: DistrictId): boolean => Object.values(TERRITORIES).some((t) => t.district === district);
 
 /**
- * A crime of the board over: foiled (Tessen pays, the street thanks her, the gang of the district
- * holds it against her), failed or left.
+ * A crime helped for its gang (ADR-0091 stage 5c): the gang pays the stake and likes her better,
+ * its grudge in the district falls by 10; Tessen and the street think less of her. Paid with the
+ * day's count, as a foiled one.
  */
-export const closeCrime = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "failed" | "left"): number => {
+const assisted = (ctx: SimContext, run: MicroEventRun): number => {
+  if (!assistable(run.kind)) return 0;
+  const d = ctx.state.domain;
+  const pay = assistPay(run.kind, bandLevel(d.progression.level, DISTRICT_BANDS[run.crime.district]), d.streetCrimes.paidToday);
+  ctx.state.domain = {
+    ...d,
+    streetCrimes: closeStreetCrime(d.streetCrimes, run.crime.id, true),
+    gangStandings: grudgeAfter(d.gangStandings, "hebi", run.crime.district, "assist"),
+  };
+  adjustReputation(ctx, "hebi", ASSIST_STANDING.gang);
+  adjustReputation(ctx, "tessen", ASSIST_STANDING.tessen);
+  adjustReputation(ctx, "civilians", ASSIST_STANDING.civilians);
+  return pay;
+};
+
+/**
+ * A crime of the board over: foiled (Tessen pays, the street thanks her, the gang of the district
+ * holds it against her), helped for the gang (`assisted`), failed or left.
+ */
+export const closeCrime = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "assisted" | "failed" | "left"): number => {
   if (outcome === "left") return 0;
+  if (outcome === "assisted") return assisted(ctx, run);
   const d = ctx.state.domain;
   const foiled = outcome === "won" || outcome === "helped";
   const level = bandLevel(d.progression.level, DISTRICT_BANDS[run.crime.district]);
