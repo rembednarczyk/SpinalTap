@@ -6,7 +6,7 @@ import {
   SHOP_SOLID_PROPS,
   FOODHALL_SOLID_PROPS,
   ROOF_SOLID_PROPS,
-  FRONT_PLAZA_SOLID_PROPS,
+  FRONT_PLAZA_SOLID_PROPS, DEPTAK_SOLID_PROPS,
   P2_PROPS,
   P2_ROBOTS,
   SHELTER_PROPS,
@@ -155,7 +155,7 @@ describe("the triangular pavilion on the corner (ADR-0074 stage 3)", () => {
     expect(ALCHEMIA_PROPS.slice(from, from + PAVILION_PROPS.length)).toEqual(PAVILION_PROPS);
     // The green tiers' two props went with ADR-0093 O1, the gallery's came last.
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
-    expect(ALCHEMIA_PROPS.slice(from + PAVILION_PROPS.length)).toHaveLength(2 + P1_RAMP_PROPS.length + 1 + 1 + P2_PROPS.length + 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length);
+    expect(ALCHEMIA_PROPS.slice(from + PAVILION_PROPS.length)).toHaveLength(2 + P1_RAMP_PROPS.length + 1 + 1 + P2_PROPS.length + 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length + DEPTAK_SOLID_PROPS.length);
   });
 
   it("puts Ren and the Hebi bag on the roof, inside the attic and clear of the sign", () => {

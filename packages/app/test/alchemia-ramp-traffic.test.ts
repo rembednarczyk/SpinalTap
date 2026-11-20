@@ -3,7 +3,7 @@ import { type AudioPort, EMPTY_INPUT } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { P1_CABINS, P1_RAMP, TRAFFIC_ROUTES, VIEW_HALF_ANGLE, type Entity, eyeOf, lineOfSight, p1RampY } from "@seki/sim";
+import { P1, P1_CABINS, P1_RAMP, TRAFFIC_ROUTES, VIEW_HALF_ANGLE, type Entity, eyeOf, lineOfSight, p1RampY } from "@seki/sim";
 import { FakeRender, teleport } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
@@ -13,7 +13,9 @@ import { GameSession } from "../src/game-session";
  * down the ramp into the south hand-over cabin, another comes out of the north cabin, up the ramp
  * and away along Bajkowskiego, onto its right lane and south down Lubartowska past the deptak's
  * mouth (T-324); on the ramp's surface, never into another car, and neither comes or goes where
- * Seki on the square would see it.
+ * Seki on the square would see it. Since C7 (20.11) two cars a route, as the board's busy ramp: both
+ * of each route's cars drive the ramp. A car out of sight comes back where its timetable is (the
+ * traffic's rule), so one out of P-1 may turn up anywhere under the deck, not only in its cabin.
  */
 
 const audio: AudioPort = { play() {}, stopAll() {} };
@@ -79,6 +81,8 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
     const into: string[] = [];
     const offRamp: string[] = [];
     let before = new Map<number, { x: number; y: number; z: number }>();
+    /** Each route's cars seen on the ramp (in, out). */
+    const rampIds = [new Set<number>(), new Set<number>()] as const;
     for (let i = 0; i < 60 * 70; i++) {
       session.step(EMPTY_INPUT);
       const all = cars(session);
@@ -95,6 +99,7 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
         lives.delete(id);
       }
       for (const c of ramp) {
+        if (c.position.x > P1_RAMP.minX && c.position.x < P1_RAMP.maxX && c.position.z > P1_RAMP.top && c.position.z < P1_RAMP.foot) rampIds[c.vehicle.route === IN ? 0 : 1].add(c.id);
         const life = lives.get(c.id) ?? { route: c.vehicle.route, first: c.vehicle.s, last: c.vehicle.s, seen: [] };
         life.last = c.vehicle.s;
         life.seen.push({ ...c.position });
@@ -113,10 +118,16 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4, G-491)", () => {
     // In: along Bajkowskiego west of the driveway, then all the way into the south cabin.
     const came = done.filter((l) => l.route === IN && l.seen.some((p) => p.z < -12 && p.x < 405) && l.seen.some((p) => cabin(P1_CABINS[0]!, p)));
     expect(came.length).toBeGreaterThan(0);
-    // Out: from the north cabin up the ramp, south down Lubartowska and never onto the deptak north of Bajkowskiego.
-    const went = done.filter((l) => l.route === OUT && cabin(P1_CABINS[1]!, l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - SOUTH.x, p.z - SOUTH.z) < 3));
+    // Out: from under the deck (its north cabin, P-1's floor or the ramp's covered part, out of the street's sight) up the
+    // ramp, south down Lubartowska and never onto the deptak north of Bajkowskiego.
+    const underDeck = (p: { x: number; z: number }) =>
+      cabin(P1_CABINS[1]!, p) || (p.x > P1.minX && p.x < P1.maxX && p.z > P1_RAMP.covered && p.z < P1.maxZ && p.x < P1_RAMP.maxX);
+    const went = done.filter((l) => l.route === OUT && underDeck(l.seen[0]!) && l.seen.some((p) => Math.hypot(p.x - SOUTH.x, p.z - SOUTH.z) < 3));
     expect(done.filter((l) => l.route === OUT).flatMap((l) => l.seen.filter((p) => p.x > 434 && p.z > -14))).toEqual([]);
     expect(went.length).toBeGreaterThan(0);
+    // Two cars a route (C7): both of each drive the ramp.
+    expect([TRAFFIC_ROUTES[IN]!.vehicles, TRAFFIC_ROUTES[OUT]!.vehicles]).toEqual([2, 2]);
+    expect(rampIds.map((s) => s.size)).toEqual([2, 2]);
   });
 
   it("stops before Seki on the ramp's east lane, and she never stands inside it (G-492: the traffic's body)", () => {

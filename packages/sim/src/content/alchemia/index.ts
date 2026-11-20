@@ -32,6 +32,8 @@ import { ROOF_GARDEN_PROPS, ROOF_PLANTER_SOLIDS, roofGardenPieces } from "./roof
 import { ROOF_DRESS_PROPS, roofDressPieces } from "./roof-dress";
 import { plazaFloorPieces } from "./front-plaza";
 import { plazaCafePieces, plazaCafeSolids } from "./front-plaza-cafe";
+import { DEPTAK_PROPS, deptakStallPieces } from "./deptak-stalls";
+import { TERRACE_PEOPLE } from "./terrace-people";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -83,6 +85,8 @@ export { ROOF_CROWD, ROOF_GARDEN_PROPS, ROOF_PLANTER_SOLIDS, bedOutline, inBed, 
 export { AIR_HANDLER, CHAIR, CRATES, MAST, PANELS, PANEL_ROWS, ROOF_DRESS_PROPS, WASHING, roofDressPieces } from "./roof-dress";
 export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { FOUNTAIN_CENTRE, FOUNTAIN_RADIUS, FOUNTAIN_RIM, PASSAGE_STEPS, PLAZA_FLOOR, PLAZA_GOING, PLAZA_RISER, PLAZA_STEPS, PLAZA_TOP, PODIUM, SOUTH_STEPS, WEST_STEPS, plazaFloorPieces } from "./front-plaza";
+export { DEPTAK_CROWD, DEPTAK_KIOSKS, DEPTAK_PROPS, DEPTAK_STALLS, deptakStallPieces, stallSeller } from "./deptak-stalls";
+export { TERRACE_PEOPLE } from "./terrace-people";
 export { CAFE_TABLES, FRONT_PLAZA_PROPS, PLAZA_CROWD, PLAZA_FOOTPRINTS, PLAZA_KIOSKS, kioskSpots, plazaCafePieces, plazaCafeSolids } from "./front-plaza-cafe";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
@@ -124,11 +128,13 @@ const MALL_IN = mallInsidePieces();
 const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), ...entrancePieces()];
 /** The square before the front (C5, 19.11): its podium, stairs and fountain, its kiosks and café; drawn with the front. */
 const FRONT_SQUARE = [...plazaFloorPieces(), ...plazaCafePieces()];
+/** The deptak's stalls dressed (C7, 20.11): crates, buckets, tags, lamps, cables, cartons and the tea; drawn with the front. */
+const DEPTAK = deptakStallPieces();
 /**
  * The gallery's body (ADR-0093 O1; the green tiers of 15.11 until then) and the front's storeys over
  * P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own.
  */
-export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT, ...FRONT_SQUARE];
+export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT, ...FRONT_SQUARE, ...DEPTAK];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
 export const ALCHEMIA_PIECES: readonly Piece[] = [
@@ -149,6 +155,7 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...LANDMARK,
   ...ROOF,
   ...FRONT_SQUARE,
+  ...DEPTAK,
 ];
 
 /** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
@@ -213,6 +220,15 @@ export const FOODHALL_SOLID_PROPS: readonly StaticProp[] = [
 export const FRONT_PLAZA_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([...FRONT_SQUARE, ...plazaCafeSolids()], 8);
 
 /**
+ * The game's models of C7 (20.11): the deptak's stalls' sellers and crates, the people on the front's
+ * terraces (still figures, drawn only), one street-props view.
+ */
+export const C7_PROPS: readonly StreetPropItem[] = [...DEPTAK_PROPS, ...TERRACE_PEOPLE];
+
+/** The deptak's stalls' solids (C7): the flower buckets, the cartons and the crates' boxes, a prop per 8 m tile, after the square's. */
+export const DEPTAK_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([...DEPTAK, ...modelBoxes(DEPTAK_PROPS.filter((p) => p.prop !== "figure"))], 8);
+
+/**
  * Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the
  * Arkady. The units' two props and the tables' one hold the food hall on P3 since ADR-0093 O3 (its
  * units, north and south of z 45, and its seating), so the ids after them stay as they were.
@@ -257,8 +273,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...FOODHALL_SOLID_PROPS,
   // The green roof (O4), its ids as on main.
   ...ROOF_SOLID_PROPS,
-  // The square before the front (C5) last, so every id above stays.
+  // The square before the front (C5), so every id above stays.
   ...FRONT_PLAZA_SOLID_PROPS,
+  // The deptak's stalls' goods (C7) last.
+  ...DEPTAK_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

@@ -1,0 +1,1 @@
+Deptak na Lubartowskiej przy Alchemii jak na planszy: na kamienicy naprzeciw frontu świecą neony SPOŻYWCZY, ALCHEMIA i PARKING CAŁODOBOWY, stragany mają sprzedawców, skrzynki z towarem i klientów, na tarasach frontu stoją ludzie, a rampą na parking jeździ dwa razy więcej aut (ADR-0074 C7).
