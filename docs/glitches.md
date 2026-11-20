@@ -2248,7 +2248,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-942 Schody placu przed Alchemią schodzą na goły grunt przed chodnikiem Bajkowskiego
 - Ważność: S4 · Zasięg: lokalny, Alchemia, x 383,6–404,3, z −9,05…−11,2
 - Opis: Między krawędzią placu T0 (z −9,05…−9,3) a kostką chodnika w232464426 (z −10,2…−11,2) leży pas gołego gruntu 1,15–1,9 m (ok. 32 m²); na ortofoto 100% kostki. Pas był przed C5 (ground-strip-gap krakowskie-2-1 400,-10 w bazie), od C5 (#793) schodzą na niego schody południowe placu. Przegląd kuratora 20.11.
-- Status: nowy (20.11)
+- Status: w naprawie (gałąź fix/g942-schody-placu); wcześniej: nowy (20.11)
 - Pakiet właściciela: tools/osm-import (corrections-alchemia.ts), regeneracja tablic
 - Test przyjęcia: brak próbki co 0,1 m w x 383,6–404,3 między krawędzią placu a pasem chodnika bez nawierzchni; klucz ground-strip-gap krakowskie-2-1 400,-10 znika z bazy; NMT bez zmian
 - Wiersz topografii: T-333 (T-332 zajęty).
