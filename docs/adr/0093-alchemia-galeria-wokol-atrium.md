@@ -189,6 +189,22 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - Szyb windy hali przy bramce P1 (5 miejsc miary strzału zza barku, G-939) do osobnej poprawki.
   - Czas klatki na telefonie odniesienia z siatką wnętrza ok. 83 tys. trójkątów niezmierzony.
 
+## Etap O3: poprawka czasu fali (20.11, gałąź `fix/m4-contracts-czas`)
+
+- **Problem:** po O3 fala Hebi zadania ochrony zaczynała na T1 i wspinała się trzy piętra do Oyajiego na P3. Testy ochrony w `m4-contracts` przekraczały 20 s w pełnym przebiegu z pokryciem (main czerwony od #787).
+- **Pomiar (profil CPU, seed 5):** kroków do zranienia Oyajiego 1173 (1020 przed O3). Krok z falą kosztował dwa razy więcej: graf poziomów co krok dla czterech gangerów (`pursueTo` 1948 z 4400 ms) i ruch po schodach ruchomych.
+- **Zmiana 1, wynik bez zmian (memoizacja w obrębie kroku):** jedno przeszukanie grafu na krok gangera dla drogi i pozycji strzeleckiej (`levelSearch`). Pozycja strzelecka sprawdza węzły w kolejności (koszt, indeks) do pierwszego widzącego cel. Zapytania do indeksu brył: 372 → 273 na krok (`level-chase-cost.test.ts`). Hash stanu fali przez 1400 kroków się nie zmienił.
+- **Zmiana 2, treść:**
+  - Naloty wchodzą przy drzwiach trzonów na P2 (SW od parkingu przy Świętoduskiej, NE od drzwi wschodnich, drogą od Lubartowskiej). Przed falą zostaje ostatni bieg schodów ruchomych.
+  - Wzorzec: opóźnione pojawienie się (spawn delay) na zegarze symulacji. Wejście ma pole `delay` w planie miejsca (`SitePlan.delay`, `contract-plans.ts`): raid_north 6,5 s, raid_east 9,5 s.
+  - Flaga `plan:way:<id>` wstaje przy przyjęciu zadania. `contractPlanSystem` opuszcza ją w ticku `tally.startTick + delay`, a streamer wtedy stawia falę.
+  - Flaga działa jako warunek `none`: jej opuszczenie fali nie zabiera, ani przy przybyciu, ani przy końcu zadania.
+  - Zapis: flaga i `startTick` są w zapisie, schemat bez zmian. Zapis sprzed tej zmiany nie ma flagi, więc fala jest od razu.
+- **Czas gry:** Oyaji obrywa po 1069–1094 krokach od przyjęcia zadania (ok. 18 s; przed O3 1020, po O3 z T1 1173). Gracz biegnący od wózka Hany ma więc tyle czasu, co przed O3. Opisy miejsc (en, pl) mówią o schodach.
+- **Czasy testów (bez pokrycia / z pokryciem):** „walks up to Oyaji” 4,7 / 11,0 s → 1,8–2,1 / 4,3–6,6 s; „a save during the raid” 8,2 / 19,0 s → 2,7 / 5,3–6,3 s (load 4–9 na 4 rdzeniach).
+- **Testy:** `untilCrew` w `packages/sim/test/helpers.ts` czeka na falę. Dostosowane: `m4-contracts`, `contract-yaw`, `m4-docks`, `wave1-net`, app `m4-loop` (`shootDown` staje na piętrze celu). Nowy test: zapis w trakcie dojścia fali, po wczytaniu fala przychodzi w tym samym ticku.
+- **Otwarte:** hook `protect_2` w `packages/narrative/ink/{en,pl}/hooks.ink` mówi jeszcze o „ścieżce od Świętoduskiej wzdłuż straganów” (nieaktualne od O3, obszar Narrative). Czujka wariantu `lockdown` stoi dalej na ulicy i wspina się po grafie.
+
 ## Etap O4: wykonanie (20.11, gałąź `feat/alchemia-o4-dach`)
 - **Wzorzec:** intensywny dach zielony (roof garden), FLL „Dachbegrünungsrichtlinien – Richtlinien für Planung, Bau und Instandhaltung von Dachbegrünungen” (2018): roślinność na warstwie substratu w podniesionych grządkach z obrzeżem (drzewa i krzewy od ok. 0,5 m substratu), utwardzone ścieżki między nimi, technika dachu w osobnej strefie. Jak na planszy (schemat kondygnacji i widok od frontu): jasny pierścień ścieżek wokół otworu atrium, zieleń po obu stronach, pergole, ławki i drzewa na najwyższym tarasie.
 - **Plan** (`roof-plan.ts`, metry świata, dach 10,7):

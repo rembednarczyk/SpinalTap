@@ -183,7 +183,10 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     const protection = session.sim.domain.contracts.active!;
     expect(protection.kind).toBe("protect");
     expect(ui.getState().objective).toContain("Defend Oyaji");
-    const wave = [...session.sim.world].filter((e) => e.tag === contractTag(protection.id)).map((e) => e.key!);
+    // The raid is on its way up the gallery's cores: it turns up on P2 after its site's delay (ADR-0093 O3).
+    const raid = () => [...session.sim.world].filter((e) => e.tag === contractTag(protection.id)).map((e) => e.key!);
+    for (let i = 0; i < 60 * 20 && raid().length === 0; i++) steps(session, 1);
+    const wave = raid();
     expect(wave).toHaveLength(protection.targets);
     for (const key of wave) shootDown(session, key);
     steps(session, 1);

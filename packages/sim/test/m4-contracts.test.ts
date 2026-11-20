@@ -8,8 +8,8 @@ import {
   contractTag,
   takenFlag,
 } from "@seki/core";
-import { CONTRACT_ITEM_SPOTS, HANA_SPOT, OYAJI_MAX_HP, SIM_HZ, STALL_KEEPERS, Simulation, ground, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
+import { CONTRACT_ITEM_SPOTS, HANA_SPOT, OYAJI_MAX_HP, SIM_HZ, SITE_PLANS, STALL_KEEPERS, Simulation, ground, stateHash } from "../src";
+import { byKey, collect, input, run, teleportPlayer, debriefExtras, untilCrew } from "./helpers";
 
 /** A point on the ground at (x, z) (the terrain of ADR-0045). */
 const at = (x: number, z: number) => ground(x, z);
@@ -225,6 +225,10 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(c).toMatchObject({ kind: "protect", status: "active" });
     // He has patched himself up since last time.
     expect(byKey(sim, "oyaji")!.health!.current).toBe(OYAJI_MAX_HP);
+    // The raid is on its way up the gallery's cores and turns up on P2 after its site's delay (ADR-0093 O3):
+    // the streamer spawns it on the step after the plan lowers its flag.
+    expect(gangers(sim, c)).toEqual([]);
+    expect(untilCrew(sim, c)).toBe(Math.round(SITE_PLANS[c.siteId]!.delay! * SIM_HZ) + 1);
     const wave = gangers(sim, c);
     expect(wave).toHaveLength(c.targets);
     expect(wave.every((g) => g.ai?.victim === "oyaji")).toBe(true);
@@ -249,6 +253,7 @@ describe("protection (Hebi come for Oyaji)", () => {
     toMarket(sim);
     const failed = collect<{ reason: string }>(sim, "ContractFailed");
     const c = accept(sim, "protect");
+    untilCrew(sim, c);
     const [g] = gangers(sim, c);
     const start = Math.hypot(g!.position.x - STALL_KEEPERS.oyaji.x, g!.position.z - STALL_KEEPERS.oyaji.z);
     run(sim, 120);
@@ -266,6 +271,18 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(sim.domain.contracts.active).toBeNull();
     // Oyaji runs from the shots now (ADR-0029), so the wave needs about 45 s of play: roomy timeout.
   }, 20_000);
+
+  it("a save while the raid is on its way: the loaded game's turns up on the same tick", () => {
+    const sim = friendlyHebi(Simulation.create({ seed: 5 }));
+    toMarket(sim);
+    const c = accept(sim, "protect");
+    run(sim, 120);
+    expect(gangers(sim, c)).toEqual([]);
+    const restored = reload(sim);
+    expect(untilCrew(restored, c)).toBe(untilCrew(sim, c));
+    expect(gangers(restored, c)).toHaveLength(c.targets);
+    expect(hash(restored)).toBe(hash(sim));
+  });
 
   it("is only on while Oyaji's stall is open (8:00 to 22:00)", () => {
     const at = (hour: number, minute = 0) =>
@@ -312,7 +329,7 @@ describe("protection (Hebi come for Oyaji)", () => {
   it("a save during the raid continues exactly like the original", () => {
     const sim = friendlyHebi(Simulation.create({ seed: 5 }));
     toMarket(sim);
-    accept(sim, "protect");
+    untilCrew(sim, accept(sim, "protect"));
     // Saved while the wave walks in, before anyone fires: weapon bloom is transient and not saved (ADR-0016).
     const shots = collect(sim, "ShotFired");
     run(sim, 60);
@@ -320,8 +337,8 @@ describe("protection (Hebi come for Oyaji)", () => {
     const restored = reload(sim);
     expect(hash(restored)).toBe(hash(sim));
     // Until the wave has hurt Oyaji (the game's state, not a clock): with seed 5 some 520 steps
-    // after the job since the raids turn up on the gallery's P2 (ADR-0093 O3: 1170 from T1 up to his
-    // shop on P3, 1000 to it on T1's level before), a hang guard well past that.
+    // after it turns up on the gallery's P2 (ADR-0093 O3: 1170 from T1 up to his shop on P3, 1000
+    // to it on T1's level before), a hang guard well past that.
     let n = 0;
     while (n < 3000 && (byKey(sim, "oyaji")?.health?.current ?? 0) >= OYAJI_MAX_HP) {
       sim.step();

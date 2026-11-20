@@ -207,9 +207,9 @@ const onP2 = (x: number, z: number): Vec3 => ({ x, y: MALL_LEVELS.p2, z });
  * P3 (ADR-0093 O3; in the hall's north-east corner on T1's level until then) through the gallery:
  * up the south-west core from the car park by Świętoduska, and up the north-east one from the east
  * door on T1, the way from Lubartowska; they turn up at the cores' doors on P2, the last escalator
- * still before them. Not on T1 any more: from there the four climbed three floors on the level
- * graph, some 20 s at twice a step's cost (the raid's tests four times as long as before O3). From
- * P2 it is one flight, and the player running up from Hana's cart meets them about its foot.
+ * still before them, after the climb to there (`SitePlan.delay`, `contract-plans.ts`). Not walked
+ * from T1 any more: the four climbed three floors on the level graph, some 20 s at twice a step's
+ * cost (the raid's tests four times as long as before O3); on the way up they are out of sight.
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<MarketSite, readonly Vec3[]>> = {
   hana_stall: [ground(426.5, 66), ground(426.5, 67.5), ground(426.5, 64.5), ground(425, 66)],
