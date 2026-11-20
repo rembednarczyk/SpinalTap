@@ -118,6 +118,22 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect(off.slice(0, 20).join(" ")).toEqual("");
   });
 
+  // West of the ramp's driveway the square ended on the car park's edge (z −9.05…−9.3), 1.15–1.9 m short
+  // of the footway's band, setts on the orthophoto; the front square's south stairs (ADR-0074 C5) come down onto it.
+  // A sample counts as bare with bare ground 1 cm south of it too: the import rounds the square's edge cut off at the
+  // band, leaving a seam of a millimetre along it (as along G-941's edge east of the driveway), not a strip of ground.
+  it("paves T0 down to Bajkowskiego's footway west of the ramp's driveway, under the front square's stairs (G-942)", () => {
+    const bare = (x: number, z: number) => !PAVED.has(surfaceAt(x, z) ?? "bare") && !PAVED.has(surfaceAt(x, z - 0.01) ?? "bare");
+    const off: string[] = [];
+    for (let k = 0; k <= 207; k++) {
+      const x = 383.6 + k / 10;
+      let z = -8.9;
+      for (; z > -13 && surfaceAt(x, z) !== "footway"; z -= 0.05) if (bare(x, z)) off.push(`${x.toFixed(1)},${z.toFixed(2)} ${surfaceAt(x, z) ?? "bare"}`);
+      expect(z, `x ${x.toFixed(1)} reaches the footway`).toBeGreaterThan(-13);
+    }
+    expect(off.length, off.slice(0, 20).join(" ")).toBe(0);
+  });
+
   it("leaves out the replaced areas and lines by id, and the rest as mapped", () => {
     const area = { id: "w1", osmId: 1, tags: { amenity: "parking" }, ring: [pt(0, 0), pt(1, 0), pt(1, 1)], holes: 0 };
     const line = { id: "w2", osmId: 2, tags: { highway: "service" }, line: [pt(0, 0), pt(1, 1)] };
