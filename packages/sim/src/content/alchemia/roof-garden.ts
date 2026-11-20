@@ -63,12 +63,10 @@ const flowers = (): Piece[] =>
       for (const z of [b.z0 + 0.4, b.z1 - 0.4, (b.z0 + b.z1) / 2]) {
         const h = roofHash(x, z);
         if (h < 0.35 || !inBed(b, x, z, 0.25)) continue;
-        // A tuft of two or three heads a hand apart, ankle to knee high.
-        for (let k = 0; k < 2 + Math.floor(h * 2); k++) {
-          const [fx, fz] = [x + 0.12 * Math.cos(k * 2.4 + h * 6), z + 0.12 * Math.sin(k * 2.4 + h * 6)];
-          const s = 0.05 + 0.04 * roofHash(fz, fx);
-          out.push(piece(box(fx - s, fx + s, fz - s, fz + s, R + b.high - 0.02, R + b.high + 0.1 + 0.25 * roofHash(fx + k, fz)), "flower", true, false));
-        }
+        // A tuft, ankle to knee high (the engine draws it as an irregular clump of heads, not a box);
+        // in the outside's mesh with the bed it grows in, seen from afar as its colour.
+        const s = 0.1 + 0.08 * roofHash(z, x);
+        out.push(piece(box(x - s, x + s, z - s, z + s, R + b.high - 0.02, R + b.high + 0.12 + 0.25 * h), "flower", false, false));
       }
     }
     return out;

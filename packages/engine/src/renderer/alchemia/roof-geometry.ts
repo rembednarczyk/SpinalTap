@@ -1,7 +1,7 @@
 import type { GroundPoint, Vec3 } from "@seki/core";
 import { ALCHEMIA_ROOF_PIECES, BED_RAISED, ROOF_PATHS, ROOF_Y, type AlchemiaBox, type AlchemiaPiece } from "@seki/sim";
 import { type BoxFace, type CityKitData, type GeometrySink, hexRgb, swatchUv } from "../city-kit-data";
-import { LAWN, LEAF, band, insetConvex, lid } from "./storey-facade";
+import { LAWN, band, insetConvex, lid } from "./storey-facade";
 
 /*
  * The gallery's green roof (ADR-0093 O4) on the city kit's texture, in Alchemia's outside mesh (the
@@ -146,11 +146,79 @@ const lantern = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox): void =>
   boxOf(sink, data, { x0: c.x - 0.006, x1: c.x + 0.006, z0: c.z - 0.006, z1: c.z + 0.006, y0: b.y1, y1: b.y1 + 0.25 }, "cable");
 };
 
+/** Leaves in several greens (the kit's paint tinted, as `LEAF` of the storeys' curtains): a clump's shade by its place. */
+const LEAVES: readonly string[] = ["#4f9a58", "#3f7a3c", "#5aa04a", "#2f6a3a", "#6a9a3a", "#467640"];
+
+/** A number in [0, 1) from a point and a salt. */
+const pointHash = (x: number, y: number, z: number, salt: number): number => {
+  const h = Math.sin(x * 12.9898 + y * 39.346 + z * 78.233 + salt * 11.135) * 43758.5453;
+  return h - Math.floor(h);
+};
+
+/**
+ * A clump of leaves (or a head of flowers) on the ground at `c`: an irregular low dome, its rim and
+ * crown points pushed in and out by the hash, its crown leaning to one side, flat-shaded so the ink
+ * draws its facets. No bottom (it sits on the soil or hangs against what carries it).
+ */
+const clump = (sink: GeometrySink, uv: readonly [number, number], c: Vec3, r: number, h: number, tint: Tint): void => {
+  const segs = 5;
+  const lean = { x: (pointHash(c.x, c.y, c.z, 1) - 0.5) * r * 0.7, z: (pointHash(c.x, c.y, c.z, 2) - 0.5) * r * 0.7 };
+  const turn = pointHash(c.x, c.y, c.z, 3) * Math.PI * 2;
+  const ring = (k: number, rr: number, y: number, salt: number): Vec3 => {
+    const a = turn + (k / segs) * Math.PI * 2;
+    const j = 0.75 + 0.45 * pointHash(c.x, c.z, k, salt);
+    const shift = y > c.y ? 1 : 0;
+    return { x: c.x + Math.cos(a) * rr * j + lean.x * 0.6 * shift, y: y + (pointHash(c.z, c.x, k, salt + 7) - 0.5) * h * 0.25, z: c.z + Math.sin(a) * rr * j + lean.z * 0.6 * shift };
+  };
+  const low = Array.from({ length: segs }, (_, k) => ring(k, r, c.y, 4));
+  const mid = Array.from({ length: segs }, (_, k) => ring(k + 0.5, r * 0.75, c.y + h * 0.6, 5));
+  const top: Vec3 = { x: c.x + lean.x, y: c.y + h, z: c.z + lean.z };
+  const out = (a: Vec3, b: Vec3, d: Vec3): Vec3 => {
+    const m = { x: (a.x + b.x + d.x) / 3 - c.x, y: (a.y + b.y + d.y) / 3 - c.y + 0.2 * h, z: (a.z + b.z + d.z) / 3 - c.z };
+    const l = Math.hypot(m.x, m.y, m.z) || 1;
+    return { x: m.x / l, y: m.y / l, z: m.z / l };
+  };
+  for (let k = 0; k < segs; k++) {
+    const [a, b] = [low[k]!, low[(k + 1) % segs]!];
+    const [m0, m1] = [mid[(k + segs - 1) % segs]!, mid[k]!];
+    sink.quad(a, b, m1, m0, out(a, b, m1), uv, tint);
+    sink.quad(m1, mid[(k + 1) % segs]!, top, top, out(m1, mid[(k + 1) % segs]!, top), uv, tint);
+  }
+};
+
+/**
+ * A piece of the roof's greenery (leaves in a crate, climbers on a rafter or down a post, a tuft of
+ * flowers in a bed) as clumps filling its box along its longest side: never the box itself (the
+ * user's decision: no square plants).
+ */
+const greenery = (sink: GeometrySink, data: CityKitData, b: AlchemiaBox, flower: boolean): void => {
+  const uv = swatchUv(data, "paint");
+  const [w, h, d] = [b.x1 - b.x0, b.y1 - b.y0, b.z1 - b.z0];
+  const tint = (x: number, y: number, z: number): Tint => (flower ? pick(FLOWERS, b) : hexRgb(LEAVES[Math.floor(pointHash(x, y, z, 9) * LEAVES.length)]!));
+  if (h > Math.max(w, d) * 1.5) {
+    // Down a post: clumps stacked round it, a little apart, each a different green.
+    const r = Math.max(w, d) / 2;
+    for (let y = b.y0; y < b.y1 - 0.05; y += r * 1.6) {
+      const c = { x: (b.x0 + b.x1) / 2 + (pointHash(b.x0, y, b.z0, 6) - 0.5) * r * 0.5, y, z: (b.z0 + b.z1) / 2 + (pointHash(b.z0, y, b.x0, 6) - 0.5) * r * 0.5 };
+      clump(sink, uv, c, r * 1.1, Math.min(r * 1.8, b.y1 - y), tint(c.x, c.y, c.z));
+    }
+    return;
+  }
+  const alongX = w >= d;
+  const [len, short] = alongX ? [w, d] : [d, w];
+  const n = Math.max(1, Math.round(len / (short * 1.1)));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n;
+    const x = alongX ? b.x0 + w * t : (b.x0 + b.x1) / 2;
+    const z = alongX ? (b.z0 + b.z1) / 2 : b.z0 + d * t;
+    const r = (short / 2) * (0.85 + 0.35 * pointHash(x, b.y0, z, 8));
+    clump(sink, uv, { x, y: b.y0, z }, r, h * (0.75 + 0.35 * pointHash(z, b.y0, x, 8)), tint(x, b.y0, z));
+  }
+};
+
 /** A plain box by kind: its swatch, and its tint (by the hash of its place where the kind has many colours). */
 const LOOK: Readonly<Partial<Record<AlchemiaPiece["kind"], (b: AlchemiaBox) => readonly [string, Tint?]>>> = {
   pergola: () => ["rust"],
-  green: () => ["paint", LEAF],
-  flower: (b) => ["paint", pick(FLOWERS, b)],
   laundry: (b) => ["paint", pick(CLOTHES, b)],
   can: (b) => ["paint", pick(CANS, b)],
   paper: (b) => ["paint", b.y1 - b.y0 > 0.02 ? TAPE : NAPKIN],
@@ -181,6 +249,7 @@ export const roofPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiec
   else if (p.kind === "crate") crate(sink, data, b);
   else if (p.kind === "fan") fan(sink, data, b);
   else if (p.kind === "lantern") lantern(sink, data, b);
+  else if (p.kind === "green" || p.kind === "flower") greenery(sink, data, b, p.kind === "flower");
   else {
     const [swatch, tint] = LOOK[p.kind]?.(b) ?? ["trim-light"];
     boxOf(sink, data, b, swatch, tint, b.y0 <= ROOF_Y + 0.01 ? NO_BOTTOM : undefined);
