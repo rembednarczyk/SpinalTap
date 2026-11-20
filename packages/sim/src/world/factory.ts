@@ -104,7 +104,10 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   }
   const m = prop.mechanism;
   if (m?.kind === "platform" && e.solid) {
-    e.elevator = { key: m.key, levels: m.levels, speed: m.speed, target: 0, settled: false };
+    // At rest where the platform stands (Alchemia's at the hall's floor, its second of three levels).
+    const top = e.solid.max.y;
+    const target = m.levels.reduce((best, y, i) => (Math.abs(y - top) < Math.abs((m.levels[best] ?? 0) - top) ? i : best), 0);
+    e.elevator = { key: m.key, levels: m.levels, speed: m.speed, target, settled: false };
     e.velocity = { x: 0, y: 0, z: 0 };
   } else if (m?.kind === "gate" && e.solid) {
     e.gate = { elevator: m.elevator, level: m.level, closed: e.solid, travel: m.travel };
@@ -114,6 +117,10 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
     e.door = { key: `${d.key}#${m.leaf}`, door: d.key, closed: e.solid, slide: m.slide, sensor: d.at, open: 0, idle: DOOR_CLOSE_DELAY, ...(d.lock ? { lock: d.lock } : {}) };
     // A sealed door never moves: a static solid, so the AI's ground raster sees it as a wall.
     if (d.lock?.kind !== "sealed") e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "shuttle" && e.solid) {
+    e.shuttle = { key: m.key, base: e.solid, axis: m.axis, travel: m.travel, period: m.period, phase: m.phase, pause: m.pause };
+    // Moving: the AI's ground raster leaves it out, as it does a lift's platform.
+    e.velocity = { x: 0, y: 0, z: 0 };
   } else if (m?.kind === "door-panel") {
     e.doorPanel = m.door;
   } else if (m?.kind === "button") {
@@ -286,7 +293,7 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
         ? gangerEntity(id, def.spawn, def.spawn.tag, ENEMY_TYPES[def.enemy].hp, chunk, undefined, def.enemy)
         : gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk)
       : npcEntity(id, def, chunk);
-  if (def.kind === "ganger" && def.patrol && e.ai) e.ai = { ...e.ai, patrol: true };
+  if (def.kind === "ganger" && def.territory && e.ai) e.ai = { ...e.ai, territory: def.territory };
   const plan = SCHEDULES[def.spawn.key];
   if (plan) e.schedule = { def: plan, own: e.interactable ?? null, pose: null };
   return e;

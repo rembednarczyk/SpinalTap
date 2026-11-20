@@ -7,7 +7,7 @@ import { DRESS_FLAG, MeshSink, hexColor } from "../src/renderer/mesh-sink";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkCables, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
-import type { Wall } from "../src/renderer/mapcity/facade-frame";
+import { DETAIL_STEP, type Wall } from "../src/renderer/mapcity/facade-frame";
 import { gableOver, stringCourse } from "../src/renderer/mapcity/landmarks/classicist";
 import { SWATCH, onWall } from "../src/renderer/mapcity/landmarks/kit";
 import { cameraAlong, gableFace, litMouths, mouthWall, tabletOn, uplights } from "../src/renderer/mapcity/landmarks/landmark-plan";
@@ -57,12 +57,12 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
   it("gives it no window grid of the tenements and no superstructure, and the data's gabled roof in tiles", () => {
     const plain = new MeshSink();
     planNearBuilding(plain, frameOf(GATE, false));
-    expect(points(plain).some((p) => p.u2 > 0)).toBe(true);
+    expect(points(plain).some((p) => p.u2 % DETAIL_STEP > 0)).toBe(true);
     const f = gate();
     expect(f.b.rise ?? 0).toBe(0);
     expect(f.b.roofShape).toBe("gabled");
     const kit = points(near3(f));
-    expect(kit.every((p) => p.u2 === 0)).toBe(true);
+    expect(kit.every((p) => p.u2 % DETAIL_STEP === 0)).toBe(true);
     const roof = kit.filter((p) => p.v2 >= ROOF_STYLE);
     expect(roof.length).toBeGreaterThan(6);
     for (const p of roof) expect(p.y).toBeGreaterThan(f.top - 0.1);

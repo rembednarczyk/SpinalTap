@@ -17,7 +17,7 @@ const OSM = mergeOsm(
 const at = (x: number, z: number, along: "x" | "z" = "x"): (typeof METRO_ENTRANCES)[number] => {
   const spot = { x, z, along, opens: 1 as const };
   const p = pavilion(spot);
-  return { ...p, label: "A", name: "test", spot, chunk: "test", station: "kanal", platform: null, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
+  return { ...p, label: "A", name: "test", spot, chunk: "test", station: "kanal", platform: null, endDoor: null, ticket: p.arrival, ticketYaw: p.arrivalYaw, hallSpot: p.arrival, hallYaw: p.arrivalYaw };
 };
 
 describe("the metro entrances' checks (ADR-0071 stage 2)", () => {

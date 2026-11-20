@@ -52,6 +52,22 @@ describe("weapon, loot and trade cues (E12)", () => {
     expect(cues).toEqual(["reload", "reload-round", "reload-round"]);
   });
 
+  it("racks the shotgun's slide once its run of rounds is in, not after a magazine or between rounds (user notes of 18.11)", () => {
+    const { bus, cues } = setup();
+    bus.emit("ReloadFinished", { entityId: PLAYER, loaded: 2, ready: false, perRound: true });
+    bus.emit("ReloadFinished", { entityId: PLAYER, loaded: 3, ready: true, perRound: true });
+    bus.emit("ReloadFinished", { entityId: PLAYER, loaded: 12, ready: true, perRound: false });
+    bus.emit("ReloadFinished", { entityId: NPC, loaded: 6, ready: true, perRound: true });
+    expect(cues).toEqual(["shotgun-pump"]);
+  });
+
+  it("knocks when a melee blow lands, a miss is the whoosh alone", () => {
+    const { bus, cues } = setup();
+    bus.emit("MeleeStrike", { entityId: PLAYER, strike: 1, hits: 0 });
+    bus.emit("MeleeStrike", { entityId: PLAYER, strike: 2, hits: 1 });
+    expect(cues).toEqual(["swing", "swing", "impact-melee"]);
+  });
+
   it("every weapon kind fires its own recorded shot; others are heard from further away", () => {
     const { bus, cues } = setup();
     const at = { x: 0, y: 1, z: 0 };

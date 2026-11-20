@@ -1,4 +1,5 @@
 import { poseBodyFromClips } from "./clips/body-pose";
+import { type FootfallCount, footfallsOf } from "./footfalls";
 import { poseLegsFromClips } from "./clips/leg-pose";
 import type { AbstractMesh, Scene, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
@@ -65,6 +66,8 @@ const disposeRig = (rig: CharacterRig, kit: CharacterKit, models: CharacterModel
 };
 
 export interface CharacterViewsDeps {
+  /** Where the followed figure's footfalls go, for the footsteps' sound (user notes of 18.11). */
+  readonly footfalls?: FootfallCount;
   /** How far the picture lifts feet standing at (x, y, z) (sidewalks, ADR-0041/0045); default the old street's. */
   readonly lift?: (x: number, y: number, z: number) => number;
   readonly scene: Scene;
@@ -281,6 +284,8 @@ export class CharacterViews implements FxActors {
       poseLegsFromClips(v.rig, t.position, t.speed, dt, t.crouch ?? 0);
       // Standing, the idle clip; on a hit, the hit reaction (ADR-0090 stage 2).
       poseBodyFromClips(v.rig, t.speed, dt, t.crouch ?? 0);
+      // Her feet coming down in the picture: the footsteps' sound goes with them (user notes of 18.11).
+      if (id === followed) this.deps.footfalls?.add(footfallsOf(v.rig, t.speed));
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
       animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
       animateGrab(v.rig, dt, t, id === followed ? "holder" : "held");

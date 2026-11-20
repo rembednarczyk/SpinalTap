@@ -104,6 +104,8 @@ export interface LublinStreetData {
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles in OSM: no lane, not even for deliveries (G-002). */
   readonly noVehicles?: true;
+  /** A street the game closes to cars (a deptak of 2077, T-324): deliveries only, as a pedestrian street. */
+  readonly carFree?: true;
 }
 
 export interface LublinMarkingData {

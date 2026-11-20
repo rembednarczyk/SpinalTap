@@ -1,4 +1,4 @@
-import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type SightProfile, type Vec3, angleTo, factionStance, sightOf } from "@seki/core";
+import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type SightProfile, TERRITORIES, type Vec3, angleTo, factionStance, gangTolerates, sightOf, standingOf } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { chestOf, clearSight, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -183,13 +183,17 @@ export const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): Vict
 };
 
 /**
- * A street patrol (ADR-0048) lets a neutral player walk its ground: it only watches her, unless
- * the heat sends it after her or she was caught in its own colours (a blown disguise).
+ * A member of a gang's territory (ADR-0091) lets the player walk its ground while its gang
+ * tolerates her in the district: no heat of the gang on her, no provocation, the grudge below the
+ * threshold and no disguise of its faction seen through. The gang's standing in the city does not
+ * decide it (it only hurries the warning), so a gang wronged elsewhere stays calm here.
  */
-const tolerates = (ctx: SimContext, g: Ganger, stance: FactionStance, hunted: boolean): boolean => {
-  if (!g.ai.patrol || stance !== "neutral" || hunted) return false;
-  const d = ctx.state.domain.disguise;
-  return !(d.blown && d.role !== null && DISGUISE_FACTION[d.role] === g.faction);
+export const tolerates = (ctx: SimContext, g: Ganger, hunted: boolean): boolean => {
+  if (!g.ai.territory) return false;
+  const { district } = TERRITORIES[g.ai.territory];
+  const d = ctx.state.domain;
+  const disguiseBurned = d.disguise.blown && d.disguise.role !== null && DISGUISE_FACTION[d.disguise.role] === g.faction;
+  return gangTolerates(standingOf(d.gangStandings, g.faction ?? "hebi", district), d.clock, { hunted, disguiseBurned });
 };
 
 /**
@@ -198,7 +202,7 @@ const tolerates = (ctx: SimContext, g: Ganger, stance: FactionStance, hunted: bo
  */
 const watchesOnly = (ctx: SimContext, g: Ganger, stance: FactionStance, heat: DomainState["heat"]): boolean => {
   const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
-  return (stance === "friendly" && !hunted) || tolerates(ctx, g, stance, hunted);
+  return (stance === "friendly" && !hunted) || tolerates(ctx, g, hunted);
 };
 
 /** Whether `g` lets the player be: it only watches her, or she wears its faction's disguise (ADR-0033). */

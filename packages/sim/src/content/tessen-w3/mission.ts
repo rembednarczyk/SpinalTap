@@ -1,11 +1,12 @@
 import type { Vec3 } from "@seki/core";
-import { DOORS_N, HALL_DOORS, MEZZANINE, MEZZANINE_DOORS, ROW_N_ROOMS, ROW_N_SPLITS } from "./layout";
-import { w3 } from "./site";
+import { DOORS_N, HALL_DOORS, MEZZANINE, MEZZANINE_DOORS, ROOF_UNDERSIDE, ROW_N_ROOMS, ROW_N_SPLITS } from "./layout";
+import { W3_CABIN, W3_ROW_N, W3_Y, w3 } from "./site";
 
 /**
  * W-3's job "Odbiór partii" in the hall (ADR-0082 §1, §2 "Patrole i posterunki", stage 3): the
  * calibration core's terminal in server room N, the room's camera, the patrols of the hall and the
- * mezzanine and the wagon airlock's guard. Pure numbers; the contract's templates spawn them.
+ * mezzanine and the wagon airlock's guard; on the pipes' way (Q2, G-908) row N roof's two cameras
+ * and the observer in the tower's cabin. Pure numbers; the contract's templates spawn them.
  */
 
 /** The core's terminal at the back of server room N: the foot of its desk, towards the door. */
@@ -78,3 +79,24 @@ export const W3_AIRLOCK_POST: Vec3 = w3(2505, 0, 418);
 
 /** The guard of armoury S, by its inner door, looking into the room (south). */
 export const W3_ARMOURY_POST: Vec3 = w3(2552, 0, 402.6);
+
+/** Row N's roof, over its underside: the roof cameras' no-go zone during the sabotage (Q2, G-908). */
+export const W3_ROOF_N = { minX: W3_ROW_N.minX, maxX: W3_ROW_N.maxX, minZ: W3_ROW_N.minZ, maxZ: W3_ROW_N.maxZ, floor: W3_Y + ROOF_UNDERSIDE } as const;
+
+/**
+ * Row N roof's two cameras (ADR-0082 §2) on its north parapet, looking out along the roof from its
+ * middle: the west one towards the tower's bridge, the east one at the hatch over server room N.
+ * Each misses the strip along the hall's wall short of its range and the roof behind it; the
+ * cooling units shade the north side. The hatch is in the east one's view: `reboot_optics` it first.
+ */
+export const W3_ROOF_CAMERAS = [
+  { key: "dev:w3-roof-cam-w", position: w3(2530, 11.5, 440), yaw: -Math.PI / 2 },
+  { key: "dev:w3-roof-cam-e", position: w3(2556, 11.5, 440), yaw: Math.PI / 2 },
+] as const;
+
+/**
+ * The observer in the tower's cabin (ADR-0082 §2, `tessen_sniper` with 40 m of sight, no shot
+ * before the alarm): at its east panes, looking over the pickup yard and row N's roof and round
+ * between them. The cabin's floor hides the bridge under it.
+ */
+export const W3_OBSERVER = { at: w3(W3_CABIN.maxX - 0.7, W3_CABIN.floor, 441), yaw: 1.0, period: 16 } as const;

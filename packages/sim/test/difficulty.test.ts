@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag, enemyScale } from "@seki/core";
+import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, SECONDS_PER_HOUR, STREET_CRIME_SLOT_HOURS, crimeSlot, streetCrimesAt, contractTag, enemyScale } from "@seki/core";
 import {
   W3_TERMINAL_SPOTS,
   GANGER_MAX_HP,
@@ -10,9 +10,9 @@ import {
   SNIPER_PERCHES,
   Simulation,
   chestOf,
-  deriveRandom,
   gangerEntity,
   ground,
+  nextCrime,
   sniperEntity,
 } from "../src";
 import { byKey, collect, input, run, standInFront, streetSim, teleportPlayer } from "./helpers";
@@ -336,22 +336,14 @@ describe("awareness and npcHealth off the beaten track (ADR-0066)", () => {
 
   it("a mugging's gang appears with the difficulty's health", () => {
     const muggers = (patch: Partial<DifficultyProfile>) => {
+      // The first mugging of the Old Town's board from 21:00 (ADR-0091 stage 5), the player 30 m off it.
+      const found = nextCrime(13, crimeSlot({ seconds: 21 * SECONDS_PER_HOUR }), (c) => c.kind === "mugging" && c.district === "kanal")!;
+      const clock = { seconds: found.slot * STREET_CRIME_SLOT_HOURS * SECONDS_PER_HOUR + 60 };
       const snap = Simulation.create({ seed: 13 }).snapshot(null, "t", "");
-      const domain = { ...snap.domain, flags: ["met_fixer"], clock: { seconds: 21 * SECONDS_PER_HOUR }, difficulty: profile(patch) };
+      const domain = { ...snap.domain, flags: ["met_fixer"], clock, streetCrimes: streetCrimesAt(clock), difficulty: profile(patch) };
       const sim = Simulation.fromSnapshot({ ...snap, domain });
       run(sim, 1);
-      teleportPlayer(sim, ground(450, -96));
-      run(sim, 2);
-      // The first step from here whose roll starts a mugging (as the street scenes test finds it).
-      for (let t = sim.tick + 1; ; t++) {
-        const r = deriveRandom(sim.seed, `micro:${t}`);
-        const roll = r.next();
-        if (roll < MICRO_EVENT_CHANCE && r.next() < 0.6) {
-          while (sim.tick < t) sim.step();
-          break;
-        }
-      }
-      teleportPlayer(sim, ground(497, -79));
+      teleportPlayer(sim, ground(found.crime.at.x, found.crime.at.z - 30));
       sim.step();
       const attackers = sim.session.street2.micro?.attackers ?? [];
       return [...sim.world].filter((e) => attackers.includes(e.id)).map((e) => e.health);

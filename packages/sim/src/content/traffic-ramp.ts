@@ -8,8 +8,9 @@ import { TURN_SPEED, type TrafficRoute, pointAt, projectOn, slice } from "./traf
  * along Bajkowskiego (one way east) on its left lane, turning left off it onto the car park's
  * driveway (`turn:lanes=left|right`, way 40052294) and down the ramp's east lane to the apron and
  * into the south hand-over cabin; one route out, from the north cabin up the ramp's west lane,
- * left onto Bajkowskiego's left lane and with it left again, north up Lubartowska (one way) past
- * Olejna to where the city's route ends. Both are the city's route along Bajkowskiego's left lane,
+ * left onto Bajkowskiego's left lane, with it onto the right lane before the junction and right,
+ * south down Lubartowska (w40050981; north of it is the deptak, T-324) to Królewska, where the
+ * city's route ends (`traffic-deptak.ts`). Both are the city's route along Bajkowskiego's left lane,
  * cut where they leave or join it, so their cars drive its lane at its pace and give way as the
  * rest of the traffic does. Pure data of the map, built once.
  */
@@ -64,8 +65,8 @@ const APRON_OUT: readonly Pt[] = [
   [RAMP_UP_X - FOOT_OUT, midZ(CABIN_OUT)],
 ];
 
-/** A point on Bajkowskiego's carriageway by the driveway, north of its axis. */
-const BY_DRIVEWAY = { x: AXIS, z: P1_RAMP.top - 8 } as const;
+/** A point on Bajkowskiego's carriageway by the driveway, north of its axis (its left lane; fixed, as the ramp's top moved to the footway's edge on 19.11). */
+const BY_DRIVEWAY = { x: AXIS, z: -13.5 } as const;
 
 /** The city's route that drives Bajkowskiego's left lane past the driveway, eastwards. */
 const leftLaneOf = (routes: readonly TrafficRoute[]): TrafficRoute => {

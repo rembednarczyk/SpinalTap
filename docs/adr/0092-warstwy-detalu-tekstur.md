@@ -1,0 +1,40 @@
+# ADR-0092: Warstwy detalu z tekstur Poly Haven na powierzchniach miasta
+
+Status: Przyjęty (19.11), decyzja użytkownika z 18.11: „rozpoczniesz duży projekt oteksturowania gry: dobierasz tekstury, tworzysz deterministyczne generatory oteksturowania Lublina”, tekstury z tego samego źródła co PodRcr (Poly Haven, CC0), rekomendowane decyzje podejmuje agent. Dotyczy ADR-0022 (zestaw miasta i paleta), ADR-0027 (wzory powierzchni), ADR-0044 (fasady z danych mapy), ADR-0063 (licencje assetów), ADR-0074 etap 8 (spójność materiałów Alchemii) i ADR-0077 (stwierdzenie, że tekstur elewacji dla Lublina brak).
+
+## Kontekst
+- Miasto jest cieniowane cel shadingiem (NPR). Kolor ściany daje paleta (`facade-style.ts`: tynki kamienic, cegła i kamień z `building:material`, dachówka, blacha, miedź), a fakturę rysują wzory proceduralne w shaderze: rząd dachówek co 0,32 m, siatka płyt chodnika co 1 m, kostka, płyty betonu. Z bliska powierzchnie są gładkie i wyglądają jak plastik.
+- Zdjęć elewacji Lublina na licencji, której możemy użyć, nie ma (ADR-0077). Zdjęcia miasta (Street View, Mapillary, katalogi zabytków) służą tylko do oglądania, jak wygląda cegła Bramy Krakowskiej, tynk kamienic Starego Miasta, płyta bloków LSM czy dachówka na Grodzkiej. Nic z nich nie trafia do repo.
+- Poly Haven ma kilkaset tekstur powierzchni na CC0 z wymiarami w świecie, w tym tynki, cegłę, piaskowiec, beton, asfalt, płyty chodnikowe, trawę, dachówkę, blachę falistą, papę i granit.
+- Kolorowe zdjęcie na ścianie rozbiłoby styl: paleta, ostre progi światła i linie konturu niosą wygląd gry.
+
+## Decyzja
+1. **Tylko jasność, kolor z palety.** Narzędzie `tools/textures/fetch_detail.py` pobiera mapę diffuse 1K (sprawdza md5, User-Agent `SekiSenshi-topo/1.0`, bez ponowień po 429), bierze luminancję, odejmuje niskie częstotliwości (rozmyte plamy oświetlenia ze zdjęcia), normalizuje wokół 0,5 i pakuje cztery warstwy do jednego PNG RGBA 512 × 512: `detail-walls`, `detail-ground`, `detail-roofs` (od etapu 3 także `detail-extra`) w `packages/app/public/textures/`, razem ok. 2,7 MB (3,6 MB z czwartym). Spis warstw (plik, kanał, bok kafla w metrach z wymiarów assetu) w `layers.json`; tabela silnika `npr/detail-layers.ts` jest z nim sprawdzana testem.
+2. **Jedno próbkowanie na fragment, bez tablic tekstur i triplanaru.** Fasady mają UV w metrach wzdłuż ściany i w górę, grunt w metrach w osiach powierzchni i świata, dach dostaje współrzędne wzdłuż okapu i w górę spadku z normalnej. Shader wybiera warstwę (maska kanału, skala, siła) selektorami, bez rozgałęzień wokół odczytu. Albedo × (1 + siła × 2 × (texel − 0,5)). Mipmapy uśredniają warstwę do 0,5 w dali, więc zanika sama; dodatkowo wygasza się od 90–220 m (fasady) i 60–160 m (grunt).
+3. **Deterministyczny generator materiału w TS, nie w shaderze.** `facadeStyle` dostaje `wallDetail` i `roofDetail`, losowane z tego samego ziarna `look` po wszystkich dotychczasowych losowaniach, więc budynek zachowuje kolory i okna:
+   - ściana: cegła i kamień z mapy; bloki powojenne (okna `block`) i garaże w betonie; hale przemysłowe w 55% w czerwonej cegle fabryk Lublina (z kolorem cegły, gdy mapa nie podaje własnego), reszta blacha falista; biurowce od 6 kondygnacji w betonie; pozostałe tynk, a tynkowana ściana stoi na kamiennym cokole (0,55 m);
+   - dach: płaski papa, spadzisty według koloru: dachówka, blacha albo miedź.
+   Kod materiału jedzie w uv2.x jako 128 × kod, ponad kondygnacją w decymetrach (najwyżej 75), więc styl okien w uv2.y i testy rozpoznające dach (`v2 ≥ ROOF_STYLE`) bez zmian.
+4. **Grunt:** teren leśne podłoże, jezdnia asfalt, chodnik i ścieżka płyty betonowe w osiach powierzchni (zamiast proceduralnej siatki), plac granit (paski ciemniejszego kamienia co 6 m zostają), trawa darń; kostka, tory i schody zostają przy swoich wzorach.
+5. **Wczytywanie.** `RendererOptions.detailTextures` (folder), `DetailTextures` w `ToonMaterials`. Do wczytania i po błędzie sampler czyta szary 1 × 1 (0,5), czyli powierzchnie wyglądają jak przed zmianą. Start gry czeka na tekstury razem z zestawem miasta (`RendererLoading`), więc nie ma doskakiwania ani niestabilnej migawki NPR. Bez nowych wywołań rysowania: trzy samplery w materiałach fasad i gruntu.
+6. **Licencje.** Każdy asset ma wpis w `credits.ts` (sekcja miasta, CC0, „zmieniony”: tylko jasność, zmniejszony), test licencji pilnuje plików.
+
+## Etapy
+1. Infrastruktura, fasady i grunt mapy (ten ADR, pierwszy PR).
+2. Zestaw miasta i Alchemia (etap 8 ADR-0074). Zrobione: paleta zestawu nazywa swatche, więc `npr/detail-kit.ts` daje im warstwy (ściany i obramienia beton, cegła cegłę, dach papę, blacha, rdza i kontenery blachę falistą, rośliny darń; szkło, neony, lakier, drzwi i drobny wystrój bez warstwy). Shader odczytuje swatch z komórki palety (górna trzecia tekstury zestawu) i kod z tekstury 16 × 16 budowanej przy wczytaniu zestawu, warstwę kładzie na płaszczyźnie ściany (`facePlane`). Działa na wszystkim, co rysuje zestaw: bloki, Alchemia, W-3, meble i pojazdy.
+3. Fugi wielkiej płyty (zrobione): betonowa ściana bloku (okna `block`) ma spoinę co kondygnację i co drugie przęsło, między oknami, jak bloki LSM i Czechowa. W obszarze gry takich bloków jest kilka (8 budynków mieszkalnych od 6 kondygnacji). Czwarty plik `detail-extra` (zrobione): deski (`weathered_planks`) na drzwiach i stolikach zestawu, tłuczeń (`gray_rocks`) na torowisku, ziarno granitowej kostki (`cobblestone_floor_08`, siła 0,25) pod proceduralnym brukiem Starego Miasta i ciemny klinkier (`red_brick_03`) na połowie ceglanych hal (`WALL_DETAIL.clinker`, losowanie dopisane na końcu). Dalej: tynk boniowany parterów, cegła licowa bloków z lat 60., papa z kruszywem.
+4. Dane z mapy: `roof:material` i `building:material` = `concrete`/`metal`/`glass` w imporcie, gdy OSM je ma. Pomiar 19.11 na `data/osm`: w obszarze gry 9 budynków ma `building:material` (wszystkie `brick`, już czytane od G-244) i 12 ma `roof:material` (8 `roof_tiles`, 4 `metal`). Za mało, żeby przeliczać tablice; wraca przy odświeżeniu mapy, gdy tagów przybędzie.
+
+## Wersja komiksowa (19.11)
+Decyzja użytkownika z 19.11, po zrzutach przed i po: dawny wygląd miał więcej charakteru, bo ziarno zdjęć zamulało kolor i kłóciło się z konturem. Użytkownik przyjął wersję komiksową (trzy wersje na tych samych kadrach w dzień i w nocy) i kazał przywrócić stare chodniki.
+- Warstwę czyta się o jeden mip grubiej (`detailTex`, bias 1), więc ziarna zdjęcia nie widać.
+- Liczą się tylko teksele ciemniejsze od średniej warstwy, w dwóch stopniach jak cele: 40% siły od 0,13 poniżej średniej, pełna od 0,23. Wychodzą linie fug, rzędów i pęknięć, bez szarej mgiełki. Albedo × (1 − siła) na najciemniejszych tekselach, gdzie indziej kolor palety.
+- Siła 0 (płaski kolor palety): tynk, beton ścian, płyty chodnika, trawa, ziemia, piaskowiec cokołu, granit placu, papa. Ich zdjęcia dawały tylko plamy.
+- Linie zostają na cegle (0,55, wzmocnione na prośbę użytkownika), klinkierze, asfalcie (pęknięcia), dachówce, blasze, deskach, tłuczniu i kostce.
+- Chodnik, ścieżka i plac znowu mają proceduralne płyty sprzed ADR-0092 (siatka co 1 m z odcieniem płyty, płytki 0,3 m, granit w przewiązce).
+- Generator materiałów (pkt 3) zostaje: decyduje, gdzie są linie cegły, dachówki i blachy.
+
+## Konsekwencje
+- Miasto zyskuje fakturę z bliska bez zmiany stylu i bez kosztu w wywołaniach; pobranie gry rośnie o ok. 2,7 MB, pamięć GPU o ok. 4 MB z mipmapami.
+- Wygląd fasad i gruntu się zmienia: nowa migawka NPR, obejrzana przed scaleniem.
+- Kolejne warstwy to wpis w `detail-layers.json`, ponowne uruchomienie narzędzia i wiersz w tabeli silnika. Wolne kanały wymagają nowego pliku, gdy trzy obecne są pełne.

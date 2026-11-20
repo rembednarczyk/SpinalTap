@@ -1,4 +1,4 @@
-import type { Vec3, ViewDescriptor } from "@seki/core";
+import type { GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
 import type { Rect, StaticProp } from "../builders";
 import type { PrismDef } from "../../world/prism";
 
@@ -66,7 +66,42 @@ export type PieceKind =
   // T0's square and the green roof (stage 7): the roof's lawns, the pergolas' timber, their paper lanterns.
   | "lawn"
   | "pergola"
-  | "lantern";
+  | "lantern"
+  // The green tiers of 15.11: the strip of light along a slab's edge.
+  | "led"
+  // P-2's automated store (stage 5a): its racks, pallets, the robots' rails, the orange beacons (its cars are the scenery's parked vehicles, 19.11).
+  | "rack"
+  | "pallet"
+  | "rail"
+  | "beacon"
+  // The front on Bajkowskiego (B1, 19.11): its screens and the sign's box.
+  | "screen"
+  | "sign"
+  // Its details (B4): the umbrellas' canopies, the ramp's green light.
+  | "umbrella"
+  | "led-green"
+  | "water"
+  // The shelter's exhibit (stage 5d1): the glass of its cases.
+  | "vitrine"
+  // The gallery round the atrium (ADR-0093 O1): its glass, drawn as frames only; its escalators' balustrades, drawn sloping.
+  | "pane"
+  | "escalator"
+  // The pale house with arcades in the front's axis (C3, 19.11).
+  | "plaster"
+  // The gallery's shops (ADR-0093 O2): the shopfronts' glass (drawn as frames), the goods, screens and their errors, the light strips,
+  // the services under the ceiling (pipes, ducts, cables) and the small things (cups and their steam, cartons, paper).
+  | "shopfront"
+  | "goods"
+  | "display"
+  | "error"
+  | "lamp"
+  | "pipe"
+  | "duct"
+  | "cable"
+  | "cup"
+  | "steam"
+  | "carton"
+  | "paper";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {
@@ -74,9 +109,23 @@ export interface Piece {
   readonly kind: PieceKind;
   readonly solid: boolean;
   readonly inside: boolean;
+  /**
+   * Its footprint when it is not its box (a rounded slab, its glass, a balustrade's piece on an arc,
+   * 19.11): a convex outline counter-clockwise on the map within the box's x and z, its prism's.
+   */
+  readonly outline?: readonly GroundPoint[];
 }
 
 export const piece = (b: Box, kind: PieceKind, inside: boolean, solid = true): Piece => ({ box: b, kind, solid, inside });
+
+/** A piece whose footprint is `outline` (convex, counter-clockwise), from `y0` to `y1`: its box bounds it. */
+export const outlined = (outline: readonly GroundPoint[], y0: number, y1: number, kind: PieceKind, solid = true): Piece => ({
+  box: box(Math.min(...outline.map((p) => p.x)), Math.max(...outline.map((p) => p.x)), Math.min(...outline.map((p) => p.z)), Math.max(...outline.map((p) => p.z)), y0, y1),
+  kind,
+  solid,
+  inside: false,
+  outline,
+});
 
 /** Seen nowhere as an entity: the engine draws Alchemia (`scenery`). */
 const NO_VIEW: ViewDescriptor = { kind: "street-props", items: [] };
@@ -93,15 +142,62 @@ const prismOf = (b: Box, c: Vec3): PrismDef => ({
   top: b.y1 - c.y,
 });
 
+/** An outlined piece as a prism around `c`. */
+const outlinePrism = (p: Piece, c: Vec3): PrismDef => ({
+  points: p.outline!.map((q) => ({ x: q.x - c.x, z: q.z - c.z })),
+  bottom: p.box.y0 - c.y,
+  top: p.box.y1 - c.y,
+});
+
 /** The solid pieces as one static prop of prisms, its centre at the middle of their boxes' foot. */
 export const solidProp = (pieces: readonly Piece[]): StaticProp => {
-  const boxes = pieces.filter((p) => p.solid).map((p) => p.box);
+  const solids = pieces.filter((p) => p.solid);
+  const boxes = solids.map((p) => p.box);
   const c = {
     x: (Math.min(...boxes.map((b) => b.x0)) + Math.max(...boxes.map((b) => b.x1))) / 2,
     y: Math.min(...boxes.map((b) => b.y0)),
     z: (Math.min(...boxes.map((b) => b.z0)) + Math.max(...boxes.map((b) => b.z1))) / 2,
   };
-  return { center: c, view: NO_VIEW, solid: true, prisms: boxes.map((b) => prismOf(b, c)), scenery: true };
+  return { center: c, view: NO_VIEW, solid: true, prisms: solids.map((p) => (p.outline ? outlinePrism(p, c) : prismOf(p.box, c))), scenery: true };
+};
+
+/** Is a piece's footprint its box (no outline, or one that is the box's own rectangle)? */
+const boxLike = (p: Piece): boolean =>
+  !p.outline ||
+  (p.outline.length === 4 && p.outline.every((q) => (Math.abs(q.x - p.box.x0) < 1e-9 || Math.abs(q.x - p.box.x1) < 1e-9) && (Math.abs(q.z - p.box.z0) < 1e-9 || Math.abs(q.z - p.box.z1) < 1e-9)));
+
+/** A box-like piece cut into parts no longer than `most` along x and z (an outlined one keeps an outline). */
+const cut = (p: Piece, most: number): Piece[] => {
+  if (!boxLike(p)) return [p];
+  const b = p.box;
+  const [nx, nz] = [Math.ceil((b.x1 - b.x0) / most - 1e-9), Math.ceil((b.z1 - b.z0) / most - 1e-9)];
+  if (nx <= 1 && nz <= 1) return [p];
+  const out: Piece[] = [];
+  for (let i = 0; i < nx; i++) {
+    for (let k = 0; k < nz; k++) {
+      const q = box(b.x0 + ((b.x1 - b.x0) * i) / nx, b.x0 + ((b.x1 - b.x0) * (i + 1)) / nx, b.z0 + ((b.z1 - b.z0) * k) / nz, b.z0 + ((b.z1 - b.z0) * (k + 1)) / nz, b.y0, b.y1);
+      out.push(
+        p.outline
+          ? { ...p, box: q, outline: [{ x: q.x1, z: q.z0 }, { x: q.x1, z: q.z1 }, { x: q.x0, z: q.z1 }, { x: q.x0, z: q.z0 }] }
+          : { ...p, box: q },
+      );
+    }
+  }
+  return out;
+};
+
+/**
+ * The solid pieces of a big part (ADR-0093 O1, the gallery) as one prop per tile of `tile` metres,
+ * long pieces cut to it: the solid index finds a prop by its box, and a walker near a prop gets all its
+ * prisms, so a prop the size of a building cost every walker in it every prism of it every step.
+ */
+export const tiledSolidProps = (pieces: readonly Piece[], tile: number): StaticProp[] => {
+  const groups = new Map<string, Piece[]>();
+  for (const p of pieces.filter((q) => q.solid).flatMap((q) => cut(q, tile))) {
+    const key = `${Math.floor((p.box.x0 + p.box.x1) / 2 / tile)}:${Math.floor((p.box.z0 + p.box.z1) / 2 / tile)}`;
+    groups.set(key, [...(groups.get(key) ?? []), p]);
+  }
+  return [...groups.keys()].sort().map((k) => solidProp(groups.get(k)!));
 };
 
 /** A point on the hall's floor. */

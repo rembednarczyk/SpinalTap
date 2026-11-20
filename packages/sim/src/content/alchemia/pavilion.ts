@@ -19,22 +19,32 @@ import { EAST } from "./plan";
  * floor stands a step over its highest point, a plinth on the low side.
  */
 
-/** The triangle's corners: on Bajkowskiego to the west, at the corner of the streets, on Lubartowska to the north. */
+/**
+ * The triangle's corners: on Bajkowskiego to the west, at the corner of the streets, on Lubartowska to
+ * the north. The west one stood at (420.5; -8.85) until ADR-0093 O2b: 2.8 m east along Bajkowskiego's
+ * side (the same line, the south side shorter), so the walk from the footway to the gallery's main
+ * doors east of the ramp is 5 m wide where it passes the corner, not 1.7 m.
+ */
 export const PAVILION_CORNERS: readonly [GroundPoint, GroundPoint, GroundPoint] = [
-  { x: 420.5, z: -8.85 },
+  { x: 423.3, z: -8.7 },
   { x: 432.3, z: -8.2 },
   { x: 436.2, z: 6.0 },
 ];
 
-/** The back-of-house box on the north-west side, towards the car park: the ladder hangs on its west face. */
-export const PAVILION_ANNEX: Rect = { minX: 424.5, maxX: 428.5, minZ: -3.5, maxZ: 0 };
+/**
+ * The back-of-house box on the north-west side, towards the car park: the ladder hangs on its west
+ * face. A metre longer to the north since ADR-0093 O2b (to z 0 before): it gives back part of the
+ * floor the west corner's move took (outline with it 93.9 m² before, 80.7 after; the triangle 82.5 and
+ * 62.9 m²).
+ */
+export const PAVILION_ANNEX: Rect = { minX: 424.5, maxX: 428.5, minZ: -3.5, maxZ: 1 };
 
 /**
- * Its levels: the plinth's foot in the ground, the floor (0.15 m over the highest ground under it),
- * the roof (a storey of 4 m), the dark fascia under the roof's edge, the attic round the roof.
- * Floor to the attic's top: 5 m.
+ * Its levels: the plinth's foot in the ground (0.1 m deeper since ADR-0093 O2b, under the annex's
+ * longer north end), the floor (0.15 m over the highest ground under it), the roof (a storey of 4 m),
+ * the dark fascia under the roof's edge, the attic round the roof. Floor to the attic's top: 5 m.
  */
-export const ALCHEMIA_PAVILION = { base: -1.1, floor: -0.15, roof: 3.85, fascia: 0.6, attic: 1.0, atticThick: 0.25 } as const;
+export const ALCHEMIA_PAVILION = { base: -1.2, floor: -0.15, roof: 3.85, fascia: 0.6, attic: 1.0, atticThick: 0.25 } as const;
 
 const [A, B, C] = PAVILION_CORNERS;
 

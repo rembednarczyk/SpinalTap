@@ -37,10 +37,19 @@ export const ENCOUNTER_REWARDS: Readonly<Record<string, EncounterReward>> = {
  * the one farthest from the player within reach is used.
  */
 export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
-  "shinsekai-7": [spotNear(290, -84), spotNear(352, -92), spotNear(205, -63)],
-  kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(688, 110)],
-  // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia by the bus station.
-  targ: [spotNear(740, 306), spotNear(778, 372), spotNear(806, 360)],
-  // The public strip by W-3's fence (ADR-0082): past the metro, east of it, by the bridge's path.
-  doki: [ground(2540, 387), ground(2570, 386.5), ground(2478, 390.5)],
+  // ADR-0091 stage 5b: 7 per district, on pavements and squares of real streets, 40 m and more off the gangs' cores,
+  // 50 m off churches and 100 m off places of memory (`street-crime-board.test.ts`). Then the deptak of Krakowskie
+  // Przedmieście, Plac Litewski, Karmelicka and Peowiaków. The second moved 44 m south-west, off the church it stood 18 m from.
+  "shinsekai-7": [spotNear(290, -84), spotNear(313, -113), spotNear(205, -63), spotNear(0, -54), spotNear(108, 72), spotNear(264, 144), spotNear(66, -222)],
+  // The third off Zaułek Panasa to the square east of the Trybunał: 40 m and more off the gangs' cores (ADR-0091, decision 9).
+  // The second 6 m north-east of where it stood, clear of the corner by it (its people and the van need the room).
+  // Then Podwale under the Old Town's east slope, Kowalska, Olejna and Rybna.
+  kanal: [spotNear(528, -58), spotNear(623, 32), spotNear(640, -10), spotNear(744, 48), spotNear(594, 144), spotNear(480, 36), spotNear(552, 72)],
+  // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia, the two by the bus
+  // station moved off its gang's core (ADR-0091, decision 9). Then Furmańska, the west end of Plac Zamkowy, Nadstawna
+  // and Ruska east of the ghetto's trace.
+  targ: [spotNear(740, 306), spotNear(760, 330), spotNear(845, 360), spotNear(624, 192), spotNear(702, 234), spotNear(786, 438), spotNear(792, 540)],
+  // The public strip by W-3's fence (ADR-0082): past the metro, east of it, by the bridge's path. Then the streets
+  // north of it: Montażowa, Towarowa, Kresowa and Kalinowszczyzna.
+  doki: [ground(2540, 387), ground(2570, 386.5), ground(2478, 390.5), spotNear(2682, 78), spotNear(2316, 342), spotNear(2520, 78), spotNear(2358, 444)],
 };

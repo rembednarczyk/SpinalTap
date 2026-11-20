@@ -268,6 +268,252 @@ Brak. Pytanie o godziny lokali rozstrzygnął użytkownik 6.11 (sekcja „Decyzj
 - **Skan.** `cut-on-road` 3 → 0 (nowa kontrola). Pozostałe bazy bez zmian, w tym `lamp-style-change-on-way` 5, `grass-under-paving`, `landuse-bare`, `pad-on-road` 8, `pavilion-on-paving` 0, `underground-level-exit` 0.
 - **Wiersze T do rejestru:** T-241 (plac T0 zamiast parkingu w173531008 z alejkami w177513189 i w173567309: kostka, trzy trawniki, pergole z lampionami i girlandami, wjazd z Bajkowskiego przez chodnik, rabaty przy parapetach rampy, latarnie pastorały i ławki deptaku; wyjazd na Lubartowską przy (447; 16) znika), T-242 (zielony dach hali: cztery trawniki i ścieżki z kostki na T0 nad food hallem). Dopiski: T-237 i T-238 „alejka zastąpiona placem T0 (T-241), G-500 zamknięty”, T-157 „pawilon B na placu T0, alejka w177513189 zniknęła z importu”, T-145 „plac T0 i zielony dach, etap 7”.
 
+### Kondygnacje A i B nad food hallem (decyzje z 15.11, plansza `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`)
+- **Bryły (`sim/content/alchemia/tiers.ts`).** Kondygnacja A (sklepy) na dachu hali: x 402–434, z 36–54,5, 4,5 m wysokości, w obrysie hali i poza tylnym pasem dachu (domek klatki i kiosk windy do z 34,8 zostają wolne). Kondygnacja B (pierścień food courtu) na A: x 406–430, z 38–52, 4,2 m, wokół otwartego dziedzińca x 414–422, z 42–48 ze świetlikiem, rabatą i drzewkiem o dwupiętrowej koronie poniżej dachu B, żeby dziedziniec był otwarty z góry. Szczyt B 8,7 m nad dachem hali, niżej niż kamienice dookoła. Ściany szklane, nad każdą płyta z okapem 0,3 m i pas LED na krawędzi (nowy rodzaj elementu `led`, swatch `neon-cyan`, sam rysunek). Dachy obu kondygnacji to tarasy: trawniki zielonego dachu przeniesione z dachu hali na pasy B (`ROOF_LAWNS`, nadal cztery), donice na północnej krawędzi A, żywopłoty wzdłuż zewnętrznych parapetów (B od południa i północy, A od wschodu), kaskady zieleni po ścianach, stoliki i ławki na południowym pasie A.
+- **Schody.** Zachodni bieg z T0 na A (x 400,25–402, 25 stopni po 0,18 m) i z A na B (x 403,8–406, 24 stopnie po 0,175 m), każdy ze spocznikiem w szczelinie parapetu i balustradą od strony spadku i na końcu spocznika (bez niej gracz schodził ze spocznika w powietrze). Stopnie to osobny `solidProp`, reszta kondygnacji drugi, oba na końcu `ALCHEMIA_PROPS`.
+- **Graf.** Ścieżka po dachu hali omija kondygnacje wschodnim pasem: nowe węzły `alchemia-roof-east-south` i `alchemia-roof-east-north` (x 434,9), `roof-north` przesunięty na z 55,6. Starty testów pościgu z dachu (food hall, parking) i spacer po zielonym dachu w teście sesji idą tym pasem.
+- **Rysunek.** Kondygnacje to trzecia siatka zewnętrza `alchemia-tiers` (osobny budynek wg §7): 1230 trójkątów. Zewnętrze 7468 z 8 tys. dzięki pomijaniu ścian, których nikt nie widzi (spód elementów stojących na podłodze, tył stopnia zakryty wyższym), `GeometrySink.box(..., skip)`. +1 wywołanie rysowania w scenach z Alchemią (`alchemia-tpp` w budżecie 380).
+- **Zapis i hash.** Bez zmiany schematu i złotego hasha: nowe bryły dokładają się na końcu listy, a postać zapisana w ich miejscu na dachu hali jest wypychana (G-485).
+- **Odłożone:** rampa w osi placu i deptak (zmieniają trasy ruchu, osobny PR z wierszem T), etapy 5 i 10, spójność materiałów (etap 8, razem z teksturami ADR-0092).
+
+### Etap 10: drzwi z hali metra B na P−1 (gałąź `ccr-ec2c4269-ilh8k8-alchemia-metro-b`)
+- **Pomiar (T-157).** Wejście B stacji Brama Krakowska stoi w x 424,4–431,6, z 26,2–29,8. Posadzka hali leży na −4,31, czyli 2,09 m nad P−1 (−6,4). Ściana końcowa hali (zewnętrzna x 424,4) stoi 2,4 m od wschodniej ściany P−1 (zewnętrzna x 422), a hala w osi z 28 wychodzi na fartuch P−1.
+- **Drzwi.** Ściana końcowa hali B dostaje otwór na szerokość hali (z 26,8–29,2) o wysokości 2,1 m (`EndDoorway.through`). Posadzka hali biegnie dalej przez otwór, a ściana końcowa zostaje jednym blokiem nad nim. Pawilon ma więc tyle samo brył w alokatorze, a złote hashe (`determinism`, `reinforcement-sidestep`) się nie zmieniają, wbrew założeniu z §12.
+- **Przejście (`alchemia/metro-door.ts`).**
+  - Za drzwiami 11 stopni po 0,28 m i 0,174 m prowadzi na zachód pod terenem. Ostatnie trzy stoją w P−1, za otworem we wschodniej ścianie (`P1_METRO_OPENING`).
+  - Ściany boczne, strop 2,1 m nad posadzką hali i ścianka nad otworem P−1. Pod całym przejściem jest co najmniej 2 m prześwitu (test). Płyta leży pod terenem, więc z placu nic nie widać.
+  - Przejście jest sklepieniem w ziemi (`GroundVault`), jak korytarz peronu A.
+  - Jego bryły to jeden `solidProp` na końcu `ALCHEMIA_PROPS`. Pokój nad stopniami należy do wnętrza `alchemia-parking`.
+- **Graf.**
+  - W grafie metra węzeł w otworze (`metro-kanal-B-end`), po stronie wolnej od automatu biletowego.
+  - W grafie P−1 węzeł przy stopie schodów (`alchemia-p1-metro-foot`) z krawędzią na fartuch.
+  - Schody łączy krawędź `via` w osobnym grafie `METRO_DOOR_LINK`, scalanym w `WORLD_NAV`. Dzięki temu grafy metra i Alchemii zostają zamknięte.
+  - P−1 ma teraz cztery wyjścia.
+- **Rysunek.** Ściana końcowa pawilonu B rysuje się z otworem (`pavilion-bake` czyta `endDoor`). Przejście jest w siatce wnętrza P−1 (`P1_ALL_PIECES`).
+- **Skan.** `metro-shaft-open` uznaje otwór B tak jak otwór peronu A.
+- **Zapis.** Bez zmiany schematu, bo przejście zajmuje dotąd pełną ziemię.
+
+### Rampa P−1 wysunięta do Bajkowskiego (plan kuratora 19.11, `docs/world/alchemia-deptak-rampa.md`)
+- **Decyzja (rekomendowana, pod nieobecność użytkownika).** Plansza z 15.11 przesuwa wjazd. Rampa zostaje w pasie x 410–418, w osi kompleksu przy szybie T-238, ale jej szczyt przechodzi z z −5,5 na z −8,8, na krawędź chodnika Bajkowskiego. Auto wjeżdża w rampę wprost z ulicy, a asfaltowy wjazd przez plac znika.
+  - Narożnik przy deptaku, dosłownie z planszy, odpada: rampa przecinałaby pawilon trójkątny, a wjazd na P−1 musiałby się zmieścić w 3,9 m między szybem a przejściem z metra B.
+  - Rampa w osi frontu placu (x 398–406) wymagałaby przebudowy P−1. Portal od Świętoduskiej nie zgadza się z planszą.
+- **Liczby.** 33,3 m przy spadku 16,4% (było 17,8%). Część otwarta do z 11, dalej strop z prześwitem 2,2 m. Rabaty przy parapetach od z −6,8. Punkt, przy którym trasa wjazdu szuka lewego pasa Bajkowskiego, jest stały (z −13,5) i nie zależy już od szczytu rampy.
+- **Import.** Bez zmian. Wykop zjada północną część asfaltowego wjazdu (`T-241/wjazd-plac`), a chodnik w232464426 zostaje poza wykopem: `cut-on-road` = 0.
+- **Zapis i hash.** Bez zmian.
+- **Deptak** na Lubartowskiej (w216497220, od Bajkowskiego do Olejnej, z trolejbusem) idzie osobnym PR. Zmienia trasę wyjazdu z rampy na południową.
+
+### Deptak na Lubartowskiej (plan kuratora 19.11, §1, wariant W2 do Olejnej, T-324)
+- **Odcinek.** Lubartowska w216497220 od Bajkowskiego (442,9; −9,9) do Olejnej (454,9; 42,8), 54 m. Krótki w173533826 (6 m do Bajkowskiego) też dostaje kostkę. Nie jechał nim żaden pas aut, bo łańcuch był krótszy niż `MIN_ROUTE`. Skręt z Bajkowskiego w w40050981 zostaje na asfalcie obu ulic. Przy asfalcie na w173533826 brzeg kostki biegłby w poprzek wylotu, a podział gruntu rozsuwa tam oba kawałki o milimetry (nowe `kerb-gap-bare` przy (443,1; −9,9)). Z kostką do Bajkowskiego tej szczeliny nie ma, a `kerb-gap-bare` spada z 585 do 584.
+- **Import.** Nowa lista `CAR_FREE_WAYS` w `tools/osm-import/src/corrections-car-free.ts`, każda droga z powodem i wierszem T. Import kładzie na niej kostkę (`surface=sett`, bez malowanych pasów) i oznacza jej odcinki `carFree`. Geometria, krawężniki i szerokość jezdni zostają z mapy. Zmiany w tabelach tylko w `krakowskie-2-1`.
+- **Ruch.** Odcinek `carFree` ma tylko dostawy, jak deptak (`roads.ts`), ale 54 m to mniej niż 80 m trasy dostaw, więc pojazdów na nim nie ma. Trasy trolejbusu tu nie było także przed etapem, bo ten odcinek Lubartowskiej ma w grze 74 m przy `MIN_TROLLEY` 150. Sieć i przystanek Brama Krakowska 01 zostają jako meble, a inne trasy trolejbusu się nie zmieniają.
+- **Skrzyżowanie z Bajkowskiego** (`traffic-deptak.ts`). Bajkowskiego skręca tylko w prawo, w w40050981 i dalej w Królewską. Prawy pas skręca, a lewy zjeżdża na prawy 14 m przed łukiem skrętu. Pas północny w40050981 zawraca przy Bajkowskiego, a z zawracaniem na końcu Królewskiej tworzy pętlę (`ring`), którą pojazdy jeżdżą bez końca. Trasy z Bajkowskiego kończą się na początku pętli. Pozostałe trasy miasta zachowują miejsca w tabeli, a pętla dochodzi na końcu, więc identyfikatory ich pojazdów się nie zmieniają. Wyjazd z P−1 (`alchemia-p1:out`) jedzie lewym pasem, zmienia go na prawy i skręca na południe. Wjazd bez zmian.
+- **Stoiska.** Osiem z planu mebli (`lubartowska-deptak.*`): kioski MPK, Ruch i naprawa telefonów, okienko z cebularzami, stragan z kwiatami, dwa stragany z warzywami i automaty. Stoją na zachodniej części dawnej jezdni, ponad 1,4 m od linii trolejbusu. Dojście z wylotu metra B (z 24–32) jest wolne. Słupki stoją na obu końcach co ok. 3,7 m, bez łańcuchów. Na północy stoją 3 m przed Olejną, żeby wylot Olejnej został wolny.
+- **Skan.** Nowe kontrole z bazą 0: `deptak-car-lane`, `road-retag-row` i `deptak-stall-clear`. `lane-dead-end` spada z 45 do 43, bo znikają dwa końce Lubartowskiej przy granicy Starego Miasta. `kerb-gap-bare` spada z 585 do 584. `market-piece-on-road` pomija drogi z `CAR_FREE_WAYS`. `lane-dead-end` pomija pętlę, bo jej koniec jest jej początkiem.
+
+### Etap 5a: P−2 (gałąź `feat/alchemia-p2-shell`)
+Pierwszy z czterech kroków etapu 5: bryła P−2, schody z P−1, korytarz i wylot na T2. Roboty (5b), przystanek windy (5c) oraz schron ze skrytką Hebi (5d) idą osobno.
+- **Poziom.** Podłoga −9,2, czyli poziom T2 (`ARKADY.ground`), więc wylot wychodzi na grunt T2 bez stopni. Płyta podłogi P−1 kończy się od spodu na −6,7, a spód stropu P−2 leży na −6,9: w świetle 2,3 m, na jedną warstwę palet z autami. Przy głębszej podłodze wylot potrzebowałby schodów.
+- **Bryła (T-325).** Magazyn x 394–418, z 2–32 pod pokładem, rampą i fartuchem P−1 leży w sklepieniu P−1 (`P1_VAULT`). Grunt sklepienia zszedł z −8,4 na −11,2, 2 m pod podłogę P−2. Do tego kąt x 418–420,4, z 23–32 pod fartuchem, przy stopie schodów. Korytarz serwisowy x 414,4–420,4 biegnie na północ pod food hallem i T1 do portalu w z 77, we własnym `GroundVault`, z bryłami co najmniej 0,1 m pod gruntem (test). Jego zachodnia ściana to wschodnie lico szybu windy, więc etap 5c otworzy windę na korytarz. P−2 trzyma 4 m od pawilonu metra B.
+- **Ziemia przy magazynie.** Pod fartuchem i klatką T-238, na wschód od magazynu, ziemię zastępują bryły bez rysunku. W sklepieniu promień przechodzi przez grunt, więc bez nich strzał spod wschodniej ściany magazynu zaczynał się za nią (`tpp-shoulder.test.ts`: 11 przecieków wobec bazy 8).
+- **Wylot (T-326).** Za portalem wykop w skarpie (`GroundCut`, x 414,4–420,4, z 77–97, dno −9,2) ze ścianami i parapetem 1 m nad skarpą, w odcinkach po 2 m. Przy z 97 grunt ma −9,2…−9,3. Zachodnia ściana stoi 2 m od osi chodnika w232464409 przy Świętoduskiej, a `cut-on-road` zostaje na 0. Wykop przecina nieformalną ścieżkę w1269042382 i linię płotu w783241007, który w grze nie jest barierą. Leży na zachodnim skraju stanowiska w1559354344, tak jak food hall (§11).
+- **Schody.** Z fartucha P−1 przy drzwiach hali i windzie jeden bieg na wschód: 16 stopni po 0,175 m i 0,28 m przez otwór w płycie P−1 (x 414,4–418,6, z 29,8–31,4) z balustradą na trzech bokach, do kąta magazynu. Nad każdym stopniem jest co najmniej 2,1 m (test). Bieg ma ściany po obu stronach. Bez południowej NPC z dolnych stopni szedł prosto do celu w magazynie (różnica wysokości poniżej `SAME_FLOOR`) i utykał głową pod krawędzią płyty P−1. Ściana północna ma 0,6 m i oddziela bieg od korytarza.
+- **Wnętrze.** Dwa rzędy po 10 palet wzdłuż toru robotów z dwiema szynami i 14 aut na paletach, regały ze słupkami i belkami, pomarańczowe pasy świetlne wzdłuż toru i w stropie, sterownia ze szklaną ścianą w narożniku SE, alejka serwisowa przy ścianie wschodniej. Wszystko stoi w miejscu do etapu 5b. Obszar `alchemia-p2` ma nazwę `interior.alchemia-p2` w katalogach en i pl.
+- **Graf.** `p2-nav.ts`: szczyt biegu przy drzwiach hali (`alchemia-p1-door`), stopa w kącie, alejka magazynu, korytarz, portal, wykop i wylot na T2. P−2 ma dwa wyjścia (`underground-level-exit` = 0; bez krawędzi portalu skan znajduje jedno), a P−1 zyskuje jedno wyjście. Test `sim`: pościg z fartucha P−1 do magazynu i z korytarza na T2. Test sesji: graczka schodzi z P−1 do magazynu i wychodzi na T2, potem wraca tą samą drogą.
+- **Rysunek.** Magazyn i korytarz to siatka `alchemia-p2` (2136 trójkątów z 8 tys.). Włącza się, gdy oko jest w P−2, na P−1 do 14 m od otworu schodów i na T2 do 35 m od wykopu. Ma jedną przyciemnioną pomarańczową lampę przyciętą do magazynu, zapaloną tylko z okiem w P−2. Wtedy lampy P−1 i hali gasną, bo światła toon nie mają przesłon (G-263) i świeciłyby przez płyty. Bieg schodów jest w siatce P−1 (1668 → 1944 trójkątów). Wykop i portal są w siatce zewnętrza (7558 → 7858 z 8 tys.), a z daleka w meblach bloku jako zastępstwo. W P−2 nie pada deszcz (`p2RoofOver`).
+- **Budżet.** Nowa scena `alchemia-p2` (gracz w alejce przy sterowni idzie na północny zachód): 209 wywołań i 77 aktywnych siatek w dwóch przebiegach, budżet 216 / 80. `alchemia-p1` 197 / 72 → 199 / 73, bo przez otwór schodów widać magazyn (pomiar z wyłączonym zasięgiem otworu). `alchemia-tpp` 273 / 105 i `alchemia-t2-tpp` 226 / 79 bez siatki P−2. Migawka NPR i pozostałe budżety bez zmian.
+- **Zapis i hash.** Schemat bez zmian. Nowe bryły stoją w dotąd pełnej ziemi. Gracz zapisany nad wykopem albo otworem schodów spada najwyżej 2,8 m, bez obrażeń (`FALL_SAFE_HEIGHT` 4 m), a z balustrady wypycha go ruch (G-485). Złote hashe (`determinism`, `reinforcement-sidestep`) się nie zmieniają, bo cztery bryły P−2 są ostatnie w `ALCHEMIA_PROPS`.
+- **Koszt symulacji.** Indeks brył jest płaski, więc zapytania na P−1 biorą też bryły magazynu pod nim. Paleta z autem to jedna bryła bez rysunku, belki nad głową są tylko rysowane, a korytarz z wykopem to osobna bryła poza oczkami P−1 (pryzmaty magazynu 91 → 60). Testy ruchu na rampie trwają ok. 10% dłużej niż bez P−2 (wcześniej 15%).
+- **Zostaje.** 5b: roboty na szynach jako ruchome bryły i winda aut z kabin P−1. 5c: przystanek windy na −9,2 w korytarzu. 5d: schron pod T2 przy północnym końcu P−2 z bramą, włazem i skrytką Hebi (migracja). Przegląd zrzutów (19.11, z T2 na wylot, z T1 na portal, z lotu): wykop ze schodkowymi murami i portal pod T1 pasują do skarpy, a wykop nie wchodzi na jezdnię. Pełny parapet wykopu wychodzi z T1 jako długa szara ściana, która zasłania plac T2. Zamiana na balustradę idzie z detalami planszy (B4).
+
+### Etap 5b: roboty magazynu P−2 (gałąź `feat/alchemia-5b`)
+- **Mechanizm `shuttle`** (`builders.ts`, `shuttle-system.ts`): bryła jeździ tam i z powrotem po jednej osi według zegara domeny, w realnych sekundach.
+  - Jej miejsce wynika z czasu, więc zapis nie potrzebuje nowego pola. Wczytana gra stawia robota tam, gdzie był, a czekanie przesuwa go dalej.
+  - System działa przed ruchem, razem z windami i drzwiami.
+  - Ciało na drodze robota zostaje zepchnięte w bok, na bliższą stronę jego toru. Bez tego robot najeżdżał na stojącego gracza (test).
+  - Bryła ma prędkość, więc raster terenu AI jej nie piecze, jak platformy windy.
+- **Dwa wózki na pasie magazynu** (`P2_ROBOTS`):
+  - wymiary 1,6 × 2,2 × 0,9 m, każdy na swojej połowie pasa;
+  - trasa 9,5 m, 32 s tam i z powrotem, z postojem na obu końcach;
+  - obok zostaje 1,5 m chodnika z każdej strony, a trasy obu wózków się nie stykają.
+- **Kolejność propów.** Wózki są ostatnimi propami Alchemii, więc identyfikatory i złote hashe się nie zmieniają. Zapis bez zmian.
+- **Zostaje:**
+  - winda aut z kabin P−1 (otwór w płycie P−1 ze ścianami kabiny i jazda na platformie): osobny krok;
+  - 5c: przystanek windy na −9,2;
+  - 5d: schron ze skrytką Hebi.
+
+### Etap 5c: przystanek windy na P−2 (gałąź `feat/alchemia-5c`)
+- **Trzy poziomy windy** (`lift.ts`): P−2 (−9,2), hala (−6,4), T0 (−2,2), od najniższego.
+  - Szyb schodzi pod podłogę hali w wykopie `LIFT_SHAFT_CUT`. Na liście cięć stoi przed wykopem hali, bo o podłodze w punkcie decyduje pierwsze cięcie.
+  - Na P−2 bramka otwiera się na wschód, prosto w korytarz serwisowy.
+  - Platforma startuje jak dotąd przy hali: fabryka ustawia cel na poziom, przy którym stoi platforma.
+- **Jazda.** Jedzie dalej w tę stronę, w którą jechała ostatnio, i zawraca na końcu: hala, T0, hala, P−2, hala. Przy dwóch poziomach to to samo co wcześniej. Kierunek nie jest zapisywany, a po wczytaniu jazda zaczyna w górę.
+- **Korytarz P−2.** Jego zachodnia ściana i strop omijają rozpiętość szybu (x 412,3–414,7, z 32,4–34,8), więc platforma jedzie swobodnie, a szyb zamykają jego własne ściany i bramka. Północna i południowa ściana szybu stoją na podłodze P−2, bo pod nią płyta podłogi korytarza wchodzi w jamę szybu.
+- **Testy.**
+  - Sesja: z hali na T0, z powrotem do hali, w dół na P−2 i wyjście do korytarza, bez obrażeń.
+  - Ściany korytarza poza otworem.
+  - Trzy poziomy i drzwi na P−2.
+- **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
+
+### Etap 5d1: bryła schronu (gałąź `feat/alchemia-5d1`)
+Pierwsza z dwóch części 5d: schron bez skrytki. Skrytka Hebi, czujka i zlecenie odzyskania przechodzą do schronu w 5d2 razem z migracją zapisu.
+- **Pokój** (`shelter.ts`): x 420,4–435, z 84–97, podłoga −12,2 (3 m pod T2), strop −9,9, płyta −9,6 pod gruntem T2 (−9,2). Pokój i droga do bramy to dwa `GroundVault`, więc teren i bruk T2 nad nimi są całe.
+- **Brama stalowa** we wschodniej ścianie korytarza P−2 (z 69–70,6): drzwi automatyczne (ADR-0038), otwierają się każdemu, kto podejdzie. Zamek dostaje w 5d2. Za bramą podest na poziomie P−2, schody w dół na północ (17 stopni po 0,176 m) i przejście do południowo-zachodniego rogu pokoju. Nad schodami strop korytarza P−2 pod gruntem T1.
+- **Właz** na T2 na wschód od pokoju, przy (441, 96): szyb (`GroundCut`) ze schodami w dół na zachód i pasem podłogi pokoju u ich stopy, żeby postać przechodziła pod ścianą nad otworem. Ściany szybu mają balustradę 1 m nad T2, a obok stoi otwarta klapa i lampka. Do kamienia pamięci jest 20 m (§6).
+- **Ekspozycja:** ławki z czasów wojny przy ścianie południowej i północnej, dwa słupy, dwie gabloty ze znaleziskami, panele zdjęć na ścianie zachodniej, ręczny wentylator i lampy awaryjne. Północno-zachodni róg zostaje wolny na skrytkę.
+- **Wnętrze i graf.** Wnętrze `alchemia-shelter` (en/pl). Graf poziomów ma dwa wyjścia: bramą do węzłów korytarza P−2 i włazem na T2.
+- **Silnik.** Schron rysuje się w siatce P−2, z własną słabą, ciepłą lampą zasilania awaryjnego (§6), gdy oko jest w schronie. Wtedy lampy P−2, P−1 i hali gasną. Szyb włazu należy do zewnętrza Alchemii. Deszcz nie pada pod płytą schronu.
+- **Zlecenie skrytki.** Jeden z ludzi Hebi stał na miejscu włazu, więc przesunął się o metr na południe (`byArkady(8.3, 7.5)`).
+- **Testy.**
+  - Symulacja: bryły pod gruntem i poza bryłami P−2, P−1, hali i T2, schody w kroku i z prześwitem, właz na poziomie T2 i poza bryłami mapy, wnętrze, graf, pościg przez bramę i przez właz.
+  - Silnik: siatki, lampa, widoczność, deszcz.
+  - Sesja: z T2 włazem do schronu i bramą do P−2, potem z powrotem, bez obrażeń.
+- **Zapis i hashe.** Złote hashe zgodne, schemat zapisu bez zmian.
+
+### Etap 5d2: skrytka Hebi w schronie (gałąź `feat/alchemia-5d2`)
+- **Skrytka** w północno-zachodnim rogu sali schronu. Osłona stoi między nią a salą, a skrzynia na ciało stoi przy wentylatorze. Kamera wisi wysoko w południowo-wschodnim rogu i patrzy na skrytkę. Neon jest nad ławką przy północnej ścianie, a głośnik przy schodach włazu (`dev:targ-*`). Strefa `restricted` (`HEBI_STASH_ZONE`) obejmuje salę.
+- **Ludzie zlecenia** stoją w sali i patrzą na zachód, w stronę przejścia od bramy. Straż stoi przy osłonie, czujka lockdownu na T2 przy włazie, a zasadzka czeka przy obu wyjściach: w korytarzu P−2 przed bramą i na T2 przy włazie.
+- **Czujka** w dzień stoi przy włazie na T2. W nocy chodzi po P−2 tam i z powrotem: wzdłuż T2, w wykop, korytarzem obok bramy do narożnika magazynu i jego alejki serwisowej.
+- **Brama** ma zamek kodowy Hebi (ADR-0082) na czas odzyskania. Hebi przechodzą swobodnie. Gracz przechodzi z kodem albo po wyłamaniu panelu, a wyłamanie podnosi alarm.
+- **Kod bramy** (2207) czujka powtarza pod nosem. To trop `hook_retrieve_2`, który był wcześniej notatką o widoku z tarasu. Podsłuchany kod otwiera bramę bez alarmu, a kamera bierze gracza za swojego.
+- **Dwa podejścia bez alarmu:**
+  - włazem z T2: skulona postać schodzi za plecami załogi i idzie wzdłuż północnej ściany;
+  - bramą od P−2, obok robotów: z podsłuchanym kodem, wzdłuż zachodniej ściany.
+- **Spawn w sklepieniu.** `clearSpot` podnosił nowo stworzoną postać na teren nad nią, nawet w `GroundVault`. Załoga stawała więc na T2 nad schronem. Teraz postać postawiona głęboko w sklepieniu zostaje na jego podłodze.
+- **Zapis v50.** Migracja `moveHebiStash` w `alchemia-rebuild.ts` usuwa czujkę, ludzi i skrzynię trwającego odzyskania oraz wszystkich z dawnego miejsca skrytki przy Arkadach (x 435–449, z 86–101). Treść przywraca ich w nowych miejscach. Gracz zostaje, bo T2 dalej jest.
+- **Testy.**
+  - Symulacja:
+    - odzyskanie bez alarmu włazem i bramą;
+    - brama zamknięta bez kodu;
+    - pościg P−1 → P−2 → schron;
+    - miejsca ludzi, urządzeń i planów na podłodze schronu.
+  - Sesja: brama zatrzymuje gracza bez zlecenia, a właz działa w obie strony.
+  - Migracja: osobny test.
+- **Hashe.** Złoty hash determinizmu zmienia się tylko przez wersję schematu: z wersją 49 przebieg daje dawny skrót.
+
+### Etap 5e: winda aut z kabin P−1 (gałąź `feat/alchemia-winda-aut`)
+- **Szyb** (`P1_CAR_LIFT`, x 399,2–403,6, z 30–31,35) leży w północnej kabinie oddawania aut. Przechodzi przez podłogę pokładu P−1 i strop P−2 do północnego końca pasa robotów: za ostatnimi słupkami regałów i ich belkami, za biegiem robotów, przed północną ścianą P−2.
+- **Platforma** z autem (nadwozie i kabina) jeździ w górę i w dół według zegara, jak roboty: `shuttle` z nową osią `y`, okres 40 s, postój 20% na każdym końcu. Na dole platforma jest równo z podłogą P−2, na górze równo z podłogą P−1. Nic z niej nie trafia do zapisu.
+- **Na P−1** szyb zamykają ściany kabiny i jej roleta. **Na P−2** barierka zamyka go z zachodu i wschodu, a od strony pasa szyb jest otwarty, z kogutem nad nim. Kto stanie pod opadającą platformą, zostaje wypchnięty na pas.
+- **Testy:**
+  - szyb w kabinie, za paletami i biegiem robotów;
+  - otwór bez innych brył Alchemii;
+  - trzy jeźdźcy w osi `y` o wspólnym rytmie;
+  - poziomy na końcach;
+  - nikt nie stoi w platformie.
+- **Hashe i zapis:** złote hashe zgodne, schemat zapisu bez zmian.
+
+### Etap 8: spójność, pierwszy przegląd (19.11)
+Przegląd zrzutów z ulic dookoła: od Bajkowskiego, Lubartowskiej, Świętoduskiej, z T1, z T2, od Placu Łokietka i z lotu z północy i z południa.
+- **Zielone stopnie** zachodniego skrzydła miały ściany w tynku, a zieleń tylko na wierzchu, więc od Bajkowskiego wyglądały jak białe pudła. Teraz są obsadzone w całości, jak zielony stok z planszy.
+- **Drzewa na tarasie L2** zasłaniały napis CENTRUM HANDLOWE na L3, z ulicy i z lotu. Drzewa stoją teraz na zachód od napisu, a przed nim zostają same donice.
+- Bez zmian w symulacji ruchu i kolizji: stopnie zostają bryłami, a drzewa i donice są tylko rysowane.
+
+### Bryła na całym terenie (decyzje użytkownika 19.11)
+Plansza `01-rozbudowa-front.jpg` to widok od Bajkowskiego i Placu Łokietka. Dotąd bryła stała tylko nad food hallem (36 × 26 m), więc od Bajkowskiego było widać 9 m tarasów 50 m w głębi, a resztę terenu zajmował plac T0. Użytkownik zdecydował, że bryła zajmuje cały teren Alchemii, czyli parking w173531008 od Bajkowskiego i działkę w1559354343 do Świętoduskiej i Lubartowskiej (ok. 150 × 45–60 m), z frontem od Bajkowskiego. Budżet siatek Alchemii rośnie do 16 000 trójkątów na siatkę.
+- **Kształty z planszy.**
+  - Schodkowe kondygnacje cofające się od frontu, z zieloną krawędzią i ciągłym pasem LED na każdej płycie.
+  - Zaokrąglone narożniki płyt.
+  - Podium przy Bajkowskiego z ekranami i zielonym spadzistym dachem schodzącym do ulicy, z linią światła wzdłuż jego profilu.
+  - Najwyższe piętro ze skrzynią napisu ALCHEMIA CENTRUM HANDLOWE i masztami, patrzące na Bajkowskiego.
+  - Z tyłu bryła schodzi na północ do T1, T2 i Arkad.
+  - Na rogu jasny budynek z arkadami.
+  - Przed frontem plac ze schodami, fontanną i kioskami oraz rampa P−1 w środku.
+- **Poziomy.** Dachy kondygnacji leżą na wysokościach istniejących tarasów: L1 2,3 (dach A), L2 6,5 (dach B), L3 10,7 (nowa, +4,2). Od chodnika Bajkowskiego (−0,8…−1,8) to ok. 12 m do dachu L3, a z napisem i masztami więcej.
+- **Bryły etapu B1 (front, nad P−1), `front.ts`.**
+  - **L1, skrzydło zachodnie.** x 394–404, z −2…14 i x 396–404, z 14…27,5, wzdłuż skośnej granicy parkingu od Świętoduskiej, z ekranem od frontu.
+  - **Zielony stok.** Trzy zielone stopnie z dachu L1 na zachód, x 386,8–394, z −2…14, każdy z linią LED wzdłuż krawędzi.
+  - **L1, skrzydło wschodnie.** x 424–436, z 13,5…22,5. Stoi między pawilonem trójkątnym a pawilonem metra B, poza okapem metra i 1,1 m od węzła wyjścia z klatki P−1, z ekranem od południa. Przejście od klatki na Lubartowską zostaje pod gołym niebem.
+  - **L2.** Dwie płyty na słupach nad pasażem T0: x 394–422, z 4…32 oraz x 422–436, z 13,5…32. Spód płyty leży na 1,95, czyli co najmniej 2,9 m nad gruntem pasażu. Ekran wisi na południowej ścianie L2. Pod płytą zostają rampa P−1 (otwarta do z 11, dalej pod płytą), domek klatki P−1, rabaty przy rampie i wejście do metra B. Okap metra jest wolny, bo spód L2 leży nad jego pasmem.
+  - **Słupy.** Siedem słupów 0,6 m poza rampą, klatką, węzłami grafu na T0 i drogą od klatki do Lubartowskiej.
+  - **L3.** x 398–428, z 12…32, ze skrzynią napisu na ścianie południowej i dwoma masztami na dachu. Napis to neon ALCHEMIA w cyjanie nad CENTRUM HANDLOWE w różu, a nowe litery R, U, D, O i W są w `neon-letters.ts`.
+  - **Dachy.** Front cofa się od ulicy: skrzydła od z −2, L2 od z 4, L3 od z 12. Na dachach L2 i L3 rosną żywopłoty, a każda płyta ma pas LED.
+  - **Plac T0 z pergolami** (etap 7) zniknął razem z girlandami. Zostały rabaty przy rampie. Meble mapy omijają obrysy skrzydeł, stopni i słupów (`FRONT_FOOTPRINTS` w `street-props.ts`), a latarnie znikają spod L2.
+  - **Rysunek i liczenie.** Front jest rysowany w siatce kondygnacji (`alchemia-tiers`), a w symulacji to osobny, ostatni prop Alchemii. Identyfikatory brył i złote hashe się nie zmieniają. Budżet każdej siatki Alchemii w testach wynosi 16 000 trójkątów.
+- **Etapy.**
+  - **B1.** Front nad P−1: skrzydła, L2 na słupach, L3 z napisem, zielony stok, usunięte pergole, budżet 16 000, przegląd kuratora.
+  - **B2 (zrobione, `pavilion-shape.ts`).** Pawilon trójkątny jako budynek z arkadami. Obrys, wysokości, aneks, drabina, Ren i neon na dachu zostają bez zmian, więc symulacja też.
+    - Zamiast szklanej ściany z ramą na każdym boku stoi jasny tynk z łukami: przęsło 1,8 m, filar 0,9 m, łuk zaczyna się na 1,9 m.
+    - W łukach, 0,25 m w głębi, świeci ciepłe szkło restauracji.
+    - Nad łukami na obu bokach od ulic jest napis ALCHEMIA ciepłymi literami.
+    - Zastępnik z daleka ma ten sam podział (ciepły pas, tynk nad nim). Jego ściana stoi za szkłem łuków, bo w swoim bloku widać go też z bliska.
+  - **B3 (zrobione).** L3 sięga na północ nad tylnym pasem T0 do południowej krawędzi kondygnacji B (z 38), więc od północy bryła schodzi kaskadą: dach L3 (10,7), B (6,5), A (2,3), T1.
+    - Skrzydła na północ od hali nie ma. T1 to front hali z wejściami i Haną.
+    - T2 to plac z kamieniem pamięci Placu Ofiar Getta, przy którym nie ma neonów ani reklam (§6).
+    - Pas między granicą działki od Świętoduskiej a T2 ma przy wykopie P−2 najwyżej 3,6 m.
+  - **B4 (pierwsza część zrobiona).**
+    - **Zaokrąglone narożniki płyt** kondygnacji (A, B, L1–L3), promień 1 m, w silniku (`rounded-slab.ts`). Pas LED biegnie po łuku, a proste pasy z symulacji przy płytach znikają. Symulacja zostaje przy pudłach, a szkło pod płytą (0,3 m w głąb) mieści się pod łukiem.
+    - **Detale rysowane bez kolizji** (`front-dress.ts`):
+      - pnącza na krawędziach L2 i L3, z dala od napisu i ekranu;
+      - trzy drzewa w donicach na tarasie L2;
+      - cztery parasole ze stolikami na dachu L3;
+      - wysokie ekrany na bokach L3;
+      - zielone pasy światła w ścianach rampy P−1 i nad wjazdem pod strop.
+    - **Fontanna z hologramem** na placu przed skrzydłem zachodnim, x 397,9–401,1, z −7,1…−3,9: niecka z czterech brył do kolan, woda i figura ze światła ze stosu pierścieni wokół rdzenia. Meble mapy ją omijają (`FRONT_FOOTPRINTS`).
+    - **Wylot P−2.** Ściany wykopu i parapet nad portalem mają w rysunku balustradę, czyli słupki i dwie poręcze na wysokości metra nad zboczem, zamiast pełnego parapetu. Z T1 widać przez nią wykop i plac T2. Zastępnik z daleka też ma tylko ścianę do zbocza i poręcz, bo w swoim bloku stoi i z bliska. Symulacja zostaje przy pełnym parapecie.
+    - **Kioski** (zrobione): dwa na placu przed frontem, na zachód od fontanny i między nią a drogą do rampy (`FRONT_KIOSKS`). Mają ladę z ciepło świecącym okienkiem od ulicy, daszek i pas światła wokół dachu. Są bryłami, a meble mapy je omijają.
+    - **Zaokrąglone szkło** (zrobione): szkło kondygnacji pod płytą z równym wysięgiem na wszystkie strony (front L1–L3, kondygnacje A i B) silnik rysuje po obrysie płyty z łukami, cofniętym o wysięg (`roundedGlass`). Narożniki szkła idą więc za łukami płyty. Symulacja zostaje przy pudłach.
+- **Zasady.** Bryły to sceneria jak kondygnacje A i B: solidne pudła szkła z dachami do chodzenia. Nowe bryły idą na koniec `ALCHEMIA_PROPS`, więc identyfikatory brył i złote hashe się nie zmieniają, chyba że usunięcie pergoli przesunie wcześniejsze. Wtedy hash zmienia się świadomie i opis trafia do commita. Graf poziomu na T0 zostaje drożny, a słupy i skrzydła stoją poza jego krawędziami (skan `walk-blocked`).
+
+### Do 1:1 z planszą (decyzje użytkownika 19.11, wieczór)
+Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy rampie i przy pawilonie) dało listę różnic. Użytkownik: „Lecimy z Twoim planem usprawnień, budynek z arkadami może przejść od frontu, robimy dziedziniec w dachu taki jak na referencji + nasze pergole z lampionami i ławki. Maksymalnie 1:1 z referencyjną grafiką”. Etapy, każdy osobnym PR-em:
+- **C1.** Szkło z wnętrzem, płyty, balustrady, mocniejsze LED.
+- **C2.** Zieleń: pnącza na krawędziach, drzewa i krzewy na tarasach, zielony stok jako ciągła pochylnia z linią LED.
+- **C3.** Jasny budynek z arkadami w osi frontu, za fontanną i obok rampy, z dwiema kondygnacjami (łuki i okna). Pawilon na rogu wraca do szkła z planu inwestora.
+- **C4.** Jasna skrzynia napisu, pionowe holo-ekrany obok niej, ekrany podium z obrazem.
+- **C5.** Plac: szerokie schody, okrągła fontanna, kioski z jedzeniem i parasolami, automaty, stoliki.
+- **C6.** Dziedziniec w dachu jak w aksonometrii, z pergolami, lampionami i ławkami.
+- **C7.** Deptak z neonami (pionowy ALCHEMIA, PARKING CAŁODOBOWY, SPOŻYWCZY) i straganami, ruch aut na rampie, schody obok niej, ludzie na tarasach.
+
+### Etap C1: szkło, płyty i balustrady (19.11)
+- **Zaokrąglenia w symulacji.** B4 zaokrąglał tylko rysunek, więc na odciętym narożniku tarasu dało się stać w powietrzu. Teraz element (`Piece`) może mieć obrys (`outline`), a bryła symulacji to graniastosłup tego obrysu.
+  - Płyta, szkło pod nią i balustrada kondygnacji mają jeden zaokrąglony obrys (`rounded.ts`). Wzorzec: prostokąt o zaokrąglonych narożnikach, czyli suma Minkowskiego prostokąta i koła, z łukami współśrodkowymi, więc obrys przesunięty do środka zostaje zaokrąglony.
+  - Promień wynosi 2 m, najwyżej ćwierć krótszego boku (wcześniej 1 m).
+  - Zaokrąglone są tylko narożniki zewnętrzne. Styki pasm kondygnacji B i skrzydeł L1 zostają proste (`outerCorners`).
+  - Liczba brył się nie zmienia, więc identyfikatory i złote hashe zostają.
+- **Balustrady.** Tarasy A i B dostały balustrady z bryłami wzdłuż zaokrąglonej krawędzi płyty, w miejsce prostych murków na linii szkła. Przejścia zostają nad podestami schodów.
+  - Na każdym prostym boku jest jeden graniastosłup, a na każdym łuku dwa, bo każda bryła kosztuje w płaskim indeksie brył.
+  - Dachy L1–L3 dostały balustrady tylko rysowane, bo nikt po nich nie chodzi. Przy zielonych stopniach L1 balustrada ma przerwę.
+  - Silnik rysuje balustradę jako słupki co 2 m z poręczą. Balustrad schowanych w szkle wyższej kondygnacji nie rysuje.
+- **Szkło jak na planszy** (`storey-facade.ts`). Wzorzec: fałszywe wnętrze oświetlonego okna (interior mapping, J. van Dongen 2008), zbudowane z geometrii, bo materiał kitu nie ma paralaksy.
+  - Na linii szkła stoją białe słupki ram co 3 m, cokół i nadproże.
+  - 1,6 m w głębi świeci ciepło tylna ściana pomieszczenia, a pod stropem ma ciemny pas.
+  - Pomieszczenie ma podłogę, a przy niej stoją ciemne sylwetki ludzi i stoliki, rozstawione deterministycznie co 2,9 m.
+  - Krawędzie schowane w sąsiedniej kondygnacji nie dostają nic.
+- **Płyty.** Są jasne, z belką krawędziową 0,32 m pod płytą. Pas światła ma 0,14 m zamiast 0,08 i biegnie po łuku wzdłuż belki.
+- **Budżet.** Siatka kondygnacji ma 12,2 tys. trójkątów przy budżecie 16 tys. Wywołania rysowania się nie zmieniają, bo ramy, wnętrza i balustrady leżą w siatce kondygnacji.
+
+### Etap C2: zieleń (19.11)
+- **Zasłony zieleni** (`front-green.ts`) wiszą na każdej odsłoniętej krawędzi kondygnacji: L1–L3 frontu oraz A i B.
+  - Biegną wzdłuż zaokrąglonego obrysu płyty, 8 cm za jej krawędzią, co 2,6 m. Każda ma 0,9–1,7 m szerokości i spada 0,6–1,8 m spod belki płyty, a od góry wystaje nad płytę.
+  - Pomijane są krawędzie, przy których stoi inna kondygnacja, oraz miejsca przy napisie i ekranach.
+  - Co gdzie rośnie, rozstrzyga skrót położenia (hash). Nie ma list pozycji ani losowości.
+  - Zasłony są tylko rysowane.
+- **Drzewa i krzewy z gry** (decyzja użytkownika z 19.11: modele gry zamiast własnych pudełek) to meble uliczne `shrubs`, `planter` i `tree` w osobnym elemencie sceny chunka Alchemii, na końcu `WORLD_SCENERY` (`FRONT_GREEN_PROPS`).
+  - Krzewy stoją co 1,6 m wzdłuż balustrad dachów frontu, 0,85 m od krawędzi, tam, gdzie nad dachem nie stoi wyższa kondygnacja. Ich wielkość rozstrzyga skrót położenia.
+  - Cztery drzewa wysokie na 6–7 m (`measuredTreeVariant`) stoją w donicach na rogach skrzydła wschodniego L1 i na tylnych rogach L3.
+  - Na tarasach A i B, po których się chodzi, nowych krzewów nie ma.
+- **Zielony stok** (`green-slope.ts`): trzy zielone stopnie silnik rysuje jako jedną równą pochylnię trawy od krawędzi dachu L1 do najniższego stopnia. Linia światła biegnie wzdłuż profilu po obu stronach i u stopy.
+  - Symulacja zostaje przy trzech stopniach. Stopnie wysokie na 1,05 m nie są do chodzenia, więc pochylnia, która w głębi stopnia leży nad jego wierzchem, nikogo nie zasłania w zwykłej grze.
+- **Budżet.** Decyzja użytkownika z 19.11: budżety trójkątów można podnosić. Budżet siatki Alchemii w testach rośnie z 16 do 40 tys., a bramkami zostają wywołania rysowania i aktywne siatki. Szkło zachowuje cokół i dwa pasy tylnej ściany, zasłony wiszą co 2,6 m.
+- **Kolor.** Liście i trawniki kondygnacji mają świeżą zieleń planszy (farba kitu barwiona na #4f9a58 i #5a9e4e), bo ciemna zieleń kitu w nocy czytała się jak ciemne płyty. Zasłona to dwa pasma nierównej długości.
+
+### Etap C3: budynek z arkadami w osi frontu (19.11)
+- **Decyzja użytkownika (19.11):** „budynek z arkadami może przejść od frontu”.
+- **Bryła** (`arcade-front.ts`): jasny dom z arkadami. Wzorzec: podcień (portyk) domu targowego, jak podcienia Starego Miasta i Arkady przy Świętoduskiej, czyli przejście pod piętrem za rzędem filarów.
+  - Stoi x 394–409, z −2…3,7, między zielonym stokiem a wykopem rampy, za fontanną.
+  - Na parterze jest pięć łuków na sześciu filarach (filary to bryły, 0,75 × 0,8 m). Podcień ma 3 m głębokości, a za nim świecą sklepy skrzydła zachodniego L1, które cofa się do z 1.
+  - Piętro od stropu podcienia (2,3) do dachu na poziomie L2 (6,5) jest bryłą. Dach łączy się z tarasem L2 w jeden taras, z balustradą na trzech bokach.
+  - Ekran z frontu skrzydła zachodniego zniknął. Ekran L2 przeszedł na wschód, nad wylot rampy.
+  - Lampy ulic znikają spod domu, a meble omijają filary.
+- **Rysunek** (`arcade-front-geometry.ts`):
+  - kremowy tynk (farba kitu barwiona na #e6d6b4);
+  - łuki z licem i podniebiem na głębokość filarów;
+  - okna piętra z ramą, słupkiem i ślemieniem, świecące ciepło albo ciemne;
+  - ciepły napis ALCHEMIA nad środkowym łukiem;
+  - gzyms z pasem światła;
+  - krzewy z gry na dachu, bez zasłon na elewacji.
+- **Pawilon na rogu** wraca do szkła z planu inwestora (rysunek sprzed B2), bo arkady ma teraz dom w osi frontu.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.

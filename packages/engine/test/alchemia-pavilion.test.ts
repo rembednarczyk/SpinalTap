@@ -10,6 +10,10 @@ import { pavilionGeometry } from "../src/renderer/alchemia/pavilion-geometry";
 import { type PavilionLook, pavilionFaces } from "../src/renderer/alchemia/pavilion-shape";
 import { ALCHEMIA_DRAW } from "../src/renderer/alchemia/alchemia-view";
 
+/** A mesh of Alchemia's, at most (decision of the user of 19.11: 16 000, the complex fills its whole site). */
+/** A mesh of Alchemia's at most (decision of the user of 19.11: triangle budgets may grow; the gates are draw calls and active meshes). */
+const ALCHEMIA_TRIANGLES = 40000;
+
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
@@ -66,7 +70,7 @@ describe("the pavilion on Alchemia's corner in the engine (ADR-0074 stage 3)", (
     pavilionGeometry(sink, kitData);
     const triangles = sink.indices.length / 3;
     expect(triangles).toBeGreaterThan(500);
-    expect(triangles).toBeLessThanOrEqual(8000);
+    expect(triangles).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
     for (let i = 0; i < sink.positions.length; i += 3) {
       expect(onCorner(sink.positions[i]!, sink.positions[i + 2]!), `${sink.positions[i]!.toFixed(2)},${sink.positions[i + 2]!.toFixed(2)}`).toBe(true);
       expect(sink.positions[i + 1]!).toBeGreaterThanOrEqual(ALCHEMIA_PAVILION.base - 1e-6);

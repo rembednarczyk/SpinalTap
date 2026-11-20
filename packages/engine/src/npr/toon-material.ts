@@ -1,6 +1,7 @@
 import type { BaseTexture, Matrix, Scene, ShaderMaterial, Texture } from "../babylon";
+import { DetailTextures } from "./detail-textures";
 import { NIGHT_RIG, type LightingRig, type PointLightDef } from "./lighting";
-import { PRESETS, type PresetName } from "./presets";
+import { PRESETS, type PresetName, type ToonPreset } from "./presets";
 import { ToonEnvironment } from "./toon-environment";
 import { createToonMaterial } from "./toon-material-factory";
 import { ToonPointLights } from "./toon-point-lights";
@@ -36,12 +37,22 @@ export class ToonMaterials {
   private readonly look: ToonSceneUniforms;
   /** Wet street tint and the lamps it mirrors (ADR-0084). */
   readonly wet = new ToonWetGround(this.materials);
+  /** The detail layers of the city's facades and ground (ADR-0092). */
+  readonly detail: DetailTextures;
+  private readonly detailed = new Set<ShaderMaterial>();
 
   constructor(
     private readonly scene: Scene,
     rig: LightingRig = NIGHT_RIG,
+    /** The folder of the detail textures (ADR-0092); without it they stay grey. */
+    detailFolder: string | null = null,
   ) {
     this.look = new ToonSceneUniforms(rig);
+    this.detail = new DetailTextures(scene);
+    this.detail.setSwap((sampler, tex) => {
+      for (const m of this.detailed) m.setTexture(sampler, tex);
+    });
+    if (detailFolder) this.detail.load(detailFolder);
   }
 
   /** The light rig pushed into every material now (fog and colours of the look on screen). */
@@ -50,7 +61,13 @@ export class ToonMaterials {
   }
 
   get(preset: PresetName): ShaderMaterial {
-    return this.cached(preset, () => createToonMaterial(this.scene, preset, PRESETS[preset], { env: this.env.bindingFor(preset) }));
+    return this.cached(preset, () => {
+      const p: ToonPreset = PRESETS[preset];
+      const city = p.city !== undefined;
+      const m = createToonMaterial(this.scene, preset, p, { env: this.env.bindingFor(preset), detail: city ? this.detail.binding : null });
+      if (city) this.detailed.add(m);
+      return m;
+    });
   }
 
   /**
@@ -79,13 +96,17 @@ export class ToonMaterials {
    * The city kit's material (ADR-0022): colour from the swatch palette, whose alpha marks
    * tinted walls (vertex colour) and self-lit swatches (windows, neon). One per palette.
    */
-  forCityKit(palette: BaseTexture): ShaderMaterial {
+  forCityKit(palette: BaseTexture, codes: BaseTexture | null = null): ShaderMaterial {
     return this.cached(`city:${palette.uniqueId}`, () => {
-      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit") });
+      // The swatches' detail layers (ADR-0092 stage 2), when the kit has its code texture.
+      const detail = codes ? [...this.detail.binding, ["detailKit", codes] as const] : null;
+      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit"), detail });
+      if (detail) this.detailed.add(m);
       m.setFloat("selfLit", 1);
       return m;
     });
   }
+
 
   /**
    * The static reflection probe the wet surfaces sample (ADR-0036). Call before the first

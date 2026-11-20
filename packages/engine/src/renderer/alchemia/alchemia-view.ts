@@ -1,10 +1,11 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, FOODHALL, FOODHALL_INNER, LIFT_HOLE, STAIR_HOUSE } from "@seki/sim";
+import { ALCHEMIA_CENTRE, ALCHEMIA_LIFT, ARKADY_CENTRE, ATRIUM, FOODHALL, FOODHALL_INNER, LIFT_HOLE, MALL_LEVELS, P2_CORRIDOR, STAIR_HOUSE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
+import { P2View, eyeInP2, eyeInShelter } from "./p2-view";
 import { ParkingView } from "./parking-view";
 import type { CarAt } from "./parking-traffic";
 
@@ -40,12 +41,14 @@ const inRect = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r
 
 /**
  * Whether a roof is over (x, y, z) at the food hall (ADR-0074 stage 1), where no rain falls: in the
- * hall under its green roof, in the stair house and the lift's kiosk on it; not on the roof or on T1.
+ * hall and the gallery over it (ADR-0093 O1) under its roof but in the atrium open to the sky, in the
+ * lift's kiosk on the roof; not on the roof or on T1.
  */
 export const hallRoofOver = (x: number, y: number, z: number): boolean => {
   if (inRect(STAIR_HOUSE, x, z) && y < FOODHALL.roof + STAIR_HOUSE.height) return true;
   if (inRect(LIFT_HOLE, x, z) && y < ALCHEMIA_LIFT.head) return true;
-  return inRect(FOODHALL, x, z) && y < FOODHALL.roof;
+  const atrium = x > ATRIUM.x0 && x < ATRIUM.x1 && z > ATRIUM.z0 && z < ATRIUM.z1;
+  return inRect(FOODHALL, x, z) && !atrium && y < MALL_LEVELS.roof;
 };
 
 export interface AlchemiaDeps {
@@ -71,22 +74,39 @@ const toHall = (e: Vec3): number => Math.hypot(Math.max(FOODHALL.minX - e.x, 0, 
  * each (two with the G-buffer). No moon shadow and no glow layer: its neon and lit glass are
  * bright in the kit's own emissive colours.
  */
+/** P-2's portal onto T2: within this of it the outside shows through it (the cutting, T2, the Arkady). */
+const PORTAL = { x: (P2_CORRIDOR.minX + P2_CORRIDOR.maxX) / 2, z: P2_CORRIDOR.maxZ } as const;
+const PORTAL_SIGHT = 25;
+
+/**
+ * Down in P-2's store or corridor, away from its portal, nothing of Alchemia's outside or its storeys
+ * shows (slabs and earth all round; stage 5e: P-2's scene keeps its draw calls). In the shelter its
+ * hatch's flight looks up at the sky: there they stay.
+ */
+const deepInP2 = (e: Vec3): boolean => eyeInP2(e) && !eyeInShelter(e) && Math.hypot(e.x - PORTAL.x, e.z - PORTAL.z) > PORTAL_SIGHT;
+
 export class AlchemiaView {
   private outside: Mesh | null = null;
   private inside: Mesh | null = null;
+  /** The green tiers over the hall (15.11), drawn with the outside. */
+  private tiers: Mesh | null = null;
   private kitSeen: CityKit | null = null;
   private level = 0;
   /** Its car park's P-1 under T0, near it only, and the cars on its ramp (ADR-0074 stage 4): a part of its own. */
   readonly parking: ParkingView;
+  /** Its car park's P-2 under P-1 (ADR-0074 stage 5a): a part of its own. */
+  readonly p2: P2View;
 
   constructor(private readonly deps: AlchemiaDeps) {
     this.parking = new ParkingView(deps);
+    this.p2 = new P2View(deps);
   }
 
   /** The meshes drawn last frame and their triangles (debug, tests). */
   get stats(): { readonly meshes: number; readonly triangles: number; readonly insideTriangles: number } {
     const on = (m: Mesh | null) => (m?.isEnabled(false) ? 1 : 0);
-    return { meshes: on(this.outside) + on(this.inside), triangles: this.outside ? this.outside.getTotalIndices() / 3 : 0, insideTriangles: this.inside ? this.inside.getTotalIndices() / 3 : 0 };
+    const tris = (m: Mesh | null) => (m ? m.getTotalIndices() / 3 : 0);
+    return { meshes: on(this.outside) + on(this.inside) + on(this.tiers), triangles: tris(this.outside) + tris(this.tiers), insideTriangles: tris(this.inside) };
   }
 
   /** Call once per frame before rendering. */
@@ -99,17 +119,20 @@ export class AlchemiaView {
     const e = this.deps.eye();
     const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
     const near = toHall(e);
-    const out = far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
-    const inn = near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
+    const out = !deepInP2(e) && far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
+    // Down in P-2 or the shelter the hall over it is behind its slabs: its inside off (its draw calls with it).
+    const inn = !eyeInP2(e) && near < INSIDE_DRAW + (this.inside?.isEnabled(false) ? INSIDE_HOLD : 0);
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
-    this.show(out, inn, Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
+    // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
+    this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
   }
 
   private build(kit: CityKit): void {
     this.kitSeen = kit;
-    const { outside, inside } = alchemiaGeometry(kit.data);
+    const { outside, inside, tiers } = alchemiaGeometry(kit.data);
     this.outside = this.fill(this.outside, "alchemia", outside, kit);
     this.inside = this.fill(this.inside, "alchemia-inside", inside, kit);
+    this.tiers = this.fill(this.tiers, "alchemia-tiers", tiers, kit);
   }
 
   private fill(mesh: Mesh | null, name: string, sink: GeometrySink, kit: CityKit): Mesh {
@@ -128,6 +151,7 @@ export class AlchemiaView {
 
   private show(out: boolean, inn: boolean, fade = 0): void {
     if (this.outside && this.outside.isEnabled(false) !== out) this.outside.setEnabled(out);
+    if (this.tiers && this.tiers.isEnabled(false) !== out) this.tiers.setEnabled(out);
     if (this.inside && this.inside.isEnabled(false) !== inn) this.inside.setEnabled(inn);
     const level = inn && this.inside !== null ? fade : 0;
     if (level === this.level) return;

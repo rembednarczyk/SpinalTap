@@ -1,0 +1,1 @@
+- Budynki z zestawu miasta, Alchemia i hale W-3 mają z bliska fakturę betonu, cegły, papy, blachy i trawy w swoich kolorach.

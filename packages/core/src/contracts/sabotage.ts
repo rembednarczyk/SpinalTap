@@ -26,7 +26,7 @@ export const SABOTAGE = {
    */
   quietReward: 2000,
   seenReward: 1420,
-  /** `reboot_optics` blinds the server room's camera this long during the job (the table's 10 s elsewhere). */
+  /** `reboot_optics` blinds the job's cameras (the server room's, row N roof's) this long (the table's 10 s elsewhere). */
   cameraRebootSeconds: 30,
   /** The guards of the hall, the mezzanine, the wagon airlock and armoury S. */
   crew: 4,

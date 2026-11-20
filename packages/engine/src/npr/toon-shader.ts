@@ -1,3 +1,5 @@
+import { KIT_DETAIL_GLSL } from "./detail-kit";
+import { DETAIL_GLSL } from "./detail-layers";
 import { FACADE_GLSL, GROUND_GLSL, STEPS_VERTEX_GLSL } from "./toon-city";
 import { LAMP_STREAK_GLSL } from "./lamp-streaks";
 import { SETT_JOINT_GLSL, STREET_FIELD_GLSL, WATER_GLSL, WET_DARKEN } from "./water-mask";
@@ -170,7 +172,7 @@ float gridLine(float x, float period, float w) {
   float d = abs(fract(x / period + 0.5) - 0.5) * period;
   return 1.0 - step(w, d);
 }
-${FACADE_GLSL}${GROUND_GLSL}
+${DETAIL_GLSL}${KIT_DETAIL_GLSL}${FACADE_GLSL}${GROUND_GLSL}
 ${WATER_GLSL}
 #ifdef WATER_MASK
 ${SETT_JOINT_GLSL}
@@ -311,6 +313,9 @@ void main(void) {
   float selfLitMask = 1.0 - step(0.25, texel.a);
 #ifdef VERTEXCOLOR
   albedo *= mix(vec3(1.0), vColor.rgb, tinted);
+#endif
+#ifdef DETAIL
+  albedo *= kitDetail(vUV, vWorldPos, n, length(cameraPosition - vWorldPos));
 #endif
 #else
 #ifdef VERTEXCOLOR

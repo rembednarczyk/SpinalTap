@@ -57,8 +57,9 @@ const bakeShell = (sink: MeshSink, f: PavilionFrame, quality: RenderQuality): vo
     frameBox(sink, f, [0, L], [k * inner, k * half], [s + PLINTH, s + TRANSOM], pane);
     frameBox(sink, f, [0, L], [k * inner, k * half], [s + TRANSOM, top], CLERESTORY);
   }
-  // The end wall; under an entrance A with the doorway down to the platform (ADR-0071 stage 4).
-  const head = f.e.platform ? f.floor + f.e.platform.doorwayHead : null;
+  // The end wall; under an entrance A with the doorway down to the platform (ADR-0071 stage 4), at
+  // metro B by Alchemia with the doorway down to P-1 (ADR-0074 stage 10).
+  const head = f.e.endDoor ? f.floor + f.e.endDoor.head : null;
   if (head === null) frameBox(sink, f, [end, L + 0.02], [-inner, inner], [base, s + PLINTH], C.granite);
   else {
     frameBox(sink, f, [end, L + 0.02], [-inner, inner], [head, s + PLINTH], C.granite);

@@ -59,6 +59,8 @@ export interface DressedModel {
 interface OnModel {
   readonly model: DressedModel;
   readonly hand: TransformNode | null;
+  /** At the wrist, turned with the forearm and not the hand: the arm implant's rings sit here. */
+  readonly forearm: TransformNode | null;
   /** Under the hand, in the closed fist: a one-handed gun hangs here. */
   readonly fist: TransformNode | null;
   readonly anchors: Partial<Record<AnchorBone, TransformNode>>;
@@ -292,6 +294,9 @@ export class Loadouts {
       const palm = model.retarget.reach.palm;
       fist.position.set(palm.x + IN_FIST.side, palm.y - IN_FIST.ahead, palm.z + IN_FIST.up);
     }
+    const forearm = new TransformNode(`${name}-bone-forearm`, this.scene);
+    const onForearm = model.retarget.holdOnRightForearm(forearm);
+    if (!onForearm) forearm.dispose();
     const anchors: Partial<Record<AnchorBone, TransformNode>> = {};
     for (const bone of ["head", "chest"] as const) {
       const node = model.retarget.anchor(bone, `${name}-bone-${bone}`);
@@ -300,7 +305,7 @@ export class Loadouts {
     // A smaller or taller model gets smaller or bigger add-ons, within reason.
     const ratio = model.retarget.headHeight / (rig.head.position.y || 1);
     const fit = Number.isFinite(ratio) && ratio > 0 ? Math.min(1.25, Math.max(0.8, ratio)) : 1;
-    return { model, hand: held ? hand : null, fist, anchors, fit, tinted: new Map() };
+    return { model, hand: held ? hand : null, forearm: onForearm ? forearm : null, fist, anchors, fit, tinted: new Map() };
   }
 
   /** Takes everything off the model's bones and gives its cloth its own colours back. */
@@ -310,9 +315,10 @@ export class Loadouts {
     s.mounted.model?.node.dispose();
     delete s.mounted.model;
     this.dress.dropModel(rig);
-    if (m.hand) {
-      m.model.retarget.release(m.hand);
-      m.hand.dispose();
+    for (const holder of [m.hand, m.forearm]) {
+      if (!holder) continue;
+      m.model.retarget.release(holder);
+      holder.dispose();
     }
     for (const node of Object.values(m.anchors)) node?.dispose();
     for (const [mesh, material] of m.tinted) mesh.material = material;
@@ -408,10 +414,12 @@ export class Loadouts {
       }
     }
     if (shows.has("arms")) {
-      // Forearm frame: -Y runs from the elbow to the fingers. On a model the hand holder sits at the wrist.
-      const forearm = onModel?.hand ?? rig.elbowR;
-      const fit = onModel?.hand ? onModel.fit : 1;
-      const along = onModel?.hand ? [0.05, 0.11] : [-0.12, -0.19];
+      // Forearm frame: -Y runs from the elbow to the fingers. On a model the forearm holder sits at
+      // the wrist and turns with the forearm, not the hand: the rings stay round the arm whatever
+      // the grip (a long gun's turns the wrist, the user 18.11).
+      const forearm = onModel?.forearm ?? rig.elbowR;
+      const fit = onModel?.forearm ? onModel.fit : 1;
+      const along = onModel?.forearm ? [0.05, 0.11] : [-0.12, -0.19];
       for (const [i, y] of along.entries()) {
         const ring = MeshBuilder.CreateTorus(`${s.name}-cyberarm${i}`, { diameter: 0.07, thickness: 0.014, tessellation: 14 }, this.scene);
         ring.parent = forearm;

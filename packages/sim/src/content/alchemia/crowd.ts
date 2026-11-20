@@ -30,11 +30,11 @@ export const FOODHALL_CROWD: readonly CrowdSpot[] = [
   at(atUnit("thai", 0.9, 1.2), into("thai"), ["eat"]),
   at(atUnit("greek", 0.9, -1.2), into("greek"), ["eat", "talk"]),
   at(atUnit("cafe", 0.9, 0.8), into("cafe"), ["drink"]),
-  // At the tables, on their benches: two by the aisle, two at the far ends.
-  at(onFloor(414, 41.35), NORTH, ["sit"]),
-  at(onFloor(421.5, 43.65), SOUTH, ["sit"]),
-  at(onFloor(412, 47.65), SOUTH, ["sit"]),
-  at(onFloor(423.5, 45.35), NORTH, ["sit"]),
+  // At the tables, on their benches: two by the aisle, two at the far ends (1.6 m north with the tables since ADR-0093 O1).
+  at(onFloor(414, 42.95), NORTH, ["sit"]),
+  at(onFloor(421.5, 45.25), SOUTH, ["sit"]),
+  at(onFloor(412, 49.25), SOUTH, ["sit"]),
+  at(onFloor(423.5, 46.95), NORTH, ["sit"]),
 ];
 
 /**

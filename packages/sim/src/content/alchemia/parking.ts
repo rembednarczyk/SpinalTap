@@ -3,6 +3,7 @@ import type { GroundCut } from "../../world/ground";
 import type { GroundVault } from "../../world/vault";
 import type { Rect, StaticProp } from "../builders";
 import { groundY } from "../lublin/terrain";
+import { ARKADY } from "./arkady";
 import { type Box, HALL, type Piece, box, piece } from "./plan";
 
 /**
@@ -16,8 +17,9 @@ import { type Box, HALL, type Piece, box, piece } from "./plan";
  * ground over it leaves headroom, then under the terrace down to an apron at its foot. There they
  * drive into one of two hand-over cabins of the automated garage on the west (the robots of P-2,
  * stage 5, take them from there) and come out of the other. West of the ramp a deck of bays with
- * chargers along its west wall; east of it a stair core up to T0 by metro B's pavilion. Walkers
- * use the ramp on its east side, along the wall. The walls keep 2 m off metro B's shaft and hall.
+ * chargers along its west wall; east of it a stair core up to T0 by metro B's pavilion, reached from
+ * the apron by a passage east under T0 (ADR-0093 O2b). Walkers use the ramp on its east side, along
+ * the wall. The walls keep 2 m off metro B's shaft and hall.
  */
 
 /** P-1: its outline (outer faces), walls, floor and ceiling (its underside), the ceiling's slab. */
@@ -27,19 +29,21 @@ const C = P1.ceiling;
 const W = P1.wall;
 
 /**
- * The ramp: between its walls from x 410 to 418, its top level with the car park's ground at z
- * -5.5, its foot on P-1's floor at z 24.5 (5.4 m over 30 m, 18%). Two lanes, down on the east and up
- * on the west (keep right), a footway along its east wall from `walk`. Open over it up to
- * `covered`, where the ground over its ceiling's slab is deep enough.
+ * The ramp: between its walls from x 410 to 418, its top level with the square's ground at z
+ * -8.8, at the edge of Bajkowskiego's footway (the curator's plan of 19.11 for the board of 15.11:
+ * the drive in from the street, not across the square), its foot on P-1's floor at z 24.5 (5.5 m
+ * over 33.3 m, 16.4%). Two lanes, down on the east and up on the west (keep right), a footway
+ * along its east wall from `walk`. Open over it up to `covered`, where the ground over its
+ * ceiling's slab is deep enough.
  */
 export const P1_RAMP = {
   minX: 410,
   maxX: 418,
   walk: 416.5,
-  top: -5.5,
+  top: -8.8,
   foot: 24.5,
-  yTop: Math.round(groundY(414, -5.5) * 100) / 100,
-  covered: 12,
+  yTop: Math.round(groundY(414, -8.8) * 100) / 100,
+  covered: 11,
   /** Headroom over the ramp under its stepped ceiling. */
   headroom: 2.2,
 } as const;
@@ -67,13 +71,23 @@ export const P1_RAMP_GRADE = (P1_RAMP.yTop - F) / (P1_RAMP.foot - P1_RAMP.top);
 /**
  * The stair core by metro B (ADR-0074 §4, the second one): a straight flight rising south from
  * P-1's floor to a landing level with T0, in a shaft dug to its foot under a stair house on the
- * car park, its door south onto it. Its foot opens north onto P-1.
+ * car park, its door south onto it. Its foot opens north onto the passage to P-1 (`P1_STAIR_LINK`).
+ * Until ADR-0093 O2b it stood 6 m west, beside the ramp's east wall (x 418.3-421.7), on the way
+ * from Bajkowskiego to the gallery's main doors: whoever walked that way in went down to P-1. Now
+ * its house stands against the west face of L1's east wing, beside the way, its door still south.
  */
-const STAIR_TOP = Math.round(groundY(420, 11.6) * 100) / 100;
-export const P1_STAIR = { minX: 418.3, maxX: 421.7, minZ: 12.4, maxZ: 22.6, wall: 0.2, risers: 28, going: 0.28, top: STAIR_TOP, house: 2.6, door: { x0: 419.3, x1: 420.7, top: 2.3 } } as const;
+const STAIR_TOP = Math.round(groundY(426, 11.6) * 100) / 100;
+export const P1_STAIR = { minX: 424.3, maxX: 427.7, minZ: 12.4, maxZ: 22.6, wall: 0.2, risers: 29, going: 0.28, top: STAIR_TOP, house: 2.6, door: { x0: 425.3, x1: 426.7, top: 2.3 } } as const;
 export const P1_STAIR_RISE = (P1_STAIR.top - F) / P1_STAIR.risers;
 /** The south end of the flight's last tread: the landing's north edge. */
 export const P1_STAIR_HEAD_Z = P1_STAIR.maxZ - (P1_STAIR.risers - 1) * P1_STAIR.going;
+
+/**
+ * The passage from the stair core's foot west to P-1 (ADR-0093 O2b): along the core's foot from the
+ * ramp's east wall through P-1's east wall (the strip at the old core's foot, x 418.3-422, open north
+ * onto the apron), under T0 to the core. Its walls' inner faces; the walls stand outside.
+ */
+export const P1_STAIR_LINK: Rect = { minX: P1_RAMP.maxX + W, maxX: P1_STAIR.maxX - P1_STAIR.wall, minZ: P1_STAIR.maxZ, maxZ: P1_RAMP.foot };
 
 /** The door in the food hall's back wall onto P-1, by Sachiko's kiosk, at the foot of the hall's stairs. */
 export const P1_HALL_DOOR = { x0: 410.5, x1: 412.2, top: 2.3 } as const;
@@ -84,6 +98,12 @@ export const P1_CABINS: readonly Rect[] = [
   { minX: 398, maxX: 404, minZ: 28.4, maxZ: 31.6 },
 ];
 const CABIN_WALL = 0.2;
+/**
+ * The car lift's shaft (ADR-0074 stage 5e) in the north cabin, down through P-1's deck to the north
+ * end of P-2's lane, where the robots take the cars: inside the cabin's walls, north of the racks'
+ * last uprights and beams and past the robots' runs, short of P-2's north wall.
+ */
+export const P1_CAR_LIFT: Rect = { minX: 399.2, maxX: 403.6, minZ: 30.0, maxZ: 31.35 };
 const CABIN_ROOF = 2.5;
 
 /** The bays: two rows of 2.5 m either side of the deck's aisle, from z 3.5, nose to the walls. */
@@ -141,17 +161,20 @@ export const P1_STAIR_CUT: GroundCut = { bounds: { minX: P1_STAIR.minX, maxX: P1
 
 /**
  * P-1 in the ground: feet deep under the car park stand on its solids (`VAULT_COVER`). Its ground
- * lies 2 m under the floor's slab, as a metro platform's under its track bed: a body on the floor
- * is raised over the ground (`LEVEL_GAP`), so an NPC on the hall's floor after one on P-1's goes
- * by the level graph, through the door, instead of straight at the wall between them.
+ * lies 2 m under the floor of the lowest level in it, as a metro platform's under its track bed: a
+ * body on a floor is raised over the ground (`LEVEL_GAP`), so an NPC on the hall's floor after one
+ * on P-1's goes by the level graph, through the door, instead of straight at the wall between them.
+ * Since stage 5a that level is P-2 under it (`p2.ts`), on T2's level: the ground 2 m under its floor.
  */
-export const P1_VAULT: GroundVault = { bounds: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ }, floor: F - 2 };
+export const P1_VAULT: GroundVault = { bounds: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ }, floor: ARKADY.ground - 2 };
+/** The passage to the stair core east of P-1's outline (ADR-0093 O2b), a room in the ground as P-1, to its walls' outer faces. */
+export const P1_LINK_VAULT: GroundVault = { bounds: { minX: P1.maxX, maxX: P1_STAIR.maxX, minZ: P1_STAIR.maxZ, maxZ: P1_RAMP.foot + W }, floor: P1_VAULT.floor };
 
-/** P-1 as an interior of ADR-0061: the deck, the apron with the strip by the stair core's foot. */
+/** P-1 as an interior of ADR-0061: the deck, the apron, the passage to the stair core's foot. */
 export const P1_ROOMS: readonly (Rect & { readonly bottom: number; readonly top: number })[] = [
   { minX: P1.minX + W, maxX: P1_RAMP.minX - W, minZ: P1.minZ + W, maxZ: P1.maxZ, bottom: F, top: C },
   { minX: P1_RAMP.minX - W, maxX: P1.maxX - W, minZ: P1_RAMP.foot, maxZ: P1.maxZ, bottom: F, top: C },
-  { minX: P1_STAIR.minX, maxX: P1_STAIR.maxX, minZ: P1_STAIR.maxZ, maxZ: P1_RAMP.foot, bottom: F, top: C },
+  { ...P1_STAIR_LINK, bottom: F, top: C },
 ];
 
 /** The ramp's covered ceiling in steps of this length, each one's underside the headroom over its high end. */
@@ -185,6 +208,21 @@ const rampPieces = (): Piece[] => {
   return out;
 };
 
+/**
+ * The opening in P-1's east wall to the passage from metro B's hall (ADR-0074 stage 10): as wide as
+ * the hall between its stairs' walls (entrance B at z 28, its stairs 2.4 m wide; a test holds the
+ * two together), up to P-1's ceiling.
+ */
+export const P1_METRO_OPENING = { minZ: 26.8, maxZ: 29.2 } as const;
+
+/**
+ * The hole in the apron's floor over the stairs down to P-2 (ADR-0074 §4, stage 5a, `p2.ts`): along
+ * the hall's back wall from its door and the lift east, clear of the cars' turns at the ramp's foot
+ * and of the walk from the passage from metro B's hall to the apron. North of it, under the hall's
+ * back wall, a strip of floor 0.6 m wide over the wall between the flight and P-2's corridor.
+ */
+export const P1_STAIR_DOWN = { minX: 414.4, maxX: 418.6, minZ: 29.8, maxZ: P1.maxZ - 0.6 } as const;
+
 /** The deck's, the apron's and the stair core's strip's floor and ceiling, P-1's outer walls. */
 const shellPieces = (): Piece[] => {
   const r = P1_RAMP;
@@ -192,17 +230,36 @@ const shellPieces = (): Piece[] => {
   const base = F - W;
   const top = C + P1.slab;
   const slab = (x0: number, x1: number, z0: number, z1: number): Piece[] => [piece(box(x0, x1, z0, z1, base, F), "floor", true), piece(box(x0, x1, z0, z1, C, top), "roof", true)];
+  const h = P1_STAIR_DOWN;
+  const k = P1_STAIR_LINK;
+  const floor = (x0: number, x1: number, z0: number, z1: number): Piece => piece(box(x0, x1, z0, z1, base, F), "floor", true);
   return [
-    ...slab(P1.minX, r.minX - W, P1.minZ, P1.maxZ),
-    ...slab(r.minX - W, P1.maxX, r.foot, P1.maxZ),
-    ...slab(s.minX, P1.maxX, s.maxZ, r.foot),
+    // The deck's floor round the car lift's shaft in the north cabin (stage 5e), its ceiling whole.
+    floor(P1.minX, r.minX - W, P1.minZ, P1_CAR_LIFT.minZ),
+    floor(P1.minX, P1_CAR_LIFT.minX, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    floor(P1_CAR_LIFT.maxX, r.minX - W, P1_CAR_LIFT.minZ, P1_CAR_LIFT.maxZ),
+    floor(P1.minX, r.minX - W, P1_CAR_LIFT.maxZ, P1.maxZ),
+    piece(box(P1.minX, r.minX - W, P1.minZ, P1.maxZ, C, top), "roof", true),
+    // The apron's floor round the hole over the stairs down to P-2 (stage 5a), its ceiling whole.
+    floor(r.minX - W, P1.maxX, r.foot, h.minZ),
+    floor(r.minX - W, h.minX, h.minZ, h.maxZ),
+    floor(h.maxX, P1.maxX, h.minZ, h.maxZ),
+    floor(r.minX - W, P1.maxX, h.maxZ, P1.maxZ),
+    piece(box(r.minX - W, P1.maxX, r.foot, P1.maxZ, C, top), "roof", true),
+    // The passage to the stair core (O2b): its floor and ceiling, its south wall west of the core's foot, its north wall east of P-1's, its east end.
+    ...slab(k.minX, k.maxX, k.minZ, k.maxZ),
+    piece(box(k.minX, s.minX, k.minZ - W, k.minZ, base, top), "wall", true),
+    piece(box(P1.maxX, k.maxX + s.wall, k.maxZ, k.maxZ + W, base, top), "wall", true),
+    piece(box(k.maxX, k.maxX + s.wall, k.minZ, k.maxZ, base, top), "wall", true),
     // West, south (the deck's), north west of the hall, east by the apron.
     piece(box(P1.minX, P1.minX + W, P1.minZ, P1.maxZ, base, top), "wall", true),
     piece(box(P1.minX + W, r.minX - W, P1.minZ, P1.minZ + W, base, top), "wall", true),
     piece(box(P1.minX, HALL.minX, P1.maxZ - W, P1.maxZ, base, top), "wall", true),
     // The threshold in the hall's back wall: its floor drawn across the wall's thickness.
     piece(box(P1_HALL_DOOR.x0, P1_HALL_DOOR.x1, HALL.minZ, HALL.minZ + HALL.wall, base, F), "floor", true, false),
-    piece(box(P1.maxX - W, P1.maxX, s.maxZ, P1.maxZ, base, top), "wall", true),
+    // East by the apron, open to the passage from metro B (stage 10) and, south of the apron, to the stair core's (O2b).
+    piece(box(P1.maxX - W, P1.maxX, k.maxZ, P1_METRO_OPENING.minZ, base, top), "wall", true),
+    piece(box(P1.maxX - W, P1.maxX, P1_METRO_OPENING.maxZ, P1.maxZ, base, top), "wall", true),
     // The trench's west wall goes on along the deck's east side down to the covered part.
     piece(box(r.minX - W, r.minX, P1.minZ, r.covered, base, top), "wall", true),
   ];

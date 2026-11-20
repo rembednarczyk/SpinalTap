@@ -62,7 +62,8 @@ describe("brick walls of the map (G-244)", () => {
       const base = { use: "historic", levels: 3, height: 12, look, area: 120, width: 8 } as const;
       const plain = facadeStyle(base);
       const brick = facadeStyle({ ...base, material: "brick" });
-      expect({ ...brick, plaster: plain.plaster, trim: plain.trim, plinth: plain.plinth }).toEqual(plain);
+      expect(brick.wallDetail).toBe("brick");
+      expect({ ...brick, plaster: plain.plaster, trim: plain.trim, plinth: plain.plinth, wallDetail: plain.wallDetail }).toEqual(plain);
       expect(facadeStyle({ ...base, material: "plaster" }), "plaster: the use's palette").toEqual(plain);
     }
   });

@@ -169,7 +169,7 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
   it("leads from the car park, the hall and the green roof down to its deck, and from its deck up to all three", () => {
     const sim = loaded();
     const deck = { x: 402, y: F, z: 15 };
-    const elsewhere = [onGround(405, -3), onGround(424, 18), beforeKeeper("kenta"), { x: 419, y: FOODHALL.roof, z: 50 }];
+    const elsewhere = [onGround(405, -3), onGround(428, 10), beforeKeeper("kenta"), { x: 434.9, y: FOODHALL.roof, z: 50 }];
     for (const s of elsewhere) {
       expect(routeAcrossLevels(sim.world, WORLD_NAV, s, deck), `${s.x},${s.z} to the deck`).not.toBeNull();
       expect(routeAcrossLevels(sim.world, WORLD_NAV, deck, s), `the deck to ${s.x},${s.z}`).not.toBeNull();
@@ -195,7 +195,7 @@ describe("P-1 in the level graph (ADR-0074 §5, stage 4)", () => {
 
   it("an alerted brawler on the car park gets to the player on the deck, and one on the deck to her on the car park", () => {
     for (const seed of [3, 11]) expect(chase(onGround(406, -4), { x: 402, y: F, z: 15 }, 40, seed), `down, seed ${seed}`).not.toBeNull();
-    for (const seed of [3, 11]) expect(chase({ x: 402, y: F, z: 15 }, onGround(424, 16), 40, seed), `up, seed ${seed}`).not.toBeNull();
+    for (const seed of [3, 11]) expect(chase({ x: 402, y: F, z: 15 }, onGround(428, 10), 40, seed), `up, seed ${seed}`).not.toBeNull();
   });
 
   it("an alerted brawler in the hall gets to the player on the apron through the door, and back", () => {

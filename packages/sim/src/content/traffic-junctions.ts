@@ -84,7 +84,7 @@ export const bezier = (a: Pt, ea: Heading, b: Pt, eb: Heading): Pt[] => {
 };
 
 /** The tightest bend of a polyline (m): each step's length over the angle it turns by. */
-const tightest = (pts: readonly Pt[]): number => {
+export const tightest = (pts: readonly Pt[]): number => {
   let least = Infinity;
   for (let i = 1; i + 1 < pts.length; i++) {
     const [a, b, c] = [pts[i - 1]!, pts[i]!, pts[i + 1]!];
@@ -109,7 +109,7 @@ const swerve = (pts: readonly Pt[]): number => {
 };
 
 /** Is every point of an arc on the carriageway and out of every building? */
-const onCarriageway = (pts: readonly Pt[]): boolean => {
+export const onCarriageway = (pts: readonly Pt[]): boolean => {
   const len = polylineLength(pts);
   for (let s = 0; s <= len; s += PROBE) {
     const p = pointAt(pts, s);
@@ -123,7 +123,7 @@ const onCarriageway = (pts: readonly Pt[]): boolean => {
  * keeps two thirds of itself at least): driven forwards, no tighter than `MIN_RADIUS`, without an S, on the
  * road. None when no cut gives one.
  */
-const arcBetween = (a: TrafficRoute, b: TrafficRoute): { cutEnd: number; cutStart: number; arc: Pt[] } | null => {
+export const arcBetween = (a: Pick<TrafficRoute, "points" | "length">, b: Pick<TrafficRoute, "points" | "length">): { cutEnd: number; cutStart: number; arc: Pt[] } | null => {
   const cuts = SETBACKS.flatMap((x) => SETBACKS.map((y) => [x, y] as const)).sort((p, q) => p[0] + p[1] - q[0] - q[1] || p[0] - q[0]);
   for (const [cutEnd, cutStart] of cuts) {
     if (cutEnd > a.length / 3 || cutStart > b.length / 3) continue;

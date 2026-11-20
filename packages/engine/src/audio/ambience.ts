@@ -130,6 +130,8 @@ export class AmbientScape {
   private lastHum = -1;
   private lastSteam = -1;
   private lastMix: { hum: EmitterMix; steam: EmitterMix } = { hum: { gain: 0, pan: 0 }, steam: { gain: 0, pan: 0 } };
+  /** How loud the whole street plays, 1 in the open (lower under W-3's roof, ADR-0082 stage 4). */
+  private street = 1;
 
   constructor(
     private readonly voices: SynthVoices,
@@ -141,6 +143,11 @@ export class AmbientScape {
   /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
   get recordedRain(): boolean {
     return !!this.ambience?.rainLoop;
+  }
+
+  /** Level of the street soundscape, 0..1 (debug, tests). */
+  get streetLevel(): number {
+    return this.street;
   }
 
   /** Last positional mix of the neon hum and steam. */
@@ -157,6 +164,14 @@ export class AmbientScape {
   resetSchedule(now: number): void {
     this.nextDrop = now + 0.2;
     this.nextCar = now + 3;
+  }
+
+  /** Lowers the whole street (rain, traffic, hum, steam) under a roof; eased, applied only on a change. */
+  setStreetLevel(level: number, now: number): void {
+    const k = Math.min(1, Math.max(0, level));
+    if (k === this.street) return;
+    this.street = k;
+    this.ambience?.out.gain.setTargetAtTime(k, now, 0.4);
   }
 
   stop(now: number): void {
@@ -179,7 +194,7 @@ export class AmbientScape {
     const sources: AudioScheduledSourceNode[] = [];
     const out = ctx.createGain();
     out.gain.value = 0;
-    out.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
+    out.gain.setTargetAtTime(this.street, ctx.currentTime, 0.8);
     out.connect(g.buses.ambience);
     const k = nodeKit(g, sources);
     const rainSynth = buildRain(k, out);

@@ -80,6 +80,8 @@ const renderer = new BabylonRenderer(stage, {
   // Facade props (ADR-0058), the CC-BY street furniture (ADR-0063), the vehicles (ADR-0058 stage 4), the drones (stage 7), the still crowd (stage 8), and the capsule room (ADR-0063 stage 3), after the kit; ?city=off leaves them out too.
   cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb", "city/door-props.glb", "city/vehicle-props.glb", "city/drone-props.glb", "city/crowd-props.glb", "city/room-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
   farCity: false,
+  // The grain of the city's plaster, brick, asphalt and roofs (ADR-0092).
+  detailTextures: new URL("textures/", document.baseURI).href,
 });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality: renderQuality });
@@ -212,7 +214,8 @@ const loop = new FixedStepLoop(browserClock, {
     renderer.effects.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
     const player = renderer.cameraTargetTransform;
-    if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
+    // Her footfalls in the picture lead the footsteps' sound (user notes of 18.11).
+    if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed, footfalls: renderer.footfalls.take() });
     // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
     // Behind the loading screen the preparation draws its own warm-up frames (ADR-0057).
     if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;

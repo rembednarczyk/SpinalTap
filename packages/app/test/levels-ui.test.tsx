@@ -37,18 +37,19 @@ const walkUntil = (g: Game, done: (p: Point) => boolean, chunks = 20): Point => 
 const prompt = () => screen.queryByTestId("prompt")?.textContent ?? "";
 
 const C = ALCHEMIA_LIFT.centre;
-const [GROUND, TOP] = ALCHEMIA_LIFT.levels;
+// The hall and T0 (stage 5c: P-2 under them, `alchemia-lift.test.ts`).
+const [, GROUND, TOP, UP] = ALCHEMIA_LIFT.levels as unknown as readonly [number, number, number, number, ...number[]];
 /** Steps of a ride from one level to the other (2.5 m/s, ADR-0020), and a few for the gate. */
-const RIDE = Math.ceil(((TOP - GROUND) / 2.5) * 60) + 15;
+const RIDE = Math.ceil(((UP - TOP) / 2.5) * 60) + 15;
 
 afterEach(unmountGame);
 
 describe("levels in the game (ADR-0020, ADR-0021)", () => {
-  it("Alchemia's lift from the food hall up to the car park and back down, the minimap level with T0 at the top", () => {
+  it("Alchemia's lift from the food hall up to the car park and on up into the gallery, the minimap level with T0 there", () => {
     const g = start();
     // In front of the cage's door in the hall (ADR-0074); one step streams the plot in.
-    const [low] = ALCHEMIA_LIFT.levels;
-    const door = ALCHEMIA_LIFT.doors[0];
+    const low = GROUND;
+    const door = ALCHEMIA_LIFT.doors[1]!;
     run(() => g.seki.teleport(door.x, door.z, SOUTH, 0, low));
     g.step(1);
     walkUntil(g, (p) => Math.hypot(p.x - C.x, p.z - C.z) < 0.5, 6);
@@ -59,10 +60,10 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     g.step(1);
     // The top is the car park's level (T0): no height over the ground on the minimap.
     expect(screen.queryByTestId("minimap-level")).toBeNull();
-    // And down again from the cage.
+    // On up the way it went (ADR-0020), to the gallery's P2 over the car park's level (ADR-0093 O1).
     g.step(1, { interact: true });
     g.step(RIDE);
-    expect(g.seki.state().player!.y).toBeCloseTo(GROUND, 2);
+    expect(g.seki.state().player!.y).toBeCloseTo(UP, 2);
   });
 
   it("jump onto Hana's cart and the container stack's ladder onto its top", () => {

@@ -1,12 +1,11 @@
 import type { ContractKind, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DeviceKind } from "../world/components";
 import { type Rect, v } from "./builders";
-import { W3_OFFICE, W3_SERVER_CAMERA, W3_SERVER_N, w3 } from "./tessen-w3";
+import { W3_OFFICE, W3_ROOF_CAMERAS, W3_ROOF_N, W3_SERVER_CAMERA, W3_SERVER_N, w3 } from "./tessen-w3";
 
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
-import { arkadySpanMid } from "./alchemia/arkady";
-import { ARKADY_OUT_YAW, HEBI_STASH_ZONE, byArkady } from "./alchemia/market";
+import { HEBI_STASH_ZONE, inShelter } from "./alchemia/market";
 
 /**
  * Cameras and hackable devices (ADR-0029), and the ways the district's security comes in when
@@ -25,8 +24,8 @@ export interface DeviceDef {
   readonly yaw: number;
   readonly network: string;
   readonly faction: FactionId;
-  /** A camera watching a no-go zone; with `during`, only while a contract of that kind runs. */
-  readonly restricted?: Rect & { readonly during?: ContractKind };
+  /** A camera watching a no-go zone; with `during`, only while a contract of that kind runs; with `floor`, only over it. */
+  readonly restricted?: Rect & { readonly during?: ContractKind; readonly floor?: number };
 }
 
 const VIEWS: Readonly<Record<DeviceKind, ViewDescriptor>> = {
@@ -40,7 +39,7 @@ export const deviceView = (kind: DeviceKind): ViewDescriptor => VIEWS[kind];
 
 /** Tessen's pass office in W-3's tower, inside its walls (the infiltration's no-go zone, ADR-0082). */
 const TESSEN_OFFICE: Rect = { minX: W3_OFFICE.minX, maxX: W3_OFFICE.maxX, minZ: W3_OFFICE.minZ, maxZ: W3_OFFICE.maxZ };
-/** Hebi's stash on T2 before the Arkady (the retrieval's no-go zone). */
+/** Hebi's stash in the shelter under T2 (the retrieval's no-go zone). */
 const HEBI_STASH: Rect = HEBI_STASH_ZONE;
 
 /** Chunks of W-3's tower and of its hall (ADR-0082), and of Alchemia (the market, ADR-0063) in Lublin's table. */
@@ -76,19 +75,25 @@ export const DEVICES: readonly DeviceDef[] = [
   { key: "dev:doki-yard-cam", chunk: HALL_CHUNK, kind: "camera", position: w3(2572.3, 3.5, 410), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
   { key: "dev:doki-vending", chunk: TOWER_CHUNK, kind: "vending", position: w3(2496.5, 0.95, 440), yaw: Math.PI / 2, network: "tessen-office", faction: "tessen" },
   { key: "dev:doki-speaker", chunk: HALL_CHUNK, kind: "speaker", position: w3(2572.3, 2.6, 425), yaw: Math.PI / 2, network: "tessen-yard", faction: "tessen" },
-  // The market in Alchemia: Hebi's stash before the Arkady, the camera on their arches looking back along them; each in a span (`ARKADY_PIERS`).
+  // The market in Alchemia: Hebi's stash in the shelter under T2 (ADR-0074 stage 5d2), its camera, neon and speaker with it.
   {
     key: "dev:targ-stash-cam",
     chunk: MARKET_CHUNK,
     kind: "camera",
-    position: byArkady(arkadySpanMid(4), 0.4, 3.2),
-    yaw: -2.3,
+    // High in the shelter's south-east corner, looking north-west over the room to the stash (stage 5d2).
+    position: inShelter(434.4, 84.6, 2.0),
+    yaw: -Math.PI / 4,
     network: "hebi-stash",
     faction: "hebi",
     restricted: { ...HEBI_STASH, during: "retrieve" },
   },
-  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: byArkady(arkadySpanMid(2), 0.1, 4.4), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
-  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: byArkady(arkadySpanMid(3), 0.25, 3.0), yaw: ARKADY_OUT_YAW, network: "hebi-stash", faction: "hebi" },
+  // Their neon over the north wall's bench, their speaker by the hatch's flight.
+  { key: "dev:targ-neon", chunk: MARKET_CHUNK, kind: "neon", position: inShelter(428.0, 96.72, 1.8), yaw: Math.PI, network: "hebi-stash", faction: "hebi" },
+  { key: "dev:targ-speaker", chunk: MARKET_CHUNK, kind: "speaker", position: inShelter(433.4, 96.55, 2.0), yaw: Math.PI, network: "hebi-stash", faction: "hebi" },
+  // Row N roof's cameras over the pipes' way into server room N (ADR-0082 §2, G-908); last, so the ids above stay.
+  ...W3_ROOF_CAMERAS.map(
+    (c): DeviceDef => ({ ...c, chunk: HALL_CHUNK, kind: "camera", network: "tessen-yard", faction: "tessen", restricted: { ...W3_ROOF_N, during: "sabotage" } }),
+  ),
 ];
 
 /**

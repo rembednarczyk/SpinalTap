@@ -75,14 +75,16 @@ const active = (sim: Simulation) => sim.domain.contracts.active;
 const upload = SABOTAGE.uploadSeconds * SIM_HZ;
 
 describe("W-3's sabotage (ADR-0082 stage 3)", () => {
-  it("brings the hall's four guards and the shift manager, the patrols on their routes, the core's terminal and the server room's camera", () => {
+  it("brings the hall's four guards, the shift manager and the cabin's observer, the patrols on their routes, the core's terminal and the server room's camera", () => {
     const sim = Simulation.create({ seed: 3 });
     const c = accept(sim);
     expect(c).toMatchObject({ siteId: "w3_hall", targets: 4, status: "active" });
     expect(c.variation).toBeUndefined();
     const guards = crew(sim, c);
-    // The four posts of the crew and, after them, the manager on the mezzanine (G-929): the only enforcer.
-    expect(guards).toHaveLength(5);
+    // The four posts of the crew and, after them, the manager on the mezzanine (G-929), the only
+    // enforcer, and the observer in the tower's cabin (G-908).
+    expect(guards).toHaveLength(6);
+    expect(byKey(sim, `${c.id}-observer`)?.enemy?.type).toBe("tessen_sniper");
     expect(guards.filter((g) => g.ai?.route)).toHaveLength(3);
     expect(guards.filter((g) => g.ai?.enforcer).map((g) => g.key)).toEqual([`${c.id}-manager`]);
     expect(byKey(sim, `${c.id}-manager`)?.ai?.route?.points).toBe(W3_PATROL_MANAGER);
@@ -374,7 +376,7 @@ describe("W-3's sabotage (ADR-0082 stage 3)", () => {
     const restored = Simulation.fromSnapshot({ ...saved, entities: saved.entities.filter((e) => e.key !== key) });
     const m = byKey(restored, key)!;
     expect(m.ai?.enforcer).toBe(true);
-    expect(crew(restored, c)).toHaveLength(5);
+    expect(crew(restored, c)).toHaveLength(6);
     run(restored, 20 * SIM_HZ);
     const pose = routePose(m.ai!.route!, restored.tick / SIM_HZ);
     expect(Math.hypot(m.position.x - pose.position.x, m.position.z - pose.position.z)).toBeLessThan(1.5);

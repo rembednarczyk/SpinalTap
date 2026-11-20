@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MICRO_EVENT_REWARD, type SaveSnapshot } from "@seki/core";
-import { Simulation, ground } from "../src";
+import { MICRO_EVENT_REWARD, type SaveSnapshot, bandLevel, streetCrimePay } from "@seki/core";
+import { DISTRICT_BANDS, Simulation, ground } from "../src";
 import { ALLEY_START, byKey, collect, input, run, teleportPlayer } from "./helpers";
 import { enterKanal, street } from "./micro-scenes";
 import { takeDown } from "./takedown-scenes";
@@ -86,7 +86,7 @@ describe("micro-events (ADR-0034)", () => {
     // One shot down, the other taken down from behind: its body stays in the world. The Rynek's
     // Hebi patrol, 11 m off, would see the takedown and fire at her, and a hit breaks it: blinded
     // by a quickhack (kept in the save, G-882), the scene is the mugging's alone.
-    for (const e of sim.world.with("ai")) if (e.ai.patrol) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
+    for (const e of sim.world.with("ai")) if (e.ai.territory) e.hackFx = { pinged: 0, blind: 1e5, crippled: 0 };
     for (const e of [...sim.world]) if (e.id === m1) e.health = { current: 0, max: 80 };
     sim.step();
     const a = [...sim.world].find((e) => e.id === m0)!;
@@ -98,7 +98,9 @@ describe("micro-events (ADR-0034)", () => {
     expect([...sim.world].find((e) => e.id === m0)?.downed).toBeDefined();
     run(sim, 2);
     expect(ended).toEqual([{ encounterId: run0.id, outcome: "won" }]);
-    expect(sim.domain.wallet.eddies).toBe(eddies + MICRO_EVENT_REWARD.mugging.eddies);
+    // Tessen pays at the district's level (ADR-0091 stage 5a), the first of the day in full.
+    const pay = streetCrimePay("mugging", bandLevel(sim.domain.progression.level, DISTRICT_BANDS.kanal), 0, sim.domain.reputation.tessen);
+    expect(sim.domain.wallet.eddies).toBe(eddies + pay);
     const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
     const again = collect(loaded, "EncounterEnded");
     teleportPlayer(sim, ALLEY_START);
@@ -106,7 +108,7 @@ describe("micro-events (ADR-0034)", () => {
     run(sim, 2);
     run(loaded, 2);
     expect([ended.length, again]).toEqual([1, []]);
-    expect([sim.domain.wallet.eddies, loaded.domain.wallet.eddies]).toEqual([eddies + MICRO_EVENT_REWARD.mugging.eddies, eddies + MICRO_EVENT_REWARD.mugging.eddies]);
+    expect([sim.domain.wallet.eddies, loaded.domain.wallet.eddies]).toEqual([eddies + pay, eddies + pay]);
   });
 
   it("an aid: help the passer-by with the interact key; walking away ends a mugging with nothing", () => {

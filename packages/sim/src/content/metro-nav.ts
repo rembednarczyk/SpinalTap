@@ -18,6 +18,9 @@ import { groundY } from "./lublin/terrain";
 const OFF_FLIGHT = 0.4;
 /** The corners' nodes stand this far off the pavilion's walls. */
 const OFF_WALL = 1;
+/** The node in an end wall's own doorway: in the wall's thickness, this far in from the stairs' side. */
+const END_DOOR_IN = 0.125;
+const END_DOOR_SIDE = 0.7;
 
 const entranceNav = (e: MetroEntranceDef & { readonly station: string }): NavGraph => {
   const { point, rect } = spotFrame(e.spot);
@@ -41,6 +44,12 @@ const entranceNav = (e: MetroEntranceDef & { readonly station: string }): NavGra
     const back = corner("back", PAVILION.length + OFF_WALL);
     nodes.push(front, back);
     edges.push({ a: id("door"), b: front.id }, { a: front.id, b: back.id });
+  }
+  // A doorway in the end wall of its own (metro B by Alchemia, ADR-0074 stage 10): a node in it, on
+  // the side clear of the ticket machine; the passage beyond belongs to what it leads to.
+  if (e.endDoor && !e.platform) {
+    nodes.push({ id: id("end"), at: { ...point(PAVILION.length - END_DOOR_IN, STAIRS.width / 2 - END_DOOR_SIDE), y: e.floor } });
+    edges.push({ a: id("foot"), b: id("end") });
   }
   const p = e.platform;
   if (p) {

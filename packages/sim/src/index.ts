@@ -75,6 +75,7 @@ export {
   CARRY_REACH,
   CARRY_SPEED,
   HIDE_REACH,
+  shuttleProgress,
 } from "./systems";
 export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
 export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "./world/bodies";
@@ -143,3 +144,4 @@ export { phoneKnot } from "./world/street";
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./simulation";
 export type { SessionState, SimContext, System, TakedownRun } from "./world/context";
 export { shopOpen } from "./world/trade-commands";
+export { type BoardCrime, CRIME_LEAVE, CRIME_REACH, crimeBoard, crimeHidden, nextCrime, openCrimes } from "./world/street-crimes";

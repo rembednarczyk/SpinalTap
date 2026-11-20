@@ -1,0 +1,200 @@
+import { type ActivityId, type StreetPropItem, type Vec3, figureVariant } from "@seki/core";
+import type { CrowdSpot } from "../crowd-spot";
+import { furniturePrisms } from "../lublin/furniture";
+import { type Piece, box, piece } from "./plan";
+import { MALL_LEVELS } from "./mall-plan";
+import { type Fit, type Layout, type Slot, cartons, ceiling, cup, draw, litter, model, newFit, shelves, shopHash, shopLayout } from "./shop-fittings";
+import { fitTrade } from "./shop-trades";
+import { SHOPS, SHOPFRONT_HEAD, SHOP_DOOR_TOP, SHOP_WALL, type ShopDef, isOpen } from "./shops-plan";
+
+/*
+ * The gallery's shops built (ADR-0093 O2, `docs/zasady-lokacji.md`): each unit's shell (its shopfront
+ * of glass on the gallery with its door, its partitions, its back room behind a wall with a staff
+ * door, the fascia its sign hangs on), its sales floor's fittings by its trade (`shop-trades.ts`),
+ * the services under its ceiling, and its seller. A shut unit's shutter is down, a barred one's
+ * grille over its glass, a vacant one's glass papered over and its floor strewn with what the last
+ * tenant left. Deterministic: a hash of the shop and the place.
+ */
+
+const W = SHOP_WALL;
+const slot = (u0: number, u1: number, v0: number, v1: number): Slot => ({ u0, u1, v0, v1 });
+/** The shopfront's glass is this thick, on the gallery's edge. */
+const GLASS = 0.1;
+
+/** What a shop is built of. */
+export interface ShopBuild {
+  readonly shop: ShopDef;
+  readonly pieces: readonly Piece[];
+  /** Solids not drawn (the game's models' boxes, a fixture drawn as its parts). */
+  readonly solids: readonly Piece[];
+  readonly props: readonly StreetPropItem[];
+  /** Its sales floor's slots (in its frame), null for a shut one. */
+  readonly layout: Layout | null;
+  /** Its sales floor's size: along the front and in from it. */
+  readonly sales: { readonly w: number; readonly s: number };
+  /** Where its seller stands and where a customer does, in the world; null when it is not open. */
+  readonly seller: Vec3 | null;
+  readonly customer: Vec3 | null;
+  readonly traces: readonly string[];
+}
+
+/** The sales floor: up to a corner unit's back room along its front, or in from the front to the back room's wall. */
+const salesOf = (s: ShopDef, w: number, d: number): { w: number; s: number } => (s.sales !== undefined ? { w: s.sales, s: d } : { w, s: d >= 7 ? d - 2.0 : d - 1.2 });
+
+/** A wall from `a0` to `a1` along one axis of a slot with a door from `g0` to `g1` in it: the two pieces and the lintel. */
+const wallWithDoor = (k: Fit, full: Slot, alongU: boolean, g0: number, g1: number, top: number, kind: "partition" | "shopfront", head: number): void => {
+  const [a0, a1] = alongU ? [full.u0, full.u1] : [full.v0, full.v1];
+  const part = (b0: number, b1: number): Slot => (alongU ? { ...full, u0: b0, u1: b1 } : { ...full, v0: b0, v1: b1 });
+  if (g0 > a0 + 0.01) draw(k, part(a0, g0), 0, top, kind, true);
+  if (a1 > g1 + 0.01) draw(k, part(g1, a1), 0, top, kind, true);
+  draw(k, part(g0, g1), SHOP_DOOR_TOP, head, kind, true);
+};
+
+/** The shell: partitions, the shopfront with its door and fascia, the back room's wall, the state's shutter, grille or paper. */
+const shell = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
+  const { w, d } = k.f;
+  const top = k.c - k.y;
+  const shop = k.shop;
+  draw(k, slot(0, W, GLASS, d), 0, top, "partition", true);
+  draw(k, slot(w - W, w, GLASS, d), 0, top, "partition", true);
+  const win = shop.window ?? { u0: 0, u1: w };
+  // The front past a corner unit's window is a partition to its neighbour.
+  if (win.u1 < w - 0.01) draw(k, slot(win.u1, w - W, 0, W), 0, top, "partition", true);
+  if (win.u0 > 0.01) draw(k, slot(W, win.u0, 0, W), 0, top, "partition", true);
+  const glass = slot(win.u0, win.u1, 0, GLASS);
+  const shutDoor = shop.state === "vacant";
+  if (shutDoor) draw(k, glass, 0, SHOPFRONT_HEAD, "shopfront", true);
+  else wallWithDoor(k, glass, true, L.door.u0, L.door.u1, SHOPFRONT_HEAD, "shopfront", SHOPFRONT_HEAD);
+  // The fascia over the glass to the ceiling: the sign's (letters in the engine).
+  draw(k, slot(win.u0, win.u1, 0, GLASS + 0.05), SHOPFRONT_HEAD, top, "sign", true);
+  // The back room's wall with its staff door (0.85 m: staff only, no customer's way).
+  if (shop.sales !== undefined) wallWithDoor(k, slot(sales.w, sales.w + W, W, d), false, L.backDoor.a0, L.backDoor.a1, top, "partition", top);
+  else wallWithDoor(k, slot(W, w - W, sales.s, sales.s + W), true, L.backDoor.a0, L.backDoor.a1, top, "partition", top);
+  if (shop.state === "shut") {
+    // The rolling shutter down behind the glass, its box under the fascia, a padlock at its foot.
+    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.06), 0, SHOPFRONT_HEAD - 0.25, "shutter", true);
+    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.3), SHOPFRONT_HEAD - 0.25, SHOPFRONT_HEAD, "shutter", true);
+    draw(k, slot(L.door.u1 - 0.1, L.door.u1 + 0.02, GLASS - 0.06, GLASS), 0.05, 0.17, "machine");
+  }
+  if (shop.state === "grille") draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.05), 0, SHOPFRONT_HEAD, "grille", true);
+  if (shop.state === "vacant") {
+    // Papered glass, sheets with gaps between them; a pale board of a letting agent's in the middle.
+    for (let u = win.u0 + 0.1, i = 0; u < win.u1 - 0.5; u += 0.95, i++) {
+      const g = shopHash(shop.id, 70, i);
+      draw(k, slot(u, Math.min(u + 0.8 + g * 0.1, win.u1 - 0.1), GLASS, GLASS + 0.01), 0.3 + g * 0.2, 2.2 + g * 0.5, "paper");
+    }
+    const m = (win.u0 + win.u1) / 2;
+    draw(k, slot(m - 0.45, m + 0.45, GLASS + 0.01, GLASS + 0.03), 1.3, 1.9, "plaster");
+  }
+};
+
+/** The back room: stock on shelves along the glass, cartons stacked, a lamp; the servers of the technical trades' (`shop-trades.ts`). */
+const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
+  const { w, d } = k.f;
+  const top = k.c - k.y;
+  if (k.shop.sales !== undefined) {
+    const u0 = sales.w + W;
+    shelves(k, slot(u0 + 0.1, w - 0.2, d - 0.55, d - 0.05), 2.2, "v1", 80);
+    cartons(k, { u: (u0 + w) / 2, v: 1.0 }, 3, 81);
+    cartons(k, { u: w - 0.6, v: 2.2 }, 2, 82);
+    draw(k, slot(u0 + 0.4, w - 0.4, d * 0.45 - 0.05, d * 0.45 + 0.05), top - 0.06, top - 0.02, "lamp");
+    return;
+  }
+  const v0 = sales.s + W;
+  const deep = d - v0 > 1.5;
+  shelves(k, slot(W + 0.1, w - W - 0.1, d - (deep ? 0.55 : 0.45), d - 0.05), deep ? 2.2 : 1.8, "v1", 80);
+  if (deep) {
+    cartons(k, { u: 0.6, v: v0 + 0.55 }, 3, 81);
+    cartons(k, { u: w * 0.5, v: v0 + 0.55 }, 2, 82);
+  }
+  draw(k, slot(0.5, w - 0.5, (v0 + d) / 2 - 0.05, (v0 + d) / 2 + 0.05), top - 0.06, top - 0.02, "lamp");
+};
+
+/** A vacant unit's floor: what the last tenant left (cartons, a ladder, a paint pot, a cable from the ceiling) and somebody's coffee (§5). */
+const vacant = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
+  const top = k.c - k.y;
+  cartons(k, { u: sales.w - 0.8, v: sales.s - 0.7 }, 3, 90);
+  cartons(k, { u: sales.w - 1.5, v: sales.s - 0.6 }, 2, 91);
+  cartons(k, { u: 0.6, v: sales.s - 0.5 }, 1, 92);
+  // A stepladder against the side wall (its box a solid), a pot of paint by it.
+  draw(k, slot(sales.w - W - 0.12, sales.w - W - 0.02, 1.0, 1.55), 0, 1.9, "rack", true);
+  draw(k, slot(sales.w - W - 0.5, sales.w - W - 0.12, 1.0, 1.05), 0, 1.85, "rack");
+  draw(k, slot(sales.w - W - 0.5, sales.w - W - 0.12, 1.5, 1.55), 0, 1.85, "rack");
+  draw(k, slot(sales.w - 0.9, sales.w - 0.6, 1.9, 2.2), 0, 0.3, "goods");
+  draw(k, slot(sales.w / 2, sales.w / 2 + 0.03, sales.s / 2, sales.s / 2 + 0.03), 1.6, top - 0.1, "cable");
+  draw(k, slot(sales.w / 2 - 0.05, sales.w / 2 + 0.08, sales.s / 2 - 0.05, sales.s / 2 + 0.08), 1.5, 1.6, "lamp");
+  cup(k, { u: 0.6, v: sales.s - 0.5 }, 0.5, true);
+  litter(k, { u: (L.door.u0 + L.door.u1) / 2, v: 0.8 }, 6, 93);
+};
+
+/** The game's models of a shop as solids: the boxes of their furniture (their yaw a quarter turn's multiple). */
+const modelSolids = (k: Fit): Piece[] =>
+  k.props.flatMap((p) =>
+    furniturePrisms(p).map((q) => {
+      const xs = q.points.map((c) => p.x + c.x);
+      const zs = q.points.map((c) => p.z + c.z);
+      return piece(box(Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs), p.y - 0.05, p.y + q.top), "machine", true);
+    }),
+  );
+
+/** One shop built. */
+export const buildShop = (shop: ShopDef): ShopBuild => {
+  const k = newFit(shop);
+  const sales = salesOf(shop, k.f.w, k.f.d);
+  const L = shopLayout(sales.w, sales.s, shop.sales !== undefined);
+  shell(k, L, sales);
+  const open = isOpen(shop);
+  if (shop.state !== "shut") {
+    if (shop.state === "vacant") vacant(k, L, sales);
+    else fitTrade(k, L, sales.w, sales.s);
+    backRoom(k, sales);
+    ceiling(k, sales.w, sales.s, open ? 2 : 0);
+  }
+  const at = (p: { u: number; v: number }): Vec3 => ({ ...k.f.point(p.u, p.v), y: k.y });
+  const seller = open ? at(L.seller) : null;
+  if (seller) {
+    const g = shopHash(shop.id, 99);
+    const look = Math.floor(shopHash(shop.id, 98) * 32);
+    model(k, "figure", L.seller.u, L.seller.v, L.side ? "-u" : "out", figureVariant({ pose: g < 0.6 ? "stand" : "hips", body: g * 7 % 1 < 0.5 ? "a" : "b", seat: 0, look }));
+  }
+  return {
+    shop,
+    pieces: k.pieces,
+    solids: [...k.solids, ...modelSolids(k)],
+    props: k.props,
+    layout: shop.state === "shut" ? null : L,
+    sales,
+    seller,
+    customer: open ? at(L.customer) : null,
+    traces: k.traces,
+  };
+};
+
+/** Every shop of P1 and P2 built, in `SHOPS`' order. */
+export const SHOP_BUILDS: readonly ShopBuild[] = SHOPS.map(buildShop);
+
+/** The shops' drawn pieces (inside the gallery: drawn near only, in the inside's mesh). */
+export const SHOP_PIECES: readonly Piece[] = SHOP_BUILDS.flatMap((b) => b.pieces);
+/** Their solids: the drawn ones and those of the fixtures drawn as parts and of the game's models. */
+export const SHOP_SOLIDS: readonly Piece[] = SHOP_BUILDS.flatMap((b) => [...b.pieces.filter((p) => p.solid), ...b.solids]);
+/** The game's models in them: drinks machines, cash machines, cabinets, ticket machines, shrubs as plastic flowers, the sellers. */
+export const SHOP_PROPS: readonly StreetPropItem[] = SHOP_BUILDS.flatMap((b) => b.props);
+
+const CHUNK = "krakowskie-2-1";
+const spot = (at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]]): CrowdSpot => ({ chunk: CHUNK, at, yaw, does, indoor: true });
+
+/**
+ * The gallery's still crowd (ADR-0060): a customer at the counter of every other open shop (by the
+ * hash of the shop), and a few people leaning on the atrium's balustrade on P1 and P2, out of the
+ * escalators' landings and the gallery's nodes.
+ */
+export const GALLERY_CROWD: readonly CrowdSpot[] = [
+  ...SHOP_BUILDS.flatMap((b) => {
+    if (!b.customer || !b.seller || shopHash(b.shop.id, 97) < 0.4) return [];
+    return [spot(b.customer, Math.atan2(b.seller.x - b.customer.x, b.seller.z - b.customer.z), shopHash(b.shop.id, 96) < 0.5 ? ["phone", "talk"] : ["talk"])];
+  }),
+  spot({ x: 418.5, y: MALL_LEVELS.p1, z: 50.6 }, Math.PI, ["lean", "phone"]),
+  spot({ x: 410.4, y: MALL_LEVELS.p1, z: 46.5 }, Math.PI / 2, ["lean"]),
+  spot({ x: 425.6, y: MALL_LEVELS.p2, z: 47.5 }, -Math.PI / 2, ["lean", "smoke"]),
+  spot({ x: 413.5, y: MALL_LEVELS.p2, z: 50.6 }, Math.PI, ["phone"]),
+];

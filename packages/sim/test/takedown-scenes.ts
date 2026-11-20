@@ -48,7 +48,7 @@ export const stallholder = (sim: Simulation, id = 4000, spot = offset(sim, 0, 1.
 /** A Hebi street patrol (the security of the square) at `at`, facing `yaw`: it watches a neutral player, it does not attack. */
 export const patrol = (sim: Simulation, id: number, at: Vec3, yaw: number): Entity => {
   const g = gangerEntity(id, { key: `patrol-${id}`, position: at, yaw }, null, 80, sim.player()!.chunk ?? "");
-  g.ai = { ...g.ai!, patrol: true };
+  g.ai = { ...g.ai!, territory: "rynek" };
   return sim.world.add(g);
 };
 

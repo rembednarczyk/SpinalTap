@@ -380,7 +380,7 @@ export type EffectDescriptor =
   /** The entity speaks a line: its mouth moves for about `seconds` (0 stops it). */
   | { readonly kind: "talk"; readonly entityId: EntityId; readonly seconds: number }
   /** The entity started reloading; the animation should last `duration` seconds. */
-  | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number }
+  | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number; readonly perRound?: boolean }
   /** A melee swing (ADR-0019): `strike` of the combo, landing after `windup`, then `recovery`. */
   | { readonly kind: "melee"; readonly entityId: EntityId; readonly strike: number; readonly windup: number; readonly recovery: number }
   /**
@@ -457,6 +457,10 @@ export type AudioCue =
   | "reload"
   // One round into a tube (shotgun, per-round reload): a short click, not the full magazine change.
   | "reload-round"
+  // The shotgun's slide racked once its run of rounds is in (ADR-0091 user notes of 18.11).
+  | "shotgun-pump"
+  // A melee blow landing: the knock under the hit's punch (user notes of 18.11).
+  | "impact-melee"
   | "weapon-switch"
   | "loot-pickup"
   | "sell"
@@ -474,4 +478,7 @@ export type AudioCue =
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
   | "explosion"
   | "alarm"
-  | "alarm-siren";
+  | "alarm-siren"
+  // W-3 (ADR-0082 stage 4): a charge clamped onto a station and armed, the virus in the core.
+  | "charge-plant"
+  | "upload-done";

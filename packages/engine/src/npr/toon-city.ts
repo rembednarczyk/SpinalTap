@@ -1,4 +1,5 @@
 import { STEP_NORM, normTread } from "@seki/core";
+import { layerGlsl } from "./detail-layers";
 
 /**
  * Toon shader parts of the city from map data (ADR-0044), compiled in only with the FACADE or
@@ -9,13 +10,18 @@ import { STEP_NORM, normTread } from "@seki/core";
 
 /**
  * Facades: uv = (along the wall, up from the ground floor) in metres; uv2.x = storey in
- * decimetres (integer) + bay / 10, uv2.y = style (integer: window style, +8 shop front, 16 roof)
+ * decimetres (integer) + 128 × the surface's detail layer (ADR-0092) + bay / 10, uv2.y = style (integer: window style, +8 shop front, 16 roof)
  * + seed. `selfLit` runs 1 at night to 0.5 by day: lit windows follow it.
  */
 export const FACADE_GLSL = /* glsl */ `
 #ifdef FACADE
+/** The wall's or roof's surface (ADR-0092): uv2.x / 128, as WALL_DETAIL and ROOF_DETAIL number them. */
+float facadeMaterial(vec2 meta) {
+  return floor((meta.x + 0.0005) / 128.0);
+}
+
 void facadeDecode(vec2 meta, out float storey, out float bay, out float style, out float shop, out float seed) {
-  storey = floor(meta.x + 0.0005) / 10.0;
+  storey = (floor(meta.x + 0.0005) - 128.0 * facadeMaterial(meta)) / 10.0;
   // Quantised: an interpolated constant wobbles in its last bits, and hashes of it would sparkle.
   bay = floor(fract(meta.x) * 1000.0 + 0.5) / 100.0;
   float code = floor(meta.y + 0.0005);
@@ -30,13 +36,35 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
   facadeDecode(meta, storey, bay, style, shop, seed);
   float near = 1.0 - smoothstep(50.0, 130.0, dist);
   float k = 1.0;
+#ifdef DETAIL
+  float fade = 1.0 - smoothstep(90.0, 220.0, dist);
+  float mat = facadeMaterial(meta);
+#endif
   if (style > 15.5) {
+#ifdef DETAIL
+    // Roofs (ADR-0092): the layer laid along the eave and up the slope, a flat roof's bitumen.
+    float flatRoof = step(0.97, n.y);
+    vec2 t = normalize(vec2(-n.z, n.x) + vec2(1e-5, 0.0));
+    vec2 rq = mix(vec2(dot(p.xz, t), p.y / sqrt(max(1.0 - n.y * n.y, 0.05))), p.xz, flatRoof);
+    vec4 rm;
+    vec2 rl = roofLayer(mix(mat, 3.0, flatRoof), rm);
+    k *= detailK(detailTex(detailRoofs, rq * rl.x), rm, rl.y * fade);
+#else
     // Roofs: tile courses and a few repaired patches.
     k *= 0.86 + 0.14 * step(0.5, fract(p.y / 0.32 + 0.5 * step(0.5, fract((p.x + p.z) / 0.5)))) * near;
+#endif
     k *= 1.0 - 0.12 * step(0.7, vnoise(p.xz * 0.3 + seed * 20.0));
     return albedo * k;
   }
   if (abs(n.y) > 0.5) return albedo * 0.9;
+#ifdef DETAIL
+  // Walls: the layer of the surface in metres along the wall and up it; a plastered wall stands on a stone plinth.
+  float wcode = q.y < 0.55 && mat < 0.5 ? 2.0 : mat;
+  vec4 wm;
+  vec2 wl = wallLayer(wcode, wm);
+  vec4 wt = wcode > 4.5 ? detailTex(detailExtra, q * wl.x) : wcode > 3.5 ? detailTex(detailRoofs, q * wl.x) : detailTex(detailWalls, q * wl.x);
+  k *= detailK(wt, wm, wl.y * fade);
+#endif
   if (q.y < 0.55) k *= 0.7;
   k -= 0.09 * step(0.6, vnoise(vec2(q.x * 0.7 + seed * 40.0, q.y * 0.07)));
   if (storey < 0.05) return albedo * k;
@@ -52,6 +80,13 @@ vec3 facadePaint(vec3 albedo, vec2 q, vec2 meta, vec3 n, vec3 p, float dist) {
     float sill = inBay * step(0.17, fy) * step(fy, 0.22);
     k += 0.18 * max(lintel, sill) * near;
   }
+#ifdef DETAIL
+  // Large-panel blocks (ADR-0092 stage 3): a joint at each storey and
+  // every second bay, between the windows.
+  if (mat > 2.5 && mat < 3.5 && style > 5.5 && style < 6.5 && q.y > ground) {
+    k -= 0.2 * max(gridLine(q.y - ground, storey, 0.02), gridLine(q.x, bay * 2.0, 0.02)) * near;
+  }
+#endif
   return albedo * k;
 }
 
@@ -175,13 +210,43 @@ void stepsMorph(inout vec3 wp, inout vec3 n, vec2 meta) {
 #endif
 `;
 
+const ASPHALT = layerGlsl("asphalt_02");
+const PAVEMENT = layerGlsl("concrete_pavement");
+const GRASS = layerGlsl("grass_path_2");
+const EARTH = layerGlsl("forest_ground_04");
+const GRANITE = layerGlsl("granite_tile");
+const SETTS = layerGlsl("cobblestone_floor_08");
+const BALLAST = layerGlsl("gray_rocks");
+
+/**
+ * The detail layer of a ground surface (ADR-0092): terrain the forest floor, a road its asphalt,
+ * a sidewalk and a footway concrete slabs in the surface's own axes, a square granite, grass its
+ * turf, the Old Town's setts the grain of granite setts over their own pattern, a railway its ballast;
+ * steps keep their own. Returns albedo's factor.
+ */
+const GROUND_DETAIL_GLSL = /* glsl */ `
+#ifdef DETAIL
+float groundDetail(float code, vec2 q, vec2 w, float dist) {
+  float fade = 1.0 - smoothstep(60.0, 160.0, dist);
+  if (code > 7.5) return 1.0;
+  if (code > 6.5) return detailK(detailTex(detailExtra, w * ${BALLAST.scale}.x), ${BALLAST.mask}, ${BALLAST.scale}.y * fade);
+  if (code > 3.5 && code < 4.5) return detailK(detailTex(detailExtra, w * ${SETTS.scale}.x), ${SETTS.mask}, ${SETTS.scale}.y * fade);
+  if (code > 2.5 && code < 3.5) return detailK(detailTex(detailRoofs, q * ${GRANITE.scale}.x), ${GRANITE.mask}, ${GRANITE.scale}.y * fade);
+  bool slabs = (code > 1.5 && code < 2.5) || code > 4.5 && code < 5.5;
+  vec2 l = code < 0.5 ? ${EARTH.scale} : code < 1.5 ? ${ASPHALT.scale} : slabs ? ${PAVEMENT.scale} : ${GRASS.scale};
+  vec4 m = code < 0.5 ? ${EARTH.mask} : code < 1.5 ? ${ASPHALT.mask} : slabs ? ${PAVEMENT.mask} : ${GRASS.mask};
+  return detailK(detailTex(detailGround, (slabs ? q : w) * l.x), m, l.y * fade);
+}
+#endif
+`;
+
 /**
  * Ground surfaces: uv = metres in the surface's box (along, across), uv2.x = surface code
  * (0 terrain, 1 road, 2 sidewalk, 3 square, 4 cobble, 5 footway, 6 grass, 7 rail, 8 kerb, 9 a
  * step's tread, 10 its riser), uv2.y = width of a long strip (a railway's sleepers) or 0, on a
  * step its lift onto the flight's ramp (`STEP_LOOK`); road markings are geometry (ADR-0052).
  */
-export const GROUND_GLSL = /* glsl */ `
+export const GROUND_GLSL = `${GROUND_DETAIL_GLSL}
 #ifdef MAP_GROUND
 vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
   float code = floor(meta.x + 0.5);
@@ -197,13 +262,15 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
   } else if (code < 1.5) {
     k = 0.92 + 0.08 * step(0.6, vnoise(w * 0.3)) - 0.1 * step(0.74, vnoise(w * 0.07 + 3.0));
   } else if (code < 2.5) {
+    // Sidewalk slabs of a metre, each its own shade (the comic version keeps them drawn, 19.11).
     k -= 0.24 * max(gridLine(q.x, 1.0, 0.018), gridLine(q.y, 1.0, 0.018)) * near;
     k += 0.06 * (hash(floor(q)) - 0.5);
   } else if (code < 3.5) {
-    // Granite slabs in running bond, with bands of a darker stone every 6 m.
+    // Granite slabs in running bond.
     vec2 g = vec2(q.x / 1.2 + 0.5 * step(0.5, fract(q.y / 1.2)), q.y / 0.6);
     k -= 0.14 * max(gridLine(g.x, 1.0, 0.015), gridLine(g.y, 1.0, 0.03)) * near;
     k += 0.08 * (hash(floor(g)) - 0.5);
+    // Bands of a darker stone every 6 m.
     k -= 0.07 * step(0.5, fract(q.y / 6.0)) * step(fract(q.y / 6.0), 0.6);
   } else if (code < 4.5) {
     // Old Town setts: small stones in courses, every stone its own shade.
@@ -226,6 +293,9 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
     float rail = step(0.68, abs(q.y)) * (1.0 - step(0.76, abs(q.y)));
     if (rail > 0.5) return vec3(0.62, 0.64, 0.68);
   }
+#ifdef DETAIL
+  k *= groundDetail(code, q, w, dist);
+#endif
   return albedo * k;
 }
 #endif

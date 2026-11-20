@@ -63,6 +63,8 @@ const finish = (
     aimHold: 0,
     reload: 0,
     reloadTotal: 0,
+    reloadRound: false,
+    reloadHold: 0,
     melee: false,
     swing: null,
     guard: 0,

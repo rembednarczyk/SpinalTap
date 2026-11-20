@@ -1,6 +1,7 @@
 import type { CharacterRig } from "./character-rig";
 import { type LadderRungs, reachForRungs } from "./ladder-hands";
-import { AIM_HOLD, applyStagger, pointPistol, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { AIM_HOLD, applyStagger, pointPistol, poseWeaponArms, smooth } from "./character-poses";
+import { beginReload, reloadReach } from "./reload-motion";
 import { applySwingBody, poseMeleeArms } from "./melee-poses";
 import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
@@ -256,7 +257,7 @@ const poseArms = (rig: CharacterRig, { swing, run, amount, lean }: Gait, dt: num
   if (w <= 0) pointPistol(rig);
   if (w > 0) {
     const left = rig.leftHold ? 0 : w;
-    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadPhase(rig));
+    holdLongGun(rig, rig.grip!, rig.stoop + lean, w, left, reloadReach(rig));
     rig.fist[0] = 0.6 * left;
   }
 };
@@ -349,14 +350,16 @@ export const setWeaponDrawn = (rig: CharacterRig, drawn: boolean): void => {
   rig.drawTarget = drawn;
 };
 
-/** Plays the reload for `seconds`. */
-export const startReload = (rig: CharacterRig, seconds: number): void => {
-  rig.reload = rig.reloadTotal = Math.max(0.1, seconds);
+/** Plays a reload step of `seconds`; `perRound` for one round of a shotgun's run of rounds. */
+export const startReload = (rig: CharacterRig, seconds: number, perRound = false): void => {
+  beginReload(rig, seconds, perRound);
 };
 
 /** Brings the weapon up to aim for a moment, e.g. on a shot. */
 export const raiseWeapon = (rig: CharacterRig): void => {
   rig.aimHold = AIM_HOLD;
+  // A shot cuts a reload short (a shotgun with a round in fires mid-reload): the weapon comes up.
+  rig.reload = 0;
 };
 
 /** Starts the death fall; the renderer disposes the rig when `deathFinished` says so. */

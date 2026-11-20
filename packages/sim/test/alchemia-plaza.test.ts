@@ -17,6 +17,8 @@ import {
   CONTRACT_ITEM_SPOTS,
   HEBI_LOOKOUT_POST,
   HEBI_STASH_ZONE,
+  SHELTER,
+  SHELTER_HATCH,
   TARG_CONTRACT_SITE_SPAWNS,
   TARG_OVERPASS_STASH,
   T2_PADS,
@@ -74,12 +76,10 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
     expect(ARKADY.length - ORTHO_PIERS.at(-1)!).toBeCloseTo(3.35, 1);
   });
 
-  it("keeps the restaurants' doors, the Hebi stash, its camera, neon, speaker and bag and the lookout in spans, off the piers (G-461)", () => {
+  it("keeps the restaurants' doors and the blockade's bag in spans, off the piers (G-461; the stash with its devices is in the shelter since stage 5d2)", () => {
     const along = (p: { x: number; z: number }) => arkadyLocal(p.x, p.z).a;
     const off = (a: number) => Math.min(...ORTHO_PIERS.map((m) => Math.abs(m - a)));
-    const hebi = DEVICES.filter((d) => d.key.startsWith("dev:targ-")).map((d) => d.position);
-    expect(hebi).toHaveLength(3);
-    const points = [...hebi, CONTRACT_ITEM_SPOTS.hebi_stash!, TARG_OVERPASS_STASH.at, HEBI_LOOKOUT_POST];
+    const points = [TARG_OVERPASS_STASH.at];
     // Clear of the pier along the face by more than half a crate.
     for (const p of points) expect(off(along(p)), `${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBeGreaterThan(ARKADY.pier / 2 + 0.3);
     for (const r of ARKADY_RESTAURANTS) expect(off(arkadySpanMid(r.door)), r.id).toBeGreaterThan(1.2);
@@ -162,18 +162,21 @@ describe("T2 and the Arkady (ADR-0074 stage 2)", () => {
     expect(groundY(m.x, m.z)).toBeCloseTo(ALCHEMIA_T2, 1);
   });
 
-  it("keeps the Hebi stash, the blockade's bag and the lookout on T2 by the Arkady, the lookout under their arches", () => {
+  it("keeps the Hebi stash, its crew and devices in the shelter under T2, the blockade's bag by the Arkady, the lookout by the hatch (stage 5d2)", () => {
     const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
-    expect(groundY(crate.x, crate.z)).toBeCloseTo(ALCHEMIA_T2, 2);
-    expect(crate.x).toBeGreaterThan(HEBI_STASH_ZONE.minX);
-    expect(crate.x).toBeLessThan(HEBI_STASH_ZONE.maxX);
-    expect(crate.z).toBeGreaterThan(HEBI_STASH_ZONE.minZ);
-    expect(crate.z).toBeLessThan(HEBI_STASH_ZONE.maxZ);
-    for (const s of TARG_CONTRACT_SITE_SPAWNS.hebi_stash) expect(s.y).toBeCloseTo(ALCHEMIA_T2, 1);
+    const inZone = (p: { x: number; z: number }) => p.x > HEBI_STASH_ZONE.minX && p.x < HEBI_STASH_ZONE.maxX && p.z > HEBI_STASH_ZONE.minZ && p.z < HEBI_STASH_ZONE.maxZ;
+    expect(inZone(crate)).toBe(true);
+    expect(crate.y - 0.3).toBeCloseTo(SHELTER.floor, 2);
+    for (const s of TARG_CONTRACT_SITE_SPAWNS.hebi_stash) {
+      expect(inZone(s)).toBe(true);
+      expect(s.y).toBeCloseTo(SHELTER.floor, 2);
+    }
+    const hebi = DEVICES.filter((d) => d.key.startsWith("dev:targ-"));
+    expect(hebi).toHaveLength(3);
+    for (const d of hebi) expect(inZone(d.position) && d.position.y > SHELTER.floor && d.position.y < SHELTER.ceiling, d.key).toBe(true);
     expect(TARG_OVERPASS_STASH.at.y - 0.2).toBeCloseTo(ALCHEMIA_T2, 2);
-    const look = arkadyLocal(HEBI_LOOKOUT_POST.x, HEBI_LOOKOUT_POST.z);
-    expect(look.c).toBeGreaterThan(0.5);
-    expect(look.c).toBeLessThan(ARKADY.arcade);
-    expect(HEBI_LOOKOUT_POST.y).toBe(ARKADY_ARCADE_FLOOR);
+    expect(HEBI_LOOKOUT_POST.y).toBeCloseTo(groundY(HEBI_LOOKOUT_POST.x, HEBI_LOOKOUT_POST.z), 6);
+    expect(HEBI_LOOKOUT_POST.y).toBeCloseTo(ALCHEMIA_T2, 1);
+    expect(Math.hypot(HEBI_LOOKOUT_POST.x - SHELTER_HATCH.maxX, HEBI_LOOKOUT_POST.z - (SHELTER_HATCH.minZ + SHELTER_HATCH.maxZ) / 2)).toBeLessThan(4);
   });
 });

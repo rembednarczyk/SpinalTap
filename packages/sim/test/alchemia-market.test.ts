@@ -5,8 +5,14 @@ import {
   ALCHEMIA_CHUNK,
   ALCHEMIA_MARKET_ACTORS,
   FOODHALL,
+  MALL_FLOORS,
   P1,
   P1_ROOMS,
+  P2,
+  P2_CUTTING,
+  P2_ROOMS,
+  SHELTER,
+  SHELTER_ROOMS,
   CONTRACT_HOOKS,
   CONTRACT_ITEM_SPOTS,
   CROWD_SPOTS,
@@ -76,10 +82,15 @@ const inPavilion = (p: Vec3): boolean =>
 const floorAt = (p: Vec3): number => {
   if (inPavilion(p) && p.y > ALCHEMIA_PAVILION.floor + 1) return ALCHEMIA_PAVILION.roof;
   // P-1 under the car park (stage 4): its floor for points deep under the ground.
+  // The shelter under T2 with Hebi's stash (stage 5d2) and P-2 with its cutting (stage 5a; the lookout's night walk): their floors, under P-1's.
+  const near = (r: { minX: number; maxX: number; minZ: number; maxZ: number }) => p.x >= r.minX - 0.5 && p.x <= r.maxX + 0.5 && p.z >= r.minZ - 0.5 && p.z <= r.maxZ + 0.5;
+  if (p.y < P1.floor - 1 && SHELTER_ROOMS.some(near) && p.y < SHELTER.ceiling) return SHELTER.floor;
+  if (p.y < P1.floor - 1 && [...P2_ROOMS, P2_CUTTING].some(near)) return P2.floor;
   if (P1_ROOMS.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ) && p.y < P1.ceiling) return P1.floor;
   const inHall = p.x >= FOODHALL.minX && p.x <= FOODHALL.maxX && p.z >= FOODHALL.minZ && p.z <= FOODHALL.maxZ;
   if (!inHall) return groundY(p.x, p.z);
-  return p.y > FOODHALL.floor + 1 ? FOODHALL.roof : FOODHALL.floor;
+  // The gallery over the hall (ADR-0093): its floors P0..the roof, the nearest one (its shops' crowd on P1 and P2 since O2).
+  return MALL_FLOORS.reduce((best, f) => (Math.abs(f - p.y) < Math.abs(best - p.y) ? f : best), FOODHALL.floor);
 };
 
 const where = (p: Vec3): string => `(${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)})`;
@@ -132,9 +143,10 @@ describe("the market in Alchemia (ADR-0063 stage 6)", () => {
     const hooks = CONTRACT_HOOKS.flatMap((h) => ("at" in h.carrier && (h.kind === "protect" || h.kind === "retrieve") ? [h.carrier.at] : []));
     expect(hooks.length).toBeGreaterThan(0);
     expect(onGroundAndClear(sim, [...crews, ...plans, ...hooks])).toEqual([]);
-    // The crate of a retrieval lies on the ground by the stash.
+    // The crate of a retrieval lies on the floor by the stash.
     const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
-    expect(crate.y - groundY(crate.x, crate.z)).toBeCloseTo(0.3, 2);
+    // In the shelter (stage 5d2): on its floor.
+    expect(crate.y - SHELTER.floor).toBeCloseTo(0.3, 2);
   });
 
   it("keeps the daily plans, the crowd, the activity spots and the devices in the chunk, clear of solids", () => {

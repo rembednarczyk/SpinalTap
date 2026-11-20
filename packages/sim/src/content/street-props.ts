@@ -1,8 +1,11 @@
 import { FIGURE_HOSTS, FIGURE_REACH, SITE_CABIN, type StreetPropItem, figureLayout, siteCabinStacked, isSitting, seatAt, segmentDistance } from "@seki/core";
+import { TERRITORY_ACTORS } from "./territory-groups";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
 import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
+import { FRONT_FOOTPRINTS, L2_SLABS } from "./alchemia/front";
+import { ARCADE_FRONT } from "./alchemia/arcade-front";
 import { W3_ACTORS, W3_PROPS } from "./tessen-w3";
 import { METRO_FOOTPRINTS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
@@ -22,7 +25,8 @@ const distanceToRect = (x: number, z: number, r: Rect): number => Math.hypot(Mat
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
 export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...W3_PROPS];
-export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS];
+// The gangs' groups (ADR-0091 stage 4) last, so the ids of the actors before them stay.
+export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS, ...TERRITORY_ACTORS];
 
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
@@ -34,7 +38,7 @@ const gameBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) =>
   p.view.kind === "block" && p.center.y + p.view.size.y / 2 >= groundY(p.center.x, p.center.z) - BURIED
     ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }]
     : [],
-).concat(METRO_FOOTPRINTS);
+).concat(METRO_FOOTPRINTS, FRONT_FOOTPRINTS);
 
 type Pt = { readonly x: number; readonly z: number };
 
@@ -98,9 +102,12 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
 /** How far a stall's stock stands from it (ADR-0058 stage 3, `props-food.ts`: beside its canvas), at most. */
 const STOCK_REACH = 2.6;
 
+/** A lamp under Alchemia's L2 over the passage (B1): its head would touch the slab's underside, and the passage is lit from it. */
+const underFront = (i: StreetPropItem): boolean => i.prop.startsWith("lamp") && [...L2_SLABS, ARCADE_FRONT].some((r) => i.x > r.minX && i.x < r.maxX && i.z > r.minZ && i.z < r.maxZ);
+
 /** The map's pieces clear of the game, before their stock is matched to the stalls kept. */
 const clear: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i)))]),
+  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i)) && !underFront(i))]),
 );
 
 /** Every stall the game kept, of all chunks: a stall and its stock may lie on two sides of a chunk's edge. */

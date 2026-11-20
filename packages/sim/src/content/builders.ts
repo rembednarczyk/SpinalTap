@@ -1,4 +1,4 @@
-import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
+import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, TerritoryId, Vec3, ViewDescriptor } from "@seki/core";
 import type { DoorLock, HideKind, Interactable, LadderDef } from "../world/components";
 import type { PrismDef } from "../world/prism";
 
@@ -45,7 +45,9 @@ export type Mechanism =
   | { readonly kind: "crawl"; readonly to: Vec3; readonly yaw: number }
   /** A leaf of an automatic door (ADR-0038): it slides by `slide` when open; the panel of a coded one. */
   | { readonly kind: "door"; readonly door: DoorDef; readonly leaf: number; readonly slide: { readonly x: number; readonly z: number } }
-  | { readonly kind: "door-panel"; readonly door: string };
+  | { readonly kind: "door-panel"; readonly door: string }
+  /** A solid running to and fro by the clock along `axis` (ADR-0074 stage 5b: P-2's robots). */
+  | { readonly kind: "shuttle"; readonly key: string; readonly axis: "x" | "y" | "z"; readonly travel: number; readonly period: number; readonly phase: number; readonly pause: number };
 
 export interface ActorSpawn {
   readonly key: string;
@@ -93,8 +95,8 @@ export type ActorDef =
       readonly when?: Presence;
       /** Enemy type and its health; without it a Hebi ganger with the default health. */
       readonly enemy?: EnemyTypeId;
-      /** A street patrol (ADR-0048): watches a neutral player instead of attacking her. */
-      readonly patrol?: true;
+      /** A member of a gang's territory (ADR-0091; the street patrols of ADR-0048 are the Rynek's): watches a player its gang tolerates in the district. */
+      readonly territory?: TerritoryId;
     };
 
 /** Axis-aligned rectangle on the XZ plane. */

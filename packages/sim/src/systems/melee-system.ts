@@ -143,7 +143,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     if (t.player) threaten(ctx, "damage", f.id);
   }
   ctx.bus.emit("MeleeStrike", { entityId: f.id, strike: f.melee.strike, hits });
-  alertNearbyGangers(ctx, f.position, weapon.alertRadius);
+  alertNearbyGangers(ctx, f.position, weapon.alertRadius, f);
   if (hits > 0) disturb(ctx, "fight", f.position, FIGHT_NOISE, f.id);
   return parried;
 };

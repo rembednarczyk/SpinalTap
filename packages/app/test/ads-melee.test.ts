@@ -54,7 +54,8 @@ describe("melee presentation (ADR-0019)", () => {
       { kind: "block", entityId: PLAYER, parried: true, at: { x: 0, y: 1.25, z: 0 } },
       { kind: "stagger", entityId: NPC, duration: 1.2 },
     ]);
-    expect(cues).toEqual(["swing", "block", "parry"]);
+    // A blow that lands knocks too (user notes of 18.11), whoever struck it.
+    expect(cues).toEqual(["swing", "impact-melee", "block", "parry"]);
   });
 });
 

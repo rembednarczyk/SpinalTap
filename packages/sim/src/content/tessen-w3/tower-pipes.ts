@@ -1,10 +1,12 @@
+import type { Vec3 } from "@seki/core";
 import { type DoorDef, type StaticProp, crate, ladderParts, neon, placeProps, stairRail, stairs, v } from "../builders";
 import { doorParts } from "../doors";
 import { DOOR_TOP } from "../interiors";
 import { groundY } from "../lublin/terrain";
 import { W3_BRIDGE_Z } from "./hall";
-import { box, railing, slabTop } from "./parts";
-import { W3_PIPES, W3_PLATFORM, W3_ROOF, W3_ROW_N, W3_TOWER, W3_TRESTLES, W3_Y, w3 } from "./site";
+import type { PrismDef } from "../../world/prism";
+import { box, railing, rectRing, slabTop } from "./parts";
+import { W3_CABIN, W3_PIPES, W3_PLATFORM, W3_ROOF, W3_ROW_N, W3_TOWER, W3_TRESTLES, W3_Y, w3 } from "./site";
 
 /**
  * The control tower and the pipeline over the river (ADR-0082 stage 1, P8, P10).
@@ -22,6 +24,7 @@ import { W3_PIPES, W3_PLATFORM, W3_ROOF, W3_ROW_N, W3_TOWER, W3_TRESTLES, W3_Y, 
 
 const T = W3_TOWER;
 const P = W3_PLATFORM;
+const C = W3_CABIN;
 /** The office's walls, and the ceiling under the tower's lower part. */
 const OFFICE_TOP = 4;
 const WALL = 0.3;
@@ -54,11 +57,47 @@ const office = (): StaticProp[] => [
   ...placeProps({ x: 0, y: W3_Y, z: 0 }, [crate(2487.2, 441, 1.2, 0.85, 3), crate(2490, 445.1, 2, 1.8, 0.6), crate(2494.9, 438.2, 0.6, 0.45, 2.2)]),
 ];
 
+/** A pane of the cabin's glass, and its floor's slab. */
+const PANE = 0.1;
+const SLAB = 0.3;
+
+/** A box (heights over the floor) as a convex part of a prop centred at `c` (world). */
+const part = (c: Vec3, x0: number, x1: number, y0: number, y1: number, z0: number, z1: number): PrismDef => ({
+  points: rectRing(x0 - c.x, x1 - c.x, z0 - c.z, z1 - c.z),
+  bottom: W3_Y + y0 - c.y,
+  top: W3_Y + y1 - c.y,
+});
+
+/**
+ * The shaft and the cabin of red glass on it, drawn as before (ADR-0082 stage 1), hollow (§2,
+ * G-908): the shaft's solid takes in the cabin's floor, the glass is only its panes. They stop a
+ * body and a shot but not the eye, so the observer sees the roofs and the yards out of the cabin,
+ * as the section's first line of sight says, and is seen in it. Two props as before, so no id moves.
+ */
+const cabin = (): StaticProp[] => {
+  const shaft = box(2488.5, 2493.5, P, C.floor, 438.5, 443.5, "concrete");
+  const glass = box(C.minX, C.maxX, C.floor, C.top, C.minZ, C.maxZ, "glass");
+  const s = shaft.center;
+  const g = glass.center;
+  return [
+    { ...shaft, prisms: [part(s, 2488.5, 2493.5, P, C.floor, 438.5, 443.5), part(s, C.minX, C.maxX, C.floor - SLAB, C.floor, C.minZ, C.maxZ)] },
+    {
+      ...glass,
+      sightThrough: true,
+      prisms: [
+        part(g, C.minX, C.minX + PANE, C.floor, C.top, C.minZ, C.maxZ),
+        part(g, C.maxX - PANE, C.maxX, C.floor, C.top, C.minZ, C.maxZ),
+        part(g, C.minX + PANE, C.maxX - PANE, C.floor, C.top, C.minZ, C.minZ + PANE),
+        part(g, C.minX + PANE, C.maxX - PANE, C.floor, C.top, C.maxZ - PANE, C.maxZ),
+      ],
+    },
+  ];
+};
+
 /** The lower part over the office up to the platform, the shaft, the cabin, the roof and the masts. */
 const body = (): StaticProp[] => [
   box(T.minX, T.maxX, OFFICE_TOP, P, T.minZ, T.maxZ, "concrete"),
-  box(2488.5, 2493.5, P, 24, 438.5, 443.5, "concrete"),
-  box(2487, 2495, 24, 28, 437, 445, "glass"),
+  ...cabin(),
   slabTop(2486.6, 2495.4, 436.6, 445.4, 28.6, 0.6, "concrete"),
   box(2488.9, 2489.1, 28.6, 34, 440.9, 441.1, "metal"),
   box(2493.4, 2493.6, 28.6, 32.4, 442.9, 443.1, "metal"),

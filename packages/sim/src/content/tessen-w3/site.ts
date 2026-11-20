@@ -88,6 +88,8 @@ export const W3_GATE = { x: 2500, minZ: 414, maxZ: 422, height: 7 } as const;
 export const W3_TOWER: W3Rect = { minX: 2486, maxX: 2496, minZ: 436, maxZ: 446 };
 /** The tower's platform: the roof of its lower part, joined to the pipe walk and the bridge onto row N. */
 export const W3_PLATFORM = 10;
+/** The tower's cabin of red glass over its shaft: inside its panes, from its floor (the shaft's top) to its ceiling. */
+export const W3_CABIN = { minX: 2487, maxX: 2495, minZ: 437, maxZ: 445, floor: 24, top: 28 } as const;
 /** The quay: its strip behind the wall, the wall (from the river's bench up to the floor, P4), the pier (P7). */
 export const W3_QUAY: W3Rect = { minX: 2480, maxX: 2487.5, minZ: 418.5, maxZ: 440 };
 /**

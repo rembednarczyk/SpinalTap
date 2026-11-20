@@ -1,4 +1,5 @@
 import type { System } from "../world/context";
+import { createTerritorySystem } from "./territory-system";
 import { bodyWatchSystem, createCivilianAiSystem, createGangerAiSystem, escortAiSystem, sniperAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
@@ -8,6 +9,7 @@ import { tessenHuntSystem } from "./tessen-hunt-system";
 import { deathSystem } from "./death-system";
 import { elevatorSystem } from "./elevator-system";
 import { doorSystem } from "./door-system";
+import { shuttleSystem } from "./shuttle-system";
 import { interactionSystem } from "./interaction-system";
 import { interiorSystem } from "./interior-system";
 import { interpolationSystem } from "./interpolation-system";
@@ -94,6 +96,7 @@ export {
 } from "./perk-system";
 export { createBodySystem, cyberCapacityOf } from "./body-system";
 export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
+export { shuttleProgress, shuttleSystem } from "./shuttle-system";
 export { CARRY_REACH, CARRY_SPEED, HIDE_REACH, bodyCandidate, carriedBody, carrySystem, hideSpotNear } from "./carry-system";
 export { GRAB_TIME, TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
 
@@ -145,6 +148,7 @@ export const createSystems = (): readonly System[] => [
   escortAiSystem,
   elevatorSystem,
   doorSystem,
+  shuttleSystem,
   movementSystem,
   createTrafficSystem(),
   activitySystem,
@@ -154,6 +158,8 @@ export const createSystems = (): readonly System[] => [
   takedownSystem,
   carrySystem,
   interactionSystem,
+  // Before the dead leave the world: a member the player killed is still there to count (ADR-0091).
+  createTerritorySystem(),
   deathSystem,
   createCrimeSystem(),
   bodyWatchSystem,

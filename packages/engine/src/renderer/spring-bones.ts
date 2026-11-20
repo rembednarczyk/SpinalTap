@@ -34,6 +34,8 @@ interface Joint {
   tail: Vector3;
   prevTail: Vector3;
   readonly settings: SpringSettings;
+  /** Cloth (`J_Sec_*`: a skirt, a coat's tails) rides the character's rise and fall whole (user notes of 18.11). */
+  readonly cloth: boolean;
   /** Colliders this joint may hit (its group's, or all of them). */
   readonly candidates: readonly SpringCollider[];
   /** Radius of the tail sphere (VRM hitRadius). */
@@ -116,6 +118,7 @@ export class SpringBones {
         tail: Vector3.Zero(),
         prevTail: Vector3.Zero(),
         settings: own?.settings ?? base,
+        cloth: /(^|-)j_sec_/i.test(node.name),
         candidates: own?.colliders ?? options.colliders ?? [],
         radius: own?.radius ?? 0,
         hits: [],
@@ -144,7 +147,9 @@ export class SpringBones {
     const moved = rootPos.subtract(this.lastRoot);
     this.lastRoot.copyFrom(rootPos);
     for (const j of this.joints) {
-      const carried = moved.scale(j.settings.follow);
+      // Cloth keeps the whole of a jump's rise and fall: left behind by a quarter of a 7 m/s drop
+      // the skirt flew up round her hips on every landing (user notes of 18.11). Hair still trails it.
+      const carried = j.cloth ? new Vector3(moved.x * j.settings.follow, moved.y, moved.z * j.settings.follow) : moved.scale(j.settings.follow);
       j.tail.addInPlace(carried);
       j.prevTail.addInPlace(carried);
     }

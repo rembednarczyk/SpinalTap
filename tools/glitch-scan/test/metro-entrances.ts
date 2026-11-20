@@ -137,9 +137,9 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
     // The samples at a side's ends lie on the walls' edges, where the rounding of the pavilion's sums decides (G-333).
     const at = (x: number, z: number) => walls.filter((w) => x >= w.minX - EDGE && x <= w.maxX + EDGE && z >= w.minZ - EDGE && z <= w.maxZ + EDGE);
     const walled = (x: number, z: number) => at(x, z).some((w) => w.minY <= e.floor && w.maxY >= e.street);
-    // The end wall's doorway down to a platform (ADR-0071 stage 4): wall under the hall's floor, wall from the
+    // The end wall's doorway down to a platform (ADR-0071 stage 4) or to Alchemia's P-1 (ADR-0074 stage 10): wall or the hall's floor under it, wall from the
     // doorway's head up to the street, nothing else open; the passage's ceiling starts no higher than the head.
-    const head = e.platform ? e.floor + e.platform.doorwayHead : null;
+    const head = e.endDoor ? e.floor + e.endDoor.head : null;
     const doorway = (x: number, z: number) =>
       head !== null && at(x, z).some((w) => w.minY < e.floor - 0.1 && w.maxY >= e.floor - 1e-6) && at(x, z).some((w) => w.minY <= head + 1e-6 && w.maxY >= e.street);
     if (e.platform && head !== null && (e.platform.ceiling[0]?.bottom ?? Infinity) > head + 1e-6) out.push({ at: near(e), what: `${name(e)}: the passage's ceiling over the doorway's head` });

@@ -18,14 +18,15 @@ export interface GarmentAssetSpec {
   readonly url: string;
   /**
    * VRoid cloth whose triangles under the garment are not drawn while it is worn: "torso" is the
-   * top (a separate "Tops" or a one-piece dress), "tie" what is worn over it.
+   * top (a separate "Tops" or a one-piece dress), "tie" what is worn over it, "skin" the body's
+   * skin of the arms and the torso (`HIDEABLE_SKIN`).
    */
-  readonly covers: readonly ("torso" | "tie")[];
+  readonly covers: readonly ("torso" | "tie" | "skin")[];
 }
 
 export const GARMENT_ASSETS = {
   // "Kimi || Desktop Mate Model" by Toriss (VRoid Hub), the long techwear jacket.
-  "jacket-techwear": { url: "./garments/jacket-techwear.glb", covers: ["torso", "tie"] },
+  "jacket-techwear": { url: "./garments/jacket-techwear.glb", covers: ["torso", "tie", "skin"] },
 } as const satisfies Partial<Record<GarmentMeshId, GarmentAssetSpec>>;
 
 export type SkinnedGarmentId = keyof typeof GARMENT_ASSETS;
@@ -88,11 +89,38 @@ export const targetSkeletonOf = (skeleton: Skeleton, prefix = ""): TargetSkeleto
   bind: skeleton.bones.map((b) => translationOf(b.getAbsoluteInverseBindMatrix())),
 });
 
-/** What a cloth mesh is to a garment over it: a top ("Tops" or a one-piece dress), what is worn over a top, or neither. */
-const coverKindOf = (m: AbstractMesh): "torso" | "tie" | null => {
+/** What a mesh is to a garment over it: a top ("Tops" or a one-piece dress), what is worn over a top, the body's skin, or neither. */
+const coverKindOf = (m: AbstractMesh): "torso" | "tie" | "skin" | null => {
   const part = toonSourceOf(m)?.source.part;
-  return part === "torso" || part === "tie" ? part : null;
+  return part === "torso" || part === "tie" ? part : part === "skin" && /body/i.test(m.name) ? "skin" : null;
 };
+
+/**
+ * The skin a garment may hide, by the bone it follows most: the arms and the torso. Not the legs
+ * (under a long coat's skirt they show as it swings), the hands, the neck or the hips.
+ */
+const HIDEABLE_SKIN = /(Spine|Chest|UpperChest|Shoulder|UpperArm|LowerArm)$/;
+
+/** Per vertex of a skinned mesh: whether the bone it follows most is one whose skin a garment may hide. */
+const hideableSkin = (m: AbstractMesh): ((v: number) => boolean) => {
+  const j = m.getVerticesData(VertexBuffer.MatricesIndicesKind);
+  const w = m.getVerticesData(VertexBuffer.MatricesWeightsKind);
+  const bones = m.skeleton?.bones ?? [];
+  if (!j || !w) return () => false;
+  const ok = bones.map((b) => HIDEABLE_SKIN.test(b.name));
+  return (v) => {
+    let k = 0;
+    for (let i = 1; i < 4; i++) if (w[v * 4 + i]! > w[v * 4 + k]!) k = i;
+    return ok[j[v * 4 + k]!] ?? false;
+  };
+};
+
+/**
+ * Bones whose skin lends a garment no weights (garment-fit.ts, step 3): the legs (a coat's skirt
+ * would part with each of them), the hands and the fingers (the cuffs would bend with them), the
+ * head (the collar would turn with it).
+ */
+const KEEP_OWN = /(UpperLeg|LowerLeg|Foot|Toe|Hand|Thumb\d|Index\d|Middle\d|Ring\d|Little\d|Head)$/;
 
 /** The parts of a model a garment must stay off: skin, trousers or skirt, the top and what is worn over it. */
 const UNDER: readonly (string | null | undefined)[] = ["skin", "legs", "torso", "tie"];
@@ -100,7 +128,7 @@ const UNDER: readonly (string | null | undefined)[] = ["skin", "legs", "torso", 
 /** The vertices of the model's body and cloth on one skeleton (`UNDER`), which the garment must stay off. */
 export const bodySurfaceOf = (meshes: readonly AbstractMesh[], skeleton: Skeleton): BodySurface | null => {
   const used = new Map<Float32Array | number[], Set<number>>();
-  const normals = new Map<Float32Array | number[], Float32Array | number[]>();
+  const extra = new Map<Float32Array | number[], { n: Float32Array | number[]; j: Float32Array | number[] | null; w: Float32Array | number[] | null }>();
   for (const m of meshes) {
     const part = toonSourceOf(m)?.source.part;
     if (m.skeleton !== skeleton || !UNDER.includes(part)) continue;
@@ -110,19 +138,34 @@ export const bodySurfaceOf = (meshes: readonly AbstractMesh[], skeleton: Skeleto
     if (!pos || !nor || !idx) continue;
     const set = used.get(pos) ?? new Set<number>();
     used.set(pos, set);
-    normals.set(pos, nor);
+    extra.set(pos, { n: nor, j: m.getVerticesData(VertexBuffer.MatricesIndicesKind), w: m.getVerticesData(VertexBuffer.MatricesWeightsKind) });
     for (const i of idx) set.add(i);
   }
   const p: number[] = [];
   const n: number[] = [];
+  const j: number[] = [];
+  const w: number[] = [];
+  let skinned = true;
   for (const [pos, set] of used) {
-    const nor = normals.get(pos)!;
+    const e = extra.get(pos)!;
+    if (!e.j || !e.w) skinned = false;
     for (const i of [...set].sort((a, b) => a - b)) {
       p.push(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!);
-      n.push(nor[i * 3]!, nor[i * 3 + 1]!, nor[i * 3 + 2]!);
+      n.push(e.n[i * 3]!, e.n[i * 3 + 1]!, e.n[i * 3 + 2]!);
+      for (let k = 0; k < 4; k++) {
+        j.push(e.j?.[i * 4 + k] ?? 0);
+        w.push(e.w?.[i * 4 + k] ?? 0);
+      }
     }
   }
-  return p.length > 0 ? { positions: Float32Array.from(p), normals: Float32Array.from(n) } : null;
+  if (p.length === 0) return null;
+  // The legs, the hands and the head lend no weights to a garment (garment-fit.ts, step 3).
+  const keepOwn = new Set(skeleton.bones.flatMap((b, i) => (KEEP_OWN.test(b.name) ? [i] : [])));
+  return {
+    positions: Float32Array.from(p),
+    normals: Float32Array.from(n),
+    ...(skinned ? { joints: Float32Array.from(j), weights: Float32Array.from(w), keepOwn } : {}),
+  };
 };
 
 /**
@@ -238,7 +281,7 @@ export class GarmentAssets {
     if (!indices || !positions || !normals) return [];
     let left = fit.uncovered.get(indices);
     if (!left) {
-      left = uncoveredTriangles({ positions, normals, indices }, fit.garment.positions);
+      left = uncoveredTriangles({ positions, normals, indices }, fit.garment.positions, coverKindOf(cloth) === "skin" ? hideableSkin(cloth) : undefined);
       fit.uncovered.set(indices, left);
     }
     return left;

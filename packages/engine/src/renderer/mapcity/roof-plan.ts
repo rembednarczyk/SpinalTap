@@ -1,6 +1,6 @@
 import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
-import { type FacadeFrame, type Palette, roofMeta, trimMeta, wallMeta } from "./facade-frame";
+import { type FacadeFrame, type Palette, frameRoofMeta, trimMeta, wallMeta } from "./facade-frame";
 import type { BellTower } from "./landmarks/bell-towers";
 import { DOWN, band, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
@@ -60,10 +60,10 @@ export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofCol
   }
   const apex = centroid(ring);
   if (!ridge && !pointInRing(apex, ring)) {
-    slab(sink, ring, f.top, roofColor, roofMeta(f.style.seed));
+    slab(sink, ring, f.top, roofColor, frameRoofMeta(f));
     return;
   }
-  const meta = roofMeta(f.style.seed);
+  const meta = frameRoofMeta(f);
   const y1 = y0 + rise;
   for (let i = 0; i < ring.length; i++) {
     const a = eaves[i] as P2;
@@ -109,7 +109,7 @@ export const addDome = (sink: MeshSink, f: FacadeFrame, rise: number, roofColor:
   const r = Math.max(2, Math.min(f.box.halfShort, f.box.halfLong) * 0.72);
   const c = { x: f.box.cx, y: f.top, z: f.box.cz };
   const drum = Math.min(rise * 0.25, 4);
-  const meta = roofMeta(f.style.seed);
+  const meta = frameRoofMeta(f);
   lathe(sink, c, [
     [r, -0.2],
     [r, drum],
@@ -185,7 +185,7 @@ export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: bool
       const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
       wallQuad(sink, a, b, { x: (b.z - a.z) / len, z: -(b.x - a.x) / len }, f.b.foot - 0.2, top, f.b.base, p.wall, meta);
     }
-    const roofMetaT = roofMeta(f.style.seed);
+    const roofMetaT = frameRoofMeta(f);
     if (!near) {
       spire(sink, ring, top, rise, p.roof, roofMetaT);
       continue;

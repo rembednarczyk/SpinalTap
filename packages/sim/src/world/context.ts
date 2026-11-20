@@ -1,5 +1,6 @@
 import type { TrafficDensity } from "../content/traffic";
-import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
+import type { BoardCrime } from "./street-crime-types";
+import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
@@ -90,12 +91,20 @@ export interface StreetScenes {
 /** A micro-event in progress: who is in it, where, and what ends it. Transient, not saved. */
 export interface MicroEventRun {
   readonly id: string;
-  readonly kind: "mugging" | "aid";
+  readonly kind: MicroEventKind;
+  /** The board's crime it is (ADR-0091 stage 5). */
+  readonly crime: BoardCrime;
   readonly at: Vec3;
-  /** The passer-by (the one robbed, or the one to help). */
-  readonly victim: EntityId;
-  /** The muggers of a mugging; empty for an aid. */
+  /** The passer-by (the one robbed, squeezed, kidnapped or to help); none at a deal or a drone. */
+  readonly victim: EntityId | null;
+  /** The gang of it (muggers, dealers, thieves, kidnappers); empty for an aid. */
   readonly attackers: readonly EntityId[];
+  /** Its thing of the street (ADR-0091 stage 5b: the crate, the drone, the van), gone with it. */
+  readonly props?: readonly EntityId[];
+  /** The tick it started: the drone's and the van's clock. */
+  readonly since?: number;
+  /** One of its gang was alerted: a deal no longer pays its quiet bonus. */
+  readonly alarmed?: boolean;
 }
 
 /** Something the street noticed this step (the payload of `Disturbance`). */

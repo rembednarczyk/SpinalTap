@@ -25,7 +25,45 @@ const strand = () => {
 
 const angle = (q: Quaternion | null): number => 2 * Math.acos(Math.min(1, Math.abs(q?.w ?? 1)));
 
+/** The same root with a two-joint skirt panel hanging from the hips. */
+const skirt = () => {
+  const { root } = strand();
+  const scene = root.getScene();
+  const node = (name: string, parent: TransformNode, y: number): TransformNode => {
+    const n = new TransformNode(name, scene);
+    n.parent = parent;
+    n.position.set(0, y, 0);
+    n.rotationQuaternion = Quaternion.Identity();
+    return n;
+  };
+  const hips = node("J_Bip_C_Hips", root, 0.9);
+  const a = node("J_Sec_L_Skirt_00", hips, 0);
+  // A flared panel: out and down from the hips, as a skirt hangs.
+  const b = node("J_Sec_L_Skirt_01", a, -0.15);
+  b.position.x = 0.09;
+  const end = node("J_Sec_L_Skirt_end", b, -0.15);
+  end.position.x = 0.09;
+  return { root, a };
+};
+
 describe("SpringBones", () => {
+  it("keeps a skirt down through a fall (user notes of 18.11)", () => {
+    const fall = (pick: (s: ReturnType<typeof skirt>) => TransformNode, make: typeof skirt) => {
+      const s = make();
+      const springs = SpringBones.create(s.root)!;
+      springs.update(1 / 60);
+      let most = 0;
+      for (let i = 0; i < 30; i++) {
+        s.root.position.y -= 7 / 60;
+        springs.update(1 / 60);
+        most = Math.max(most, angle(pick(s).rotationQuaternion));
+      }
+      return most;
+    };
+    // Before: carried by three quarters of the drop, the panel swung up 0.37 rad.
+    expect(fall((s) => s.a, skirt), "skirt").toBeLessThan(0.1);
+  });
+
   it("finds secondary chains and starts in the bind pose", () => {
     const { root, a, b } = strand();
     const springs = SpringBones.create(root)!;

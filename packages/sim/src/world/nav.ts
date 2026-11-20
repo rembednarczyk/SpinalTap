@@ -106,28 +106,74 @@ interface Search {
   readonly prev: readonly number[];
 }
 
+/** A binary min-heap of (cost, node) pairs, lowest cost first and the lowest node on a tie. */
+class Frontier {
+  private readonly items: [number, number][] = [];
+
+  get size(): number {
+    return this.items.length;
+  }
+
+  private static less(a: [number, number], b: [number, number]): boolean {
+    return a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+  }
+
+  push(c: number, i: number): void {
+    const h = this.items;
+    h.push([c, i]);
+    for (let k = h.length - 1; k > 0; ) {
+      const up = (k - 1) >> 1;
+      if (!Frontier.less(h[k]!, h[up]!)) break;
+      [h[k], h[up]] = [h[up]!, h[k]!];
+      k = up;
+    }
+  }
+
+  pop(): [number, number] {
+    const h = this.items;
+    const top = h[0]!;
+    const last = h.pop()!;
+    if (h.length > 0) {
+      h[0] = last;
+      for (let k = 0; ; ) {
+        const [l, r] = [2 * k + 1, 2 * k + 2];
+        let m = k;
+        if (l < h.length && Frontier.less(h[l]!, h[m]!)) m = l;
+        if (r < h.length && Frontier.less(h[r]!, h[m]!)) m = r;
+        if (m === k) break;
+        [h[k], h[m]] = [h[m]!, h[k]!];
+        k = m;
+      }
+    }
+    return top;
+  }
+}
+
+/**
+ * Dijkstra from the nodes in reach of `from`. Lowest cost first, lowest index on a tie: the same route
+ * on every machine. A heap of the frontier (ADR-0093 O1: the gallery's floors grew the graph, and the
+ * scan of every node for the next one grew with its square); the order nodes are settled in, and so
+ * every way, is the scan's.
+ */
 const search = (world: World<Entity>, p: Prepared, from: Vec3): Search => {
   const n = p.at.length;
   const cost = new Array<number>(n).fill(Infinity);
   const prev = new Array<number>(n).fill(-1);
   const done = new Array<boolean>(n).fill(false);
+  const frontier = new Frontier();
   for (const [i, c] of attach(world, p, from)) cost[i] = c;
-  for (;;) {
-    let best = -1;
-    let bestCost = Infinity;
-    // Lowest cost first, lowest index on a tie: the same route on every machine.
-    cost.forEach((c, i) => {
-      if (!done[i] && c < bestCost) {
-        best = i;
-        bestCost = c;
-      }
-    });
-    if (best < 0) break;
+  cost.forEach((c, i) => {
+    if (c < Infinity) frontier.push(c, i);
+  });
+  while (frontier.size > 0) {
+    const [bestCost, best] = frontier.pop();
+    if (done[best] || bestCost !== cost[best]) continue;
     done[best] = true;
     for (const { to, cost: c } of p.adj[best] ?? []) {
       if (bestCost + c < (cost[to] ?? Infinity)) {
         cost[to] = bestCost + c;
         prev[to] = best;
+        frontier.push(cost[to]!, to);
       }
     }
   }

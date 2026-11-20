@@ -191,7 +191,6 @@ krakowskie-2-1 370,-20
 krakowskie-2-1 410,-20
 krakowskie-2-1 430,-20
 krakowskie-2-1 410,-10
-krakowskie-2-1 430,-10
 krakowskie-2-1 360,0
 krakowskie-2-1 370,0
 krakowskie-2-1 290,10

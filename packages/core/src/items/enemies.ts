@@ -32,6 +32,8 @@ export interface SightProfile {
 const HEBI_SIGHT: SightProfile = { sight: 17, cone: 1.2, crouchSight: 0.5, near: 2, suspicionRate: 0.67 };
 const TRAINED_SIGHT: SightProfile = { sight: 17, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 0.53 };
 const GUARD_SIGHT: SightProfile = { sight: 18, cone: 1.05, crouchSight: 0.5, near: 2.2, suspicionRate: 0.47 };
+/** W-3's observer in the tower's cabin (ADR-0082 §2): a guard's eyes that reach 40 m. */
+const SNIPER_SIGHT: SightProfile = { ...GUARD_SIGHT, sight: 40 };
 
 /** What an enemy carries and wears (plan §5.1). The sim spawns it, the loot table pays for it. */
 export interface EnemyType {
@@ -44,8 +46,11 @@ export interface EnemyType {
   readonly outfit: readonly GarmentId[];
   /** Rolled once, at death, into a bag. */
   readonly loot: LootTableId;
-  /** Its sight (ADR-0069); none for a sniper, which keeps its own (ADR-0024). */
-  readonly vision?: SightProfile;
+  /**
+   * Its sight (ADR-0069). A sniper on its perch keeps its own (ADR-0024, its rifle's range): the
+   * sniper's profile is for one with the AI of a ganger, W-3's observer before the alarm (ADR-0082).
+   */
+  readonly vision: SightProfile;
   /** An elite is a level above its district's band (ADR-0059); the rest are regulars. */
   readonly rank?: "elite";
 }
@@ -79,8 +84,8 @@ export const ENEMY_TYPES = {
     vision: GUARD_SIGHT,
   },
   // Takes a high perch, telegraphs every shot with a laser and falls back when Seki gets close.
-  tessen_sniper: { id: "tessen_sniper", faction: "tessen", hp: 70, weapon: "kagero_dmr", outfit: ["tactical_visor", "cargo_pants"], loot: "tessen_sniper" },
+  tessen_sniper: { id: "tessen_sniper", faction: "tessen", hp: 70, weapon: "kagero_dmr", outfit: ["tactical_visor", "cargo_pants"], loot: "tessen_sniper", vision: SNIPER_SIGHT },
 } as const satisfies Record<EnemyTypeId, EnemyType>;
 
-/** The sight of an enemy type; a type without one (the sniper) and anything untyped sees as a Hebi ganger. */
-export const sightOf = (type: EnemyTypeId | undefined): SightProfile => (ENEMY_TYPES[type ?? "hebi_ganger"] as EnemyType).vision ?? HEBI_SIGHT;
+/** The sight of an enemy type (every type names its own); anything untyped sees as a Hebi ganger. */
+export const sightOf = (type: EnemyTypeId | undefined): SightProfile => (ENEMY_TYPES[type ?? "hebi_ganger"] as EnemyType).vision;

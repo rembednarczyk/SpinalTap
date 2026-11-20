@@ -1,7 +1,8 @@
 /**
- * Block letters of neon tube for Alchemia's sign on the pavilion's roof (ADR-0074 stage 3): the
- * proper name ALCHEMIA, the same in every language, as straight strokes the kit's glow swatches
- * can draw in the same mesh as the pavilion (no glyph atlas, no draw call of its own). Pure data.
+ * Block letters of neon tube for Alchemia's sign on the pavilion's roof (ADR-0074 stage 3) and
+ * Tessen's over W-3's wagon gate (ADR-0082 stage 4) and the front's ALCHEMIA CENTRUM HANDLOWE (B1):
+ * proper names and the mall's own sign, the same in every language, as straight strokes the kit's glow swatches can draw in the same mesh
+ * as their building (no glyph atlas, no draw call of its own). Pure data.
  */
 
 /** A stroke: a rectangle in a letter's units, x across from its left, y up from its foot. */
@@ -20,6 +21,27 @@ const GLYPHS: Readonly<Record<string, { readonly w: number; readonly strokes: re
   E: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [0, MID, 2.4, MID + S], [0, 0, 3, S]] },
   M: { w: 4, strokes: [[0, 0, S, 5], [4 - S, 0, 4, 5], [0, 5 - S, 4, 5], [2 - S / 2, 1.6, 2 + S / 2, 5]] },
   I: { w: 3, strokes: [[1.5 - S / 2, 0, 1.5 + S / 2, 5], [0.5, 5 - S, 2.5, 5], [0.5, 0, 2.5, S]] },
+  T: { w: 3, strokes: [[0, 5 - S, 3, 5], [1.5 - S / 2, 0, 1.5 + S / 2, 5 - S]] },
+  S: { w: 3, strokes: [[0, 5 - S, 3, 5], [0, MID, S, 5 - S], [0, MID, 3, MID + S], [3 - S, S, 3, MID], [0, 0, 3, S]] },
+  // CENTRUM HANDLOWE on the front's sign (B1, 19.11).
+  R: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S], [3 - S, 0, 3, MID]] },
+  U: { w: 3, strokes: [[0, 0, S, 5], [3 - S, 0, 3, 5], [0, 0, 3, S]] },
+  D: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 2.4, 5], [0, 0, 2.4, S], [3 - S, S, 3, 5 - S]] },
+  O: { w: 3, strokes: [[0, 0, S, 5], [3 - S, 0, 3, 5], [0, 5 - S, 3, 5], [0, 0, 3, S]] },
+  W: { w: 4, strokes: [[0, 0, S, 5], [4 - S, 0, 4, 5], [0, 0, 4, S], [2 - S / 2, 0, 2 + S / 2, 3.4]] },
+  " ": { w: 1.5, strokes: [] },
+  // The gallery's shops' names (ADR-0093 O2).
+  B: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 2.4, 5], [0, MID, 2.6, MID + S], [0, 0, 2.6, S], [2.4 - S, MID, 2.4, 5], [3 - S, 0, 3, MID + S]] },
+  F: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [0, MID, 2.4, MID + S]] },
+  G: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [0, 0, 3, S], [3 - S, S, 3, MID + S], [1.6, MID, 3, MID + S]] },
+  K: { w: 3, strokes: [[0, 0, S, 5], [0, MID, 1.8, MID + S], [1.6, MID + S, 1.6 + S, 3.6], [2.2, 3.6, 3, 5], [1.6, 0, 1.6 + S, MID], [2.2, 0, 3, 1.2]] },
+  P: { w: 3, strokes: [[0, 0, S, 5], [0, 5 - S, 3, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S]] },
+  V: { w: 3, strokes: [[0, 1.6, S, 5], [3 - S, 1.6, 3, 5], [S, 0.6, S + 0.6, 2.0], [3 - S - 0.6, 0.6, 3 - S, 2.0], [1.2, 0, 1.8, 1.0]] },
+  X: { w: 3, strokes: [[0, 0, S, 1.6], [3 - S, 0, 3, 1.6], [0, 3.4, S, 5], [3 - S, 3.4, 3, 5], [S, 1.4, 3 - S, 3.6]] },
+  Y: { w: 3, strokes: [[0, MID, S, 5], [3 - S, MID, 3, 5], [0, MID, 3, MID + S], [1.5 - S / 2, 0, 1.5 + S / 2, MID]] },
+  Z: { w: 3, strokes: [[0, 5 - S, 3, 5], [0, 0, 3, S], [2.2, 3, 3, 5 - S], [1.1, MID - 0.2, 1.9, 3.2], [0, S, 0.8, MID]] },
+  // The diagonal in three steps: the strokes stay rectangles.
+  N: { w: 3.4, strokes: [[0, 0, S, 5], [3.4 - S, 0, 3.4, 5], [S, 3, S + 0.6, 4.2], [1.4, 1.9, 2, 3.1], [2, 0.8, 2.6, 2]] },
 };
 
 /** The gap between letters, in units. */
@@ -27,6 +49,8 @@ const GAP = 1;
 
 /** A stroke of the text in metres: `x0..x1` across from the text's middle (right of a reader), `y0..y1` up from its foot. */
 export interface NeonStroke {
+  /** The letter of the text it belongs to (0 for the first), for signs lit in two colours. */
+  readonly letter: number;
   readonly x0: number;
   readonly x1: number;
   readonly y0: number;
@@ -44,10 +68,10 @@ export const neonText = (text: string, height: number): NeonStroke[] => {
   const u = height / 5;
   let x = -neonWidth(text, height) / 2;
   const out: NeonStroke[] = [];
-  for (const ch of text) {
+  for (const [letter, ch] of [...text].entries()) {
     const g = GLYPHS[ch];
     if (!g) continue;
-    for (const [a, b, c, d] of g.strokes) out.push({ x0: x + a * u, x1: x + c * u, y0: b * u, y1: d * u });
+    for (const [a, b, c, d] of g.strokes) out.push({ letter, x0: x + a * u, x1: x + c * u, y0: b * u, y1: d * u });
     x += (g.w + GAP) * u;
   }
   return out;

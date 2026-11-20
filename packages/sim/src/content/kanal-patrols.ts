@@ -96,7 +96,7 @@ const POSTS = {
   rynek: againstWall(543, -60),
 } as const;
 
-const ganger = (key: string, at: Vec3, yaw: number): ActorDef => ({ kind: "ganger", spawn: { key, position: at, yaw, tag: null }, patrol: true });
+const ganger = (key: string, at: Vec3, yaw: number): ActorDef => ({ kind: "ganger", spawn: { key, position: at, yaw, tag: null }, territory: "rynek" });
 
 export const KANAL_PATROL_ACTORS: readonly ActorDef[] = [
   ganger("hebi-rynek", ground(...(RYNEK_LOOP[0] as [number, number])), Math.PI / 2),

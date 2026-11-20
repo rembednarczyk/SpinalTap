@@ -1,0 +1,1 @@
+- Wjazd na parking P−1 Alchemii prowadzi teraz prosto z Bajkowskiego, bez objazdu przez plac.

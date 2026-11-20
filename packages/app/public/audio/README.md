@@ -1,10 +1,10 @@
 # Nagrania audio (CC0)
 
-Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie cue → pliki jest w `packages/app/src/audio-manifest.ts`. Brak pliku albo błąd dekodowania (np. Vorbis w starym Safari) cicho wraca do syntezy. `?audio=off` wyłącza nagrania. Muzyka pozostaje proceduralna.
+Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie cue → pliki jest w `packages/app/src/audio-manifest.ts`. Brak pliku albo błąd dekodowania (np. Vorbis w starym Safari) cicho wraca do syntezy. `?audio=off` wyłącza nagrania. Proceduralne zostają (stan 18.11): muzyka, klakson aut (`horn`), koniec wgrywania wirusa (`upload-done`), szum miasta, para i deszcz pod nagraniem (`ambience.ts`), warstwy hali W-3 (`w3-scape.ts`), radio (muzyka i lektor z formantów, ADR-0036).
 
 Wszystkie pliki są na licencji **CC0 1.0** (domena publiczna, https://creativecommons.org/publicdomain/zero/1.0/): bez obowiązku atrybucji, użycie komercyjne dozwolone. Autorów i tak wymieniamy.
 
-Format: OGG Vorbis, 44,1 kHz. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
+Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
 
 ## Źródła
 
@@ -16,6 +16,9 @@ Format: OGG Vorbis, 44,1 kHz. Pliki Kenney i deszcz są skopiowane bez zmian (ju
 | The Free Firearm Sound Library (Prepared SFX Library) | Ben Jaszczak i in. (freefirearmsfx.com), mirror OGA: bart | CC0 (strona OGA: "CC0 NO RIGHTS RESERVED") | https://opengameart.org/content/the-free-firearm-sound-library | `Prepared SFX Library.7z` (194 MB, z niego 14 plików) |
 | Handgun Reload Sound Effect | zer0_sol | CC0 (strona OGA) | https://opengameart.org/content/handgun-reload-sound-effect | `reload.wav` |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
+| RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
+| Alarm | ezduzziteh | CC0 (strona OGA) | https://opengameart.org/content/alarm-1 | `alarm_2.ogg` (pobrane 18.11) |
+| Sirens and Alarm Noise | aquinn | CC0 (strona OGA) | https://opengameart.org/content/sirens-and-alarm-noise | `siren.mp3` (pobrane 18.11) |
 
 ## Pliki
 
@@ -56,6 +59,17 @@ Format: OGG Vorbis, 44,1 kHz. Pliki Kenney i deszcz są skopiowane bez zmian (ju
 | `sell-tin-000.ogg`, `sell-tin-001.ogg` | Impact Sounds, `impactTin_medium_000-001.ogg` | `sell` (sprzedaż, z syntezą monet) |
 | `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
 | `blast-crunch-003.ogg`, `blast-crunch-004.ogg` | Sci-fi Sounds, `explosionCrunch_003.ogg`, `explosionCrunch_004.ogg` (bez zmian; paczka pobrana 17.11 z mirroru OGA https://opengameart.org/content/sci-fi-sounds, `sci-fi_sounds.zip`, License.txt: CC0) | `explosion` (wybuch ładunków W-3, z syntezą niskiego huku) |
+| `shotgun-pump-000.ogg` | RPG Sound Pack, `metalLatch.ogg` (0-0,18 s) i `metalClick.ogg` (od 0,15 s) 0,17 s później | `shotgun-pump` (zamek strzelby po ostatnim naboju) |
+| `impact-melee-000.ogg` | RPG Sound Pack, `chop.ogg` | `impact-melee` (uderzenie broni białej) |
+| `swing-000.ogg`, `swing-001.ogg` | RPG Sound Pack, `knifeSlice.ogg`, `knifeSlice2.ogg` | `swing` (zamach) |
+| `block-000.ogg` | RPG Sound Pack, `metalPot3.ogg` (pierwsze 0,3 s) | `block` (cios na gardzie) |
+| `parry-000.ogg` | RPG Sound Pack, `metalPot3.ogg` (pierwsze 0,6 s) | `parry` (z syntezą dźwięczenia) |
+| `jump-cloth-000.ogg`, `jump-cloth-001.ogg` | RPG Sound Pack, `cloth1.ogg`, `cloth3.ogg` | `jump` (wybicie) |
+| `land-step-000.ogg`, `land-step-001.ogg` | RPG Sound Pack, `footstep05.ogg`, `footstep06.ogg` | `land` (z syntezą niskiego tąpnięcia) |
+| `land-hard-000.ogg` | RPG Sound Pack, `dropLeather.ogg` | `land-hard` (z syntezą) |
+| `charge-clamp-000.ogg` | RPG Sound Pack, `metalLatch.ogg` (pierwsze 0,22 s) | `charge-plant` (z syntezą piknięć uzbrojenia) |
+| `alarm-klaxon-000.ogg` | Alarm (ezduzziteh), `alarm_2.ogg` (pierwsze 0,96 s, dwa tony) | `alarm` (podniesiony alarm W-3) |
+| `alarm-siren-000.ogg` | Sirens and Alarm Noise (aquinn), `siren.mp3` (3,48-5,0 s, jedno wycie) | `alarm-siren` (co 2,4 s w trakcie alarmu) |
 | `rain-loop.ogg` | Rain (loopable), `1.ogg` (27 s, stereo) | pętla deszczu na szynie `ambience` (synteza pod spodem na 30%) |
 
-Łącznie ok. 1,2 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).
+Łącznie ok. 1,4 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type DomainEvents, type SaveSnapshot, WITNESS_CALL_SECONDS } from "@seki/core";
 import { SIM_HZ, Simulation, TAKEDOWN_TIME, ground, stateHash, type Entity } from "../src";
 import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
-import { enterKanal } from "./micro-scenes";
+import { BY_THE_GATE, IN_THE_GATE, enterKanal } from "./micro-scenes";
 import { CROUCH, offset, quietStreet, stallholder, takeDown, ticks, victim } from "./takedown-scenes";
 
 /**
@@ -19,10 +19,17 @@ const AFTER = 15 * SIM_HZ;
 const afraid = (sim: Simulation) =>
   sim.world.with("civilian").entities.filter((c) => (c.civilian.crowd?.state ?? "calm") !== "calm").map((c) => c.key ?? `#${c.id}`);
 
-/** The mugging by Brama Krakowska won by a takedown and a shot: the street runs from it. */
+/**
+ * The mugging by Brama Krakowska won by a takedown and a shot: the street runs from it. The
+ * Rynek's patrol stays out of it: the muggers' shots at their victim do not set it on the player (G-938).
+ */
 const panic = (seed: number): Simulation => {
-  const { sim } = enterKanal("mugging", seed);
+  const { sim } = enterKanal("mugging", seed, 0, 21, BY_THE_GATE, IN_THE_GATE);
   const run0 = sim.session.street2.micro!;
+  // Hideo, saved by key, by the mugging when the shots ring out: the street runs from them, him too.
+  const hideo = byKey(sim, "hideo")!;
+  hideo.position = { x: run0.at.x - 6, y: run0.at.y, z: run0.at.z - 4 };
+  hideo.prevPosition = hideo.position;
   const [m0, m1] = run0.attackers;
   const a = [...sim.world].find((e) => e.id === m0)!;
   for (const e of [...sim.world] as Entity[]) if (run0.attackers.includes(e.id)) e.hackFx = { pinged: 0, blind: 100, crippled: 0 };

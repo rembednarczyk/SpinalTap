@@ -1,4 +1,5 @@
 import { Matrix } from "../babylon";
+import { FootfallCount } from "./footfalls";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
@@ -72,6 +73,11 @@ export interface RendererOptions {
    * Off in Lublin (ADR-0045): the map's own city is drawn to the horizon.
    */
   readonly farCity?: boolean;
+  /**
+   * URL of the folder of the detail textures (ADR-0092), ending in `/`: the grain of the city's
+   * plaster, brick, asphalt and roofs. Without it the surfaces keep their palette and patterns alone.
+   */
+  readonly detailTextures?: string | null;
 }
 
 /** The effects over the whole frame the game sets (ADR-0030): hits, quickhacks, heat, the scanner; the fog for the map preview. */
@@ -119,6 +125,8 @@ export class BabylonRenderer implements RenderPort {
    */
   wallRay: CameraOccluder | null = null;
   private readonly characters: CharacterViews;
+  /** The followed figure's footfalls, taken once a frame for the footsteps' sound (user notes of 18.11). */
+  readonly footfalls = new FootfallCount();
   /** What the characters do where they stand (ADR-0040). */
   private readonly activities: CharacterActivities;
   private readonly props: PropViews;
@@ -165,7 +173,7 @@ export class BabylonRenderer implements RenderPort {
     options: RendererOptions = {},
   ) {
     const { scene } = stage;
-    this.materials = new ToonMaterials(scene);
+    this.materials = new ToonMaterials(scene, NIGHT_RIG, options.detailTextures ?? null);
     const tier = qualityTier(stage.options.quality);
     const high = tier.shadowMap > 1024;
     // Before any material: the wet presets compile with the probe in them.
@@ -192,6 +200,7 @@ export class BabylonRenderer implements RenderPort {
     };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({
+      footfalls: this.footfalls,
       scene,
       materials: this.materials,
       shadow: this.shadow,
@@ -257,7 +266,7 @@ export class BabylonRenderer implements RenderPort {
       eye: () => eye,
     });
     this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars() });
-    this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low" });
+    this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low", particles: stage.options.quality !== "low" });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -282,7 +291,7 @@ export class BabylonRenderer implements RenderPort {
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
     const { materials, shadow } = this;
     const gbuffer = this.lineArt?.geometryBuffer ?? null;
-    this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
+    this.loading = new RendererLoading({ stage, materials, shadow, characters: this.characters, gbuffer, cityKit: () => Promise.all([this.cityKit.ready, this.materials.detail.ready]), cityWaiting: () => this.map.current?.waiting ?? 0 });
     const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
     this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet, shadow: this.shadow });
   }
@@ -414,6 +423,7 @@ export class BabylonRenderer implements RenderPort {
     this.capsule.update();
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
+    this.alchemia.p2.update();
     this.w3.update(dt, this.stage.options.reference);
     // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
     this.fx.indoorFade.set(this.w3.interior);

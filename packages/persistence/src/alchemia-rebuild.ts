@@ -212,3 +212,39 @@ export const raiseAlchemiaPavilion = (old: Json): Json => {
   if (Array.isArray(old.strayBodies)) out.strayBodies = keptOffPavilion(old.strayBodies);
   return out;
 };
+
+/**
+ * v49 -> v50 (ADR-0074 stage 5d2): Hebi's stash from T2 before the Arkady's south arches into the
+ * air-raid shelter under T2, its lookout from under the arches to the shelter's hatch. Their saved
+ * people go and the content brings them back where they are now: the lookout, the crew and the
+ * crate of a running retrieval at the stash, anybody kept on the stash's old ground (spelled out,
+ * the content of its time); the player stays (T2 is still there).
+ */
+export const OLD_STASH = { minX: 435, maxX: 449, minZ: 86, maxZ: 101, over: -10 } as const;
+
+const onOldStash = (p: unknown): boolean =>
+  isObject(p) && typeof p.x === "number" && typeof p.y === "number" && typeof p.z === "number" && p.x >= OLD_STASH.minX && p.x <= OLD_STASH.maxX && p.z >= OLD_STASH.minZ && p.z <= OLD_STASH.maxZ && p.y > OLD_STASH.over;
+
+/** The running retrieval at the stash, its people's and crate's key prefix (`c7-`), or null. */
+const stashJob = (domain: unknown): string | null => {
+  const active = isObject(domain) && isObject(domain.contracts) ? domain.contracts.active : undefined;
+  return isObject(active) && active.siteId === "hebi_stash" && typeof active.id === "string" ? `${active.id}-` : null;
+};
+
+const keptOffOldStash = (list: unknown): unknown => (Array.isArray(list) ? list.filter((p: unknown) => !(isObject(p) && isObject(p.state) && onOldStash(p.state.position))) : list);
+
+export const moveHebiStash = (old: Json): Json => {
+  const out: Json = { ...old, version: 50 };
+  const job = stashJob(old.domain);
+  if (Array.isArray(old.entities)) {
+    out.entities = old.entities.filter((e: unknown) => {
+      if (!isObject(e) || e.key === "player") return true;
+      if (e.key === "hebi-lookout") return false;
+      if (job && typeof e.key === "string" && e.key.startsWith(job)) return false;
+      return !onOldStash(e.position);
+    });
+  }
+  if (isObject(old.reinforcements)) out.reinforcements = { ...old.reinforcements, people: keptOffOldStash(old.reinforcements.people) };
+  if (Array.isArray(old.strayBodies)) out.strayBodies = keptOffOldStash(old.strayBodies);
+  return out;
+};

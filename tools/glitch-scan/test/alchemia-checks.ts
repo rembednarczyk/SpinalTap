@@ -1,4 +1,24 @@
-import { ALCHEMIA_CENTRE, ALCHEMIA_PIECES, ARKADY, P1_PIECES, ARKADY_OSM_ID, ARKADY_OUTLINE, ARKADY_PIECES, ARKADY_PROP, KEPT_OSM, type AlchemiaBox, arkadyLocal } from "../../../packages/sim/src/content/alchemia";
+import {
+  ALCHEMIA_CENTRE,
+  ALCHEMIA_LIFT_NE,
+  ALCHEMIA_PIECES,
+  ARKADY,
+  P1_PIECES,
+  P2_CUTTING_PIECES,
+  ARKADY_OSM_ID,
+  ARKADY_OUTLINE,
+  ARKADY_PIECES,
+  ARKADY_PROP,
+  KEPT_OSM,
+  SHOP_PIECES,
+  SHOP_SOLIDS,
+  type AlchemiaBox,
+  type AlchemiaPiece,
+  arkadyLocal,
+  liftPieces,
+  mallInsidePieces,
+  mallOutsidePieces,
+} from "../../../packages/sim/src/content/alchemia";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { isLandmark } from "../../../packages/sim/src/content/lublin";
 import { DIG_PADS, MAP_CHUNKS, PADS } from "../../../packages/sim/src/content/lublin/sites";
@@ -57,13 +77,13 @@ const EYE_EVERY = 8;
 const EYE = 1.6;
 
 /**
- * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's, the pavilion's and P-1's outside too) seen from the streets within
+ * `game-solid-landmark-occlusion` (review of #312): Alchemia's solids (the Arkady's, the pavilion's, P-1's and P-2's outside too) seen from the streets within
  * 250 m hide at most a quarter of the views of a landmark's top (the eyes on the streets from which
  * the top is behind one of its boxes, of all the eyes within 250 m of both). Baseline 0.
  */
 export const alchemiaHidesLandmarks = (): Finding[] => {
-  // With P-1's outside (stage 4): the ramp trench's parapets and portal, the stair core's house.
-  const boxes = [...ALCHEMIA_PIECES, ...P1_PIECES].filter((p) => p.solid && !p.inside).map((p) => p.box);
+  // With P-1's outside (stage 4): the ramp trench's parapets and portal, the stair core's house; and P-2's cutting's (stage 5a).
+  const boxes = [...ALCHEMIA_PIECES, ...P1_PIECES, ...P2_CUTTING_PIECES].filter((p) => p.solid && !p.inside).map((p) => p.box);
   // The Arkady's boxes are of their own frame (x along the building, z across it): the eye and the top go into it.
   const arkady = ARKADY_PIECES.filter((p) => p.solid).map((p) => p.box);
   const local = (p: P3): P3 => {
@@ -183,3 +203,29 @@ export const keptInGame = (): KeptInputs => {
     },
   };
 };
+
+/**
+ * The gallery round the atrium (ADR-0093 O1, O2): its body (slabs, glass, the roof's balustrades),
+ * its galleries, escalators and cores, the north-east lift's shaft and its shops with their fittings.
+ */
+const galleryPieces = (): AlchemiaPiece[] => [...mallOutsidePieces(), ...mallInsidePieces(), ...liftPieces(ALCHEMIA_LIFT_NE), ...SHOP_PIECES, ...SHOP_SOLIDS];
+
+/** The gallery's plot: the body's outline and its slabs' overhang on the west, north and east (the front stands against its south face). */
+export const GALLERY_PLOT = { x0: 399.7, x1: 436.3, z0: 32, z1: 58.3 } as const;
+/** Nothing of it higher: the roof at 10.7, the cores' stair houses 2.6 m over it. */
+export const GALLERY_TOP = 13.5;
+
+/**
+ * `alchemia-mall-footprint` (review of ADR-0093 O1 by the topography's curator): a piece of the
+ * gallery off its plot, into the street, the ramps or the front. Baseline 0.
+ */
+export const mallFootprint = (pieces: readonly AlchemiaPiece[] = galleryPieces()): Finding[] =>
+  pieces.flatMap((p) => {
+    const b = p.box;
+    const off = b.x0 < GALLERY_PLOT.x0 - 1e-6 || b.x1 > GALLERY_PLOT.x1 + 1e-6 || b.z0 < GALLERY_PLOT.z0 - 1e-6 || b.z1 > GALLERY_PLOT.z1 + 1e-6;
+    return off ? [{ at: near((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2), what: `${p.kind} x ${b.x0.toFixed(2)}..${b.x1.toFixed(2)}, z ${b.z0.toFixed(2)}..${b.z1.toFixed(2)} off the gallery's plot` }] : [];
+  });
+
+/** `alchemia-mall-height` (the same review): a piece of the gallery over y 13.5, past the T row's height (T-329). Baseline 0. */
+export const mallHeight = (pieces: readonly AlchemiaPiece[] = galleryPieces()): Finding[] =>
+  pieces.flatMap((p) => (p.box.y1 > GALLERY_TOP + 1e-6 ? [{ at: near((p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2), what: `${p.kind} up to y ${p.box.y1.toFixed(2)}` }] : []));

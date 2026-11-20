@@ -63,7 +63,7 @@ describe("the view of a knocked-out body (G-449)", () => {
     steps(session, 5, CROUCH);
     const p = session.sim.player()!;
     const g = gangerEntity(9100, { key: "test-patrol", position: { x: guard.position.x - 1.2, y: guard.position.y, z: guard.position.z }, yaw: Math.PI / 2 }, null, 80, p.chunk ?? "");
-    g.ai = { ...g.ai!, patrol: true };
+    g.ai = { ...g.ai!, territory: "rynek" };
     session.sim.world.add(g);
     steps(session, ticks(WAKE_TIME) - 1, CROUCH);
     expect(render.transforms.get(guard.id)?.unconscious).toBe(true);

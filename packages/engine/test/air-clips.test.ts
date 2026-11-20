@@ -71,7 +71,7 @@ describe("off the ground and landing, from the clips (ADR-0090)", () => {
     }
   });
 
-  it("stopping from a run, the figure dips and leans, then stands as before", () => {
+  it("stopping from a run, the figure stops with no braking pose (the user's call of 18.11)", () => {
     const r = buildHeroine(scene, materials, "sprinter");
     for (let i = 0; i < 30; i++) frame(r, undefined, 0);
     const stand = world(r, r.head).y;
@@ -81,8 +81,7 @@ describe("off the ground and landing, from the clips (ADR-0090)", () => {
       frame(r, undefined, 0);
       lowest = Math.min(lowest, world(r, r.head).y);
     }
-    expect(stand - lowest).toBeGreaterThan(0.1);
-    for (let i = 0; i < 1.5 / DT; i++) frame(r, undefined, 0);
-    expect(Math.abs(world(r, r.head).y - stand)).toBeLessThan(0.03);
+    // Before: Mixamo's "run to stop" leant her forward and dipped her, the head 22 cm down and more.
+    expect(stand - lowest, "head down on stopping").toBeLessThan(0.06);
   });
 });

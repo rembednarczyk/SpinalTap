@@ -6,6 +6,8 @@ import type { LayeredMusic } from "./layered-music";
 import type { RadioPlayer } from "./radio";
 import { DEFAULT_POSE } from "./spatial";
 import type { SynthVoices } from "./synth-voices";
+import type { W3Scape } from "./w3-scape";
+import { W3_STREET_LEVEL } from "./w3-sound-map";
 
 /** The looping parts of the mix that the scheduler drives. */
 export interface SoundscapeParts {
@@ -13,11 +15,13 @@ export interface SoundscapeParts {
   readonly ambient: AmbientScape;
   readonly music: LayeredMusic;
   readonly radio: RadioPlayer;
+  readonly w3: W3Scape;
 }
 
 /**
  * The scheduler steps of the soundscape (ADR-0013): score and radio, ambience and footsteps,
- * all following the listener pose. Owns the pose, the gait and the time of the last step.
+ * W-3's sectors (ADR-0082 stage 4), all following the listener pose. Owns the pose, the gait and
+ * the time of the last step.
  */
 export class SoundscapeClock {
   private readonly steps = new FootstepClock();
@@ -31,8 +35,14 @@ export class SoundscapeClock {
   /** New listener pose; positional ambience follows at once when the graph exists. */
   setPose(pose: AudioListenerPose, g: Graph | null): void {
     this.pose = pose;
+    if (pose.footfalls !== undefined) this.steps.feel(pose.footfalls);
     this.parts.radio.updateListener(pose);
-    if (g) this.parts.ambient.updatePositional(pose, g.ctx.currentTime, false);
+    if (!g) return;
+    const now = g.ctx.currentTime;
+    this.parts.ambient.updatePositional(pose, now, false);
+    this.parts.w3.update(pose, now);
+    // Under W-3's roof the street's rain and traffic come through dull.
+    this.parts.ambient.setStreetLevel(W3_STREET_LEVEL[this.parts.w3.place], now);
   }
 
   /** Starts rain, traffic, neon hum, steam and the music loop. Idempotent. */
@@ -44,6 +54,8 @@ export class SoundscapeClock {
     this.lastTick = now;
     music.refresh(g, now);
     ambient.updatePositional(this.pose, now, true);
+    this.parts.w3.update(this.pose, now, true);
+    ambient.setStreetLevel(W3_STREET_LEVEL[this.parts.w3.place], now);
   }
 
   /** One scheduler step. */
@@ -60,7 +72,8 @@ export class SoundscapeClock {
     // Like the score, the radio plays once the soundscape runs (autoStart or startAmbience).
     if (music.running) radio.schedule(g, now, mood);
     ambient.tick(g, now);
-    const n = this.steps.advance(this.pose.speed, dt);
+    if (music.running) this.parts.w3.tick(g, now);
+    const n = this.steps.take(this.pose.speed, dt, now);
     for (let i = 0; i < n; i++) voices.footstep(g, now + 0.01 + i * 0.05, this.pose.speed, this.steps);
   }
 }

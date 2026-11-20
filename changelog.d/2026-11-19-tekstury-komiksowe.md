@@ -1,0 +1,1 @@
+- Tekstury w wersji komiksowej: zamiast ziarna zdjęć cienkie linie fug, pęknięć i dachówek, a chodniki znowu z dawnymi płytami (ADR-0092).

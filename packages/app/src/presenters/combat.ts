@@ -39,15 +39,23 @@ export const presentCombat: Presenter = ({ bus, render, audio, ui, isPlayer }) =
   }),
   // Melee (ADR-0019): the swing plays over the simulation's timing; the whoosh comes as it lands.
   bus.on("MeleeSwing", (e) => render.playEffect({ kind: "melee", entityId: e.entityId, strike: e.strike, windup: e.windup, recovery: e.recovery })),
-  bus.on("MeleeStrike", () => audio.play("swing")),
+  bus.on("MeleeStrike", (e) => {
+    audio.play("swing");
+    // A blow that lands knocks (user notes of 18.11); a miss is the whoosh alone.
+    if (e.hits > 0) audio.play("impact-melee");
+  }),
   bus.on("AttackBlocked", (e) => {
     render.playEffect({ kind: "block", entityId: e.defenderId, parried: e.parried, at: e.at });
     audio.play(e.parried ? "parry" : "block");
   }),
   bus.on("Staggered", (e) => render.playEffect({ kind: "stagger", entityId: e.entityId, duration: e.duration })),
   bus.on("ReloadStarted", (e) => {
-    render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration });
+    render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration, perRound: e.perRound });
     if (isPlayer(e.entityId)) audio.play(e.perRound ? "reload-round" : "reload");
+  }),
+  // The last round of a shotgun's run in: the slide racked.
+  bus.on("ReloadFinished", (e) => {
+    if (isPlayer(e.entityId) && e.perRound && e.ready) audio.play("shotgun-pump");
   }),
   bus.on("DamageDealt", (e) => {
     render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });

@@ -221,7 +221,7 @@ const ping = (ctx: SimContext, target: Entity, duration: number): void => {
 
 /** Reboot Optics: the target goes blind and loses the player. */
 const rebootOptics = (ctx: SimContext, target: Entity, duration: number): void => {
-  // The server room's camera of W-3's sabotage reboots slower (ADR-0082): time for the upload's start.
+  // The cameras of W-3's sabotage (the server room's, the roof's) reboot slower (ADR-0082): time for the upload's start, the hatch.
   const sabotage = target.device?.restricted?.during === "sabotage";
   hackFxOf(ctx.world, target).blind = sabotage ? Math.max(duration, SABOTAGE.cameraRebootSeconds) : duration;
   const ai = target.ai;

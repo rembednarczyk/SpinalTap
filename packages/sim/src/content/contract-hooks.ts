@@ -87,11 +87,13 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
   {
     id: "hook_retrieve_2",
     kind: "retrieve",
-    source: "shard",
+    source: "bark",
     knot: "hook_retrieve_2",
     text: "hook.retrieve_2",
-    carrier: { post: 1 },
-    reveal: { kind: "intel" },
+    // The code of the shelter's gate from P-2 (ADR-0074 stage 5d2): the lookout says it over to himself, by the hatch by day,
+    // in P-2 at night. Overheard, it is the second way in, without the alarm.
+    carrier: { key: "hebi-lookout" },
+    reveal: { kind: "code" },
   },
   {
     id: "hook_protect_1",

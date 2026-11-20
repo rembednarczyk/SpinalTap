@@ -5,6 +5,13 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v50: Hebi's stash in the air-raid shelter under Alchemia's T2 (ADR-0074 stage 5d2); an older
+ * save drops the lookout, a running retrieval's crew and crate and whoever was kept on the stash's
+ * old ground by the Arkady: the content brings them back where they are now.
+ * v49: the street's crimes in progress (ADR-0091 stage 5), `domain.streetCrimes`; an older save
+ * gets the board of its clock with nothing done.
+ * v48: the gangs' grudge and provocation per district (ADR-0091 stage 2), `domain.gangStandings`;
+ * an older save gets none: every gang calm everywhere.
  * v44: the player's step onto a ladder's rungs in progress (G-913), optional (`stance.ladderSettle`):
  * an older save made in it loads hanging where she was, as before.
  * v43: the last shot at the player (G-901), optional: its tick and the key of who fired it. The
@@ -89,7 +96,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 47;
+export const SAVE_SCHEMA_VERSION = 50;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
