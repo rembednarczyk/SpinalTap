@@ -1,10 +1,9 @@
 import { CLUTTER, CLUTTER_SHAPES } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 import { type CityProps, addPropToSink } from "../city-props";
-import { MeshSink } from "../mesh-sink";
+import type { MeshSink } from "../mesh-sink";
 import { pieceXform } from "./market-models";
 import type { WorldProp } from "./prop-batch";
-import { block, paint } from "./prop-kit";
 
 /**
  * The odds and ends of ADR-0096 at their place: a piece of kind `clutter` is the model of
@@ -18,15 +17,4 @@ export const bakeClutter = (sink: MeshSink, props: CityProps | null, p: WorldPro
   const key = CLUTTER_SHAPES[p.shape]?.key;
   const model = key ? props.models.get(key) : undefined;
   if (model) addPropToSink(sink, props, model, pieceXform(p));
-};
-
-/** The gallery's stand-in of a shape: a box of about its size (the city bakes only the models). */
-export const clutterStandIn = (shape: number): MeshSink => {
-  const sink = new MeshSink();
-  const solid = CLUTTER_SHAPES[shape]?.solid;
-  const w = solid ? solid.hx * 2 : 0.5;
-  const d = solid ? solid.hz * 2 : 0.4;
-  const h = solid ? solid.top : 0.5;
-  block(sink, 0, 0, 0, w, h, d, paint("#4a4f57"));
-  return sink;
 };

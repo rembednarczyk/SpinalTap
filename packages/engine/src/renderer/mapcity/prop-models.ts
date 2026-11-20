@@ -9,7 +9,7 @@ import { doorOfShape } from "./prop-door";
 import { barrierModel } from "./barrier-models";
 import { siteModel } from "./construction";
 import { figureStandIn } from "./figure-models";
-import { clutterStandIn } from "./clutter-models";
+import { clutterStandIn } from "./clutter-stand-in";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
