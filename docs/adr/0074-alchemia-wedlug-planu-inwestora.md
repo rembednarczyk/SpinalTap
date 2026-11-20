@@ -514,6 +514,57 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
   - krzewy z gry na dachu, bez zasłon na elewacji.
 - **Pawilon na rogu** wraca do szkła z planu inwestora (rysunek sprzed B2), bo arkady ma teraz dom w osi frontu.
 
+### Etap C5: plac przed frontem (19.11, gałąź `feat/alchemia-c5-plac`)
+- **Wzorzec:** plac przed wejściem budynku jako „people place” (J. Gehl, „Life Between Buildings”, 1971, i „Cities for People”, 2010; Project for Public Spaces, „How to Turn a Place Around”, 2000): aktywne krawędzie (sklepy pod arkadą, kioski), miejsca do siedzenia (krzesła, obręcz fontanny, ławka, same schody), jedzenie i woda. Różnice: plac jest podniesiony na płycie nad gruntem jak na planszy, a nie zrównany z ulicą, a jedzenie sprzedają kioski, nie parter budynku.
+- **Podium** (`front-plaza.ts`): płyta od zachodniego narożnika domu z arkadami do parapetu rampy, x 394–409,7, z −7,4…1, z posadzką podcienia arkad. Wierzch −0,72, czyli trzy podstopnie nad gruntem przejścia pod L2 (−1,2). Teren opada na zachód, więc podium stoi 0,4 m nad gruntem przy rampie i 1,1 m przy zielonym stoku. NMT bez zmian, bez `PADS`.
+- **Schody** (bryły, 0,16 × 0,30 m, §6):
+  - na południe do Bajkowskiego pięć stopni na całej szerokości, do z −8,9, czyli do krawędzi kostki placu przed chodnikiem;
+  - za rogiem na zachód siedem stopni, do stopy zielonego stoku (z −2), razem z południowymi jedno L;
+  - na północ dwa stopnie w dół do przejścia pod L2 na zachód od rampy, którym droga spod arkad idzie dalej do wejścia głównego (O2b).
+  - Stopień kończy się tam, gdzie grunt do niego dochodzi (sprawdzane co 10 cm). Jak schody przy pochyłej ulicy: na wschodzie zostają dwa stopnie, na zachodzie sześć, a ostatni podstopień nad gruntem ma najwyżej 0,22 m.
+- **Fontanna** okrągła jak na planszy, w miejscu kwadratowej z B4: średnica 3,2 m, środek (399,5; −5,2), u szczytu schodów, 1,6 m przed filarami arkad.
+  - Obręcz do kolan (0,42 m, siedzisko) z 20 łuków jako bryła; ten sam obrys ma rysunek i bryła, jak w `rounded.ts`.
+  - Woda jako bryła, a u stopy obręczy pas światła.
+  - W wodzie projektor, nad nim pionowy panel hologramu w cyjanowej ramie z jednym pasem przesuniętym w bok (pęknięty hologram, §3).
+- **Kioski z jedzeniem** (`front-plaza-cafe.ts`, `FRONT_KIOSKS` przebudowane): jeden u stopy schodów zachodnich z ladą do ulicy, drugi przy narożniku placu od Świętoduskiej z ladą do placu.
+  - Lada z oświetlonym jedzeniem w witrynie, ściany boczne i tylna, słupki przy ladzie, dach z pasami szyldu (czerwony i bursztynowy).
+  - Markiza nad ladą i z boku, opadająca od kiosku. Silnik rysuje ją jako pochyłą płachtę z ciepłym światłem pod krawędzią (`plaza-geometry.ts`).
+  - W środku blat z parującą płytą, menu na ekranie i światło pod dachem; na ladzie kubki, przed nią ulotki, za kioskiem kartony.
+  - Kiosk przy schodach bierze prąd z szafki ulicznej z gry kablem po ścianie (kontrast techniki i biedy, §3), a na jego dachu stoi donica.
+- **Stoliki:** cztery okrągłe stoliki z krzesłami pod parasolami. Dwa stoją na wschód od fontanny przy automatach, jeden na zachód od niej, jeden między kioskami.
+  - Parasol silnik rysuje jako niski stożek z falbaną i lampą pod spodem.
+  - Bryłą stolika jest ośmiokąt blatu do podłogi, a krzesła siedziskiem.
+  - Ślady sprzed chwili (§5): kubki z parą, karton z jedzeniem, krzesło przewrócone na plecy.
+- **Z modeli gry** (`FRONT_PLAZA_PROPS`, osobny widok mebli, ostatni w `WORLD_SCENERY`):
+  - dwa automaty z napojami przy parapecie rampy, przodem do podium;
+  - cztery kosze i ławka u stopy zielonego stoku;
+  - donice przy filarach arkad i donica z drzewem między kioskami;
+  - szafka uliczna;
+  - sprzedawcy w kioskach (postacie z gry jak w sklepach O2).
+  Bryły mebli to ich prostopadłościany (`modelBoxes`). Własne bryły z pudełek ma tylko to, czego gra nie ma: kiosk, stolik, krzesło, parasol i markiza.
+- **Tłum** (ADR-0060, `PLAZA_CROWD`): klienci w kolejkach przy kioskach, siedzący przy stolikach, jeden na obręczy fontanny i jeden przy automatach.
+- **Przesunięte, nie obudowane:**
+  - trawnik T0 przy Bajkowskiego (x 385–398, z −5,5…−1,5) zniknął z importu, bo na ortofoto miał 1% zieleni (przegląd T-245). Zieleń wraca jako donice i drzewo z gry;
+  - grządka przy zachodnim parapecie rampy zaczyna się u stopy schodów do przejścia (z 1,6, było −6,8);
+  - ławka mapy pod arkadą (404,8; 0) odpada, bo meble mapy omijają obrys podium i schodów (`FRONT_FOOTPRINTS`).
+- **Światło:** pasy w nosie krawędzi podium na południu i zachodzie i nad schodami do przejścia (§4: droga jaśniejsza). Do tego obręcz fontanny, hologram, witryny i szyldy kiosków, lampy pod parasolami i automaty. Na parapecie rampy wzdłuż podium stoją słupki i poręcz, tylko rysowane.
+- **Bryły i identyfikatory:** bryły placu leżą w propach po 8 m na końcu `ALCHEMIA_PROPS` (`FRONT_PLAZA_SOLID_PROPS`), więc identyfikatory wcześniejszych brył zostają. Bryła frontu traci tylko fontannę i kioski z B4. Złote hashe podłogi testowej się nie zmieniają.
+- **Rysunek:** plac należy do siatki kondygnacji (`alchemia-tiers`), więc nie dokłada siatek ani wywołań rysowania. Siatka ma 19 886 trójkątów przy budżecie testu 40 000. Meble gry są wypiekane w blokach mebli ulicy.
+  - Posadzka podium to farba kitu przyciemniona do mokrego kamienia planszy. Stopnie są jasne (§4: droga jaśniejsza).
+  - Hologram to obraz ze światła: blady cyjan z pasami w poprzek, jak ekrany frontu, a nie świecąca płyta.
+- **Sceny `npr-perf`** (wywołania i aktywne siatki, przed → po, budżety bez zmian): `alchemia-tpp` 283/113 → 283/113, `alchemia-t2-tpp` 222/77 → 222/77, `alchemia-p1` 197/74 → 197/74, `alchemia-p2` 207/76 → 207/76, `zielona-budowa-tpp` 153/70 → 153/70. Żadna scena nie patrzy na plac; zrzuty z placu są w raporcie etapu.
+- **Skan:** bez nowych i bez ubyłych miejsc (`scan:diff`: 3652 → 3652). Przesłanianie kościoła św. Józefa przez bryły Alchemii: 87 z 358 oczu (24,3% przy progu 25%), z placem i bez niego tyle samo, bo bryły placu sięgają najwyżej dachu kiosku.
+- **Zapis:** pobudka zapisu v35 z wykopu rampy (`PARKING_WAKE`) stała w (406; −3), czyli teraz w podium. Przeszła na kostkę u stopy schodów przy szczycie rampy (406; −9,6). Schemat bez zmian.
+- **Odstępstwa od planszy:**
+  - Na planszy schody mają sześć do siedmiu stopni na całej szerokości. Tu podium leży 0,48 m nad przejściem, bo inaczej droga spod arkad do wejścia miałaby więcej stopni, a NMT zostaje. Stopnie na wschodzie przechodzą więc w spadek terenu.
+  - Na planszy kiosk stoi przed schodami od ulicy. Tu stoi u stopy schodów zachodnich, bo schody południowe kończą się 1,1 m przed chodnikiem (krawędź placu z −9,2), a na chodnik nic nie wchodzi.
+  - Kawiarnia z parasolami stoi na planszy na wschód od rampy. Tam jest oś wejścia głównego O2b i pawilon, więc stoliki stoją na podium i przy kioskach.
+  - Automaty z planszy to wysokie szafy z neonem na dachu, a tu automaty z napojami z gry.
+- **Testy:**
+  - sim `alchemia-front-plaza.test.ts`: stopnie według reguł; krokowany gracz z chodnika po schodach na podium, pod arkadę, w dół do przejścia i do galerii P1, a także schodami zachodnimi i południowymi w obie strony; fontanna jako bryła; kioski, stoliki i meble z gry; chodnik, jezdnia, rampa i oś O2b wolne; tłum.
+  - engine `alchemia-plaza.test.ts`: plac w siatce kondygnacji, stożki parasoli, markizy, kolory.
+  - Poprawione świadomie: liczniki propów od końca (`FRONT_PLAZA_SOLID_PROPS`), start spod arkady w `alchemia-entrance` na podium, widoki mebli w `street-furniture`, trawniki w `corrections-alchemia`.
+
 ## Konsekwencje
 - Alchemia zgadza się z jedynym planem tego miejsca, a jej tarasy wynikają z NMT, a nie z wyrównanego placu. Topografia ma mniej odstępstw do obrony, a ruina T-188 przestaje być błędem.
 - Sprzedawcy mają lokale z ladami, a targ dostaje trzy poziomy, podziemie i drogi pościgu. To więcej testów nawigacji, za to na sprawdzonym wzorcu metra.
