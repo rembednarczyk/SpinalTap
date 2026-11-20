@@ -1,6 +1,6 @@
 import type { GroundPoint } from "@seki/core";
 import type { Rect } from "../builders";
-import { groundY } from "../lublin/terrain";
+import { groundY, surfaceY } from "../lublin/terrain";
 import { ARCADE_FRONT, ARCADE_WALK } from "./arcade-front";
 import { P1, P1_RAMP } from "./parking";
 import { type Box, type Piece, box, outlined, piece } from "./plan";
@@ -46,25 +46,30 @@ export const PASSAGE_STEPS = 2;
 /** The west stairs run north up to the green slope's foot (`front.ts`, `GREEN_STEPS`). */
 const WEST_END = ARCADE_FRONT.minZ;
 
-/** The highest ground at the foot of the passage's steps: the podium lies a whole number of risers over it. */
-const passageGround = (): number => {
+/**
+ * The highest paving at the foot of the passage's steps: the podium lies a whole number of risers over
+ * it. The paving, not the terrain: the square's setts are drawn `SURFACE_LIFT.square` (8 cm) over the
+ * ground, and a riser is what the eye measures from them (a body stands on the terrain, its feet in the
+ * setts, as everywhere in the city).
+ */
+const passagePaving = (): number => {
   const z = PODIUM.maxZ + PASSAGE_STEPS * PLAZA_GOING;
   let g = -Infinity;
-  for (let x = WING_EAST; x <= PODIUM.maxX + 1e-6; x += 0.25) g = Math.max(g, groundY(x, z));
+  for (let x = WING_EAST; x <= PODIUM.maxX + 1e-6; x += 0.25) g = Math.max(g, surfaceY(x, z));
   return g;
 };
 
-/** The podium's top: one rise more than the passage's steps over the passage's ground. */
-export const PLAZA_TOP = cm(passageGround() + (PASSAGE_STEPS + 1) * PLAZA_RISER);
+/** The podium's top: one rise more than the passage's steps over the passage's paving. */
+export const PLAZA_TOP = cm(passagePaving() + (PASSAGE_STEPS + 1) * PLAZA_RISER);
 
-/** The ground under a box's footprint, lowest and highest, sampled every half metre. */
-const groundRange = (x0: number, x1: number, z0: number, z1: number): { low: number; high: number } => {
+/** The ground (or the paving, `at`) under a box's footprint, lowest and highest, sampled every half metre. */
+const groundRange = (x0: number, x1: number, z0: number, z1: number, at: (x: number, z: number) => number = groundY): { low: number; high: number } => {
   let [low, high] = [Infinity, -Infinity];
   const nx = Math.max(1, Math.ceil((x1 - x0) / 0.5));
   const nz = Math.max(1, Math.ceil((z1 - z0) / 0.5));
   for (let i = 0; i <= nx; i++) {
     for (let k = 0; k <= nz; k++) {
-      const g = groundY(x0 + ((x1 - x0) * i) / nx, z0 + ((z1 - z0) * k) / nz);
+      const g = at(x0 + ((x1 - x0) * i) / nx, z0 + ((z1 - z0) * k) / nz);
       [low, high] = [Math.min(low, g), Math.max(high, g)];
     }
   }
@@ -97,7 +102,8 @@ const bands = (): StepBand[] => {
       out.push({ k, top, down: "w", rect: { minX: x0, maxX: x1, minZ: P.minZ - (k - 1) * G, maxZ: WEST_END } });
     } else out.push({ k, top, down: "w", rect: { minX: x0, maxX: x1, minZ: P.minZ - SOUTH_STEPS * G, maxZ: WEST_END } });
   }
-  for (let k = 1; k <= PASSAGE_STEPS; k++) {
+  // One more where the passage's paving lies lower than at its highest (it falls 6 cm along it): kept only there, so no riser at the foot is over 0.18.
+  for (let k = 1; k <= PASSAGE_STEPS + 1; k++) {
     out.push({ k, top: cm(PLAZA_TOP - k * PLAZA_RISER), down: "n", rect: { minX: WING_EAST, maxX: P.maxX, minZ: P.maxZ + (k - 1) * G, maxZ: P.maxZ + k * G } });
   }
   return out;
@@ -105,8 +111,13 @@ const bands = (): StepBand[] => {
 
 /** A step's length is cut in parts of this most (each a prism of the solids). */
 const STEP_PART = 1.2;
-/** How far a step's top stands over the highest ground under it at least: lower, the ground has it (the steps die into the slope). */
-const OVER_GROUND = 0.03;
+/**
+ * How far a step's top stands over the lowest paving under it at least: lower, the paving has it (the
+ * steps die into the slope). Kept wherever it comes out of the paving at all, the step above it is
+ * never more than a riser and this over the paving (§6: 0.15-0.18); the paving may come a few
+ * centimetres over its tread's back up the slope, as on steps along a sloping street.
+ */
+const OVER_PAVING = 0.01;
 /** Where along a step the ground is looked at. */
 const SLICE = 0.1;
 
@@ -114,7 +125,7 @@ const SLICE = 0.1;
 const partOf = (r: Rect, alongX: boolean, a: number, b: number): Rect => (alongX ? { ...r, minX: r.minX + a, maxX: r.minX + b } : { ...r, minZ: r.minZ + a, maxZ: r.minZ + b });
 
 /**
- * The steps the ground leaves: each band where its top stands over the ground (the ground falls west,
+ * The steps the ground leaves: each band where its top comes out of the paving (the ground falls west,
  * so the south flight's steps run out to the east, as steps along a sloping street do; looked at every
  * 10 cm, so a step ends where the ground comes up to it), in parts along its length, each solid from
  * under the ground to its top.
@@ -126,7 +137,7 @@ export const PLAZA_STEPS: readonly (StepBand & { readonly box: Box })[] = bands(
   const slices = Math.max(1, Math.round(len / SLICE));
   const free = Array.from({ length: slices }, (_, i) => {
     const q = partOf(r, alongX, (len * i) / slices, (len * (i + 1)) / slices);
-    return b.top >= groundRange(q.minX, q.maxX, q.minZ, q.maxZ).high + OVER_GROUND;
+    return b.top >= groundRange(q.minX, q.maxX, q.minZ, q.maxZ, surfaceY).low + OVER_PAVING;
   });
   // Runs of free slices, each cut into parts of at most STEP_PART.
   const out: (StepBand & { box: Box })[] = [];
@@ -154,7 +165,7 @@ export const PLAZA_FLOOR: Rect = {
   minX: PODIUM.minX - WEST_STEPS * PLAZA_GOING,
   maxX: PODIUM.maxX,
   minZ: PODIUM.minZ - SOUTH_STEPS * PLAZA_GOING,
-  maxZ: PODIUM.maxZ + PASSAGE_STEPS * PLAZA_GOING,
+  maxZ: PODIUM.maxZ + (PASSAGE_STEPS + 1) * PLAZA_GOING,
 };
 
 /** The podium: a deck from under the ground to its top, the arcade's walk on it. */

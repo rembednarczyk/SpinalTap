@@ -516,12 +516,12 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
 
 ### Etap C5: plac przed frontem (19.11, gałąź `feat/alchemia-c5-plac`)
 - **Wzorzec:** plac przed wejściem budynku jako „people place” (J. Gehl, „Life Between Buildings”, 1971, i „Cities for People”, 2010; Project for Public Spaces, „How to Turn a Place Around”, 2000): aktywne krawędzie (sklepy pod arkadą, kioski), miejsca do siedzenia (krzesła, obręcz fontanny, ławka, same schody), jedzenie i woda. Różnice: plac jest podniesiony na płycie nad gruntem jak na planszy, a nie zrównany z ulicą, a jedzenie sprzedają kioski, nie parter budynku.
-- **Podium** (`front-plaza.ts`): płyta od zachodniego narożnika domu z arkadami do parapetu rampy, x 394–409,7, z −7,4…1, z posadzką podcienia arkad. Wierzch −0,72, czyli trzy podstopnie nad gruntem przejścia pod L2 (−1,2). Teren opada na zachód, więc podium stoi 0,4 m nad gruntem przy rampie i 1,1 m przy zielonym stoku. NMT bez zmian, bez `PADS`.
+- **Podium** (`front-plaza.ts`): płyta od zachodniego narożnika domu z arkadami do parapetu rampy, x 394–409,7, z −7,4…1, z posadzką podcienia arkad. Wierzch −0,64, czyli trzy podstopnie nad kostką przejścia pod L2 (−1,12; kostka placu jest rysowana 8 cm nad gruntem, `SURFACE_LIFT.square`). Teren opada na zachód, więc podium stoi 0,46 m nad gruntem przy rampie i 1,22 m przy zielonym stoku. NMT bez zmian, bez `PADS`.
 - **Schody** (bryły, 0,16 × 0,30 m, §6):
   - na południe do Bajkowskiego pięć stopni na całej szerokości, do z −8,9, czyli do krawędzi kostki placu przed chodnikiem;
-  - za rogiem na zachód siedem stopni, do stopy zielonego stoku (z −2), razem z południowymi jedno L;
-  - na północ dwa stopnie w dół do przejścia pod L2 na zachód od rampy, którym droga spod arkad idzie dalej do wejścia głównego (O2b).
-  - Stopień kończy się tam, gdzie grunt do niego dochodzi (sprawdzane co 10 cm). Jak schody przy pochyłej ulicy: na wschodzie zostają dwa stopnie, na zachodzie sześć, a ostatni podstopień nad gruntem ma najwyżej 0,22 m.
+  - za rogiem na zachód do siedmiu stopni (z kostki wychodzi sześć), do stopy zielonego stoku (z −2), razem z południowymi jedno L;
+  - na północ dwa stopnie w dół do przejścia pod L2 na zachód od rampy, którym droga spod arkad idzie dalej do wejścia głównego (O2b), i trzeci tam, gdzie kostka przejścia leży niżej (opada wzdłuż niego o 6 cm).
+  - Podstopnie liczy się od kostki, bo ją widzi oko. Stopień zostaje wszędzie, gdzie wychodzi z kostki (sprawdzane co 10 cm), więc żaden podstopień nie przekracza 0,18 m. Na końcu stopnia, gdzie kostka podchodzi pod niego, ostatni podstopień maleje do zera, jak przy schodach na pochyłej ulicy. Dolnej granicy 0,15 m nie da się tam utrzymać bez zmiany NMT, a kostka może wejść kilka centymetrów na tył najniższego stopnia. Ciało stoi na terenie, 8 cm pod kostką, jak wszędzie w mieście, więc ostatni krok ruchu ma do 0,26 m (`STEP_HEIGHT` 0,45).
 - **Fontanna** okrągła jak na planszy, w miejscu kwadratowej z B4: średnica 3,2 m, środek (399,5; −5,2), u szczytu schodów, 1,6 m przed filarami arkad.
   - Obręcz do kolan (0,42 m, siedzisko) z 20 łuków jako bryła; ten sam obrys ma rysunek i bryła, jak w `rounded.ts`.
   - Woda jako bryła, a u stopy obręczy pas światła.
@@ -545,7 +545,7 @@ Porównanie zrzutów z planszą (21:00, od Bajkowskiego, z lotu, z góry, przy r
 - **Tłum** (ADR-0060, `PLAZA_CROWD`): klienci w kolejkach przy kioskach, siedzący przy stolikach, jeden na obręczy fontanny i jeden przy automatach.
 - **Przesunięte, nie obudowane:**
   - trawnik T0 przy Bajkowskiego (x 385–398, z −5,5…−1,5) zniknął z importu, bo na ortofoto miał 1% zieleni (przegląd T-245). Zieleń wraca jako donice i drzewo z gry;
-  - grządka przy zachodnim parapecie rampy zaczyna się u stopy schodów do przejścia (z 1,6, było −6,8);
+  - grządka przy zachodnim parapecie rampy zaczyna się u stopy schodów do przejścia (z 1,9, było −6,8);
   - ławka mapy pod arkadą (404,8; 0) odpada, bo meble mapy omijają obrys podium i schodów (`FRONT_FOOTPRINTS`).
 - **Światło:** pasy w nosie krawędzi podium na południu i zachodzie i nad schodami do przejścia (§4: droga jaśniejsza). Do tego obręcz fontanny, hologram, witryny i szyldy kiosków, lampy pod parasolami i automaty. Na parapecie rampy wzdłuż podium stoją słupki i poręcz, tylko rysowane.
 - **Bryły i identyfikatory:** bryły placu leżą w propach po 8 m na końcu `ALCHEMIA_PROPS` (`FRONT_PLAZA_SOLID_PROPS`), więc identyfikatory wcześniejszych brył zostają. Bryła frontu traci tylko fontannę i kioski z B4. Złote hashe podłogi testowej się nie zmieniają.

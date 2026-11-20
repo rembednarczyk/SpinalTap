@@ -26,7 +26,7 @@ export const PARKING_AREAS: readonly Area[] = [
 /**
  * Where a save made there wakes: on the square west of the ramp's top, a few centimetres over it, at
  * the foot of the stairs before the front (ADR-0074 C5: at (406; -3) the square's podium stands now,
- * 0.4 m over the ground, and a container put there lay inside it).
+ * half a metre over the ground, and a container put there lay inside it).
  */
 export const PARKING_WAKE = { x: 406, y: -1.08, z: -9.6, chunk: "krakowskie-2-1" } as const;
 

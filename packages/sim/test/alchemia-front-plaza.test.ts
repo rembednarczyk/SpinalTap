@@ -25,6 +25,7 @@ import {
   gangerEntity,
   groundY,
   kioskSpots,
+  surfaceY,
   plazaCafePieces,
   plazaCafeSolids,
   plazaFloorPieces,
@@ -87,22 +88,21 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
       // Each step a rise under the one above it, a going deep.
       expect(s.top).toBeCloseTo(PLAZA_TOP - s.k * PLAZA_RISER, 6);
       expect(s.down === "w" ? b.x1 - b.x0 : b.z1 - b.z0).toBeCloseTo(PLAZA_GOING, 6);
-      // Standing over the ground under it, rooted in it.
-      for (const [x, z] of [[b.x0, b.z0], [b.x1, b.z0], [b.x0, b.z1], [b.x1, b.z1]] as const) {
-        expect(s.top, `${s.down}${s.k} ${x},${z}`).toBeGreaterThan(groundY(x, z));
-        expect(b.y0).toBeLessThan(groundY(x, z));
-      }
-      // Down from its nose: the next step a rise lower, or the ground no more than a rise and a little under it.
+      // Coming out of the paving, rooted in the ground.
+      const corners = [[b.x0, b.z0], [b.x1, b.z0], [b.x0, b.z1], [b.x1, b.z1]] as const;
+      expect(Math.max(...corners.map(([x, z]) => s.top - surfaceY(x, z))), `${s.down}${s.k} ${b.x0},${b.z0}`).toBeGreaterThan(0);
+      for (const [x, z] of corners) expect(b.y0).toBeLessThan(groundY(x, z));
+      // Down from its nose: the next step a rise lower, or the paving (drawn 8 cm over the ground) no more than a riser under it.
       const len = s.down === "w" ? b.z1 - b.z0 : b.x1 - b.x0;
       for (let t = 0.1; t < len; t += 0.2) {
         const [x, z] = s.down === "w" ? [b.x0 - 0.05, b.z0 + t] : s.down === "s" ? [b.x0 + t, b.z0 - 0.05] : [b.x0 + t, b.z1 + 0.05];
         const below = PLAZA_STEPS.find((q) => q.k === s.k + 1 && x >= q.box.x0 - 1e-6 && x <= q.box.x1 + 1e-6 && z >= q.box.z0 - 1e-6 && z <= q.box.z1 + 1e-6);
         if (below) expect(s.top - below.top).toBeCloseTo(PLAZA_RISER, 6);
-        else worstFoot = Math.max(worstFoot, s.top - groundY(x, z));
+        else worstFoot = Math.max(worstFoot, s.top - surfaceY(x, z));
       }
     }
-    // The steps die into the slope (the ground falls west): the last one's rise over it at most a riser and a few centimetres.
-    expect(worstFoot).toBeLessThan(PLAZA_RISER + 0.06);
+    // The steps die into the slope (the ground falls west): the last one's rise over the paving at most §6's 0.18 m.
+    expect(worstFoot).toBeLessThanOrEqual(0.18);
     // No flight longer than a landing's 17 risers (§6).
     expect(Math.max(...PLAZA_STEPS.map((s) => s.k))).toBeLessThanOrEqual(17);
   });
