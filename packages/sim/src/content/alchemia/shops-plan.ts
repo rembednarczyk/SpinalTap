@@ -1,7 +1,8 @@
 import { type Box, HALL, HALL_INNER, box } from "./plan";
 import { MAIN_DOORS, MALL, MALL_GLASS_THICK, MALL_LEVELS } from "./mall-plan";
 import type { Rectangle } from "./rounded";
-import { FRONT_CEILINGS, FRONT_FLOORS, type FrontFloor } from "./front-levels";
+import { FRONT_CEILINGS, FRONT_FLOORS } from "./front-levels";
+import type { ShopDef, ShopFront } from "./shop-types";
 import { FRONT_SHOPS, TOKYO_DRIP_L2 } from "./front-shops";
 
 /*
@@ -16,38 +17,7 @@ import { FRONT_SHOPS, TOKYO_DRIP_L2 } from "./front-shops";
  * the frame mirrored then.
  */
 
-/** What a shop sells: its fittings, its light and its sign's colour in the engine. */
-export type ShopTrade = "implants" | "electronics" | "clothing" | "pharmacy" | "arms" | "repair" | "pawn" | "tattoo" | "synth-food" | "vr" | "crypto" | "florist";
-
-/**
- * Open, its shutter down (`shut`: a rolling shutter, or bars over its glass with `grille`), or
- * `vacant`: to let, its glass papered over, cartons on its floor.
- */
-export type ShopState = "open" | "shut" | "grille" | "vacant";
-
-/** Which side of its rectangle is its front, on the gallery. */
-export type ShopFront = "n" | "s" | "e" | "w";
-
-export interface ShopDef {
-  readonly id: string;
-  /** The gallery's floor, or one of the front's storeys (ADR-0093 O5, `front-levels.ts`). */
-  readonly floor: "p0" | "p1" | "p2" | FrontFloor;
-  readonly rect: Rectangle;
-  readonly front: ShopFront;
-  /** The part of the front on the gallery (`u` from-to), for a corner unit; the rest of that side is a partition. */
-  readonly window?: { readonly u0: number; readonly u1: number };
-  /** A corner unit's sales floor up to this `u`; past it, behind a partition with a door, its back room. */
-  readonly sales?: number;
-  readonly trade: ShopTrade;
-  readonly state: ShopState;
-  /** The sign over its front: a proper name in the world's language, the same in every language (ADR-0056). */
-  readonly sign: string;
-  readonly door?: "r";
-  /** A partition across its back: its back is on no glass (a front's unit back to back with a café, short of a rounded corner, O5). */
-  readonly back?: true;
-  /** Its front on the street: the storey's glass before its shopfront, open at its door (L1's east wing, O5). */
-  readonly street?: true;
-}
+export type { ShopDef, ShopFront, ShopState, ShopTrade } from "./shop-types";
 
 /** The glass's inner faces (its panes `MALL_GLASS_THICK` deep inside the body's line, `mall.ts`). */
 export const GLASS_IN: Rectangle = { x0: MALL.x0 + MALL_GLASS_THICK, x1: MALL.x1 - MALL_GLASS_THICK, z0: MALL.z0 + MALL_GLASS_THICK, z1: MALL.z1 - MALL_GLASS_THICK };

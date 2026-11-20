@@ -1,5 +1,5 @@
 import type { Rectangle } from "./rounded";
-import type { ShopDef } from "./shops-plan";
+import type { ShopDef } from "./shop-types";
 
 /*
  * The units of the front's storeys (ADR-0093 O5): the gallery's in-line units (O2's pattern: a
