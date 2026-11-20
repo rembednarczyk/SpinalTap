@@ -248,6 +248,17 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
 - **Pomieszczenia ADR-0061:** kondygnacje frontu należą do `alchemia-gallery`, prostokąty na licach ścian, bez krawędzi w dłoni od ścianki wzdłuż niej.
 - **Rysunek:** szkło frontu ramą (`paneFrame`) zamiast fałszywego wnętrza (`glassFacade` z sylwetkami i stolikami usunięte), pomieszczenia i lokale w siatce wnętrza, nazwy kawiarni, baru i grilla neonem (`venue-signs.ts`). Belka stropów frontu rysowana jako pierścień przy krawędzi (z zewnątrz jak dotąd), sufit pomieszczeń na spodzie stropu: pełna płyta schodziła o belkę (0,32 m) i chowała lampy i instalacje pod stropem. Siatka wnętrza rysowana także w 75 m od frontu (z placu przed nim i z Placu Łokietka przy Ratuszu), nie tylko w 45 m od hali; sceny `npr-perf` poza tym zasięgiem (Rynek ok. 100 m, Zielona) bez zmian. Deszcz nie pada w pomieszczeniach frontu. Modele gry pomieszczeń w ostatnim widoku `street-props` scenerii. Trójkąty: wnętrze 86 348 → 135 966 (limit testu 90 000 → 140 000, decyzja z 19.11: trójkąty wolne), kondygnacje 16 638 → 23 330, zewnętrzna 22 536 → 22 496.
 - **Budżety `npr-perf`** (wywołania i aktywne siatki, przed → po, budżety bez zmian): `alchemia-tpp` 283/113 → 283/113, `alchemia-t2-tpp` 222/77 → 222/77, `alchemia-p1` 197/74 → 197/74, `alchemia-p2` 207/76 → 207/76, `zielona-budowa-tpp` 153/70 → 153/70.
+- **Ciepłe światło widziane z placu** (decyzja koordynatora po pierwszym raporcie: elewacja nocą ciemniejsza niż fałszywe wnętrza z main nie wystarcza; wzorzec: ciepłe tła main jako prawdziwe źródła w pomieszczeniach):
+  - bary przy szkle (L3 od południa po obu stronach przejścia do drzwi, L2 w narożniku przy pasażu poprzecznym): lada z podświetlonym frontem i blatem, stołki, postacie z gry siedzące twarzą na plac, lampy wiszące nisko nad ladą, podświetlone tablice menu nad nią, stojaki z menu w narożnikach;
+  - ciepłe pasy pod stropem wzdłuż szkła L2 i L3, świetlne sufity nad barami i kawiarnią, panele co 2,4 m (w siatce kondygnacji, więc i z daleka);
+  - lokale od ulicy (NIGHT SILK pod arkadami, KONBINI): lampy wzdłuż witryny, podświetlone tło ekspozycji, ściana przy drzwiach i ściana za ladą;
+  - pasaż L1: podświetlona reklama na boku NIGHT SILK, totem przy drzwiach od arkad, tablica nad tymi drzwiami, okładzina szachtu za pierwszym łukiem; lampiony w przęsłach arkad;
+  - girlandy lampionów nad żywopłotami tarasów L2 i L3; postacie przy stolikach kawiarni przy szkle;
+  - drzewa przesunięte w O5 na taras wschodni L2 i na dach L3 stały w linii widoku z placu: taras wschodni dalej na północ, dach L3 z powrotem przy masztach.
+  Pomiar na zrzutach o 22:00 (`shots:compare`, obszar frontu w kadrze 1280 × 720, bez ekranu SEKI i hologramów, których O5 nie rusza; ciepły piksel: R > G > B, R − B > 40, jasność > 80):
+  - `plac-front`: jasność 66,8 → 64,8, ciepłe piksele 8,0% → 6,6% (przed tym krokiem 61,0 i 3,1%);
+  - `plac-gora`: jasność 54,3 → 54,1, ciepłe piksele 5,4% → 5,9% (przed: 48,5 i 0,6%).
+  Z placu zostaje różnica pod łukami arkad i w pasie na prawo od ekranu SEKI: tła main były ciepłą płaszczyzną od posadzki do stropu, prawdziwe pomieszczenia mają posadzkę, meble i ludzi. Z daleka (dalej niż 75 m, wnętrza nie rysują się) świecą panele, pasy i sufity w siatce kondygnacji, bez osobnego tła ani siatki.
 - **Bryły:** w slocie frontu w `ALCHEMIA_PROPS` zostały schody zieleni i filary arkad (na gruncie), reszta kondygnacji frontu, lokale (po jednym propie) i wyposażenie z donicami tarasów jako ostatnie (`FRONT_O5_PROPS`), kafelki 12 m. Identyfikatory sprzed O5 bez zmian.
 - **Pomiary:**
   - miara strzału zza barku (G-275) w pomieszczeniach frontu: 181 przy pierwszym układzie, 0 po ściankach 0,2 m, szachtach w narożnikach i granicach pomieszczeń na licach ścian; galeria 0, reszta miasta bez zmian;
@@ -265,7 +276,8 @@ Rekomendowane opcje wybiera agent. Wcześniej w tym samym dniu użytkownik zdecy
   - przegląd kuratora topografii (treść w obrysie frontu, obrys i wysokość bez zmian, skan przesłaniania jak na main);
   - zapis: schemat bez zmian; gracz zapisany przed O5 w bryle szkła frontu (niemożliwe) albo na P2 w lokalu TOKYO DRIP (teraz przejście) wczyta się normalnie, na P3 w miejscu przesuniętego stołu w jego bryle;
   - czas klatki na telefonie odniesienia z siatką wnętrza ok. 136 tys. trójkątów niezmierzony;
-  - dalej niż 75 m od frontu (np. z Rynku) wnętrza frontu nie są rysowane i przez ramy szkła widać puste kondygnacje; zastępnik z daleka (podświetlone tyły lokali w siatce kondygnacji) do decyzji.
+  - dalej niż 75 m od frontu (np. z Rynku) wnętrza frontu nie są rysowane: przez ramy szkła widać oświetlone stropy (panele, pasy i sufity w siatce kondygnacji), bez mebli i ludzi;
+  - jasność frontu z placu (`plac-front`) o ok. 3% i ciepłe piksele o ok. 1,4 punktu poniżej main (szczegóły wyżej), do decyzji.
 
 ## Konsekwencje
 - Graf, punkty tłumu, zadania i dialogi związane z halą zmieniają się w O1 i O3. Testy tras i zadań idą za nimi.
