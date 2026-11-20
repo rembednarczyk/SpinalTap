@@ -109,11 +109,12 @@ const hideo = (): ScheduleDef => {
   const { hideoHome: home } = KANAL_SPOTS;
   const bramowa = ground(520, -63);
   // Over the Rynek and into Bramowa at its mouth: from SAKE straight to Bramowa runs through the houses (G-943).
-  const rynek = [ground(548, -70), ground(536, -54)];
+  const rynek = ground(548, -70);
+  const mouth = ground(536, -54);
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "dom", at: hm(2), path: [...rynek, bramowa, home], yaw: Math.PI / 2, activity: "sleep" },
+      { label: "dom", at: hm(2), path: [rynek, mouth, bramowa, home], yaw: Math.PI / 2, activity: "sleep" },
       { label: "do pracy", at: hm(7, 30), path: [bramowa, ...GRODZKA_WALK, HIDEO_BUS_STOP], yaw: Math.PI / 2, activity: "phone" },
       { label: "sake", at: hm(17), path: [HIDEO_BUS_STOP, ...[...GRODZKA_WALK].reverse(), sake.position], yaw: sake.yaw, activity: "drink" },
     ],
