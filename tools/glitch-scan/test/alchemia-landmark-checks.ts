@@ -9,6 +9,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { buildingView } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
+import { MEMORIAL_CLEAR, type RemembrancePlace, remembranceOff } from "../../../packages/sim/src/content/remembrance";
 import { type CityKitData, GeometrySink, parseCityKit, swatchUv } from "../../../packages/engine/src/renderer/city-kit-data";
 import { DEPTAK_SIGNS, type DeptakSign, planDeptakSigns } from "../../../packages/engine/src/renderer/alchemia/deptak-signs";
 import { foodhallGeometry } from "../../../packages/engine/src/renderer/alchemia/foodhall-geometry";
@@ -39,18 +40,13 @@ import { geoToWorld } from "../../osm-import/src/project.ts";
  */
 
 type Finding = { readonly at: string; readonly what: string };
-type GroundPoint = { readonly x: number; readonly z: number };
+/** A point of a sign on the plan, and its height where it is known (world y). */
+type GroundPoint = { readonly x: number; readonly z: number; readonly y?: number };
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
 /** A place of remembrance kept clear of neon: its box on the plan (a stumbling stone's is its node). */
-export interface Remembrance {
-  readonly name: string;
-  readonly x0: number;
-  readonly x1: number;
-  readonly z0: number;
-  readonly z1: number;
-}
+export type Remembrance = RemembrancePlace;
 
 /** A glowing sign, or a piece of one (a letter, a quad, a tube): what draws it, its kind, its points on the plan. */
 export interface Glow {
@@ -59,12 +55,21 @@ export interface Glow {
   readonly points: readonly GroundPoint[];
 }
 
-/** No glowing sign nearer a place of remembrance than this, across the plan (m). */
-export const MEMORIAL_CLEAR = 20;
+/** No glowing sign nearer a place of remembrance than this, across the plan (m): the rule the map's signs keep (`remembrance.ts` of sim). */
+export { MEMORIAL_CLEAR };
+/** The ground at a point (world y), as the terrain, T2's pads and the cuts shape it. */
+export type GroundAt = (x: number, z: number) => number;
+
+/** The map's ground, and none (every sign over it) off its chunks, where `groundY` answers 0 for want of a terrain. */
+const mapGround: GroundAt = (x, z) => (MAP_CHUNKS.some((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ) ? groundY(x, z) : -Infinity);
+
 /** Two points of one source's glow this close are one sign (m): the gap between a sign's letters is under it. */
 const ONE_SIGN = 1.5;
 
-/** The memorial stone of Plac Ofiar Getta on T2 (ADR-0074 stage 2) and the map's stumbling stones (`memorial=stolperstein`). */
+/**
+ * The memorial stone of Plac Ofiar Getta on T2 (ADR-0074 stage 2) and the map's stumbling stones
+ * (`memorial=stolperstein`), read from the OSM data, not from what the import made of them.
+ */
 export const remembrances = (nodes: Iterable<{ readonly lat: number; readonly lon: number; readonly tags?: Readonly<Record<string, string>> }>): Remembrance[] => {
   const m = ALCHEMIA_MEMORIAL;
   const out: Remembrance[] = [{ name: "the memorial of Plac Ofiar Getta", x0: m.x0, x1: m.x1, z0: m.z0, z1: m.z1 }];
@@ -76,7 +81,6 @@ export const remembrances = (nodes: Iterable<{ readonly lat: number; readonly lo
   return out;
 };
 
-const offBox = (p: GroundPoint, r: Remembrance): number => Math.hypot(Math.max(r.x0 - p.x, 0, p.x - r.x1), Math.max(r.z0 - p.z, 0, p.z - r.z1));
 
 type Close = { readonly p: GroundPoint; readonly piece: number; readonly kind: string; readonly d: number; readonly r: Remembrance };
 
@@ -99,14 +103,17 @@ const signsOf = (close: readonly Close[]): Close[][] => {
  * `memorial-neon-clear` (the curator's reviews of Alchemia, ADR-0074 §6): a glowing sign nearer
  * than 20 m across the plan to the memorial of Plac Ofiar Getta or a stumbling stone. One finding
  * a sign (a source's points within `ONE_SIGN` of each other), at the middle of its part within reach.
+ * Only what can be seen from the ground counts: a point under the ground at it (a neon in a room
+ * under T2, its slab and the square's paving over it) is out of sight of the stone, as §6 means it.
  */
-export const memorialNeonClear = (places: readonly Remembrance[], glows: readonly Glow[]): Finding[] => {
+export const memorialNeonClear = (places: readonly Remembrance[], glows: readonly Glow[], ground: GroundAt = mapGround): Finding[] => {
   const bySource = new Map<string, Close[]>();
   glows.forEach((g, piece) => {
     for (const p of g.points) {
+      if (p.y !== undefined && p.y < ground(p.x, p.z)) continue;
       let best: Close | null = null;
       for (const r of places) {
-        const d = offBox(p, r);
+        const d = remembranceOff(p, r);
         if (d < MEMORIAL_CLEAR && (!best || d < best.d)) best = { p, piece, kind: g.kind, d, r };
       }
       if (best) bySource.set(g.source, [...(bySource.get(g.source) ?? []), best]);
@@ -134,7 +141,7 @@ export const meshGlows = (sink: MeshSink, source: string): Glow[] => {
   for (let v = 0; v + 3 < sink.vertexCount; v += 4) {
     const kind = GLOWING.get(Math.round(sink.uvs2[v * 2 + 1]!) % NEAR_ONLY.kind);
     if (kind === undefined) continue;
-    out.push({ source, kind, points: [0, 1, 2, 3].map((k) => ({ x: sink.positions[(v + k) * 3]!, z: sink.positions[(v + k) * 3 + 2]! })) });
+    out.push({ source, kind, points: [0, 1, 2, 3].map((k) => ({ x: sink.positions[(v + k) * 3]!, y: sink.positions[(v + k) * 3 + 1]!, z: sink.positions[(v + k) * 3 + 2]! })) });
   }
   return out;
 };
@@ -212,13 +219,13 @@ const neonTriangles = (sink: GeometrySink, data: CityKitData, source: string): G
   const out: Glow[] = [];
   for (let t = 0; t + 2 < sink.indices.length; t += 3) {
     const tri = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!];
-    if (tri.every(lit)) out.push({ source, kind: "neon", points: tri.map((v) => ({ x: sink.positions[v * 3]!, z: sink.positions[v * 3 + 2]! })) });
+    if (tri.every(lit)) out.push({ source, kind: "neon", points: tri.map((v) => ({ x: sink.positions[v * 3]!, y: sink.positions[v * 3 + 1]!, z: sink.positions[v * 3 + 2]! })) });
   }
   return out;
 };
 
-/** A neon's plate on the plan, `half` either way of its middle along x and z. */
-const plate = (source: string, x: number, z: number, hx: number, hz: number): Glow => ({
+/** A neon's plate on the plan, `half` either way of its middle along x and z; its points at its top (world y) where it is known. */
+const plate = (source: string, x: number, z: number, hx: number, hz: number, top?: number): Glow => ({
   source,
   kind: "neon",
   points: [
@@ -226,7 +233,7 @@ const plate = (source: string, x: number, z: number, hx: number, hz: number): Gl
     { x: x + hx, z: z - hz },
     { x: x + hx, z: z + hz },
     { x: x - hx, z: z + hz },
-  ],
+  ].map((p) => (top === undefined ? p : { ...p, y: top })),
 });
 
 /**
@@ -242,19 +249,19 @@ export const gameNeonGlows = (): Glow[] => {
   foodhallGeometry(hall, data);
   const pavilion: GroundPoint[] = [];
   pavilionFaces((c, _n, look) => {
-    if (look === "neon") pavilion.push(...c.map((p) => ({ x: p.x, z: p.z })));
+    if (look === "neon") pavilion.push(...c.map((p) => ({ x: p.x, y: p.y, z: p.z })));
   });
   const A = ARCADE_FRONT;
   // The arcade house's ALCHEMIA over its middle arch is drawn in the windows' warm swatch: placed as `arcade-front-geometry.ts` places it.
   const arcadeHalf = neonWidth("ALCHEMIA", 0.5) / 2;
   const w3Half = neonWidth("TESSEN", W3_NEON.height) / 2 + 0.6;
-  const props = WORLD_CHUNKS.flatMap((c) => c.props.flatMap((p) => (p.view.kind === "neon" ? [plate(`neon ${p.view.label ?? p.view.color}`, p.center.x, p.center.z, p.view.size.x / 2, p.view.size.z / 2)] : [])));
+  const props = WORLD_CHUNKS.flatMap((c) => c.props.flatMap((p) => (p.view.kind === "neon" ? [plate(`neon ${p.view.label ?? p.view.color}`, p.center.x, p.center.z, p.view.size.x / 2, p.view.size.z / 2, p.center.y + p.view.size.y / 2)] : [])));
   const devices = WORLD_DEVICES.flatMap((d) => {
     const view = deviceView(d.kind);
     if (view.kind !== "neon") return [];
     // Turned by its yaw: the plate's square on the plan holds it either way.
     const half = Math.max(view.size.x, view.size.z) / 2;
-    return [plate(`device ${d.key}`, d.position.x, d.position.z, half, half)];
+    return [plate(`device ${d.key}`, d.position.x, d.position.z, half, half, d.position.y + view.size.y / 2)];
   });
   return [
     ...neonTriangles(shops, data, "the gallery's shop signs (O2)"),

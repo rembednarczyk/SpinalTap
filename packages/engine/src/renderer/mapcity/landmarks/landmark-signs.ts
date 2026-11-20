@@ -1,6 +1,7 @@
 import type { MeshSink, Rgba, Vec } from "../../mesh-sink";
 import type { FacadeFrame, Wall } from "../facade-frame";
 import { spanAt } from "../passage-plan";
+import { hushedOnWall } from "../remembrance-clear";
 import { MAP_SIGN_KIND } from "../sign-plan";
 import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
@@ -98,7 +99,8 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
     const best = clockWalls(f).neon;
     if (best) {
       const c = clockSpot(f, best);
-      flat(sink, best, best.length / 2, c.y, 0.14, c.r * 2.3, c.r * 2.3, tint("#5ce1ff", 0.9), [HOLO_RING_SEED, MAP_SIGN_KIND.holo]);
+      // The holographic face is left out by a place of remembrance (G-943).
+      if (!hushedOnWall(f.b.remembrance, best, best.length / 2 - c.r * 1.15, best.length / 2 + c.r * 1.15, 0.14)) flat(sink, best, best.length / 2, c.y, 0.14, c.r * 2.3, c.r * 2.3, tint("#5ce1ff", 0.9), [HOLO_RING_SEED, MAP_SIGN_KIND.holo]);
     }
   }
   if (layer.checkpoint) jambStrips(sink, f, tint("#ff2e88", 1));

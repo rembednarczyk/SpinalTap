@@ -1,7 +1,9 @@
 import type { BuildingPassage, EntityId, Vec3, ViewDescriptor } from "@seki/core";
+import { MEMORIAL_CLEAR, REMEMBRANCE_PLACES, type RemembrancePlace } from "@seki/sim";
+import { SPAN_MAX } from "./canyon-plan";
 import type { MapBuilding, WorldPassage } from "./facade-frame";
 import { bellTowersAt, towerAt, wallAt } from "./landmarks/match";
-import { type P2, centroid, pointInRing } from "./polygon";
+import { type P2, boundsOf, centroid, pointInRing } from "./polygon";
 
 /** A building view of the map city, with its clean ring in world metres. */
 export interface BuildingSource {
@@ -28,6 +30,16 @@ const carriesPart = (e: BuildingSource, around: Iterable<BuildingSource>): boole
 };
 
 /**
+ * The places of remembrance its signs may reach (ADR-0074 §6, G-943): the signs on its walls, and
+ * the billboards and curtains over the street, which hang up to `SPAN_MAX` off them.
+ */
+export const remembranceNear = (ring: readonly P2[], places: readonly RemembrancePlace[] = REMEMBRANCE_PLACES): RemembrancePlace[] => {
+  const b = boundsOf(ring);
+  const reach = MEMORIAL_CLEAR + SPAN_MAX;
+  return places.filter((r) => Math.hypot(Math.max(r.x0 - b.maxX, 0, b.minX - r.x1), Math.max(r.z0 - b.maxZ, 0, b.minZ - r.z1)) < reach);
+};
+
+/**
  * The measured building of a view (ADR-0044). The entity stands at the foot of its outline; on a
  * slope the bottom `plinth` metres are a plinth, so the ground floor (and the window grid)
  * starts above it. A footbridge (ADR-0048) keeps the street as its ground floor and draws from
@@ -38,6 +50,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
   const v = e.view;
   const base = e.at.y;
   const towers = bellTowersAt(e.at.x, e.at.z, v.outline.length);
+  const quiet = remembranceNear(e.ring);
   const plinth = v.soffit !== undefined ? 0 : Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
   let foot = v.soffit !== undefined ? base + Math.min(Math.max(v.soffit, 0), v.height - 1) : base;
   if (v.soffit === undefined) for (const p of e.ring) foot = Math.min(foot, heightAt(p.x, p.z) ?? base);
@@ -65,6 +78,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
     ...(v.vertical ? { rise: Math.max(0, v.vertical.rise), clutter: Math.min(1, Math.max(0, v.vertical.clutter)) } : {}),
     ...(v.venues?.length ? { venues: v.venues.map((u) => ({ x: u.at.x + e.at.x, z: u.at.z + e.at.z, name: u.name, color: u.color })) } : {}),
+    ...(quiet.length > 0 ? { remembrance: quiet } : {}),
     ...(v.vertical?.landmarks?.length ? { landmarks: v.vertical.landmarks.map((l) => ({ ring: l.outline.map((p) => ({ x: p.x + e.at.x, z: p.z + e.at.z })), top: l.top + e.at.y })) } : {}),
   };
 };
