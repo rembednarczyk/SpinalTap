@@ -24,6 +24,13 @@ const ALCHEMIA_TRIANGLES = 40000;
  * arcades, the café and L3's bar, grill and tables, 86 348 -> 135 738, the same decision).
  */
 const INSIDE_TRIANGLES = 140000;
+/**
+ * The tiers' mesh (the front's storeys, the square, the green): its curtains of green drawn as ivy since
+ * 20.11, strands of single leaves (some 52 thousand triangles on 270 curtains, the mesh some 24 thousand before
+ * them); the user's decision of 19.11, triangles free, the gates the draw calls and active meshes,
+ * which the ivy leaves as they were (it is in this mesh).
+ */
+const TIERS_TRIANGLES = 90000;
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -46,7 +53,7 @@ describe("Alchemia's food hall in the engine (ADR-0074 stage 1)", () => {
     expect(inside.indices.length / 3).toBeLessThanOrEqual(INSIDE_TRIANGLES);
     // The green tiers of 15.11, a building of their own (ADR-0074 §7).
     expect(tiers.indices.length / 3).toBeGreaterThan(500);
-    expect(tiers.indices.length / 3).toBeLessThanOrEqual(ALCHEMIA_TRIANGLES);
+    expect(tiers.indices.length / 3).toBeLessThanOrEqual(TIERS_TRIANGLES);
     // Nothing of it outside the plot round the hall and its ramps, T2 with its stairs, the Arkady with their pavements, and the pavilion on the corner (stage 3).
     const onPlot = (x: number, z: number) => x > FOODHALL.minX - 7 && x < FOODHALL.maxX + 7 && z > FOODHALL.minZ - 7 && z < 94;
     const onCorner = (x: number, z: number) => x > 420.2 && x < 436.6 && z > -9.1 && z < 6.4;

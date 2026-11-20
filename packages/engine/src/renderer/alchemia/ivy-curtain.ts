@@ -92,8 +92,8 @@ export const ivyCurtain = (sink: GeometrySink, uv: readonly [number, number], pt
   for (let i = 0; i < strands; i++) {
     const along = ((i + 0.2 + 0.6 * hash(a.x, i, a.z, 6)) / strands) * w;
     const root = { x: a.x + t.x * along, z: a.z + t.z * along };
-    // Most strands hang to the curtain's bottom, some stop short: the board's ragged hem.
-    const r = hash(root.x, y1, root.z, 7);
+    // Most strands hang to the curtain's bottom (every third all the way), some stop short: the board's ragged hem.
+    const r = i % 3 === 1 ? 0 : hash(root.x, y1, root.z, 7);
     const bottom = y0 + drop * 0.45 * r * r;
     const out = 0.05 + 0.07 * hash(root.x, y1, root.z, 8);
     const phase = hash(root.x, y1, root.z, 9) * 6.283;
