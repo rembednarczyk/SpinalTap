@@ -1,4 +1,5 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
+import type { RemembrancePlace } from "@seki/sim";
 import type { BellTower } from "./landmarks/bell-towers";
 import { ROOF_DETAIL, WALL_DETAIL } from "../../npr/detail-layers";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, type WallMaterial, facadeStyle } from "./facade-style";
@@ -55,6 +56,8 @@ export interface MapBuilding {
   readonly landmarks?: readonly { readonly ring: readonly P2[]; readonly top: number }[];
   /** The map's venues in or at it (ADR-0064 stage 4): world points, 2077 names, neon colours. */
   readonly venues?: readonly MapVenue[];
+  /** The places of remembrance within reach of its signs (ADR-0074 §6, G-943): its signs keep off them (`remembrance-clear.ts`). */
+  readonly remembrance?: readonly RemembrancePlace[];
 }
 
 /** A venue of the map on a building, its point in world metres (ADR-0064 stage 4). */

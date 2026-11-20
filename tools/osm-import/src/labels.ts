@@ -193,6 +193,8 @@ export const poiKind = (t: Tags): { kind: PoiKind; tag: string } | null => {
   if (CULTURE.has(a)) return { kind: "culture", tag: `amenity=${a}` };
   if (SERVICE.has(a)) return { kind: "service", tag: `amenity=${a}` };
   if (t.tourism === "museum" || t.tourism === "attraction" || t.tourism === "artwork" || t.tourism === "viewpoint" || t.historic) {
+    // A stumbling stone by its own tag: the map's signs keep off it (ADR-0074 §6, `remembrance.ts` of sim).
+    if (t.memorial === "stolperstein") return { kind: "sight", tag: "memorial=stolperstein" };
     return { kind: "sight", tag: t.tourism ? `tourism=${t.tourism}` : `historic=${t.historic}` };
   }
   if (t.office) return { kind: "office", tag: `office=${t.office}` };

@@ -2,6 +2,7 @@ import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
+import { hushedOnWall, quietStretches } from "./remembrance-clear";
 import { clearSpotFrom, clearStretches, fitFlatSign, wallNear } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 
@@ -144,7 +145,7 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const width = Math.min(w.length * 0.7, 14);
     // A narrow wall's whole ad is narrower than HOLO_MIN: only a neighbour may leave it out (G-157).
     const fit = fitFlatSign(f, w, w.length / 2, width, Math.min(HOLO_MIN, width), 0.45, bottom);
-    if (!fit) continue;
+    if (!fit || hushedOnWall(f.b.remembrance, w, fit.u - fit.width / 2, fit.u + fit.width / 2, 0.45)) continue;
     const height = Math.min(exposed * 0.75, fit.width * 1.6);
     flatOnWall(sink, w, fit.u, from + exposed / 2, 0.45, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
   }
@@ -158,7 +159,7 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const width = Math.min(w.length * 0.5, 10);
     const bottom = f.top - 2 - Math.min(width * 1.4, tall * 0.4);
     const fit = fitFlatSign(f, w, want, width, Math.min(HOLO_MIN, width), 0.8, bottom);
-    if (!fit) return;
+    if (!fit || hushedOnWall(f.b.remembrance, w, fit.u - fit.width / 2, fit.u + fit.width / 2, 0.8)) return;
     const height = Math.min(fit.width * 1.4, tall * 0.4);
     flatOnWall(sink, w, fit.u, f.top - height / 2 - 2, 0.8, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
   }
@@ -181,8 +182,12 @@ const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: S
     const u = width / 2 + 0.5 + rand() * Math.max(w.length - width - 1, 0);
     if (f.style.shopfront) {
       const cell = Math.floor(rand() * MAP_SIGN_BOARDS.length);
-      flatOnWall(sink, w, u, f.b.base + f.ground - 0.45, 0.1, width, h, signTint(color, 1), [cell, MAP_SIGN_KIND.board]);
-      signReflection(sink, w, u, ground, groundY, width * 0.9, 6, signTint(color, 0.8), rand());
+      const seed = rand();
+      // By a place of remembrance the board is left out, its draws kept, so the blade stays as it was (G-943).
+      if (!hushedOnWall(f.b.remembrance, w, u - width / 2, u + width / 2, 0.1)) {
+        flatOnWall(sink, w, u, f.b.base + f.ground - 0.45, 0.1, width, h, signTint(color, 1), [cell, MAP_SIGN_KIND.board]);
+        signReflection(sink, w, u, ground, groundY, width * 0.9, 6, signTint(color, 0.8), seed);
+      }
     }
     if (rand() < 0.6) {
       const end = rand() < 0.5 ? 0.9 : w.length - 0.9;
@@ -192,7 +197,7 @@ const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: S
       const y = f.b.base + f.ground + 1.7;
       // Off the end where a neighbour stands out in front of the wall (G-157), or none.
       const u = clearSpotFrom(f, w, end, w.length - end, BLADE_OUT[0], BLADE_OUT[1], y - BLADE_HEIGHT / 2);
-      if (u === null) continue;
+      if (u === null || hushedOnWall(f.b.remembrance, w, u - 0.02, u + 0.02, BLADE_OUT[0], BLADE_OUT[1])) continue;
       blade(sink, w, u, y, cell, bc);
       signReflection(sink, w, u, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], seed);
     }
@@ -231,7 +236,8 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
   for (const w of f.walls) {
     if (hiddenWall(f, w) || w.blind) continue;
     // Looking every 0.1 m of every wall up took most of the signs' time: only near the neighbours now.
-    for (const [a, b] of clearStretches(f, w, TUBE_OUT, TUBE_OUT, y - TUBE_HEIGHT / 2, wallNear(f, w, TUBE_OUT))) {
+    // Cut off by a place of remembrance's zone too (G-943).
+    for (const [a, b] of quietStretches(f.b.remembrance, w, TUBE_OUT, clearStretches(f, w, TUBE_OUT, TUBE_OUT, y - TUBE_HEIGHT / 2, wallNear(f, w, TUBE_OUT)))) {
       // The samples may end a whole wall a hair short of its length, so a short wall keeps its tube.
       if (b - a >= Math.min(TUBE_MIN, w.length) - 1e-6) flatOnWall(sink, w, (a + b) / 2, y, TUBE_OUT, b - a, TUBE_HEIGHT, signTint(color, 1), [0, MAP_SIGN_KIND.tube]);
     }

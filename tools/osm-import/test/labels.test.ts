@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { chunkFlights, chunkFootWays, chunkServiceWays, chunkStepRuns, chunkStreets } from "../src/labels.ts";
+import { chunkFlights, chunkFootWays, chunkServiceWays, chunkStepRuns, chunkStreets, poiKind } from "../src/labels.ts";
 
 const rect = { minX: 0, minZ: 0, maxX: 100, maxZ: 100 };
 const street = (x0: number, x1: number): Line => ({ id: "w1", osmId: 1, tags: { highway: "residential", name: "Lubartowska" }, line: [{ x: x0, z: 50 }, { x: x1, z: 50 }] });
@@ -87,5 +87,12 @@ describe("chunk runs of steps with a step_count (G-840)", () => {
     expect(chunkStepRuns([bent({ step_count: "x" })], rect)).toEqual([]);
     expect(chunkStepRuns([bent({ step_count: "9", tunnel: "yes" })], rect)).toEqual([]);
     expect(chunkStepRuns([bent({ step_count: "9", highway: "footway" })], rect)).toEqual([]);
+  });
+});
+
+describe("points of interest", () => {
+  it("keep a stumbling stone by its own tag, so the map's signs keep off it (ADR-0074 §6, G-943), and another memorial as historic", () => {
+    expect(poiKind({ historic: "memorial", memorial: "stolperstein", name: "Lejb Cygielman" })).toEqual({ kind: "sight", tag: "memorial=stolperstein" });
+    expect(poiKind({ historic: "memorial", memorial: "plaque", name: "Wolni z wolnymi" })).toEqual({ kind: "sight", tag: "historic=memorial" });
   });
 });

@@ -1,6 +1,7 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Vec, hexColor } from "../mesh-sink";
 import type { FacadeFrame, Wall } from "./facade-frame";
+import { hushedOnWall } from "./remembrance-clear";
 
 /**
  * Hanging shop signs of the Old Town (ADR-0048, `stare-miasto.hanging-shop-signs` of the props
@@ -34,7 +35,7 @@ const streetWalls = (f: FacadeFrame): Wall[] =>
     .slice()
     .sort((a, b) => b.length - a.length);
 
-/** The bracket signs of a building: one or two on its street walls, over the ground floor. */
+/** The bracket signs of a building: one or two on its street walls, over the ground floor; none by a place of remembrance (G-943). */
 export const bracketSpots = (f: FacadeFrame): BracketSpot[] => {
   if (!f.b.bracketSigns || f.style.signs === 0 || !f.style.shopfront || f.b.lifted || (f.b.doorways?.length ?? 0) > 0) return [];
   const rand = prng((f.b.look ^ 0xb7ac) >>> 0);
@@ -45,7 +46,8 @@ export const bracketSpots = (f: FacadeFrame): BracketSpot[] => {
       const end = rand() < 0.5;
       const u = Math.min(Math.max(1.2 + rand() * Math.min(2, wall.length * 0.3), 1), wall.length - 1);
       return { wall, u: end ? u : wall.length - u, y: f.b.base + Math.min(f.ground + 0.55, 5.2), seed: rand() };
-    });
+    })
+    .filter((s) => !hushedOnWall(f.b.remembrance, s.wall, s.u, s.u, SIGN_OUT - SIGN_RADIUS, SIGN_OUT + SIGN_RADIUS));
 };
 
 /** A point off the wall: `u` along it, `out` metres out of it, at height y. */
