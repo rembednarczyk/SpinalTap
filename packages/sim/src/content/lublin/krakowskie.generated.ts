@@ -3697,7 +3697,7 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":205.7,"z":110.6,"kind":"sight","tag":"tourism=artwork","name":"Koziołek Maciej"},
       {"x":53.4,"z":76.7,"kind":"sight","tag":"historic=memorial","name":"W rocznicę pierwszego posiedzena Rządu 1918 r."},
       {"x":183.5,"z":143.8,"kind":"shop","tag":"shop=hairdresser","name":"Piotr Oszust"},
-      {"x":142.5,"z":98.5,"kind":"sight","tag":"historic=memorial","name":"Maria Rechtszaft"},
+      {"x":142.5,"z":98.5,"kind":"sight","tag":"memorial=stolperstein","name":"Maria Rechtszaft"},
       {"x":213,"z":36.3,"kind":"office","tag":"office=ngo","name":"Fundacja Siła Jedności"},
     ],
     passages: [

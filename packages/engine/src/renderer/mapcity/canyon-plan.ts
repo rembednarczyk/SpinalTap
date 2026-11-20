@@ -1,9 +1,10 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type FacadeFrame, type Wall, trimMeta, wallMeta } from "./facade-frame";
+import { type FacadeFrame, type MapBuilding, type Wall, trimMeta, wallMeta } from "./facade-frame";
 import { DOWN, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
 import type { P2 } from "./polygon";
+import { hushed } from "./remembrance-clear";
 import { type Uv, quadUv } from "./sink-ops";
 
 /**
@@ -43,6 +44,8 @@ export interface Span {
   /** The first span of a wall: billboards and footbridges go only there. */
   readonly main: boolean;
   readonly seed: number;
+  /** The places of remembrance its building's signs keep off (G-943): its billboard and curtain too. */
+  readonly remembrance?: MapBuilding["remembrance"];
 }
 
 /** Narrowest and widest street a span crosses, metres. */
@@ -76,7 +79,7 @@ export const findSpans = (f: FacadeFrame, across: AcrossAt): Span[] => {
             if (across(a.x + w.nx * mid, a.z + w.nz * mid, f.b.id)) hi = mid;
             else lo = mid;
           }
-          out.push({ a, b: { x: a.x + w.nx * hi, z: a.z + w.nz * hi }, along: along(w), width: hi, base: f.b.base, top: Math.min(f.top, hit.top), clutter: (own + hit.clutter) / 2, main: k === 0, seed: rand() });
+          out.push({ a, b: { x: a.x + w.nx * hi, z: a.z + w.nz * hi }, along: along(w), width: hi, base: f.b.base, top: Math.min(f.top, hit.top), clutter: (own + hit.clutter) / 2, main: k === 0, seed: rand(), ...(f.b.remembrance ? { remembrance: f.b.remembrance } : {}) });
         }
         break;
       }
@@ -251,6 +254,9 @@ export const spanBillboard = (s: Span): Billboard | null => {
   const top = Math.min(s.top - 1, s.base + 11 + rand() * 5);
   if (top - h < s.base + 5) return null;
   const c = { x: (s.a.x + s.b.x) / 2, y: top - h / 2, z: (s.a.z + s.b.z) / 2 };
+  // None by a place of remembrance (G-943): its face runs across the street, `w` wide.
+  const half = { x: (-s.along.z * w) / 2, z: (s.along.x * w) / 2 };
+  if (hushed(s.remembrance, { x: c.x - half.x, z: c.z - half.z }, { x: c.x + half.x, z: c.z + half.z })) return null;
   return { c, n: s.along, w, h, cell: Math.floor(rand() * 4), color: LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#00e5ff" };
 };
 

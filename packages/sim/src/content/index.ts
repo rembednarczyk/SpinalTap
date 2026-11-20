@@ -32,3 +32,4 @@ export { BOLLARD, type BollardChain, FOOD_STALL, bollardChains, chainDir, chainV
 export { againstWall, inBuilding, nearestWall, spotNear } from "./lublin/places";
 export { clearedBuilding } from "./cleared-buildings";
 export type { RoomCut, SceneryItem } from "./lublin/city";
+export * from "./remembrance";

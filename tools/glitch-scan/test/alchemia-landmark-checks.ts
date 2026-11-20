@@ -9,6 +9,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { buildingView } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
+import { MEMORIAL_CLEAR, type RemembrancePlace, remembranceOff } from "../../../packages/sim/src/content/remembrance";
 import { type CityKitData, GeometrySink, parseCityKit, swatchUv } from "../../../packages/engine/src/renderer/city-kit-data";
 import { DEPTAK_SIGNS, type DeptakSign, planDeptakSigns } from "../../../packages/engine/src/renderer/alchemia/deptak-signs";
 import { foodhallGeometry } from "../../../packages/engine/src/renderer/alchemia/foodhall-geometry";
@@ -44,13 +45,7 @@ type GroundPoint = { readonly x: number; readonly z: number };
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
 /** A place of remembrance kept clear of neon: its box on the plan (a stumbling stone's is its node). */
-export interface Remembrance {
-  readonly name: string;
-  readonly x0: number;
-  readonly x1: number;
-  readonly z0: number;
-  readonly z1: number;
-}
+export type Remembrance = RemembrancePlace;
 
 /** A glowing sign, or a piece of one (a letter, a quad, a tube): what draws it, its kind, its points on the plan. */
 export interface Glow {
@@ -59,12 +54,15 @@ export interface Glow {
   readonly points: readonly GroundPoint[];
 }
 
-/** No glowing sign nearer a place of remembrance than this, across the plan (m). */
-export const MEMORIAL_CLEAR = 20;
+/** No glowing sign nearer a place of remembrance than this, across the plan (m): the rule the map's signs keep (`remembrance.ts` of sim). */
+export { MEMORIAL_CLEAR };
 /** Two points of one source's glow this close are one sign (m): the gap between a sign's letters is under it. */
 const ONE_SIGN = 1.5;
 
-/** The memorial stone of Plac Ofiar Getta on T2 (ADR-0074 stage 2) and the map's stumbling stones (`memorial=stolperstein`). */
+/**
+ * The memorial stone of Plac Ofiar Getta on T2 (ADR-0074 stage 2) and the map's stumbling stones
+ * (`memorial=stolperstein`), read from the OSM data, not from what the import made of them.
+ */
 export const remembrances = (nodes: Iterable<{ readonly lat: number; readonly lon: number; readonly tags?: Readonly<Record<string, string>> }>): Remembrance[] => {
   const m = ALCHEMIA_MEMORIAL;
   const out: Remembrance[] = [{ name: "the memorial of Plac Ofiar Getta", x0: m.x0, x1: m.x1, z0: m.z0, z1: m.z1 }];
@@ -76,7 +74,6 @@ export const remembrances = (nodes: Iterable<{ readonly lat: number; readonly lo
   return out;
 };
 
-const offBox = (p: GroundPoint, r: Remembrance): number => Math.hypot(Math.max(r.x0 - p.x, 0, p.x - r.x1), Math.max(r.z0 - p.z, 0, p.z - r.z1));
 
 type Close = { readonly p: GroundPoint; readonly piece: number; readonly kind: string; readonly d: number; readonly r: Remembrance };
 
@@ -106,7 +103,7 @@ export const memorialNeonClear = (places: readonly Remembrance[], glows: readonl
     for (const p of g.points) {
       let best: Close | null = null;
       for (const r of places) {
-        const d = offBox(p, r);
+        const d = remembranceOff(p, r);
         if (d < MEMORIAL_CLEAR && (!best || d < best.d)) best = { p, piece, kind: g.kind, d, r };
       }
       if (best) bySource.set(g.source, [...(bySource.get(g.source) ?? []), best]);

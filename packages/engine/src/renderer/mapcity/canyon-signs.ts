@@ -2,6 +2,7 @@ import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { type Span, spanBillboard } from "./canyon-plan";
 import { type FacadeFrame, type Wall } from "./facade-frame";
+import { hushed, hushedOnWall } from "./remembrance-clear";
 import { MAP_SIGN_KIND } from "./sign-plan";
 import { clearSpotFrom } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
@@ -81,14 +82,15 @@ export interface CurtainLine {
   readonly to: number;
 }
 
-/** The line of a curtain from the span's random draws, or null when it would hang too low. */
+/** The line of a curtain from the span's random draws, or null when it would hang too low or by a place of remembrance (G-943). */
 const curtainLine = (s: Span, rand: () => number): CurtainLine | null => {
   const y = Math.min(s.top - 1.5, s.base + 6 + rand() * 6);
   if (y < s.base + 5) return null;
   const off = (rand() - 0.5) * 6;
   const from = s.width * (0.1 + rand() * 0.3);
   const to = s.width * (0.6 + rand() * 0.3);
-  return { y, off, from, to };
+  const at = (t: number) => ({ x: s.a.x + ((s.b.x - s.a.x) / s.width) * t + s.along.x * off, z: s.a.z + ((s.b.z - s.a.z) / s.width) * t + s.along.z * off });
+  return hushed(s.remembrance, at(from - 0.05), at(to + 0.05)) ? null : { y, off, from, to };
 };
 
 /**
@@ -144,7 +146,7 @@ const banners = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const cell = 4 + Math.floor(rand() * 8);
     // Off the end where a neighbour stands out in front of the wall (G-157), or none.
     const u = clearSpotFrom(f, w, end, w.length - end, 1.0 - h / 8, 1.0 + h / 8, y - h / 2);
-    if (u === null) continue;
+    if (u === null || hushedOnWall(f.b.remembrance, w, u, u, 1.0 - h / 8, 1.0 + h / 8)) continue;
     const centre = { x: w.a.x + dx * u + w.nx * 1.0, y, z: w.a.z + dz * u + w.nz * 1.0 };
     twoFaced(sink, centre, { x: w.nx, z: w.nz }, h / 4, h, color, [cell, MAP_SIGN_KIND.ad]);
   }
@@ -169,6 +171,7 @@ const stackAd = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
   const h = Math.min(w / 2, (t.y1 - t.y0) * 0.8);
   const c = { x: (wall.a.x + wall.b.x) / 2 + wall.n.x * 0.15, y: (t.y0 + t.y1) / 2, z: (wall.a.z + wall.b.z) / 2 + wall.n.z * 0.15 };
   const side = { x: (wall.b.x - wall.a.x) / wall.len, z: (wall.b.z - wall.a.z) / wall.len };
+  if (hushed(f.b.remembrance, { x: c.x - side.x * h, z: c.z - side.z * h }, { x: c.x + side.x * h, z: c.z + side.z * h })) return;
   const p = (s: number, k: number): Vec => ({ x: c.x + side.x * s * (h * 2) * 0.5, y: c.y + k * (h / 2), z: c.z + side.z * s * (h * 2) * 0.5 });
   quadUv(sink, [p(-1, -1), p(1, -1), p(1, 1), p(-1, 1)], { x: wall.n.x, y: 0, z: wall.n.z }, tint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1), UV, [Math.floor(rand() * 4), MAP_SIGN_KIND.ad]);
 };

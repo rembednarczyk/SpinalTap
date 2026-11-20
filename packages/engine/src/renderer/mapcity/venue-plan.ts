@@ -1,6 +1,7 @@
 import { SIGN_GLYPHS } from "@seki/core";
 import type { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
+import { hushedOnWall } from "./remembrance-clear";
 import { MAP_SIGN_KIND, type SignGround, flatOnWall, signReflection, signTint } from "./sign-plan";
 import { blockedStretches, clearStretches } from "./sign-room";
 
@@ -51,6 +52,8 @@ export interface VenueBoard {
   readonly squeeze: number;
   readonly text: string;
   readonly color: string;
+  /** By a place of remembrance (ADR-0074 §6, G-943): not drawn, but its stretch kept, so the doors and awnings under it stay as they were. */
+  readonly hushed?: true;
 }
 
 const along = (w: Wall, x: number, z: number): { u: number; off: number } => {
@@ -75,7 +78,8 @@ const textWidth = (text: string): number => [...text].reduce((s, c) => s + glyph
  * Where the boards of a building's venues go: each on the street wall nearest it (a party wall
  * or a wall a neighbour hides takes none), as near its point as the wall's ends, the doorways the
  * game cut, a neighbour standing out in front of the wall and the boards already there allow; a
- * venue with no room left gets none. Landmarks keep their own signs (ADR-0062): none there.
+ * venue with no room left gets none. A board by a place of remembrance (ADR-0074 §6) is marked
+ * `hushed`. Landmarks keep their own signs (ADR-0062): none there.
  */
 export const venueBoards = (f: FacadeFrame): VenueBoard[] => {
   const venues = f.b.venues ?? [];
@@ -124,7 +128,8 @@ export const venueBoards = (f: FacadeFrame): VenueBoard[] => {
     const u = spots.find((s) => s - width / 2 >= GAP - 1e-6 && s + width / 2 <= w.length - GAP + 1e-6 && !overlaps(busy, s - width / 2, s + width / 2));
     if (u === undefined) continue;
     busy.push([u - width / 2, u + width / 2]);
-    out.push({ wall: w, u, y, width, height: glyph + 2 * PAD_Y, glyph, squeeze, text, color: v.color });
+    const hushed = hushedOnWall(f.b.remembrance, w, u - width / 2, u + width / 2, BOARD_OUT, GLYPH_OUT);
+    out.push({ wall: w, u, y, width, height: glyph + 2 * PAD_Y, glyph, squeeze, text, color: v.color, ...(hushed ? { hushed: true as const } : {}) });
   }
   return out;
 };
@@ -134,7 +139,7 @@ export const venueBoardOn = (f: FacadeFrame, w: Wall): number | null => venueBoa
 
 /** The boards, letters and streaks of a building's venues; `lite` (the phone) leaves the streaks out. Returns the boards drawn. */
 export const planVenueSigns = (sink: MeshSink, f: FacadeFrame, ground: SignGround = () => null, lite = false): number => {
-  const boards = venueBoards(f);
+  const boards = venueBoards(f).filter((b) => !b.hushed);
   for (const b of boards) {
     const color = signTint(b.color, 1);
     flatOnWall(sink, b.wall, b.u, b.y, BOARD_OUT, b.width, b.height, color, [b.width / b.height, MAP_SIGN_KIND.venue]);
