@@ -36,7 +36,7 @@ HEBI: We hit the old man from across the square, same as always. Why change what
 -> END
 
 === hook_protect_2 ===
-Mail on Hana's terminal. From: unknown. Subject: Oyaji. "The Hebi will come down the path from Świętoduska. From the roof terrace you can see the whole path along the stalls, and they never look up."
+Mail on Hana's terminal. From: unknown. Subject: Oyaji. "The Hebi will come up through the gallery: in by the stair cores on the second floor, then the last escalator to the food hall. From the roof garden you can see the whole atrium, and they never look up."
 -> END
 
 // escort: Mika's way from the yard to the boat.
