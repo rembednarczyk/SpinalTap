@@ -18,6 +18,8 @@ import { litSpot } from "./props-lit-spot.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { EntranceZones, boardDoor } from "./props-entrances.ts";
+import { venueGardens } from "./props-gardens.ts";
+import { venueAFrames } from "./props-aframes.ts";
 import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
@@ -362,6 +364,11 @@ export const facingOf = (site: Site, x: Placed): number => {
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
+/** The rule's name in `perItem` for the venues' gardens (ADR-0094 stage 2). */
+export const VENUE_GARDENS = "rule.venue-gardens";
+/** The rule's name in `perItem` for the boards on the pavement by the venues' doors (ADR-0094 stage 2). */
+export const VENUE_A_FRAMES = "rule.venue-a-frames";
+
 /** Why a piece was left out in `skipped`: it stood in a door's clear zone (ADR-0094 stage 1). */
 export const ENTRANCE_SKIP = "before an entrance";
 
@@ -388,6 +395,8 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   const zones = new EntranceZones([...(market.entrances ?? []), ...gameDoorPoints, ...boards.map(boardDoor)]);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
+  const gardenCaps = new Map<string, number>();
+  const aFrameCaps = new Map<string, number>();
   // The obstacles of the pieces placed so far, each added as it is placed.
   const obstacles: Obstacles = new SpatialHash<Obstacle>(4);
   const push = (x: Placed) => {
@@ -399,6 +408,15 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
     const prop = propOf(item.kind);
     if (!prop) {
       skipped[item.kind] = (skipped[item.kind] ?? 0) + (item.count ?? 0);
+      continue;
+    }
+    // The plan's gardens over an area or along a line give way to the venues' own (ADR-0094 stage 2): their numbers are the districts' most.
+    // So do the boards on the pavement, by the venues' doors.
+    const venueCaps = prop === "cafe-garden" ? gardenCaps : prop === "a-frame-sign" ? aFrameCaps : null;
+    if (venueCaps && !item.position && !item.points) {
+      const at = item.polygon ? centroid(flat(item.polygon)) : linesOf(item)[0]?.[0];
+      const d = at ? site.chunkAt(at)?.district : undefined;
+      if (d) venueCaps.set(d, (venueCaps.get(d) ?? 0) + (item.count ?? 0));
       continue;
     }
     const noGeometry = !item.position && !item.points && !item.polygon && !item.line && !item.lines;
@@ -434,6 +452,9 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) push({ ...g, from: item.id });
     }
   }
+  // The cafés' gardens by their venues (ADR-0094 stage 2), before the street groups' bins and plates.
+  for (const x of venueGardens(site, clear, zones, boards, placed, gardenCaps)) push({ ...x, from: VENUE_GARDENS });
+  for (const x of venueAFrames(site, clear, zones, boards, placed, aFrameCaps)) push({ ...x, from: VENUE_A_FRAMES });
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
   for (const item of deferred) for (const x of placeStreetGroup(site, item, placed, (q) => facingOf(site, q))) placed.push({ ...x, from: item.id });
   // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.

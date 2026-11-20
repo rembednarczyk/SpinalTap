@@ -1,0 +1,1 @@
+- Ogródki kawiarni i restauracji stoją przy swoich lokalach, plecami do fasady i płotkiem do ulicy, a potykacze z boku drzwi sklepów i lokali. Rynek nie ma już ogródków pod murami Trybunału.
