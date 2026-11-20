@@ -28,6 +28,7 @@ EXTERNAL change_rep(faction, delta)
 EXTERNAL set_alias(name)
 EXTERNAL unlock_memory(id)
 EXTERNAL accept_contract()
+EXTERNAL assist_crime()
 EXTERNAL complete_contract()
 
 === fixer ===

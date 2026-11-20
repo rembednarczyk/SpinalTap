@@ -3,13 +3,13 @@ import { translate } from "@seki/ui";
 import type { Presenter } from "./context";
 
 /*
- * A street crime over (ADR-0091 stage 6): a toast says how it ended, foiled or failed. Every micro-event is a crime
+ * A street crime over (ADR-0091 stage 6): a toast says how it ended, foiled, done for the gang (stage 5c) or failed. Every micro-event is a crime
  * of the board since stage 5b, its run id `micro:<kind>:<tick>`. The pay comes with its own money
  * toast (`EddiesChanged`).
  */
 
 /** A crime walked away from stays on the board, to come back to: no toast for it. */
-const OUTCOMES = { won: "crime.end.foiled", helped: "crime.end.foiled", failed: "crime.end.failed" } as const;
+const OUTCOMES = { won: "crime.end.foiled", helped: "crime.end.foiled", assisted: "crime.end.assisted", failed: "crime.end.failed" } as const;
 const KINDS: readonly MicroEventKind[] = ["mugging", "aid", "extortion", "deal", "droneTheft", "kidnap"];
 
 /** The crime's kind from its run id, or null for an encounter that is not one. */

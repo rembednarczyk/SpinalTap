@@ -10,6 +10,7 @@ import { chooseTakedown, startTakedown } from "../systems/takedown-system";
 import { carryBody, dropBody } from "../systems/carry-system";
 import { setDifficulty } from "./difficulty";
 import { trackStreetCrime } from "./street-crimes";
+import { assistStreetCrime } from "./crime-assist";
 
 type CommandType = GameCommand["type"];
 
@@ -35,6 +36,7 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   wait: waitMinutes,
   "track-quest": trackQuest,
   "track-street-crime": trackStreetCrime,
+  "assist-street-crime": assistStreetCrime,
   // Character progression (ADR-0059).
   "spend-attribute-point": spendAttribute,
   "spend-perk-point": spendPerk,

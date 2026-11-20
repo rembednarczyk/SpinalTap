@@ -80,6 +80,12 @@ export type GameCommand =
    * an entry lets go of the crime: one target on the HUD.
    */
   | { readonly type: "track-street-crime"; readonly id: string | null }
+  /**
+   * Takes the gang's side in the crime running by the player (ADR-0091 stage 5c, a dark job): its
+   * people go on with it, she keeps watch until it is done, the gang pays. Sent by the dialogue
+   * with one of them; refused without a gang's crime in progress or once it has turned to a fight.
+   */
+  | { readonly type: "assist-street-crime" }
   // Character progression (ADR-0059).
   /** Puts one unspent attribute point into `attribute`; refused without a point or at the cap. */
   | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId }

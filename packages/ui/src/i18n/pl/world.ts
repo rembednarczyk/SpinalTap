@@ -337,6 +337,7 @@ export const plWorld = {
   "crime.untrack": "Przestań śledzić",
   "crime.end.foiled": "Przestępstwo udaremnione",
   "crime.end.failed": "Za późno",
+  "crime.end.assisted": "Robota dla Hebi zrobiona",
   "crime.close": "Zamknij",
   "crime.objective.title": "Przestępstwo na ulicy",
   "crime.objective": "{kind} · {metres} m",

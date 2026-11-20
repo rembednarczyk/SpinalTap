@@ -339,6 +339,7 @@ export const enWorld = {
   "crime.untrack": "Stop tracking",
   "crime.end.foiled": "Crime foiled",
   "crime.end.failed": "Too late",
+  "crime.end.assisted": "Job done for Hebi",
   "crime.close": "Close",
   "crime.objective.title": "Street crime",
   "crime.objective": "{kind} · {metres} m",
