@@ -151,7 +151,7 @@
     GORO: I sell umbrellas to everyone. Friendship, not so much.
 }
 { game_hour >= 8 && game_hour < 22:
-    GORO: Umbrellas, raincoats, implant wrap. Here it rains even when it doesn't.
+    GORO: Umbrellas, rain jackets, implant wrap. Here it rains even when it doesn't.
 - else:
     GORO: The stall's closed, but I'm not asleep. Making sure nobody borrows my awning.
 }

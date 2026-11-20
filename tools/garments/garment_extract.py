@@ -1,6 +1,7 @@
 """Cuts a garment out of a VRoid VRM 0.x file into a small GLB of its own (ADR-0086, way A).
 
     python3 -I tools/garments/garment_extract.py SOURCE.vrm OUT.glb --recipe tools/garments/garments.json --id jacket-techwear
+    python3 -I tools/garments/garment_extract.py --hem Y IN.glb OUT.glb
 
 The recipe (`garments.json`) names the source file by its sha256, the materials whose primitives
 make the garment and, where the garment shares a material with other parts (an exported model
@@ -15,7 +16,15 @@ with merged materials), the UV rectangles of its triangles. The result:
   binds every bone unrotated, which the tool checks);
 - one texture at most SIZE px (default 512): the used parts of the source textures cropped and
   packed into one atlas, so the garment is one mesh and one draw call per character;
-- no thumbnail, no other image, no VRM extension.
+- no thumbnail, no other image, no VRM extension;
+- with `"hem": Y` in the recipe (metres, the source's frame), nothing under the height Y (user
+  20.11: no coats in the game, a long jacket ends at the hips). The cut is a clip of every
+  triangle against the plane y = Y (Sutherland-Hodgman, one plane): triangles above it stay,
+  triangles across it keep their part above. A vertex on a cut edge is made once per edge, so
+  the hem stays one welded line; its position, normal and UV are interpolated along the edge, its
+  weights are the edge ends' blended per bone, the four largest kept and normalised. Unused
+  vertices go, the others keep their order; the root node's `extras` gain `"hem"`. `--hem`
+  shortens an already extracted GLB the same way.
 
 The source is untrusted data: it is only parsed (JSON and binary buffers), never executed. The
 output is the same bytes for the same source and recipe.
@@ -32,6 +41,8 @@ from PIL import Image
 CT = {5120: np.int8, 5121: np.uint8, 5122: np.int16, 5123: np.uint16, 5125: np.uint32, 5126: np.float32}
 NC = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}
 PAD = 4
+# The garment primitive's vertex attributes, in the order of their buffer views.
+ATTRIBUTES = ('POSITION', 'NORMAL', 'TEXCOORD_0', 'JOINTS_0', 'WEIGHTS_0')
 
 
 class Glb:
@@ -227,6 +238,32 @@ def build(glb, recipe, size):
     return image, rows, indices, order, nodes, parent, bind
 
 
+def layout(blobs):
+    """The buffer views of the blobs (five vertex attributes, the indices, then the rest) and the binary chunk."""
+    views, binary = [], bytearray()
+    for i, b in enumerate(blobs):
+        while len(binary) % 4:
+            binary.append(0)
+        view = {'buffer': 0, 'byteOffset': len(binary), 'byteLength': len(b)}
+        if i < 5:
+            view['target'] = 34962
+        elif i == 5:
+            view['target'] = 34963
+        views.append(view)
+        binary += b
+    while len(binary) % 4:
+        binary.append(0)
+    return views, binary
+
+
+def glb_bytes(gltf, binary):
+    js = json.dumps(gltf, separators=(',', ':'), sort_keys=True).encode()
+    while len(js) % 4:
+        js += b' '
+    total = 12 + 8 + len(js) + 8 + len(binary)
+    return struct.pack('<III', 0x46546C67, 2, total) + struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(binary), 0x004E4942) + bytes(binary)
+
+
 def encode(recipe, image, rows, indices, order, nodes, parent, bind, source_sha):
     """The garment GLB: one mesh node, one skin, one material, one texture."""
     n = len(rows)
@@ -250,19 +287,7 @@ def encode(recipe, image, rows, indices, order, nodes, parent, bind, source_sha)
     png = io.BytesIO()
     image.save(png, 'PNG', optimize=True)
     blobs = [pos.tobytes(), nor.tobytes(), uv.tobytes(), jnt.tobytes(), wgt.tobytes(), idx.tobytes(), ibm.tobytes(), png.getvalue()]
-    views, binary = [], bytearray()
-    for i, b in enumerate(blobs):
-        while len(binary) % 4:
-            binary.append(0)
-        view = {'buffer': 0, 'byteOffset': len(binary), 'byteLength': len(b)}
-        if i < 5:
-            view['target'] = 34962
-        elif i == 5:
-            view['target'] = 34963
-        views.append(view)
-        binary += b
-    while len(binary) % 4:
-        binary.append(0)
+    views, binary = layout(blobs)
 
     def acc(view, comp, typ, count, extra=None):
         a = {'bufferView': view, 'componentType': comp, 'type': typ, 'count': count}
@@ -300,7 +325,7 @@ def encode(recipe, image, rows, indices, order, nodes, parent, bind, source_sha)
         'scene': 0,
         'scenes': [{'nodes': [0]}],
         'nodes': out_nodes,
-        'meshes': [{'name': recipe['id'], 'primitives': [{'attributes': {'POSITION': 0, 'NORMAL': 1, 'TEXCOORD_0': 2, 'JOINTS_0': 3, 'WEIGHTS_0': 4}, 'indices': 5, 'material': 0}]}],
+        'meshes': [{'name': recipe['id'], 'primitives': [{'attributes': {k: i for i, k in enumerate(ATTRIBUTES)}, 'indices': 5, 'material': 0}]}],
         'skins': [{'inverseBindMatrices': 6, 'joints': [bone_node[b] for b in order]}],
         'materials': [{
             'name': recipe['material'],
@@ -316,33 +341,123 @@ def encode(recipe, image, rows, indices, order, nodes, parent, bind, source_sha)
         'bufferViews': views,
         'buffers': [{'byteLength': len(binary)}],
     }
-    js = json.dumps(gltf, separators=(',', ':'), sort_keys=True).encode()
-    while len(js) % 4:
-        js += b' '
-    total = 12 + 8 + len(js) + 8 + len(binary)
-    return struct.pack('<III', 0x46546C67, 2, total) + struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(binary), 0x004E4942) + bytes(binary)
+    return glb_bytes(gltf, binary)
+
+
+def _blend(ja, wa, jb, wb, t):
+    """Weights of a point at t from vertex a to b: both ends' per bone, the four largest, normalised."""
+    acc = {}
+    for j, w in zip(ja, wa):
+        if w > 0:
+            acc[int(j)] = acc.get(int(j), 0.0) + (1 - t) * float(w)
+    for j, w in zip(jb, wb):
+        if w > 0:
+            acc[int(j)] = acc.get(int(j), 0.0) + t * float(w)
+    top = sorted(acc.items(), key=lambda x: (-x[1], x[0]))[:4]
+    total = sum(w for _, w in top)
+    joints = [j for j, _ in top] + [0] * (4 - len(top))
+    weights = [w / total for _, w in top] + [0.0] * (4 - len(top))
+    return joints, weights
+
+
+def clip(pos, nor, uv, jnt, wgt, idx, y):
+    """The garment's vertex arrays and triangles with everything under y cut off."""
+    pos, nor, uv, jnt, wgt = (list(map(tuple, a)) for a in (pos, nor, uv, jnt, wgt))
+    cut = {}
+
+    def on_edge(a, b):
+        lo, hi = (a, b) if a < b else (b, a)
+        if (lo, hi) not in cut:
+            t = (y - pos[lo][1]) / (pos[hi][1] - pos[lo][1])
+            lerp = lambda p, q: tuple(float(p[k] + t * (q[k] - p[k])) for k in range(len(p)))
+            p = list(lerp(pos[lo], pos[hi]))
+            p[1] = float(y)
+            n = np.array(lerp(nor[lo], nor[hi]))
+            n = n / max(np.linalg.norm(n), 1e-12)
+            j, w = _blend(jnt[lo], wgt[lo], jnt[hi], wgt[hi], t)
+            cut[(lo, hi)] = len(pos)
+            pos.append(tuple(p))
+            nor.append(tuple(float(x) for x in n))
+            uv.append(lerp(uv[lo], uv[hi]))
+            jnt.append(tuple(j))
+            wgt.append(tuple(w))
+        return cut[(lo, hi)]
+
+    out = []
+    for k in range(0, len(idx) - 2, 3):
+        tri = [int(v) for v in idx[k:k + 3]]
+        poly = []
+        for i in range(3):
+            a, b = tri[i], tri[(i + 1) % 3]
+            ina, inb = pos[a][1] >= y, pos[b][1] >= y
+            if ina:
+                poly.append(a)
+            if ina != inb:
+                poly.append(on_edge(a, b))
+        for i in range(1, len(poly) - 1):
+            out.extend((poly[0], poly[i], poly[i + 1]))
+    used = sorted(set(out))
+    remap = {v: i for i, v in enumerate(used)}
+    pick = lambda a, dt: np.array([a[v] for v in used], dtype=dt)
+    return (pick(pos, np.float32), pick(nor, np.float32), pick(uv, np.float32), pick(jnt, np.uint8), pick(wgt, np.float32),
+            np.array([remap[v] for v in out], dtype=np.uint32))
+
+
+def hem(data, y):
+    """The bytes of a garment GLB (as `garment_extract.encode` writes it) cut at the height y."""
+    g = Glb(data)
+    js = g.json
+    prim = js['meshes'][0]['primitives'][0]
+    at = prim['attributes']
+    arrays = [g.accessor(at[k]) for k in ATTRIBUTES]
+    pos, nor, uv, jnt, wgt, idx = clip(*arrays, g.accessor(prim['indices']).ravel(), y)
+    n = len(pos)
+    idx = idx.astype(np.uint16 if n < 65536 else np.uint32)
+    view_of = lambda i: js['bufferViews'][js['accessors'][i]['bufferView']]
+    raw = lambda v: g.bin[v.get('byteOffset', 0):v.get('byteOffset', 0) + v['byteLength']]
+    ibm = raw(view_of(js['skins'][0]['inverseBindMatrices']))
+    image = raw(js['bufferViews'][js['images'][0]['bufferView']])
+    blobs = [pos.tobytes(), nor.tobytes(), uv.tobytes(), jnt.tobytes(), wgt.tobytes(), idx.tobytes(), ibm, image]
+    views, binary = layout(blobs)
+    acc = js['accessors']
+    for i, k in enumerate(ATTRIBUTES):
+        acc[at[k]].update({'bufferView': i, 'count': n})
+    acc[at['POSITION']].update({'min': pos.min(0).tolist(), 'max': pos.max(0).tolist()})
+    acc[prim['indices']].update({'bufferView': 5, 'count': len(idx), 'componentType': 5123 if idx.dtype == np.uint16 else 5125})
+    acc[js['skins'][0]['inverseBindMatrices']]['bufferView'] = 6
+    js['images'][0]['bufferView'] = 7
+    js['bufferViews'] = views
+    js['buffers'] = [{'byteLength': len(binary)}]
+    js['nodes'][0].setdefault('extras', {})['hem'] = y
+    return glb_bytes(js, binary)
 
 
 def extract(data, recipe, size=512):
-    """The garment GLB's bytes from a source file's bytes and its recipe."""
+    """The garment GLB's bytes from a source file's bytes and its recipe (cut at its `hem`, if any)."""
     sha = hashlib.sha256(data).hexdigest()
     if recipe.get('sha256') and recipe['sha256'] != sha:
         raise ValueError(f"source sha256 {sha}, the recipe expects {recipe['sha256']}")
     glb = Glb(data)
-    return encode(recipe, *build(glb, recipe, size), sha)
+    out = encode(recipe, *build(glb, recipe, size), sha)
+    return hem(out, recipe['hem']) if recipe.get('hem') is not None else out
 
 
 def main(argv):
     args = argv[1:]
-    if len(args) < 2 or '--recipe' not in args or '--id' not in args:
+    if len(args) >= 4 and args[0] == '--hem':
+        # An extracted garment, shortened: `--hem Y IN.glb OUT.glb`.
+        dst = args[3]
+        out = hem(open(args[2], 'rb').read(), float(args[1]))
+    elif len(args) < 2 or '--recipe' not in args or '--id' not in args:
         print(__doc__)
         return 2
-    src, dst = args[0], args[1]
-    recipes = json.load(open(args[args.index('--recipe') + 1], encoding='utf-8'))['garments']
-    rid = args[args.index('--id') + 1]
-    recipe = next(r for r in recipes if r['id'] == rid)
-    size = int(args[args.index('--size') + 1]) if '--size' in args else 512
-    out = extract(open(src, 'rb').read(), recipe, size)
+    else:
+        src, dst = args[0], args[1]
+        recipes = json.load(open(args[args.index('--recipe') + 1], encoding='utf-8'))['garments']
+        rid = args[args.index('--id') + 1]
+        recipe = next(r for r in recipes if r['id'] == rid)
+        size = int(args[args.index('--size') + 1]) if '--size' in args else 512
+        out = extract(open(src, 'rb').read(), recipe, size)
     with open(dst, 'wb') as f:
         f.write(out)
     g = Glb(out)

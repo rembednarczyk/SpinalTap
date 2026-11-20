@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { type Crossing, SIDEWALKS, SIDEWALK_HEIGHT, type Walkway } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { crowdLook } from "../src/renderer/crowd-look";
+import { WARM_JACKETS, crowdLook } from "../src/renderer/crowd-look";
 import { freshPuppet, gaitJoints, partMatrices, plantedHips, poseParts, puppetPose, setPuppetActivity, stepPuppet } from "../src/renderer/crowd-pose";
 import { PART, PART_COUNT, buildPuppet, puppetDims } from "../src/renderer/crowd-puppet";
 import { CrowdViews } from "../src/renderer/crowd-views";
@@ -34,12 +34,29 @@ describe("residents' looks and figures (ADR-0041)", () => {
     expect(crowdLook(42)).toEqual(crowdLook(42));
     const looks = Array.from({ length: 300 }, (_, i) => crowdLook(i * 7919));
     expect(new Set(looks.map((l) => l.hair)).size).toBe(5);
-    expect(new Set(looks.map((l) => l.garment)).size).toBe(3);
+    expect(new Set(looks.map((l) => l.garment)).size).toBe(2);
     expect(new Set(looks.map((l) => l.colors.top)).size).toBeGreaterThan(10);
     for (const l of looks) {
       expect(l.height).toBeGreaterThanOrEqual(1.5);
       expect(l.height).toBeLessThanOrEqual(1.9);
     }
+  });
+
+  it("nobody wears a coat: the torso's cloth ends at the hips, a third in warm jackets, skirts on two women in seven (user 20.11)", () => {
+    const seeds = Array.from({ length: 2000 }, (_, i) => i);
+    let lowestTorso = Infinity;
+    for (const seed of seeds) {
+      const t = buildPuppet(crowdLook(seed), false);
+      // Torso parts are laid out from the hip pivot: nothing of the top hangs below it.
+      for (let v = 0; v < t.vertexCount; v++) if (t.parts[v] === PART.torso) lowestTorso = Math.min(lowestTorso, t.positions[v * 3 + 1]!);
+    }
+    expect(lowestTorso).toBeGreaterThanOrEqual(0);
+    const looks = seeds.map(crowdLook);
+    const women = looks.filter((l) => l.female);
+    const share = (n: number, of: number) => n / of;
+    expect(share(women.filter((l) => l.garment === "skirt").length, women.length)).toBeCloseTo(2 / 7, 1);
+    expect(looks.filter((l) => !l.female).every((l) => l.garment === "jacket")).toBe(true);
+    expect(share(looks.filter((l) => (WARM_JACKETS as readonly string[]).includes(l.colors.top)).length, looks.length)).toBeGreaterThan(0.25);
   });
 
   it("a figure stands on the ground at its height; an umbrella rises above the head", () => {

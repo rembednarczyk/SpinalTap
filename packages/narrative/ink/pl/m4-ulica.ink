@@ -151,7 +151,7 @@
     GORO: Parasole sprzedaję każdemu. Przyjaźń już nie.
 }
 { game_hour >= 8 && game_hour < 22:
-    GORO: Parasole, płaszcze, folia na implanty. Tu pada nawet wtedy, kiedy nie pada.
+    GORO: Parasole, kurtki przeciwdeszczowe, folia na implanty. Tu pada nawet wtedy, kiedy nie pada.
 - else:
     GORO: Stragan zamknięty, ale ja nie śpię. Pilnuję, żeby nikt nie pożyczył sobie markizy.
 }

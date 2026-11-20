@@ -139,6 +139,37 @@ class GarmentExtractTest(unittest.TestCase):
         self.assertEqual(out.json['accessors'][5]['count'], 6)
         self.assertGreaterEqual(float(out.accessor(0)[:, 0].min()), 2.0)
 
+    def test_hem_cuts_the_garment_at_a_height_with_one_welded_edge(self):
+        out = ge.Glb(ge.extract(self.src, {**RECIPE, 'hem': 1.5}, 32))
+        # Each quad (y 1..2): of its two triangles, one keeps a triangle above y 1.5, the other a quad (two).
+        self.assertEqual(out.json['accessors'][5]['count'], 18)
+        pos = out.accessor(0)
+        # Per quad: the two top corners and three points on the cut, the diagonal's made once for both triangles.
+        self.assertEqual(len(pos), 10)
+        self.assertAlmostEqual(float(pos[:, 1].min()), 1.5, places=6)
+        self.assertEqual(out.json['accessors'][0]['min'][1], float(pos[:, 1].min()))
+        np.testing.assert_allclose(out.accessor(4).sum(1), 1, atol=1e-6)
+        n = out.accessor(1)
+        np.testing.assert_allclose(np.linalg.norm(n, axis=1), 1, atol=1e-6)
+        # A point half way up the quad's right edge samples the texture half way along it.
+        cut = [i for i in range(len(pos)) if abs(pos[i][1] - 1.5) < 1e-6 and abs(pos[i][0] - 1) < 1e-6]
+        self.assertEqual(len(cut), 1)
+        full = self.out
+        right = [i for i in range(len(full.accessor(0))) if abs(full.accessor(0)[i][0] - 1) < 1e-6]
+        np.testing.assert_allclose(out.accessor(2)[cut[0]], full.accessor(2)[right].mean(0), atol=1e-6)
+        self.assertEqual(out.json['nodes'][0]['extras']['hem'], 1.5)
+        # The texture and the skeleton are the extraction's own.
+        self.assertEqual(out.json['skins'], full.json['skins'])
+        self.assertEqual(np.asarray(out.image(0)).tobytes(), np.asarray(full.image(0)).tobytes())
+
+    def test_hem_in_the_recipe_is_the_hem_of_the_extracted_file(self):
+        long = ge.extract(self.src, RECIPE, 32)
+        self.assertEqual(ge.extract(self.src, {**RECIPE, 'hem': 1.5}, 32), ge.hem(long, 1.5))
+        # Under the garment: nothing cut, the same geometry.
+        low = ge.Glb(ge.hem(long, 0.5))
+        self.assertEqual(low.json['accessors'][5]['count'], 12)
+        np.testing.assert_array_equal(low.accessor(0), self.out.accessor(0))
+
 
 if __name__ == '__main__':
     unittest.main()

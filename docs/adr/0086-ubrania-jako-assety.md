@@ -176,3 +176,6 @@ Każdy z trzech: wpis w `sources.json` z URL strony, sha256 i zrzutem pól warun
 - Postać w przebraniu kosztuje jedną siatkę więcej (2–3 wywołania), w zapasie budżetu `models`; pomiar w każdym etapie.
 - Każde ubranie z zewnątrz przechodzi ścieżkę licencji z ADR-0063 (README, `sources.json` z sha256, „Autorzy”, test `credits.test.ts`).
 - Migawka NPR nie widzi modeli (`models=off`), więc wygląd ubrań sprawdzają zrzuty w PR-ach i testy przebijania.
+
+## Dopisek 20.11: bez płaszczy
+Decyzja użytkownika z 20.11 (`docs/decyzje.md`): w grze nie ma płaszczy. Płaszcz Tessen i płaszcz taktyczny z tabeli kandydatów odpadają; kurtka Hebi (`jacket-techwear.glb`) kończy się na biodrach (przepis `hem` w `garment_extract.py`). Nowe ubrania z ekwipunku kończą się najniżej 15 cm pod kością bioder.

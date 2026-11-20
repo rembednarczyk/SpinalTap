@@ -83,6 +83,8 @@ export interface LublinGroundData {
   readonly outline: FlatPoints;
   /** On a bridge: not draped on the terrain. */
   readonly bridge?: true;
+  /** A zebra's piece cut by the chunk's edge: its whole band, `[x0, z0, …]`, for the stripes to line up (G-958). */
+  readonly zebra?: FlatPoints;
   /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
   readonly deck?: FlatPoints;
   /** Laid by the import in a pedestrian street's frontage (G-853): drawn as any piece, not read by the furniture's placing. */

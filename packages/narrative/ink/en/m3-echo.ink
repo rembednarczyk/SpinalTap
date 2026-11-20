@@ -39,7 +39,7 @@ Kagami Biotech. The name sits in your head like a splinter. Mori put you back to
 
 === recall_operating_table ===
 A white lamp. Not like Mori's. Bigger, with six lenses.
-You're strapped to a table and you can't feel your legs. Someone in a coat with the Kagami logo taps at a tablet.
+You're strapped to a table and you can't feel your legs. Someone in an apron with the Kagami logo taps at a tablet.
 TECH: Recording forty-one. Identity check before overwrite.
 TECH: What's your name?
 * [You say your name. #tone:main]

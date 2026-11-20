@@ -83,7 +83,7 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     expect(kurosawa).toBeLessThanOrEqual(kaito);
   });
 
-  it("wears a coat of another cut (M00_006), and lends nothing: only a named character wears his file (G-560)", async () => {
+  it("wears a hoodie of another cut (M00_006), and lends nothing: only a named character wears his file (G-560)", async () => {
     serveModels();
     const library = new ModelLibrary(new Scene(new NullEngine()), new ToonMaterials(new Scene(new NullEngine())));
     const cloth = await library.clothOf({ url: "kurosawa.vrm" });
@@ -103,10 +103,10 @@ describe("Kurosawa's model (ADR-0076 stage 3)", () => {
     // Kurosawa in the scene, his file loaded: still no lender (ADR-0076 stage 4a).
     views.spawn(4, { kind: "npc", preset: "fixer", cast: "kurosawa" }, STAND);
     await settled(views);
-    // A coat on a shirt's UVs would scatter its texels: Base_Male keeps his own top.
+    // A hoodie on a shirt's UVs would scatter its texels: Base_Male keeps his own top.
     // Booleans: a failing `toContain` would print the scene graph of the textures.
     const wearsOwn = (id: EntityId, part: string) => texturesOf(views, id, part).drawn.includes(texturesOf(views, id, part).own);
-    expect(wearsOwn(2, "torso"), "Base_Male in Kurosawa's coat").toBe(true);
+    expect(wearsOwn(2, "torso"), "Base_Male in Kurosawa's hoodie").toBe(true);
     expect(wearsOwn(3, "legs"), "Base_Male in Kurosawa's trousers").toBe(true);
   });
 });
