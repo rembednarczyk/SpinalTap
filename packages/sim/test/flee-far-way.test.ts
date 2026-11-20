@@ -82,6 +82,9 @@ describe("runners round a way out of the flee window (G-928, round 2)", () => {
     sim.step();
     for (let i = 0; i < 2 * SIM_HZ; i++) sim.step();
     const c = alone(sim, (e) => !!e.staff);
+    // Without the sabotage's Tessen (the guards, the manager and the observer, 10-35 m off): the runner is the subject, its
+    // pose at every step the same with them and without, and their minds and steps were an eighth of this test's time.
+    for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
     for (const [x, z, k, far] of [
       [2519, 396, 5, true],
       [2519, 396, 6, false],
