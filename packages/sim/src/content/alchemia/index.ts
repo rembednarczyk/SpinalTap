@@ -28,6 +28,8 @@ import { FOODHALL_PROPS, seatingPieces } from "./foodhall-seating";
 import { kitchenPieces } from "./foodhall-kitchens";
 import { fumikoWindowPieces } from "./fumiko-p0";
 import { LANDMARK_PROPS, landmarkPieces } from "./landmark";
+import { ROOF_GARDEN_PROPS, ROOF_PLANTER_SOLIDS, roofGardenPieces } from "./roof-garden";
+import { ROOF_DRESS_PROPS, roofDressPieces } from "./roof-dress";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
 export * from "./foodhall";
@@ -74,6 +76,9 @@ export { FOODHALL_PROPS, FUMIKO_STOOLS, TABLE_GROUPS, groupParts, seatingPieces 
 export { kitchenPieces } from "./foodhall-kitchens";
 export { FUMIKO_WINDOW, FUMIKO_WINDOW_SPOT, FUMIKO_WINDOW_YAW, beforeHatch, fumikoWindowPieces } from "./fumiko-p0";
 export { FOUNTAIN_P0, LANDMARK_PROPS, landmarkPieces } from "./landmark";
+export * from "./roof-plan";
+export { ROOF_CROWD, ROOF_GARDEN_PROPS, ROOF_PLANTER_SOLIDS, bedOutline, inBed, roofGardenPieces } from "./roof-garden";
+export { AIR_HANDLER, CHAIR, CRATES, MAST, PANELS, PANEL_ROWS, ROOF_DRESS_PROPS, WASHING, roofDressPieces } from "./roof-dress";
 export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
 
@@ -97,6 +102,10 @@ const SEATING = seatingPieces();
 const KITCHENS = kitchenPieces();
 const FUMIKO_P0 = fumikoWindowPieces();
 const LANDMARK = landmarkPieces();
+/** The green roof (ADR-0093 O4): its garden (beds, pergolas, tables) and its services, the residents' garden and the traces. */
+const ROOF = [...roofGardenPieces(), ...roofDressPieces()];
+/** The green roof's pieces among `ALCHEMIA_PIECES`: the engine draws them by their part of the roof (`roof-geometry.ts`). */
+export const ALCHEMIA_ROOF_PIECES: readonly Piece[] = ROOF;
 
 const SHELL = shellPieces();
 const UNITS = unitPieces();
@@ -132,7 +141,18 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...KITCHENS,
   ...FUMIKO_P0,
   ...LANDMARK,
+  ...ROOF,
 ];
+
+/** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
+export const ALCHEMIA_ROOF_PROPS: readonly StreetPropItem[] = [...ROOF_GARDEN_PROPS, ...ROOF_DRESS_PROPS];
+
+/**
+ * The green roof's solids (O4) a prop per tile: its beds, pergolas' posts, tables, services and the
+ * residents' crates and chair, the planters' boxes and the boxes of the game's models (the trees'
+ * trunks, the benches, the lamps' posts, the cabinet).
+ */
+export const ROOF_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([...ROOF, ...ROOF_PLANTER_SOLIDS, ...modelBoxes(ALCHEMIA_ROOF_PROPS)], 12);
 
 /** The game's models of the food hall and of P0's landmark (ADR-0093 O3), drawn with the shops' (one street-props view). */
 export const ALCHEMIA_HALL_PROPS: readonly StreetPropItem[] = [...SHOP_PROPS, ...FOODHALL_PROPS, ...LANDMARK_PROPS];
@@ -220,8 +240,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...MALL_PROPS,
   // Its shops on P1 and P2 (O2), then P0's (O3), so every id above stays.
   ...SHOP_SOLID_PROPS,
-  // The food hall's kitchens, Fumiko's second place and P0's landmark (O3) last.
+  // The food hall's kitchens, Fumiko's second place and P0's landmark (O3).
   ...FOODHALL_SOLID_PROPS,
+  // The green roof (O4) last, so every id above stays.
+  ...ROOF_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

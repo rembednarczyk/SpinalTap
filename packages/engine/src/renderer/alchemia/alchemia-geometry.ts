@@ -13,6 +13,7 @@ import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
+import { roofPaving, roofPiece } from "./roof-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
@@ -79,6 +80,16 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   steam: "win-white",
   carton: "fabric-amber",
   paper: "paint",
+  // The green roof (ADR-0093 O4): its own part draws these (`roof-geometry.ts`); here only for the table's sake.
+  planter: "plant",
+  flower: "paint",
+  panel: "glass-blue",
+  mast: "metal",
+  fan: "ac-grille",
+  crate: "rust",
+  laundry: "paint",
+  chair: "fabric-teal",
+  can: "paint",
 };
 
 /** The front's glass is lit up to this much over the floor (ADR-0074 §6: the front warm at night). */
@@ -275,6 +286,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     const b = p.box;
     if (TIER_SET.has(p) && p.kind === "led" && ledOfSlab(b, slabs)) continue;
     if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
+    // The green roof (ADR-0093 O4): its beds, pergolas, services and the residents' garden.
+    if (roofPiece(sink, data, p)) continue;
     // The escalators' upright balustrades: drawn sloping (`escalator-geometry.ts`).
     if (p.kind === "escalator") continue;
     // The gallery's shops (ADR-0093 O2): by their trade, their shopfronts as frames.
@@ -328,6 +341,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   pavilionGeometry(outside, data);
   parkingOutside(outside, data);
   p2Outside(outside, data);
+  roofPaving(outside, data);
   frontSignLetters(tiers, data);
   greenSlope(tiers, data);
   arcadeFrontGeometry(tiers, data);
