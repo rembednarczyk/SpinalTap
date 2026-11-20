@@ -106,7 +106,8 @@ const kioskPieces = (k: PlazaKiosk): Piece[] => {
   return [
     piece(lb(0, w, 0, 0.55, floor, y + K.counter), "counter", false),
     piece(lb(0.08, w - 0.08, 0.04, 0.5, y + K.counter, y + K.counter + K.vitrine), "food", false, false),
-    piece(lb(0.06, w - 0.06, -0.01, 0, floor + 0.15, y + K.counter - 0.1), "sign-amber", false, false),
+    // A strip of light along the counter's front under its top, the counter itself dark steel.
+    piece(lb(0.06, w - 0.06, -0.012, 0, y + K.counter - 0.12, y + K.counter - 0.06), "sign-amber", false, false),
     piece(lb(0, t, 0.55, d, floor, top), "wall", false),
     piece(lb(w - t, w, 0.55, d, floor, top), "wall", false),
     piece(lb(t, w - t, d - t, d, floor, top), "wall", false),
@@ -192,7 +193,7 @@ const tablePieces = (t: CafeTable, k: number): Piece[] => {
     piece(box(t.x - 0.12, t.x + 0.12, t.z - 0.12, t.z + 0.12, y + TABLE.rim - 0.1, y + TABLE.rim - 0.02), "lamp", false, false),
     // A cup steaming on it (its sitter got up a moment ago), every other table a carton of food.
     piece(box(t.x + 0.1, t.x + 0.18, t.z - 0.05, t.z + 0.03, y + TABLE.top, y + TABLE.top + 0.1), "cup", false, false),
-    piece(box(t.x + 0.11, t.x + 0.17, t.z - 0.04, t.z + 0.02, y + TABLE.top + 0.12, y + TABLE.top + 0.4), "steam", false, false),
+    piece(box(t.x + 0.125, t.x + 0.155, t.z - 0.025, t.z + 0.005, y + TABLE.top + 0.12, y + TABLE.top + 0.24), "steam", false, false),
   ];
   if (k % 2 === 0) out.push(piece(box(t.x - 0.22, t.x - 0.04, t.z - 0.12, t.z + 0.06, y + TABLE.top, y + TABLE.top + 0.07), "carton", false, false));
   for (const c of t.chairs) {

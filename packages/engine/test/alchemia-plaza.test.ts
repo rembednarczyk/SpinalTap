@@ -61,14 +61,22 @@ describe("the square before Alchemia's front in the engine (ADR-0074 C5)", () =>
     expect(uvs.has(swatchUv(kitData, "win-warm").join(","))).toBe(true);
   });
 
-  it("paints the hologram and the kiosks' food lit, their sign bands neon", () => {
+  it("paints the hologram and the kiosks' food lit, their sign bands neon, the podium dark", () => {
     const uvOf = (kind: string): string => {
       const g = alchemiaGeometry(kitData, square.filter((p) => p.kind === kind).slice(0, 1)).tiers;
       return `${g.uvs[0]},${g.uvs[1]}`;
     };
-    expect(uvOf("holo")).toBe(swatchUv(kitData, "win-teal").join(","));
+    // The hologram a picture of light: a pale glow with bands across it.
+    const holo = alchemiaGeometry(kitData, square.filter((p) => p.kind === "holo")).tiers;
+    const holoUvs = new Set<string>();
+    for (let i = 0; i < holo.uvs.length; i += 2) holoUvs.add(`${holo.uvs[i]},${holo.uvs[i + 1]}`);
+    for (const c of ["glass-blue", "win-teal", "neon-cyan", "neon-pink"]) expect(holoUvs.has(swatchUv(kitData, c).join(",")), c).toBe(true);
     expect(uvOf("food")).toBe(swatchUv(kitData, "win-warm").join(","));
     expect(uvOf("sign-red")).toBe(swatchUv(kitData, "neon-red").join(","));
     expect(uvOf("sign-amber")).toBe(swatchUv(kitData, "neon-amber").join(","));
+    // The podium's paving: the kit's paint tinted dark (the board's wet stone), not the light trim of the steps.
+    const deck = alchemiaGeometry(kitData, square.filter((p) => p.kind === "paving" && !p.outline)).tiers;
+    expect(`${deck.uvs[0]},${deck.uvs[1]}`).toBe(swatchUv(kitData, "paint").join(","));
+    expect(deck.colors[0]!).toBeLessThan(0.5);
   });
 });

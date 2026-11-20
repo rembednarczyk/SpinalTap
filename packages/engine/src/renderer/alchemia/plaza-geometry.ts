@@ -1,14 +1,18 @@
 import type { GroundPoint, Vec3 } from "@seki/core";
 import type { AlchemiaPiece } from "@seki/sim";
-import { type CityKitData, type GeometrySink, swatchUv } from "../city-kit-data";
+import { type CityKitData, type GeometrySink, hexRgb, swatchUv } from "../city-kit-data";
 import { band, lid } from "./storey-facade";
 
 /*
  * The square before Alchemia's front (C5 of the board 1:1, 19.11) as the board draws what the
  * simulation gives as flat outlines: an umbrella's canopy (an octagon) as a low cone over its rim with
  * a hanging valance, a kiosk's awning (a quad, its first edge against the kiosk) as a sheet sloping
- * down and out from under the roof. Pure data, no Babylon.
+ * down and out from under the roof, the fountain's hologram as a picture of light (bands on a pale glow,
+ * as the front's screens), the podium's paving dark as the board's wet stone. Pure data, no Babylon.
  */
+
+/** The podium's and the fountain's rim's stone: the kit's paint tinted to the board's wet dark grey. */
+export const PAVING = hexRgb("#59606f");
 
 type P2 = GroundPoint;
 
@@ -54,8 +58,33 @@ const awning = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: n
   sink.quad(at(pts[3]!, y0 - 0.06), at(pts[2]!, y0 - 0.06), p2, p3, { x: 0, y: -1, z: 0 }, swatchUv(data, "win-warm"));
 };
 
+const X: Vec3 = { x: 1, y: 0, z: 0 };
+const Y: Vec3 = { x: 0, y: 1, z: 0 };
+const Z: Vec3 = { x: 0, y: 0, z: 1 };
+
+/**
+ * The hologram's panel (thin along z): a pale cyan glow with brighter bands across it and a pink one,
+ * a picture as the board's, not a lit slab; both faces.
+ */
+const hologram = (sink: GeometrySink, data: CityKitData, b: AlchemiaPiece["box"]): void => {
+  const c = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2 };
+  const [hx, hy, hz] = [(b.x1 - b.x0) / 2, (b.y1 - b.y0) / 2, (b.z1 - b.z0) / 2];
+  sink.box(c, [X, Y, Z], [hx, hy, hz], swatchUv(data, "glass-blue"));
+  const bands = 7;
+  for (let k = 0; k < bands; k++) {
+    const y = b.y0 + ((k + 0.5) * (b.y1 - b.y0)) / bands;
+    const inset = k % 3 === 0 ? 0.08 : 0.3 - (k % 2) * 0.12;
+    const swatch = k === 4 ? "neon-pink" : k % 2 === 0 ? "win-teal" : "neon-cyan";
+    sink.box({ x: c.x - inset / 2, y, z: c.z }, [X, Y, Z], [hx - inset / 2 - 0.08, 0.06, hz + 0.01], swatchUv(data, swatch));
+  }
+};
+
 /** Draws a piece of the square the way only the eye needs it; false when it is not one. */
 export const plazaPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece): boolean => {
+  if (p.kind === "holo") {
+    hologram(sink, data, p.box);
+    return true;
+  }
   const pts = p.outline;
   if (!pts) return false;
   if (p.kind === "umbrella") canopy(sink, data, pts, p.box.y0, p.box.y1);

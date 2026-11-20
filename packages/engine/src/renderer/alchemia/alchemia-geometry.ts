@@ -13,7 +13,7 @@ import { greenSlope, ofGreenSlope } from "./green-slope";
 import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
-import { plazaPiece } from "./plaza-geometry";
+import { PAVING, plazaPiece } from "./plaza-geometry";
 
 /**
  * Alchemia by the investor's plan (ADR-0074 stage 1) as pieces of geometry on the city kit's
@@ -331,8 +331,9 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     // The storeys' green (C2): the board's fresh leaves, the kit's paint tinted; the house with arcades' plaster (C3).
     const leaf = TIER_SET.has(p) && (p.kind === "green" || p.kind === "lawn");
     const steel = p.kind === "step" && p.inside && onEscalator(b);
-    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : undefined;
-    boxOf(sink, data, b, leaf ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
+    const paving = p.kind === "paving";
+    const tint = leaf ? (p.kind === "lawn" ? LAWN : LEAF) : p.kind === "plaster" ? PLASTER : paving ? PAVING : undefined;
+    boxOf(sink, data, b, leaf || paving ? "paint" : steel ? "metal" : swatchOf(p), hiddenFaces(p, steps), tint);
   }
   frontFrame(outside, data);
   arkadyGeometry(outside, data);
