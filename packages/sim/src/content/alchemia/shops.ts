@@ -6,7 +6,8 @@ import { MALL_LEVELS } from "./mall-plan";
 import { FOUNTAIN_P0 } from "./landmark";
 import { type Fit, type Layout, type Slot, cartons, ceiling, cup, draw, litter, model, newFit, shelves, shopHash, shopLayout } from "./shop-fittings";
 import { fitTrade } from "./shop-trades";
-import { SHOPS, SHOPFRONT_HEAD, SHOP_DOOR_TOP, type ShopDef, isOpen } from "./shops-plan";
+import { FRONT_SHOPS } from "./front-shops";
+import { SHOPS, type ShopDef, isOpen, shopDoorTop, shopHead } from "./shops-plan";
 
 /*
  * The gallery's shops built (ADR-0093 O2, `docs/zasady-lokacji.md`): each unit's shell (its shopfront
@@ -47,7 +48,7 @@ const wallWithDoor = (k: Fit, full: Slot, alongU: boolean, g0: number, g1: numbe
   const part = (b0: number, b1: number): Slot => (alongU ? { ...full, u0: b0, u1: b1 } : { ...full, v0: b0, v1: b1 });
   if (g0 > a0 + 0.01) draw(k, part(a0, g0), 0, top, kind, true);
   if (a1 > g1 + 0.01) draw(k, part(g1, a1), 0, top, kind, true);
-  draw(k, part(g0, g1), SHOP_DOOR_TOP, head, kind, true);
+  draw(k, part(g0, g1), shopDoorTop(k.shop), head, kind, true);
 };
 
 /** The shell: partitions, the shopfront with its door and fascia, the back room's wall, the state's shutter, grille or paper. */
@@ -63,21 +64,24 @@ const shell = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
   if (win.u1 < w - 0.01) draw(k, slot(win.u1, w - W, 0, W), 0, top, "partition", true);
   if (win.u0 > 0.01) draw(k, slot(W, win.u0, 0, W), 0, top, "partition", true);
   const glass = slot(win.u0, win.u1, 0, GLASS);
+  const head = shopHead(shop);
   const shutDoor = shop.state === "vacant";
-  if (shutDoor) draw(k, glass, 0, SHOPFRONT_HEAD, "shopfront", true);
-  else wallWithDoor(k, glass, true, L.door.u0, L.door.u1, SHOPFRONT_HEAD, "shopfront", SHOPFRONT_HEAD);
+  if (shutDoor) draw(k, glass, 0, head, "shopfront", true);
+  else wallWithDoor(k, glass, true, L.door.u0, L.door.u1, head, "shopfront", head);
   // The fascia over the glass to the ceiling: the sign's (letters in the engine).
-  draw(k, slot(win.u0, win.u1, 0, GLASS + 0.05), SHOPFRONT_HEAD, top, "sign", true);
+  draw(k, slot(win.u0, win.u1, 0, GLASS + 0.05), head, top, "sign", true);
+  // A wall across its back where no glass is (O5): back to back with a café, short of a rounded corner.
+  if (shop.back) draw(k, slot(W, w - W, d - W, d), 0, top, "partition", true);
   // The back room's wall with its staff door (0.85 m: staff only, no customer's way).
   if (shop.sales !== undefined) wallWithDoor(k, slot(sales.w, sales.w + W, W, d), false, L.backDoor.a0, L.backDoor.a1, top, "partition", top);
   else wallWithDoor(k, slot(W, w - W, sales.s, sales.s + W), true, L.backDoor.a0, L.backDoor.a1, top, "partition", top);
   if (shop.state === "shut") {
     // The rolling shutter down behind the glass, its box under the fascia, a padlock at its foot.
-    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.06), 0, SHOPFRONT_HEAD - 0.25, "shutter", true);
-    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.3), SHOPFRONT_HEAD - 0.25, SHOPFRONT_HEAD, "shutter", true);
+    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.06), 0, head - 0.25, "shutter", true);
+    draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.3), head - 0.25, head, "shutter", true);
     draw(k, slot(L.door.u1 - 0.1, L.door.u1 + 0.02, GLASS - 0.06, GLASS), 0.05, 0.17, "machine");
   }
-  if (shop.state === "grille") draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.05), 0, SHOPFRONT_HEAD, "grille", true);
+  if (shop.state === "grille") draw(k, slot(win.u0, win.u1, GLASS, GLASS + 0.05), 0, head, "grille", true);
   if (shop.state === "vacant") {
     // Papered glass, sheets with gaps between them; a pale board of a letting agent's in the middle.
     for (let u = win.u0 + 0.1, i = 0; u < win.u1 - 0.5; u += 0.95, i++) {
@@ -91,8 +95,10 @@ const shell = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
 
 /** The back room: stock on shelves along the glass, cartons stacked, a lamp; the servers of the technical trades' (`shop-trades.ts`). */
 const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
-  const { w, d } = k.f;
   const W = k.wall;
+  // Its back wall's breadth in from the back where it has one (O5).
+  const { w } = k.f;
+  const d = k.shop.back ? k.f.d - W : k.f.d;
   const top = k.c - k.y;
   if (k.shop.sales !== undefined) {
     const u0 = sales.w + W;
@@ -110,6 +116,24 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
     cartons(k, { u: w * 0.5, v: v0 + 0.55 }, 2, 82);
   }
   draw(k, slot(0.5, w - 0.5, (v0 + d) / 2 - 0.05, (v0 + d) / 2 + 0.05), top - 0.06, top - 0.02, "lamp");
+};
+
+/**
+ * A street unit's light seen from the street (ADR-0093 O5, the board's lit shops behind the front's
+ * glass): a strip of lamps along its window under the fascia, a lightbox across its sales floor's
+ * back wall over the counter (its brand's backdrop), one on its side wall by the door and one behind
+ * its window display, warm.
+ */
+const streetWindow = (k: Fit, sales: { w: number; s: number }): void => {
+  const W = k.wall;
+  const head = shopHead(k.shop);
+  draw(k, slot(0.3, k.f.w - 0.3, GLASS + 0.08, GLASS + 0.2), head - 0.14, head - 0.08, "lamp");
+  if (k.shop.sales === undefined) draw(k, slot(W + 0.25, sales.w - W - 0.25, sales.s - 0.04, sales.s), 0.5, head - 0.15, "lightbox");
+  // Its side wall by the door lit (seen from the street through the door), behind the wall rack there.
+  draw(k, slot(W, W + 0.03, 0.4, sales.s - 0.2), 0.3, head - 0.2, "lightbox");
+  // The window display's backdrop lit behind it (a shop window's light box), the door's side open.
+  const L = shopLayout(sales.w, sales.s, k.shop.sales !== undefined, W);
+  if (L.window) draw(k, slot(L.window.u0, L.window.u1, L.window.v1 + 0.02, L.window.v1 + 0.06), 0.15, head - 0.1, "lightbox");
 };
 
 /** A vacant unit's floor: what the last tenant left (cartons, a ladder, a paint pot, a cable from the ceiling) and somebody's coffee (§5). */
@@ -152,6 +176,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
     else fitTrade(k, L, sales.w, sales.s);
     backRoom(k, sales);
     ceiling(k, sales.w, sales.s, open ? 2 : 0);
+    if (open && shop.street) streetWindow(k, sales);
   }
   const at = (p: { u: number; v: number }): Vec3 => ({ ...k.f.point(p.u, p.v), y: k.y });
   const seller = open ? at(L.seller) : null;
@@ -176,6 +201,11 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
 /** Every shop of P1, P2 and P0 built, in `SHOPS`' order. */
 export const SHOP_BUILDS: readonly ShopBuild[] = SHOPS.map(buildShop);
 
+/** The front's units built (ADR-0093 O5), in `FRONT_SHOPS`' order: a prop each after every other solid of Alchemia's. */
+export const FRONT_SHOP_BUILDS: readonly ShopBuild[] = FRONT_SHOPS.map(buildShop);
+/** The gallery's and the front's, for the engine's colours and signs. */
+export const ALL_SHOP_BUILDS: readonly ShopBuild[] = [...SHOP_BUILDS, ...FRONT_SHOP_BUILDS];
+
 /** The shops' drawn pieces (inside the gallery: drawn near only, in the inside's mesh). */
 export const SHOP_PIECES: readonly Piece[] = SHOP_BUILDS.flatMap((b) => b.pieces);
 /** Their solids: the drawn ones and those of the fixtures drawn as parts and of the game's models. */
@@ -187,15 +217,22 @@ const CHUNK = "krakowskie-2-1";
 const spot = (at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]]): CrowdSpot => ({ chunk: CHUNK, at, yaw, does, indoor: true });
 
 /**
- * The gallery's still crowd (ADR-0060): a customer at the counter of every other open shop (by the
- * hash of the shop), a few people leaning on the atrium's balustrade on P1 and P2, out of the
- * escalators' landings and the gallery's nodes, and a few by P0's fountain (O3).
+ * A customer at the counter of every other open shop of `builds` (by the hash of the shop): the still
+ * crowd's (ADR-0060), indoors.
  */
-export const GALLERY_CROWD: readonly CrowdSpot[] = [
-  ...SHOP_BUILDS.flatMap((b) => {
+export const shopCustomers = (builds: readonly ShopBuild[]): CrowdSpot[] =>
+  builds.flatMap((b) => {
     if (!b.customer || !b.seller || shopHash(b.shop.id, 97) < 0.4) return [];
     return [spot(b.customer, Math.atan2(b.seller.x - b.customer.x, b.seller.z - b.customer.z), shopHash(b.shop.id, 96) < 0.5 ? ["phone", "talk"] : ["talk"])];
-  }),
+  });
+
+/**
+ * The gallery's still crowd (ADR-0060): its shops' customers (`shopCustomers`), a few people leaning
+ * on the atrium's balustrade on P1 and P2, out of the escalators' landings and the gallery's nodes,
+ * and a few by P0's fountain (O3).
+ */
+export const GALLERY_CROWD: readonly CrowdSpot[] = [
+  ...shopCustomers(SHOP_BUILDS),
   spot({ x: 418.5, y: MALL_LEVELS.p1, z: 50.6 }, Math.PI, ["lean", "phone"]),
   spot({ x: 410.4, y: MALL_LEVELS.p1, z: 46.5 }, Math.PI / 2, ["lean"]),
   spot({ x: 425.6, y: MALL_LEVELS.p2, z: 47.5 }, -Math.PI / 2, ["lean", "smoke"]),

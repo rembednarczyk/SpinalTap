@@ -23,7 +23,13 @@ import { frontPieces } from "./front";
 import { frontDressPieces } from "./front-dress";
 import { frontGreenPieces } from "./front-green";
 import { entrancePieces } from "./entrance";
-import { SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, modelBoxes } from "./shops";
+import { FRONT_SHOP_BUILDS, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, modelBoxes, shopCustomers } from "./shops";
+import { frontShellInsidePieces, frontShellPieces } from "./front-shell";
+import { FRONT_ROOM_CROWD, FRONT_ROOM_PROPS, FRONT_ROOM_SIGNS, type VenueSign, frontRoomPieces } from "./front-rooms";
+import { L3_CROWD, L3_PROPS, L3_SIGNS, l3Pieces } from "./front-l3";
+import { drawnOnly } from "./front-fit";
+import { FRONT_GREEN_PROPS, FRONT_PLANTER_SOLIDS } from "./front-green";
+import type { CrowdSpot } from "../crowd-spot";
 import { FOODHALL_PROPS, seatingPieces } from "./foodhall-seating";
 import { kitchenPieces } from "./foodhall-kitchens";
 import { fumikoWindowPieces } from "./fumiko-p0";
@@ -58,7 +64,13 @@ export { escalatorFlight, escalatorPieces, escalatorTread } from "./escalators";
 export { slabOf as storeySlabOf } from "./storey";
 export { ALCHEMIA_NAV } from "./nav";
 export { frontDressPieces } from "./front-dress";
-export { FRONT_GREEN_PROPS, frontGreenPieces } from "./front-green";
+export { FRONT_GREEN_PROPS, FRONT_PLANTER_SOLIDS, FRONT_TREES, frontGreenPieces } from "./front-green";
+export * from "./front-levels";
+export { FRONT_SHOPS, TOKYO_DRIP_L2 } from "./front-shops";
+export { ARCADE_BACK, FRONT_ROOMS, frontGlass } from "./front-shell";
+export { FRONT_ROOM_CROWD, FRONT_ROOM_PROPS, type VenueSign } from "./front-rooms";
+export { L3_CROWD, L3_GROUPS, L3_PROPS, SKY_BAR, YAKITORI } from "./front-l3";
+export { FRONT_NAV } from "./front-nav";
 export { entrancePieces } from "./entrance";
 export {
   GLASS_IN as SHOP_GLASS_IN,
@@ -66,6 +78,8 @@ export {
   SHOPS as GALLERY_SHOPS,
   SHOPFRONT_HEAD,
   SHOP_DOOR,
+  ALL_SHOPS as ALL_GALLERY_SHOPS,
+  shopHead as galleryShopHead,
   type ShopDef as GalleryShopDef,
   type ShopState as GalleryShopState,
   type ShopTrade as GalleryShopTrade,
@@ -75,7 +89,7 @@ export {
   shopFloor as galleryShopFloor,
   shopFrame as galleryShopFrame,
 } from "./shops-plan";
-export { GALLERY_CROWD, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
+export { ALL_SHOP_BUILDS, FRONT_SHOP_BUILDS, GALLERY_CROWD, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
 export { FOODHALL_PROPS, FUMIKO_STOOLS, TABLE_GROUPS, groupParts, seatingPieces } from "./foodhall-seating";
 export { kitchenPieces } from "./foodhall-kitchens";
 export { FUMIKO_WINDOW, FUMIKO_WINDOW_SPOT, FUMIKO_WINDOW_YAW, beforeHatch, fumikoWindowPieces } from "./fumiko-p0";
@@ -125,7 +139,20 @@ const LIFT_NE = liftPieces(ALCHEMIA_LIFT_NE);
 /** The gallery round the atrium (ADR-0093 O1): its body drawn from afar, its galleries' balustrades, escalators and cores near. */
 const MALL_OUT = mallOutsidePieces();
 const MALL_IN = mallInsidePieces();
-const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), ...entrancePieces()];
+/** The front's storeys (B1) with their glass, floors and steps as rooms since ADR-0093 O5 (`front-shell.ts`), drawn with the storeys. */
+const FRONT = [...frontPieces(), ...frontDressPieces(), ...frontGreenPieces(), ...entrancePieces(), ...frontShellPieces()];
+/**
+ * The front's rooms furnished (ADR-0093 O5): the steps in from the arcade, the arcades and the café
+ * (`front-rooms.ts`), L3's bar, grill and tables (`front-l3.ts`); drawn near only, with the solids
+ * not drawn among them.
+ */
+const FRONT_IN = [...frontShellInsidePieces(), ...frontRoomPieces(), ...l3Pieces()];
+/** The front's rooms' fittings (O5) with the solids not drawn among them: the glitch scan's `alchemia-front-footprint` measures them. */
+export const FRONT_ROOM_PIECES: readonly Piece[] = FRONT_IN;
+/** Of them what the engine draws (among `ALCHEMIA_PIECES`). */
+export const FRONT_ROOM_DRAWN: readonly Piece[] = drawnOnly(FRONT_IN);
+/** The front's units (O5), a prop each among the last of Alchemia's. */
+const FRONT_SHOP_PIECES = FRONT_SHOP_BUILDS.flatMap((b) => b.pieces);
 /** The square before the front (C5, 19.11): its podium, stairs and fountain, its kiosks and café; drawn with the front. */
 const FRONT_SQUARE = [...plazaFloorPieces(), ...plazaCafePieces()];
 /** The deptak's stalls dressed (C7, 20.11): crates, buckets, tags, lamps, cables, cartons and the tea; drawn with the front. */
@@ -156,6 +183,8 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...ROOF,
   ...FRONT_SQUARE,
   ...DEPTAK,
+  ...FRONT_ROOM_DRAWN,
+  ...FRONT_SHOP_PIECES,
 ];
 
 /** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
@@ -229,6 +258,39 @@ export const C7_PROPS: readonly StreetPropItem[] = [...DEPTAK_PROPS, ...TERRACE_
 export const DEPTAK_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([...DEPTAK, ...modelBoxes(DEPTAK_PROPS.filter((p) => p.prop !== "figure"))], 8);
 
 /**
+ * The front's solids on the ground in its old slot (B1): the green steps and the house with arcades'
+ * piers. The rest of the front's storeys a prop per 12 m tile (ADR-0093 O5: a walker near a prop gets
+ * all its prisms, and one walks in the storeys now).
+ */
+const FRONT_GROUND = FRONT.filter((p) => p.solid && p.box.y0 <= -2.9 && (p.kind === "green" || p.kind === "plaster"));
+const FRONT_GROUND_SET: ReadonlySet<Piece> = new Set(FRONT_GROUND);
+export const FRONT_STOREY_PROPS: readonly StaticProp[] = tiledSolidProps(FRONT.filter((p) => !FRONT_GROUND_SET.has(p)), 12);
+
+/** The front's units (O5): a prop each, as the gallery's. */
+export const FRONT_SHOP_SOLID_PROPS: readonly StaticProp[] = FRONT_SHOP_BUILDS.map((b) => solidProp([...b.pieces, ...b.solids.map((p) => ({ ...p, solid: true }))]));
+
+/** The game's models in the front's rooms (O5): the arcades' machines and benches, the café's and the bar's people, the units' models. */
+export const FRONT_ROOM_MODELS: readonly StreetPropItem[] = [...FRONT_ROOM_PROPS, ...L3_PROPS, ...FRONT_SHOP_BUILDS.flatMap((b) => b.props)];
+
+/**
+ * The front's fittings (O5) and the planters and trunks of the trees on its terraces, which one walks
+ * now: a prop per 12 m tile.
+ */
+export const FRONT_ROOM_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps(
+  [...FRONT_IN, ...modelBoxes([...FRONT_ROOM_PROPS, ...L3_PROPS]), ...FRONT_PLANTER_SOLIDS, ...modelBoxes(FRONT_GREEN_PROPS.filter((p) => p.prop === "tree"))],
+  12,
+);
+
+/** Every solid of the front's storeys as rooms (O5), the last of `ALCHEMIA_PROPS`. */
+export const FRONT_O5_PROPS: readonly StaticProp[] = [...FRONT_STOREY_PROPS, ...FRONT_SHOP_SOLID_PROPS, ...FRONT_ROOM_SOLID_PROPS];
+
+/** The front's still crowd (O5): its units' customers, the arcades' and the café's people, L3's. */
+export const FRONT_CROWD: readonly CrowdSpot[] = [...shopCustomers(FRONT_SHOP_BUILDS), ...FRONT_ROOM_CROWD, ...L3_CROWD];
+
+/** The neon names of the front's café, bar and grill (O5), drawn by the engine's letters. */
+export const FRONT_VENUE_SIGNS: readonly VenueSign[] = [...FRONT_ROOM_SIGNS, ...L3_SIGNS];
+
+/**
  * Every solid of Alchemia, a prop per part of the food hall, its lift's moving parts, then T2 and the
  * Arkady. The units' two props and the tables' one hold the food hall on P3 since ADR-0093 O3 (its
  * units, north and south of z 45, and its seating), so the ids after them stay as they were.
@@ -257,8 +319,9 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   solidProp(METRO_DOOR_PIECES),
   // Stage 5a after stage 10's: P-2's shell with its portal and cutting, the flight down from P-1, the store's fittings.
   ...P2_PROPS,
-  // The front over P-1 (B1, 19.11) after stage 5a's: its wings, storeys, columns and green steps, one prop of its own.
-  solidProp(FRONT),
+  // The front over P-1 (B1, 19.11) after stage 5a's: its green steps and the house with arcades' piers, on the ground, one prop
+  // of its own (its storeys and their rooms a prop per tile among the last since ADR-0093 O5: one walks in them now).
+  solidProp(FRONT_GROUND),
   // Stage 5b after the front: P-2's robots, running by the clock.
   ...P2_ROBOTS,
   // Stage 5d1 after 5b's: the shelter.
@@ -275,8 +338,11 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   ...ROOF_SOLID_PROPS,
   // The square before the front (C5), so every id above stays.
   ...FRONT_PLAZA_SOLID_PROPS,
-  // The deptak's stalls' goods (C7) last.
+  // The deptak's stalls' goods (C7).
   ...DEPTAK_SOLID_PROPS,
+  // The front's storeys as rooms (ADR-0093 O5): their slabs, glass, floors, balustrades and steps a prop per tile, their units a
+  // prop each, their fittings and the terraces' planters a prop per tile, last.
+  ...FRONT_O5_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

@@ -47,7 +47,8 @@ export const FOODHALL_CROWD: readonly CrowdSpot[] = [
   onBench(1, "b", 2.0),
   onBench(2, "a", 1.0),
   onBench(3, "b", 0.7),
-  onBench(5, "a", 0.9),
+  // On the bench by the door into L3 (ADR-0093 O5: the lift's lobby's side is a wall's breadth off), and at the pair moved into L3.
+  onBench(5, "b", 0.9),
   onBench(6, "a", 2.2),
   onBench(7, "a", 1.0),
   // On a stool at Fumiko's bar.
