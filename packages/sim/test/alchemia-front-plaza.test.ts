@@ -22,6 +22,7 @@ import {
   Simulation,
   WORLD_SCENERY,
   WORLD_STREET_PROPS,
+  gangerEntity,
   groundY,
   kioskSpots,
   plazaCafePieces,
@@ -134,6 +135,30 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
     const south = start(395.0, -10.8);
     expect(runThrough(south, [{ x: 395.0, z: -6.4 }])).not.toBeNull();
     expect(south.player()!.position.y).toBeCloseTo(PLAZA_TOP, 1);
+  });
+
+  it("lets an alerted brawler from the footway get up the stairs to the player by the fountain, and from the kiosks up the west stairs", () => {
+    /** Seconds the brawler at `from` takes to hurt the player at `to` or stand by her, or null. */
+    const chase = (from: { x: number; z: number }, to: { x: number; z: number; y: number }, seed: number): number | null => {
+      const sim = Simulation.create({ seed });
+      teleportPlayer(sim, { ...to, y: to.y + 0.05 });
+      sim.step();
+      const p = sim.player()!;
+      const g = gangerEntity(9001, { key: "plaza-chaser", position: { x: from.x, y: groundY(from.x, from.z), z: from.z }, yaw: 0 }, null, 200, "krakowskie-2-1", undefined, "hebi_brawler");
+      g.ai!.alerted = true;
+      sim.world.add(g);
+      const health = p.health!.current;
+      for (let i = 0; i < 60 * 40; i++) {
+        sim.step();
+        if (p.health!.current < health || (Math.hypot(g.position.x - p.position.x, g.position.z - p.position.z) < 2.5 && Math.abs(g.position.y - p.position.y) < 1)) return i / 60;
+      }
+      return null;
+    };
+    const fountain = { x: FOUNTAIN_CENTRE.x + 2.3, z: FOUNTAIN_CENTRE.z - 0.5, y: PLAZA_TOP };
+    for (const seed of [3, 11]) {
+      expect(chase({ x: 405.5, z: -10.8 }, fountain, seed), `south, seed ${seed}`).not.toBeNull();
+      expect(chase({ x: 388.5, z: -3.6 }, { x: 395.2, z: -3.0, y: PLAZA_TOP }, seed), `west, seed ${seed}`).not.toBeNull();
+    }
   });
 
   it("stands a round fountain on the podium: a rim knee high all round, solid, its water and hologram in it", () => {
