@@ -2266,6 +2266,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin plan), tools/glitch-scan
 - Kurator (przegląd G-948): street.vending-machines#3 leży na osi GATE_WALK (0,00 m), clearSpot przesuwa go o 1,08 m na (439,6; −101), nadal 1,03 m od osi, więc clearOfGame = false. Poprawka kontroli: dopasować punkt ręczny do najbliższego elementu tego samego rodzaju w LUBLIN_STREET_PROPS w promieniu 1,5 m, obecność w WORLD_STREET_PROPS sprawdzać dla niego z MATCH 0,1 m (baza 13 = 12 z G-947 + krakowskie-2-0 440,-100; wynik stały dla 1,5–3 m). Punkt przenieść dalej niż 1,5 m od osi, np. na zachodni bruk przy słupkach Królewskiej.
 
+### G-950 Szeroki raster pościgu liczony w całości w jednym kroku przy zmianie piętra
+- Ważność: S3 · Zasięg: pościgi po schodach i rampach (Alchemia: hala P0, rampa P−1)
+- Opis: Pomiar agenta perf pościgu (20.11): w pościgu do hali (ziarno 3) szeroki raster piętra −6,25 powstaje w plasterkach (gotowy w kroku 303), ale napastnik schodzi w tym czasie na −6,5 i raster idzie do kosza; napastnik stoi ok. 60 kroków u stóp schodów (241–301), potem wideWay liczy raster −6,5 w całości w jednym kroku. W parkingu na rampie szerokie rastry −5,75, −6, −6,25, −6,5 liczone w całości w jednym kroku każdy (kroki 643, 667, 691, 717). W grze skoki klatki jak G-643 i postój napastnika. Poprawka: piętro rastra zaokrąglone do pasma (np. jeden raster na bieg schodów) albo zawsze w plasterkach; zmiana zachowania, osobny PR z testem.
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim/src/systems/ai (pościg, nav-share), packages/sim/src/world/nav.ts
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
