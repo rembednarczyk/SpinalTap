@@ -1,6 +1,7 @@
 import { MeshSink } from "../mesh-sink";
 import { blob, block, glow, paint, ring, tube, v3 } from "./prop-kit";
-import { TREE_SHAPE } from "./prop-shapes";
+import { TREE_SHAPE, treeSpeciesOf, treeStyleOf } from "./prop-shapes";
+import { FULL_LEAVES, type LeafDensity, type TreeForm, leafyTree } from "./tree-plan";
 
 /**
  * Greenery of the street furniture (ADR-0047): five tree silhouettes of the centre's lime
@@ -50,65 +51,89 @@ const CROWNS: Readonly<Record<number, readonly (readonly [number, number, number
   ],
 };
 
-/** A limb from the trunk into the crown: from `dy` under the trunk's top to (x, top + up, z), of radius r. */
-type Limb = readonly [dy: number, x: number, up: number, z: number, r: number];
-
-/** A species' trunk: its height to the crown, its radius, the far tree's square trunk and the limbs. */
+/** A species' trunk: its height to the crown, its radius and the far tree's square trunk. */
 interface Trunk {
   readonly h: number;
   readonly r: number;
   readonly far: number;
-  readonly limbs: readonly Limb[];
 }
+
+const TRUNK: Readonly<Record<number, Trunk>> = {
+  [TREE_SHAPE.lime]: { h: 3.6, r: 0.26, far: 0.3 },
+  [TREE_SHAPE.maple]: { h: 3.3, r: 0.26, far: 0.3 },
+  [TREE_SHAPE.chestnut]: { h: 3.1, r: 0.26, far: 0.3 },
+  // A short, thick bole branching low (the simulation's trunk: `TREE_GIRTH`).
+  [TREE_SHAPE.oak]: { h: 2.8, r: 0.42, far: 0.5 },
+  [TREE_SHAPE.poplar]: { h: 3.4, r: 0.45, far: 0.52 },
+};
+
+const trunkOf = (shape: number): Trunk => TRUNK[shape] ?? TRUNK[TREE_SHAPE.lime]!;
+
+/** How many scaffold limbs a species has and how steep they rise (degrees): a lime's and a maple's oval, the chestnut's dome, the oak's spread, the poplar's climb. */
+const LIMBS: Readonly<Record<number, Pick<TreeForm, "limbs" | "rise">>> = {
+  [TREE_SHAPE.lime]: { limbs: 5, rise: [40, 62] },
+  [TREE_SHAPE.maple]: { limbs: 5, rise: [32, 55] },
+  [TREE_SHAPE.chestnut]: { limbs: 6, rise: [28, 50] },
+  [TREE_SHAPE.oak]: { limbs: 6, rise: [18, 40] },
+  [TREE_SHAPE.poplar]: { limbs: 5, rise: [55, 75] },
+};
+
+/**
+ * A near tree of model `shape` (`species + TREE_SPECIES * style`, `treeStyleAt`): in comic realism
+ * (`tree-plan.ts`, the user's decision of 20.11; trunk, limbs, branches and a crown of leaf clusters
+ * within the species' crown ellipsoids), or the game's original one, mixed in for its look.
+ */
+export const tree = (shape: number, density: LeafDensity = FULL_LEAVES): MeshSink => {
+  const species = treeSpeciesOf(shape);
+  const sink = treeStyleOf(shape) === 1 ? classicTree(species) : new MeshSink();
+  if (treeStyleOf(shape) !== 1) {
+    const { h, r } = trunkOf(species);
+    leafyTree(sink, { h, r, ...(LIMBS[species] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[species] ?? CROWNS[0]!, species, density);
+  }
+  // 2077: sensor bands on the city's maples.
+  if (species === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
+  return sink;
+};
+
+/** A limb of the original tree from the trunk into the crown: from `dy` under the trunk's top to (x, top + up, z), of radius r. */
+type Limb = readonly [dy: number, x: number, up: number, z: number, r: number];
 
 const TWO_LIMBS: readonly Limb[] = [
   [0.4, 0.8, 1.1, 0.3, 0.09],
   [0.6, -0.7, 0.9, -0.4, 0.08],
 ];
 
-const TRUNK: Readonly<Record<number, Trunk>> = {
-  [TREE_SHAPE.lime]: { h: 3.6, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  [TREE_SHAPE.maple]: { h: 3.3, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  [TREE_SHAPE.chestnut]: { h: 3.1, r: 0.26, far: 0.3, limbs: TWO_LIMBS },
-  // A short, thick bole branching low into four heavy limbs (the simulation's trunk: `TREE_GIRTH`).
-  [TREE_SHAPE.oak]: {
-    h: 2.8,
-    r: 0.42,
-    far: 0.5,
-    limbs: [
-      [0.3, 2.0, 1.4, 0.6, 0.16],
-      [0.5, -1.9, 1.2, -0.7, 0.15],
-      [0.2, 0.5, 1.6, -1.8, 0.14],
-      [0.4, -0.4, 1.5, 1.7, 0.13],
-    ],
-  },
-  [TREE_SHAPE.poplar]: {
-    h: 3.4,
-    r: 0.45,
-    far: 0.52,
-    limbs: [
-      [0.4, 1.0, 1.6, 0.3, 0.15],
-      [0.6, -0.9, 1.4, -0.5, 0.14],
-      [0.3, 0.2, 2.0, -0.9, 0.12],
-    ],
-  },
+/** The original tree's limbs: a short oak bole branching into four, the poplar into three, the rest into two. */
+const CLASSIC_LIMBS: Readonly<Record<number, readonly Limb[]>> = {
+  [TREE_SHAPE.oak]: [
+    [0.3, 2.0, 1.4, 0.6, 0.16],
+    [0.5, -1.9, 1.2, -0.7, 0.15],
+    [0.2, 0.5, 1.6, -1.8, 0.14],
+    [0.4, -0.4, 1.5, 1.7, 0.13],
+  ],
+  [TREE_SHAPE.poplar]: [
+    [0.4, 1.0, 1.6, 0.3, 0.15],
+    [0.6, -0.9, 1.4, -0.5, 0.14],
+    [0.3, 0.2, 2.0, -0.9, 0.12],
+  ],
 };
 
-const trunkOf = (shape: number): Trunk => TRUNK[shape] ?? TRUNK[TREE_SHAPE.lime]!;
-
-export const tree = (shape: number): MeshSink => {
+/**
+ * The game's original tree, kept in the mix for its look (the user, 20.11): a trunk, two to four
+ * limbs and a crown of smooth low-poly blobs, so the ink draws only its outline (ADR-0047).
+ */
+const classicTree = (species: number): MeshSink => {
   const sink = new MeshSink();
-  const { h, r, limbs } = trunkOf(shape);
+  const { h, r } = trunkOf(species);
   sink.prism(v3(0, -0.3, 0), r, h + 0.3, 7, BARK, false, 0.15);
-  for (const [dy, x, up, z, lr] of limbs) tube(sink, v3(0, h - dy, 0), v3(x, h + up, z), lr, BARK, 5, 0.05);
-  for (const [x, y, z, rx, ry, rz, c] of CROWNS[shape] ?? CROWNS[0]!) blob(sink, v3(x, y, z), rx, ry, rz, paint(c), 8, 5);
-  // 2077: sensor bands on the city's maples.
-  if (shape === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
+  for (const [dy, x, up, z, lr] of CLASSIC_LIMBS[species] ?? TWO_LIMBS) tube(sink, v3(0, h - dy, 0), v3(x, h + up, z), lr, BARK, 5, 0.05);
+  for (const [x, y, z, rx, ry, rz, c] of CROWNS[species] ?? CROWNS[0]!) blob(sink, v3(x, y, z), rx, ry, rz, paint(c), 8, 5);
   return sink;
 };
 
 /** The far tree: a trunk and one crown, a fraction of the vertices. */
-export const farTree = (shape: number): MeshSink => {
+export const farTree = (model: number): MeshSink => {
+  const shape = treeSpeciesOf(model);
   const sink = new MeshSink();
   const { h, far } = trunkOf(shape);
   sink.box(v3(0, h / 2 - 0.15, 0), far, h + 0.3, far, BARK, { bottom: false });
