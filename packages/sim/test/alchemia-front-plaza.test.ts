@@ -30,7 +30,7 @@ import {
   plazaCafeSolids,
   plazaFloorPieces,
 } from "../src";
-import { FRONT_PLAZA_SOLID_PROPS } from "../src/content/alchemia";
+import { DEPTAK_SOLID_PROPS, FRONT_PLAZA_SOLID_PROPS } from "../src/content/alchemia";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { lineOfSight } from "../src/world/hitscan";
 import { teleportPlayer } from "./helpers";
@@ -238,8 +238,8 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
     expect(PIECES.some((p) => p.kind === "paper")).toBe(true);
     expect(PIECES.some((p) => p.kind === "carton")).toBe(true);
     expect(PIECES.some((p) => p.kind === "chair" && p.box.y1 - p.box.y0 < 0.05)).toBe(true);
-    // Drawn with the street furniture, the last view of the scenery.
-    expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
+    // Drawn with the street furniture, a view of the scenery before C7's (the deptak's stalls and the terraces' people, 20.11).
+    expect(WORLD_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
   });
 
   it("keeps everything off Bajkowskiego's footway and carriageway, the ramp's trench and the main entrance's way, on the square's paving", () => {
@@ -263,9 +263,9 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
     expect(map.filter((i) => i.x > PLAZA_FLOOR.minX && i.x < PLAZA_FLOOR.maxX && i.z > PLAZA_FLOOR.minZ && i.z < PLAZA_FLOOR.maxZ)).toEqual([]);
   });
 
-  it("puts its solids in props of their own, the last of Alchemia's, so every id before them stays", () => {
+  it("puts its solids in props of their own, after every earlier one of Alchemia's (only C7's deptak's after them), so every id before them stays", () => {
     expect(FRONT_PLAZA_SOLID_PROPS.length).toBeGreaterThan(0);
-    expect(ALCHEMIA_PROPS.slice(-FRONT_PLAZA_SOLID_PROPS.length)).toEqual(FRONT_PLAZA_SOLID_PROPS);
+    expect(ALCHEMIA_PROPS.slice(-FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length, -DEPTAK_SOLID_PROPS.length)).toEqual(FRONT_PLAZA_SOLID_PROPS);
     const prisms = FRONT_PLAZA_SOLID_PROPS.reduce((n, p) => n + (p.prisms?.length ?? 0), 0);
     expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length);
   });

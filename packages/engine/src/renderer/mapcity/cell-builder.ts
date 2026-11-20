@@ -8,6 +8,7 @@ import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { planPavilionSigns } from "../metro/pavilion-signs";
 import { planAlchemiaSigns } from "../alchemia/front-signs";
+import { planDeptakSigns } from "../alchemia/deptak-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planGround } from "./cell-ground";
@@ -88,6 +89,8 @@ export class CellBuilder {
     if (!signs.empty) planSiteSigns(signs, cell.bounds, this.deps.siteTexts(), lite);
     // So does the light of Alchemia's front (ADR-0074 C4): its sign's letters, the holograms, the screens' pictures.
     if (!signs.empty) planAlchemiaSigns(signs, cell.bounds);
+    // And the neons of the deptak on Lubartowska on the tenement across from it (ADR-0074 C7).
+    if (!signs.empty) planDeptakSigns(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       // The neon's streaks shine in the puddles of the ground under them (ADR-0084).
