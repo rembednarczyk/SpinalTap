@@ -101,6 +101,7 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   "sign-amber": "neon-amber",
   // The front's rooms' ceiling panels (ADR-0093 O5): warm, the board's lit storeys behind their glass.
   "ceiling-light": "win-warm",
+  "lightbox": "win-warm",
   chair: "dark",
 };
 

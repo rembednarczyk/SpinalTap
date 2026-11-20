@@ -1,7 +1,7 @@
 import { type ActivityId, type StreetPropItem, type Vec3, figureVariant } from "@seki/core";
 import type { CrowdSpot } from "../crowd-spot";
 import { FRONT_CEILINGS, FRONT_FLOORS, L3_DOORS } from "./front-levels";
-import { cartonsAt, cupAt, inBox, litterAt, model, servicesRun, solidOnly, wayLights } from "./front-fit";
+import { barSeats, cartonsAt, cupAt, inBox, litterAt, model, servicesRun, solidOnly, wayLights, windowBar } from "./front-fit";
 import type { VenueSign } from "./front-rooms";
 import { shopHash } from "./shop-fittings";
 import type { Piece } from "./plan";
@@ -117,23 +117,42 @@ const group = (g: { x0: number; z0: number }, i: number): Piece[] => {
   return out;
 };
 
-/** L3 furnished: the bar, the grill, the tables, the services, the way lit to its doors, its traces. */
+/**
+ * The window bars along L3's south glass either side of the aisle to its door (the board's people at
+ * the lit glass of the top storey, under the sign): x 400.2-408.4 and 412.0-425.8, past the rounded corners.
+ */
+const WINDOW_BARS: readonly (readonly [string, number, number])[] = [
+  ["l3-window-w", 400.2, 408.4],
+  ["l3-window-e", 412.0, 425.8],
+];
+const GLASS_IN_SOUTH = 12.2;
+
+/** L3 furnished: the bar, the grill, the window bars, the tables, the services, the way lit to its doors, its traces. */
 export const l3Pieces = (): Piece[] => [
   ...bar(),
   ...grill(),
+  ...WINDOW_BARS.flatMap(([key, x0, x1]) => windowBar(key, x0, x1, GLASS_IN_SOUTH, 1, F)),
   ...L3_GROUPS.flatMap(group),
   ...servicesRun(416.6, 420.0, 12.8, 31.6, C, 3.0),
   ...servicesRun(405.8, 427.6, 23.2, 25.2, C, 3.0),
   ...servicesRun(399.8, 416.0, 15.4, 16.4, C, 0),
   ...wayLights(418.3, 418.3, 12.6, 31.8, F),
-  ...wayLights(410.2, 418.3, 13.0, 13.0, F),
   ...wayLights(418.3, 427.8, 24.0, 24.0, F),
   ...litterAt("l3-bar", 411.0, 27.2, F, 4),
   ...litterAt("l3-south", 410.2, 13.4, F, 3),
 ];
 
-/** The game's models on L3: the barkeeper, the grill's cook, bins and drinks machines by the aisles. */
+/** Still figures (ADR-0058) on the window bars' stools, every other one by a hash of the place, looking out over the square. */
+const barSitters = (): StreetPropItem[] =>
+  WINDOW_BARS.flatMap(([key, x0, x1]) =>
+    barSeats(x0, x1, GLASS_IN_SOUTH, 1).flatMap((s, i) =>
+      shopHash(key, i, 7) < 0.55 ? [model("figure", s.x, F, s.z, S, figureVariant({ pose: "sit", body: shopHash(key, i, 8) < 0.5 ? "a" : "b", seat: 0.75, look: Math.floor(shopHash(key, i, 9) * 32) }))] : [],
+    ),
+  );
+
+/** The game's models on L3: the barkeeper, the grill's cook, the people at the window bars, bins and drinks machines by the aisles. */
 export const L3_PROPS: readonly StreetPropItem[] = [
+  ...barSitters(),
   model("figure", 411.0, F, 30.3, S, figureVariant({ pose: "stand", body: "a", seat: 0, look: 22 })),
   model("figure", 424.6, F, 29.6, S, figureVariant({ pose: "hips", body: "b", seat: 0, look: 3 })),
   model("waste-bin", 416.25, F, 27.6, 0, 3),
@@ -165,6 +184,6 @@ export const L3_CROWD: readonly CrowdSpot[] = [
   onBench(3, "a", 1.0),
   onBench(5, "b", 0.9),
   onBench(8, "a", 1.9),
-  spot({ x: 407.4, y: F, z: 12.8 }, S, ["phone"]),
-  spot({ x: L3_DOORS.south.x1 + 1.2, y: F, z: 12.9 }, S, ["lean", "smoke"]),
+  spot({ x: L3_DOORS.south.x0 - 0.15, y: F, z: 13.0 }, S, ["phone"]),
+  spot({ x: L3_DOORS.south.x1 + 0.2, y: F, z: 13.4 }, S, ["lean", "smoke"]),
 ];

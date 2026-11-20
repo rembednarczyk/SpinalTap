@@ -95,3 +95,32 @@ export const cafeTable = (x: number, z: number, y: number, chairs: readonly ("x-
 
 /** What of `pieces` the engine draws: all but the solids not drawn (`solidOnly`). */
 export const drawnOnly = (pieces: readonly Piece[]): Piece[] => pieces.filter((p) => !HIDDEN.has(p));
+
+/**
+ * A bar along the inside of the glass facing out (ADR-0093 O5, the board's people at the lit glass): a
+ * counter a hand off the glass from `x0` to `x1` on the floor `y`, its glass side a warm lightbox, stools
+ * every 0.9 m on the room's side (`room` +1 north of the glass at `z`, -1 south), cups on it. Its seats
+ * for still figures: `barSeats`.
+ */
+export const windowBar = (key: string, x0: number, x1: number, z: number, room: 1 | -1, y: number): Piece[] => {
+  const [c0, c1] = [z + room * 0.05, z + room * 0.5].sort((a, b) => a - b) as [number, number];
+  const out: Piece[] = [
+    inBox(x0, x1, c0, c1, y - 0.05, y + 1.05, "counter", true),
+    inBox(x0 - 0.02, x1 + 0.02, c0 - 0.03, c1 + 0.03, y + 1.05, y + 1.09, "table"),
+    // The lightbox on its glass side, seen from the street.
+    room > 0 ? inBox(x0, x1, c0 - 0.03, c0, y + 0.1, y + 0.95, "lightbox") : inBox(x0, x1, c1, c1 + 0.03, y + 0.1, y + 0.95, "lightbox"),
+  ];
+  for (const s of barSeats(x0, x1, z, room)) {
+    out.push(inBox(s.x - 0.17, s.x + 0.17, s.z - 0.17, s.z + 0.17, y + 0.71, y + 0.75, "bench"), inBox(s.x - 0.03, s.x + 0.03, s.z - 0.03, s.z + 0.03, y, y + 0.71, "bench"));
+    out.push(solidOnly(s.x - 0.17, s.x + 0.17, s.z - 0.17, s.z + 0.17, y - 0.05, y + 0.75));
+    if (shopHash(key, s.x * 10) < 0.45) out.push(...cupAt(s.x + 0.1, (c0 + c1) / 2, y + 1.09, shopHash(key, s.x, 2) < 0.4));
+  }
+  return out;
+};
+
+/** The stools of a window bar: every 0.9 m from its west end, 0.85 m off the glass into the room. */
+export const barSeats = (x0: number, x1: number, z: number, room: 1 | -1): { x: number; z: number }[] => {
+  const out: { x: number; z: number }[] = [];
+  for (let x = x0 + 0.45; x < x1 - 0.3; x += 0.9) out.push({ x, z: z + room * 0.85 });
+  return out;
+};

@@ -118,6 +118,18 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
   draw(k, slot(0.5, w - 0.5, (v0 + d) / 2 - 0.05, (v0 + d) / 2 + 0.05), top - 0.06, top - 0.02, "lamp");
 };
 
+/**
+ * A street unit's light seen from the street (ADR-0093 O5, the board's lit shops behind the front's
+ * glass): a strip of lamps along its window under the fascia and a lightbox across its sales floor's
+ * back wall over the counter (its brand's backdrop), warm.
+ */
+const streetWindow = (k: Fit, sales: { w: number; s: number }): void => {
+  const W = k.wall;
+  const head = shopHead(k.shop);
+  draw(k, slot(0.3, k.f.w - 0.3, GLASS + 0.08, GLASS + 0.2), head - 0.14, head - 0.08, "lamp");
+  if (k.shop.sales === undefined) draw(k, slot(W + 0.25, sales.w - W - 0.25, sales.s - 0.04, sales.s), 0.5, head - 0.15, "lightbox");
+};
+
 /** A vacant unit's floor: what the last tenant left (cartons, a ladder, a paint pot, a cable from the ceiling) and somebody's coffee (§5). */
 const vacant = (k: Fit, L: Layout, sales: { w: number; s: number }): void => {
   const top = k.c - k.y;
@@ -158,6 +170,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
     else fitTrade(k, L, sales.w, sales.s);
     backRoom(k, sales);
     ceiling(k, sales.w, sales.s, open ? 2 : 0);
+    if (open && shop.street) streetWindow(k, sales);
   }
   const at = (p: { u: number; v: number }): Vec3 => ({ ...k.f.point(p.u, p.v), y: k.y });
   const seller = open ? at(L.seller) : null;

@@ -1,7 +1,8 @@
 import { type ActivityId, type StreetPropItem, type Vec3, figureVariant } from "@seki/core";
 import type { CrowdSpot } from "../crowd-spot";
 import { FRONT_CEILINGS, FRONT_FLOORS } from "./front-levels";
-import { cafeTable, cartonsAt, cupAt, inBox, litterAt, model, servicesRun, solidOnly, wayLights } from "./front-fit";
+import { barSeats, cafeTable, cartonsAt, cupAt, inBox, litterAt, model, servicesRun, solidOnly, wayLights, windowBar } from "./front-fit";
+import { shopHash } from "./shop-fittings";
 import type { Piece } from "./plan";
 
 /*
@@ -62,6 +63,17 @@ const L1_PROPS: readonly StreetPropItem[] = [
   model("shrubs", 402.9, L1 + 0.45, 3.9, 1.1, 0x316),
 ];
 
+/** The window bar in the corner south-east of L2's cross, along its east bar's south glass (z 13.7 inside). */
+const SE_BAR = { x0: 422.3, x1: 433.6, z: 13.7 } as const;
+
+/** Still figures (ADR-0058) at the glass: on the window bar's stools, every other one by a hash, and at the café's tables by the glass. */
+const glassSitters = (): StreetPropItem[] => [
+  ...barSeats(SE_BAR.x0, SE_BAR.x1, SE_BAR.z, 1).flatMap((s, i) =>
+    shopHash("l2-window", i, 7) < 0.55 ? [model("figure", s.x, L2, s.z, S, figureVariant({ pose: "sit", body: shopHash("l2-window", i, 8) < 0.5 ? "a" : "b", seat: 0.75, look: Math.floor(shopHash("l2-window", i, 9) * 32) }))] : [],
+  ),
+  ...[4, 5, 6].map((t, i) => model("figure", CAFE_TABLES_X[t]! - 0.62, L2, CAFE_ROWS[0], E, figureVariant({ pose: "sit", body: i % 2 === 0 ? "b" : "a", seat: 0.45, look: 5 + i * 9 }))),
+];
+
 /** The café KISSA NEKO behind L2's glass over the square (x 394.2-416.6, z 4.2-10.6): its counter at its west end, two rows of tables. */
 const CAFE_TABLES_X = [399.8, 402.4, 405.0, 407.6, 410.2, 412.8, 415.4] as const;
 const CAFE_ROWS = [5.4, 8.9] as const;
@@ -97,6 +109,7 @@ const cafe = (): Piece[] => {
   return out;
 };
 const CAFE_PROPS: readonly StreetPropItem[] = [
+  ...glassSitters(),
   // The barista behind the counter: a still figure of the game's, as the shops' sellers.
   model("figure", 395.6, L2, 8.0, E, figureVariant({ pose: "stand", body: "b", seat: 0, look: 13 })),
   model("waste-bin", 398.0, L2, 10.25, N, 2),
@@ -114,7 +127,8 @@ const l2Arcade = (): Piece[] => [
   ...cartonsAt("l2-delivery-2", 426.1, 21.0, L2, 2),
   ...litterAt("l2-door", 419.2, 30.6, L2, 5),
   ...litterAt("l2-corner", 427.0, 15.5, L2, 4),
-  ...cupAt(430.3, 14.45, L2 + 0.45, true),
+  // The window bar along the east bar's south glass, over the walk to Lubartowska (the board's people at L2's lit glass).
+  ...windowBar("l2-window", SE_BAR.x0, SE_BAR.x1, SE_BAR.z, 1, L2),
   // On the spine's walls (the units' sides): ad screens, flyers pasted over flyers, a cable taped up to a screen (§3).
   inBox(416.6, 416.66, 12.2, 15.6, L2 + 1.3, L2 + 2.7, "machine"),
   inBox(416.66, 416.68, 12.3, 15.5, L2 + 1.36, L2 + 2.64, "display"),
@@ -134,12 +148,10 @@ const L2_PROPS: readonly StreetPropItem[] = [
   model("planter", 420.4, L2, 7.0, 0, 9),
   model("shrubs", 420.4, L2 + 0.45, 7.0, 2.3, 0x51a),
   model("bench", 419.4, L2, 4.75, S, 1),
-  // The corner south-east of the cross: drinks, cash, a bench and a planter by its glass.
-  model("vending-machine", 423.4, L2, 14.1, N, 2),
-  model("vending-machine", 424.5, L2, 14.1, N, 7),
-  model("atm", 426.2, L2, 14.05, N, 1),
-  model("waste-bin", 427.4, L2, 14.1, N, 0),
-  model("bench", 430.6, L2, 14.3, N, 0),
+  // The corner south-east of the cross: drinks and cash by its east glass, a planter, the window bar's people (`SE_BAR`).
+  model("vending-machine", 435.4, L2, 16.0, W, 2),
+  model("vending-machine", 435.4, L2, 17.05, W, 7),
+  model("atm", 435.45, L2, 18.2, W, 1),
   model("planter", 433.6, L2, 16.6, 0, 11),
   model("shrubs", 433.6, L2 + 0.45, 16.6, 4.1, 0x214),
 ];
@@ -166,6 +178,6 @@ export const FRONT_ROOM_CROWD: readonly CrowdSpot[] = [
   spot({ x: CAFE_TABLES_X[6] + 0.62, y: L2, z: CAFE_ROWS[0] }, W, ["sit"]),
   spot({ x: 417.4, y: L2, z: 5.3 }, S, ["lean", "phone"]),
   spot({ x: 410.6, y: L2, z: 20.6 }, W, ["talk"]),
-  spot({ x: 423.95, y: L2, z: 15.1 }, N, ["phone"]),
+  spot({ x: 425.3, y: L2, z: 15.3 }, S, ["phone", "talk"]),
   spot({ x: 419.6, y: L2, z: 25.4 }, E, ["phone", "talk"]),
 ];

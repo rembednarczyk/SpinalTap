@@ -200,6 +200,30 @@ const lightPanels = (): Piece[] => {
   }
   return out;
 };
+/**
+ * Warm strips of light along the inside of the glass under the ceilings of L2 and L3 (cove lights, a
+ * hand in from the glass, on its straight runs): what the street sees first of the lit storeys, as the
+ * board's warm bands behind the glass (the fake rooms' lit backs until O5). Drawn with the storeys.
+ */
+const COVE_IN = 0.45;
+const coves = (): Piece[] => {
+  const strip = (x0: number, x1: number, z0: number, z1: number, top: number): Piece => piece(box(x0, x1, z0, z1, top - 0.06, top - 0.01), "ceiling-light", false, false);
+  const [c2, c3] = [FRONT_CEILINGS.l2, FRONT_CEILINGS.l3];
+  const i = FRONT_GLASS + COVE_IN;
+  return [
+    // L2: its south glass over the square east of the house with arcades, its spine's east glass, its east bar's south and east glass, its west glass.
+    strip(ARCADE_FRONT.maxX + 0.4, A.maxX - 1.7, A.minZ + i, A.minZ + i + 0.12, c2),
+    strip(A.maxX - i - 0.12, A.maxX - i, A.minZ + 1.7, B.minZ, c2),
+    strip(B.minX + 0.4, B.maxX - 1.7, B.minZ + i, B.minZ + i + 0.12, c2),
+    strip(B.maxX - i - 0.12, B.maxX - i, B.minZ + 1.7, B.maxZ - 0.4, c2),
+    strip(A.minX + i, A.minX + i + 0.12, A.minZ + 1.7, 30.0, c2),
+    // L3: its south glass behind the sign, its east and west glass.
+    strip(L3.minX + 1.7, L3.maxX - 1.7, L3.minZ + i, L3.minZ + i + 0.12, c3),
+    strip(L3.maxX - i - 0.12, L3.maxX - i, L3.minZ + 1.7, L3.maxZ - 0.4, c3),
+    strip(L3.minX + i, L3.minX + i + 0.12, L3.minZ + 1.7, 30.0, c3),
+  ];
+};
+
 /** The units' floors that are the front's storeys. */
 const FRONT_STOREY_OF: Readonly<Record<string, true>> = { l1: true, l1e: true, l2: true, l3: true };
 
@@ -208,6 +232,7 @@ export const frontShellPieces = (): Piece[] => [
   ...frontGlass(),
   ...risers(),
   ...lightPanels(),
+  ...coves(),
   arcadeBack(),
   ...WEST_WING.map((r) => floorOf(r, L1_LEVEL, F.l1)),
   floorOf(EAST_WING, L1_LEVEL, F.l1e),
