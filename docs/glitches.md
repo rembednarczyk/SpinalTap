@@ -2284,6 +2284,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (systems/traffic-system.ts)
 
+### G-955 Chodnik Lubartowskiej zapada się w przejście rampy E Alchemii
+- Ważność: S4 · Zasięg: Krakowskie, chodnik Lubartowskiej x 442,5–445, z 29–36
+- Opis: Przegląd kuratora PR #816 (20.11): zachodnia krawędź chodnika (linia (442,6; 26,4)→(454,5; 61,5), 2,5 m) leży w komórce siatki między kolumną 442,5 (na rampie E) a 445 (na NMT): 0,38–0,50 m pod NMT, oś do 0,16 m, spadek w poprzek do 17%; #816 dokłada do 0,08 m. Poprawka: zagęścić siatkę pod wschodnim brzegiem rampy (siteGrid/flightGrid, FLIGHT_CELL), chodnik na NMT, uskok na ściankę oporową z balustradą wzdłuż x ok. 442,5 (wzorzec Arkad T-218, parapety P−1).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/lublin teren, alchemia terraces)
+
+### G-956 Nierówne stopnie rampy E Alchemii
+- Ważność: S4 · Zasięg: rampa E Alchemii x 436,3–441,7, z 30–56
+- Opis: Przegląd kuratora PR #816: stopnie idą za gruntem chodzonym (rampa pod padami, over false; linia T0 z 32,5 i przejście T1 łamią spadek): 0,098 / 0,184 / 0,269 / 0,269, 12 × 0,168, potem 0,199–0,245 i 0,095; lokalny spadek do 26,9% przy projektowanych 16,8%. Poprawka: EAST_RAMP z over: true i początkiem na linii siatki z 32,5 (precedens T-219, schody T1 → T2).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/alchemia terraces, terrace-steps.ts)
+
+### G-957 Donice przy filarach arkad na placu C5 bez bryły
+- Ważność: S4 · Zasięg: plac C5 Alchemii, donice (397,22; −2,55) i (402,92; −2,55) na podium −0,64
+- Opis: Przegląd kuratora PR #816: dwie donice przy filarach arkad rysowane bez bryły, gracz przez nie przechodzi (zasada rysunek i bryła o tym samym kształcie). Donica przy x 397,22 stoi środkiem na filarze 2; drzwi NIGHT SILK i tak są za filarem, przęsło zwęża się z 2,10 do 1,88 m, wyjście z lokalu zostaje (sprawdzić test alchemia-front-rooms po zmianie).
+- Status: zgłoszone
+- Pakiet właściciela: packages/sim (content/alchemia front-plaza)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
