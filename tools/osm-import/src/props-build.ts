@@ -87,7 +87,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // The rows of bollards along the kerbs of the centre (G-820) once the plan stands, broken by the taxi ranks and the bays the orthophoto shows.
   const kerbRule = loadKerbRule();
   // Read once for every pass of the plan.
-  const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() }];
+  // The map's entrances: the doors (below) take them, and the furniture keeps their fronts clear (ADR-0094 stage 1).
+  const entrances = loadEntrances();
+  const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors(), entrances: [...entrances.map((e) => e.p), ...doors.passageMouths()] }];
   const place = (p: typeof plan) => placeProps(p, chunks, tags, boards, market, kerbRule);
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
   // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree
@@ -96,7 +98,6 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   const table = byChunk as Map<string, StreetPropItem[]>;
   // The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
   const doorWalls = decalWalls.lublinDoorWalls();
-  const entrances = loadEntrances();
   const doorsOut = addDoors(table, new Site(chunks), doorWalls, entrances, { surfaceY: (p) => decalWalls.surfaceY(p.x, p.z), gameDoors: doors.gameDoors(), underground: loadUndergroundWays() });
   // The decals (ADR-0058 stage 6) after the furniture and the doors: the stickers go on its poles, the
   // grates keep off its manholes, the wall decals off the doors.

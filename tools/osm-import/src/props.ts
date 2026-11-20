@@ -9,6 +9,7 @@ import { PROPS_OUT, buildProps } from "./props-build.ts";
 import { SITES_OUT } from "./construction-table.ts";
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import { endCheck, writeTable } from "./table-write.ts";
+import { ENTRANCE_SKIP } from "./props-gen.ts";
 
 const { text, sitesText, sites, byChunk, stats, crowns, decals, doors, figures, entrances, doorWalls } = await buildProps();
 writeTable(PROPS_OUT, text);
@@ -37,7 +38,7 @@ console.log("figures (ADR-0058 stage 8) by host:", Object.entries(figures.per).s
 console.log("  spots turned down:", Object.entries(figures.rejected).sort().map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`wall lanterns slid off a venue's board: ${stats.offBoard}, dropped with no wall beside it: ${stats.onBoard}`);
 console.log("mapped:", Object.entries(stats.mapped).map(([k, v]) => `${k} -> ${v} (${MAPPED[k]?.why ?? ""})`).join("; "));
-console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? (SKIPPED_ART as Record<string, string>)[k] ?? "unknown kind"})`).join("; "));
+console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? (SKIPPED_ART as Record<string, string>)[k] ?? (k === ENTRANCE_SKIP ? "in a door's clear zone (ADR-0094)" : "unknown kind")})`).join("; "));
 if (process.argv.includes("--items")) {
   for (const [id, [asked, got]] of Object.entries(stats.perItem)) if (asked !== got) console.log(`${id}: ${asked} asked, ${got} placed`);
 }

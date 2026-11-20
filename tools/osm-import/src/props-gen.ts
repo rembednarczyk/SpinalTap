@@ -17,6 +17,7 @@ import { bulkyPieces } from "./props-bulky.ts";
 import { litSpot } from "./props-lit-spot.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
+import { EntranceZones, boardDoor } from "./props-entrances.ts";
 import { onKerb } from "./props-bollard-lines.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideSpot, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
@@ -277,7 +278,7 @@ const bulkyItems = (placed: readonly Placed[]): StreetPropItem[] =>
 /** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
 const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles, placed: readonly Placed[]): Placed[] => {
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: Obstacles, placed: readonly Placed[], zones: EntranceZones): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   // A group of points with a yaw faces that way, as a single position does (the benches of Alchemia's T0 towards their lawns).
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: osmAt(item, i) }));
@@ -290,7 +291,8 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     if (BULKY.has(prop)) return bulkyPieces(site, ring, prop, item.count ?? 1, item.id, placed);
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
-    const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
+    // Off the doors' fronts too (ADR-0094 stage 1: a garden of the Rynek stood before the Trybunał's door).
+    const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) && zones.clear(p, prop) } as Site;
     return scatter(clear, ring, count, item.id, AREA_GAP[prop] ?? 2).map((p, k) => ({ prop, p, yaw: null, key: `${item.id}~${k}` }));
   }
   if (item.line || item.lines) return [...onLines(site, item, prop, obstacles), ...fillPlace(site, item, prop, obstacles)];
@@ -360,6 +362,9 @@ export const facingOf = (site: Site, x: Placed): number => {
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
+/** Why a piece was left out in `skipped`: it stood in a door's clear zone (ADR-0094 stage 1). */
+export const ENTRANCE_SKIP = "before an entrance";
+
 /** The rule's name in `perItem` for the food booths, which no group of the plan asks for. */
 export const FOOD_STALLS = "rule.food-stalls";
 
@@ -378,6 +383,9 @@ const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.starts
 const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext): { placed: Placed[]; fromLine: Set<Placed> } => {
   const placed: Placed[] = [];
   const clear = new Clearances(site.chunks, market);
+  // The doors' clear zones (ADR-0094 stage 1): the map's entrances, the passages' mouths, the game's doors and the doors under the venues' boards.
+  const gameDoorPoints = (market.doors ?? []).map((d) => ({ x: (d.a.x + d.b.x) / 2, z: (d.a.z + d.b.z) / 2 }));
+  const zones = new EntranceZones([...(market.entrances ?? []), ...gameDoorPoints, ...boards.map(boardDoor)]);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
   // The obstacles of the pieces placed so far, each added as it is placed.
@@ -398,7 +406,13 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       deferred.push(item);
       continue;
     }
-    for (const at of placeItem(site, item, prop, obstacles, placed)) {
+    // A piece the plan pins to a point of the map stays there; the rest keep off the doors' fronts.
+    const pinned = item.position !== undefined || item.points !== undefined;
+    for (const at of placeItem(site, item, prop, obstacles, placed, zones)) {
+      if (!pinned && !zones.clear(at.p, at.prop)) {
+        skipped[ENTRANCE_SKIP] = (skipped[ENTRANCE_SKIP] ?? 0) + 1;
+        continue;
+      }
       const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
       const shape = shapeOf(item, prop, x.key, tags);
       if (typeof shape === "string") {
