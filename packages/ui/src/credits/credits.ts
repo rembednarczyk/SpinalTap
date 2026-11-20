@@ -45,6 +45,7 @@ const VEHICLES = ["city/vehicle-props.glb"] as const;
 const DRONES = ["city/drone-props.glb"] as const;
 const CROWD = ["city/crowd-props.glb"] as const;
 const ROOMS = ["city/room-props.glb"] as const;
+const EXTRAS = ["city/extra-props.glb"] as const;
 /** The icons of one game-icons.net author the game draws after, by their titles there: "Brain, Syringe (game-icons.net)". */
 const gameIcons = (author: GameIconAuthor): string => {
   const names = Object.values(GAME_ICON_SOURCES).filter((s) => s.author === author);
@@ -101,6 +102,11 @@ export const CREDITS: readonly Credit[] = [
   { id: "kenney-car-kit-2", section: "street", title: "Car Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/car-kit", license: "CC0-1.0", files: VEHICLES, changed: true },
   // CC-BY 4.0 (ADR-0058 stage 7, E4 of the second pack): the drones over the street canyons, drone-props.glb.
   { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
+  // CC-BY 4.0 (ADR-0096): the extra props of extra-props.glb.
+  { id: "sketchfab-street-asset-pack", section: "street", title: "Street Asset Pack", author: "vmatthew", authorUrl: "https://sketchfab.com/vmatthew", url: "https://sketchfab.com/3d-models/street-asset-pack-f3eb47d02e2e4ab290e66752fa354b48", license: "CC-BY-4.0", files: EXTRAS, changed: true },
+  { id: "sketchfab-mini-atm", section: "street", title: "Simple Mini-ATM", author: "Blender3D", authorUrl: "https://sketchfab.com/Blender3D", url: "https://sketchfab.com/3d-models/simple-mini-atm-297bb83c296b49cf93bfbf157f9ca431", license: "CC-BY-4.0", files: EXTRAS, changed: true },
+  { id: "sketchfab-satellite-comms", section: "street", title: "Satellite Comms", author: "Duane's Mind", authorUrl: "https://sketchfab.com/duanesmind", url: "https://sketchfab.com/3d-models/satellite-comms-4be56951da39429a963ee12140bbff57", license: "CC-BY-4.0", files: EXTRAS, changed: true },
+  { id: "sketchfab-fire-escape-doors", section: "street", title: "Fire Escape / Exit Doors", author: "blue man group", authorUrl: "https://sketchfab.com/bloobloo", url: "https://sketchfab.com/3d-models/fire-escape-exit-doors-4ad9f395571a4dfaadce33dfeccc7a53", license: "CC-BY-4.0", files: EXTRAS, changed: true },
   // CC-BY 4.0 (ADR-0063 stage 3): the capsule room on Jezuicka, room-props.glb.
   { id: "sketchfab-futuristic-compact-room", section: "city", title: "Futuristic Compact Room", author: "igor.tesV", authorUrl: "https://sketchfab.com/igor.tesV", url: "https://sketchfab.com/3d-models/futuristic-compact-room-f49b4d0fbd45427bb47484b0a9ccfe75", license: "CC-BY-4.0", files: ROOMS, changed: true },
   // The cast (VRoid Project samples) and the weapons.
