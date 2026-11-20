@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-951 Auto rampy P−1 pojawia się w ciele gracza poza jego wzrokiem i go spycha
+- Ważność: S3 · Zasięg: rampa P−1 Alchemii, trasa 109 (ruch uliczny comeAndGo)
+- Opis: Pomiar agenta testu ramp-pass (20.11): ziarno 77, gracz x 411,05, z 8, kurs 0, krok 2720: auto 3003488 powstaje 0,55 m od osi gracza, w obrysie (szerokość 0,91 + promień 0,38), a ruch spycha gracza o 0,69 m na zachód. comeAndGo i crowded w traffic-system.ts nie sprawdzają gracza. Bliskie G-492. Poprawka: punkt pojawienia się auta poza obrysem ciał (gracza i NPC) albo odłożenie pojawienia.
+- Status: naprawione (20.11, #812 scalony); wcześniej: w PR #812 (20.11, gałąź fix/g951-auto-w-ciele, c9d2845); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (systems/traffic-system.ts)
+
 ### G-946 Czekanie w trakcie ostrzeżenia gangu prowokuje gang
 - Ważność: S2 · Zasięg: każdy posterunek gangu (TerritoryWarned), okno czekania
 - Opis: Godz. 12:00, gracz 3 m przed posterunkiem hebi-bramowa z wyciągniętą bronią: przychodzi TerritoryWarned (3 s świata), potem wait 60 min. Skoki czasu wyczerpują ostrzeżenie bez szansy na schowanie broni: 3 zdarzenia TerritoryProvoked, grudge 5, prowokacja na kilka godzin. waitBlock (packages/app/src/presenters/wait.ts) nie blokuje czekania przy trwającym ostrzeżeniu (warnedUntil). Znalezisko agenta G-944 (sonda w scratchpad g944-probe3.test.ts).
