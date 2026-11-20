@@ -1,5 +1,6 @@
 import { MeshSink, type Rgba } from "../mesh-sink";
-import { blob, block, frustum, glow, paint, path, pyramid, ring, tube, v3 } from "./prop-kit";
+import { blob, block, frustum, glow, paint, pyramid, ring, tube, v3 } from "./prop-kit";
+import { koziolek } from "./koziolek";
 import { MONUMENT_SHAPE } from "./prop-shapes";
 
 /**
@@ -143,22 +144,6 @@ const figure = (sink: MeshSink, y: number, s: number): void => {
   tube(sink, v3(0.26 * s, y + 1.45 * s, 0), v3(0.32 * s, y + 0.95 * s, 0.12 * s), 0.07 * s, BRONZE, 5);
   tube(sink, v3(-0.26 * s, y + 1.45 * s, 0), v3(-0.38 * s, y + 1.75 * s, 0.25 * s), 0.07 * s, BRONZE, 5);
   blob(sink, v3(0, y + 1.75 * s, 0), 0.13 * s, 0.16 * s, 0.14 * s, BRONZE, 6, 4);
-};
-
-/** The Koziołek of Lublin's coat of arms: a bronze goat rearing on a low plinth. */
-const koziolek = (sink: MeshSink): void => {
-  block(sink, 0, -0.2, 0, 0.9, 0.6, 0.6, GRANITE);
-  const b = paint("#7c6a3e");
-  blob(sink, v3(0, 0.75, 0), 0.32, 0.17, 0.15, b, 7, 4);
-  for (const [x, z] of [
-    [-0.2, -0.07],
-    [-0.2, 0.07],
-  ] as const) {
-    tube(sink, v3(x, 0.66, z), v3(x - 0.05, 0.4, z), 0.035, b, 4);
-  }
-  for (const z of [-0.07, 0.07]) tube(sink, v3(0.2, 0.75, z), v3(0.38, 0.95, z), 0.03, b, 4);
-  blob(sink, v3(0.33, 1.02, 0), 0.1, 0.09, 0.07, b, 6, 3);
-  for (const z of [-0.04, 0.04]) path(sink, [v3(0.32, 1.1, z), v3(0.26, 1.24, z * 2), v3(0.16, 1.26, z * 3), v3(0.12, 1.16, z * 3)], 0.016, b, 4);
 };
 
 const WHITEWASH = paint("#d8d2c4");
