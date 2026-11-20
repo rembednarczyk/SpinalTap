@@ -5,6 +5,7 @@ import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
+import { PHONE_LEAVES } from "./tree-plan";
 import { doorOfShape } from "./prop-door";
 import { barrierModel } from "./barrier-models";
 import { siteModel } from "./construction";
@@ -105,13 +106,22 @@ export const propModel = (kind: StreetPropKind, shape: number): PropModel => {
 };
 
 let lowBollard: MeshSink | null = null;
+const phoneTrees = new Map<number, MeshSink>();
+/** The phones' near tree: the same tree with fewer, bigger leaves (comic realism, LOD by quality, `docs/zasady-lokacji.md` §9). */
+const phoneTree = (shape: number): MeshSink => {
+  let m = phoneTrees.get(shape);
+  if (!m) phoneTrees.set(shape, (m = tree(shape, PHONE_LEAVES)));
+  return m;
+};
 
 /**
  * The mesh a near block bakes for a piece: its detailed model, but for the phones' bollards
- * (quality `low`), which take the post of about a hundred vertices (`bollardLow`).
+ * (quality `low`), which take the post of about a hundred vertices (`bollardLow`), and their
+ * trees, with fewer and bigger leaves.
  */
 export const nearModel = (kind: StreetPropKind, shape: number, quality: RenderQuality): MeshSink => {
   if (kind === "bollard" && quality === "low") return (lowBollard ??= bollardLow());
+  if (kind === "tree" && quality === "low") return phoneTree(shape);
   return propModel(kind, shape).sink;
 };
 

@@ -1,7 +1,7 @@
 import { MeshSink } from "../mesh-sink";
 import { blob, block, glow, paint, ring, tube, v3 } from "./prop-kit";
 import { TREE_SHAPE } from "./prop-shapes";
-import { type TreeForm, leafyTree } from "./tree-plan";
+import { FULL_LEAVES, type LeafDensity, type TreeForm, leafyTree } from "./tree-plan";
 
 /**
  * Greenery of the street furniture (ADR-0047): five tree silhouettes of the centre's lime
@@ -82,10 +82,10 @@ const LIMBS: Readonly<Record<number, Pick<TreeForm, "limbs" | "rise">>> = {
  * The near tree in comic realism (`tree-plan.ts`, the user's decision of 20.11): trunk, limbs,
  * branches and a crown of leaf clusters within the species' crown ellipsoids.
  */
-export const tree = (shape: number): MeshSink => {
+export const tree = (shape: number, density: LeafDensity = FULL_LEAVES): MeshSink => {
   const sink = new MeshSink();
   const { h, r } = trunkOf(shape);
-  leafyTree(sink, { h, r, ...(LIMBS[shape] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[shape] ?? CROWNS[0]!, shape);
+  leafyTree(sink, { h, r, ...(LIMBS[shape] ?? LIMBS[TREE_SHAPE.lime]!) }, CROWNS[shape] ?? CROWNS[0]!, shape, density);
   // 2077: sensor bands on the city's maples.
   if (shape === TREE_SHAPE.maple) ring(sink, v3(0, 1.35, 0), 0.25, 0.025, SENSOR, 10);
   return sink;

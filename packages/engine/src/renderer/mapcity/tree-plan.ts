@@ -28,10 +28,10 @@ export interface TreeForm {
 }
 
 const BARK = paint("#4a3a2f");
-/** Half the length of a leaf card: twice a real lime leaf, to read at the game's distances (§9). */
-const LEAF = 0.15;
+/** Half the length of a leaf card: some three times a real lime leaf, so the crown reads as a summer mass at the game's distances (§9). */
+const LEAF = 0.22;
 /** Leaves a cluster tries to place, and a cluster's radius. */
-const PER_CLUSTER = 24;
+const PER_CLUSTER = 34;
 const CLUSTER = 0.75;
 
 const hash = (a: number, b: number, c: number, salt: number): number => {
@@ -97,15 +97,19 @@ const skeleton = (sink: MeshSink, form: TreeForm, crowns: readonly Crown[], shap
   return tips;
 };
 
-/** Points spread through the crown ellipsoids (a Fibonacci sphere per ellipsoid, three shells), to fill it between the tips. */
+/**
+ * Points spread through the crown ellipsoids (a Fibonacci sphere per ellipsoid), to fill it between
+ * the tips: most in the outer shell, where a summer crown has its leaves, some deep inside, so it
+ * does not read hollow from under it.
+ */
 const fill = (crowns: readonly Crown[]): Vec[] =>
   crowns.flatMap((c, ci) => {
-    const n = Math.max(6, Math.round(c[3] * c[4] * c[5] * 1.1));
+    const n = Math.max(8, Math.round(c[3] * c[4] * c[5] * 2.2));
     return Array.from({ length: n }, (_, k) => {
       const y = 1 - (2 * (k + 0.5)) / n;
       const r = Math.sqrt(1 - y * y);
       const t = k * 2.39996 + ci;
-      const shell = 0.45 + 0.4 * hash(ci, k, 7, 8);
+      const shell = k % 4 === 0 ? 0.2 + 0.3 * hash(ci, k, 7, 8) : 0.55 + 0.35 * hash(ci, k, 7, 8);
       return v3(c[0] + Math.cos(t) * r * c[3] * shell, c[1] + y * c[4] * shell, c[2] + Math.sin(t) * r * c[5] * shell);
     });
   });
@@ -123,11 +127,19 @@ const leaf = (sink: MeshSink, p: Vec, out: Vec, size: number, colour: Rgba): voi
   sink.quad([at(-0.6, 0), at(0.15, 0.55), at(1, 0), at(0.15, -0.55)], out, colour);
 };
 
+/** How many leaves a cluster tries and how big they are: the full tree's, and the phones' (quality `low`, ADR-0079) with fewer and bigger leaves. */
+export interface LeafDensity {
+  readonly perCluster: number;
+  readonly leaf: number;
+}
+export const FULL_LEAVES: LeafDensity = { perCluster: PER_CLUSTER, leaf: LEAF };
+export const PHONE_LEAVES: LeafDensity = { perCluster: 13, leaf: LEAF * 1.6 };
+
 /** The leaves: a cluster on every tip and on every fill point, each leaf kept inside the crown. */
-const foliage = (sink: MeshSink, crowns: readonly Crown[], centres: readonly Vec[]): void => {
+const foliage = (sink: MeshSink, crowns: readonly Crown[], centres: readonly Vec[], density: LeafDensity): void => {
   const base = crowns.map((c) => paint(c[6]));
   centres.forEach((c, ci) => {
-    for (let k = 0; k < PER_CLUSTER; k++) {
+    for (let k = 0; k < density.perCluster; k++) {
       const d = norm(v3(hash(ci, k, 1, 13) - 0.5, hash(ci, k, 2, 14) - 0.5, hash(ci, k, 3, 15) - 0.5));
       const p = add(c, d, CLUSTER * Math.cbrt(hash(ci, k, 4, 16)));
       const { crown, depth } = deepest(p, crowns);
@@ -135,7 +147,7 @@ const foliage = (sink: MeshSink, crowns: readonly Crown[], centres: readonly Vec
       const out = norm(v3((p.x - crown[0]) / crown[3], (p.y - crown[1]) / crown[4] + 0.15, (p.z - crown[2]) / crown[5]));
       // Old leaves inside the crown darker, the sunlit top lighter.
       const light = (0.72 + 0.3 * depth) * (out.y > 0.5 ? 1.12 : 1);
-      leaf(sink, p, out, LEAF * (0.8 + 0.45 * hash(ci, k, 5, 17)), shade(base[crowns.indexOf(crown)]!, light));
+      leaf(sink, p, out, density.leaf * (0.8 + 0.45 * hash(ci, k, 5, 17)), shade(base[crowns.indexOf(crown)]!, light));
     }
   });
 };
@@ -159,9 +171,9 @@ const fit = (sink: MeshSink, start: number, shape: number, h: number): void => {
 };
 
 /** A whole tree of `shape` into `sink`: trunk, limbs, branches and leaves, fitted to the species' size. */
-export const leafyTree = (sink: MeshSink, form: TreeForm, crowns: readonly Crown[], shape: number): void => {
+export const leafyTree = (sink: MeshSink, form: TreeForm, crowns: readonly Crown[], shape: number, density: LeafDensity = FULL_LEAVES): void => {
   const start = sink.vertexCount;
   const tips = skeleton(sink, form, crowns, shape);
-  foliage(sink, crowns, [...tips, ...fill(crowns)]);
+  foliage(sink, crowns, [...tips, ...fill(crowns)], density);
   fit(sink, start, shape, form.h);
 };
