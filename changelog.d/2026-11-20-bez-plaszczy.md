@@ -1,0 +1,1 @@
+W grze nie ma już płaszczy: przechodnie, którzy je nosili, chodzą w kurtkach albo spódnicach w tych samych kolorach, Babcia Ume i Doktor Mori bez modeli noszą kurtki do bioder, a kurtka Hebi na modelach kończy się na biodrach zamiast przy kolanach.
