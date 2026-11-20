@@ -291,6 +291,8 @@ export class NarrativeRuntime {
       this.emit({ type: "accept-contract", kind });
     });
     story.BindExternalFunction("deliver_contract", () => this.emit({ type: "deliver-contract" }));
+    // The gang's side of a street crime (ADR-0091 stage 5c): the offer taken.
+    story.BindExternalFunction("assist_crime", () => this.emit({ type: "assist-street-crime" }));
     story.BindExternalFunction("unlock_memory", (id: string) => {
       if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
       this.emit({ type: "unlock-memory", memoryId: id });

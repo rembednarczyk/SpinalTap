@@ -189,8 +189,9 @@ export const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): Vict
  * decide it (it only hurries the warning), so a gang wronged elsewhere stays calm here.
  */
 export const tolerates = (ctx: SimContext, g: Ganger, hunted: boolean): boolean => {
-  if (!g.ai.territory) return false;
-  const { district } = TERRITORIES[g.ai.territory];
+  // A territory's member, or one of the gang's crime in progress (ADR-0091 stage 5c) in its district.
+  const district = g.ai.territory ? TERRITORIES[g.ai.territory].district : g.ai.crime;
+  if (!district) return false;
   const d = ctx.state.domain;
   const disguiseBurned = d.disguise.blown && d.disguise.role !== null && DISGUISE_FACTION[d.disguise.role] === g.faction;
   return gangTolerates(standingOf(d.gangStandings, g.faction ?? "hebi", district), d.clock, { hunted, disguiseBurned });

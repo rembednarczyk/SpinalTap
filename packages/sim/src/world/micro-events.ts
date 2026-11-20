@@ -5,9 +5,10 @@ import type { MicroEventRun, SimContext } from "./context";
 import { lowerFlag } from "./domain-ops";
 import { GANGER_MAX_HP, gangerEntity, toughen } from "./factory";
 import { enemyScalingIn } from "./enemy-scaling";
-import { passerBy, thankedByStreet } from "./street-scenes";
+import { passerBy, payReward, thankedByStreet } from "./street-scenes";
 import { type BoardCrime, CRIME_LEAVE, closeCrime } from "./street-crimes";
 import { POSTS, alarmed, crimeProps, getaway, hasVictim, leave } from "./crime-scenes";
+import { assistStep, crewTurned, offerAssist } from "./crime-assist";
 
 /**
  * The street's crimes in progress (ADR-0034, ADR-0091 stage 5): a crime of the board starts at its
@@ -48,7 +49,10 @@ const spawn = (ctx: SimContext, crime: BoardCrime): MicroEventRun => {
   if (kind === "aid" && victim) ctx.world.addComponent(victim, "interactable", { kind: "help", dialogueId: id, prompt: "prompt.help", radius: 1.8 });
   const npcId = victim?.id ?? attackers[0]!;
   ctx.bus.emit("EncounterStarted", { encounterId: id, knot: "", npcId });
-  return { id, kind, at, crime, victim: victim?.id ?? null, attackers, props, since: ctx.tick };
+  const run: MicroEventRun = { id, kind, at, crime, victim: victim?.id ?? null, attackers, props, since: ctx.tick };
+  // A gang's crime: its people let her walk up, and one offers her a part in it (stage 5c).
+  offerAssist(ctx, run);
+  return run;
 };
 
 const byId = (ctx: SimContext, id: number): Entity | undefined => [...ctx.world].find((e) => e.id === id);
@@ -60,7 +64,7 @@ const out = (ctx: SimContext, id: number): boolean => {
 };
 
 /** Ends the micro-event: its people go (the living ones), the dead leave no flag behind. */
-const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "failed" | "left"): void => {
+const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "assisted" | "failed" | "left"): void => {
   // The crate, the drone or the van goes with the crime.
   for (const id of run.props ?? []) {
     const e = byId(ctx, id);
@@ -83,6 +87,8 @@ const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | 
   for (const key of [`${run.id}:victim`, ...run.attackers.map((_, i) => `${run.id}:m${i}`)]) lowerFlag(ctx, deadFlag(key));
   const eddies = closeCrime(ctx, run, outcome);
   if (outcome === "won" || outcome === "helped") thankedByStreet(ctx, eddies, MICRO_EVENT_REWARD[run.kind].civilians);
+  // The gang's pay; the street's opinion of it is in `closeCrime`.
+  if (outcome === "assisted") payReward(ctx, { eddies });
   ctx.session.street2.micro = null;
   ctx.bus.emit("EncounterEnded", { encounterId: run.id, outcome });
 };
@@ -106,21 +112,36 @@ export const runMicroEvent = (ctx: SimContext, player: Entity | null): void => {
     close(ctx, run, "left");
     return;
   }
-  const away = getaway(ctx, run);
+  if (run.side === "assist") {
+    const step = assistStep(ctx, run, player);
+    if (step === "done") {
+      close(ctx, run, "assisted");
+      return;
+    }
+    // She went for them after all: the job is off, the crime a fight as any other.
+    if (step === "turned") {
+      const { side: _side, watched: _watched, ...foil } = run;
+      ctx.session.street2.micro = foil;
+    }
+  }
+  const current = ctx.session.street2.micro ?? run;
+  if (current.side !== "assist") crewTurned(ctx, current);
+  const away = getaway(ctx, current);
   if (away === "gone") {
-    close(ctx, run, "failed");
+    // The thieves' drone or the kidnappers' van away: her job done, or the crime lost.
+    close(ctx, current, current.side === "assist" ? "assisted" : "failed");
     return;
   }
   if (away === "leaving") {
-    leave(ctx, run);
+    leave(ctx, current);
     return;
   }
-  if (run.victim !== null && out(ctx, run.victim)) {
-    close(ctx, run, "failed");
+  if (current.victim !== null && out(ctx, current.victim)) {
+    close(ctx, current, "failed");
     return;
   }
-  if (!run.alarmed && alarmed(ctx, run)) ctx.session.street2.micro = { ...run, alarmed: true };
-  if (run.kind !== "aid" && run.attackers.every((id) => out(ctx, id))) close(ctx, ctx.session.street2.micro ?? run, "won");
+  if (!current.alarmed && alarmed(ctx, current)) ctx.session.street2.micro = { ...current, alarmed: true };
+  if (current.kind !== "aid" && current.attackers.every((id) => out(ctx, id))) close(ctx, ctx.session.street2.micro ?? current, "won");
 };
 
 /** A crime of the board within the player's reach starts (ADR-0091 stage 5). */
