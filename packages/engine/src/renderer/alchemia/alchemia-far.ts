@@ -19,6 +19,11 @@ const COLORS: Partial<Readonly<Record<AlchemiaPieceKind, Rgba>>> = {
   roof: hexColor("#2f3a33"),
   parapet: hexColor("#5a6170"),
   frame: hexColor("#15171c"),
+  // The green roof's services and crates (ADR-0093 O4); its beds are rounded, so not here.
+  panel: hexColor("#1d3346"),
+  machine: hexColor("#596070"),
+  crate: hexColor("#5b3a2c"),
+  pergola: hexColor("#5b3a2c"),
 };
 /** The front's glass, lit warm as the detailed one (`win-warm` up to the doors' heads). */
 const WARM: Rgba = hexColor("#c99662", DRESS_FLAG.lit);

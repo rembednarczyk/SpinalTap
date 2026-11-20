@@ -90,7 +90,9 @@ const coreToRing = (): NavEdge[] =>
   STAIR_CORES.flatMap((c) =>
     c.floors.map((y, i) => {
       const f = UPPER.find(([, g]) => g === y);
-      return edge(`core-${c.key}-door-${i}`, f ? `${f[0]}-${c.key === "sw" ? "sw" : "se"}` : "g0-ne");
+      // On the roof (O4) the north-east core's door opens onto its way north off the ring's north-east corner.
+      const ring = c.key === "sw" ? "sw" : f?.[0] === "gr" ? "ne" : "se";
+      return edge(`core-${c.key}-door-${i}`, f ? `${f[0]}-${ring}` : "g0-ne");
     }),
   );
 
@@ -115,6 +117,13 @@ const P3_NODES: readonly NavNode[] = [
   node("g3-oyaji-in", 429.6, L.p3, 36.0),
 ];
 const P3_EDGES: readonly NavEdge[] = [edge("g3-sw", "g3-w"), edge("g3-w", "g3-wa"), edge("g3-e", "g3-ea"), edge("g3-se", "g3-oyaji-out"), edge("g3-oyaji-out", "g3-oyaji-in")];
+
+/**
+ * The green roof (O4): the paved ring's north corners round the atrium's balustrade (the west and
+ * north-east ways past the beds and pergolas) and the west pergola's middle between its benches.
+ */
+const ROOF_NODES: readonly NavNode[] = [node("gr-nw", 409.6, L.roof, 51.4), node("gr-ne", 426.5, L.roof, 51.4), node("gr-wp", 404.3, L.roof, 52.05)];
+const ROOF_EDGES: readonly NavEdge[] = [edge("gr-sw", "gr-nw"), edge("gr-nw", "gr-ne"), edge("gr-se", "gr-ne"), edge("gr-nw", "gr-wp")];
 
 /** The escalators' ends: P0's foot, each landing's node in lane A and in lane B. */
 const [E1, E2, E3] = ESCALATORS as readonly [(typeof ESCALATORS)[number], (typeof ESCALATORS)[number], (typeof ESCALATORS)[number]];
@@ -190,6 +199,6 @@ const DOOR_EDGES: readonly NavEdge[] = [
 
 /** The gallery's graph, joined to the hall's (`nav.ts`) at its stair head, its back aisle and T0's nodes. */
 export const MALL_NAV: NavGraph = {
-  nodes: [...ringNodes(), ...CORES.flatMap((c) => c.nodes), ...ESCALATOR_NODES, ...DOOR_NODES, ...P0_NODES, ...P3_NODES],
-  edges: [...ringEdges(), ...CORES.flatMap((c) => c.edges), ...coreToRing(), ...ESCALATOR_EDGES, ...DOOR_EDGES, ...P0_EDGES, ...P3_EDGES],
+  nodes: [...ringNodes(), ...CORES.flatMap((c) => c.nodes), ...ESCALATOR_NODES, ...DOOR_NODES, ...P0_NODES, ...P3_NODES, ...ROOF_NODES],
+  edges: [...ringEdges(), ...CORES.flatMap((c) => c.edges), ...coreToRing(), ...ESCALATOR_EDGES, ...DOOR_EDGES, ...P0_EDGES, ...P3_EDGES, ...ROOF_EDGES],
 };
