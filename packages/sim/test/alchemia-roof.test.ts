@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_INPUT, type Vec3 } from "@seki/core";
+import { EMPTY_INPUT, type Vec3, figureLayout, isSitting, seatAt } from "@seki/core";
 import {
   ALCHEMIA_LIFT,
   ALCHEMIA_LIFT_NE,
@@ -223,6 +223,16 @@ describe("the gallery's green roof (ADR-0093 O4)", () => {
     const sitting = ROOF_CROWD.filter((c) => c.does.includes("sit"));
     const leaning = ROOF_CROWD.filter((c) => c.does.includes("lean"));
     expect(sitting.length).toBeGreaterThanOrEqual(4);
+    // The still figures (ADR-0058 stage 8), always there: the sitters on a bench's seat, on other benches than the crowd's.
+    const figures = ALCHEMIA_ROOF_PROPS.filter((p) => p.prop === "figure");
+    expect(figures.length).toBeGreaterThanOrEqual(3);
+    for (const f of figures) {
+      for (const c of ROOF_CROWD) expect(Math.hypot(c.at.x - f.x, c.at.z - f.z), `${f.x},${f.z}`).toBeGreaterThan(1.0);
+      if (!isSitting(figureLayout(f.variant).pose)) continue;
+      const host = ALCHEMIA_ROOF_PROPS.find((h) => h.prop === "bench" && seatAt(h, f.x, f.z) !== null);
+      expect(host, `sitter ${f.x},${f.z}`).toBeDefined();
+      expect(f.y).toBe(host!.y);
+    }
     expect(leaning.length).toBeGreaterThanOrEqual(2);
     for (const c of ROOF_CROWD) {
       expect(c.at.y).toBe(R);

@@ -83,13 +83,27 @@ const crates = (): Piece[] => {
     for (let i = 0; i < CRATES.count; i++) {
       const z = CRATES.z0 + i * CRATES.every;
       out.push({ ...piece(box(x0, x1, z + 0.04, z + CRATES.every - 0.04, R - 0.05, R + CRATES.high), "crate", true), inside: true });
-      // What grows in it: leaves, and in some red, yellow or green fruit (`flower`), by the hash.
-      for (const k of [0.3, 0.7]) {
-        const x = x0 + (x1 - x0) * k;
-        const h = roofHash(x, z);
-        const zc = z + CRATES.every / 2;
-        out.push(thing(x - 0.2, x + 0.2, zc - 0.22, zc + 0.22, R + CRATES.high - 0.04, R + CRATES.high + 0.15 + 0.35 * h, h < 0.25 ? "carton" : "green"));
-        if (h > 0.55) out.push(thing(x - 0.07, x + 0.07, zc - 0.07, zc + 0.07, R + CRATES.high + 0.15, R + CRATES.high + 0.29, "flower"));
+      // What grows in it, by the hash: a crate of lettuce heads in two rows, or of tomatoes on stakes with their fruit (`flower`), or seedlings in a carton.
+      const h = roofHash(x0, z);
+      const zc = z + CRATES.every / 2;
+      const top = R + CRATES.high - 0.03;
+      if (h < 0.5) {
+        for (const u of [0.22, 0.5, 0.78]) for (const v of [-0.15, 0.15]) {
+          const x = x0 + (x1 - x0) * u;
+          const s = 0.07 + 0.03 * roofHash(x + v, zc);
+          out.push(thing(x - s, x + s, zc + v - s, zc + v + s, top, top + 0.1 + 0.06 * roofHash(zc, x + v), "green"));
+        }
+      } else if (h < 0.85) {
+        for (const u of [0.3, 0.7]) {
+          const x = x0 + (x1 - x0) * u;
+          out.push(thing(x - 0.012, x + 0.012, zc - 0.012, zc + 0.012, top, top + 0.65, "pipe"));
+          out.push(thing(x - 0.11, x + 0.11, zc - 0.1, zc + 0.1, top + 0.1, top + 0.5, "green"));
+          out.push(thing(x + 0.06, x + 0.12, zc - 0.13, zc - 0.07, top + 0.22, top + 0.28, "flower"));
+          out.push(thing(x - 0.12, x - 0.06, zc + 0.05, zc + 0.11, top + 0.32, top + 0.38, "flower"));
+        }
+      } else {
+        out.push(thing(x0 + 0.15, x0 + 0.6, zc - 0.2, zc + 0.2, top, top + 0.08, "carton"));
+        out.push(thing(x0 + 0.2, x0 + 0.55, zc - 0.15, zc + 0.15, top + 0.08, top + 0.14, "green"));
       }
     }
   });
@@ -107,8 +121,9 @@ const washing = (): Piece[] => {
   for (let z = w.z0 + 0.35; z < w.z1 - 0.4; z += 0.62) {
     const h = roofHash(z, w.x);
     if (h < 0.2) continue;
-    const width = 0.3 + 0.3 * h;
-    out.push(thing(w.x - 0.015, w.x + 0.015, z, z + width, R + w.line - 0.35 - 0.45 * h, R + w.line, "laundry"));
+    // A shirt, a towel, socks: a hand to half a metre wide, hanging a hand to half a metre down.
+    const width = 0.15 + 0.35 * roofHash(w.x, z);
+    out.push(thing(w.x - 0.015, w.x + 0.015, z, z + width, R + w.line - 0.12 - 0.4 * h, R + w.line, "laundry"));
   }
   return out;
 };

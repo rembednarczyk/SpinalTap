@@ -97,8 +97,8 @@ export const PERGOLAS: readonly Pergola[] = [
   { key: "s", xs: [419.7, 423.6, 427.5], zs: [33.0, 37.2] },
 ];
 
-/** The paper lanterns under the pergolas' rafters: ruby red, a box this big, this far under the beam (over every head). */
-export const LANTERN = { size: 0.3, drop: 0.3 } as const;
+/** The paper lanterns (chōchin) under the pergolas' rafters: ruby red, this wide and tall, this far under the beam (over every head). */
+export const LANTERN = { size: 0.28, tall: 0.36, drop: 0.25 } as const;
 
 /**
  * The benches (the game's, `bench`: variant 1 with a back, 0 the long ława), facing `yaw` (0 north):

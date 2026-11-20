@@ -1,4 +1,4 @@
-import { type StreetPropItem, measuredTreeVariant } from "@seki/core";
+import { FIGURE_SEATS, type FigurePose, type StreetPropItem, figureVariant, measuredTreeVariant } from "@seki/core";
 import type { CrowdSpot } from "../crowd-spot";
 import { seatGroups } from "../lublin/seats";
 import { type Piece, box, outlined, piece } from "./plan";
@@ -63,8 +63,12 @@ const flowers = (): Piece[] =>
       for (const z of [b.z0 + 0.4, b.z1 - 0.4, (b.z0 + b.z1) / 2]) {
         const h = roofHash(x, z);
         if (h < 0.35 || !inBed(b, x, z, 0.25)) continue;
-        const s = 0.12 + 0.1 * h;
-        out.push(piece(box(x - s, x + s, z - s, z + s, R + b.high - 0.02, R + b.high + 0.12 + 0.25 * h), "flower", true, false));
+        // A tuft of two or three heads a hand apart, ankle to knee high.
+        for (let k = 0; k < 2 + Math.floor(h * 2); k++) {
+          const [fx, fz] = [x + 0.12 * Math.cos(k * 2.4 + h * 6), z + 0.12 * Math.sin(k * 2.4 + h * 6)];
+          const s = 0.05 + 0.04 * roofHash(fz, fx);
+          out.push(piece(box(fx - s, fx + s, fz - s, fz + s, R + b.high - 0.02, R + b.high + 0.1 + 0.25 * roofHash(fx + k, fz)), "flower", true, false));
+        }
       }
     }
     return out;
@@ -95,7 +99,7 @@ const pergola = (p: Pergola): Piece[] => {
         for (const dz of [-1, 1]) {
           const zz = z + dz * (p.zs[k + 1]! - p.zs[k]!) * 0.22;
           const s = LANTERN.size / 2;
-          out.push(piece(box(x - s, x + s, zz - s, zz + s, TOP + B - LANTERN.drop - LANTERN.size, TOP + B - LANTERN.drop), "lantern", false, false));
+          out.push(piece(box(x - s, x + s, zz - s, zz + s, TOP + B - LANTERN.drop - LANTERN.tall, TOP + B - LANTERN.drop), "lantern", false, false));
         }
       }
     }
@@ -147,9 +151,24 @@ const trees = (): StreetPropItem[] =>
 /** The surface under (x, z): a bed's top, or the roof. */
 const surface = (x: number, z: number): number => R + (ROOF_BEDS.find((b) => inBed(b, x, z))?.high ?? 0);
 
+/** A still figure (ADR-0058 stage 8) on seat `k` of bench `i` (its hips there, facing as the bench), drawn only. */
+const sitter = (i: number, k: number, body: "a" | "b", look: number): StreetPropItem => {
+  const b = ROOF_BENCHES[i]!;
+  const seat = FIGURE_SEATS.bench!(b.variant % 2)[k]!;
+  const [c, s] = [Math.cos(b.yaw), Math.sin(b.yaw)];
+  return { prop: "figure", x: b.x + seat.x * c + seat.z * s, y: R, z: b.z - seat.x * s + seat.z * c, yaw: b.yaw + seat.turn, variant: figureVariant({ pose: "sit", body, seat: seat.top, look }) };
+};
+const stander = (x: number, z: number, yaw: number, pose: FigurePose, body: "a" | "b", look: number): StreetPropItem => ({ prop: "figure", x, y: R, z, yaw, variant: figureVariant({ pose, body, seat: 0, look }) });
+
+/**
+ * The roof's still crowd, always there (the crowd of ADR-0060 comes and goes): one on the west
+ * pergola's far bench, one on the south one's ława, the gardener by her crates with a hand on her hip.
+ */
+const FIGURES: readonly StreetPropItem[] = [sitter(1, 1, "a", 7), sitter(7, 0, "b", 19), stander(431.45, 41.7, -Math.PI / 2, "hips", "b", 26)];
+
 /**
  * The game's models on the roof: trees, shrubs in the beds, the benches, the park lamps by the ways,
- * the planters with their greenery.
+ * the planters with their greenery, the still figures.
  */
 export const ROOF_GARDEN_PROPS: readonly StreetPropItem[] = [
   ...trees(),
@@ -157,6 +176,7 @@ export const ROOF_GARDEN_PROPS: readonly StreetPropItem[] = [
   ...ROOF_BENCHES.map((b): StreetPropItem => ({ prop: "bench", x: b.x, y: R, z: b.z, yaw: b.yaw, variant: b.variant })),
   ...ROOF_LAMPS.map((l): StreetPropItem => ({ prop: "lamp-park", x: l.x, y: surface(l.x, l.z), z: l.z, yaw: 0, variant: 0 })),
   ...ROOF_PLANTERS.map((p, i): StreetPropItem => ({ prop: "planter", x: p.x, y: R, z: p.z, yaw: 0, variant: 7 + 2 * i })),
+  ...FIGURES,
 ];
 
 /** The planters' concrete boxes (the game's planter: 1.2 m square, 0.6 m over its foot, `prop-green.ts`): solid, not drawn. */
