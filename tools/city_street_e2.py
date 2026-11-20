@@ -34,14 +34,14 @@ MIN_PART = 12
 # triangles target, options
 E2 = [
     # A free-standing cash machine, front at +X: the solid is 0.7 x 1.75 x 0.6 m.
-    ('st-atm', 'oga-pixelmannen-atms', 'x/ATM_NORMAL.obj', ['atm'], -90, (0.68, 1.75, 0.58), 400,
+    ('st-atm', 'oga-pixelmannen-atms', 'x/ATM_NORMAL.obj', ['atm'], -90, (0.68, 1.75, 0.58), 2000,
      {'obj': {'ATM_CUBE_BODY': 'trim', 'ATM_CUBE_BLACK': 'dark', 'ATM_CUBE_SCREEN': 'win-teal', 'ATM_CUBE_BUTTONS': 'metal',
               'ATM_CUBE_ACCEPT': 'neon-green', 'ATM_CUBE_DECLINE': 'neon-red', 'ATM_CUBE_CARDSLOT': 'neon-cyan', 'ATM_CUBE_CASHSLOT': 'dark'}}),
     # Quaternius' fire hydrant in the palette's crimson cloth, the nearest to red (it reads magenta; a red
     # swatch needs the palette rebaked): the solid is a post 0.17 m round, 0.9 m tall.
     ('st-hydrant', 'quaternius-zombie-kit', 'Environment/glTF/FireHydrant.gltf', ['hydrant'], 0, (0.31, 0.9, 0.24), 300, {'paint': {'brick': 'fabric-magenta'}}),
     # A planter: Kenney's large wooden pot with a bush and red flowers (no solid; the procedural one is 1.2 m).
-    ('st-planter', 'kenney-nature-kit', 'x/Models/GLTF format/pot_large.glb', ['planter'], 0, (1.2, 1.15, 1.05), 400,
+    ('st-planter', 'kenney-nature-kit', 'x/Models/GLTF format/pot_large.glb', ['planter'], 0, (1.2, 1.15, 1.05), 2500,
      {'parts': [('x/Models/GLTF format/plant_bushDetailed.glb', 1.7, (0, 0.13, 0)), ('x/Models/GLTF format/flower_redA.glb', 1.6, (0.12, 0.15, 0.05)),
                 ('x/Models/GLTF format/flower_purpleB.glb', 1.6, (-0.15, 0.15, -0.08))],
       'roles': {'wood': 'rust', 'woodBarkDark': 'dark', 'grass': 'plant', 'colorRed': 'fabric-magenta', 'colorPurple': 'neon-violet'}}),
@@ -49,14 +49,14 @@ E2 = [
     # (the rack's solid is 1.66 m deep); the bike's thin tubes need more triangles than its size suggests.
     ('st-bike', 'quaternius-public-transport', 'OBJ/Bicycle.obj', ['parked-bike'], 0, (0.5, 1.0, 1.66), 500,
      {'obj': {'Bike': 'fabric-teal', 'Handle': 'dark', 'Wheel': 'tyre', 'Material.003': 'trim'}, 'wheels': ('tyre', 0.03)}),
-    ('st-scooter', 'oga-lyricsz-bike', 'x/bike.obj', ['parked-scooter'], 90, (0.7, 1.1, 1.66), 280,
+    ('st-scooter', 'oga-lyricsz-bike', 'x/bike.obj', ['parked-scooter'], 90, (0.7, 1.1, 1.66), 1500,
      {'obj': {'Material.001': 'fabric-magenta', 'Material.002': 'tyre'}}),
     # The food cart (AVIKA) on the markets: the solid is 3.9 x 2.65 x 1.5 m; its wheels (under 0.45 m) apart.
-    ('st-food-cart', 'sketchfab-avika-street-food-cart', 'avika_street_food_cart.glb', ['food-cart'], 0, (3.88, 2.64, 1.48), 650,
-     {'bands': [(0, 0.45, 300)], 'posts': (((-1.5, -0.5), (1.25, -0.5), (-1.5, 0.25), (1.25, 0.25)), 0.0, 2.35, 0.05)}),
+    ('st-food-cart', 'sketchfab-avika-street-food-cart', 'avika_street_food_cart.glb', ['food-cart'], 0, (3.88, 2.64, 1.48), 4200,
+     {'bands': [(0, 0.45, 1200)], 'posts': (((-1.5, -0.5), (1.25, -0.5), (-1.5, 0.25), (1.25, 0.25)), 0.0, 2.35, 0.05)}),
 ] + [
     # The shipping container at the Giełda na Kresowej, one model per colour: the solid is 6.06 x 2.6 x 2.44 m.
-    (f'st-container-{c}', 'sketchfab-shipping-container', 'classic_shipping_container_freegameready.glb', ['container'], 0, (6.04, 2.58, 2.42), 800,
+    (f'st-container-{c}', 'sketchfab-shipping-container', 'classic_shipping_container_freegameready.glb', ['container'], 0, (6.04, 2.58, 2.42), 4000,
      {'paint': {'ac': c, 'metal': c, 'trim-light': c, 'trim': c, 'dark': c}}) for c in ('rust', 'dumpster')
 ]
 

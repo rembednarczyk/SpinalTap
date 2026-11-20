@@ -32,7 +32,7 @@ import os, zlib
 import numpy as np
 from city_ccby import flat_normals, roles_of, simplify, weld
 from city_street_e2 import drop_specks
-from city_kit_gltf import png_bytes, scene_triangles, write_glb
+from city_kit_gltf import kept_models, png_bytes, scene_triangles, write_glb
 from city_kit_palette import GRID, SWATCHES, palette_images, swatch_uv
 
 # key, source id, file, styles (the street kind it stands in for), yaw (deg about glTF Y, front to +Z),
@@ -41,21 +41,23 @@ STREET = [
     # Drinks machines: the solid is 1.0 x 1.9 x 0.76 m.
     ('st-vending', 'sketchfab-vending-machine', 'vending_machine.glb', ['vending-machine'], 0, (0.98, 1.9, 0.74), 1400,
      {'materials': {'Stuff': 'win-white'}}),
-    ('st-vending-ramen', 'sketchfab-ramen-vending-machine', 'ramen_vending_machine.glb', ['vending-machine'], 0, (0.98, 1.9, 0.54), 1400,
+    ('st-vending-ramen', 'sketchfab-ramen-vending-machine', 'ramen_vending_machine.glb', ['vending-machine'], 0, (0.98, 1.9, 0.54), 5000,
      {'below': 0.8, 'remap': {'neon-cyan': 'shop-teal', 'neon-blue': 'shop-teal'}}),
     # Ticket machines: the solid is 0.56 x 1.75 x 0.4 m. The yellow one of the two Reston terminals on a post.
-    ('st-ticket-terminal', 'sketchfab-reston-b2-terminal', 'reston_b2_terminal.glb', ['ticket-machine'], 0, (0.5, 0.84, 0.3), 900,
+    ('st-ticket-terminal', 'sketchfab-reston-b2-terminal', 'reston_b2_terminal.glb', ['ticket-machine'], 0, (0.5, 0.84, 0.3), 3000,
      {'crop': (0.5, 1.0), 'post': (0.26, 0.8, 0.2)}),
-    ('st-ticket-kiosk', 'sketchfab-scifi-kiosk', 'scifi_kiosk.glb', ['ticket-machine'], 0, (0.5, 1.67, 0.38), 900,
+    ('st-ticket-kiosk', 'sketchfab-scifi-kiosk', 'scifi_kiosk.glb', ['ticket-machine'], 0, (0.5, 1.67, 0.38), 2100,
      {'screen': (0.2, 'win-teal')}),
     # The camera on its mast (no solid: the kind is drawn only); the procedural one is 4.3 m.
-    ('st-cctv', 'sketchfab-cctv-camera', 'cctv_camera.glb', ['cctv'], 0, (0.2, 0.4, 0.6), 700, {'mast': (3.75, 0.12), 'remap': {'fabric-amber': 'dark'}}),
+    ('st-cctv', 'sketchfab-cctv-camera', 'cctv_camera.glb', ['cctv'], 0, (0.2, 0.4, 0.6), 3200, {'mast': (3.75, 0.12), 'remap': {'fabric-amber': 'dark'}}),
     # A paper lantern hung under a market stall's canopy; lit at night.
-    ('st-lantern', 'sketchfab-paper-lantern-chochin', 'chinese__japanese_paper_lantern_chochin.glb', ['lantern'], 0, (0.3, 0.46, 0.3), 120,
+    ('st-lantern', 'sketchfab-paper-lantern-chochin', 'chinese__japanese_paper_lantern_chochin.glb', ['lantern'], 0, (0.3, 0.46, 0.3), 600,
      {'remap': {'brick': 'neon-red', 'fabric-amber': 'fabric-amber'}}),
 ]
 
-MAX_TRIS = 1500
+# The most a near model takes (ADR-0058, the user's decision of 20.11: comic realism, triangles up to the
+# original's detail; phones draw the procedural furniture of `prop-e2.ts` instead).
+MAX_TRIS = 6000
 
 
 def box_tris(cx, cy, cz, w, h, d):
@@ -172,7 +174,18 @@ def build_street(ccby_dir, out_dir):
         print(f"{key:20s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
     # ADR-0058 stage 2 after these: the models above keep their bytes.
     from city_street_e2 import E2, bake_e2, is_ccby
+    dst = os.path.join(out_dir, 'street-props.glb')
+    missing = [key for key, source, *_ in E2 if not os.path.isdir(os.path.join(ccby_dir, source))]
+    kept = {}
+    if missing:
+        print('kept from the file, their source missing:', ', '.join(missing))
+        models, kept_extras = kept_models(dst, set(missing))
+        kept = {m['key']: (m, kept_extras[m['key']]) for m in models}
     for key, source, name, styles, yaw, fit, target, opts in E2:
+        if key in kept:
+            m, extras[key] = kept[key]
+            out.append(m)
+            continue
         P, N, roles, size = bake_e2(os.path.join(ccby_dir, source), name, yaw, fit, target, opts)
         m = weld(key, P, N, roles, swatch_uv, MAX_TRIS)
         out.append(m)
@@ -180,7 +193,6 @@ def build_street(ccby_dir, out_dir):
         extras[key] = {'size': size, 'styles': styles, **({'credit': source} if is_ccby(source) else {})}
         print(f"{key:20s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
     albedo, glow = palette_images()
-    dst = os.path.join(out_dir, 'street-props.glb')
     write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
     print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))
 

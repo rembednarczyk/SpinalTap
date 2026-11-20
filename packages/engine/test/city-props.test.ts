@@ -58,12 +58,12 @@ const windsWithNormals = (positions: Float32Array | number[], normals: Float32Ar
 };
 
 describe("city-props.glb (ADR-0058)", () => {
-  it("holds the facade props: keys pr-*, metres, at most 1.5 thousand triangles each, a small file", () => {
-    expect(propsFile.byteLength).toBeLessThan(512 * 1024);
+  it("holds the facade props: keys pr-*, metres, at most 6 thousand triangles each, under 768 KiB", () => {
+    expect(propsFile.byteLength).toBeLessThan(768 * 1024);
     expect(facadeModels.length).toBeGreaterThanOrEqual(10);
     for (const m of facadeModels) {
       expect(m.key).toMatch(/^pr-[a-z0-9-]+$/);
-      expect(triangleCount(m)).toBeLessThanOrEqual(1500);
+      expect(triangleCount(m)).toBeLessThanOrEqual(6000);
       expect(m.size.x).toBeGreaterThan(0.05);
       expect(Math.max(m.size.x, m.size.y, m.size.z)).toBeLessThan(5);
       expect(m.styles.length).toBeGreaterThan(0);

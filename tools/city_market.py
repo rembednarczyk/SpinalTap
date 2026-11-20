@@ -59,18 +59,18 @@ MODELS = [
         part(SURVIVAL, 'resource-planks.glb', (1.9, 1.6, 1.25), (0, 0, 0), 90),
         part(SURVIVAL, 'box-large.glb', 1.6, (-0.21, 0.15, 0), paint=CARDBOARD), part(SURVIVAL, 'box-large.glb', 1.6, (0.21, 0.15, 0), paint=CARDBOARD),
         part(SURVIVAL, 'box.glb', 1.6, (-0.1, 0.55, 0.05), paint=CARDBOARD),
-    ], (1.18, 0.98, 0.78), 500, []),
+    ], (1.18, 0.98, 0.78), 1500, []),
     ('mk-barrels', ['market-goods'], [
         part(SURVIVAL, 'barrel.glb', 2.6, (-0.31, 0, 0)), part(SURVIVAL, 'barrel.glb', 2.6, (0.31, 0, 0), paint={'brick': 'fabric-teal'}),
-    ], (1.22, 0.93, 0.62), 600, []),
+    ], (1.22, 0.93, 0.62), 1800, []),
     ('mk-crates', ['market-goods'], [
         part(MARKET, 'display-fruit.glb', 0.9, (-0.275, 0, 0)), part(MARKET, 'display-fruit.glb', 0.9, (0.275, 0, 0)),
         part(MARKET, 'display-fruit.glb', 0.85, (-0.275, 0.46, 0), paint=CARDBOARD),
-    ], (1.08, 0.88, 0.78), 600, []),
+    ], (1.08, 0.88, 0.78), 1800, []),
     ('mk-canvas', ['market-goods'], [
         part(SURVIVAL, 'structure-canvas.glb', (2.76, 2.76, 1.96), (0, 0, 0), paint={'fabric-amber': 'fabric-teal'}),
         part(SURVIVAL, 'box-large.glb', 1.6, (-0.3, 0, 0), paint=CARDBOARD), part(SURVIVAL, 'barrel.glb', 2.0, (0.35, 0, 0.05)),
-    ], (1.38, 1.38, 0.98), 500, []),
+    ], (1.38, 1.38, 0.98), 1500, []),
     # The food booth (sim FOOD_STALL): the counter 2.1 x 1.05 x 0.6 m round z 0.1, the posts at x +-1.05,
     # z -0.7 and 0.4, the roof 2.4 m up, three stools at z 0.85.
     ('mk-yatai', ['food-stall'], [
@@ -78,29 +78,29 @@ MODELS = [
         part(SURVIVAL, 'structure-canvas.glb', (4.2, 4.8, 2.2), (0, 0, -0.15), paint={'fabric-amber': 'rust'}),
         part(FOOD, 'pot-stew.glb', 0.55, (0.55, 1.02, 0.05)), part(FOOD, 'bowl-broth.glb', 0.45, (-0.2, 1.02, 0.15)),
         part(FOOD, 'bowl-broth.glb', 0.45, (-0.6, 1.02, 0.1)),
-    ] + [part(FURNITURE, 'stoolBar.obj', 0.15, (x, 0, 0.85)) for x in (-0.65, 0, 0.65)], None, 1400,
+    ] + [part(FURNITURE, 'stoolBar.obj', 0.15, (x, 0, 0.85)) for x in (-0.65, 0, 0.65)], None, 4000,
         noren(1.85, 2.38, 0.47, -1.05, 1.05, 4)),
     # The goods on a counter, on a 2 x 0.5 m top.
     ('mk-counter-ramen', ['counter-goods'], [
         part(FOOD, 'pot-stew.glb', 0.5, (-0.6, 0, 0)), part(FOOD, 'steamer.glb', 0.45, (0.05, 0, 0)),
         part(FOOD, 'bowl-broth.glb', 0.4, (0.55, 0, -0.05)), part(FOOD, 'bowl-broth.glb', 0.4, (0.85, 0, 0.05)),
         part(FOOD, 'skewer.glb', 0.7, (-0.15, 0, 0.18)),
-    ], None, 300, []),
+    ], None, 900, []),
     ('mk-counter-produce', ['counter-goods'], [
         part(FOOD, 'cabbage.glb', 0.7, (-0.75, 0, 0)), part(FOOD, 'watermelon.glb', 0.6, (-0.35, 0, 0)),
         part(FOOD, 'pineapple.glb', 0.8, (0.0, 0, 0)), part(FOOD, 'apple.glb', 0.8, (0.25, 0, 0.08)),
         part(FOOD, 'apple.glb', 0.8, (0.4, 0, -0.05)), part(FOOD, 'tomato.glb', 0.9, (0.6, 0, 0.05)),
         part(FOOD, 'tomato.glb', 0.9, (0.78, 0, -0.06)), part(FOOD, 'carrot.glb', 0.6, (0.92, 0, 0.1)),
-    ], None, 300, []),
+    ], None, 900, []),
     ('mk-counter-drinks', ['counter-goods'], [
         part(FOOD, f, s, (x, 0, z)) for f, s, x, z in (
             ('soda-can.glb', 0.6, -0.8, 0.0), ('soda-can.glb', 0.6, -0.65, 0.1), ('soda-can.glb', 0.6, -0.5, -0.05),
             ('carton.glb', 0.9, -0.2, 0.0), ('carton.glb', 0.9, 0.0, 0.05), ('soda.glb', 0.7, 0.3, 0.0),
             ('cup-coffee.glb', 0.6, 0.55, 0.05), ('cup-coffee.glb', 0.6, 0.75, -0.05))
-    ], None, 300, []),
+    ], None, 900, []),
 ]
 
-MAX_TRIS = 1500
+MAX_TRIS = 6000
 
 
 def part_triangles(folder, p):

@@ -82,11 +82,11 @@ describe("market-props.glb (ADR-0058 stage 3)", () => {
     expect(by("mk-counter-drinks")).toEqual(["kenney-food-kit"]);
   });
 
-  it("is small, on the city kit's palette, CC0 (no credits), every model light", () => {
-    expect(marketBytes.byteLength).toBeLessThan(256 * 1024);
+  it("is under 512 KiB, on the city kit's palette, CC0 (no credits), every model up to 6 thousand triangles", () => {
+    expect(marketBytes.byteLength).toBeLessThan(512 * 1024);
     expect(market.swatches).toEqual(props.swatches);
     expect([...market.models.keys()]).toEqual(["mk-cartons", "mk-barrels", "mk-crates", "mk-canvas", "mk-yatai", "mk-counter-ramen", "mk-counter-produce", "mk-counter-drinks"]);
-    for (const m of market.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(1500);
+    for (const m of market.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(6000);
     // The glTF's JSON chunk: no node carries a credit.
     const head = new DataView(marketBytes, 12, 8);
     const json = new TextDecoder().decode(new Uint8Array(marketBytes, 20, head.getUint32(0, true)));

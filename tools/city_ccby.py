@@ -23,8 +23,8 @@ from city_kit_palette import SW, hsv
 from city_props import material_image, nearest_neon, texel_mean, to_srgb
 
 # Heaviest model the engine may bake into a cell (ADR-0058); the target leaves room under it.
-MAX_TRIS = 1500
-TARGET_TRIS = 1400
+MAX_TRIS = 6000
+TARGET_TRIS = 4000
 
 # Electric pole (Just_Eh): flat materials by name. Its emissive ones (the lamp's warm white, the blue
 # indicator lights) go by their colour: a pale one is the lamp (`headlight`), a saturated one a neon.

@@ -29,8 +29,8 @@ const poles = pieces.filter(isPoleLamp);
 
 describe("CC-BY street props in city-props.glb (ADR-0063)", () => {
   it("holds the pole and the robot dog: light, in metres, the pole's mast on its origin with a lamp", () => {
-    expect(triangleCount(pole)).toBeLessThanOrEqual(1500);
-    expect(triangleCount(dog)).toBeLessThanOrEqual(1500);
+    expect(triangleCount(pole)).toBeLessThanOrEqual(6000);
+    expect(triangleCount(dog)).toBeLessThanOrEqual(6000);
     expect(pole.size.y).toBeGreaterThan(7.5);
     expect(pole.size.y).toBeLessThan(10);
     expect(pole.lights?.length).toBe(1);
