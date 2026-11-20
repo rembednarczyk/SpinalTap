@@ -23,8 +23,12 @@ export const PARKING_AREAS: readonly Area[] = [
   { minX: 418.2, maxX: 421.8, minZ: 12.3, maxZ: 22.7 },
 ];
 
-/** Where a save made there wakes: on the car park west of the ramp's top, a few centimetres over it. */
-export const PARKING_WAKE = { x: 406, y: -1.15, z: -3, chunk: "krakowskie-2-1" } as const;
+/**
+ * Where a save made there wakes: on the square west of the ramp's top, a few centimetres over it, at
+ * the foot of the stairs before the front (ADR-0074 C5: at (406; -3) the square's podium stands now,
+ * 0.4 m over the ground, and a container put there lay inside it).
+ */
+export const PARKING_WAKE = { x: 406, y: -1.08, z: -9.6, chunk: "krakowskie-2-1" } as const;
 
 /** Sachiko's state: she comes back from the content, behind her counter turned to the door. */
 const PARKING_MOVED: readonly string[] = ["sachiko"];
