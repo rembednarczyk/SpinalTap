@@ -268,11 +268,20 @@ export const FRONT_PLAZA_PROPS: readonly StreetPropItem[] = [
   item("planter", 388.3, -6.1, 0, 4, kioskBase(PLAZA_KIOSKS[0]!).y + KIOSK.roof + 0.14),
 ];
 
-/** The square's solids: the drawn ones of the kiosks and café, the tables' and chairs' footprints, the game's models' boxes (not the sellers, inside the kiosks). */
-export const plazaCafeSolids = (): Piece[] => [
-  ...CAFE_TABLES.flatMap(tableSolids),
-  ...modelBoxes(FRONT_PLAZA_PROPS.filter((p) => p.prop !== "figure" && p.y < floorAt(p.x, p.z) + 1)),
-];
+/** The models on the square's floor (not the sellers, inside the kiosks, nor the planter on the stairs' kiosk's roof). */
+const ON_FLOOR = FRONT_PLAZA_PROPS.filter((p) => p.prop !== "figure" && p.y < floorAt(p.x, p.z) + 1);
+
+/**
+ * The box of the planter a tree stands in (the game's planter: 1.2 m square, 0.6 m over its foot, as
+ * the terraces' `FRONT_PLANTER_SOLIDS`): not a solid of the street's furniture, so the tree's trunk
+ * stood 0.4 m over the ground in it (the user's 20.11, `alchemia-off-ground`). Not the two by the
+ * arcade's piers: the one at x 397.2 stands before NIGHT SILK's door, whose way out it would close.
+ */
+const planterSolids = (): Piece[] =>
+  ON_FLOOR.filter((p) => p.prop === "planter" && ON_FLOOR.some((t) => t.prop === "tree" && t.x === p.x && t.z === p.z)).map((p) => piece(box(p.x - 0.6, p.x + 0.6, p.z - 0.6, p.z + 0.6, p.y - 0.05, p.y + 0.6), "machine", false));
+
+/** The square's solids: the drawn ones of the kiosks and café, the tables' and chairs' footprints, the game's models' boxes and its planters'. */
+export const plazaCafeSolids = (): Piece[] => [...CAFE_TABLES.flatMap(tableSolids), ...modelBoxes(ON_FLOOR), ...planterSolids()];
 
 const spot = (at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], group?: string): CrowdSpot => (group ? { chunk: CHUNK, at, yaw, does, group } : { chunk: CHUNK, at, yaw, does });
 

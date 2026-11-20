@@ -4,7 +4,7 @@ import type { StaticProp } from "../builders";
 import { FOODHALL_CUT, FOODHALL_STAIR_CUT, shellPieces } from "./foodhall";
 import { ALCHEMIA_LIFT_MECHANISM, ALCHEMIA_LIFT_NE, ALCHEMIA_LIFT_NE_MECHANISM, LIFT_SHAFT_CUT, liftPieces } from "./lift";
 import { HALL, type Piece, solidProp, tiledSolidProps } from "./plan";
-import { terracePieces } from "./terraces";
+import { terracePieces } from "./terrace-steps";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";

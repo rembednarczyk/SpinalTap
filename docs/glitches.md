@@ -1076,7 +1076,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
 ### G-445 Rampa E Alchemii: kostka drapowana na siatce 2,5 m przebija stopnie
-- Status: zgłoszone (7.11, naprawiacz rundy 3 PR #343)
+- Status: w naprawie (gałąź fix/alchemia-rowno-z-gruntem, kontrola `alchemia-off-ground`); wcześniej: zgłoszone (7.11, naprawiacz rundy 3 PR #343)
 - Ważność: S4 · Zasięg: `drapedTriangles` (`DRAPE_GRID` 2,5 m) czyta teren przy x 435 (NMT w obrysie hali) i x 442,5 (wyższy grunt na wschód), więc paski kostki wychodzą ponad stopnie; poprawka: wyrównać teren pod obrysem hali przy ścianie E albo stopnie dopasowane do siatki drapowania
 - Pakiet właściciela: packages/sim (content Alchemii), packages/engine (renderer/mapcity)
 

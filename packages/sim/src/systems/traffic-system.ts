@@ -25,6 +25,8 @@ const HURRY = 1.3;
 /** A body's radius and the margin a vehicle keeps beside it (m). */
 const BODY = 0.38;
 const SIDE_MARGIN = 0.35;
+/** Further than a vehicle drives and steps aside in a step, round its footprint (m): who it may push out. */
+const NEAR_MOVE = 1;
 /** Gap a vehicle leaves before someone in its way, and before the vehicle ahead (m). */
 const STOP_GAP = 1.2;
 const FOLLOW_GAP = 2.2;
@@ -107,6 +109,8 @@ interface Ahead {
   player: number | null;
   /** The player is beside its way, within the room it passes them by, this far to its right (m). */
   beside: number | null;
+  /** Bodies other than the player's this step's drive could take it into (G-953), found in the same pass. */
+  near: Entity[];
 }
 
 /** Margin round a crossing vehicle's body the one giving way keeps (m). */
@@ -227,7 +231,7 @@ const giveWayToBody = (self: Vehicle, o: Vehicle, reach: number, out: Ahead): vo
 const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, Vehicle>, pose: { x: number; z: number; tx: number; tz: number }): Ahead => {
   const st = self.vehicle;
   const reach = reachOf(self);
-  const out: Ahead = { allowed: Infinity, player: null, beside: null };
+  const out: Ahead = { allowed: Infinity, player: null, beside: null, near: [] };
   const passing = st.blocked > PASS_AFTER;
   for (const b of ctx.world.with("body")) {
     const dx = b.position.x - pose.x;
@@ -235,6 +239,7 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
     if (Math.abs(dx) > reach + 3 || Math.abs(dz) > reach + 3) continue;
     const fwd = dx * pose.tx + dz * pose.tz;
     const lat = dx * pose.tz - dz * pose.tx;
+    if (!b.player && Math.abs(fwd) < st.half.l + b.body.radius + NEAR_MOVE && Math.abs(lat) < st.half.w + b.body.radius + NEAR_MOVE) out.near.push(b);
     if (fwd < -st.half.l - BODY || fwd > reach) continue;
     if (b.player && Math.abs(lat) < st.half.w + BODY + PASS_ROOM + SIDE_MARGIN) out.beside = lat;
     // Passing the player, the vehicle goes by close.
@@ -289,21 +294,26 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
   return out;
 };
 
-/** Pushes the player out of a vehicle's footprint (no knock-down yet: the vehicle has stopped before it, ADR-0050). */
-const pushOut = (player: Entity, v: Vehicle): void => {
+/**
+ * Pushes a body out of a vehicle's footprint (no knock-down yet: the vehicle has stopped before it,
+ * ADR-0050): the player's, and a passer-by's who stepped out within its stopping distance (G-953).
+ * Not one a floor above or below (the car park over P-1): as the movement's push between bodies.
+ */
+const pushOut = (who: Entity, v: Vehicle): void => {
+  if (!who.player && Math.abs(who.position.y - v.position.y) >= (who.body?.height ?? 0)) return;
   const st = v.vehicle;
   const tx = Math.sin(v.yaw);
   const tz = Math.cos(v.yaw);
-  const dx = player.position.x - v.position.x;
-  const dz = player.position.z - v.position.z;
+  const dx = who.position.x - v.position.x;
+  const dz = who.position.z - v.position.z;
   const fwd = dx * tx + dz * tz;
   const lat = dx * tz - dz * tx;
-  const r = player.body?.radius ?? BODY;
+  const r = who.body?.radius ?? BODY;
   const inFwd = st.half.l + r - Math.abs(fwd);
   const inLat = st.half.w + r - Math.abs(lat);
   if (inFwd <= 0 || inLat <= 0) return;
-  const p = player.position;
-  player.position =
+  const p = who.position;
+  who.position =
     inLat < inFwd
       ? { x: p.x + tz * Math.sign(lat || 1) * inLat, y: p.y, z: p.z - tx * Math.sign(lat || 1) * inLat }
       : { x: p.x + tx * Math.sign(fwd || 1) * inFwd, y: p.y, z: p.z + tz * Math.sign(fwd || 1) * inFwd };
@@ -382,7 +392,7 @@ const comeAndGo = (ctx: SimContext, live: Map<EntityId, Vehicle>, player: Entity
       if (!fresh && watched(ctx, player, { x: pose.x, y: focus.y, z: pose.z }, radius)) continue;
       if (crowded(live, route, s, lane)) continue;
       const v = vehicleEntity(ctx, route, i, s);
-      if (tooLateFor(live, v)) continue;
+      if (tooLateFor(live, v) || !clearOfBodies(ctx, pose, v.vehicle.half, v.vehicle.v)) continue;
       live.set(v.id, ctx.world.add(v) as Vehicle);
       ctx.streamer.streamedOut.delete(v.id);
     }
@@ -435,6 +445,26 @@ const tooLateFor = (live: ReadonlyMap<EntityId, Vehicle>, v: Vehicle): boolean =
     return met !== null && (cannotStop(v, met.a) || cannotStop(o, met.b));
   });
 
+/**
+ * Are a vehicle's footprint at `at` and the way it brakes in ahead of it clear of bodies, the
+ * player's and passers-by's (spawn-point validation)? One appearing round a body pushed it out of
+ * its footprint (G-951: out of the player's sight, so nothing else held it back); one appearing
+ * just behind it could not stop short of it. It comes at the next look, once they are clear.
+ */
+const clearOfBodies = (ctx: SimContext, at: { x: number; z: number; tx: number; tz: number }, half: VehicleState["half"], v: number): boolean => {
+  const ahead = half.l + STOP_GAP + (v * v) / (2 * BRAKE);
+  for (const b of ctx.world.with("body")) {
+    const r = b.body.radius;
+    const dx = b.position.x - at.x;
+    const dz = b.position.z - at.z;
+    if (Math.abs(dx) > ahead + r || Math.abs(dz) > ahead + r) continue;
+    const fwd = dx * at.tx + dz * at.tz;
+    const lat = dx * at.tz - dz * at.tx;
+    if (Math.abs(lat) < half.w + r + SIDE_MARGIN && fwd > -half.l - r - SIDE_MARGIN && fwd < ahead + r) return false;
+  }
+  return true;
+};
+
 /** Is the place a vehicle would jump back onto its timetable free: no other vehicle as close as `crowded` lets one appear by? */
 const freeFor = (live: ReadonlyMap<EntityId, Vehicle>, self: Vehicle, at: { x: number; z: number }): boolean =>
   [...live.values()].every((o) => o === self || flat(o.position, at) >= o.vehicle.half.l + 9);
@@ -463,8 +493,9 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   if (lag < -lane.length / 2) lag += lane.length;
   // Far off its timetable (the clock skipped ahead, a long hold-up): back on it where nobody sees.
   const turning = () => lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b) === true;
-  // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place.
-  if (Math.abs(lag) > RESYNC && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, lanePose(lane, tt.s))) {
+  // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place; nor round a body (G-951).
+  const back = Math.abs(lag) > RESYNC ? lanePose(lane, tt.s) : null;
+  if (back && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, back) && clearOfBodies(ctx, back, st.half, Math.min(st.v, tt.v))) {
     st.s = tt.s;
     lag = 0;
     // It lands at the speed of where it lands: braking from its old speed would take it through a turn round fast.
@@ -530,4 +561,5 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;
   if (player) pushOut(player, v);
+  for (const b of ahead.near) pushOut(b, v);
 };

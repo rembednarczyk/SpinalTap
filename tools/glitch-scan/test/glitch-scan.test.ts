@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
@@ -14,10 +14,8 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { streetAxes } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
-import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
-import { planPatrolLanes } from "../../../packages/engine/src/renderer/drones/patrol-lanes";
-import { PATROL_STREETS, cityPatrolWorld, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
+import { cityPatrolWorld } from "../../../packages/engine/src/renderer/drones/patrol-world";
 import { decalChecks } from "./decal-pieces";
 import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
@@ -54,6 +52,7 @@ import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, frontFootprint, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
+import { alchemiaOffGroundInGame } from "./alchemia-ground-world";
 import { stairFootUnpaved } from "./stair-foot";
 import { cityStairWorld } from "./stair-foot-world";
 import { planPropsInGame } from "./plan-prop-under-game";
@@ -130,8 +129,8 @@ import { seamGaps } from "./seam-gap";
 import { citySeamWorld } from "./seam-world";
 import { abutmentSteps } from "./deck-abutment";
 import { kerbSteps } from "./deck-kerb";
-import { walkBlocked } from "./walk-blocked";
-import { cityWalkWorld } from "./walk-world";
+import { madeFindings, startMade } from "./scan-cache";
+import { type MadeKind, cityPatrolLanes, cityWalkBlocked, readSourceOsm } from "./scan-makers";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { cityCrownsOffSurface } from "./landmark-crowns";
 import { churchFakeTowers, dataTops, towersOffNmpt } from "./church-towers";
@@ -151,7 +150,6 @@ import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
-import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
 import { ENTRANCE_REACH, loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
@@ -206,12 +204,7 @@ type Finding = { readonly at: string; readonly what: string };
 /** The scan's base, a file of known keys a kind (`src/scan-base.ts`). */
 const BASE = join(__dirname, "baseline");
 /** The map data the city is generated from (ADR-0042), for what the import may lose. */
-const OSM_DIR = join(__dirname, "../../../data/osm");
-const SOURCE_OSM = mergeOsm(
-  readdirSync(OSM_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
-);
+const SOURCE_OSM = readSourceOsm();
 /** The map's foot paths, not the sidewalks mapped along the streets (`crossing-off-path`). */
 const FOOT_PATHS = () =>
   [...SOURCE_OSM.ways.values()]
@@ -639,8 +632,7 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
   let memo: readonly PatrolLane[] | null = null;
-  // Under the canyon drones' lanes, as the renderer plans them.
-  return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY))));
+  return () => (memo ??= cityPatrolLanes());
 })();
 
 /** The paving as the renderer drapes it over the terrain (`pool-paving.ts`), once. */
@@ -655,7 +647,7 @@ const DECK_PAINT = (() => {
   return () => (memo ??= deckPaint(mapGround(WORLD_SCENERY)));
 })();
 
-const CHECKS: Readonly<Record<string, () => Finding[]>> = {
+const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
    * Lane by lane, so a junction's join does not move the samples; the joins' arcs, straight on too,
@@ -1307,8 +1299,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * steeper than tg 35° off steps, along a way of the map whose axis is blocked there itself
    * (`walk-axes.ts`). Not the edges the model means: walls, barriers, a deck's sides over lower
    * ground, a way under a deck, T-147, Alchemia's terraces (`walk-blocked.ts`, `walk-world.ts`).
+   * Computed in a process of its own, out of the coverage's reach (`scan-cache.ts`).
    */
-  "walk-blocked": () => walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(SOURCE_OSM).lines)),
+  "walk-blocked": () => madeFindings("walk-blocked"),
   /**
    * A point (every 0.25 m) under a bridge's piece where the ground the game walks is more than
    * 0.01 m over the deck (G-686): the terrain shows through the deck's paving as a grey patch.
@@ -1568,6 +1561,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "alchemia-mall-height": () => mallHeight(),
   /** A piece of the front's rooms (ADR-0093 O5: its units, arcades, café, bar, steps in) out of its storeys' outlines and heights. */
   "alchemia-front-footprint": () => frontFootprint(),
+  /**
+   * A piece of Alchemia outside (drawn, a solid not drawn as it is, a model it places) whose foot hangs
+   * over 5 cm over what it stands on (the drawn ground, the map's paving, a piece under it), or whose
+   * top lies over 5 cm under the ground at part of its outline while the rest stands out: a cut (the
+   * user's 20.11, `alchemia-ground.ts`).
+   */
+  "alchemia-off-ground": () => alchemiaOffGroundInGame(),
   /**
    * A glowing sign (the map's signs, venues' boards, holograms and adverts; the game's neons, the
    * deptak's, the front's and the gallery's) nearer than 20 m across the plan to the memorial of
@@ -2391,6 +2391,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
+  /** `patrolChecks`' pool against the paving, computed in a process of its own (`scan-cache.ts`): 5 s under coverage. */
+  "drone-low-pool": () => madeFindings("drone-low-pool"),
   /** A low patrol's searchlight pool, laid where the views lay it (`cityPatrolWorld`), sinking into the drawn paving: a dark middle (G-293). */
   "drone-low-pool-sunk": () => poolSunk(PATROL_LANES(), cityPatrolWorld().surfaceAt, DRAWN_PAVING()),
   /** Two overlapping pieces of the drawn paving at different heights over the ground where they meet: a step, patches and the depth flickering (G-301, `paving-overlap.ts`). */
@@ -2890,6 +2892,9 @@ describe("the glitch scan (ADR-0054)", () => {
  * The report and the base's files are written once the kinds have run: with `-t <kind>` only
  * that kind's file.
  */
+/** The kinds computed in a process of their own (`scan-cache.ts`). */
+const MADE: readonly MadeKind[] = ["walk-blocked", "drone-low-pool"];
+
 describe("the glitch scan against its baseline (ADR-0054)", () => {
   const mode = process.env.GLITCH_BASELINE;
   const found: Record<string, Finding[]> = {};
@@ -2912,9 +2917,18 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     // The hits per cell of the map's coverage register (docs/mapa-pokrycie.md), for its report.
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
+  const title = (k: string) => `finds no new place of ${k} (baseline/${k}.txt)`;
+  // The kinds computed in a process of their own start it here, cold, for the kinds' tests before
+  // theirs to run meanwhile: only when their test runs (not filtered out with `-t`).
+  // Vitest takes the hook's fixtures from a pattern in its first argument, the suite in its second.
+  // eslint-disable-next-line no-empty-pattern
+  beforeAll(({}, suite) => {
+    const runs = (k: string) => suite.tasks.some((t) => t.name === title(k) && t.mode === "run");
+    if (MADE.some(runs)) startMade();
+  });
   for (const [k, check] of Object.entries(CHECKS)) {
-    it(`finds no new place of ${k} (baseline/${k}.txt)`, () => {
-      found[k] = check();
+    it(title(k), async () => {
+      found[k] = await check();
       const keys = keysOf(k, found[k], MAP_CHUNKS);
       const base = readKind(BASE, k);
       const d = diffKind(k, base, keys);
@@ -2922,6 +2936,16 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
       if (mode !== "accept" && fails(d)) expect.fail(`${formatDiff(d).join("\n")}\n(a new place of a glitch: fix it, or take it in on purpose with GLITCH_BASELINE=accept, README.md)`);
     });
   }
+  // The process of the kinds finds what this process finds: the same modules loaded by Node through
+  // `node-resolve.ts` and its transform of types, not Vite's, and the findings back through
+  // `node:v8`. On a chunk (a slope by the steps of Podzamcze, 11 findings), against the whole
+  // city's findings the kind's test awaited: no second process.
+  it("finds in the kinds' own process the walk-blocked of a chunk this process finds (scan-cache.ts)", async () => {
+    const chunk = "podzamcze-1-0";
+    const own = cityWalkBlocked(chunk);
+    expect(own.length).toBeGreaterThan(0);
+    expect((await madeFindings("walk-blocked")).filter((f) => f.what.startsWith(`${chunk} `))).toEqual(own);
+  });
   // After every kind has run: a cell of the coverage register is `czyste` only with no hit of the scan in it.
   it("holds no hit in a cell the coverage register calls czyste (docs/mapa-pokrycie.json)", () => {
     if (Object.keys(found).length < Object.keys(CHECKS).length) return;

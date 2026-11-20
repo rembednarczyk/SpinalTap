@@ -3,6 +3,7 @@ import { type GroundField, MAX_WALK_SLOPE } from "../../world/ground";
 import { type Collider, closestXZ, colliderTop, overCollider } from "../../world/solids";
 import { offTheBank } from "../bank";
 import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
+import { type Made, type NavShareStore, recall, remember, through } from "./nav-memo";
 
 /*
  * The raster of a window of the steering (ADR-0025): which 0.5 m cells a body stands in, made from
@@ -104,6 +105,26 @@ function* terrainOf(ground: GroundField, x0: number, z0: number, reach: number, 
     yield cells;
   }
   return base;
+}
+
+/** Terrain passes a ground keeps (`terrainLayer`): a wide one is 1.2 MB. */
+const TERRAINS = 6;
+const terrains = new WeakMap<GroundField, Map<string, Made<Float64Array | null>>>();
+
+/**
+ * The terrain under a window (`terrainOf`), made once for every floor and set of solids rasterised
+ * in it: it depends only on the ground (immutable), the window and the reach. A ganger going down
+ * the stairs of Alchemia's car park made a raster at each quarter metre of a floor (`floorOf`),
+ * and the terrain pass was half of each (a wide one some 115 ms under coverage). A hit gives back
+ * the reports the making gave (`through`), so the slices of a wide raster, and the units of work
+ * counted, are what they were; the heights are only read (`Raster.base` and the builders).
+ */
+function* terrainLayer(ground: GroundField, x0: number, z0: number, reach: number, cells: number): Slices<Float64Array | null> {
+  let kept = terrains.get(ground);
+  if (!kept) terrains.set(ground, (kept = new Map()));
+  const map = kept;
+  const store: NavShareStore<Float64Array | null> = { get: (k) => recall(map, k), set: (k, made) => void remember(map, k, made, TERRAINS) };
+  return yield* through(store, `${x0}|${z0}|${reach}|${cells}`, () => terrainOf(ground, x0, z0, reach, cells));
 }
 
 /** A diagonal neighbour more than this higher is a wall: a step, or the steepest walkable slope over the diagonal if more. */
@@ -320,6 +341,18 @@ const stepsAcross = (ground: GroundField, from: { x: number; y: number; z: numbe
 
 const near = { x: 0, z: 0 };
 
+/** Rounding a sloped top may take past its ends (m): far less than any height the raster tells apart. */
+const TOP_SLACK = 1e-9;
+
+/** The lowest and highest `colliderTop` of a collider anywhere on its footprint, a sloped one's widened by `TOP_SLACK`. */
+const topSpan = (c: Collider): readonly [number, number] => {
+  if (c.prism) return [c.prism.top, c.prism.top];
+  const b = c.box;
+  if (!c.slope) return [b.max.y, b.max.y];
+  const low = b.min.y + c.slope.low;
+  return [Math.min(low, b.max.y) - TOP_SLACK, Math.max(low, b.max.y) + TOP_SLACK];
+};
+
 /** The cells of a box widened by `margin` in the window, a row: what the raster goes through for a solid. */
 const boxCells = (c: Collider, margin: number, x0: number, z0: number, cells: number): number => {
   const [ix0, ix1] = cellRange(c.box.min.x - margin, c.box.max.x + margin, x0, cells);
@@ -348,8 +381,11 @@ function* openFloor(open: Uint8Array, solids: readonly Collider[], base: Float64
     const b = c.box;
     const [ix0, ix1] = cellRange(b.min.x, b.max.x, x0, cells);
     const [iz0, iz1] = cellRange(b.min.z, b.max.z, z0, cells);
+    // A top nowhere at the floor's height (most solids of a window: walls, slabs of other floors) opens no cell; its rows count as before.
+    const [lo, hi] = topSpan(c);
+    const level = hi >= floor - SNAP_DOWN && lo <= floor + STEP_HEIGHT;
     for (let iz = iz0; iz <= iz1; iz++) {
-      for (let ix = ix0; ix <= ix1; ix++) {
+      for (let ix = ix0; ix <= ix1 && level; ix++) {
         const x = centre(ix, x0);
         const z = centre(iz, z0);
         if (c.prism && !overCollider(c, x, z)) continue;
@@ -382,14 +418,17 @@ function* closeSolids(open: Uint8Array, solids: readonly Collider[], base: Float
     if (!relative && (b.min.y >= floor + BODY_HEIGHT || b.max.y <= floor + STEP_HEIGHT)) continue;
     const [ix0, ix1] = cellRange(b.min.x - CLEARANCE, b.max.x + CLEARANCE, x0, cells);
     const [iz0, iz1] = cellRange(b.min.z - CLEARANCE, b.max.z + CLEARANCE, z0, cells);
+    const hi = topSpan(c)[1];
     for (let iz = iz0; iz <= iz1; iz++) {
       const z = centre(iz, z0);
       for (let ix = ix0; ix <= ix1; ix++) {
+        // The cheap tests first: over the head, or no top over a step anywhere (on the ground floor
+        // most of the window's solids are one or the other), and the footprint is not looked at.
+        const ref = relative ? (base[iz * cells + ix] ?? 0) : floor;
+        if ((relative && b.min.y >= ref + BODY_HEIGHT) || hi <= ref + STEP_HEIGHT) continue;
         const x = centre(ix, x0);
         const q = closestXZ(c, x, z, near);
         if ((x - q.x) ** 2 + (z - q.z) ** 2 >= r2) continue;
-        const ref = relative ? (base[iz * cells + ix] ?? 0) : floor;
-        if (relative && b.min.y >= ref + BODY_HEIGHT) continue;
         if (colliderTop(c, q.x, q.z) > ref + STEP_HEIGHT) open[iz * cells + ix] = 0;
       }
       done += Math.max(0, ix1 - ix0 + 1);
@@ -404,7 +443,7 @@ function* closeSolids(open: Uint8Array, solids: readonly Collider[], base: Float
 
 export function* rasterise(solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField, cells: number): Slices<Raster> {
   const open = new Uint8Array(cells * cells);
-  const base = yield* terrainOf(ground, x0, z0, reach, cells);
+  const base = yield* terrainLayer(ground, x0, z0, reach, cells);
   const flight = base && floor === 0 ? yield* flightsOf(ground, x0, z0, cells) : null;
   const ledges = base && floor === 0 && (flight || decksIn(ground, x0, z0, cells)) ? yield* ledgesOf(base, ground, x0, z0, cells) : null;
   const walls = floor === 0 && base ? new Uint8Array(cells * cells) : null;
