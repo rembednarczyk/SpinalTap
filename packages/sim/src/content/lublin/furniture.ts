@@ -35,7 +35,7 @@ const box = (x: number, z: number, hx: number, hz: number, top: number): Box => 
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`); a tree's solid is by `treeGirth`. */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4 };
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4, clutter: 9 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /**
  * A tree's size, as `treeScale` of `@seki/core` (G-422, G-423): an oak's or a poplar's from its step
@@ -113,6 +113,22 @@ export const SITE = {
   scaffold: (v: number): { readonly length: number; readonly height: number; readonly rise: number } => ({ length: (v & 1023) / 10, height: ((v >> 10) & 511) / 10, rise: (((v >> 21) & 255) - 128) / 100 }),
 } as const;
 
+/**
+ * The odds and ends' solids by shape (ADR-0096), its own copy of `CLUTTER_SHAPES` of `@seki/core` as
+ * for `SITE` (the importer runs this file without the core's index); a test holds the two equal.
+ */
+export const CLUTTER_SOLIDS: readonly ({ readonly hx: number; readonly hz: number; readonly top: number } | null)[] = [
+  null,
+  null,
+  null,
+  null,
+  { hx: 0.31, hz: 0.29, top: 1.0 },
+  null,
+  null,
+  { hx: 0.42, hz: 0.42, top: 1.05 },
+  null,
+];
+
 /** The parts of each solid kind, by shape. Heights are above the foot. */
 const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => readonly Part[]>> = {
   // Shape 0 the long ława of the squares (no back), 1 the bench with a back.
@@ -165,6 +181,11 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   "site-cabin": () => [box(0, 0, 3.03, 1.22, 2.6)],
   // Stage 2: the crane's mast, the scaffold (its top over its higher end).
   "site-crane": (_s, v) => [box(0, 0, 0.8, 0.8, SITE.craneHeight(v))],
+  // ADR-0096: the odds and ends by shape (`CLUTTER_SHAPES`), none for what is stepped over or hangs on a wall.
+  clutter: (s) => {
+    const solid = CLUTTER_SOLIDS[s];
+    return solid ? [box(0, 0, solid.hx, solid.hz, solid.top)] : [];
+  },
   "site-scaffold": (_s, v) => {
     const s = SITE.scaffold(v);
     return [box(0, 0.65, s.length / 2, 0.65, s.height + Math.abs(s.rise) / 2)];

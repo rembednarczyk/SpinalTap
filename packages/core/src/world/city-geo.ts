@@ -183,7 +183,9 @@ export type StreetPropKind =
   | "site-board"
   | "site-cabin"
   | "site-crane"
-  | "site-scaffold";
+  | "site-scaffold"
+  // ADR-0096: the odds and ends of `extra-props.glb` (`clutter.ts`), one model per shape.
+  | "clutter";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {

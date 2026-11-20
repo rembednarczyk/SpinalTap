@@ -11,4 +11,5 @@ export * from "./figures";
 export * from "./trees";
 export * from "./barriers";
 export * from "./sites";
+export * from "./clutter";
 export * from "./step-norm";

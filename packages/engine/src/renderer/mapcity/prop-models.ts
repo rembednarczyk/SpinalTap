@@ -9,6 +9,7 @@ import { doorOfShape } from "./prop-door";
 import { barrierModel } from "./barrier-models";
 import { siteModel } from "./construction";
 import { figureStandIn } from "./figure-models";
+import { clutterStandIn } from "./clutter-models";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
@@ -83,6 +84,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   // Stage 2: a crane 24 m high with a 30 m jib, a scaffold 8 m long and 10 m high with its banner.
   "site-crane": () => plain(siteModel("site-crane", siteCraneVariant({ height: 24, jib: 30, phase: 0 }), "high")),
   "site-scaffold": () => plain(siteModel("site-scaffold", siteScaffoldVariant({ length: 8, height: 10, rise: 0, banner: 0 }), "high")),
+  // ADR-0096: the city bakes the odds and ends only as models of `extra-props.glb` (`clutter-models.ts`); this is the gallery's stand-in.
+  clutter: (s) => plain(clutterStandIn(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

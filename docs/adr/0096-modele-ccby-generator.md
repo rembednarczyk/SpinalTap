@@ -18,7 +18,7 @@ Różnice: tekstury z napisami (płaskie neony, szyldy z Tajwanu, szyld baru) ni
 Reguły (kotwica → co, gdzie, ile):
 1. **Zaplecze lokalu** (`fast_food`, `restaurant`, `cafe`, `bar`, `pub` z `venues.ts`): ściana budynku lokalu od podwórza albo boczna, najbliższa jego szyldowi i poza strefami wolnymi wejść (ADR-0094 §2). Przy ścianie 1–3 worki na śmieci, kartony, czasem beczka; liczba i dobór z hasha lokalu. Przy kontenerach (`container`) worki obok.
 2. **Budowa** (ADR-0087, ogrodzenie `site-fence`) i jezdnia przy niej: pachołki w odstępie 1,5 m wzdłuż ogrodzenia od strony jezdni, bariery betonowe na rogach ogrodzenia, barierki metalowe przy bramie budowy (`site-gate`); pogięte warianty z hasha, co najwyżej 1 na 4.
-3. **Bank i bankomat** (`amenity=bank`, `amenity=atm` w OSM, bez wolnostojącego `atm` z planu): bankomat ścienny na fasadzie budynku banku, 1,1 m nad chodnikiem, obok wejścia poza jego strefą wolną.
+3. **Bank i bankomat** (`amenity=bank`, `amenity=atm` w OSM, bez wolnostojącego `atm` z planu): bankomat ścienny na fasadzie budynku banku, dolną krawędzią 0,8 m nad chodnikiem, obok wejścia poza jego strefą wolną.
 4. **Dach** (płaski, budynek od 5 kondygnacji): antena satelitarna, co najwyżej jedna na budynek z hasha (ok. 1 na 6 budynków), w narożniku dachu poza nadbudówkami (ADR-0051) i attyką, czaszą na południe.
 5. **Szyld wysięgnikowy** lokalu: rama z paczki z Tajwanu, szyld LED albo pionowy neon jako wariant szyldu lokalu (wybór z hasha lokalu, warstwa 2077), z nazwą lokalu z atlasu. Stare Miasto zostaje oszczędne (ADR-0058).
 6. **Witryna**: parter sklepu w warstwie 2077 (Lubartowska, Podzamcze, Nabrzeże) dostaje witrynę z Asian Shop Pack dopasowaną do szerokości lokalu; Stare Miasto i Krakowskie bez zmian.
@@ -29,7 +29,7 @@ Kontrola: każdy etap ma testy reguł w `tools/osm-import/test` (kotwica, strefy
 
 ## Etapy
 1. Wypiek `tools/city_extras.py` → `extra-props.glb`: modele z 13 źródeł rozcięte na pojedyncze rzeczy, na palecie, do 6 tys. trójkątów (wnętrza i robot z własnym limitem), kredyty, testy pliku.
-2. Zaplecza lokali, budowy, bankomaty ścienne (reguły 1–3), z bryłami w symulacji tam, gdzie mebel stoi na chodniku.
+2. Zaplecza lokali i bankomaty ścienne (reguły 1 i 3); 2b: budowy (reguła 2, kawałki budów powstają w `core`, ADR-0087), z bryłami w symulacji tam, gdzie mebel stoi na chodniku.
 3. Anteny na dachach (reguła 4).
 4. Szyldy wysięgnikowe (reguła 5).
 5. Witryny (reguła 6).
@@ -42,3 +42,9 @@ Każdy etap: `pnpm osm:props`, `scan:diff`, przegląd topografii, `npr-perf` (wy
 - Więcej drobiazgu w strefach, gdzie gra była pusta (zaplecza, budowy, dachy), zgodnie z zasadami lokacji (trzy warstwy, ślad świeżej obecności).
 - Rośnie liczba trójkątów; wywołania rysowania nie, bo modele idą do istniejących siatek bloków.
 - `props.generated.ts` i baza skanu zmieniają się w etapach 2–6.
+
+## Wdrożenie etapu 2 (20.11): zaplecza lokali i bankomaty ścienne
+- Kontrakt: rodzaj `clutter` w `StreetPropKind` i tabela `CLUTTER_SHAPES` w `core` (`world/clutter.ts`): kształt to dokładnie jeden model `extra-props.glb`, z bryłą albo bez (kosz z deskami i beczka mają bryłę, worki, kartony, butelka, kubek i bankomat w ścianie nie). Symulacja trzyma własną kopię brył (`CLUTTER_SOLIDS`, importer czyta ten plik bez indeksu `core`), test pilnuje zgodności.
+- Generator `tools/osm-import/src/props-clutter.ts` (po budkach z jedzeniem w `props-gen.ts`, `from` = `rule.venue-clutter`): lokal z kuchnią (restauracja, kawiarnia, fast food, bar, pub), pierwszy szyld, prosto od drzwi przez budynek i rząd za nim do 40 m, do pierwszego wolnego gruntu; tam 2–4 rzeczy w odstępach 0,8 m, 0,5 m od muru, obrót z hasha do ±0,6 rad. Każda na wolnym gruncie także 0,3 m dookoła, poza ścieżkami, strefami wejść, bryłami i 4 m od osi jezdni. Bankomat: 0,9 m za końcem szyldu banku, 0,12 m od muru, mur za nim i wolny chodnik przed nim, strona z hasha.
+- Wynik na mapie: 228 rzeczy (219 na zapleczach ok. 75 lokali, 9 bankomatów na 13 banków).
+- Renderer: `clutter-models.ts` piecze tylko modele z pliku (bez zastępnika w mieście), telefon (`low`) tylko bankomaty. Kolejność i warianty bez losowości: lokale po `fnv(nazwa)`, mieszanka i obrót z `fnv` nazwy.

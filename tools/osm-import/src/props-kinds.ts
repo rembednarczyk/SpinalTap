@@ -3,6 +3,7 @@
  * map to the nearest `StreetPropKind`, and which are left out and why.
  */
 import type { StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
+import { CLUTTER_SHAPES } from "../../../packages/core/src/world/clutter.ts";
 
 /** Kinds of the plan that are a `StreetPropKind` as they are. */
 const SAME: readonly StreetPropKind[] = [
@@ -150,7 +151,7 @@ export const knownKind = (kind: string): boolean => propOf(kind) !== null || kin
  * bench without a back, 1 with a back; advertising column 0 graphite, 1 the yellow one with a dome;
  * street plate 0 on a post, 1 on a wall (ADR-0094 stage 3).
  */
-export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 6, artwork: 6, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2, "street-plate": 2 };
+export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 6, artwork: 6, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2, "street-plate": 2, clutter: CLUTTER_SHAPES.length };
 
 /** `hash` with its shape forced to `shape` (kept within 16 bits). */
 export const withShape = (hash: number, kind: StreetPropKind, shape: number): number => {

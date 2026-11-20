@@ -19,6 +19,7 @@ import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } fro
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { EntranceZones, boardDoor } from "./props-entrances.ts";
 import { venueGardens } from "./props-gardens.ts";
+import { venueClutter } from "./props-clutter.ts";
 import { venueAFrames } from "./props-aframes.ts";
 import { startPlates } from "./props-plates.ts";
 import { sculptureFacing } from "./props-statues.ts";
@@ -386,6 +387,8 @@ export const ENTRANCE_SKIP = "before an entrance";
 
 /** The rule's name in `perItem` for the food booths, which no group of the plan asks for. */
 export const FOOD_STALLS = "rule.food-stalls";
+/** The `from` of the odds and ends by their venues (ADR-0096 stage 2). */
+export const VENUE_CLUTTER = "rule.venue-clutter";
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
@@ -480,6 +483,8 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   }
   // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.
   for (const x of foodStalls(site, clear, boards, placed)) placed.push({ ...x, from: FOOD_STALLS });
+  // The odds and ends of ADR-0096 by their venues (`extra-props.glb`): the restaurants' backs, the banks' machines.
+  for (const x of venueClutter(site, clear, viewing, boards)) placed.push({ ...x, from: VENUE_CLUTTER });
   return { placed, fromLine };
 };
 

@@ -1,4 +1,4 @@
-import { type StreetPropKind, TREE_KIND, TREE_SPECIES, treeScale, treeSpecies, treeSpread } from "@seki/core";
+import { CLUTTER_SHAPES, type StreetPropKind, TREE_KIND, TREE_SPECIES, treeScale, treeSpecies, treeSpread } from "@seki/core";
 import type { RenderQuality } from "../../npr/quality";
 
 /**
@@ -27,6 +27,8 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   "market-goods": 4,
   // ADR-0058 stage 9: a door's model (`DOOR_MODELS`); its size is in the bits above.
   door: 8,
+  // ADR-0096: the odds and ends, one model of `extra-props.glb` per shape (`CLUTTER_SHAPES`).
+  clutter: CLUTTER_SHAPES.length,
 };
 
 /** Monument and artwork shapes. */
@@ -85,6 +87,7 @@ const TALL: ReadonlySet<StreetPropKind> = new Set([
 ]);
 
 const SMALL: ReadonlySet<StreetPropKind> = new Set([
+  "clutter",
   "bollard",
   "waste-bin",
   "manhole",

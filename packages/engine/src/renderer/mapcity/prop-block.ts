@@ -14,6 +14,7 @@ import { bakeSitePiece } from "./construction";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
+import { bakeClutter } from "./clutter-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
 import { chainModel, farModel, nearModel } from "./prop-models";
@@ -128,6 +129,8 @@ const bakePiece = (deps: Pick<PropBakeDeps, "quality" | "poles">, sink: MeshSink
   else if (SITE_KINDS.has(p.prop)) bakeSitePiece(sink, p, deps.quality);
   // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
   else if (p.prop === "figure") bakeFigure(sink, poles.props, p, deps.quality);
+  // The odds and ends of ADR-0096: models of `extra-props.glb` only.
+  else if (p.prop === "clutter") bakeClutter(sink, poles.props, p, deps.quality);
   else if (!(models && bakeStreetModel(sink, models, p))) {
     bake(sink, nearModel(p.prop, p.shape, deps.quality), p);
     for (const c of p.chains ?? []) bake(sink, chainModel(c.end, deps.quality), { ...p, yaw: c.yaw });
