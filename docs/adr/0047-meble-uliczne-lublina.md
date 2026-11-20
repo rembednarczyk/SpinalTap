@@ -72,3 +72,6 @@ Blok bliżej niż „szczegóły” rysuje swoje komórki w szczegółach (każd
   - kilka najbliższych latarń jako światła punktowe toon, jeśli scena gry w Lublinie tego potrzebuje;
   - kolor per instancja (atrybut instancji w shaderze toon), żeby warianty kolorów nie były osobnymi siatkami;
   - budżety scen Lublina przy przenosinach gry.
+
+## Dopisek 20.11: komiksowy realizm
+Decyzja użytkownika z 20.11 (`docs/zasady-lokacji.md` §9) zmienia zasadę modeli zieleni. Korony drzew jako kilka gładkich brył („żeby tusz rysował tylko obrys”) i krzewy jako trzy kule to bryły zastępcze. Wolno je zostawić tylko jako LOD z daleka (bloki 256 m, telefon `low`). Wersja bliska ma pień, konary, gałęzie i korony z kęp liści o nierównym obrysie, dla każdego z pięciu gatunków osobno (lipa, klon, kasztanowiec, dąb, topola). Krzew ma gałązki i liście. Instancje i bloki LOD zostają, więc wywołań rysowania nie przybywa.

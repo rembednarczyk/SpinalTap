@@ -2,7 +2,7 @@
 
 Stałe zasady dla każdego, kto projektuje albo przerabia miejsce w grze: pomieszczenie, budynek, plac, parking, wnętrze zadania. Obowiązują ludzi i agentów. Wynikają z planu gry (`docs/seki-senshi-plan.md`), z ADR-ów (głównie 0042 topografia, 0046 testy i budżety, 0054 glitche, 0056 teksty, 0058 assety, 0074 Alchemia, 0082 W-3) i z decyzji użytkownika z 19.11. Zasady wiążą się z kodem tam, gdzie się da: kontrolą skanu, testem albo regułą rozstawienia.
 
-Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym Lublinie. Komiksowy rendering NPR (kontur, płaskie światło) wymusza czytelne bryły i mocne źródła światła, a nie fotorealizm.
+Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym Lublinie, rysowane jako **komiksowy realizm** (§9, decyzja użytkownika z 20.11). Kształty, proporcje i gęstość detalu są jak w prawdziwym świecie. Komiks jest tylko w sposobie rysowania: tusz, płaskie światło, paleta i mocne źródła światła. Rendering NPR nie usprawiedliwia uproszczonej geometrii.
 
 ## 1. Miejsce stoi w prawdziwym Lublinie
 - Obrys, wysokość terenu i układ ulic biorą się z danych (OSM, NMT, LoD2). Cyberpunkowa warstwa leży na mieście, nie zastępuje go (ADR-0042).
@@ -58,7 +58,7 @@ Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym
 - Graf nawigacji przechodzi przez każde drzwi, schody i pasaż. Kontrola skanu `walk-blocked` i testy tras pilnują, żeby gęstość niczego nie zamknęła.
 
 ## 8. Assety: modele gry przed własnymi pudełkami
-- Drzewa, krzewy, donice, ławki, latarnie, automaty, kosze i pojazdy bierzemy z modeli gry: meble uliczne (`tree`, `shrubs`, `planter`, `bench` i inne z `StreetPropKind`), `city-kit`, `city-props`, `vehicle-props`. Własną geometrię z pudełek budujemy tylko dla tego, czego w modelach nie ma.
+- Drzewa, krzewy, donice, ławki, latarnie, automaty, kosze i pojazdy bierzemy z modeli gry, o ile model spełnia §9 (komiksowy realizm). Model gry, który sam jest bryłą zastępczą (np. korona drzewa jako kilka kul), poprawiamy w modelu, a nie powielamy: meble uliczne (`tree`, `shrubs`, `planter`, `bench` i inne z `StreetPropKind`), `city-kit`, `city-props`, `vehicle-props`. Własną geometrię z pudełek budujemy tylko dla tego, czego w modelach nie ma.
 - Nowe modele: licencja CC0 albo CC-BY z kredytem w README i w `sources.json` (ADR-0058). Najpierw modele użytkownika.
 - Gęstości i szczegółów nie ograniczamy na zapas. Budżety trójkątów na siatkę można podnosić (decyzja użytkownika z 19.11). Bramkami zostają wywołania rysowania i aktywne siatki scen `npr-perf`, a do tego czas klatki na telefonie odniesienia (decyzja z 12.11). Koszt każdej zmiany mierzymy przed i po.
 - Detal ma poziomy LOD: z bliska pełny, z daleka zastępnik, na telefonie lekki. Pula najwyższego poziomu jest tylko dla tego, co stoi w miejscu (zaparkowane auta, rekwizyty), bo bufor ruchomych idzie na GPU co klatkę.
@@ -75,3 +75,20 @@ Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym
 - Każda widoczna zmiana kończy się zrzutem przed i po (noc, a gdy ma sens, także dzień), wysłanym użytkownikowi (decyzja z 2.11).
 - Testy: geometria i reguły w testach bez przeglądarki, przeglądarka tylko do zrzutów i budżetów (ADR-0046). Skan glitchy bez nowych miejsc.
 - Jedna zmiana to jedna gałąź i jeden PR. Bryły symulacji i rysunek idą osobno, gdy zmiana jest duża.
+
+## 9. Komiksowy realizm (decyzja użytkownika 20.11)
+- Kształt jak w rzeczywistości, rysunek jak w komiksie. Stylizacja to tusz, płaskie światło, paleta i czytelny kolor. Nie zastępujemy kształtu figurą.
+- Formy organiczne nie są bryłami zastępczymi (kula, pudło, graniastosłup):
+  - drzewo ma pień, konary, gałęzie i koronę z kęp liści o nierównym obrysie;
+  - krzew ma gałązki i liście;
+  - bluszcz ma pędy i pojedyncze liście, poszarpany dół i masę przy krawędzi;
+  - trawnik ma kępy, a nie płaską zieleń;
+  - kwiaty mają łodygi i kwiaty.
+  To samo dotyczy ludzi, ubrań, wody i ognia.
+- Rzeczy techniczne mają prawdziwe części: rury z kołnierzami, kable ze zwisem, automaty z panelem, wlotem i przyciskami, meble z nogami i blatem. Prostopadłościan jest tylko tam, gdzie w rzeczywistości jest prostopadłościan.
+- Drobny detal wolno powiększyć, żeby czytał się z odległości gry (np. liść dwa razy większy od prawdziwego). Wolno też zagęścić lub rozrzedzić detal. Kształt zostaje prawdziwy.
+- Punktem odniesienia jest zdjęcie prawdziwego obiektu albo plansza koncepcyjna. Wynik sprawdzamy zrzutem z bliska (2–5 m) i z odległości gry, obok odniesienia.
+- Uproszczenie wolno stosować tylko jako LOD: z daleka (siatki dalekie, bloki) i na telefonie (`low`). Pełny kształt jest zawsze wersją bliską.
+- Budżet: trójkąty są wolne (decyzja z 19.11). Bramkami są wywołania rysowania, aktywne siatki i czas klatki na telefonie odniesienia. Detal dokładamy do istniejących siatek (instancje, scalanie), a nie w nowych wywołaniach.
+- Brak tekstury z alfą w zestawie miasta nie usprawiedliwia uproszczeń: liście, pędy i kępy budujemy z geometrii (karty liści jako małe wielokąty).
+
