@@ -54,6 +54,7 @@ import { inFootprint } from "../../../packages/sim/src/content/barrier-room";
 import { alchemiaHidesLandmarks, frontFootprint, keptInGame, mallFootprint, mallHeight, osmBuildingsKept, padsUnregistered } from "./alchemia-checks";
 import { arcadeRhythm, dipInGame, gamePiers, padDipUncovered } from "./arkady-checks";
 import { glowsInGame, memorialNeonClear, remembrances, roofModelHeight } from "./alchemia-landmark-checks";
+import { alchemiaOffGroundInGame } from "./alchemia-ground-world";
 import { stairFootUnpaved } from "./stair-foot";
 import { cityStairWorld } from "./stair-foot-world";
 import { planPropsInGame } from "./plan-prop-under-game";
@@ -1568,6 +1569,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "alchemia-mall-height": () => mallHeight(),
   /** A piece of the front's rooms (ADR-0093 O5: its units, arcades, café, bar, steps in) out of its storeys' outlines and heights. */
   "alchemia-front-footprint": () => frontFootprint(),
+  /**
+   * A piece of Alchemia outside (drawn, a solid not drawn as it is, a model it places) whose foot hangs
+   * over 5 cm over what it stands on (the drawn ground, the map's paving, a piece under it), or whose
+   * top lies over 5 cm under the ground at part of its outline while the rest stands out: a cut (the
+   * user's 20.11, `alchemia-ground.ts`).
+   */
+  "alchemia-off-ground": () => alchemiaOffGroundInGame(),
   /**
    * A glowing sign (the map's signs, venues' boards, holograms and adverts; the game's neons, the
    * deptak's, the front's and the gallery's) nearer than 20 m across the plan to the memorial of

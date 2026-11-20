@@ -76,6 +76,12 @@ const runThrough = (sim: Simulation, points: readonly { x: number; z: number }[]
 };
 
 describe("the square before Alchemia's front (ADR-0074 C5)", () => {
+  it("stands the trunk of the tree in its planter on the planter's box, on the ground (the user's 20.11)", () => {
+    const tree = FRONT_PLAZA_PROPS.find((p) => p.prop === "tree" && p.y! < groundY(p.x, p.z) + 1)!;
+    const under = plazaCafeSolids().filter((p) => p.box.x0 <= tree.x && p.box.x1 >= tree.x && p.box.z0 <= tree.z && p.box.z1 >= tree.z && p.box.y1 < tree.y! + 0.5);
+    expect(under.some((p) => p.box.y0 <= groundY(tree.x, tree.z) && p.box.y1 >= tree.y! - 0.05), "the planter's box").toBe(true);
+  });
+
   it("lays its podium a whole number of risers over the passage's ground and its steps by the rules", () => {
     expect(PLAZA_RISER).toBeGreaterThanOrEqual(0.15);
     expect(PLAZA_RISER).toBeLessThanOrEqual(0.18);
