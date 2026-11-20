@@ -1,5 +1,4 @@
 # plan-prop-under-game: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-krakowskie-2-0 430,-100
 krakowskie-2-1 402,-3
 krakowskie-2-1 389,-1
 krakowskie-2-1 395,-1

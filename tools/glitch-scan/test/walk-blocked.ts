@@ -254,8 +254,12 @@ const stepText = (a: WalkCell, n: WalkCell, block: WalkBlock): string => {
   return `${dy > STEP_HEIGHT ? "ledge" : "step down"} ${dy.toFixed(2)} m`;
 };
 
-/** `walk-blocked` over the chunks; `onMap` is where the map has ground (by default the chunks; the whole map's when a probe scans a part of it). */
-export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld, onMap: (x: number, z: number) => boolean = inChunks(chunks)): Finding[] => {
+/**
+ * `walk-blocked` over the chunks; `onMap` is where the map has ground (by default the chunks; the
+ * whole map's when a probe scans a part of it). With `only`, the findings of those chunks alone,
+ * as in the scan of all: their neighbours' cells past the seams are still read.
+ */
+export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld, onMap: (x: number, z: number) => boolean = inChunks(chunks), only?: ReadonlySet<string>): Finding[] => {
   const rasters = chunks.map(walkRaster);
   const flagAt = (x: number, z: number): number => {
     for (let k = 0; k < chunks.length; k++) {
@@ -266,5 +270,5 @@ export const walkBlocked = (chunks: readonly WalkChunk[], world: WalkWorld, onMa
     }
     return 0;
   };
-  return chunks.flatMap((c, k) => chunkFindings(c, rasters[k]!, world, flagAt, onMap));
+  return chunks.flatMap((c, k) => (only && !only.has(c.id) ? [] : chunkFindings(c, rasters[k]!, world, flagAt, onMap)));
 };
