@@ -4,8 +4,9 @@ import { L2_TOP, L3, L3_TOP } from "./front";
 
 /*
  * The board's details on the front (ADR-0074 B4, decisions of 19.11): umbrellas over tables on L3's roof, tall
- * screens on L3's sides and the ramp's portal lit green, as on the board. Drawn only: nobody climbs
- * to L2's terrace or L3's roof (no stairs lead there), and the ramp's lights are in its walls.
+ * screens on L3's sides and the ramp's portal lit green, as on the board. Drawn only but the tables
+ * (one walks onto L3's roof from the gallery's green roof since ADR-0093 O5); the ramp's lights are in
+ * its walls.
  */
 
 /** Umbrellas over tables on L3's roof, towards its south edge: the board's top terrace. */
@@ -13,7 +14,8 @@ const umbrellas = (): Piece[] =>
   [L3.minX + 4, L3.minX + 10, L3.minX + 16, L3.minX + 22].flatMap((x, i) => {
     const z = L3.minZ + 3 + (i % 2) * 1.5;
     return [
-      piece(box(x - 0.5, x + 0.5, z - 0.5, z + 0.5, L3_TOP, L3_TOP + 0.75), "table", false, false),
+      // Solid since ADR-0093 O5: one walks out onto L3's roof from the gallery's.
+      piece(box(x - 0.5, x + 0.5, z - 0.5, z + 0.5, L3_TOP - 0.05, L3_TOP + 0.75), "table", false),
       piece(box(x - 0.04, x + 0.04, z - 0.04, z + 0.04, L3_TOP + 0.75, L3_TOP + 2.3), "column", false, false),
       piece(box(x - 1.3, x + 1.3, z - 1.3, z + 1.3, L3_TOP + 2.3, L3_TOP + 2.45), "umbrella", false, false),
     ];

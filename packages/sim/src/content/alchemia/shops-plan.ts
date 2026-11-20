@@ -1,6 +1,8 @@
 import { type Box, HALL, HALL_INNER, box } from "./plan";
 import { MAIN_DOORS, MALL, MALL_GLASS_THICK, MALL_LEVELS } from "./mall-plan";
 import type { Rectangle } from "./rounded";
+import { FRONT_CEILINGS, FRONT_FLOORS, type FrontFloor } from "./front-levels";
+import { FRONT_SHOPS, TOKYO_DRIP_L2 } from "./front-shops";
 
 /*
  * The shops of the gallery's P1 and P2 (ADR-0093 O2) and of P0, the old food hall's floor (O3): the ring of units between the gallery round
@@ -28,7 +30,8 @@ export type ShopFront = "n" | "s" | "e" | "w";
 
 export interface ShopDef {
   readonly id: string;
-  readonly floor: "p0" | "p1" | "p2";
+  /** The gallery's floor, or one of the front's storeys (ADR-0093 O5, `front-levels.ts`). */
+  readonly floor: "p0" | "p1" | "p2" | FrontFloor;
   readonly rect: Rectangle;
   readonly front: ShopFront;
   /** The part of the front on the gallery (`u` from-to), for a corner unit; the rest of that side is a partition. */
@@ -40,6 +43,10 @@ export interface ShopDef {
   /** The sign over its front: a proper name in the world's language, the same in every language (ADR-0056). */
   readonly sign: string;
   readonly door?: "r";
+  /** A partition across its back: its back is on no glass (a front's unit back to back with a café, short of a rounded corner, O5). */
+  readonly back?: true;
+  /** Its front on the street: the storey's glass before its shopfront, open at its door (L1's east wing, O5). */
+  readonly street?: true;
 }
 
 /** The glass's inner faces (its panes `MALL_GLASS_THICK` deep inside the body's line, `mall.ts`). */
@@ -91,7 +98,8 @@ const P2_SHOPS: readonly ShopDef[] = [
   { id: "p2-e2", floor: "p2", rect: r(428, G.x1, 40.2, 44.8), front: "w", trade: "crypto", state: "open", sign: "KOINEX" },
   { id: "p2-e3", floor: "p2", rect: r(428, G.x1, 44.8, 49.4), front: "w", trade: "florist", state: "vacant", sign: "" },
   { id: "p2-s1", floor: "p2", rect: r(408, 412.2, G.z0, 37), front: "n", trade: "pharmacy", state: "open", sign: "MEDIX", door: "r" },
-  { id: "p2-s2", floor: "p2", rect: r(414.8, 421.4, G.z0, 37), front: "n", trade: "clothing", state: "shut", sign: "TOKYO DRIP" },
+  // On L2 since ADR-0093 O5 (its place in this list and its id kept): the passage to L2 runs where it stood (x 414.8-421.4).
+  { id: "p2-s2", floor: "l2", rect: TOKYO_DRIP_L2, front: "s", trade: "clothing", state: "shut", sign: "TOKYO DRIP" },
   { id: "p2-s3", floor: "p2", rect: r(421.4, 428, G.z0, 37), front: "n", trade: "tattoo", state: "open", sign: "INKSPOT", door: "r" },
 ];
 
@@ -125,9 +133,16 @@ const P0_SHOPS: readonly ShopDef[] = [
 /** P1's and P2's first (their ids and solids as O2 left them), P0's after them (O3). */
 export const SHOPS: readonly ShopDef[] = [...P1_SHOPS, ...P2_SHOPS, ...P0_SHOPS];
 
-/** A shop's floor, and the underside of the slab over it (on P0 the hall's old roof, 0.4 m thick). */
-export const shopFloor = (s: ShopDef): number => MALL_LEVELS[s.floor];
-export const shopCeiling = (s: ShopDef): number => (s.floor === "p0" ? HALL.ceiling : (s.floor === "p1" ? MALL_LEVELS.p2 : MALL_LEVELS.p3) - 0.3);
+/** The gallery's units and the front's (ADR-0093 O5). */
+export const ALL_SHOPS: readonly ShopDef[] = [...SHOPS, ...FRONT_SHOPS];
+
+/** A shop's floor, and the underside of the slab over it (on P0 the hall's old roof, 0.4 m thick; on the front its storey's, `front-levels.ts`). */
+export const shopFloor = (s: ShopDef): number => (s.floor === "p0" || s.floor === "p1" || s.floor === "p2" ? MALL_LEVELS[s.floor] : FRONT_FLOORS[s.floor]);
+export const shopCeiling = (s: ShopDef): number => {
+  if (s.floor === "p0") return HALL.ceiling;
+  if (s.floor === "p1" || s.floor === "p2") return (s.floor === "p1" ? MALL_LEVELS.p2 : MALL_LEVELS.p3) - 0.3;
+  return FRONT_CEILINGS[s.floor];
+};
 
 /** Is a shop open to its customers? */
 export const isOpen = (s: ShopDef): boolean => s.state === "open";
@@ -182,18 +197,19 @@ export const shopFrame = (s: ShopDef): ShopFrame => {
 
 /** The shop over (x, y, z), between its floor and its ceiling, or null (the engine's colours of a shop's light, goods and sign). */
 export const shopAt = (x: number, y: number, z: number): ShopDef | null =>
-  SHOPS.find((s) => x >= s.rect.x0 - 0.3 && x <= s.rect.x1 + 0.3 && z >= s.rect.z0 - 0.3 && z <= s.rect.z1 + 0.3 && y >= shopFloor(s) - 0.1 && y <= shopCeiling(s) + 0.05) ?? null;
+  ALL_SHOPS.find((s) => x >= s.rect.x0 - 0.3 && x <= s.rect.x1 + 0.3 && z >= s.rect.z0 - 0.3 && z <= s.rect.z1 + 0.3 && y >= shopFloor(s) - 0.1 && y <= shopCeiling(s) + 0.05) ?? null;
 
 /**
  * The ways through the ring kept clear of shops, on each floor (ADR-0093 O1's doors and cores): the
  * south-west core's corridor, the north-east core's, the north-east lift's lobby, and on P1 the main
  * doors' hall, the east door's lobby and the hall's lift's back; on P2 the hall's lift's lobby.
  */
-export const RING_WAYS: Readonly<Record<ShopDef["floor"], readonly Rectangle[]>> = {
+export const RING_WAYS: Readonly<Partial<Record<ShopDef["floor"], readonly Rectangle[]>>> = {
   // P0 (O3): the back aisle to the stairs and the door onto P-1, the hall's lift's lobby, the way in from T1, the north-east core's corridor, its lift's lobby, the alcove before the corner unit.
   p0: [r(408, 412.3, I.z0, 37), r(412.3, 414.8, 34.8, 37), r(413, 419, 53, I.z1), r(425, 427.5, 53, I.z1), r(428, I.x1, 49.4, 51.9), r(424.4, 428, I.z0, 37)],
   p1: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(MAIN_HALL.x0, MAIN_HALL.x1, G.z0, 37), r(EAST_LOBBY_X, G.x1, G.z0, 35.6), r(412.2, 414.8, 34.8, 37)],
-  p2: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(412.2, 414.8, 34.8, 37)],
+  // P2's passage south to L2 (ADR-0093 O5), where TOKYO DRIP stood.
+  p2: [r(G.x0, 408, 37.9, 39.8), r(425, 427.5, 53, G.z1), r(428, G.x1, 49.4, 51.9), r(412.2, 414.8, 34.8, 37), r(414.8, 421.4, G.z0, 37)],
 };
 
 /** A partition's thickness, the shopfront's glass head and the door's head over the floor, the door's width. */
@@ -206,3 +222,6 @@ export const shopWall = (s: ShopDef): number => (s.floor === "p0" ? 0.2 : SHOP_W
 export const SHOPFRONT_HEAD = 3.0;
 export const SHOP_DOOR_TOP = 2.4;
 export const SHOP_DOOR = 1.5;
+/** A shop's glass head and door head over its floor: lower under L1's soffit (ADR-0093 O5), its fascia 0.4 m and more under the ceiling. */
+export const shopHead = (s: ShopDef): number => Math.min(SHOPFRONT_HEAD, shopCeiling(s) - shopFloor(s) - 0.4);
+export const shopDoorTop = (s: ShopDef): number => Math.min(SHOP_DOOR_TOP, shopHead(s) - 0.15);

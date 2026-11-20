@@ -1,6 +1,6 @@
 import { type GroundPoint, type StreetPropItem, measuredTreeVariant } from "@seki/core";
 import { FRONT_SIGN, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, frontPieces } from "./front";
-import { type Piece, box, outlined } from "./plan";
+import { type Piece, box, outlined, piece } from "./plan";
 import { P1_STAIR } from "./parking";
 import { type Corners, type Rectangle, outerCorners, roundedOutline } from "./rounded";
 import { FRONT_OVERHANG, MALL, MALL_CORNERS, MALL_LEVELS, MALL_RADIUS } from "./mall-plan";
@@ -11,9 +11,9 @@ import type { Rect } from "../builders";
 /*
  * The board's green on Alchemia (C2 of the board 1:1, 19.11): curtains of green hanging over every
  * storey's open edge, shrubs along the front's roofs inside their balustrades, trees on the corners
- * of L1's east wing and L3's roof. Drawn only: the curtains hang in the air outside the slabs, and
- * nobody walks the front's roofs. Placed by rule along the storeys' rounded outlines, what grows
- * where fixed by a hash of the place (no list of positions, no randomness).
+ * of L2's east terrace and L3's roof. The curtains drawn only: they hang in the air outside the slabs.
+ * Placed by rule along the storeys' rounded outlines, what grows where fixed by a hash of the place
+ * (no list of positions, no randomness).
  */
 
 /** A storey for the green: its glass's rectangle, its glass's bottom and its slab's top, its rounded corners and their radius. */
@@ -153,28 +153,39 @@ const planted = (x: number, z: number, y: number, seed: number): StreetPropItem[
 ];
 
 /**
- * The board's trees on the roofs: L1's east wing (its front corners), L3's roof (its back corners,
- * clear of the umbrellas), L2's south terrace west of L3's sign (in front of it their crowns would
- * hide CENTRUM HANDLOWE, stage 8: before the sign, planters with shrubs only). Once boxes of
- * `front-dress.ts`; the game's trees since 19.11 (the user: no square trees in Alchemia).
+ * The board's trees on the roofs: L2's east terrace (L1's east wing's roof under L2's glass until
+ * ADR-0093 O5), L3's roof (its back corners, clear of the umbrellas and the masts), L2's south terrace
+ * west of L3's sign (in front of it their crowns would hide CENTRUM HANDLOWE, stage 8: before the sign,
+ * planters with shrubs only). Once boxes of `front-dress.ts`; the game's trees since 19.11 (the user:
+ * no square trees in Alchemia). One walks among them since O5: their planters' boxes and trunks solid
+ * (`FRONT_GREEN_SOLIDS`).
  */
-const roofTrees = (): StreetPropItem[] => {
-  const e = L1_LEVEL[L1_LEVEL.length - 1]!;
+export const FRONT_TREES: readonly { readonly x: number; readonly z: number; readonly y: number; readonly seed: number; readonly tree: boolean }[] = (() => {
   const l2 = L2_SLABS[0]!;
+  const east = L2_SLABS[1]!;
   return [
-    ...tree(l2.minX + 2.2, 8, L2_TOP, 197),
-    ...tree(l2.minX + 6.2, 8, L2_TOP, 233),
-    ...planted(l2.minX + 13, 8, L2_TOP, 61),
-    ...planted(l2.maxX - 6, 8, L2_TOP, 89),
-    ...tree(e.minX + 2, e.minZ + 1.8, L1_TOP, 41),
-    ...tree(e.maxX - 2, e.minZ + 1.8, L1_TOP, 77),
-    ...tree(L3.minX + 2.5, L3.maxZ - 3, L3_TOP, 113),
-    ...tree(L3.maxX - 2.5, L3.maxZ - 3, L3_TOP, 151),
+    { x: l2.minX + 2.2, z: 8, y: L2_TOP, seed: 197, tree: true },
+    { x: l2.minX + 6.2, z: 8, y: L2_TOP, seed: 233, tree: true },
+    { x: l2.minX + 13, z: 8, y: L2_TOP, seed: 61, tree: false },
+    { x: l2.maxX - 6, z: 8, y: L2_TOP, seed: 89, tree: false },
+    // On L2's terrace east of L3, clear of its door (ADR-0093 O5): on L1's east wing's roof until then, inside L2's glass.
+    { x: L3.maxX + 2.5, z: east.minZ + 4, y: L2_TOP, seed: 41, tree: true },
+    { x: east.maxX - 2.4, z: east.maxZ - 2.6, y: L2_TOP, seed: 77, tree: true },
+    // Off the masts at its back (ADR-0093 O5: a tree stood on each).
+    { x: L3.minX + 4.5, z: L3.maxZ - 5, y: L3_TOP, seed: 113, tree: true },
+    { x: L3.maxX - 5, z: L3.maxZ - 5, y: L3_TOP, seed: 151, tree: true },
   ];
-};
+})();
+const roofTrees = (): StreetPropItem[] => FRONT_TREES.flatMap((t) => (t.tree ? tree(t.x, t.z, t.y, t.seed) : planted(t.x, t.z, t.y, t.seed)));
 
 /** The curtains of green, drawn with the storeys. */
 export const frontGreenPieces = (): Piece[] => STOREYS.flatMap(curtains);
 
 /** The trees, planters and shrubs on the front's roofs: street furniture of the game's, in Alchemia's chunk (19.11: the game's models, no boxes). */
 export const FRONT_GREEN_PROPS: readonly StreetPropItem[] = [...STOREYS.flatMap(shrubs), ...roofTrees()];
+
+/**
+ * The planters' concrete boxes on the terraces (the game's planter: 1.2 m square, 0.6 m over its foot,
+ * as the green roof's), solid, not drawn: one walks the terraces since ADR-0093 O5.
+ */
+export const FRONT_PLANTER_SOLIDS: readonly Piece[] = FRONT_TREES.map((t) => piece(box(t.x - 0.6, t.x + 0.6, t.z - 0.6, t.z + 0.6, t.y - 0.05, t.y + 0.6), "machine", false));

@@ -1,10 +1,11 @@
 import { type Piece, box, outlined, piece } from "./plan";
-import { ALL_CORNERS, type Corners, type Rectangle, cornerRadius, roundedOutline } from "./rounded";
+import { ALL_CORNERS, type Corners, type Rectangle, balustrade, cornerRadius, roundedOutline } from "./rounded";
 
 /*
  * A storey of Alchemia's front (ADR-0074 B1, C1): glass up to a slab with its overhang and a strip
  * of light along its edge, the outer corners rounded. The green tiers A and B that first used it
- * (15.11) gave way to the gallery round its atrium (ADR-0093 O1, `mall.ts`); the front keeps it.
+ * (15.11) gave way to the gallery round its atrium (ADR-0093 O1, `mall.ts`); the front keeps it. A
+ * solid box of glass until ADR-0093 O5, a wall round rooms since.
  */
 
 /** A slab's thickness at a storey's top, its overhang past the glass. */
@@ -29,15 +30,20 @@ const ledRing = (r: Area, y: number, over: number): Piece[] => {
 };
 
 /**
- * A slab over glass: the glass up to it, the slab with its overhang, a strip of light along its
- * edge; its `corners` rounded (19.11), the glass's concentric with the slab's.
+ * A slab over its storey: the slab with its overhang, a strip of light along its edge; its `corners`
+ * rounded (19.11). Its glass is a wall of its own since ADR-0093 O5 (`storeyGlass`): one walks
+ * behind it.
  */
-export const storey = (r: Area, bottom: number, top: number, corners: Corners = ALL_CORNERS, radius = cornerRadius(slabOf(r))): Piece[] => {
+export const storey = (r: Area, top: number, corners: Corners = ALL_CORNERS, radius = cornerRadius(slabOf(r))): Piece[] => {
   const s = top - SLAB;
-  const slab = slabOf(r);
-  return [
-    outlined(roundedOutline(slab, -OVER, corners, undefined, radius), bottom - 0.05, s, "glass"),
-    outlined(roundedOutline(slab, 0, corners, undefined, radius), s, top, "roof"),
-    ...ledRing(r, s, OVER),
-  ];
+  return [outlined(roundedOutline(slabOf(r), 0, corners, undefined, radius), s, top, "roof"), ...ledRing(r, s, OVER)];
 };
+
+/**
+ * A storey's glass as a wall `thick` deep inside its outline (ADR-0093 O5, the gallery's glass of O1):
+ * from `bottom` up to the slab over it, open over `gaps` (doors, the joints with the next bar of the
+ * storey or with the gallery, whose glass is the wall there), its corners concentric with the slab's.
+ * The engine draws it as its frame only, so the eye sees the storey's rooms through it.
+ */
+export const storeyGlass = (r: Area, bottom: number, top: number, thick: number, corners: Corners = ALL_CORNERS, gaps: readonly Rectangle[] = [], radius = cornerRadius(slabOf(r))): Piece[] =>
+  balustrade(slabOf(r), -OVER, corners, bottom, top - SLAB - bottom, true, gaps, radius, "pane", thick);
