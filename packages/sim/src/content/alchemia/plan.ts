@@ -121,7 +121,9 @@ export type PieceKind =
   | "awning"
   | "food"
   | "sign-red"
-  | "sign-amber";
+  | "sign-amber"
+  // The front's storeys as rooms (ADR-0093 O5): the warm light panels under their ceilings, seen through the glass from the street.
+  | "ceiling-light";
 
 /** A drawn piece of Alchemia: its box, its kind, solid or not, inside the hall (drawn near only) or out. */
 export interface Piece {

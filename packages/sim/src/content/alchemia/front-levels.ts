@@ -47,6 +47,8 @@ export const GALLERY_FRONT_DOOR = { x0: 417.2, x1: 421.2 } as const;
  */
 export const L1_DOORS = {
   arcade: { x0: 400.4, x1: 402.2 },
+  // NIGHT SILK's own door on the arcade (its unit's shop door, `front-shops.ts`).
+  shop: { x0: 396.55, x1: 398.05 },
   east: { z0: 10.8, z1: 12.3 },
   north: { x0: 400.4, x1: 402.2 },
 } as const;

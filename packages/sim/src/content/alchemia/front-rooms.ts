@@ -58,8 +58,8 @@ const L1_PROPS: readonly StreetPropItem[] = [
   model("waste-bin", 403.5, L1, 9.6, W, 1),
   model("bench", 403.45, L1, 18.0, W, 0),
   model("street-cabinet", 403.55, L1, 23.5, W, 0),
-  model("planter", 397.6, L1, 2.0, 0, 5),
-  model("shrubs", 397.6, L1 + 0.45, 2.0, 1.1, 0x316),
+  model("planter", 402.9, L1, 3.9, 0, 5),
+  model("shrubs", 402.9, L1 + 0.45, 3.9, 1.1, 0x316),
 ];
 
 /** The café KISSA NEKO behind L2's glass over the square (x 394.2-416.6, z 4.2-10.6): its counter at its west end, two rows of tables. */

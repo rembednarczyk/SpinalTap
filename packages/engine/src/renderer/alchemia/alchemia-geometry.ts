@@ -99,6 +99,8 @@ const SWATCH: Readonly<Record<AlchemiaPieceKind, string>> = {
   food: "win-warm",
   "sign-red": "neon-red",
   "sign-amber": "neon-amber",
+  // The front's rooms' ceiling panels (ADR-0093 O5): warm, the board's lit storeys behind their glass.
+  "ceiling-light": "win-warm",
   chair: "dark",
 };
 
@@ -222,7 +224,8 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece):
   const b = p.box;
   if (TIER_SET.has(p) && ofMall(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, darkEdges(pts));
   else if (p.kind === "pane") paneFrame(sink, data, pts, b.y0, b.y1);
-  else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led);
+  // The front's slabs (its storeys' rooms under them since ADR-0093 O5): the beam a ring, the ceiling the slab's underside.
+  else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, undefined, true);
   else if (p.kind === "parapet") railing(sink, data, pts, b.y0, b.y1);
   else if (p.kind === "green" && pts.length === 4) {
     // A curtain of green over a slab's edge (C2): its sides and its top, nobody sees under it.

@@ -92,13 +92,26 @@ const LED_OUT = 0.05;
  * A rounded slab: its prism down to the beam's foot (the room's ceiling), the light along the beam;
  * `dark` edges (a joint with the next piece of a ring of slabs, ADR-0093 O1) without it.
  */
-export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark?: (i: number) => boolean): void => {
+export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark?: (i: number) => boolean, ring = false): void => {
   const uv = swatchUv(data, swatch);
   band(sink, pts, y0 - BEAM, y1, uv);
   lid(sink, pts, y1, 1, uv);
-  lid(sink, pts, y0 - BEAM, -1, uv);
+  if (ring) {
+    // A storey with rooms under it (the front's since ADR-0093 O5): the beam a ring along the edge, its inner face and its foot,
+    // the ceiling the slab's own underside, so the rooms' lamps and services under it show.
+    const inner = insetConvex(pts, BEAM_RING);
+    band(sink, [...inner].reverse(), y0 - BEAM, y0, uv);
+    pts.forEach((p, i) => {
+      const q = pts[(i + 1) % pts.length]!;
+      const [a, b] = [inner[i]!, inner[(i + 1) % pts.length]!];
+      sink.quad(at(q, y0 - BEAM), at(b, y0 - BEAM), at(a, y0 - BEAM), at(p, y0 - BEAM), { x: 0, y: -1, z: 0 }, uv);
+    });
+    lid(sink, inner, y0, -1, uv);
+  } else lid(sink, pts, y0 - BEAM, -1, uv);
   band(sink, insetConvex(pts, -LED_OUT), y0 - BEAM + 0.05, y0 - BEAM + 0.05 + LED_HIGH, swatchUv(data, led), dark);
 };
+/** The beam's ring's breadth in from a slab's edge: its overhang past the glass and a hand. */
+const BEAM_RING = 0.35;
 
 /** A plain prism of an outline (a soffit). */
 export const prismOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string): void => {

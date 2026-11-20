@@ -12,9 +12,13 @@ import type { ShopDef } from "./shop-types";
 
 const r = (x0: number, x1: number, z0: number, z1: number): Rectangle => ({ x0, x1, z0, z1 });
 
-/** L1's west wing: its arcade along the east glass (x 400.2-403.8), the units west of it facing it. */
+/**
+ * L1's west wing: its arcade along the east glass (x 400.2-403.8), the units west of it facing it, and
+ * one on the arcade under the house with arcades (the board's lit shops under the arches): its door in
+ * the wing's glass, steps down inside it from the arcade's podium.
+ */
 const L1: readonly ShopDef[] = [
-  { id: "l1-1", floor: "l1", rect: r(394.2, 400.2, 2.8, 8.4), front: "e", trade: "clothing", state: "open", sign: "NIGHT SILK" },
+  { id: "l1-1", floor: "l1", rect: r(395.8, 400.2, 1.2, 8.4), front: "s", trade: "clothing", state: "open", sign: "NIGHT SILK", street: true },
   { id: "l1-2", floor: "l1", rect: r(394.2, 400.2, 8.4, 12.3), front: "e", trade: "repair", state: "vacant", sign: "" },
   // Its back on the narrower north part's glass from z 14; south of it a sealed corner behind a wall.
   { id: "l1-3", floor: "l1", rect: r(396.2, 400.2, 12.3, 20.6), front: "e", trade: "pharmacy", state: "open", sign: "FARMA PLUS", back: true },

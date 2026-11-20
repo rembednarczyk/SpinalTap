@@ -219,14 +219,32 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
     for (const b of UNITS.filter((u) => shopOpen(u.shop))) {
       const f = galleryShopFrame(b.shop);
       const d = b.layout!.door;
-      const before = { ...f.point((d.u0 + d.u1) / 2, -0.9), y: b.customer!.y };
+      // A street unit's door opens on the arcade's podium (NIGHT SILK: from the square before its arches) or the walk (KONBINI), the
+      // others' on their storey's arcade.
+      const out = f.point((d.u0 + d.u1) / 2, b.shop.street && b.shop.floor === "l1" ? -3.6 : -0.9);
+      const y = !b.shop.street ? b.customer!.y : b.shop.floor === "l1" ? PLAZA_TOP : groundY(out.x, out.z);
+      const before = { ...out, y };
       expect(routeAcrossLevels(sim.world, WORLD_NAV, before, gallery), `${b.shop.id} out`).not.toBeNull();
       expect(routeAcrossLevels(sim.world, WORLD_NAV, gallery, before), `${b.shop.id} in`).not.toBeNull();
     }
   });
 
+  it("puts the street units' doors in the storey's glass where their shop doors are: NIGHT SILK on the arcade, KONBINI on the walk", () => {
+    for (const [id, door] of [["l1-1", L1_DOORS.shop], ["l1e-1", null]] as const) {
+      const b = FRONT_SHOP_BUILDS.find((q) => q.shop.id === id)!;
+      expect(b.shop.street, id).toBe(true);
+      const f = galleryShopFrame(b.shop);
+      const [p, q] = [f.point(b.layout!.door.u0, 0), f.point(b.layout!.door.u1, 0)];
+      if (door) expect([Math.min(p.x, q.x), Math.max(p.x, q.x)], id).toEqual([expect.closeTo(door.x0, 2), expect.closeTo(door.x1, 2)]);
+      else expect([Math.min(p.z, q.z), Math.max(p.z, q.z)], id).toEqual([expect.closeTo(L1E_DOOR.z0, 2), expect.closeTo(L1E_DOOR.z1, 2)]);
+    }
+  });
+
   it("steps up and down at L1's doors by the rules: risers 0.15-0.18 m, treads 0.29 m", () => {
-    const flightsAt = [...FRONT_STEPS_FOOTPRINTS.map((r) => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ })), { x0: L1_DOORS.arcade.x0, x1: L1_DOORS.arcade.x1, z0: 1.4, z1: 2.1 }];
+    const flightsAt = [
+      ...FRONT_STEPS_FOOTPRINTS.map((r) => ({ x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ })),
+      ...[L1_DOORS.arcade, L1_DOORS.shop].map((d) => ({ x0: d.x0, x1: d.x1, z0: 1.29, z1: 2.1 })),
+    ];
     const steps = ALCHEMIA_PIECES.filter((p) => p.kind === "step" && flightsAt.some((r) => p.box.x0 >= r.x0 - 0.01 && p.box.x1 <= r.x1 + 0.01 && p.box.z0 >= r.z0 - 0.01 && p.box.z1 <= r.z1 + 0.01));
     expect(steps.length).toBeGreaterThanOrEqual(10);
     for (const p of steps) expect(Math.min(p.box.x1 - p.box.x0, p.box.z1 - p.box.z0), `${p.box.x0},${p.box.z0}`).toBeCloseTo(STEP_GOING, 2);
@@ -260,6 +278,14 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
     walk(419, 2, 120);
     expect(at().z).toBeGreaterThan(L2_SLABS[0]!.minZ);
     expect(at().y).toBeCloseTo(F.l2, 1);
+    // Into NIGHT SILK from the arcade under the house with arcades, down its steps to its counter.
+    const silk = FRONT_SHOP_BUILDS.find((q) => q.shop.id === "l1-1")!;
+    teleportPlayer(sim, { x: (L1_DOORS.shop.x0 + L1_DOORS.shop.x1) / 2, y: PLAZA_TOP, z: -0.6 }, 0);
+    sim.step();
+    walk((L1_DOORS.shop.x0 + L1_DOORS.shop.x1) / 2, 3.2);
+    walk(silk.customer!.x, silk.customer!.z);
+    expect(Math.hypot(at().x - silk.customer!.x, at().z - silk.customer!.z)).toBeLessThan(0.5);
+    expect(at().y).toBeCloseTo(F.l1, 1);
     // In from the arcade under the house with arcades, down its steps, on along L1's arcade and out by its north door down to T0.
     teleportPlayer(sim, { x: 401.3, y: PLAZA_TOP, z: -0.6 }, 0);
     sim.step();

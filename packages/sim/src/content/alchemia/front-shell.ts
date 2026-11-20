@@ -6,6 +6,7 @@ import { EAST_WING, L1_LEVEL, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, WEST_WING, s
 import { FRONT_CEILINGS, FRONT_DOOR_TOP, FRONT_FLOORS, FRONT_GLASS, L1E_DOOR, L1_DOORS, L3_DOORS, STEP_GOING, STEP_RISE } from "./front-levels";
 import { PLAZA_TOP } from "./front-plaza";
 import { MALL } from "./mall-plan";
+import { ALL_SHOPS } from "./shops-plan";
 import { type Piece, box, outlined, piece } from "./plan";
 import { type Corners, type Rectangle, cornerRadius, roundedOutline, wallStrip } from "./rounded";
 import { OVER, SLAB, slabOf, storeyGlass } from "./storey";
@@ -45,11 +46,13 @@ export const frontGlass = (): Piece[] => [
   ...storeyGlass(W1, F.l1 - 0.05, L1_TOP, FRONT_GLASS, storeyCorners(W1, L1_LEVEL), [
     { x0: W2.minX + FRONT_GLASS, x1: W1.maxX - 0.05, z0: W1.maxZ - 0.4, z1: W1.maxZ + 0.4 },
     acrossZ(L1_DOORS.arcade, W1.minZ),
+    acrossZ(L1_DOORS.shop, W1.minZ),
     acrossX(W1.maxX, L1_DOORS.east),
   ]),
   ...storeyGlass(W2, F.l1 - 0.05, L1_TOP, FRONT_GLASS, storeyCorners(W2, L1_LEVEL), [{ x0: W2.minX + 0.05, x1: W2.maxX - 0.05, z0: W2.minZ - 0.4, z1: W2.minZ + 0.4 }, acrossZ(L1_DOORS.north, W2.maxZ)]),
   // Its threshold the arcade's podium, a few steps over the floor: the door's head over that.
   lintel("s", L1_DOORS.arcade.x0, L1_DOORS.arcade.x1, W1.minZ, PLAZA_TOP, L1_TOP),
+  lintel("s", L1_DOORS.shop.x0, L1_DOORS.shop.x1, W1.minZ, PLAZA_TOP, L1_TOP),
   lintel("e", L1_DOORS.east.z0, L1_DOORS.east.z1, W1.maxX, F.l1, L1_TOP),
   lintel("n", L1_DOORS.north.x0, L1_DOORS.north.x1, W2.maxZ, F.l1, L1_TOP),
   // L1's east wing: its unit's door onto the walk to Lubartowska.
@@ -123,9 +126,13 @@ const steps = (): Piece[] => {
   // Inside the arcade's door: a landing level with the podium in the glass's depth, then down to the floor.
   const landing = 0.45;
   const inner = flight("z", W1.minZ + landing, d.arcade.x0, d.arcade.x1, PLAZA_TOP, F.l1, true, false);
+  // NIGHT SILK's: a landing in the glass's and its shopfront's depth, then down into its aisle.
+  const shopIn = W1.minZ + FRONT_GLASS + 0.1;
   return [
     piece(box(d.arcade.x0, d.arcade.x1, W1.minZ, W1.minZ + landing, F.l1 - 0.05, PLAZA_TOP), "step", true),
     ...inner,
+    piece(box(d.shop.x0, d.shop.x1, W1.minZ, shopIn, F.l1 - 0.05, PLAZA_TOP), "step", true),
+    ...flight("z", shopIn, d.shop.x0, d.shop.x1, PLAZA_TOP, F.l1, true, false),
     ...flight("x", W1.maxX, d.east.z0, d.east.z1, F.l1, footGround("x", W1.maxX + 0.9, d.east.z0, d.east.z1), false, true),
     ...flight("z", W2.maxZ, d.north.x0, d.north.x1, F.l1, footGround("z", W2.maxZ + 2.1, d.north.x0, d.north.x1), false, true),
     ...flight("x", EAST_WING.maxX, L1E_DOOR.z0, L1E_DOOR.z1, F.l1e, footGround("x", EAST_WING.maxX + 0.6, L1E_DOOR.z0, L1E_DOOR.z1), false, true),
@@ -153,10 +160,12 @@ const centre = (r: Rect, x: "w" | "e", z: "s" | "n"): GroundPoint => {
 const risers = (): Piece[] => {
   const prism = (pts: GroundPoint[], y0: number, y1: number): Piece => outlined(pts, y0, y1, "wall");
   const p = (x: number, z: number): GroundPoint => ({ x, z });
-  const [w1nw, el, l2nw, l3nw] = [centre(W1, "w", "n"), EAST_WING, centre(A, "w", "n"), centre(L3, "w", "n")];
+  const [w1nw, w1sw, el, l2nw, l3nw] = [centre(W1, "w", "n"), centre(W1, "w", "s"), EAST_WING, centre(A, "w", "n"), centre(L3, "w", "n")];
   const e = (x: "w" | "e", z: "s" | "n") => centre(el, x, z);
   return [
     prism([p(396.2, 12.3), p(396.2, 13.8), ...arc(w1nw, 90)], F.l1 - 0.05, L1_TOP - SLAB),
+    // West of NIGHT SILK by the wing's south-west corner.
+    prism([p(w1sw.x, W1.minZ + FRONT_GLASS), p(395.8, W1.minZ + FRONT_GLASS), p(395.8, 8.4), p(W1.minX + FRONT_GLASS, 8.4), ...arc(w1sw, 180).slice(0, -1)], F.l1 - 0.05, L1_TOP - SLAB),
     prism([p(e("w", "s").x, 13.7), p(e("e", "s").x, 13.7), ...arc(e("e", "s"), -90).slice(1), ...arc(e("w", "s"), 180).slice(0, -1)], F.l1e - 0.05, L1_TOP - SLAB),
     prism([...arc(e("e", "n"), 0), ...arc(e("w", "n"), 90)], F.l1e - 0.05, L1_TOP - SLAB),
     prism([p(400.0, 30.3), p(400.0, 31.8), ...arc(l2nw, 90)], F.l2 - 0.05, L2_TOP - SLAB),
@@ -165,10 +174,40 @@ const risers = (): Piece[] => {
   ];
 };
 
+/**
+ * The warm light panels under the ceilings of the front's rooms (a grid every 2.4 m, ADR-0093 O5): the
+ * board's lit storeys seen through their glass from the square and from afar (drawn with the storeys,
+ * the rooms' own things near only), none in a closed unit, over a riser or past the glass.
+ */
+const PANEL_EVERY = 2.4;
+const lightPanels = (): Piece[] => {
+  const closed = ALL_SHOPS.filter((s) => FRONT_STOREY_OF[s.floor] !== undefined && s.state !== "open").map((s) => s.rect);
+  const risersBoxes = risers().map((p) => p.box);
+  const out: Piece[] = [];
+  for (const [floor, top] of [[F.l1, FRONT_CEILINGS.l1], [F.l1e, FRONT_CEILINGS.l1e], [F.l2, FRONT_CEILINGS.l2], [F.l3, FRONT_CEILINGS.l3]] as const) {
+    const rooms = FRONT_ROOMS.filter((r) => r.bottom === floor);
+    const [x0, z0] = [Math.min(...rooms.map((r) => r.minX)), Math.min(...rooms.map((r) => r.minZ))];
+    const [x1, z1] = [Math.max(...rooms.map((r) => r.maxX)), Math.max(...rooms.map((r) => r.maxZ))];
+    for (let x = x0 + PANEL_EVERY / 2; x < x1; x += PANEL_EVERY) {
+      for (let z = z0 + PANEL_EVERY / 2; z < z1; z += PANEL_EVERY) {
+        const inside = (r: { minX: number; maxX: number; minZ: number; maxZ: number }) => x - 0.5 > r.minX && x + 0.5 < r.maxX && z - 0.3 > r.minZ && z + 0.3 < r.maxZ;
+        if (!rooms.some(inside)) continue;
+        if (closed.some((r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1)) continue;
+        if (risersBoxes.some((b) => b.y0 < top && b.y1 > floor && x > b.x0 - 0.6 && x < b.x1 + 0.6 && z > b.z0 - 0.4 && z < b.z1 + 0.4)) continue;
+        out.push(piece(box(x - 0.45, x + 0.45, z - 0.22, z + 0.22, top - 0.04, top - 0.01), "ceiling-light", false, false));
+      }
+    }
+  }
+  return out;
+};
+/** The units' floors that are the front's storeys. */
+const FRONT_STOREY_OF: Readonly<Record<string, true>> = { l1: true, l1e: true, l2: true, l3: true };
+
 /** The front's shell drawn from afar with the storeys: the glass, the house with arcades' back wall, the wings' floors, L3's patch, the steps outside. */
 export const frontShellPieces = (): Piece[] => [
   ...frontGlass(),
   ...risers(),
+  ...lightPanels(),
   arcadeBack(),
   ...WEST_WING.map((r) => floorOf(r, L1_LEVEL, F.l1)),
   floorOf(EAST_WING, L1_LEVEL, F.l1e),
