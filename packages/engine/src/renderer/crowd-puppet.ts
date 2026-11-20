@@ -87,7 +87,7 @@ class FigureBuilder {
 
   /**
    * A tapered box from (w0, d0) at height y0 to (w1, d1) at y1, centred on (cx, cz); `dz1`
-   * moves the top forward (a sloped back, a coat's flare). Six faces.
+   * moves the top forward (a sloped back, a skirt's flare). Six faces.
    */
   taper(part: number, c: Rgba, y0: number, w0: number, d0: number, y1: number, w1: number, d1: number, cx = 0, cz = 0, dz1 = 0): void {
     const b: V3[] = [
@@ -231,7 +231,6 @@ const torso = (f: FigureBuilder, d: PuppetDims, look: CrowdLook, s: number): voi
   f.taper(PART.pelvis, bottom, -0.07 * s, 0.3 * s * w, 0.18 * s, 0.1 * s, 0.31 * s * w, 0.19 * s);
   f.taper(PART.torso, top, 0.06 * s, 0.3 * s * w, 0.19 * s, d.shoulderY - 0.1 * s, 2 * chest * s * w * 0.78, 0.22 * s);
   f.taper(PART.torso, top, d.shoulderY - 0.1 * s, 2 * chest * s * w * 0.78, 0.22 * s, d.shoulderY + 0.05 * s, 0.24 * s * w, 0.17 * s);
-  if (look.garment === "coat") f.taper(PART.torso, top, -0.42 * s, 0.44 * s * w, 0.3 * s, d.shoulderY - 0.02, 0.36 * s * w, 0.24 * s);
   if (look.garment === "skirt") f.taper(PART.pelvis, top, -0.32 * s, 0.4 * s * w, 0.3 * s, 0.06 * s, 0.31 * s * w, 0.2 * s);
   if (look.trim) f.box(PART.torso, rgba(look.colors.accent, 0), 0, d.shoulderY - 0.16 * s, 0.115 * s, 0.3 * s * w, 0.02, 0.01);
   if (look.bag) f.box(PART.torso, rgba(look.colors.bag), 0, d.shoulderY - 0.2 * s, -0.17 * s, 0.26 * s * w, 0.32 * s, 0.12 * s);
