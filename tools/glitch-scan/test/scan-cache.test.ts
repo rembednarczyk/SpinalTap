@@ -1,25 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { madeWalkBlocked, makerInputs } from "./scan-cache";
-
-// The process starts before this one loads the city's modules, cold as in CI, and runs meanwhile.
-const CHUNK = "podzamcze-1-0";
-const made = madeWalkBlocked(CHUNK);
-made.catch(() => undefined);
-const { SCAN_MAKERS } = await import("./scan-makers");
+import { makerInputs } from "./scan-cache";
 
 /**
- * The scan's kinds computed in a process of their own (`scan-cache.ts`) find what the test's own
- * process finds: the same modules loaded by Node through `node-resolve.ts` and its transform of
- * types, not Vite's, and the findings back through `node:v8`. On one chunk, a slope by the steps of
- * Podzamcze with 11 findings (the whole city's are in the scan, `glitch-scan.test.ts`).
+ * The key of the scan's kinds computed in a process of their own (`scan-cache.ts`). That the
+ * process finds what the test's own process finds is the scan's to hold, on a chunk, beside the
+ * kind's findings it awaits anyway (`glitch-scan.test.ts`): no second process of the city.
  */
 describe("the scan's kinds from a process of their own (scan-cache.ts)", () => {
-  it("finds the walk-blocked of a chunk the test's process finds", async () => {
-    const own = SCAN_MAKERS["walk-blocked"](CHUNK);
-    expect(own.length).toBeGreaterThan(0);
-    expect(await made).toEqual(own);
-  });
-
   it("keys the cache by the modules the maker loads and the data it reads", () => {
     const inputs = makerInputs();
     for (const f of [

@@ -1,9 +1,7 @@
 /**
  * The scan's kinds computed in a node process of their own (`scan-cache.ts`), out of the reach of
  * the test's coverage, by the name of their cache file: `kinds`, every such kind over the whole
- * city at once, as the scan runs them (one process loads the city's modules once for all), and
- * `walk-blocked` over a part of it, for the test that holds the process's findings to the test
- * process's (`scan-cache.test.ts`).
+ * city at once, as the scan runs them (one process loads the city's modules once for all).
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -38,8 +36,11 @@ export const readSourceOsm = (): OsmData =>
 export const cityPatrolLanes = (): readonly PatrolLane[] =>
   planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY)));
 
-/** `walk-blocked` over the whole city, or with `ids` (comma-separated) over those chunks alone. */
-const walkBlockedIn = (ids: string): Finding[] =>
+/**
+ * `walk-blocked` over the whole city, or with `ids` (comma-separated) over those chunks alone: the
+ * scan holds the process's findings to its own process's on a chunk (`glitch-scan.test.ts`).
+ */
+export const cityWalkBlocked = (ids: string): Finding[] =>
   walkBlocked(MAP_CHUNKS, cityWalkWorld(extractFeatures(readSourceOsm()).lines), inChunks(MAP_CHUNKS), ids === "" ? undefined : new Set(ids.split(",")));
 
 const noMesh = (): never => {
@@ -48,7 +49,7 @@ const noMesh = (): never => {
 
 /** The kinds of the scan computed in a process of their own, over the whole city (the scan's `CHECKS` of these names). */
 export const MADE_KINDS = {
-  "walk-blocked": () => walkBlockedIn(""),
+  "walk-blocked": () => cityWalkBlocked(""),
   /** The pools against the paving, needing no mesh of the scenery. */
   "drone-low-pool": () => patrolChecks(cityPatrolLanes, noMesh, surfaceY)["drone-low-pool"]!(),
 } satisfies Record<string, () => Finding[]>;
@@ -57,7 +58,6 @@ export type MadeKind = keyof typeof MADE_KINDS;
 
 export const SCAN_MAKERS = {
   kinds: (): Record<MadeKind, Finding[]> => Object.fromEntries(Object.entries(MADE_KINDS).map(([k, make]) => [k, make()])) as Record<MadeKind, Finding[]>,
-  "walk-blocked": walkBlockedIn,
-} satisfies Record<string, (arg: string) => unknown>;
+} satisfies Record<string, () => unknown>;
 
 export const isMaker = (name: string): name is keyof typeof SCAN_MAKERS => Object.hasOwn(SCAN_MAKERS, name);

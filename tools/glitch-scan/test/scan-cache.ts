@@ -4,8 +4,8 @@
  * (`tools/osm-import/test/city.ts`): `walk-blocked` laid its raster of 0.25 m over the city (5.8
  * million heights) in 2.6 s, and in 7.4-8 s under the test's coverage, past the limit of 20 s on a
  * loaded CI runner (PR #806). The tools are not measured for coverage, and the code of core and sim
- * the kind runs is covered by its own tests; `scan-cache.test.ts` holds the process's findings to
- * those of the test's own on a part of the city.
+ * the kind runs is covered by its own tests; the scan holds the process's findings to those of
+ * its own process on a part of the city (`glitch-scan.test.ts`).
  *
  * The key is every input of the makers: the modules `scan-make.ts` loads, followed through their
  * imports (`moduleClosure`, as the map tables' inputs are), and the data they read (`MAKER_DATA`).
@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REPO } from "../../osm-import/src/paths.ts";
 import { moduleClosure } from "../../osm-import/src/table-inputs.ts";
-import { filesKey, processCache } from "../../osm-import/test/process-cache.ts";
+import { filesKey, processCache } from "./process-cache.ts";
 import type { MadeKind } from "./scan-makers.ts";
 
 type Finding = { readonly at: string; readonly what: string };
@@ -52,9 +52,6 @@ const CACHE = processCache({
 
 /** The kind's findings over the whole city, from the process of every kind (`SCAN_MAKERS.kinds`). */
 export const madeFindings = async (kind: MadeKind): Promise<Finding[]> => (await CACHE.load<Record<MadeKind, Finding[]>>("kinds"))[kind];
-
-/** `walk-blocked`'s findings in the chunks of `ids` (comma-separated), from a process of their own. */
-export const madeWalkBlocked = (ids: string): Promise<Finding[]> => CACHE.load<Finding[]>("walk-blocked", ids);
 
 /** Starts the process of every kind, if their findings are not kept yet, for a test to await later: a failure comes there. */
 export const startMade = (): void => void CACHE.load("kinds").catch(() => undefined);

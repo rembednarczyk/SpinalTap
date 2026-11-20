@@ -1,19 +1,19 @@
 /**
  * Results the tests read, computed in a node process of their own and kept on the disk under a key
- * of every input (`city.ts`, the glitch scan's `scan-cache.ts`): under `--coverage` V8 counts every
- * block a test's process runs, and the cell loops of the city's generators and of the scan ran
- * 2-3 times slower for it, past the test's limit in CI, whose cache is always cold. The tools are
- * not measured for coverage, and the code of core and sim they run is covered by its own tests.
+ * of every input, as the whole city is (`tools/osm-import/test/city.ts`): under `--coverage` V8
+ * counts every block a test's process runs, and the scan's cell loops ran 2-3 times slower for it,
+ * past the test's limit in CI, whose cache is always cold (`scan-cache.ts`). The tools are not
+ * measured for coverage, and the code of core and sim they run is covered by its own tests.
  *
  * A result is read from this process's memory, then from the disk (`<dir>/<name>-<key>[.<arg>].bin`),
- * else computed: `get` waits for the process, `load` does not (a test may start it early, before
- * the tests that read it, and await it there). The maker of a result writes it serialised
+ * else computed in a process not waited for (`load`): a test may start it early, before the tests
+ * that read it, and await it there. The maker of a result writes it serialised
  * (`node:v8`) to a temporary file and renames it over the result's own (`writeResult`): parallel
  * workers computing the same key each write a whole file, and a maker left running by a test
  * process that ended still leaves its result. A new key drops the files of the name under the old.
  * Every read returns a fresh copy, so a test may change what it gets.
  */
-import { execFile, execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -30,8 +30,6 @@ export interface ProcessCacheSpec {
 }
 
 export interface ProcessCache {
-  /** The result, computed in a process waited for when it is not kept yet. */
-  readonly get: <T>(name: string, arg?: string) => T;
   /** The result, computed in a process not waited for when it is not kept yet: each (name, arg) once. */
   readonly load: <T>(name: string, arg?: string) => Promise<T>;
 }
@@ -79,21 +77,6 @@ export const processCache = (spec: ProcessCacheSpec): ProcessCache => {
     memory.set(id, bytes);
     return bytes;
   };
-  const get = <T>(name: string, arg = ""): T => {
-    const id = idOf(name, arg);
-    let bytes = memory.get(id);
-    if (!bytes) {
-      const file = fileOf(name, id);
-      bytes = kept(file);
-      if (bytes) memory.set(id, bytes);
-      else {
-        mkdirSync(spec.dir, { recursive: true });
-        execFileSync(process.execPath, spec.argv(name, file, arg), { env: makerEnv(), stdio: ["ignore", "ignore", "pipe"] });
-        bytes = made(name, id, file);
-      }
-    }
-    return deserialize(bytes) as T;
-  };
   const load = async <T>(name: string, arg = ""): Promise<T> => {
     const id = idOf(name, arg);
     let job = pending.get(id);
@@ -114,5 +97,5 @@ export const processCache = (spec: ProcessCacheSpec): ProcessCache => {
     memory.set(id, bytes);
     return deserialize(bytes) as T;
   };
-  return { get, load };
+  return { load };
 };
