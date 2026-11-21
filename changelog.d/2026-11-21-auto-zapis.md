@@ -1,0 +1,1 @@
+- Auta trafiają do zapisu gry: po wczytaniu gracz siedzi w aucie, którym jechał, a auta zostawione na ulicy stoją tam, gdzie je zostawił.

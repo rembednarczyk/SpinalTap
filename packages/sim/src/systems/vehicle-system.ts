@@ -14,9 +14,9 @@ import { BODY_RADIUS } from "../content/walker-size";
 import { solidIndexOf } from "../world/solid-index";
 import { circleTouches } from "../world/solids";
 import { STEP_HEIGHT } from "./step";
+import { PLAYER_CAR_ID_BASE, nextCarId } from "../world/vehicle/saved-cars";
 
-/** Ids of the player's cars: past every route's block of the traffic's ids (`VEHICLE_ID_BASE`). */
-export const PLAYER_CAR_ID_BASE = 3_990_000;
+export { PLAYER_CAR_ID_BASE };
 /** Most cars she leaves standing in the world; an older one goes when she takes another. */
 const LEFT_CARS = 3;
 /** How near a street car's side she must be to take it (m), and the most it may drive by then (m/s). */
@@ -64,7 +64,7 @@ export const carToTake = (ctx: SimContext, player: Entity): (Entity & { vehicle:
  * place, its speed and heading, and the player sits in it. Its driver runs off (the crime's
  * witnesses and the wanted level follow the event, ADR-0091).
  */
-export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: NonNullable<Entity["vehicle"]> }, next: number): Car => {
+export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: NonNullable<Entity["vehicle"]> }): Car => {
   const view = v.view!.kind === "vehicle" ? v.view! : { kind: "vehicle" as const, model: "sedan" as const, tint: 0 };
   const car = newCar(view.model, v.position.x, v.position.y, v.position.z, v.yaw);
   // It stopped for her: she pulls the door open and gets in (ADR-0097, clip of 21.11), the car still.
@@ -72,12 +72,13 @@ export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: 
   offend(ctx, "assault", v.position);
   ctx.world.remove(v);
   ctx.streamer.streamedOut.add(v.id);
-  const id = PLAYER_CAR_ID_BASE + next;
+  // Past her cars in the world: a loaded game brings them back under theirs (v52).
+  const id = nextCarId(ctx.world);
   const e = ctx.world.add({ id, position: { ...v.position }, prevPosition: { ...v.position }, yaw: v.yaw, prevYaw: v.yaw, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, view: { kind: "vehicle", model: view.model, tint: view.tint }, car }) as Car;
   ctx.streamer.streamedOut.delete(id);
   ctx.session.driving = id;
   // Its driver pulled out and thrown onto the road first (ADR-0097, clips of 21.11), then she gets in.
-  ejectDriver(ctx, DRIVER_ID_BASE + next, seatInWorld(car), v.yaw, v.position.y);
+  ejectDriver(ctx, DRIVER_ID_BASE + (id - PLAYER_CAR_ID_BASE), seatInWorld(car), v.yaw, v.position.y);
   ctx.session.carAct = startAct("enter", JACK_WAIT);
   ctx.bus.emit("VehicleEntered", { vehicleId: id, from: "traffic" });
   placeSeat(player, e);
@@ -193,7 +194,6 @@ const endAct = (ctx: SimContext, player: Entity, car: Car, act: CarActState): vo
  * holds the prompt; four substeps of 240 Hz for each car awake; the body against the city.
  */
 export const createVehicleSystem = (): System => {
-  let next = 0;
   let look = 0;
   /** Seconds at the wheel (the driving clip's loop) and since the horn was pressed, and whether it was held. */
   let seatTime = 0;
@@ -224,7 +224,7 @@ export const createVehicleSystem = (): System => {
             look = 0;
           } else if (v) {
             retireOldest(ctx);
-            takeCar(ctx, player, v, next++);
+            takeCar(ctx, player, v);
             look = 0;
           }
         }

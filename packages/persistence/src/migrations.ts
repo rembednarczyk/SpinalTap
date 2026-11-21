@@ -442,6 +442,8 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   49: moveHebiStash,
   // v50 -> v51 (ADR-0095): act III's ending in the story, "Źródło" started after act II (`act3-story.ts`).
   50: startActThree,
+  // v51 -> v52 (ADR-0097): the player's cars, optional: an older save has none, she loads on foot.
+  51: (old) => ({ ...old, version: 52 }),
 };
 
 /** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */

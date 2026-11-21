@@ -3,8 +3,13 @@ import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
 import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
+import type { DriveInput } from "../ports/input-port";
+import type { VehicleModel } from "../ports/types";
 
 /**
+ * v52: the player's cars (ADR-0097), optional (`cars`): the one she drives and those she left
+ * standing, each with its body's whole state, so a loaded game drives on as the saved one would.
+ * An older save has none: she loads on foot, as before.
  * v50: Hebi's stash in the air-raid shelter under Alchemia's T2 (ADR-0074 stage 5d2); an older
  * save drops the lookout, a running retrieval's crew and crate and whoever was kept on the stash's
  * old ground by the Arkady: the content brings them back where they are now.
@@ -96,7 +101,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 51;
+export const SAVE_SCHEMA_VERSION = 52;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -404,6 +409,40 @@ export interface ThreatSnapshot {
   readonly source?: string;
 }
 
+/** A wheel of a saved car: its spin (rad/s), its spring's compression (m) and its tyre's slip angle (rad, lagging). */
+export interface CarWheelSnapshot {
+  readonly omega: number;
+  readonly compression: number;
+  readonly alpha: number;
+}
+
+/**
+ * One of the player's cars (ADR-0097, v52): its look and its body's state as the simulation steps
+ * it (the centre of mass, the attitude as a quaternion, the velocities, the wheels, the engine and
+ * the box, the controls), what the step recomputes (the contacts, the loads, the forces) left out.
+ */
+export interface CarSnapshot {
+  readonly model: VehicleModel;
+  readonly tint: number;
+  readonly pos: Vec3;
+  readonly q: { readonly w: number; readonly x: number; readonly y: number; readonly z: number };
+  readonly vel: Vec3;
+  readonly ang: Vec3;
+  readonly wheels: readonly CarWheelSnapshot[];
+  readonly rpm: number;
+  readonly gear: number;
+  readonly shift: number;
+  readonly controls: DriveInput;
+  readonly asleep: boolean;
+  readonly still: number;
+  /** Where a braked, all but stopped car is held. Absent when free. */
+  readonly hold?: Vec3;
+  /** The car she drives; at most one. Absent for those she left. */
+  readonly driving?: true;
+  /** Getting in or out of it, and the clip's time (s). Absent at the wheel or with none. */
+  readonly act?: { readonly kind: "enter" | "exit"; readonly t: number };
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -441,6 +480,8 @@ export interface SaveSnapshot {
   readonly strayBodies?: readonly StrayBodySnapshot[];
   /** The last shot at the player (G-901). Absent when none was fired at her yet. */
   readonly lastThreat?: ThreatSnapshot;
+  /** The player's cars (ADR-0097, v52), oldest first. Absent with none. */
+  readonly cars?: readonly CarSnapshot[];
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

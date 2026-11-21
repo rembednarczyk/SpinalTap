@@ -24,6 +24,7 @@ import { findContractError, findContractOnSiteError, findFormerContractsError } 
 import { findContractWave2Error, findEncountersError, findGangStandingsError, findMetroError, findStreetCrimesError } from "./validate-wave2";
 import { findProgressionError } from "./validate-progression";
 import { findEntityError, findReinforcementsError, findStrayBodiesError } from "./validate-entities";
+import { findCarsError } from "./validate-cars";
 
 type Json = Record<string, unknown>;
 
@@ -44,6 +45,9 @@ export const findSchemaError = (s: Json): string | null => {
   if (reinforcementsError) return reinforcementsError;
   const strayError = findStrayBodiesError(s.strayBodies, s.tick);
   if (strayError) return strayError;
+  // ADR-0097 (v52): the player's cars.
+  const carsError = findCarsError(s.cars);
+  if (carsError) return carsError;
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   // ADR-0038: leaves of resident doors that are moving or about to close.
