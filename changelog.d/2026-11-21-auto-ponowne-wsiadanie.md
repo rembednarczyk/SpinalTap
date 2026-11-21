@@ -1,0 +1,1 @@
+- Do auta, z którego się wysiadło, można wsiąść ponownie: podpowiedź „Weź auto” wskazuje je przed autami z ulicy.

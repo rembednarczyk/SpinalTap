@@ -1,5 +1,5 @@
 import { type Contract, type EntityId, contractAlarmFlag, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
-import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT, canGetOut, carToTake } from "./vehicle-system";
+import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT, canGetOut, carToTake, ownCarToEnter } from "./vehicle-system";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -173,8 +173,8 @@ export const interactionSystem: System = {
     }
     const { best, bestDist } = nearest(ctx, player);
     const action = bodyAction(session, bestDist);
-    // Nothing else in reach: a street car she can take holds the prompt (the vehicle system takes it).
-    const car = !action && !best ? carToTake(ctx, player) : null;
+    // Nothing else in reach: a car of her own, else a street car she can take, holds the prompt (the vehicle system takes it).
+    const car = !action && !best ? (ownCarToEnter(ctx, player) ?? carToTake(ctx, player)) : null;
     const focusId = action ? action.id : (best?.id ?? car?.id ?? null);
     const prompt = action ? action.prompt : (best?.interactable.prompt ?? (car ? TAKE_CAR_PROMPT : null));
     if (focusId !== session.focusId || prompt !== session.focusPrompt) {

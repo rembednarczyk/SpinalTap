@@ -80,6 +80,33 @@ export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: 
   return e;
 };
 
+/** A car of her own she left standing (ADR-0097): within reach of its side, slow enough; the nearest. */
+export const ownCarToEnter = (ctx: SimContext, player: Entity): Car | null => {
+  let best: { e: Car; d: number } | null = null;
+  for (const e of ctx.world.with("car").entities as Car[]) {
+    if (e.id === ctx.session.driving || Math.abs(forwardSpeed(e.car)) > ENTER_SPEED) continue;
+    const half = vehicleSpec(e.car.model).half;
+    const yaw = attitude(e.car.q).yaw;
+    const dx = player.position.x - e.position.x;
+    const dz = player.position.z - e.position.z;
+    const [tx, tz] = [Math.sin(yaw), Math.cos(yaw)];
+    const fwd = Math.abs(dx * tx + dz * tz) - half.z;
+    const lat = Math.abs(dx * tz - dz * tx) - half.x;
+    const d = Math.hypot(Math.max(fwd, 0), Math.max(lat, 0));
+    if (d <= ENTER_REACH && Math.abs(player.position.y - e.position.y) < 2 && (!best || d < best.d)) best = { e, d };
+  }
+  return best?.e ?? null;
+};
+
+/** She gets back into a car of her own: the act of getting in from its door, then at the wheel. */
+const getIn = (ctx: SimContext, player: Entity, car: Car): void => {
+  wake(car.car);
+  ctx.session.driving = car.id;
+  ctx.session.carAct = startAct("enter");
+  ctx.bus.emit("VehicleEntered", { vehicleId: car.id, from: "own" });
+  placeSeat(player, car);
+};
+
 /** The player in her seat: at the car, still, her body out of the way of the street. */
 const placeSeat = (player: Entity, car: Car): void => {
   player.seated = car.id;
@@ -183,8 +210,13 @@ export const createVehicleSystem = (): System => {
       if (ctx.input.interact && !ctx.session.carAct) {
         if (driving && Math.abs(forwardSpeed(driving.car)) < EXIT_SPEED) getOut(ctx, player, driving);
         else if (!driving && ctx.session.focusPrompt === TAKE_CAR_PROMPT) {
-          const v = carToTake(ctx, player);
-          if (v) {
+          // Her own car before the street's: the one she left is hers to take back.
+          const own = ownCarToEnter(ctx, player);
+          const v = own ? null : carToTake(ctx, player);
+          if (own) {
+            getIn(ctx, player, own);
+            look = 0;
+          } else if (v) {
             retireOldest(ctx);
             takeCar(ctx, player, v, next++);
             look = 0;
