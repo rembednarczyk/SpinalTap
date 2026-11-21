@@ -1,0 +1,1 @@
+- Budynki usługowe i magazyny w dokach, nad kanałem, w Shinsekai-7 i przy Targu mają na tylnej ścianie, od podwórza, stalowe drzwi ewakuacyjne z poręczą.

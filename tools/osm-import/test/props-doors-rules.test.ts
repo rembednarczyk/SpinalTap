@@ -108,6 +108,20 @@ describe("the doors on the facades (ADR-0058 stage 9)", () => {
     expect(xs(doors([wall({ use: "historic" })], [entrance(3.9)]))).toEqual([4]);
   });
 
+  it("a shop or works building gets a fire exit on its wall facing no street, nearest the middle (ADR-0096 stage 6)", () => {
+    const [d] = doors([wall({ use: "commercial" })], [], {}, { streets: [] });
+    expect(d!.rule).toBe("exit");
+    expect(d!.item.x).toBe(10);
+    expect(doorLayout(d!.item.variant).model).toBe("exit");
+    expect(doors([wall({ use: "industrial" })], [], {}, { streets: [] }).map((x) => x.rule)).toEqual(["exit"]);
+    // Not on its street front, not on a tenement, not on a wall too short for it.
+    expect(doors([wall({ use: "commercial" })])).toEqual([]);
+    expect(doors([wall({ use: "residential" })], [], {}, { streets: [] })).toEqual([]);
+    expect(doors([wall({ use: "commercial", length: 3.5, slots: [{ u: 1.75, width: 1.2, top: 2.3, max: 2.4, cover: false }] })], [], {}, { streets: [] })).toEqual([]);
+    // Not on a back wall that has a door already, and one per building.
+    expect(doors([wall({ use: "commercial" })], [entrance(3.9)], {}, { streets: [] }).map((x) => x.rule)).toEqual(["entrance"]);
+  });
+
   it("a way under ground in front of a tenement is no street: no staircase's door facing only it (G-197)", () => {
     // The street along z 20 is a tunnel (Trasa Podziemna: `tunnel=yes`, `layer=-1`, a footway in the chunks).
     const under = { underground: [[{ x: -30, z: 20 }, { x: 10, z: 20 }, { x: 50, z: 20 }]] };
