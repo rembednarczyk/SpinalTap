@@ -329,7 +329,8 @@ jobs:
   # (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about 2 min a
   # shard with warm caches (G-387). Three since 15.11: two groups reached 24.7 and 14.7 min of
   # the 25 min limit (playwright.config.ts). On 17.11 group 3 took up to 24.5 min on a slow
-  # runner and ui-scale moved to group 2 (expected at most about 19 min each).
+  # runner and ui-scale moved to group 2 (expected at most about 19 min each). Four since 21.11:
+  # group 1 (npr-perf, gpu-queue, models) ran past 25 min on slow runners; group 4 takes half of it.
   e2e:
     # No matrix value in the name: GitHub appends "(1)", "(2)" itself, and a skipped job (docs-only
     # change) then reads plainly instead of showing the unexpanded expression.
@@ -343,7 +344,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -405,7 +406,7 @@ jobs:
           key: playwright-debs-${{ runner.os }}-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
       - name: Mark the end of setup
         run: echo "setup $(date +%s)" >> "$RUNNER_TEMP/e2e-times"
-      # Three groups of about equal time (playwright.config.ts, E2E_GROUP), not --shard: that splits
+      # Four groups of about equal time (playwright.config.ts, E2E_GROUP), not --shard: that splits
       # by test count and left every slow spec in shard 1.
       - run: pnpm test:e2e
         env:

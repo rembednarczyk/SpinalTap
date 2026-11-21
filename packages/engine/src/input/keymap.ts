@@ -30,6 +30,7 @@ export type Action =
   | "scan"
   | "dash"
   | "swapShoulder"
+  | "horn"
   | "wait";
 
 /**
@@ -69,6 +70,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   dash: ["AltLeft"],
   // Over the other shoulder in TPP (G-275); G sits next to V, which switches the view.
   swapShoulder: ["KeyG"],
+  // The car's horn (ADR-0097), held: B is free and a beep.
+  horn: ["KeyB"],
   // The wait window (let the hours pass); read by the UI, not by the input frame. L is free.
   wait: ["KeyL"],
 };
@@ -159,6 +162,7 @@ export const mapKeyboardMouse = (
     scan,
     quickhack: scan ? quickhackPressed(keys.pressed) : 0,
     dash: any(keys.pressed, map.dash),
+    ...(any(keys.held, map.horn) ? { horn: true } : {}),
   };
 };
 
@@ -303,6 +307,8 @@ const padButtons = (pad: PadState): Omit<InputFrame, "moveX" | "moveZ" | "lookYa
   quickhack: 0,
   // Double tap of B (ADR-0036), detected by `DoubleTap` while polling.
   dash: pad.dash ?? false,
+  // The left stick pressed: sprint on foot, the horn at the wheel (ADR-0097).
+  ...(pad.buttons[10] ? { horn: true } : {}),
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -329,6 +335,7 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   dash: a.dash || b.dash,
   // A device's own driving axes (ADR-0097 §4): the pad's, when its triggers are in use.
   ...(a.drive ?? b.drive ? { drive: (a.drive ?? b.drive)! } : {}),
+  ...(a.horn || b.horn ? { horn: true } : {}),
 });
 
 /** How a button behaves: held down, or pressed once to start and again to stop. */

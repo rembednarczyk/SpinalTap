@@ -44,9 +44,9 @@ describe("the traffic and the player's car", () => {
     for (let i = 0; i < 400 && acting(); i++) sim.step();
     const mine = [...sim.world].find((e) => e.id === sim.session.driving)!;
     for (let i = 0; i < 300 && Math.hypot(mine.car!.vel.x, mine.car!.vel.z) > 0.3; i++) sim.step(press({ drive: { throttle: 0, brake: 1, steer: 0, handbrake: true } }));
-    for (let i = 0; i < 10 && sim.session.driving !== null; i++) sim.step(press({ interact: i % 2 === 0 }));
-    expect(sim.session.driving).toBeNull();
+    for (let i = 0; i < 10 && sim.session.driving !== null && !acting(); i++) sim.step(press({ interact: i % 2 === 0 }));
     for (let i = 0; i < 400 && acting(); i++) sim.step();
+    expect(sim.session.driving).toBeNull();
     const lane = TRAFFIC_ROUTES[route]!;
     const at = lanePose(lane, along + 30);
     const floor = ground(at.x, at.z);
@@ -55,7 +55,9 @@ describe("the traffic and the player's car", () => {
     const half = vehicleSpec(mine.car.model).half;
     let queued = false;
     let into = -Infinity;
-    for (let i = 0; i < 60 * 40; i++) {
+    // Up to 40 s for one of the lane's cars to come up and stop behind it; then 3 s more of it standing there.
+    let until = 60 * 40;
+    for (let i = 0; i < until; i++) {
       sim.step();
       for (const v of sim.world.with("vehicle")) {
         if (v.vehicle.route !== route) continue;
@@ -66,7 +68,10 @@ describe("the traffic and the player's car", () => {
         if (fwd <= 0 || Math.abs(dx * tz - dz * tx) > half.x + v.vehicle.half.w) continue;
         // How far its nose went into the car's tail (m): above zero they meet.
         into = Math.max(into, v.vehicle.half.l + half.z - fwd);
-        if (fwd < 15 && v.vehicle.v < 0.3) queued = true;
+        if (fwd < 15 && v.vehicle.v < 0.3 && !queued) {
+          queued = true;
+          until = Math.min(until, i + 60 * 3);
+        }
       }
     }
     expect(queued).toBe(true);

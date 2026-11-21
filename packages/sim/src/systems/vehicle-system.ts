@@ -1,8 +1,9 @@
 import { type EntityId, isDrivable, vehicleSpec } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
-import { attitude, toWorld, v3 } from "../world/vehicle/frame";
+import { type V3, attitude, toWorld, v3 } from "../world/vehicle/frame";
 import { type CarState, forwardSpeed, newCar } from "../world/vehicle/state";
+import { type CarActState, HELD, seatInWorld, startAct, stepAct } from "../world/vehicle/car-act";
 import { driveCar, wake } from "../world/vehicle/step";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
@@ -23,6 +24,15 @@ export const ENTER_SPEED = 6;
 export const TAKE_CAR_PROMPT = "prompt.car.take";
 /** Slow enough to get out (m/s). */
 const EXIT_SPEED = 3;
+/** The prompt at the wheel while she can get out: the HUD names the key, a phone shows its "Use" button (a catalog key, ADR-0056). */
+export const EXIT_CAR_PROMPT = "prompt.car.exit";
+
+/** She can get out now: at the wheel of her car, not getting in or out, the car slow enough. */
+export const canGetOut = (ctx: SimContext): boolean => {
+  if (ctx.session.carAct) return false;
+  const car = drivenCar(ctx);
+  return car !== null && Math.abs(forwardSpeed(car)) < EXIT_SPEED;
+};
 /** Crash speed into a wall or a car that counts as a hit (m/s). */
 const HIT_SPEED = 2.5;
 /** How fast the free look's turn round the car comes back behind it (1/s). */
@@ -55,8 +65,7 @@ export const carToTake = (ctx: SimContext, player: Entity): (Entity & { vehicle:
 export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: NonNullable<Entity["vehicle"]> }, next: number): Car => {
   const view = v.view!.kind === "vehicle" ? v.view! : { kind: "vehicle" as const, model: "sedan" as const, tint: 0 };
   const car = newCar(view.model, v.position.x, v.position.y, v.position.z, v.yaw);
-  const f = toWorld(car.q, v3(0, 0, 1));
-  car.vel = v3(f.x * v.vehicle.v, 0, f.z * v.vehicle.v);
+  // It stopped for her: she pulls the door open and gets in (ADR-0097, clip of 21.11), the car still.
   // Its driver pulled out: an assault in the crime's rules (ADR-0029), if anyone sees it.
   offend(ctx, "assault", v.position);
   ctx.world.remove(v);
@@ -65,6 +74,7 @@ export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: 
   const e = ctx.world.add({ id, position: { ...v.position }, prevPosition: { ...v.position }, yaw: v.yaw, prevYaw: v.yaw, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, view: { kind: "vehicle", model: view.model, tint: view.tint }, car }) as Car;
   ctx.streamer.streamedOut.delete(id);
   ctx.session.driving = id;
+  ctx.session.carAct = startAct("enter");
   ctx.bus.emit("VehicleEntered", { vehicleId: id, from: "traffic" });
   placeSeat(player, e);
   return e;
@@ -101,24 +111,48 @@ const roomFor = (ctx: SimContext, x: number, y: number, z: number, self: EntityI
   return true;
 };
 
-/**
- * Gets out on the driver's side (left), or the right when a wall or a car stands at the left;
- * with both sides shut she stays in. Returns whether she got out.
- */
-const getOut = (ctx: SimContext, player: Entity, car: Car): boolean => {
+/** The side she can get out on: the driver's (left) when there is room for her, else the right; null with both shut. */
+const exitSide = (ctx: SimContext, car: Car): { readonly left: boolean; readonly at: V3 } | null => {
   const half = vehicleSpec(car.car.model).half;
-  const y = car.position.y;
-  const side = [-1, 1]
-    .map((s) => toWorld(car.car.q, v3(s * (half.x + STEP_OUT), 0, STEP_ALONG)))
-    .find((o) => roomFor(ctx, car.position.x + o.x, y, car.position.z + o.z, car.id));
-  if (!side) return false;
-  player.position = { x: car.position.x + side.x, y, z: car.position.z + side.z };
+  for (const s of [-1, 1]) {
+    const at = toWorld(car.car.q, v3(s * (half.x + STEP_OUT), 0, STEP_ALONG));
+    if (roomFor(ctx, car.position.x + at.x, car.position.y, car.position.z + at.z, car.id)) return { left: s < 0, at };
+  }
+  return null;
+};
+
+/** She stands beside the car at `at` (from its middle), out of it. */
+const stepOut = (ctx: SimContext, player: Entity, car: Car, at: V3): void => {
+  player.position = { x: car.position.x + at.x, y: car.position.y, z: car.position.z + at.z };
   player.prevPosition = { ...player.position };
   player.velocity = { x: 0, y: 0, z: 0 };
   ctx.session.driving = null;
+  ctx.session.carAct = null;
   delete player.seated;
+  delete player.carPose;
   ctx.bus.emit("VehicleExited", { vehicleId: car.id });
-  return true;
+};
+
+/**
+ * Gets out on the driver's side (left) with the clip of getting out, or at once on the right when
+ * a wall or a car stands at the left; with both sides shut she stays in.
+ */
+const getOut = (ctx: SimContext, player: Entity, car: Car): void => {
+  const side = exitSide(ctx, car);
+  if (!side) return;
+  if (side.left) ctx.session.carAct = startAct("exit");
+  else stepOut(ctx, player, car, side.at);
+};
+
+/** The act's clip played through: seated at the wheel, or out by the door (the right one if the left was shut meanwhile). */
+const endAct = (ctx: SimContext, player: Entity, car: Car, act: CarActState): void => {
+  if (act.kind === "enter") {
+    ctx.session.carAct = null;
+    return;
+  }
+  const side = exitSide(ctx, car);
+  if (side) stepOut(ctx, player, car, side.at);
+  else ctx.session.carAct = null;
 };
 
 /**
@@ -130,6 +164,10 @@ const getOut = (ctx: SimContext, player: Entity, car: Car): boolean => {
 export const createVehicleSystem = (): System => {
   let next = 0;
   let look = 0;
+  /** Seconds at the wheel (the driving clip's loop) and since the horn was pressed, and whether it was held. */
+  let seatTime = 0;
+  let hornTime = 0;
+  let hornHeld = false;
   return {
     name: "vehicle",
     run(ctx) {
@@ -138,9 +176,11 @@ export const createVehicleSystem = (): System => {
       const driving = ctx.session.driving !== null ? ((ctx.world.with("car").entities.find((c) => c.id === ctx.session.driving) as Car | undefined) ?? null) : null;
       if (ctx.session.driving !== null && !driving) {
         ctx.session.driving = null;
+        ctx.session.carAct = null;
         delete player.seated;
+        delete player.carPose;
       }
-      if (ctx.input.interact) {
+      if (ctx.input.interact && !ctx.session.carAct) {
         if (driving && Math.abs(forwardSpeed(driving.car)) < EXIT_SPEED) getOut(ctx, player, driving);
         else if (!driving && ctx.session.focusPrompt === TAKE_CAR_PROMPT) {
           const v = carToTake(ctx, player);
@@ -154,7 +194,7 @@ export const createVehicleSystem = (): System => {
       const ground = worldGround(ctx);
       for (const e of [...ctx.world.with("car").entities].sort((a, b) => a.id - b.id) as Car[]) {
         const mine = e.id === ctx.session.driving;
-        driveCar(e.car, mine ? ctx.input : null, ground, ctx.dt);
+        driveCar(e.car, mine ? (ctx.session.carAct ? HELD : ctx.input) : null, ground, ctx.dt);
         const wall = collideSolids(ctx, e.car);
         const traffic = collideTraffic(ctx, e.car, e.id);
         collideBodies(ctx, e.car, e.id);
@@ -170,6 +210,18 @@ export const createVehicleSystem = (): System => {
           look = ctx.input.lookYaw !== 0 ? look + ctx.input.lookYaw : look * Math.max(0, 1 - LOOK_BACK * ctx.dt);
           player.yaw = attitude(e.car.q).yaw + look;
           player.prevYaw = player.yaw;
+          const horn = !ctx.session.carAct && ctx.input.horn === true;
+          if (horn && !hornHeld) {
+            hornTime = 0;
+            ctx.bus.emit("VehicleHorn", { vehicleId: e.id, at: { ...e.position } });
+          }
+          hornHeld = horn;
+          seatTime += ctx.dt;
+          hornTime += ctx.dt;
+          const playing = ctx.session.carAct;
+          if (playing && stepAct(playing, ctx.dt)) endAct(ctx, player, e, playing);
+          const act = ctx.session.carAct;
+          if (player.seated !== undefined) player.carPose = { act: act ? act.kind : horn ? "horn" : "drive", t: act ? act.t : horn ? hornTime : seatTime, yaw: attitude(e.car.q).yaw, seat: seatInWorld(e.car), floor: e.position.y };
         }
       }
     },

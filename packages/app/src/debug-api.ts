@@ -45,8 +45,13 @@ export interface DebugApi {
     residents: number;
     /** Vehicles driving round the player (ADR-0050). */
     vehicles: number;
+    /** At the wheel of a car (ADR-0097), and getting in or out of it ("enter", "exit"), else null. */
+    driving: boolean;
+    carAct: string | null;
   };
   perf(): PerfSample;
+  /** The street's cars round the player (ADR-0050): where each is, its heading and speed (m/s). */
+  cars(): { x: number; y: number; z: number; yaw: number; speed: number }[];
   setPaused(paused: boolean): void;
   /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), Lublin's ground by default. */
   teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
@@ -138,9 +143,14 @@ export const createDebugApi = (
       clock: formatClock(sim.clock),
       residents: [...sim.world].filter((e) => e.view?.kind === "crowd").length,
       vehicles: [...sim.world].filter((e) => e.vehicle !== undefined).length,
+      driving: sim.session.driving !== null,
+      carAct: sim.session.carAct?.kind ?? null,
     };
   },
   perf,
+  cars() {
+    return [...session.sim.world].filter((e) => e.vehicle !== undefined).map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z, yaw: e.yaw, speed: e.vehicle!.v }));
+  },
   setPaused(paused) {
     loop.paused = paused;
   },

@@ -43,6 +43,7 @@ export const plContent = {
   // Obezwładnienia (ADR-0065, ADR-0075): klawisz interakcji chwyta; w chwycie ogłusza, a atak zabija.
   "prompt.takedown": "Chwyć",
   "prompt.car.take": "Przejmij auto",
+  "prompt.car.exit": "Wysiądź",
   "prompt.grab": "Ogłusz",
   "prompt.grab.kill": "Zabij",
   // Ciała (ADR-0065, etap 3): ten sam klawisz podnosi, upuszcza albo ukrywa.

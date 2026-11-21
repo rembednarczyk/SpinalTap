@@ -1,4 +1,5 @@
-import type { AudioCue, WeaponLook } from "@seki/core";
+import { type AudioCue, WEAPON_CATALOG, type WeaponLook } from "@seki/core";
+import type { UiStore } from "@seki/ui";
 import { patchUi } from "@seki/ui";
 import type { Presenter } from "./context";
 
@@ -11,6 +12,22 @@ const PLAYER_SHOT: Readonly<Record<WeaponLook, AudioCue>> = {
   rifle: "shot-rifle",
   baton: "shot",
   blade: "shot",
+};
+/** A weapon drawn or switched to: its own handling (user notes of 21.11). */
+const DRAW: Readonly<Record<WeaponLook, AudioCue>> = {
+  pistol: "draw-pistol",
+  revolver: "draw-revolver",
+  smg: "draw-smg",
+  shotgun: "draw-shotgun",
+  rifle: "draw-rifle",
+  baton: "draw-baton",
+  blade: "draw-blade",
+};
+/** The weapon in the player's hand, as the HUD's strip names it; null with an empty hand. */
+const activeLook = (ui: UiStore): WeaponLook | null => {
+  const strip = ui.getState().weapons;
+  const name = strip?.slots.find((s) => s.slot === strip.active)?.name ?? null;
+  return Object.values(WEAPON_CATALOG).find((d) => d.name === name)?.look ?? null;
 };
 /** Someone else's shot, heard from further away: handguns and SMGs share one set. */
 const ENEMY_SHOT: Readonly<Record<WeaponLook, AudioCue>> = {
@@ -31,11 +48,13 @@ export const presentCombat: Presenter = ({ bus, render, audio, ui, isPlayer }) =
   }),
   bus.on("WeaponToggled", (e) => {
     render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: e.drawn });
-    if (isPlayer(e.entityId)) audio.play("ui-select");
+    if (!isPlayer(e.entityId)) return;
+    const look = e.drawn ? activeLook(ui) : null;
+    audio.play(e.drawn ? (look ? DRAW[look] : "weapon-switch") : "holster");
   }),
   bus.on("WeaponSwitched", (e) => {
     render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: true, slot: e.slot });
-    if (isPlayer(e.entityId)) audio.play("weapon-switch");
+    if (isPlayer(e.entityId)) audio.play(DRAW[WEAPON_CATALOG[e.weapon].look]);
   }),
   // Melee (ADR-0019): the swing plays over the simulation's timing; the whoosh comes as it lands.
   bus.on("MeleeSwing", (e) => render.playEffect({ kind: "melee", entityId: e.entityId, strike: e.strike, windup: e.windup, recovery: e.recovery })),

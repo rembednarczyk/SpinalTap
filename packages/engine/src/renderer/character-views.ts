@@ -21,6 +21,7 @@ import { type CharacterModelManifest, ModelLibrary } from "./model-library";
 import { type CharacterDescriptor, type ModelChoice, modelChoiceOf } from "./model-cast";
 import { type WallProbe, layBody, placeLaid } from "./body-lay";
 import { animateGrab, inGrab, placeHeld, reachForNeck } from "./grab-clip";
+import { poseAtCar } from "./clips/car-clips";
 import { carriedShoulder } from "./knockout-carry";
 import { animateKnockout, settleKnockout } from "./knockout-pose";
 import type { HumanoidRetarget } from "./model-rig";
@@ -289,6 +290,8 @@ export class CharacterViews implements FxActors {
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
       animateKnockout(v.rig, dt, !!t.unconscious, shoulder);
       animateGrab(v.rig, dt, t, id === followed ? "holder" : "held");
+      // At a car (ADR-0097): seated at the wheel, or getting in or out, from the user's clips.
+      if (t.car) poseAtCar(v.rig, t.car);
       if (id !== followed && t.grab) this.held = id;
       if (id !== followed) placeBody(v, dt, shoulder !== null, holder?.rig ?? null, this.deps.wall);
     }

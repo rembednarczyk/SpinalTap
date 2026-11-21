@@ -124,7 +124,30 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Wysiadanie najpierw po lewej (strona kierowcy), a gdy tam stoi bryła wysokości ciała (wyższa niż stopień `STEP_HEIGHT`) albo auto ruchu, po prawej. Miejsce to koło ciała bohaterki (`BODY_RADIUS`) 0,7 m za bokiem nadwozia i 0,4 m przed środkiem auta. Z obiema stronami zamkniętymi zostaje w aucie.
 - Test sesji `vehicle-carjack.test.ts`: słupek przy drzwiach kierowcy, wysiada po prawej; słupki po obu stronach, zostaje w środku. Bez zmiany test pada (wysiada w słupek po lewej).
 
+## Animacje przy aucie (21.11, klipy Mixamo użytkownika)
+- Klipy z folderu użytkownika („Driving”, „Honking Horn”, „Entering Car”, „Exiting Car”, „Removing Driver”, „Hit By Car”) przeniesione narzędziem `tools/animations` (ADR-0090) do tablicy ciała (`carDrive`, `carHorn`, `carEnter`, `carExit`, `carJack`); surowe FBX zostają u użytkownika. Narzędzie dostało `--only nazwa,…`: czyta tylko wskazane klipy, resztę tablic zostawia bez zmian (paczki z wcześniejszych importów nie muszą być pod ręką).
+- Wzorzec: klip całego ciała nakładany na rig po proceduralnej animacji, jak klipy śmierci (ADR-0090 pkt 10); stan i czas klipu prowadzi symulacja (`Transform.car`: czynność, czas klipu, kurs auta, biodra kierowcy w świecie i ziemia przy drzwiach), renderer tylko rysuje. Odpowiednik sekwencji wsiadania z gier z otwartym światem (wejście jako akcja z czasem, w którym sterowanie czeka).
+- Wsiadanie: od drzwi kierowcy, część klipu od 1,4 s (pierwsze 1,4 s to podejście) do końca, w tempie 1,5 (ok. 2,7 s); auto stoi na hamulcu, gaz czeka. Wysiadanie: od fotela do 3,2 s klipu (dalej postać tylko się obraca), w tempie 1,4 (ok. 2,3 s), po lewej. Po prawej (lewa strona zastawiona) bez klipu, od razu. W trakcie bohaterka siedzi w aucie dla reszty gry.
+- Za kierownicą postać jest widoczna i siedzi w pętli „Driving”; klakson (B, na padzie wciśnięta lewa gałka) to klip „Honking Horn” i zdarzenie `VehicleHorn` z każdym wciśnięciem (dźwięk w etapie dźwięku).
+- Fotel kierowcy (`driverSeat`): biodra 0,26 m nad ziemią, o piątą część szerokości w lewo od osi i 1/12 długości za środkiem. Wszystkie auta ulicy noszą niskie auto sportowe (dach ok. 1,15 m), więc wyżej głowa wychodziła przez dach (zrzuty 21.11). Auto w klipach Mixamo jest wyższe: przy wsiadaniu i wysiadaniu wysokość bioder idzie za tym, na ile postać w danej chwili stoi (siedząc: nasz fotel; stojąc: biodra stojącej postaci nad ziemią przy drzwiach).
+- „Removing Driver” to klip wyciąganego kierowcy (nie napastnika): z „Hit By Car” idzie do kierowcy auta z ruchu (wyrwany, rzucony na jezdnię, wstaje i ucieka) i do potrąconych pieszych, w osobnym PR.
+
+## Kamera za autem jak w PodRcr (21.11, prośba użytkownika)
+- Wzorzec: widok z zewnątrz z drugiego projektu użytkownika, PodRcr (`src/render/CockpitCamera.ts`, `updateChase`, i `ChaseTrail.ts`), przeniesiony do `engine/camera` (`car-chase.ts`, `chase-trail.ts`).
+- Kamera stoi na drodze, którą auto przed chwilą przejechało (ślad co 0,5 m), 6,2 m za nim i 2,3 m nad ziemią. W zakręcie zostaje więc na wolnej jezdni, a auto wychodzi na bok kadru, zamiast żeby kamera wpadała w ścianę na przedłużeniu osi auta.
+- Jej miejsce względem auta nadąża z opóźnieniem (6/s), więc odległość nie rośnie z prędkością. Patrzy 7 m przed auto, na wysokości 1,1 m. Szybciej (do 40 m/s) kadr poszerza się do 22% i kamera podjeżdża bliżej w tej samej proporcji (jak w PodRcr), więc auto zostaje tej samej wielkości, a szybciej ucieka tylko ulica.
+- Różnice wobec PodRcr:
+  - bez przechyłu kamery z autem i bez wstrząsów (auto gracza nie ma jeszcze szkód ani drgań nawierzchni);
+  - rozglądanie myszką obraca kamerę wokół auta, a symulacja sprowadza je z powrotem za auto;
+  - ściana albo teren mapy między autem a kamerą przyciąga ją do auta (promień od punktu 1,2 m nad autem, jak kamera zza ramienia).
+- Test `car-chase.test.ts`: za autem na prostej, na śladzie w zakręcie, obrót myszką.
+
+
 ## Ruch uliczny widzi auto gracza, porzucone auto na ręcznym (21.11)
 - Na zrzutach z przejmowania auta ruch wjeżdżał w stojące auto gracza: `lookAhead` w ruchu ulicznym patrzył na ciała i na pojazdy ruchu, a auta z fizyką (`car`) nie znał. Teraz widzi je jak pojazd przed sobą na swoim pasie (bezpieczna prędkość modelu jazdy za poprzednikiem Gippsa, 1981: droga hamowania v²/2a i odstęp `FOLLOW_GAP`), z obrysem auta obróconym do pasa, więc auto stojące w poprzek zajmuje go szerzej niż stojące wzdłuż (`systems/traffic-player-cars.ts`).
 - Auto bez kierowcy dostawało zerowe sterowanie i staczało się po pochyłości ulicy. Auto porzucone stoi teraz na ręcznym (sam ręczny: wciśnięty hamulec na postoju wrzuca wsteczny), więc trzyma je kotwica postoju; pchnięte toczy się dalej.
 - Testy: `traffic-player-car.test.ts` (auto gracza na osi pasa w godzinie szczytu, ruch staje za nim i nie wchodzi w jego obrys; bez poprawki żaden pojazd nie staje) i w `vehicle-physics.test.ts` puste auto na zboczu 10% stoi (bez poprawki stacza się o 15 m).
+
+## Podpowiedź „Wysiądź” (21.11, polecenie użytkownika)
+- Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
+- Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
