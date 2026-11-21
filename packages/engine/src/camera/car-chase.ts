@@ -1,4 +1,5 @@
-import type { Vec3 } from "@seki/core";
+import type { CarPose, Vec3 } from "@seki/core";
+import { type AbstractMesh, type FreeCamera, Ray, type Scene, Vector3 } from "../babylon";
 import { ChaseTrail } from "./chase-trail";
 
 /*
@@ -70,5 +71,50 @@ export class CarChase {
     const eye = { x: car.x + this.offset.x, y: car.y + Math.max(MIN_ABOVE, this.offset.y), z: car.z + this.offset.z };
     const target = { x: car.x + Math.sin(yaw + look) * LOOK_AHEAD * reach, y: car.y + LOOK_UP, z: car.z + Math.cos(yaw + look) * LOOK_AHEAD * reach };
     return { eye, target, widen };
+  }
+}
+
+/** The point over the car's ground the chase camera is pulled in towards past a wall (m), and its margin off the wall. */
+const PIVOT = 1.2;
+const WALL_MARGIN = 0.25;
+/** `a - b` turned into -π..π. */
+const angleDiff = (a: number, b: number): number => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+/** The map's own ray (ADR-0045): the distance to the first wall or ground along `dir`, null for none. */
+type Occluder = (origin: Vec3, dir: Vec3, maxDist: number) => number | null;
+
+/**
+ * The chase camera placed in the scene: `CarChase`'s shot, pulled in to the car where a wall or
+ * the map's ground stands between them, as the shoulder camera is (a part of `CameraRig`, ADR-0031).
+ */
+export class CarChaseView {
+  private readonly chase = new CarChase();
+
+  constructor(
+    private readonly scene: Scene,
+    private readonly isBlocker: (mesh: AbstractMesh) => boolean,
+    private readonly occluder: () => Occluder | null,
+  ) {}
+
+  reset(): void {
+    this.chase.reset();
+  }
+
+  /** Puts `camera` behind the car of `car` standing at `at`, looked round to `yaw`. */
+  place(camera: FreeCamera, car: CarPose, at: Vec3, yaw: number, dt: number): void {
+    const ground = { x: at.x, y: car.floor, z: at.z };
+    const shot = this.chase.update(ground, car.yaw, angleDiff(yaw, car.yaw), dt);
+    const pivot = new Vector3(ground.x, ground.y + PIVOT, ground.z);
+    const to = new Vector3(shot.eye.x, shot.eye.y, shot.eye.z).subtract(pivot);
+    const full = to.length();
+    const dir = to.scale(1 / Math.max(full, 1e-6));
+    let reach = full;
+    const hit = this.scene.pickWithRay(new Ray(pivot, dir, full + WALL_MARGIN), this.isBlocker);
+    if (hit?.hit) reach = Math.max(0.5, Math.min(reach, hit.distance - WALL_MARGIN));
+    const t = this.occluder()?.({ x: pivot.x, y: pivot.y, z: pivot.z }, { x: dir.x, y: dir.y, z: dir.z }, full + WALL_MARGIN) ?? null;
+    if (t !== null) reach = Math.max(0.5, Math.min(reach, t - WALL_MARGIN));
+    camera.position.copyFrom(pivot.add(dir.scale(reach)));
+    camera.setTarget(new Vector3(shot.target.x, shot.target.y, shot.target.z));
+    camera.fov *= 1 + shot.widen;
   }
 }
