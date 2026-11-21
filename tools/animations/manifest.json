@@ -244,6 +244,12 @@
       "mode": "pose",
       "fps": 15,
       "hipsFrom": "first"
+    },
+    "carHit": {
+      "file": "Car/Hit By Car.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
     }
   }
 }

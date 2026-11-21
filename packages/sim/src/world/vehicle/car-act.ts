@@ -22,16 +22,25 @@ export type CarActKind = keyof typeof CAR_ACT;
 export interface CarActState {
   readonly kind: CarActKind;
   t: number;
+  /** Seconds it waits at the start first: at the door while the driver is pulled out. */
+  hold: number;
 }
 
-export const startAct = (kind: CarActKind): CarActState => ({ kind, t: CAR_ACT[kind].from });
+export const startAct = (kind: CarActKind, hold = 0): CarActState => ({ kind, t: CAR_ACT[kind].from, hold });
 
 /** Plays the act on by `dt` seconds; true once its clip is through. */
 export const stepAct = (act: CarActState, dt: number): boolean => {
+  if (act.hold > 0) {
+    act.hold = Math.max(0, act.hold - dt);
+    return false;
+  }
   const span = CAR_ACT[act.kind];
   act.t = Math.min(span.to, act.t + dt * span.rate);
   return act.t >= span.to;
 };
+
+/** How long she waits at the door while the driver is pulled out of a taken car (s). */
+export const JACK_WAIT = 1.5;
 
 /** The car held still while she gets in or out: the brake on, the handbrake pulled. */
 export const HELD: DriveInput = { throttle: 0, brake: 1, steer: 0, handbrake: true };
