@@ -20,6 +20,8 @@ export interface VehicleTemplate {
   readonly colors: Float32Array;
   readonly indices: Uint32Array;
   readonly vertexCount: number;
+  /** On a texture of its own (`KitModel.skin`): its UVs are the skin's, its colour the paint for the skin's tinted texels. */
+  readonly skin?: string;
 }
 
 /** The kit's model behind each car. */
@@ -31,19 +33,24 @@ export const KIT_CARS: Readonly<Partial<Record<VehicleModel, string>>> = {
   delivery: "car-delivery",
 };
 
-/** Paints of Lublin 2077: magenta, teal, silver, graphite, amber, oxblood, slate, white, black. */
-export const PAINTS = ["#a8255f", "#178a90", "#c4c8d0", "#323a4c", "#d8a640", "#7c2430", "#5a6470", "#e9e9e4", "#1c1e24"] as const;
+/**
+ * Paints of Lublin 2077, dark (user's notes of 21.11: "more dark cyberpunk"): deep magenta, dark teal,
+ * gunmetal, graphite, burnt amber, oxblood, night violet, midnight blue, black. The neon and the
+ * lamps of the models stay bright against them.
+ */
+export const PAINTS = ["#6e1446", "#0f4f57", "#4a505c", "#23293a", "#7a5418", "#4e121e", "#2e1f4d", "#16243f", "#0f1015"] as const;
 
 /** The paint a vehicle's tint seed picks (a trolleybus keeps its livery). */
 export const paintOf = (model: VehicleModel, tint: number): number => (model === "trolleybus" ? 0 : (tint >>> 3) % PAINTS.length);
 
-const toTemplate = (sink: GeometrySink): VehicleTemplate => ({
+const toTemplate = (sink: GeometrySink, skin?: string): VehicleTemplate => ({
   positions: Float32Array.from(sink.positions),
   normals: Float32Array.from(sink.normals),
   uvs: Float32Array.from(sink.uvs),
   colors: Float32Array.from(sink.colors),
   indices: Uint32Array.from(sink.indices),
   vertexCount: sink.vertexCount,
+  ...(skin ? { skin } : {}),
 });
 
 const X: Vec3 = { x: 1, y: 0, z: 0 };
@@ -95,6 +102,15 @@ const propsVehicle = (props: VehicleProps, m: KitModel, model: VehicleModel, col
   const sink = new GeometrySink();
   // Front +z in the file is -z once parsed (like the kit's cars): turned round.
   sink.addModel(m, { key: m.key, x: 0, y: 0, z: 0, turn: Math.PI, sx: size.width / m.size.x, sy: Math.min(Math.max(1, size.length / m.size.z), size.height / m.size.y), sz: size.length / m.size.z, tint: "#ffffff" });
+  if (m.skin) {
+    // Its own texture (the close-up, 21.11): its UVs as they are, the paint on every vertex (the skin's alpha says where it shows).
+    const [r, g, b] = hexRgb(color("paint"));
+    for (let v = 0; v * 4 < sink.colors.length; v++) sink.colors.splice(v * 4, 3, r, g, b);
+    // The kit's sink moves UVs into the palette's rows: the skin's are its own.
+    for (let i = 0; i < m.uvs.length; i++) sink.uvs[i] = m.uvs[i] ?? 0;
+    extra?.(sink);
+    return toTemplate(sink, m.skin);
+  }
   for (let v = 0; v * 2 < m.uvs.length; v++) {
     const s = swatchAt(props.data, m.uvs[v * 2] ?? 0, m.uvs[v * 2 + 1] ?? 0);
     const uv = props.uvs[s] ?? [0, 0];
