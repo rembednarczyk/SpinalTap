@@ -120,3 +120,8 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 ## Wysiadanie na prawo (21.11, polecenie użytkownika)
 - Wysiadanie najpierw po lewej (strona kierowcy), a gdy tam stoi bryła wysokości ciała (wyższa niż stopień `STEP_HEIGHT`) albo auto ruchu, po prawej. Miejsce to koło ciała bohaterki (`BODY_RADIUS`) 0,7 m za bokiem nadwozia i 0,4 m przed środkiem auta. Z obiema stronami zamkniętymi zostaje w aucie.
 - Test sesji `vehicle-carjack.test.ts`: słupek przy drzwiach kierowcy, wysiada po prawej; słupki po obu stronach, zostaje w środku. Bez zmiany test pada (wysiada w słupek po lewej).
+
+## Ruch uliczny widzi auto gracza, porzucone auto na ręcznym (21.11)
+- Na zrzutach z przejmowania auta ruch wjeżdżał w stojące auto gracza: `lookAhead` w ruchu ulicznym patrzył na ciała i na pojazdy ruchu, a auta z fizyką (`car`) nie znał. Teraz widzi je jak pojazd przed sobą na swoim pasie (bezpieczna prędkość modelu jazdy za poprzednikiem Gippsa, 1981: droga hamowania v²/2a i odstęp `FOLLOW_GAP`), z obrysem auta obróconym do pasa, więc auto stojące w poprzek zajmuje go szerzej niż stojące wzdłuż (`systems/traffic-player-cars.ts`).
+- Auto bez kierowcy dostawało zerowe sterowanie i staczało się po pochyłości ulicy. Auto porzucone stoi teraz na ręcznym (sam ręczny: wciśnięty hamulec na postoju wrzuca wsteczny), więc trzyma je kotwica postoju; pchnięte toczy się dalej.
+- Testy: `traffic-player-car.test.ts` (auto gracza na osi pasa w godzinie szczytu, ruch staje za nim i nie wchodzi w jego obrys; bez poprawki żaden pojazd nie staje) i w `vehicle-physics.test.ts` puste auto na zboczu 10% stoi (bez poprawki stacza się o 15 m).

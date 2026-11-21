@@ -44,8 +44,15 @@ describe("the car on flat ground (ADR-0097 stage 2)", () => {
     const at = { ...car.pos };
     run(car, pedal({ handbrake: true }), 4, slope);
     expect(Math.hypot(car.pos.x - at.x, car.pos.z - at.z)).toBeLessThan(0.05);
-    run(car, null, 3, slope);
+    run(car, pedal({}), 3, slope);
     expect(car.pos.z).toBeLessThan(at.z - 1);
+  });
+
+  it("left with nobody at the wheel, stands on the slope on its handbrake", () => {
+    const car = settled(slope);
+    const at = { ...car.pos };
+    run(car, null, 6, slope);
+    expect(Math.hypot(car.pos.x - at.x, car.pos.z - at.z)).toBeLessThan(0.05);
   });
 
   it("goes from 0 to 100 km/h in 4-7 s and tops out at 230-310 km/h", () => {

@@ -5,6 +5,7 @@ import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "..
 import { ownWayRoom } from "../content/traffic-ramp";
 import { pointsAlong } from "../content/traffic-lane";
 import { bodiesMeet, cannotStop, goesFirst } from "./traffic-bodies";
+import { roomBeforePlayerCars } from "./traffic-player-cars";
 import type { Entity, VehicleState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { VEHICLE_IDS_PER_ROUTE, halfSize, lanePose, timetable, vehicleCount, vehicleId, vehiclePlan } from "../world/traffic";
@@ -290,6 +291,12 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
       out.allowed = allowed;
       out.player = null;
     }
+  }
+  // The player's cars with physics, left standing or driven: as the vehicle ahead.
+  const room = roomBeforePlayerCars(ctx, self.position.y, pose, st.half, reach, BRAKE, FOLLOW_GAP, SIDE_MARGIN);
+  if (room < out.allowed) {
+    out.allowed = room;
+    out.player = null;
   }
   return out;
 };
