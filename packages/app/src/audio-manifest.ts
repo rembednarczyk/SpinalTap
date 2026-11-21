@@ -36,10 +36,11 @@ const SOUNDS = {
     // Weapons, loot and trade (E12).
     // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
     reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
-    // Louder than the first cut (0.5): one shell was lost under the street (user notes of 18.11).
-    "reload-round": { urls: range("reload-metal-", ["000", "001"]), gain: 0.85, pitch: 0.05, send: 0.12 },
-    // The slide racked after the last shell: a latch back, a click forward (RPG sounds, 18.11).
-    "shotgun-pump": { urls: ["shotgun-pump-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.18 },
+    // One shell pushed into the tube, recorded on a real shotgun (zer0_sol, 21.11): the fingers on the
+    // brass, then the follower's click 0.48 s on, as the round's 0.5 s ends. Four takes, no metal tap.
+    "reload-round": { urls: range("reload-shell-", ["000", "001", "002", "003"]), gain: 0.8, pitch: 0.03, send: 0.12 },
+    // The pump racked after the last shell, back and forth in one recorded stroke (zer0_sol, 21.11).
+    "shotgun-pump": { urls: ["shotgun-rack-000.ogg"], gain: 0.65, pitch: 0.03, send: 0.18 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.

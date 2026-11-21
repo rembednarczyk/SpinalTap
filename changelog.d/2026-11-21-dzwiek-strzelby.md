@@ -1,0 +1,1 @@
+- Ładowanie strzelby brzmi jak prawdziwa broń: każdy nabój to nagranie wsuwania naboju do magazynka z trzaskiem podajnika, a po ostatnim słychać przeładowanie czółenka. Wcześniej były to stuknięcia metalu z ogólnej paczki dźwięków.

@@ -15,6 +15,7 @@ Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przy
 | Sci-fi Sounds | Kenney | CC0 (License.txt w paczce) | https://kenney.nl/assets/sci-fi-sounds | `kenney_sci-fi-sounds.zip` |
 | The Free Firearm Sound Library (Prepared SFX Library) | Ben Jaszczak i in. (freefirearmsfx.com), mirror OGA: bart | CC0 (strona OGA: "CC0 NO RIGHTS RESERVED") | https://opengameart.org/content/the-free-firearm-sound-library | `Prepared SFX Library.7z` (194 MB, z niego 14 plików) |
 | Handgun Reload Sound Effect | zer0_sol | CC0 (strona OGA) | https://opengameart.org/content/handgun-reload-sound-effect | `reload.wav` |
+| Shotgun Reload Sound Effects | zer0_sol | CC0 (strona OGA: „Feel free to use these sounds without attribution”) | https://opengameart.org/content/shotgun-reload-sound-effects | `shotgunsounds.zip` (pobrane 21.11) |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
 | RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
 | Alarm | ezduzziteh | CC0 (strona OGA) | https://opengameart.org/content/alarm-1 | `alarm_2.ogg` (pobrane 18.11) |
@@ -53,13 +54,13 @@ Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przy
 | `clinic-heal-000.ogg`, `clinic-heal-001.ogg` | Sci-fi Sounds, `forceField_000.ogg`, `forceField_001.ogg` | `heal` (klinika) |
 | `cyber-overdrive.ogg` | Sci-fi Sounds, `computerNoise_000.ogg` (pierwsze 1,2 s, mono) | `overdrive` (z syntezą) |
 | `reload-handgun-000.ogg` | Handgun Reload Sound Effect, `reload.wav` (od 0,09 s do 1,47 s, mono, -4 dB, wyciszenie ostatnich 0,12 s): wypięcie magazynka, nowy magazynek, zamek | `reload` (przeładowanie magazynka gracza) |
-| `reload-metal-000.ogg`, `reload-metal-001.ogg` | Impact Sounds, `impactMetal_light_000-001.ogg` | `reload-round` (nabój do strzelby, po jednym) |
+| `reload-shell-000.ogg`, `reload-shell-001.ogg`, `reload-shell-002.ogg`, `reload-shell-003.ogg` | Shotgun Reload Sound Effects, `4 Shell Reload.mp3`, cztery naboje (od 0,05 s, 1,13 s, 2,19 s i 3,25 s po 0,53 s, mono, normalizacja do -18 LUFS, wyciszenie ostatnich 0,06 s): palce na mosiądzu i trzask podajnika | `reload-round` (nabój do strzelby, po jednym) |
 | `weapon-switch-000.ogg`, `weapon-switch-001.ogg` | Impact Sounds, `impactPlate_light_000-001.ogg` | `weapon-switch` (zmiana slotu broni) |
 | `loot-pickup-000.ogg`, `loot-pickup-001.ogg` | Impact Sounds, `impactSoft_medium_000-001.ogg` | `loot-pickup` (podniesienie łupu z torby) |
 | `sell-tin-000.ogg`, `sell-tin-001.ogg` | Impact Sounds, `impactTin_medium_000-001.ogg` | `sell` (sprzedaż, z syntezą monet) |
 | `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
 | `blast-crunch-003.ogg`, `blast-crunch-004.ogg` | Sci-fi Sounds, `explosionCrunch_003.ogg`, `explosionCrunch_004.ogg` (bez zmian; paczka pobrana 17.11 z mirroru OGA https://opengameart.org/content/sci-fi-sounds, `sci-fi_sounds.zip`, License.txt: CC0) | `explosion` (wybuch ładunków W-3, z syntezą niskiego huku) |
-| `shotgun-pump-000.ogg` | RPG Sound Pack, `metalLatch.ogg` (0-0,18 s) i `metalClick.ogg` (od 0,15 s) 0,17 s później | `shotgun-pump` (zamek strzelby po ostatnim naboju) |
+| `shotgun-rack-000.ogg` | Shotgun Reload Sound Effects, `Rack.mp3` (od 0,60 s do 1,06 s, mono, normalizacja do -14 LUFS, wyciszenie ostatnich 0,06 s): czółenko w tył i w przód | `shotgun-pump` (przeładowanie po ostatnim naboju) |
 | `impact-melee-000.ogg` | RPG Sound Pack, `chop.ogg` | `impact-melee` (uderzenie broni białej) |
 | `swing-000.ogg`, `swing-001.ogg` | RPG Sound Pack, `knifeSlice.ogg`, `knifeSlice2.ogg` | `swing` (zamach) |
 | `block-000.ogg` | RPG Sound Pack, `metalPot3.ogg` (pierwsze 0,3 s) | `block` (cios na gardzie) |
