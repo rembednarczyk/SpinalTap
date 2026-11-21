@@ -1,0 +1,1 @@
+- Deptak Lubartowskiej przy Alchemii kończy się równo: kostka urywa się prostą linią przy krawężniku Olejnej i Bajkowskiego, bez skośnych klinów asfaltu (T-324).

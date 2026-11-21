@@ -14,6 +14,13 @@ export interface CarFreeWay {
   readonly reason: string;
   /** The entry of `docs/topografia.md` it answers. */
   readonly ref: string;
+  /**
+   * Where its setts end square across it, metres back from its first (`start`) or last (`end`) node
+   * at a street it meets (user's notes of 21.11: the deptak "evenly finished"): at that street's kerb,
+   * the rest to the node asphalt of the junction (`deptak-ends.ts`). Without it the setts reach the node,
+   * where the junction's asphalt cuts them along the other streets' slanting edges.
+   */
+  readonly trim?: { readonly start?: number; readonly end?: number };
 }
 
 export const CAR_FREE_WAYS: readonly CarFreeWay[] = [
@@ -23,6 +30,8 @@ export const CAR_FREE_WAYS: readonly CarFreeWay[] = [
     id: "w216497220",
     reason: "Lubartowska od Bajkowskiego do Olejnej: deptak z kioskami i straganami bez ruchu aut (decyzja użytkownika 15.11), kostka zamiast asfaltu",
     ref: "T-324",
+    // Square at Olejna's south kerb (its half 1.7 m by the node), 1.8 m short of the node.
+    trim: { end: 1.8 },
   },
   {
     // Its 6 m south to Bajkowskiego (-15.8..-9.9), the deptak's mouth: no car lane ran along it (a chain
@@ -33,6 +42,8 @@ export const CAR_FREE_WAYS: readonly CarFreeWay[] = [
     id: "w173533826",
     reason: "wylot deptaku przy Bajkowskiego: 6 m Lubartowskiej, którymi nie jechał żaden pas aut; skręt z Bajkowskiego w w40050981 zostaje na asfalcie",
     ref: "T-324",
+    // Square at Bajkowskiego's north kerb (its half 3.65-3.7 m by the node), 3.7 m short of the node.
+    trim: { start: 3.7 },
   },
 ];
 
