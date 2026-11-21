@@ -10,6 +10,7 @@ import type { MetroStationId } from "../world/wave2";
 import type { AttributeId } from "../progression/attributes";
 import type { PerkId } from "../progression/perks";
 import type { DifficultyProfile } from "../difficulty/difficulty";
+import type { DrivingAssist } from "../ports/types";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -122,4 +123,6 @@ export type GameCommand =
    * with an alerted NPC near the player it waits until the fight is over. A profile with a
    * multiplier out of range is refused.
    */
-  | { readonly type: "set-difficulty"; readonly profile: DifficultyProfile };
+  | { readonly type: "set-difficulty"; readonly profile: DifficultyProfile }
+  /** The driving assists of the player's setting (ADR-0097 §4): the car she drives takes them at once. Not saved. */
+  | { readonly type: "set-driving-assist"; readonly assist: DrivingAssist };

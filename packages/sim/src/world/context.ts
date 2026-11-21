@@ -1,6 +1,6 @@
 import type { TrafficDensity } from "../content/traffic";
 import type { BoardCrime } from "./street-crime-types";
-import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
+import type { CrimeKind, DifficultyProfile, DisturbanceKind, DrivingAssist, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { CarActState } from "./vehicle/car-act";
 import type { SeededRandom } from "../rng/seeded-random";
@@ -66,6 +66,8 @@ export interface SessionState {
   driving: EntityId | null;
   /** Getting into or out of the car (ADR-0097, clips of 21.11), null otherwise. Transient, not saved. */
   carAct: CarActState | null;
+  /** The player's driving assists (ADR-0097 §4), from her settings through `set-driving-assist`. Not saved. */
+  drivingAssist: DrivingAssist;
 }
 
 /**
@@ -195,6 +197,7 @@ export const freshSession = (): SessionState => ({
   pendingDifficulty: null,
   driving: null,
   carAct: null,
+  drivingAssist: "full",
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
