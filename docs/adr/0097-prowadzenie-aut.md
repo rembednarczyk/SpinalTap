@@ -163,7 +163,12 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Test sesji: auto na pełnym gazie wjeżdża w pieszego, ten zostaje rzucony, jest przypięty, przechodzi przez wstawanie i staje 1,2–2,2 m od miejsca, w którym upadł.
 
 
+
 ## Ruch uliczny widzi auto gracza, porzucone auto na ręcznym (21.11)
 - Na zrzutach z przejmowania auta ruch wjeżdżał w stojące auto gracza: `lookAhead` w ruchu ulicznym patrzył na ciała i na pojazdy ruchu, a auta z fizyką (`car`) nie znał. Teraz widzi je jak pojazd przed sobą na swoim pasie (bezpieczna prędkość modelu jazdy za poprzednikiem Gippsa, 1981: droga hamowania v²/2a i odstęp `FOLLOW_GAP`), z obrysem auta obróconym do pasa, więc auto stojące w poprzek zajmuje go szerzej niż stojące wzdłuż (`systems/traffic-player-cars.ts`).
 - Auto bez kierowcy dostawało zerowe sterowanie i staczało się po pochyłości ulicy. Auto porzucone stoi teraz na ręcznym (sam ręczny: wciśnięty hamulec na postoju wrzuca wsteczny), więc trzyma je kotwica postoju; pchnięte toczy się dalej.
 - Testy: `traffic-player-car.test.ts` (auto gracza na osi pasa w godzinie szczytu, ruch staje za nim i nie wchodzi w jego obrys; bez poprawki żaden pojazd nie staje) i w `vehicle-physics.test.ts` puste auto na zboczu 10% stoi (bez poprawki stacza się o 15 m).
+
+## Podpowiedź „Wysiądź” (21.11, polecenie użytkownika)
+- Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
+- Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).

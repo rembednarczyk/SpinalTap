@@ -26,6 +26,15 @@ export const ENTER_SPEED = 6;
 export const TAKE_CAR_PROMPT = "prompt.car.take";
 /** Slow enough to get out (m/s). */
 const EXIT_SPEED = 3;
+/** The prompt at the wheel while she can get out: the HUD names the key, a phone shows its "Use" button (a catalog key, ADR-0056). */
+export const EXIT_CAR_PROMPT = "prompt.car.exit";
+
+/** She can get out now: at the wheel of her car, not getting in or out, the car slow enough. */
+export const canGetOut = (ctx: SimContext): boolean => {
+  if (ctx.session.carAct) return false;
+  const car = drivenCar(ctx);
+  return car !== null && Math.abs(forwardSpeed(car)) < EXIT_SPEED;
+};
 /** Crash speed into a wall or a car that counts as a hit (m/s). */
 const HIT_SPEED = 2.5;
 /** How fast the free look's turn round the car comes back behind it (1/s). */

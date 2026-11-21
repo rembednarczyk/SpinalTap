@@ -2,7 +2,7 @@ import { EMPTY_INPUT, type InputFrame, hm } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { Simulation, ground, type Entity } from "../src";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
-import { TAKE_CAR_PROMPT } from "../src/systems/vehicle-system";
+import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT } from "../src/systems/vehicle-system";
 import { lanePose } from "../src/world/traffic";
 import { teleportPlayer } from "./helpers";
 
@@ -220,5 +220,29 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     const moved = Math.hypot(walker.position.x - down.x, walker.position.z - down.z);
     expect(moved).toBeGreaterThan(1.2);
     expect(moved).toBeLessThan(2.2);
+  });
+
+  it("offers to get out while the car is slow (the phone's Use button), not at speed nor while getting in or out", () => {
+    const { sim, mine } = takenAndStopped();
+    const prompts: (string | null)[] = [];
+    sim.bus.on("InteractionFocusChanged", (e) => prompts.push(e.prompt));
+    sim.step();
+    expect(sim.session.focusPrompt).toBe(EXIT_CAR_PROMPT);
+    expect(sim.session.focusId).toBe(mine().id);
+    // Driving off: gone above 3 m/s, back once it has stopped.
+    for (let i = 0; i < 90; i++) sim.step(press({ moveZ: 1 }));
+    expect(sim.session.focusPrompt).toBeNull();
+    const speed = () => Math.hypot(mine().velocity?.x ?? 0, mine().velocity?.z ?? 0);
+    for (let i = 0; i < 300 && speed() > 0.5; i++) sim.step(press({ moveZ: -1 }));
+    for (let i = 0; i < 30; i++) sim.step();
+    expect(sim.session.focusPrompt).toBe(EXIT_CAR_PROMPT);
+    // The key gets her out: no prompt while the clip of getting out plays, nor after.
+    sim.step(press({ interact: true }));
+    sim.step();
+    expect(sim.session.carAct?.kind).toBe("exit");
+    expect(sim.session.focusPrompt).toBeNull();
+    untilActDone(sim);
+    expect(sim.session.driving).toBeNull();
+    expect(prompts).toContain(EXIT_CAR_PROMPT);
   });
 });

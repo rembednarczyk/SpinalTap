@@ -1,0 +1,1 @@
+- W aucie, gdy stoi albo jedzie wolno, pojawia się podpowiedź „Wysiądź”: na komputerze z klawiszem, na telefonie jako przycisk. Wcześniej na telefonie nie dało się wysiąść.
