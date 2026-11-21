@@ -79,7 +79,7 @@ export {
 } from "./systems";
 export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
 export { gearName as carGear, kmh as carKmh } from "./world/vehicle/step";
-export { TAKE_CAR_PROMPT } from "./systems/vehicle-system";
+export { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT } from "./systems/vehicle-system";
 export type { CarState } from "./world/vehicle/state";
 export { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT, NO_ROOM_PROMPT } from "./world/bodies";
 export {
