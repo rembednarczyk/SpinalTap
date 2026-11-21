@@ -84,6 +84,7 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
       const stop = (brake * dt) / I;
       w.omega = Math.abs(free) <= stop ? 0 : free - Math.sign(free) * stop;
       w.fx = w.fy = w.slipRatio = 0;
+      w.eased = null;
       return;
     }
     const n = w.normal;
@@ -99,8 +100,15 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
     w.alpha += (alphaK - w.alpha) * Math.min(1, ((Math.abs(vx) + t.lowSpeed) * dt) / t.relaxation);
     const kappa0 = (w.omega * r - vx) / denom;
     // Assists: ease the brake of a locking wheel, the drive of a spinning one.
-    if (brake > 0 && kappa0 < ABS_SLIP && Math.abs(vx) > 2) brake *= 0.4;
-    if (drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) drive *= Math.max(0, 1 - (kappa0 * Math.sign(vx || 1) - TC_SLIP) / TC_SPAN);
+    w.eased = null;
+    if (brake > 0 && kappa0 < ABS_SLIP && Math.abs(vx) > 2) {
+      brake *= 0.4;
+      w.eased = "abs";
+    }
+    if (drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) {
+      drive *= Math.max(0, 1 - (kappa0 * Math.sign(vx || 1) - TC_SLIP) / TC_SPAN);
+      w.eased = "tc";
+    }
     const fx0 = magic(t.longitudinal, kappa0) * w.load * g;
     const kw = (slope(t.longitudinal, kappa0) * w.load * g * r) / denom;
     const inertia = I + dt * r * kw;
@@ -131,6 +139,12 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
 /** The skid's strength for the sound and the HUD: the largest slip over the wheels (0 grip, 1 sliding). */
 export const skid = (car: CarState): number =>
   Math.min(1, Math.max(0, ...car.wheels.map((w) => (w.load > 0 ? Math.max(Math.abs(w.slipRatio) / 0.3, Math.abs(w.slipAngle) / 0.3) : 0))));
+
+/** Whether ABS or traction control eased any wheel in the last substep (the HUD's lamps). */
+export const assists = (car: CarState): { readonly abs: boolean; readonly tc: boolean } => ({
+  abs: car.wheels.some((w) => w.eased === "abs"),
+  tc: car.wheels.some((w) => w.eased === "tc"),
+});
 
 /** Left and front of wheel `i`, for the telemetry's labels. */
 export const wheelName = (i: number): string => `${isFront(i) ? "F" : "R"}${isLeft(i) ? "L" : "R"}`;
