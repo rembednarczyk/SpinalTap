@@ -1,6 +1,7 @@
 import type { EngineSound } from "@seki/core";
 import type { Graph } from "./audio-graph";
 import { CoilWhine } from "./coil-whine";
+import { TyreSqueal } from "./tyre-squeal";
 import type { EngineLoopSpec, SampleBank } from "./samples";
 
 /** Playback rate of the loop at idle and at the limiter: the recording is an idle's beat, pitched up with the revs. */
@@ -41,6 +42,8 @@ export class EngineLoop {
   private run: Running | null = null;
   /** A coil under load in the engine's background (user's notes of 21.11), synthesized: it needs no recording. */
   private readonly whine = new CoilWhine();
+  /** The tyres' squeal as they slide (ADR-0097 §3), synthesized too. */
+  private readonly squeal = new TyreSqueal();
 
   constructor(
     private readonly bank: SampleBank,
@@ -52,6 +55,11 @@ export class EngineLoop {
   /** True while the coil's whine plays (debug, tests). */
   get whining(): boolean {
     return this.whine.playing;
+  }
+
+  /** True while the tyres' squeal runs, silent or not (debug, tests). */
+  get squealing(): boolean {
+    return this.squeal.playing;
   }
 
   /** True while the loop plays (debug, tests). */
@@ -71,6 +79,7 @@ export class EngineLoop {
     const want = this.want;
     if (!want) return this.stop(now);
     this.whine.follow(g, now, want);
+    this.squeal.follow(g, now, want);
     const run = this.run ?? this.start(g, now);
     if (!run) return;
     const v = engineVoice(want);
@@ -81,6 +90,7 @@ export class EngineLoop {
 
   stop(now: number): void {
     this.whine.stop(now);
+    this.squeal.stop(now);
     const run = this.run;
     if (!run) return;
     run.level.gain.setTargetAtTime(0, now, FADE / 3);

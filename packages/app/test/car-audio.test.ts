@@ -1,12 +1,13 @@
 import { type AudioCue, type EngineSound, vehicleSpec } from "@seki/core";
 import type { Simulation } from "@seki/sim";
 import { describe, expect, it } from "vitest";
-import { BLIP, CarAudio, engineOf } from "../src/presenters/car-audio";
+import { BLIP, CRASH_ENERGY, CarAudio, SQUEAL_PACE, engineOf, hitCue } from "../src/presenters/car-audio";
 
 /** A simulation as the car's sounds read it: the car she drives and her act at it. */
 const fakeSim = () => {
   const spec = vehicleSpec("sedan");
-  const car = { model: "sedan" as const, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false }, q: { w: 1, x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 } };
+  const wheel = () => ({ load: 3000, slipRatio: 0, slipAngle: 0 });
+  const car = { model: "sedan" as const, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false }, q: { w: 1, x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, wheels: [wheel(), wheel(), wheel(), wheel()] };
   const session: { driving: number | null; carAct: { kind: "enter" | "exit"; t: number } | null } = { driving: null, carAct: null };
   const world = { with: () => ({ entities: session.driving === null ? [] : [{ id: session.driving, car }] }) };
   return { sim: { session, world } as unknown as Pick<Simulation, "session" | "world">, session, car, spec };
@@ -63,11 +64,29 @@ describe("the car she drives as heard (ADR-0097)", () => {
     const { sim, session, car, spec } = fakeSim();
     expect(engineOf(sim)).toBeNull();
     session.driving = 900;
-    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0 });
+    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0, skid: 0 });
     car.rpm = spec.engine.limiter;
     car.controls.throttle = 0.7;
     car.vel = { x: 0, y: 0, z: -12 };
-    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7 });
+    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7, skid: 0 });
+  });
+
+  it("sends the tyres' slide for their squeal, none at a walking pace", () => {
+    const { sim, session, car } = fakeSim();
+    session.driving = 900;
+    car.wheels[2]!.slipAngle = 0.3;
+    // At a standstill a slip angle is no slide.
+    expect(engineOf(sim)?.skid).toBe(0);
+    car.vel = { x: 0, y: 0, z: -((SQUEAL_PACE / 2) / 3.6) };
+    expect(engineOf(sim)?.skid).toBeCloseTo(0.5, 6);
+    car.vel = { x: 0, y: 0, z: -((2 * SQUEAL_PACE) / 3.6) };
+    expect(engineOf(sim)?.skid).toBeCloseTo(1, 6);
+  });
+
+  it("sounds a bump for a knock and a crash for a hard hit", () => {
+    expect(hitCue(5_000)).toBe("car-bump");
+    expect(hitCue(CRASH_ENERGY - 1)).toBe("car-bump");
+    expect(hitCue(CRASH_ENERGY)).toBe("car-crash");
   });
 
   it("blips the revs as she sits down, up and back to idle within the blip's length, and then follows the engine", () => {

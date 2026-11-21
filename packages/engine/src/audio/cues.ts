@@ -315,6 +315,23 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "noise", freq: 0, dur: 0.08, gain: 0.12, filter: 1200, filterTo: 300, filterType: "lowpass", attack: 0.001 },
     ],
   },
+  // Her car hitting something (ADR-0097 §3), under the recorded metal (or alone if it fails): a knock,
+  // and for a crash a low thud, a crunch of noise falling away and a short scrape of sheet metal.
+  "car-bump": {
+    send: 0.15,
+    voices: [
+      { type: "sine", freq: 140, to: 70, dur: 0.12, gain: 0.25, attack: 0.002 },
+      { type: "noise", freq: 0, dur: 0.06, gain: 0.1, filter: 1800, filterTo: 600, filterType: "lowpass", attack: 0.001 },
+    ],
+  },
+  "car-crash": {
+    send: 0.3,
+    voices: [
+      { type: "sine", freq: 90, to: 32, dur: 0.45, gain: 0.45, attack: 0.002 },
+      { type: "noise", freq: 0, dur: 0.35, gain: 0.3, filter: 3200, filterTo: 500, filterType: "lowpass", attack: 0.001 },
+      { type: "sawtooth", freq: 230, to: 170, start: 0.04, dur: 0.3, gain: 0.05, filter: 2400, filterType: "bandpass", attack: 0.01 },
+    ],
+  },
   "engine-stop": {
     send: 0.15,
     voices: [{ type: "sawtooth", freq: 40, to: 14, dur: 1.1, gain: 0.1, filter: 600, filterTo: 200, filterType: "lowpass", attack: 0.01 }],

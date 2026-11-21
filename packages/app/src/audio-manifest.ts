@@ -114,6 +114,10 @@ const SOUNDS = {
     "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
     "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
     "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
+    // Her car hitting something (ADR-0097 §3): Kenney's metal at -12 dB, a bump to about the doors' level,
+    // a crash some 6 dB over it with the synth's thud and crunch under it.
+    "car-bump": { urls: range("car-bump-", ["000", "001"]), gain: 0.8, pitch: 0.06, send: 0.15 },
+    "car-crash": { urls: range("car-crash-", ["000", "001", "002"]), gain: 1.6, pitch: 0.05, send: 0.3, layerSynth: true },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },

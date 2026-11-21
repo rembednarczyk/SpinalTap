@@ -527,6 +527,9 @@ export type AudioCue =
   | "car-door-open"
   | "car-door-close"
   | "engine-stop"
+  // Her car hitting something (ADR-0097 §3): a knock against a kerb post or a slow bump, a crash.
+  | "car-bump"
+  | "car-crash"
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
   | "explosion"
   | "alarm"
