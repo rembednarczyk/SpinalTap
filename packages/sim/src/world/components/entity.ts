@@ -1,6 +1,6 @@
 import type { ActivityId, CarPose, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
 import type { CarState } from "../vehicle/state";
-import type { EjectedDriver } from "../vehicle/ejected-driver";
+import type { EjectedDriver } from "../vehicle/thrown-types";
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
