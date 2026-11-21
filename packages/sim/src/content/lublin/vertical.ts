@@ -25,13 +25,15 @@ interface DistrictRule {
   readonly min: number;
   readonly max: number;
   readonly clutter: number;
+  /** The venues' fronts from the Asian Shop Pack (ADR-0096 rule 6). */
+  readonly shopfronts?: true;
 }
 
 const RULES: Readonly<Record<District, DistrictRule>> = {
   "shinsekai-7": { share: 0.85, min: 2, max: 8, clutter: 0.8 },
-  targ: { share: 0.9, min: 3, max: 8, clutter: 0.9 },
+  targ: { share: 0.9, min: 3, max: 8, clutter: 0.9, shopfronts: true },
   kanal: { share: 0.3, min: 1, max: 1, clutter: 0.25 },
-  doki: { share: 0.6, min: 1, max: 4, clutter: 0.5 },
+  doki: { share: 0.6, min: 1, max: 4, clutter: 0.5, shopfronts: true },
 };
 
 /** The Rynek: the Trybunał's centre and the radius in which the Old Town keeps its skyline. */
@@ -155,8 +157,9 @@ export const verticalOf = (b: LublinBuildingData, district: District, near: read
   // Each building hangs a little more or less than its district.
   const clutter = Math.round(Math.min(1, Math.max(0, base * (0.7 + 0.6 * unit(b.look, 3)))) * 100) / 100;
   if (rise === 0 && clutter === 0) return undefined;
+  const shops = RULES[district].shopfronts ? { shopfronts: true as const } : {};
   const under = near.filter((l) => l.top < b.y + b.height + rise);
-  if (rise === 0 || under.length === 0) return { rise, clutter };
+  if (rise === 0 || under.length === 0) return { rise, clutter, ...shops };
   const landmarks = under.map((l) => ({ outline: Array.from({ length: l.outline.length / 2 }, (_, i) => ({ x: (l.outline[i * 2] ?? 0) - b.x, z: (l.outline[i * 2 + 1] ?? 0) - b.z })), top: l.top - b.y }));
-  return { rise, clutter, landmarks };
+  return { rise, clutter, landmarks, ...shops };
 };

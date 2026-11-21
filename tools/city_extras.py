@@ -31,6 +31,7 @@ LIFT = {'ex-atm-wall': 0.8}
 
 STREET = ('sketchfab-street-asset-pack', 'street_asset_pack.glb')
 TAIWAN = ('sketchfab-taiwan-signboard', 'taiwan_style_signboard_lowpoly.glb')
+ASIAN = ('sketchfab-asian-shop-pack', 'asian_shop_pack_free_gameready.glb')
 
 
 def starts(*prefixes):
@@ -75,9 +76,14 @@ EXTRAS = [
     ('ex-blade-frame', TAIWAN, exact('board02_metal_0', 'board02_board_0'), ['blade-frame'], 90, 0, 3.585),
     ('ex-blade-narrow', TAIWAN, exact('board13_metal_0', 'board13_board_0'), ['blade-narrow'], 90, 0, 4.336),
     ('ex-blade-led', ('sketchfab-cyberpunk-led-neon-sign', 'cyberpunk_animated_japanese_led_neon_sign.glb'), exact('Object_36'), ['blade-led'], -90, 0, 1.778),
+    # The venues' fronts in the shop districts (ADR-0096 rule 6), face to +Z, the back on the wall: a whole
+    # shopfront with its door and windows, a door with a window, a hatch with a counter.
+    ('ex-front-wide', ASIAN, exact('Object_4'), ['shopfront-wide'], 0, 0, 3.0),
+    ('ex-front-door', ASIAN, exact('Object_62'), ['shopfront-door'], 0, 0, 2.7),
+    ('ex-front-counter', ASIAN, exact('Object_46'), ['shopfront-counter'], 90, 0, 3.0),
 ]
 # Models placed by their box's middle (`onWall`), not their foot's: a frame whose stay reaches down to one side.
-BOX_CENTRED = {'ex-blade-frame', 'ex-blade-narrow', 'ex-blade-led'}
+BOX_CENTRED = {'ex-blade-frame', 'ex-blade-narrow', 'ex-blade-led', 'ex-front-wide', 'ex-front-door', 'ex-front-counter'}
 
 
 def source_file(folder, source, name):
@@ -116,7 +122,10 @@ def build_extras(folder, out_dir):
     out, extras = [], {}
     for key, src, keep, styles, yaw, pitch, height in EXTRAS:
         P, roles, size = bake_extra(folder, src, keep, yaw, pitch, height, key in BOX_CENTRED)
-        if key in BOX_CENTRED:
+        if key == 'ex-front-door':
+            # Its texture reads as one colour: the door's frame in the street's metal.
+            roles = ['metal' for _ in roles]
+        if key.startswith('ex-blade'):
             # The panel's printed colours (the pack's own lettering) go dark: the game's blade lights it.
             roles = ['dark' if r.startswith(('neon', 'win', 'fabric')) else r for r in roles]
         P = P + np.array([0, LIFT.get(key, 0), 0])

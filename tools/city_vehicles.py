@@ -24,7 +24,8 @@ Usage: python3 -I tools/city_kit.py --vehicles DIR --out DIR (DIR as filled by t
 import os, zlib
 import numpy as np
 from PIL import Image
-from city_ccby import flat_normals, simplify, weld
+from city_ccby import flat_normals, weld
+from city_qem import qem_simplify
 from city_kit import car_roles
 from city_kit_gltf import accessor, png_bytes, read_glb, scene_triangles, write_glb
 from city_kit_palette import GRID, SWATCHES, hsv, palette_images, swatch_uv
@@ -73,8 +74,8 @@ VEHICLES = [
 # The city kit's own cars (front -Z in the kit): their phone and far versions.
 KIT_CARS = [('car-sedan', 'sedan'), ('car-hatchback', 'hatchback'), ('car-taxi', 'taxi'), ('car-van', 'van'), ('car-delivery', 'delivery')]
 
-NEAR_TRIS, LITE_TRIS = 1000, 350
-MAX_TRIS = 1500
+NEAR_TRIS, LITE_TRIS = 2500, 350
+MAX_TRIS = 3750
 # The welded model may come out a little over its target (the lamps, neon and tyres are reduced on their own).
 MAX_OVER = 1.5
 
@@ -320,8 +321,9 @@ GLOWS = {name for name, _, kind in SWATCHES if kind == 'glow'}
 
 
 def reduce(P, roles, target):
-    """`simplify` with the lamps and neon (a tenth of the budget) and the tyres (a sixth) on their own: small or
-    round, they would melt into the body, and the lamps are what shows at night."""
+    """Quadric simplification (`city_qem`, meshoptimizer) with the lamps and neon (a tenth of the budget) and the
+    tyres (a sixth) on their own: small or round, they would melt into the body, and the lamps are what shows at
+    night. Vertex clustering tore the near and phone versions (holes, wedges, a wheel off; audit of 20.11)."""
     groups = [(lambda r: r in GLOWS, target // 10), (lambda r: r == 'tyre', target // 6)]
     rest = np.ones(len(P), bool)
     outP, outR = [], []
@@ -329,10 +331,11 @@ def reduce(P, roles, target):
         sel = np.array([test(r) for r in roles]) & rest
         rest &= ~sel
         if sel.any():
-            Q, R = simplify(P[sel], [r for r, k in zip(roles, sel) if k], budget)
+            Q, R = qem_simplify(P[sel], [r for r, k in zip(roles, sel) if k], budget)
             outP.append(Q)
             outR += R
-    Q, R = drop_specks(*simplify(P[rest], [r for r, k in zip(roles, rest) if k], target - sum(len(q) for q in outP)))
+    # No specks to drop: edge collapse leaves none (the clustering did), and a roof or a pane is no speck.
+    Q, R = qem_simplify(P[rest], [r for r, k in zip(roles, rest) if k], target - sum(len(q) for q in outP))
     return np.concatenate(outP + [Q]), outR + R
 
 
