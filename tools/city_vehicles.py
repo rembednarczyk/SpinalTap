@@ -15,7 +15,8 @@ boxes after its silhouette, slice by slice along its length); so have the city k
 read from packages/app/public/city/city-kit.glb itself), whose near models stay in the kit.
 
 Colours per triangle: Kenney's from its colormap (`city_kit.car_roles`), a textured model's by the value of its
-mean texel (`bands`; emissive texels become the nearest neon), an OBJ's by material name. The `paint` swatch is
+mean texel (`bands`; emissive texels become the nearest neon; with `settle` smoothed over its mesh), an OBJ's by
+material name. The `paint` swatch is
 tinted per vehicle by the engine; the trolleybus's livery is tinted by swatch (`wall` its red roof, `wall-dark`
 its green skirt). Node `extras`: {"size", "styles", "credit": source id for CC-BY}.
 
@@ -32,6 +33,7 @@ from city_kit_palette import GRID, SWATCHES, hsv, palette_images, swatch_uv
 from city_props import material_image, nearest_neon, texel_mean
 from city_street import box_tris
 from city_street_e2 import drop_specks, is_ccby
+from city_vehicle_roles import settle_roles
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = os.path.join(HERE, '..', 'packages', 'app', 'public', 'city', 'city-kit.glb')
@@ -59,9 +61,10 @@ DIRTY_BANDS = [(0.12, 'tyre'), (0.3, 'trim'), (0.45, 'metal'), (9, 'paint')]
 #   glass: (lowest height share, highest |normal y|, z share range) where the paint above the belt is glass
 #   roof: role of the up-facing triangles of the top tenth; lengthen: (z0, z1) shares of the length stretched
 #   proportional: its height scaled as its length (not stretched to the body's)
+#   settle: its roles settled over its mesh (dark rims, no specks; `city_vehicle_roles`)
 VEHICLES = [
-    # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11), the nearest few in its close-up `-hi` of some 4 thousand triangles.
-    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 4000}),
+    # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11), the nearest few in its close-up `-hi`: the whole of 4d_Bob's car, 11.4 thousand triangles (the user's decision of 21.11: the car is in plain view, the full 12 thousand).
+    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 12000, 'settle': True}),
     ('veh-dirty', 'sedan', DIRTY, 0, {'proportional': True, 'bands': DIRTY_BANDS, 'materials': {'large_car_glass_mat': 'glass-dark', 'large_car_wheels_mat': 'tyre'}}),
     ('veh-suv', 'van', (KENNEY, 'x/Models/GLB format/suv.glb'), 0, {'kenney': True}),
     ('veh-pickup', 'van', (KENNEY, 'x/Models/GLB format/truck.glb'), 0, {'kenney': True}),
@@ -162,7 +165,8 @@ def tidy(P, roles, opts):
     for t, r in enumerate(roles):
         if r == opts.get('lights'):
             r = 'headlight' if c[t, 2] > 0 else 'taillight'
-        if 'glass' in opts and r == 'paint':
+        # A settled model's panes are its parts of their own (`city_vehicle_roles`): its body's paint stays paint.
+        if 'glass' in opts and r == 'paint' and not opts.get('settle'):
             y0, ny, (za, zb) = opts['glass']
             zs = (c[t, 2] - lo[2]) / (hi[2] - lo[2]) - 0.5
             if c[t, 1] > lo[1] + y0 * (hi[1] - lo[1]) and abs(n[t, 1]) < ny and za <= zs <= zb:
@@ -301,6 +305,8 @@ def source(folder, key, src, yaw, body, opts):
         P, roles = kenney_roles(path)
     else:
         P, roles = textured_roles(path, opts)
+        if opts.get('settle'):
+            roles = settle_roles(P, roles, opts.get('glass'))
     P = turn(P, yaw)
     if 'lengthen' in opts:
         w, _, l = SIZE[body]

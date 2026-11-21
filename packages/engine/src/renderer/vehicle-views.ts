@@ -20,14 +20,16 @@ export interface FleetStats {
 
 /**
  * How far vehicles are drawn, where the far version takes over (m from the camera), and how many of
- * the nearest wear their close-up within how far (19.11), per quality. The close-ups take places of
- * a pool in the shared mesh (discrete LOD with a fixed pool of the finest level, as the drones'
- * places), so the mesh holds the close-up a few times, not once per car of the city.
+ * the nearest wear their close-up within how far (19.11), per quality: `high` places for the parked
+ * cars, `driving` for those on the move. The close-ups take places of a pool in the shared mesh
+ * (discrete LOD with a fixed pool of the finest level, as the drones' places), so the mesh holds the
+ * close-up a few times, not once per car of the city. The driving ones' pool is small, as their
+ * buffers go up every frame; its first place is the player's car's, the nearest one (21.11).
  */
-export const VEHICLE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly high: number; readonly highReach: number }>> = {
-  high: { near: 90, draw: 240, high: 12, highReach: 45 },
-  medium: { near: 70, draw: 180, high: 8, highReach: 35 },
-  low: { near: 45, draw: 120, high: 0, highReach: 0 },
+export const VEHICLE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly high: number; readonly driving: number; readonly highReach: number }>> = {
+  high: { near: 90, draw: 240, high: 12, driving: 2, highReach: 45 },
+  medium: { near: 70, draw: 180, high: 8, driving: 1, highReach: 35 },
+  low: { near: 45, draw: 120, high: 0, driving: 0, highReach: 0 },
 };
 
 interface Pair {
@@ -102,8 +104,8 @@ class Fleet {
   constructor(
     private readonly deps: VehicleViewsDeps,
     private readonly name: string,
-    /** Whether it keeps a pool of close-ups: the parked cars only, whose buffers go up only when something changes (the driving ones' go up every frame). */
-    private readonly closeUps: boolean,
+    /** Its pool of close-ups in `VEHICLE_LOD`: the parked cars' (`high`) or the driving ones' (`driving`). */
+    private readonly pool: "high" | "driving",
   ) {}
 
   has(id: EntityId): boolean {
@@ -332,7 +334,7 @@ class Fleet {
       triangles += m.pair.near.indices.length + m.pair.far.indices.length;
     }
     // The close-ups' pool after the vehicles' own versions: every place laid out for one close-up.
-    const places = high && this.closeUps ? VEHICLE_LOD[this.deps.quality].high : 0;
+    const places = high ? VEHICLE_LOD[this.deps.quality][this.pool] : 0;
     this.poolBase = total;
     this.poolVerts = high?.vertexCount ?? 0;
     this.poolOwners = Array.from({ length: places }, () => null);
@@ -409,8 +411,8 @@ export class VehicleViews {
   private readonly parked: Fleet;
 
   constructor(private readonly deps: VehicleViewsDeps) {
-    this.driving = new Fleet(deps, "vehicles", false);
-    this.parked = new Fleet(deps, "parked", true);
+    this.driving = new Fleet(deps, "vehicles", "driving");
+    this.parked = new Fleet(deps, "parked", "high");
   }
 
   has(id: EntityId): boolean {

@@ -64,13 +64,14 @@ describe("vehicle-props.glb (ADR-0058 stage 4)", () => {
     }
   });
 
-  it("is light: near up to 2500 triangles, the sports car's close-up up to 4500, the phone's up to 350, far ones under 200, a file under 1200 KiB, on the props' palette", () => {
-    // Decision of the user of 19.11: the sports car at some 4 thousand triangles close up (`-hi`); the file grows with it (600 to 845 KiB).
-    expect(vehicleBytes.byteLength).toBeLessThan(1200 * 1024);
+  it("is light: near up to 2500 triangles, the sports car's close-up up to 12000, the phone's up to 350, far ones under 200, a file under 1600 KiB, on the props' palette", () => {
+    // Decisions of the user: the sports car close up (`-hi`) at some 4 thousand triangles (19.11), then whole, 11.4 thousand, as the
+    // player's car is in plain view (21.11); the file grows with it (845 to 1450 KiB).
+    expect(vehicleBytes.byteLength).toBeLessThan(1600 * 1024);
     expect(vehicles.swatches).toEqual(props.swatches);
-    expect(triangleCount(vehicles.models.get("veh-cyber-hi")!)).toBeGreaterThan(3500);
+    expect(triangleCount(vehicles.models.get("veh-cyber-hi")!)).toBeGreaterThan(11000);
     for (const m of vehicles.models.values()) {
-      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key.endsWith("-hi") ? 4500 : 2500;
+      const cap = m.key.endsWith("-far") ? 200 : m.key.endsWith("-lite") ? 350 : m.key.endsWith("-hi") ? 12000 : 2500;
       expect(triangleCount(m), m.key).toBeLessThanOrEqual(cap);
       expect(m.key).toMatch(/^(veh|car)-[a-z-]+$/);
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
@@ -194,6 +195,23 @@ describe("vehicle views with the vehicles' file (ADR-0058 stage 4)", () => {
       views.update();
       expect(views.stats.high, quality).toBeLessThanOrEqual(lod.high);
       if (quality !== "low") expect(views.stats.high, quality).toBeGreaterThan(0);
+    }
+  });
+
+  it("puts the close-up on the nearest of the driving cars too (the player's own), as many as their pool's places", () => {
+    for (const quality of ["high", "medium", "low"] as const) {
+      const scene = new Scene(new NullEngine());
+      const city = new CityKit(scene, new ToonMaterials(scene), null, kit, { labels: false });
+      city.setProps(props);
+      const views = new VehicleViews({ scene, kit: () => city, glow: null, eye: () => ({ x: 0, z: 0 }), quality });
+      for (let i = 0; i < 10; i++) views.spawn(i + 1, { kind: "vehicle", model: "sedan", tint: 7 + i }, at(0, 4 + i * 3));
+      views.update();
+      const lod = VEHICLE_LOD[quality];
+      expect(views.stats.high, quality).toBe(lod.driving);
+      // It moves on in its close-up: the place stays its own.
+      views.move(1, at(0, 3));
+      views.update();
+      expect(views.stats.high, quality).toBe(lod.driving);
     }
   });
 });
