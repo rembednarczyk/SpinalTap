@@ -128,3 +128,13 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Za kierownicą postać jest widoczna i siedzi w pętli „Driving”; klakson (B, na padzie wciśnięta lewa gałka) to klip „Honking Horn” i zdarzenie `VehicleHorn` z każdym wciśnięciem (dźwięk w etapie dźwięku).
 - Fotel kierowcy (`driverSeat`): biodra 0,26 m nad ziemią, o piątą część szerokości w lewo od osi i 1/12 długości za środkiem. Wszystkie auta ulicy noszą niskie auto sportowe (dach ok. 1,15 m), więc wyżej głowa wychodziła przez dach (zrzuty 21.11). Auto w klipach Mixamo jest wyższe: przy wsiadaniu i wysiadaniu wysokość bioder idzie za tym, na ile postać w danej chwili stoi (siedząc: nasz fotel; stojąc: biodra stojącej postaci nad ziemią przy drzwiach).
 - „Removing Driver” to klip wyciąganego kierowcy (nie napastnika): z „Hit By Car” idzie do kierowcy auta z ruchu (wyrwany, rzucony na jezdnię, wstaje i ucieka) i do potrąconych pieszych, w osobnym PR.
+
+## Kamera za autem jak w PodRcr (21.11, prośba użytkownika)
+- Wzorzec: widok z zewnątrz z drugiego projektu użytkownika, PodRcr (`src/render/CockpitCamera.ts`, `updateChase`, i `ChaseTrail.ts`), przeniesiony do `engine/camera` (`car-chase.ts`, `chase-trail.ts`).
+- Kamera stoi na drodze, którą auto przed chwilą przejechało (ślad co 0,5 m), 6,2 m za nim i 2,3 m nad ziemią. W zakręcie zostaje więc na wolnej jezdni, a auto wychodzi na bok kadru, zamiast żeby kamera wpadała w ścianę na przedłużeniu osi auta.
+- Jej miejsce względem auta nadąża z opóźnieniem (6/s), więc odległość nie rośnie z prędkością. Patrzy 7 m przed auto, na wysokości 1,1 m. Szybciej (do 40 m/s) kadr poszerza się do 22% i kamera podjeżdża bliżej w tej samej proporcji (jak w PodRcr), więc auto zostaje tej samej wielkości, a szybciej ucieka tylko ulica.
+- Różnice wobec PodRcr:
+  - bez przechyłu kamery z autem i bez wstrząsów (auto gracza nie ma jeszcze szkód ani drgań nawierzchni);
+  - rozglądanie myszką obraca kamerę wokół auta, a symulacja sprowadza je z powrotem za auto;
+  - ściana albo teren mapy między autem a kamerą przyciąga ją do auta (promień od punktu 1,2 m nad autem, jak kamera zza ramienia).
+- Test `car-chase.test.ts`: za autem na prostej, na śladzie w zakręcie, obrót myszką.
