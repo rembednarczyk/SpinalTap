@@ -47,6 +47,29 @@ export interface InputFrame {
    * replays): the right shoulder.
    */
   readonly leftShoulder?: boolean;
+  /**
+   * Driving (ADR-0097 §1), when the device gives its own axes (a pad's triggers, a wheel's pedals):
+   * the simulation drives from them while the player sits in a car. Absent (a keyboard, touch, older
+   * frames): the car reads the movement axes, `moveZ` as throttle and brake and `moveX` as steer,
+   * eased in the simulation, and `jump` as the handbrake.
+   */
+  readonly drive?: DriveInput;
+}
+
+/** A driver's controls (ADR-0097 §1). */
+export interface DriveInput {
+  /** 0..1. */
+  readonly throttle: number;
+  /** 0..1. */
+  readonly brake: number;
+  /** -1..1, positive to the left. */
+  readonly steer: number;
+  readonly handbrake: boolean;
+  /** Edge-triggered: a gear up or down (sequential box). */
+  readonly shiftUp?: boolean;
+  readonly shiftDown?: boolean;
+  /** 0..1, a wheel's clutch pedal (absent: the clutch works itself). */
+  readonly clutch?: number;
 }
 
 export type QuickhackSlotInput = 0 | 1 | 2 | 3 | 4 | 5;

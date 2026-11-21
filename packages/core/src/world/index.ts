@@ -13,3 +13,4 @@ export * from "./barriers";
 export * from "./sites";
 export * from "./clutter";
 export * from "./step-norm";
+export * from "./vehicle-spec";
