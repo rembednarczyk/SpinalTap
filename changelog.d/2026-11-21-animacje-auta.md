@@ -1,0 +1,1 @@
+- Bohaterka wsiada do auta i wysiada z niego z animacją, siedzi widoczna za kierownicą i trąbi klaksonem (B, na padzie wciśnięta lewa gałka).

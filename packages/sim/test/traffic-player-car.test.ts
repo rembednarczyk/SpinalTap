@@ -44,9 +44,9 @@ describe("the traffic and the player's car", () => {
     for (let i = 0; i < 400 && acting(); i++) sim.step();
     const mine = [...sim.world].find((e) => e.id === sim.session.driving)!;
     for (let i = 0; i < 300 && Math.hypot(mine.car!.vel.x, mine.car!.vel.z) > 0.3; i++) sim.step(press({ drive: { throttle: 0, brake: 1, steer: 0, handbrake: true } }));
-    for (let i = 0; i < 10 && sim.session.driving !== null; i++) sim.step(press({ interact: i % 2 === 0 }));
-    expect(sim.session.driving).toBeNull();
+    for (let i = 0; i < 10 && sim.session.driving !== null && !acting(); i++) sim.step(press({ interact: i % 2 === 0 }));
     for (let i = 0; i < 400 && acting(); i++) sim.step();
+    expect(sim.session.driving).toBeNull();
     const lane = TRAFFIC_ROUTES[route]!;
     const at = lanePose(lane, along + 30);
     const floor = ground(at.x, at.z);

@@ -114,6 +114,7 @@ export const pl = {
   "control.prevWeapon": "Poprzednia broń",
   "control.toggleCamera": "Widok FPP / TPP",
   "control.swapShoulder": "Zmiana ramienia (TPP)",
+  "control.horn": "Klakson (auto)",
   // Settings.
   "settings.heading": "Ustawienia",
   "settings.tab.general": "Ogólne",

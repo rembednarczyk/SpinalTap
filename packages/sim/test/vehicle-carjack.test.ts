@@ -37,11 +37,22 @@ const inTheWay = (): { sim: Simulation; car: Car } => {
 
 const playerOf = (sim: Simulation): Entity => [...sim.world].find((e) => e.player)!;
 
+/** Steps until her getting in or out is through (the clip's span at its pace, under 3 s); the steps it took. */
+const untilActDone = (sim: Simulation): number => {
+  let n = 0;
+  while (sim.session.carAct && n < 240) {
+    sim.step();
+    n++;
+  }
+  return n;
+};
+
 /** She takes the car in her way, drives it a little and brakes it to a stop; the car she sits in. */
 const takenAndStopped = (): { sim: Simulation; mine: () => Entity } => {
   const { sim } = inTheWay();
   for (let i = 0; i < 300 && sim.session.focusPrompt !== TAKE_CAR_PROMPT; i++) sim.step();
   sim.step(press({ interact: true }));
+  untilActDone(sim);
   const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
   for (let i = 0; i < 60; i++) sim.step(press({ moveZ: 1 }));
   // Brake to a stop and let go (held on, the brake would put it in reverse).
@@ -89,6 +100,14 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     sim.step(press({ interact: true }));
     expect(sim.session.driving).not.toBeNull();
     expect([...sim.world].some((e) => e.id === car.id)).toBe(false);
+    // She gets in with the clip (ADR-0097, 21.11): the car stands meanwhile and the throttle waits.
+    expect(sim.session.carAct?.kind).toBe("enter");
+    sim.step(press({ moveZ: 1 }));
+    expect(playerOf(sim).carPose?.act).toBe("enter");
+    const steps = untilActDone(sim);
+    expect(steps).toBeGreaterThan(120);
+    expect(steps).toBeLessThan(200);
+    expect(playerOf(sim).carPose?.act).toBe("drive");
     const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
     const from = { ...mine().position };
     for (let i = 0; i < 180; i++) sim.step(press({ moveZ: 1 }));
@@ -97,11 +116,16 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     // She sits in it, her view follows its heading.
     expect(Math.hypot(playerOf(sim).position.x - mine().position.x, playerOf(sim).position.z - mine().position.z)).toBeLessThan(0.01);
     // Brake to a stop and get out on the left.
-    for (let i = 0; i < 240; i++) sim.step(press({ moveZ: -1 }));
+    const moving = () => Math.hypot(mine().velocity?.x ?? 0, mine().velocity?.z ?? 0);
+    for (let i = 0; i < 240 && moving() > 0.5; i++) sim.step(press({ moveZ: -1 }));
     for (let i = 0; i < 30; i++) sim.step();
     const left = mine();
     sim.step(press({ interact: true }));
+    // Out with the clip: seated through it, then by the door.
+    expect(sim.session.carAct?.kind).toBe("exit");
+    expect(untilActDone(sim)).toBeGreaterThan(100);
     expect(sim.session.driving).toBeNull();
+    expect(playerOf(sim).carPose).toBeUndefined();
     const p = playerOf(sim).position;
     const off = Math.hypot(p.x - left.position.x, p.z - left.position.z);
     expect(off).toBeGreaterThan(1);
@@ -127,5 +151,18 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     postBeside(second.sim, car2, 1, 4_990_002);
     second.sim.step(press({ interact: true }));
     expect(second.sim.session.driving).toBe(car2.id);
+  });
+
+  it("honks once a press, with the clip of the hand on the horn while it is held", () => {
+    const { sim, mine } = takenAndStopped();
+    const honks: unknown[] = [];
+    sim.bus.on("VehicleHorn", (e) => honks.push(e));
+    for (let i = 0; i < 20; i++) sim.step(press({ horn: true }));
+    expect(playerOf(sim).carPose?.act).toBe("horn");
+    sim.step();
+    expect(playerOf(sim).carPose?.act).toBe("drive");
+    sim.step(press({ horn: true }));
+    expect(honks).toHaveLength(2);
+    expect(mine().id).toBe(sim.session.driving);
   });
 });

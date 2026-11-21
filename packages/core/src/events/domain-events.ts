@@ -263,6 +263,8 @@ export interface DomainEvents {
   /** The player sat in a car: `from` the street's traffic (a carjacking, its driver thrown out) or a car standing. */
   VehicleEntered: { vehicleId: EntityId; from: "traffic" | "parked" | "own" };
   VehicleExited: { vehicleId: EntityId };
+  /** The player pressed the horn of the car she drives (ADR-0097): the sound, the street's notice. */
+  VehicleHorn: { vehicleId: EntityId; at: Vec3 };
   /** The player's car hit something: `energy` the kinetic energy taken out of the crash (J), at a world point. */
   VehicleHit: { vehicleId: EntityId; other: EntityId | null; energy: number; at: Vec3 };
   /** The player's car ran into someone on foot. */

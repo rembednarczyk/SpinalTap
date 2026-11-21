@@ -392,7 +392,8 @@ export class CameraRig {
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, aim: ads, choke: this.chokeArms.forearms() });
-    this.onBodyVisibility(!fpp && !seat);
+    // At the wheel her figure sits in the car, with the clip of driving (ADR-0097, clips of 21.11).
+    this.onBodyVisibility(seat || !fpp);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
 }
