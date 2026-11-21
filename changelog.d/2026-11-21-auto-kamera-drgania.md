@@ -1,0 +1,1 @@
+- Kamera za autem już nie drga: postać i kamera przesuwają się płynnie razem z autem między krokami symulacji.

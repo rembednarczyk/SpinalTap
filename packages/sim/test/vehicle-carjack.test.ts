@@ -137,6 +137,19 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect([...sim.world].some((e) => e.id === left.id && e.car)).toBe(true);
   });
 
+  it("keeps her step's start at the wheel as the car's, so she is drawn between the steps with it (user's notes of 21.11: the camera shook)", () => {
+    const { sim, mine } = takenAndStopped();
+    for (let i = 0; i < 90; i++) sim.step(press({ moveZ: 1, moveX: -0.5 }));
+    const car = mine();
+    const her = playerOf(sim);
+    // Moving: her step's start is the car's, not her step's end.
+    expect(Math.hypot(car.position.x - car.prevPosition.x, car.position.z - car.prevPosition.z)).toBeGreaterThan(0.05);
+    expect(her.prevPosition.x).toBeCloseTo(car.prevPosition.x, 6);
+    expect(her.prevPosition.z).toBeCloseTo(car.prevPosition.z, 6);
+    // Her heading turns between the steps as the car's does.
+    expect(her.prevYaw).not.toBe(her.yaw);
+  });
+
   it("gets back into the car she left: it offers itself again, she sits in it and drives it on (user notes of 21.11)", () => {
     const { sim, mine } = takenAndStopped();
     const left = mine();
