@@ -1,8 +1,9 @@
-import { EMPTY_INPUT, type DriveInput, vehicleSpec } from "@seki/core";
+import { EMPTY_INPUT, type DriveInput, type InputFrame, vehicleSpec } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { attitude, length } from "../src/world/vehicle/frame";
 import { type CarState, forwardSpeed, newCar } from "../src/world/vehicle/state";
 import { driveCar, kmh } from "../src/world/vehicle/step";
+import { steerLimit } from "../src/world/vehicle/tyre";
 import type { CarGround } from "../src/world/vehicle/suspension";
 
 /** The car's physics on test floors (ADR-0097 §5), stepped at 60 Hz without a browser. */
@@ -100,7 +101,8 @@ describe("the car on flat ground (ADR-0097 stage 2)", () => {
     // velocity's turn each half second), once the circle is steady.
     for (let t = 0, k = 0; t < 24; t += DT, k++) {
       const v = forwardSpeed(car);
-      driveCar(car, pedal({ throttle: v < 19.5 ? 0.7 : 0.25, steer: t > 4 ? 0.6 : 0 }), flat, DT);
+      // Full lock: the speed-sensitive steering (`steerLimit`) asks the tyres for their grip and no more.
+      driveCar(car, pedal({ throttle: v < 19.5 ? 0.7 : 0.25, steer: t > 4 ? 1 : 0 }), flat, DT);
       if (k % 30 === 29) {
         if (t > 12) samples.push(Math.hypot(car.vel.x - last.x, car.vel.z - last.z) / 0.5 / 9.81);
         last = { ...car.vel };
@@ -156,5 +158,48 @@ describe("the car on flat ground (ADR-0097 stage 2)", () => {
     run(k, null, 0);
     for (let i = 0; i < 120; i++) driveCar(k, { ...EMPTY_INPUT, moveZ: 1 }, flat, DT);
     expect(forwardSpeed(k)).toBeGreaterThan(5);
+  });
+});
+
+describe("the car under a keyboard's all-or-nothing keys (user's notes of 21.11: it slid at once)", () => {
+  const key = (over: Partial<InputFrame>): InputFrame => ({ ...EMPTY_INPUT, ...over });
+  /** The rear tyres' slip angle (rad): the tail sliding out (the body's own angle is large in a tight turn at low speed without any slide). */
+  const tailSlip = (c: CarState) => Math.max(...c.wheels.slice(2).map((w) => Math.abs(w.slipAngle)));
+  const at = (kmhNow: number): CarState => {
+    const car = settled();
+    for (let i = 0; i < 1200 && kmh(car) < kmhNow; i++) driveCar(car, key({ moveZ: 1 }), flat, DT);
+    return car;
+  };
+  /** Held for `seconds`: the largest slip of the tail, and the largest slip of a driven wheel. */
+  const held = (car: CarState, f: InputFrame, seconds: number) => {
+    let slip = 0;
+    let spin = 0;
+    for (let t = 0; t < seconds; t += DT) {
+      driveCar(car, f, flat, DT);
+      slip = Math.max(slip, tailSlip(car));
+      spin = Math.max(spin, ...car.wheels.slice(2).map((w) => w.slipRatio));
+    }
+    return { slip, spin };
+  };
+
+  it("turns at full lock without its tail coming round, on the throttle or off it, at 30, 60 and 100 km/h", () => {
+    for (const speed of [30, 60, 100]) {
+      for (const moveZ of [0, 1]) {
+        const { slip } = held(at(speed), key({ moveX: -1, moveZ }), 2);
+        expect(slip, `${speed} km/h, throttle ${moveZ}`).toBeLessThan(0.14);
+      }
+    }
+  });
+
+  it("asks of the front no more steer than its tyres hold: the lock falls with the speed", () => {
+    const spec = vehicleSpec("sedan");
+    expect(steerLimit(spec, 1)).toBe(spec.steer.max);
+    expect(steerLimit(spec, 100 / 3.6)).toBeLessThan(0.1);
+    expect(steerLimit(spec, 60 / 3.6)).toBeLessThan(steerLimit(spec, 30 / 3.6));
+  });
+
+  it("keeps a driven wheel from spinning up under full throttle in a turn (traction control)", () => {
+    const { spin } = held(at(30), key({ moveX: -1, moveZ: 1 }), 3);
+    expect(spin).toBeLessThan(0.4);
   });
 });
