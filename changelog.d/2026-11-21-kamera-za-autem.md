@@ -1,0 +1,1 @@
+- Kamera za autem jedzie po śladzie auta i nadąża za nim z opóźnieniem (jak w PodRcr): w zakręcie auto wychodzi na bok kadru, a kamera nie wjeżdża w ściany. Przy większej prędkości kadr się poszerza.
