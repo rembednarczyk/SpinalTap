@@ -152,7 +152,7 @@ const gables = (sink: MeshSink, f: FacadeFrame, planes: readonly Plane[], y0: nu
     const at = (t: number): P2 => ({ x: w.a.x + (w.b.x - w.a.x) * t, z: w.a.z + (w.b.z - w.a.z) * t });
     const hs = ts.map((t) => Math.max(lowest(planes, at(t)), 0));
     const top = Math.max(...hs);
-    if (top < 0.6 || (w.blind && w.coveredTo >= y0 + top - 0.1)) continue;
+    if (top < 0.6 || (w.blind && w.hiddenTo >= y0 + top - 0.1)) continue;
     const n = { x: w.nx, y: 0, z: w.nz };
     for (let k = 0; k + 1 < ts.length; k++) {
       const t0 = ts[k] as number;

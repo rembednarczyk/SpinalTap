@@ -99,8 +99,14 @@ export interface Wall {
   readonly nz: number;
   /** Another building stands against it, or it is on the map's edge: no windows, no signs. */
   readonly blind: boolean;
-  /** Top of the neighbour against it (world y), or -Infinity. */
+  /** Top of the neighbour against it (world y), or -Infinity: from three samples, for what hangs or is painted on it. */
   readonly coveredTo: number;
+  /**
+   * Lowest top of the neighbours against it along its whole length (world y), or -Infinity where
+   * any stretch of it is open: what may leave the wall or its gable out (`hiddenWall`), so no
+   * stretch a neighbour does not cover is left as a hole into the empty building.
+   */
+  readonly hiddenTo: number;
   /** On the map's edge (G-556): blind, facing nothing, so nothing hangs or is painted on it. */
   readonly edge?: true;
   /** Bay width that fits the wall a whole number of times; 0 for no windows. */
@@ -166,6 +172,31 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
   return { blind: true, coveredTo: covered };
 };
 
+/** Step (m) and end margin (m) of the samples along a wall that decide whether a neighbour hides all of it. */
+const HIDE_STEP = 0.1;
+const HIDE_END = 0.02;
+
+/**
+ * The lowest top of the neighbours along the whole wall a..c, sampled every `HIDE_STEP` from 2 cm off its ends (the three
+ * samples of `classify` miss a neighbour that covers them but not the stretch between or past
+ * them: 74 walls of Lublin, 76 m of holes, were left out so, 21.11); -Infinity where one is open.
+ */
+const hiddenAlong = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): number => {
+  const len = Math.hypot(c.x - a.x, c.z - a.z) || 1;
+  const nx = (c.z - a.z) / len;
+  const nz = -(c.x - a.x) / len;
+  const span = Math.max(len - 2 * HIDE_END, 0);
+  const n = Math.max(1, Math.ceil(span / HIDE_STEP));
+  let lowest = Infinity;
+  for (let k = 0; k <= n; k++) {
+    const t = (len < 2 * HIDE_END ? len / 2 : HIDE_END + (span * k) / n) / len;
+    const top = neighbour(a.x + (c.x - a.x) * t + nx * 0.6, a.z + (c.z - a.z) * t + nz * 0.6, b.id);
+    if (top === null || (b.lifted && top <= b.foot + 0.1)) return -Infinity;
+    lowest = Math.min(lowest, top);
+  }
+  return lowest;
+};
+
 export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null, edge: MapEdgeAt = () => false): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
@@ -196,6 +227,7 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: Neighb
       nz: -(c.x - a.x) / length,
       blind,
       coveredTo,
+      hiddenTo: blind && !onEdge ? hiddenAlong(b, a, c, neighbour) : -Infinity,
       ...(onEdge ? { edge: true as const } : {}),
       bay: blind || length < 1.4 || style.window === WINDOW_STYLE.none ? 0 : length / n,
     });
@@ -210,7 +242,7 @@ export const frameWallMeta = (f: FacadeFrame, w: Wall): Uv => wallMeta(f.storey,
 export const frameRoofMeta = (f: FacadeFrame): Uv => roofMeta(f.style.seed, ROOF_DETAIL[f.style.roofDetail]);
 
 /** Walls a neighbour hides up to this building's top: not worth drawing. */
-export const hiddenWall = (f: FacadeFrame, w: Wall): boolean => w.blind && w.coveredTo >= f.top - 0.1;
+export const hiddenWall = (f: FacadeFrame, w: Wall): boolean => w.blind && w.hiddenTo >= f.top - 0.1;
 
 /** The plinth band round a building's foot (`planNearBuilding`): dark stone `out` metres off its walls, from `below` under its foot to `above` over its ground floor's line. */
 export const PLINTH_BAND = { out: 0.06, below: 0.2, above: 0.55 } as const;

@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-959 Ściany przy sąsiednim budynku pominięte, choć sąsiad zasłania je tylko w części: dziura w budynku
+- Ważność: S2 · Zasięg: 74 ściany Lublina, 76 m dziur (największe: 9 m na ścianie 72 m przy (2536; 406), 5,7 m przy (−155; −108), 4,5 m przy (416; −152) i (218; 60)); szczyty dachów dwuspadowych tak samo
+- Opis: Polecenie użytkownika 21.11 („budynki z przezroczystymi ścianami”). Ścianę, przy której stoi inny budynek, `hiddenWall` pomijała, gdy sąsiad był dość wysoki w trzech próbkach (15%, 50%, 85% długości, 0,6 m od ściany). Sąsiad krótszy niż ściana, kilku sąsiadów z przerwami albo sąsiad z wcięciem zostawiali odcinek ściany bez sąsiada i bez ściany: przez dziurę widać pusty środek budynku, a jego dalsze ściany są od tyłu, więc obcięte, i budynek wygląda na przezroczysty (zrzut (416; −152): oświetlona ulica za budynkiem). Kierunek ścian był dobry: `cleanRing` ustawia obrysy przeciwnie do wskazówek zegara, obrysów samoprzecinających się nie ma.
+- Status: naprawione (21.11, `fix/sciany-przy-sasiedzie`)
+- Pakiet właściciela: packages/engine (`renderer/mapcity/facade-frame.ts`, `roof-shapes.ts`)
+- Poprawka: ściana dostaje `hiddenTo`, najniższy wierzch sąsiadów wzdłuż całej jej długości, próbkowany co 0,1 m od 2 cm od końców (−∞, gdy któryś odcinek jest odkryty); pominięcie ściany i szczytu dachu czyta `hiddenTo`. `coveredTo` z trzech próbek zostaje dla szyldów, kabli i kalkomanii; importer kalkomanii (`decal-walls.ts`) pomija ścianę zasłoniętą w trzech próbkach jak dotąd (kalkomania na takiej ścianie mogłaby trafić w sąsiada), więc tablice mapy się nie zmieniają. Pominiętych ścian 575 → 388; ściany odsłonięte w części rysuje się jako ślepe (bez okien).
+- Test przyjęcia: `packages/engine/test/hidden-walls.test.ts`: trzech wąskich sąsiadów nad próbkami nie ukrywa ściany; w całym Lublinie żadna pominięta ściana nie ma odkrytego odcinka (sprawdzane co 0,1 m) i żadna ściana nie jest zwrócona do wnętrza swojego budynku. Bez poprawki oba testy padają.
+
 ### G-904 Stopy wychodzą z piwnicy W-3 na teren o 2,2 m w jednym kroku (2474,9; 408,5)
 - Ważność: S3 · Zasięg: piwnica W-3, wyjście przy (2474,9; 408,5)
 - Opis: Znalezione przy G-903: stopy z podłogi piwnicy (−30,2) wychodzą na teren (−28,0), +2,18 m w jednym kroku, także w pełnej symulacji z kolizjami (4 przypadki gracza po poprawce G-903). Bez pomostu, więc reguła deckSide tego nie obejmuje. Sondy: scratchpad g903-sim-probe.test.ts.

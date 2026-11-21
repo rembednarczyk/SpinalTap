@@ -1,0 +1,1 @@
+- Budynki stojące przy innych budynkach nie mają już dziur w ścianach, przez które widać było ich wnętrze i ulicę za nimi.
