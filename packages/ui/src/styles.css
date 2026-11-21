@@ -158,8 +158,8 @@ kbd {
   right: 24px;
   bottom: 120px;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
   padding: 6px 14px;
   background: var(--panel);
   border: 1px solid var(--panel-edge);
@@ -178,6 +178,49 @@ kbd {
   font-size: 22px;
   margin-left: 6px;
   color: var(--accent, #00e5ff);
+}
+.hud__vehicle-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+/* The tachometer (ADR-0097 §3): segments lit up to the revs, the last two the red band. */
+.hud__vehicle-tach {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+}
+.hud__tach-seg {
+  flex: 1;
+  background: var(--panel-edge);
+  opacity: 0.5;
+}
+.hud__tach-seg--on {
+  background: var(--accent, #00e5ff);
+  opacity: 1;
+}
+.hud__tach-seg--red.hud__tach-seg--on {
+  background: #ff2a6d;
+}
+.hud__vehicle--limiter .hud__tach-seg--on {
+  animation: hud-limiter 0.12s steps(2) infinite;
+}
+@keyframes hud-limiter {
+  50% {
+    opacity: 0.35;
+  }
+}
+/* The assists' lamps: dim at rest, amber while they work. */
+.hud__lamp {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  opacity: 0.25;
+}
+.hud__lamp--on {
+  color: #ffb000;
+  opacity: 1;
 }
 .hud__prompt {
   position: absolute;

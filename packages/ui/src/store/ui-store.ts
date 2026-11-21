@@ -80,6 +80,15 @@ export * from "./settings-vm";
 // One flat Zustand store; each area below is its own type, and the comment says who writes it.
 
 /** Session and screen: which screen, saves, toasts and the interaction prompt. Written by the app's session and save controller. */
+/** The car's dashboard on the HUD (ADR-0097 §3). */
+export interface VehicleVm {
+  readonly kmh: number;
+  readonly gear: string;
+  readonly revs: number;
+  readonly abs: boolean;
+  readonly tc: boolean;
+}
+
 export interface SessionUiState {
   readonly screen: Screen;
   /** The loading screen's bar (ADR-0057), written by the app's loading controller. */
@@ -90,8 +99,11 @@ export interface SessionUiState {
    * the prompt and on the touch fire button; null for nothing.
    */
   readonly promptHold: string | null;
-  /** The car she drives (ADR-0097 §3): speed (km/h, whole) and gear ("R", "N", "1".."6"); null on foot. Written by the app's vehicle presenter. */
-  readonly vehicle: { readonly kmh: number; readonly gear: string } | null;
+  /**
+   * The car she drives (ADR-0097 §3): speed (km/h, whole), gear ("R", "N", "1".."6"), revs (0 idle .. 1
+   * the limiter) and whether ABS and traction control are working; null on foot. Written by the app's vehicle presenter.
+   */
+  readonly vehicle: VehicleVm | null;
   readonly toasts: readonly Toast[];
   readonly slots: readonly SlotVm[];
   readonly hasSaves: boolean;

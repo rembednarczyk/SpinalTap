@@ -260,6 +260,8 @@ export const enWorld = {
   "contract.hooks": "Leads found",
   "hud.health": "Health",
   "hud.kmh": "km/h",
+  "hud.abs": "ABS",
+  "hud.tc": "TC",
   "hud.openJournal": "Open the journal",
   "hud.ability.ready": "ready",
   "hud.medkits": "Medkits × {count}",

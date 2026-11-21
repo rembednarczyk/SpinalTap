@@ -18,6 +18,7 @@ import { useViewportAspect } from "./use-viewport-aspect";
 import { useRecentChange } from "./use-recent-change";
 import { XpHud } from "./xp-hud";
 import { ObjectiveCard } from "./objective-card";
+import { VehicleDash } from "./vehicle-dash";
 
 /** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
 export const HUD_CAMERA_FOV = hipVerticalFov(DEFAULT_HORIZONTAL_FOV, 16 / 9);
@@ -201,14 +202,8 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <div className="hud__camera">
         {cameraMode} · [{keyOf(controls, "toggleCamera", "V", t)}]
       </div>
-      {vehicle && (
-        // At the wheel (ADR-0097 §3): the speed and the gear.
-        <div className="hud__vehicle" data-testid="vehicle">
-          <span className="hud__vehicle-speed">{vehicle.kmh}</span>
-          <span className="hud__vehicle-unit">{t("hud.kmh")}</span>
-          <span className="hud__vehicle-gear">{vehicle.gear}</span>
-        </div>
-      )}
+      {/* At the wheel (ADR-0097 §3): the speed, the gear, the revs and the assists. */}
+      {vehicle && <VehicleDash vehicle={vehicle} />}
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <span className="hud__prompt-action" data-testid="prompt-main">

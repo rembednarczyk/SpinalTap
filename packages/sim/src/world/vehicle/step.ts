@@ -161,3 +161,9 @@ export const kmh = (car: CarState): number => forwardSpeed(car) * 3.6;
 
 /** The gear for the HUD: "R", "N" or its number. */
 export const gearName = (car: CarState): string => (car.gear < 0 ? "R" : car.gear === 0 ? "N" : String(car.gear));
+
+/** The revs for the HUD's tachometer: 0 at idle .. 1 at the limiter. */
+export const revs = (car: CarState): number => {
+  const { idle, limiter } = vehicleSpec(car.model).engine;
+  return Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle)));
+};
