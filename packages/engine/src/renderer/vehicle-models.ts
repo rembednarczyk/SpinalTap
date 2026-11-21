@@ -3,6 +3,7 @@ import { type CityKitData, GeometrySink, type KitModel, hexRgb, swatchUv } from 
 import { type CityProps, swatchAt } from "./city-props";
 import { TROLLEY_LIVERY, type VehicleVariant } from "./vehicle-variants";
 import { type WheelPart, wheelParts } from "./vehicle-wheels";
+import { type DoorPart, doorPart } from "./vehicle-door";
 
 /**
  * The street's vehicles (ADR-0050) as geometry on the city kit's texture (ADR-0022), in the
@@ -25,6 +26,8 @@ export interface VehicleTemplate {
   readonly skin?: string;
   /** Its wheels the engine turns (a close-up's, `KitModel.wheels`, ADR-0097 §3). */
   readonly wheels?: readonly WheelPart[];
+  /** Its driver's door the engine opens (a close-up's, `KitModel.door`, 21.11). */
+  readonly door?: DoorPart;
 }
 
 /** The kit's model behind each car. */
@@ -46,7 +49,7 @@ export const PAINTS = ["#6e1446", "#0f4f57", "#4a505c", "#23293a", "#7a5418", "#
 /** The paint a vehicle's tint seed picks (a trolleybus keeps its livery). */
 export const paintOf = (model: VehicleModel, tint: number): number => (model === "trolleybus" ? 0 : (tint >>> 3) % PAINTS.length);
 
-const rest = (sink: GeometrySink, skin?: string): Omit<VehicleTemplate, "positions" | "wheels"> => ({
+const rest = (sink: GeometrySink, skin?: string): Omit<VehicleTemplate, "positions" | "wheels" | "door"> => ({
   normals: Float32Array.from(sink.normals),
   uvs: Float32Array.from(sink.uvs),
   colors: Float32Array.from(sink.colors),
@@ -56,12 +59,13 @@ const rest = (sink: GeometrySink, skin?: string): Omit<VehicleTemplate, "positio
 });
 
 /** A template from the sink; a close-up's wheels (vertex ranges) become its parts (`vehicle-wheels.ts`). */
-const toTemplate = (sink: GeometrySink, skin?: string, wheels?: readonly (readonly [number, number])[]): VehicleTemplate => {
+const toTemplate = (sink: GeometrySink, skin?: string, wheels?: readonly (readonly [number, number])[], door?: readonly [number, number]): VehicleTemplate => {
   const positions = Float32Array.from(sink.positions);
   return {
     positions,
     ...rest(sink, skin),
     ...(wheels ? { wheels: wheelParts(positions, wheels) } : {}),
+    ...(door ? { door: doorPart(positions, door) } : {}),
   };
 };
 
@@ -121,7 +125,7 @@ const propsVehicle = (props: VehicleProps, m: KitModel, model: VehicleModel, col
     // The kit's sink moves UVs into the palette's rows: the skin's are its own.
     for (let i = 0; i < m.uvs.length; i++) sink.uvs[i] = m.uvs[i] ?? 0;
     extra?.(sink);
-    return toTemplate(sink, m.skin, m.wheels);
+    return toTemplate(sink, m.skin, m.wheels, m.door);
   }
   for (let v = 0; v * 2 < m.uvs.length; v++) {
     const s = swatchAt(props.data, m.uvs[v * 2] ?? 0, m.uvs[v * 2 + 1] ?? 0);

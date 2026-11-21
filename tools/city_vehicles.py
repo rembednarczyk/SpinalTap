@@ -36,6 +36,7 @@ from city_street_e2 import drop_specks, is_ccby
 from city_vehicle_roles import settle_roles
 from city_vehicle_skin import fitted_normals, skin_images, skin_model
 from city_vehicle_wheels import wheels
+from city_vehicle_doors import cut_door
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = os.path.join(HERE, '..', 'packages', 'app', 'public', 'city', 'city-kit.glb')
@@ -434,10 +435,25 @@ def build_vehicles(folder, out_dir):
             if order is None:
                 m = skin_model(f'{key}-hi', P, N, tex['uv'])
             else:
-                m = skin_model(f'{key}-hi', P[order], N[order], tex['uv'][order], [w['tris'] for w in found])
+                # The driver's door sliced out of the body along its outline (21.11): it opens upward in the engine.
+                n_wheel = sum(w['tris'] for w in found)
+                wheel_tris = order[len(order) - n_wheel:]
+                in_wheel = np.zeros(len(P), bool)
+                in_wheel[wheel_tris] = True
+                V = np.concatenate([P, N, tex['uv']], -1)
+                V2, src, is_door = cut_door(V, np.array([r == 'glass-dark' for r in roles]), in_wheel)
+                # Body (cut), the wheels in their order (untouched: the same triangles), the door last.
+                at_src = {int(t): i for i, t in enumerate(src) if in_wheel[t]}
+                body2 = [i for i in range(len(V2)) if not is_door[i] and not in_wheel[src[i]]]
+                order2 = np.array(body2 + [at_src[int(t)] for t in wheel_tris] + [i for i in range(len(V2)) if is_door[i]])
+                tail = [w['tris'] for w in found] + ([int(is_door.sum())] if is_door.any() else [])
+                m = skin_model(f'{key}-hi', V2[order2, :, :3], V2[order2, :, 3:6], V2[order2, :, 6:8], tail)
             flat = P.reshape(-1, 3)
             out.append(m)
             wheel_extras = {'wheels': [{'first': a, 'count': n, 'axle': w['axle'], 'radius': w['radius']} for (a, n), w in zip(m['parts'], found)]} if 'parts' in m else {}
+            if 'parts' in m and len(m['parts']) > len(found):
+                a, n = m['parts'][len(found)]
+                wheel_extras['door'] = {'first': a, 'count': n}
             extras[m['key']] = {'size': [round(float(x), 3) for x in np.ptp(flat, 0)], 'styles': ['veh-hi'], 'skin': key, **wheel_extras, **({'credit': credit} if credit else {})}
             images += list(zip((f'skin:{key}', f'skin-glow:{key}'), skin_images(tex['base'], tex['emissive'], tex['uv'], roles)))
             print(f"{m['key']:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} skin {key}")

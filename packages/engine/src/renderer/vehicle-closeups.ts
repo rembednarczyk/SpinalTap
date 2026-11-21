@@ -3,6 +3,7 @@ import { type GlowLayer, type Mesh, MeshClass, type Plane, type Scene, type Shad
 import { rampPitch } from "./alchemia/parking-traffic";
 import type { VehicleTemplate } from "./vehicle-models";
 import { poseWheels } from "./vehicle-wheels";
+import { poseDoor } from "./vehicle-door";
 
 /**
  * Writes a template turned by the yaw and moved to the transform into `positions` and `normals` at
@@ -22,7 +23,8 @@ export const placeTemplate = (t: VehicleTemplate, positions: Float32Array, norma
   const [cr, sr] = [Math.cos(roll), Math.sin(roll)];
   const { x: px, y: py, z: pz } = tr.position;
   // A car with physics turns its close-up's wheels first (ADR-0097 §3).
-  const shape = poseWheels(t, t.wheels, tr.wheels, posed);
+  // And its driver's door up, while she gets in or out (21.11).
+  const shape = poseDoor(poseWheels(t, t.wheels, tr.wheels, posed), t.door, tr.door, posed);
   const src = shape.positions;
   const nsrc = shape.normals;
   let o = offset * 3;

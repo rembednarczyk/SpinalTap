@@ -63,6 +63,8 @@ export interface CarState {
   assist: DrivingAssist;
   /** 0 whole .. 1 a wreck (`damage.ts`). */
   damage: number;
+  /** The driver's door, 0 shut .. 1 up (`car-act.ts`, the picture only). Not saved: a loaded car stands shut. */
+  door: number;
 }
 
 const wheel = (): WheelState => ({ omega: 0, compression: 0, alpha: 0, load: 0, contact: null, normal: v3(0, 1, 0), slipRatio: 0, slipAngle: 0, fx: 0, fy: 0, eased: null, rolled: 0 });
@@ -89,6 +91,7 @@ export const newCar = (model: VehicleModel, x: number, groundY: number, z: numbe
     hold: null,
     assist: "full",
     damage: 0,
+    door: 0,
   };
 };
 
