@@ -40,7 +40,7 @@ const playerOf = (sim: Simulation): Entity => [...sim.world].find((e) => e.playe
 /** Steps until her getting in or out is through (the clip's span at its pace, under 3 s); the steps it took. */
 const untilActDone = (sim: Simulation): number => {
   let n = 0;
-  while (sim.session.carAct && n < 240) {
+  while (sim.session.carAct && n < 400) {
     sim.step();
     n++;
   }
@@ -105,8 +105,9 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     sim.step(press({ moveZ: 1 }));
     expect(playerOf(sim).carPose?.act).toBe("enter");
     const steps = untilActDone(sim);
-    expect(steps).toBeGreaterThan(120);
-    expect(steps).toBeLessThan(200);
+    // At the door while its driver is pulled out (1.5 s), then in (2.7 s).
+    expect(steps).toBeGreaterThan(210);
+    expect(steps).toBeLessThan(290);
     expect(playerOf(sim).carPose?.act).toBe("drive");
     const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
     const from = { ...mine().position };
@@ -164,6 +165,61 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     sim.step(press({ horn: true }));
     expect(honks).toHaveLength(2);
     expect(mine().id).toBe(sim.session.driving);
+  });
+
+  it("pulls its driver out, throws him onto the road, and he gets up and runs off out of the way", () => {
+    const { sim, car } = inTheWay();
+    for (let i = 0; i < 300 && sim.session.focusPrompt !== TAKE_CAR_PROMPT; i++) sim.step();
+    sim.step(press({ interact: true }));
+    const driver = () => [...sim.world].find((e) => e.ejected !== undefined);
+    const d = driver()!;
+    expect(d).toBeDefined();
+    expect(d.key).toBeUndefined();
+    const seen = new Set<string>();
+    let far = 0;
+    for (let i = 0; i < 60 * 16 && driver(); i++) {
+      sim.step();
+      const e = driver();
+      if (!e) break;
+      seen.add(e.carPose?.act ?? "run");
+      far = Math.max(far, Math.hypot(e.position.x - car.position.x, e.position.z - car.position.z));
+    }
+    expect([...seen]).toEqual(["pulled", "thrown", "getup", "run"]);
+    expect(far).toBeGreaterThan(25);
+    // Out of the way, he leaves the world: nothing of him in a save.
+    expect(driver()).toBeUndefined();
+  });
+
+  it("throws someone it runs into onto the road, holds them there, and they get up where they fell", () => {
+    const { sim, mine } = takenAndStopped();
+    const car = mine();
+    const [fx, fz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+    // Someone standing 12 m ahead of the middle; full throttle into them.
+    const at = { x: car.position.x + fx * 12, y: car.position.y, z: car.position.z + fz * 12 };
+    const walker = sim.world.add({ id: 4_990_100, position: { ...at }, prevPosition: { ...at }, yaw: 0, prevYaw: 0, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, body: { radius: 0.38, height: 1.8 }, view: { kind: "npc", preset: "civilian", look: 0 } });
+    const ranOver: unknown[] = [];
+    sim.bus.on("VehicleRanOver", (e) => ranOver.push(e));
+    for (let i = 0; i < 300 && !walker.struck; i++) sim.step(press({ moveZ: 1 }));
+    expect(walker.struck).toBeDefined();
+    expect(ranOver).toHaveLength(1);
+    sim.step();
+    expect(walker.carPose?.act).toBe("thrown");
+    const down = { ...walker.position };
+    // Pinned while down, whatever the step does.
+    for (let i = 0; i < 60; i++) sim.step();
+    expect(Math.hypot(walker.position.x - down.x, walker.position.z - down.z)).toBeLessThan(1e-9);
+    const acts = new Set<string>();
+    for (let i = 0; i < 60 * 6 && walker.struck; i++) {
+      sim.step();
+      acts.add(walker.carPose?.act ?? "up");
+    }
+    expect(walker.struck).toBeUndefined();
+    expect(walker.carPose).toBeUndefined();
+    expect([...acts]).toContain("getup");
+    // Up where the throw left them: some 1.6 m on from where they were hit.
+    const moved = Math.hypot(walker.position.x - down.x, walker.position.z - down.z);
+    expect(moved).toBeGreaterThan(1.2);
+    expect(moved).toBeLessThan(2.2);
   });
 
   it("offers to get out while the car is slow (the phone's Use button), not at speed nor while getting in or out", () => {

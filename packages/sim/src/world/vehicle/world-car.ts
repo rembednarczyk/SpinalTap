@@ -7,6 +7,7 @@ import { solidIndexOf } from "../solid-index";
 import { pushCircleOut } from "../solids";
 import { type V3, attitude, dot, length, scale, sub, toWorld, v3 } from "./frame";
 import { type CarState, restHeight } from "./state";
+import { strike } from "./struck";
 import type { CarGround } from "./suspension";
 
 /**
@@ -128,16 +129,17 @@ const RUN_OVER = 4;
 
 /**
  * People on foot against the car (ADR-0097 §2.7): nobody stands in its body, the background
- * passers-by neither; each is pushed out
- * of its footprint the shorter way, and one hit faster than `RUN_OVER` is run over (an assault in
- * the crime's rules, ADR-0029/0091). Their falls and injuries come with the bodies' physics.
+ * passers-by neither; each is pushed out of its footprint the shorter way. Someone hit faster than
+ * `RUN_OVER` is run over (an assault in the crime's rules, ADR-0029/0091) and, unless armed and
+ * hostile (they take the push and fight on), thrown onto the road with the user's clip and gets up
+ * (`struck.ts`). Someone already down is not hit again.
  */
 export const collideBodies = (ctx: SimContext, car: CarState, self: EntityId): void => {
   const half = vehicleSpec(car.model).half;
   const f = toWorld(car.q, v3(0, 0, 1));
   const speed = Math.hypot(car.vel.x, car.vel.z);
   for (const b of ctx.world.with("body")) {
-    if (b.player) continue;
+    if (b.player || b.struck) continue;
     const r = b.body.radius;
     const dx = b.position.x - car.pos.x;
     const dz = b.position.z - car.pos.z;
@@ -154,6 +156,7 @@ export const collideBodies = (ctx: SimContext, car: CarState, self: EntityId): v
     if (speed > RUN_OVER && !b.passerby) {
       ctx.bus.emit("VehicleRanOver", { vehicleId: self, victim: b.id, speed });
       offend(ctx, "assault", b.position, undefined, b.id);
+      if (!b.enemy) strike(ctx.world, b, { x: car.vel.x / speed, z: car.vel.z / speed });
     }
   }
 };
