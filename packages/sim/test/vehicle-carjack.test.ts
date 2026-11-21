@@ -137,6 +137,19 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect([...sim.world].some((e) => e.id === left.id && e.car)).toBe(true);
   });
 
+  it("keeps her step's start at the wheel as the car's, so she is drawn between the steps with it (user's notes of 21.11: the camera shook)", () => {
+    const { sim, mine } = takenAndStopped();
+    for (let i = 0; i < 90; i++) sim.step(press({ moveZ: 1, moveX: -0.5 }));
+    const car = mine();
+    const her = playerOf(sim);
+    // Moving: her step's start is the car's, not her step's end.
+    expect(Math.hypot(car.position.x - car.prevPosition.x, car.position.z - car.prevPosition.z)).toBeGreaterThan(0.05);
+    expect(her.prevPosition.x).toBeCloseTo(car.prevPosition.x, 6);
+    expect(her.prevPosition.z).toBeCloseTo(car.prevPosition.z, 6);
+    // Her heading turns between the steps as the car's does.
+    expect(her.prevYaw).not.toBe(her.yaw);
+  });
+
   it("gets back into the car she left: it offers itself again, she sits in it and drives it on (user notes of 21.11)", () => {
     const { sim, mine } = takenAndStopped();
     const left = mine();
@@ -269,5 +282,39 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     untilActDone(sim);
     expect(sim.session.driving).toBeNull();
     expect(prompts).toContain(EXIT_CAR_PROMPT);
+  });
+
+  it("saves her cars: loaded, she is at the wheel of the one she drove and it drives on as the saved game does; the one she left stands where it was", () => {
+    const { sim, mine } = takenAndStopped();
+    for (let i = 0; i < 40; i++) sim.step(press({ moveZ: 1, moveX: 0.3 }));
+    const snap = JSON.parse(JSON.stringify(sim.snapshot(null, "t", ""))) as ReturnType<Simulation["snapshot"]>;
+    expect(snap.cars).toHaveLength(1);
+    expect(snap.cars![0]!.driving).toBe(true);
+    const loaded = Simulation.fromSnapshot(snap, undefined, "off", "high");
+    expect(loaded.session.driving).toBe(sim.session.driving);
+    expect(playerOf(loaded).seated).toBe(loaded.session.driving);
+    const drivenIn = (s: Simulation) => [...s.world].find((e) => e.id === s.session.driving)!;
+    // The same body: the same place, then the same way on under the same keys.
+    expect(drivenIn(loaded).position.x).toBeCloseTo(mine().position.x, 9);
+    for (let i = 0; i < 60; i++) {
+      sim.step(press({ moveZ: 1, moveX: -0.4 }));
+      loaded.step(press({ moveZ: 1, moveX: -0.4 }));
+    }
+    expect(drivenIn(loaded).position.x).toBeCloseTo(drivenIn(sim).position.x, 6);
+    expect(drivenIn(loaded).position.z).toBeCloseTo(drivenIn(sim).position.z, 6);
+    // Out of it and saved again: it stands where she left it, hers to take again, and a new car takes an id of its own.
+    for (let i = 0; i < 240 && Math.hypot(drivenIn(loaded).velocity?.x ?? 0, drivenIn(loaded).velocity?.z ?? 0) > 0.5; i++) loaded.step(press({ moveZ: -1 }));
+    for (let i = 0; i < 30; i++) loaded.step();
+    const left = drivenIn(loaded);
+    loaded.step(press({ interact: true }));
+    for (let i = 0; i < 240 && loaded.session.carAct; i++) loaded.step();
+    expect(loaded.session.driving).toBeNull();
+    const again = Simulation.fromSnapshot(JSON.parse(JSON.stringify(loaded.snapshot(null, "t", ""))) as ReturnType<Simulation["snapshot"]>, undefined, "off", "high");
+    const standing = [...again.world].filter((e) => e.car);
+    expect(standing).toHaveLength(1);
+    expect(standing[0]!.id).toBe(left.id);
+    expect(Math.hypot(standing[0]!.position.x - left.position.x, standing[0]!.position.z - left.position.z)).toBeLessThan(0.05);
+    expect(again.session.driving).toBeNull();
+    expect(playerOf(again).seated).toBeUndefined();
   });
 });

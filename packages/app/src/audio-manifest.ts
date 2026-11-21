@@ -113,7 +113,6 @@ const SOUNDS = {
     horn: { urls: ["car-horn-000.ogg"], gain: 0.4, pitch: 0.03, send: 0.45 },
     "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
     "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
-    "engine-start": { urls: ["engine-start-000.ogg"], gain: 0.45, pitch: 0.02, send: 0.15 },
     "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },

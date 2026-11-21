@@ -1,4 +1,4 @@
-import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, WOUND_CRITICAL, WOUND_FROM, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
+import { type ActivityId, type AppearanceDescriptor, type CarPose, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, WOUND_CRITICAL, WOUND_FROM, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import { carTilt } from "../world/vehicle/world-car";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
@@ -13,6 +13,19 @@ type AimFields = Pick<Transform, "aim" | "aimZoom" | "guard">;
  * Aim and guard for the presentation (ADR-0019): the player's eased aim down sights with the
  * zoom of the weapon in hand, an NPC's weapon up while it fights, the guard of either.
  */
+/**
+ * Her pose at the car between two steps (ADR-0097): the car's heading, her seat and the floor moved
+ * as her own place and heading are between the steps, so she, the car and the chase camera go
+ * together (the car is drawn between its steps; a pose from the step's end shook against it).
+ */
+const betweenSteps = (e: Entity, pose: CarPose, alpha: number): CarPose => {
+  if (!e.velocity) return pose;
+  const at = lerp(e.prevPosition, e.position, alpha);
+  const [dx, dy, dz] = [at.x - e.position.x, at.y - e.position.y, at.z - e.position.z];
+  const turn = lerpAngle(e.prevYaw, e.yaw, alpha) - e.yaw;
+  return { ...pose, yaw: pose.yaw + turn, seat: { x: pose.seat.x + dx, y: pose.seat.y + dy, z: pose.seat.z + dz }, floor: pose.floor + dy };
+};
+
 const aimOf = (e: Entity, alpha: number): AimFields => {
   const out: { aim?: number; aimZoom?: number; guard?: number } = {};
   if (e.posture) {
@@ -118,7 +131,7 @@ export class RenderSync {
         ...(grab ? { grab } : {}),
         // At the wheel and the car's tilt (ADR-0097).
         ...(e.seated !== undefined ? { seat: "driver" as const } : {}),
-        ...(e.carPose ? { car: e.carPose } : {}),
+        ...(e.carPose ? { car: betweenSteps(e, e.carPose, alpha) } : {}),
         ...(e.car ? { tilt: carTilt(e.car) } : {}),
       };
       if (!this.spawned.has(e.id)) {

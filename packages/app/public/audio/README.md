@@ -90,7 +90,6 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | `car-horn-000.ogg` | GGBotNet, `Car_Horn.ogg` | `horn` (klakson aut z ruchu i auta gracza) |
 | `car-door-open-000.ogg` | GGBotNet, `Car_Door_Open.ogg` | `car-door-open` |
 | `car-door-close-000.ogg` | GGBotNet, `Car_Door_Close.ogg` | `car-door-close` |
-| `engine-start-000.ogg` | GGBotNet, `Car_Engine_Start_Up.ogg` | `engine-start` |
 | `engine-stop-000.ogg` | GGBotNet, `Car_Engine_Turning_Off.ogg` (do 1,82 s) | `engine-stop` |
 | `engine-loop-000.ogg` | domasx2, `loop_0.wav` | pętla silnika auta gracza (`EngineLoop`, wysokość od obrotów) |
 

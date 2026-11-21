@@ -300,7 +300,7 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
     ],
   },
   // The car she drives (ADR-0097), synthesized only if its recording fails: the latch and the door's
-  // thud, the starter's whirr under a rising engine, the engine dying away.
+  // thud, the engine dying away.
   "car-door-open": {
     send: 0.1,
     voices: [
@@ -313,13 +313,6 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
     voices: [
       { type: "sine", freq: 110, to: 55, dur: 0.16, gain: 0.3, attack: 0.002 },
       { type: "noise", freq: 0, dur: 0.08, gain: 0.12, filter: 1200, filterTo: 300, filterType: "lowpass", attack: 0.001 },
-    ],
-  },
-  "engine-start": {
-    send: 0.15,
-    voices: [
-      { type: "sawtooth", freq: 18, to: 24, dur: 0.7, gain: 0.08, filter: 500, filterType: "lowpass", attack: 0.02 },
-      { type: "sawtooth", freq: 30, to: 48, start: 0.6, dur: 0.9, gain: 0.12, filter: 700, filterType: "lowpass", attack: 0.05 },
     ],
   },
   "engine-stop": {
