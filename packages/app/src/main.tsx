@@ -1,6 +1,6 @@
 import "./fonts";
 import { degToRad } from "@seki/core";
-import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
+import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio, VehicleTelemetry } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
@@ -21,6 +21,7 @@ import { pointerFocus } from "./pointer-focus";
 import { feedTouchFire } from "./touch-fire";
 import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
+import { feedTelemetry } from "./telemetry-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
 import { type SettingsStorage, applyEffects, applyVolumes, defaultAimMode, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
 import { webHaptics } from "./haptics";
@@ -84,6 +85,9 @@ const renderer = new BabylonRenderer(stage, {
   // The grain of the city's plaster, brick, asphalt and roofs (ADR-0092).
   detailTextures: new URL("textures/", document.baseURI).href,
 });
+// The driven car's telemetry (ADR-0097 §3), a developer's mode: made only behind `?telemetry=1`.
+const telemetry = params.get("telemetry") === "1" ? new VehicleTelemetry(stage.scene) : null;
+
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality: renderQuality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
@@ -220,6 +224,8 @@ const loop = new FixedStepLoop(browserClock, {
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed, footfalls: renderer.footfalls.take() });
     // The car she drives (ADR-0097): its doors, its engine's start and stop, its revs.
     carAudio.frame(session.sim, stage.engine.getDeltaTime() / 1000);
+    // The driven car's telemetry, a developer's mode (ADR-0097 §3), with the frame drawn.
+    if (telemetry) feedTelemetry(telemetry, session.sim);
     // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
     // Behind the loading screen the preparation draws its own warm-up frames (ADR-0057).
     if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;
