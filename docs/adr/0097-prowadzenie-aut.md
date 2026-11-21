@@ -168,11 +168,11 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 
 ## Drzwi otwierane do góry (21.11, prośba użytkownika)
 - Prośba: drzwi w aucie otwierane do góry, żeby nie zmieniać animacji wyrzucania kierowcy. Wzorzec: drzwi nożycowe (scissor doors) z Lamborghini Countach. Zawias jest u góry przedniej krawędzi drzwi, skrzydło obraca się w górę wokół poprzecznej osi auta i staje prawie pionowo nad przednim błotnikiem. Otwarta strona zostaje wolna, więc klipy wsiadania, wysiadania i wyrzucania kierowcy działają bez zmian.
-- Model źródłowy (auto 4d_Bob) ma jedno spawane nadwozie bez osobnych drzwi. `tools/city_vehicle_doors.py` wycina drzwi kierowcy po liniach modelu:
-  - zakres: od przedniej krawędzi za przednim kołem do słupka B, od progu po krawędź dachu, razem z szybą;
-  - trójkąt nadwozia należy do drzwi, gdy jego środek leży w prostopadłościanie drzwi;
-  - osobny element przechodzi do drzwi tylko w całości, a szyba trójkąt po trójkącie;
-  - w zbliżeniu (`veh-cyber-hi`) drzwi to osobny zakres wierzchołków po kołach (`extras.door`);
+- Model źródłowy (auto 4d_Bob) ma jedno spawane nadwozie bez osobnych drzwi. `tools/city_vehicle_doors.py` wycina drzwi kierowcy po obrysie z linii modelu:
+  - obrys to wielokąt wypukły w widoku z boku: skośna przednia krawędź za przednim kołem, słupek A, krawędź dachu, słupek B i próg;
+  - cięcie to przycinanie siatki płaszczyznami (mesh slicing, algorytm Sutherlanda–Hodgmana): każdy trójkąt nadwozia i szyby po stronie kierowcy przecinający obrys dzielę na część w środku (drzwi) i części na zewnątrz (nadwozie), a nowe wierzchołki dostają interpolowane normalne i UV. Drzwi i otwór mają przez to jedną prostą krawędź (uwagi użytkownika z 21.11: pierwsza wersja zbierała całe trójkąty i zostawiała ostre schodki);
+  - osobny element przechodzi do drzwi tylko w całości, inaczej zostaje przy nadwoziu (próg, nadkola);
+  - w zbliżeniu (`veh-cyber-hi`) drzwi to osobny zakres wierzchołków po kołach (`extras.door`), 297 trójkątów; cięcie dokłada 295 trójkątów do 11 424;
   - nowy wypiek `vehicle-props.glb` zmienia tylko to zbliżenie.
 - Uwaga dla następnych wycięć: wczytanie modelu odbija oś z pliku i obraca model, więc lewa strona gry (strona kierowcy w `sim`) to w pliku +x.
 - `sim`: `CarState.door` (0 zamknięte .. 1 w górze, tylko obraz, bez zapisu), `doorTarget` i `stepDoor` w `car-act.ts`. Drzwi idą w górę przez cały akt wsiadania (także w czasie wyrzucania kierowcy), opadają 0,9 s klipu przed jego końcem, gdy bohaterka już siedzi. Przy wysiadaniu są w górze przez cały akt i opadają, gdy ona stoi obok. Ruch w każdą stronę trwa ok. 0,45 s. `Transform.door` w `core`.
