@@ -115,6 +115,17 @@ export const vehicleSpec = (model: VehicleModel): VehicleSpec => {
   };
 };
 
+/**
+ * The driver's hips in the body's frame (ADR-0097, the clips of 21.11): left of the middle by
+ * a fifth of the width, a twelfth of the length behind it, and up a third of the body's height
+ * from the ground under the car (m). A street car's seat: the hips over the sill, under the roof.
+ */
+export const driverSeat = (spec: VehicleSpec): { readonly x: number; readonly y: number; readonly z: number } => ({
+  x: -Math.round(spec.half.x * 0.42 * 1000) / 1000,
+  y: Math.round(spec.half.y * 2 * 0.36 * 1000) / 1000,
+  z: -Math.round(spec.half.z * 2 * 0.08 * 1000) / 1000,
+});
+
 /** The engine's torque at `rpm` (N·m at full throttle), linear between the table's points, flat past its ends. */
 export const engineTorque = (spec: VehicleSpec, rpm: number): number => {
   const t = spec.engine.torque;

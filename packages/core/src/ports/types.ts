@@ -56,14 +56,33 @@ export interface Transform {
    * The renderer plays the grab's clips from it; the events only cue the sound. Absent outside a grab.
    */
   readonly grab?: GrabPhase;
-  /** At the wheel of a car (ADR-0097): the renderer leaves her figure out and the camera chases the car. */
+  /** At the wheel of a car (ADR-0097): the camera chases the car. */
   readonly seat?: "driver";
+  /**
+   * The figure at a car (ADR-0097, the user's clips of 21.11): what it does there and how far into
+   * the clip. The renderer lays the clip with the figure's hips at `seat` (the driver's seat in the
+   * world) and the car heading `yaw`; absent, the figure stands where its transform is.
+   */
+  readonly car?: CarPose;
   /**
    * A car's tilt on its springs (ADR-0097 §2a): pitch with the nose down positive, roll with the
    * body over to its right side positive. Absent: level (the street's traffic).
    */
   readonly tilt?: { readonly pitch: number; readonly roll: number };
 }
+
+/**
+ * At a car (ADR-0097): `drive` at the wheel, `horn` pressing it, `enter` getting in from the
+ * driver's door, `exit` getting out of it. `t` is seconds into the clip (the simulation plays it at
+ * its own pace), `yaw` the car's heading, `seat` the driver's hips in the world.
+ */
+export interface CarPose {
+  readonly act: CarAct;
+  readonly t: number;
+  readonly yaw: number;
+  readonly seat: Vec3;
+}
+export type CarAct = "drive" | "horn" | "enter" | "exit";
 
 /** What a takedown grab is doing (ADR-0075): holding, choking out or killing. */
 export type GrabPhase = "hold" | "choke" | "kill";

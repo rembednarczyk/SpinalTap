@@ -101,14 +101,39 @@ const sample = (file: string, fps: number, turned = false): Sampled => {
 const pick = <K extends string>(s: Sampled, keys: readonly K[]): Record<K, readonly number[]> => Object.fromEntries(keys.map((k) => [k, s.paths.get(k)!])) as Record<K, readonly number[]>;
 
 const dir = process.argv[2];
-if (!dir) throw new Error("usage: node tools/animations/src/import.ts <dir with the unzipped packs>");
+if (!dir) throw new Error("usage: node tools/animations/src/import.ts <dir with the unzipped packs> [--only name,name]");
+// `--only`: the named clips alone are read from `<dir>`; the rest stay as the tables have them (the packs
+// of earlier imports need not be at hand).
+const onlyAt = process.argv.indexOf("--only");
+const only = onlyAt > 0 ? new Set((process.argv[onlyAt + 1] ?? "").split(",").filter(Boolean)) : null;
 type Source = string | { readonly file: string; readonly mirror: boolean };
 type BodySource = { readonly file: string; readonly mode: BodyMode; readonly fps?: number; readonly turn?: boolean; readonly hipsFrom?: HipsFrom; readonly inPlace?: boolean };
 const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8")) as { clips: Record<string, Source>; body: Record<string, BodySource> };
 
 const legs: Record<string, LegClip> = {};
 const legSources: Record<string, string> = {};
+const out = (f: string) => new URL(`../../../packages/engine/src/renderer/clips/${f}`, import.meta.url);
+/** The clips and sources a generated table holds now (one `  name: {json},` line each). */
+const kept = <T>(file: string): { clips: Record<string, T>; sources: Record<string, string> } => {
+  const text = readFileSync(out(file), "utf8");
+  const clips: Record<string, T> = {};
+  for (const m of text.matchAll(/^ {2}(\w+): (\{.*\}),$/gm)) clips[m[1]!] = JSON.parse(m[2]!) as T;
+  const sources: Record<string, string> = {};
+  const line = /^\/\/ Sources: (.*)\.$/m.exec(text)?.[1] ?? "";
+  for (const part of line.split("; ")) {
+    const at = part.indexOf(" <- ");
+    if (at > 0) sources[part.slice(0, at)] = part.slice(at + 4);
+  }
+  return { clips, sources };
+};
+const legsKept = only ? kept<LegClip>("leg-clips.generated.ts") : null;
+const bodyKept = only ? kept<BodyClip>("body-clips.generated.ts") : null;
+
 for (const [name, src] of Object.entries(manifest.clips)) {
+  if (only && !only.has(name)) {
+    if (legsKept!.clips[name]) [legs[name], legSources[name]] = [legsKept!.clips[name]!, legsKept!.sources[name] ?? ""];
+    continue;
+  }
   const file = typeof src === "string" ? src : src.file;
   const s = sample(join(dir, file), 30);
   const raw = { cycle: s.cycle, frames: s.frames, hips: s.paths.get("hips")!, joints: pick(s, LEG_JOINTS), hipsEnd: s.hipsEnd };
@@ -119,6 +144,10 @@ for (const [name, src] of Object.entries(manifest.clips)) {
 const body: Record<string, BodyClip> = {};
 const bodySources: Record<string, string> = {};
 for (const [name, src] of Object.entries(manifest.body)) {
+  if (only && !only.has(name)) {
+    if (bodyKept!.clips[name]) [body[name], bodySources[name]] = [bodyKept!.clips[name]!, bodyKept!.sources[name] ?? ""];
+    continue;
+  }
   const s = sample(join(dir, src.file), src.fps ?? 30, src.turn ?? false);
   const bind = { hips: s.bind.get("hips")!, neck: s.bind.get("neck")!, shoulderL: s.bind.get("shoulderL")!, shoulderR: s.bind.get("shoulderR")! };
   const raw = { cycle: s.cycle, frames: s.frames, hips: s.paths.get("hips")!, neck: s.paths.get("neck")!, bind, head: s.turns.head, arms: pick(s, ARM_POINTS), legs: pick(s, LEG_JOINTS) };
@@ -128,8 +157,7 @@ for (const [name, src] of Object.entries(manifest.body)) {
   } else body[name] = toBodyClip(raw, src.mode, src.hipsFrom);
   bodySources[name] = src.file;
 }
-const out = (f: string) => new URL(`../../../packages/engine/src/renderer/clips/${f}`, import.meta.url);
 writeFileSync(out("leg-clips.generated.ts"), legClipsModule(legs, legSources));
 writeFileSync(out("body-clips.generated.ts"), bodyClipsModule(body, bodySources));
-console.log(Object.entries(legs).map(([k, c]) => `${k}: ${c.frames} frames, ${c.cycle} s, stride ${c.stride.x},${c.stride.z}`).join("\n"));
-console.log(Object.entries(body).map(([k, c]) => `${k}: ${c.frames} frames, ${c.cycle} s`).join("\n"));
+console.log(Object.entries(legs).filter(([k]) => !only || only.has(k)).map(([k, c]) => `${k}: ${c.frames} frames, ${c.cycle} s, stride ${c.stride.x},${c.stride.z}`).join("\n"));
+console.log(Object.entries(body).filter(([k]) => !only || only.has(k)).map(([k, c]) => `${k}: ${c.frames} frames, ${c.cycle} s`).join("\n"));

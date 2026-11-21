@@ -216,6 +216,34 @@
       "file": "Male Injured Pack/injured hurting idle.fbx",
       "mode": "pose",
       "fps": 10
+    },
+    "carDrive": {
+      "file": "Car/Driving.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "carHorn": {
+      "file": "Car/Honking Horn.fbx",
+      "mode": "pose",
+      "fps": 10
+    },
+    "carEnter": {
+      "file": "Car/Entering Car.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "last"
+    },
+    "carExit": {
+      "file": "Car/Exiting Car.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
+    },
+    "carJack": {
+      "file": "Car/Removing Driver.fbx",
+      "mode": "pose",
+      "fps": 15,
+      "hipsFrom": "first"
     }
   }
 }

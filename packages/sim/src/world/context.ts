@@ -2,6 +2,7 @@ import type { TrafficDensity } from "../content/traffic";
 import type { BoardCrime } from "./street-crime-types";
 import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
+import type { CarActState } from "./vehicle/car-act";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
 import type { WorldStreamer } from "./streaming";
@@ -63,6 +64,8 @@ export interface SessionState {
    * wheel loads with her on foot beside it (the car's save comes with ADR-0097 stage 6).
    */
   driving: EntityId | null;
+  /** Getting into or out of the car (ADR-0097, clips of 21.11), null otherwise. Transient, not saved. */
+  carAct: CarActState | null;
 }
 
 /**
@@ -191,6 +194,7 @@ export const freshSession = (): SessionState => ({
   dropRoom: true,
   pendingDifficulty: null,
   driving: null,
+  carAct: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
