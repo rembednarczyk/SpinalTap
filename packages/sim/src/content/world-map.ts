@@ -182,7 +182,7 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   // The furniture (ADR-0050), so the views above keep their scenery ids.
   ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
   // The parked cars (ADR-0050), each drawn where it stands.
-  ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
+  ...PARKED_CARS.map((p, i): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw, parked: i })),
   // And those in the bays of Alchemia's P-1 under its car park (ADR-0074 stage 4).
   ...P1_CARS.map((p): SceneryItem => ({ chunk: ALCHEMIA_CHUNK, view: p1CarView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
   // The map's walls, fences and hedges (ADR-0077), drawn with the furniture, last so the ids above stay.

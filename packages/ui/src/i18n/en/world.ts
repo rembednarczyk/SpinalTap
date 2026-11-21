@@ -427,6 +427,7 @@ export const enWorld = {
   "heat.crime.murder": "murder",
   "heat.crime.trespass": "trespassing",
   "heat.crime.hacking": "network intrusion",
+  "heat.crime.theft": "car theft",
   "hint.move": "move and look around",
   "hint.move.touch": "Left thumb: move. Right: look around.",
   "hint.sprint": "sprint, jump, crouch",

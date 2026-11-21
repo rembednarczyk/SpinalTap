@@ -5,6 +5,7 @@ import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT } from "../src/systems/vehicle-system";
 import { lanePose } from "../src/world/traffic";
 import { firesFromCar } from "../src/world/vehicle/drive-by";
+import { RUN_OVER_HARM, runOverDamage } from "../src/world/vehicle/world-car";
 import { teleportPlayer } from "./helpers";
 
 /**
@@ -372,5 +373,35 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect(snap.cars![0]!.damage).toBeCloseTo(mine().car!.damage, 9);
     const loaded = Simulation.fromSnapshot(snap, undefined, "off", "high");
     expect([...loaded.world].find((e) => e.id === loaded.session.driving)!.car!.damage).toBeCloseTo(mine().car!.damage, 9);
+  });
+
+  it("hurts someone it runs over by the speed: slow, they are thrown and hurt; fast, killed by her (ADR-0097 §5)", () => {
+    expect(runOverDamage(4)).toBe(0);
+    expect(runOverDamage(8)).toBe(4 * RUN_OVER_HARM);
+    const runInto = (ahead: number) => {
+      const { sim, mine } = takenAndStopped();
+      const car = mine();
+      const [fx, fz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+      const at = { x: car.position.x + fx * ahead, y: car.position.y, z: car.position.z + fz * ahead };
+      const walker = sim.world.add({ id: 4_990_200, position: { ...at }, prevPosition: { ...at }, yaw: 0, prevYaw: 0, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, body: { radius: 0.38, height: 1.8 }, health: { current: 100, max: 100 }, view: { kind: "npc", preset: "civilian", look: 0 } });
+      const hits: { speed: number }[] = [];
+      const harm: number[] = [];
+      sim.bus.on("VehicleRanOver", (e) => hits.push(e));
+      sim.bus.on("DamageDealt", (e) => {
+        if (e.targetId === walker.id) harm.push(e.amount);
+      });
+      for (let i = 0; i < 400 && hits.length === 0; i++) sim.step(press({ moveZ: 1 }));
+      return { walker, hits, harm, player: playerOf(sim) };
+    };
+    const slow = runInto(9);
+    expect(slow.hits).toHaveLength(1);
+    expect(slow.harm[0]).toBe(runOverDamage(slow.hits[0]!.speed));
+    expect(slow.walker.health!.current).toBeGreaterThan(0);
+    expect(slow.walker.health!.current).toBeLessThan(100);
+    expect(slow.walker.struck).toBeDefined();
+    const fast = runInto(45);
+    expect(fast.hits[0]!.speed).toBeGreaterThan(12);
+    expect(fast.walker.health!.current).toBeLessThanOrEqual(0);
+    expect(fast.walker.lastHitBy).toBe(fast.player.id);
   });
 });

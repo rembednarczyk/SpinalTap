@@ -47,6 +47,7 @@ export const enContent = {
   "prompt.takedown": "Grab",
   "prompt.car.take": "Take the car",
   "prompt.car.exit": "Get out",
+  "prompt.car.break": "Break into the car",
   "prompt.grab": "Knock out",
   "prompt.grab.kill": "Kill",
   // Bodies (ADR-0065, stage 3): the same key picks one up, drops it, or hides it.

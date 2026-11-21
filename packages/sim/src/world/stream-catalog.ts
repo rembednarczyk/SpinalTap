@@ -33,6 +33,8 @@ export interface Template {
   readonly make: () => Entity;
   /** Flags that decide whether the actor is in the world at all (ADR-0023). */
   readonly when?: Presence;
+  /** A parked car's place in `PARKED_CARS` (ADR-0050): gone for good once she broke into it (ADR-0097). */
+  readonly parked?: number;
 }
 
 /**
@@ -66,7 +68,7 @@ export class StreamCatalog {
       }
       (chunk.street ?? []).slice(0, STREET_IDS_PER_CHUNK).forEach((prop, i) => {
         const id = STREET_ID_BASE + order * STREET_IDS_PER_CHUNK + i;
-        list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
+        list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id), ...(prop.parked ? { parked: prop.parked.index } : {}) });
       });
       (chunk.rooms ?? []).slice(0, ROOM_IDS_PER_CHUNK).forEach((prop, i) => {
         const id = ROOM_ID_BASE + order * ROOM_IDS_PER_CHUNK + i;

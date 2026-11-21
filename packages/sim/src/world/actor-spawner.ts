@@ -1,6 +1,7 @@
 import { type EntityId, type EntitySnapshot, type GameClock, type Vec3, takenFlag } from "@seki/core";
 import type { World } from "miniplex";
 import { isPresent } from "../content/builders";
+import { takenParked } from "../content/parked-taken";
 import type { Entity } from "./components";
 import { applyEntitySnapshot, isDead, toughen } from "./factory";
 import { corpseOf, freshDowned, restoreDowned } from "./bodies";
@@ -51,8 +52,11 @@ export class ActorSpawner {
     return toughen(t.make(), this.enemyScaling());
   }
 
-  spawnProps(world: World<Entity>, chunkId: string): void {
+  /** A chunk's props, but the parked cars she broke into (ADR-0097): their places stay empty. */
+  spawnProps(world: World<Entity>, chunkId: string, flags: readonly string[]): void {
+    const taken = takenParked(flags);
     for (const t of this.catalog.propsOf(chunkId)) {
+      if (t.parked !== undefined && taken.has(t.parked)) continue;
       world.add(t.make());
       this.state.streamedOut.delete(t.id);
     }

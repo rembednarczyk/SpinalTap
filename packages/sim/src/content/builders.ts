@@ -31,6 +31,8 @@ export interface StaticProp {
   readonly sightThrough?: true;
   /** A hiding place for one body (ADR-0065): a container, a dumpster, a locker. */
   readonly hide?: HideKind;
+  /** A car parked on the street (ADR-0050): its place in `PARKED_CARS` and its facing, so she can break into it (ADR-0097). */
+  readonly parked?: { readonly index: number; readonly yaw: number };
 }
 
 /** Parts of a lift: the platform (a solid), the gates at upper levels and the call buttons. */

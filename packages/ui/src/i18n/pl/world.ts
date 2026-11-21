@@ -425,6 +425,7 @@ export const plWorld = {
   "heat.crime.murder": "zabójstwo",
   "heat.crime.trespass": "wtargnięcie",
   "heat.crime.hacking": "włamanie do sieci",
+  "heat.crime.theft": "kradzież auta",
   "hint.move": "ruch i rozglądanie",
   "hint.move.touch": "Lewy kciuk: ruch. Prawy: rozglądanie.",
   "hint.sprint": "sprint, skok, kucanie",

@@ -243,7 +243,7 @@ export class WorldStreamer {
     const chunks = this.chunks.filter((c) => wanted.has(c.id) || distanceToRect(focus.x, focus.z, c.bounds) <= this.radii.loadRadius);
     for (const c of chunks) {
       this.state.resident.add(c.id);
-      this.spawner.spawnProps(world, c.id);
+      this.spawner.spawnProps(world, c.id, flags);
     }
     between();
     for (const c of chunks) this.spawner.spawnActors(world, flags, this.catalog.actorsOf(c.id), clock);
@@ -289,7 +289,7 @@ export class WorldStreamer {
     if (unloaded) unloadChunks(world, this.state, new Set(unloaded), (p) => this.chunkIdAt(p), this.formerKeys, this.nearFocus(focus));
     for (const id of loaded ?? []) {
       resident.add(id);
-      this.spawner.spawnProps(world, id);
+      this.spawner.spawnProps(world, id, flags);
     }
     for (const id of loaded ?? []) this.spawner.spawnActors(world, flags, this.catalog.actorsOf(id), clock);
     if (loaded) this.spawner.wakeBodies(world, flags, new Set(loaded), clock);
