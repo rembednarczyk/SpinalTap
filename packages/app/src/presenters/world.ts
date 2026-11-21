@@ -1,6 +1,7 @@
 import { FACTIONS, formatClock } from "@seki/core";
 import { type Translate, translate } from "@seki/ui";
 import type { Presenter } from "./context";
+import { hitCue } from "./car-audio";
 
 /** Landings from lower than this (a kerb, a stair) make no sound of their own; footsteps cover them. */
 const LANDING_SOUND_DROP = 0.5;
@@ -68,6 +69,8 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     bus.on("VehicleHorned", () => audio.play("horn")),
     // Her own horn in the car she drives (ADR-0097), once a press.
     bus.on("VehicleHorn", () => audio.play("horn")),
+    // Her car hitting a wall, a post or a car (ADR-0097 §3): a bump or a crash by the energy taken out.
+    bus.on("VehicleHit", (e) => audio.play(hitCue(e.energy))),
     // The hit that wrecked her car (ADR-0097 §5): its engine dies.
     bus.on("VehicleWrecked", () => audio.play("engine-stop")),
     bus.on("TimeSkipped", (e) =>

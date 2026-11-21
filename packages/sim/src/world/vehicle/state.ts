@@ -24,6 +24,8 @@ export interface WheelState {
   fy: number;
   /** The assist that eased this wheel in the last substep (ABS its brake, traction control its drive), for the HUD's lamps. */
   eased: "abs" | "tc" | null;
+  /** How far its tread has rolled (m, forward positive), for the picture's wheels; not saved. */
+  rolled: number;
 }
 
 /** The driver's controls as the car feels them (eased from the input, ADR-0097 §1). */
@@ -61,7 +63,7 @@ export interface CarState {
   damage: number;
 }
 
-const wheel = (): WheelState => ({ omega: 0, compression: 0, alpha: 0, load: 0, contact: null, normal: v3(0, 1, 0), slipRatio: 0, slipAngle: 0, fx: 0, fy: 0, eased: null });
+const wheel = (): WheelState => ({ omega: 0, compression: 0, alpha: 0, load: 0, contact: null, normal: v3(0, 1, 0), slipRatio: 0, slipAngle: 0, fx: 0, fy: 0, eased: null, rolled: 0 });
 
 /** The height of the centre of mass over flat ground with the springs at their static sag. */
 export const restHeight = (spec: VehicleSpec): number => spec.suspension.rest + spec.wheelRadius - (spec.mass * 9.81) / 4 / spec.suspension.spring[0];

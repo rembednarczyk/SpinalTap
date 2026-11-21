@@ -35,6 +35,7 @@ from city_street import box_tris
 from city_street_e2 import drop_specks, is_ccby
 from city_vehicle_roles import settle_roles
 from city_vehicle_skin import fitted_normals, skin_images, skin_model
+from city_vehicle_wheels import wheels
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = os.path.join(HERE, '..', 'packages', 'app', 'public', 'city', 'city-kit.glb')
@@ -427,10 +428,17 @@ def build_vehicles(folder, out_dir):
         near = opts.get('near', NEAR_TRIS)
         if tex:
             # The close-up whole, on its own UVs and texture (`city_vehicle_skin`): no swatches, no simplification.
-            m = skin_model(f'{key}-hi', P, fitted_normals(tex['N'], tex['turned'], P), tex['uv'])
+            # Its wheels as parts of their own at its end, each turned by the engine about its axle (ADR-0097 §3).
+            order, found = wheels(P)
+            N = fitted_normals(tex['N'], tex['turned'], P)
+            if order is None:
+                m = skin_model(f'{key}-hi', P, N, tex['uv'])
+            else:
+                m = skin_model(f'{key}-hi', P[order], N[order], tex['uv'][order], [w['tris'] for w in found])
             flat = P.reshape(-1, 3)
             out.append(m)
-            extras[m['key']] = {'size': [round(float(x), 3) for x in np.ptp(flat, 0)], 'styles': ['veh-hi'], 'skin': key, **({'credit': credit} if credit else {})}
+            wheel_extras = {'wheels': [{'first': a, 'count': n, 'axle': w['axle'], 'radius': w['radius']} for (a, n), w in zip(m['parts'], found)]} if 'parts' in m else {}
+            extras[m['key']] = {'size': [round(float(x), 3) for x in np.ptp(flat, 0)], 'styles': ['veh-hi'], 'skin': key, **wheel_extras, **({'credit': credit} if credit else {})}
             images += list(zip((f'skin:{key}', f'skin-glow:{key}'), skin_images(tex['base'], tex['emissive'], tex['uv'], roles)))
             print(f"{m['key']:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} skin {key}")
             high = None
