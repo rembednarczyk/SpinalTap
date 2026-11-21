@@ -262,6 +262,8 @@ export const enWorld = {
   "hud.kmh": "km/h",
   "hud.abs": "ABS",
   "hud.tc": "TC",
+  "hud.damage": "Damage",
+  "hud.wreck": "Wrecked",
   "hud.openJournal": "Open the journal",
   "hud.ability.ready": "ready",
   "hud.medkits": "Medkits × {count}",

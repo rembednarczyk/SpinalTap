@@ -444,6 +444,8 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   50: startActThree,
   // v51 -> v52 (ADR-0097): the player's cars, optional: an older save has none, she loads on foot.
   51: (old) => ({ ...old, version: 52 }),
+  // v52 -> v53 (ADR-0097 §5): a car's damage, optional: an older save's cars are whole.
+  52: (old) => ({ ...old, version: 53 }),
 };
 
 /** The v46 presets' six multipliers and the pressure each gets in v47 (ADR-0089 stage 5), spelled out. */

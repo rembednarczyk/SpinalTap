@@ -59,6 +59,8 @@ export interface CarState {
   still: number;
   /** Where a braked, all but stopped car is held (static friction the tyres' slip model lacks at a standstill), or null. */
   hold: V3 | null;
+  /** 0 whole .. 1 a wreck (`damage.ts`). */
+  damage: number;
 }
 
 const wheel = (): WheelState => ({ omega: 0, compression: 0, alpha: 0, load: 0, contact: null, normal: v3(0, 1, 0), slipRatio: 0, slipAngle: 0, fx: 0, fy: 0, eased: null, rolled: 0 });
@@ -83,6 +85,7 @@ export const newCar = (model: VehicleModel, x: number, groundY: number, z: numbe
     asleep: false,
     still: 0,
     hold: null,
+    damage: 0,
   };
 };
 

@@ -8,7 +8,7 @@ import { TACH_SEGMENTS } from "../src/hud/vehicle-dash";
 
 const intents = (): UiIntents => new Proxy({}, { get: () => vi.fn() }) as UiIntents;
 const mount = (vehicle: VehicleVm | null) => render(<GameUi store={createUiStore({ screen: "playing", settings: { ...DEFAULT_SETTINGS, locale: "en" }, vehicle })} intents={intents()} />);
-const at = (over: Partial<VehicleVm> = {}): VehicleVm => ({ kmh: 87, gear: "3", revs: 0.5, abs: false, tc: false, ...over });
+const at = (over: Partial<VehicleVm> = {}): VehicleVm => ({ kmh: 87, gear: "3", revs: 0.5, abs: false, tc: false, damage: 0, ...over });
 
 afterEach(cleanup);
 
@@ -34,6 +34,18 @@ describe("the car's dashboard (ADR-0097 §3)", () => {
     mount(at({ abs: true }));
     expect(screen.getByTestId("lamp-abs").classList.contains("hud__lamp--on")).toBe(true);
     expect(screen.getByTestId("lamp-tc").classList.contains("hud__lamp--on")).toBe(false);
+  });
+
+  it("shows the body's damage once there is some, and a wreck as such (ADR-0097 §5)", () => {
+    mount(at());
+    expect(screen.queryByTestId("vehicle-damage")).toBeNull();
+    cleanup();
+    mount(at({ damage: 0.45 }));
+    expect(screen.getByTestId("vehicle-damage").textContent).toContain("Damage");
+    expect((screen.getByTestId("vehicle-damage").querySelector(".hud__vehicle-damage-fill") as HTMLElement).style.width).toBe("45%");
+    cleanup();
+    mount(at({ damage: 1 }));
+    expect(screen.getByTestId("vehicle-damage").textContent).toContain("Wrecked");
   });
 
   it("is not there on foot", () => {

@@ -52,6 +52,8 @@ export interface DebugApi {
   perf(): PerfSample;
   /** The street's cars round the player (ADR-0050): where each is, its heading and speed (m/s). */
   cars(): { x: number; y: number; z: number; yaw: number; speed: number }[];
+  /** Sets the damage (0..1) of the car she drives (ADR-0097 §5; the smoke's screenshots); false on foot. */
+  damageCar(damage: number): boolean;
   setPaused(paused: boolean): void;
   /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), Lublin's ground by default. */
   teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
@@ -150,6 +152,12 @@ export const createDebugApi = (
   perf,
   cars() {
     return [...session.sim.world].filter((e) => e.vehicle !== undefined).map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z, yaw: e.yaw, speed: e.vehicle!.v }));
+  },
+  damageCar(damage) {
+    const car = [...session.sim.world].find((e) => e.id === session.sim.session.driving)?.car;
+    if (!car) return false;
+    car.damage = Math.min(1, Math.max(0, damage));
+    return true;
   },
   setPaused(paused) {
     loop.paused = paused;
