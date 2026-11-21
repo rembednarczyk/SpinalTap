@@ -62,8 +62,12 @@ export const FLOOR_CHUNK: ChunkDef = {
 
 export const FLOOR: readonly ChunkDef[] = [FLOOR_CHUNK];
 
-/** Where the player starts: the south of the yard, looking north at the Hebi. */
-export const FLOOR_START: Vec3 = floorAt(0, -30);
+/**
+ * Where the player starts: the south of the yard, looking north at the Hebi. 2.7 m further north
+ * since the run of 21.11 (3.5 m/s, sprint 6 m/s; 4.2 and 6.9 before): the scripted walk, sprint, creep
+ * and jump cover that much less, so the fight starts where it did.
+ */
+export const FLOOR_START: Vec3 = floorAt(0, -27.3);
 
 /** The residents standing about the yard (ADR-0041): not saved, so a loaded game has none. */
 const RESIDENTS: readonly { readonly at: Vec3; readonly yaw: number }[] = [
@@ -161,7 +165,8 @@ export const floorScript = (): ReplayFrame[] => [
   { input: input({ weaponSlot: 3 }) },
   ...many(240, (i) => {
     const phase = i % 120;
-    return { aim: phase >= 30 && phase < 50, fire: phase >= 60 && phase < 100, moveZ: phase < 30 ? 1 : phase >= 105 ? -1 : 0, lookYaw: i % 50 < 25 ? 0.003 : -0.003 };
+    // Up to the Hebi 36 steps (30 at the run of 4.2 m/s before 21.11: the same ground at 3.5).
+    return { aim: phase >= 36 && phase < 56, fire: phase >= 60 && phase < 100, moveZ: phase < 36 ? 1 : phase >= 104 ? -1 : 0, lookYaw: i % 50 < 25 ? 0.003 : -0.003 };
   }),
   { input: input({ weaponSlot: 2 }) },
   ...many(120, (i) => ({ fire: true, lookYaw: i % 60 < 30 ? 0.003 : -0.003 })),

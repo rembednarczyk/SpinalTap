@@ -30,7 +30,8 @@ import { restingLevel } from "./elevator-system";
 import { roomToStand } from "./movement-system";
 
 export const PITCH_LIMIT = 1.25;
-export const SPRINT_MULTIPLIER = 1.65;
+/** The sprint over the run: 6 m/s (21.6 km/h) from the base 3.5, a fit runner's sprint (user's notes of 21.11). */
+export const SPRINT_MULTIPLIER = 1.7;
 /** Walk speed multiplier while crouched. Crouching also rules out sprinting. */
 export const CROUCH_SPEED_MULTIPLIER = 0.5;
 /** Seconds to get fully down or back up. */

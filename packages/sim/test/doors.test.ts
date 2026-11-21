@@ -235,7 +235,7 @@ describe("saving with a door in motion (ADR-0038)", () => {
     // Every character stays: the loaded game has to bring back the same world.
     const sim = Simulation.create({ seed: 3 });
     teleportPlayer(sim, clinic(-3, 4.4), turned(-Math.PI / 2));
-    run(sim, 36, input({ moveZ: 1 }));
+    run(sim, 44, input({ moveZ: 1 }));
     const open = openness(sim, CLINIC_DOOR);
     expect(open).toBeGreaterThan(0);
     expect(open).toBeLessThan(1);

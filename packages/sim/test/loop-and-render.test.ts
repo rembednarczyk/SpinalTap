@@ -57,7 +57,7 @@ describe("RenderSync", () => {
     const viewCount = port.views.size;
     const t = port.transforms.get(player.id)!;
     expect(t.position.z).toBeCloseTo((player.prevPosition.z + player.position.z) / 2);
-    expect(t.speed).toBeGreaterThan(4);
+    expect(t.speed).toBeGreaterThan(3);
 
     // Any drawn thing but the player: on Plac Litewski, the wreck or a prop of the square.
     const guard = [...sim.world].find((e) => e.view && !e.player && e.view.kind !== "crowd")!;

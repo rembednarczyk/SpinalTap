@@ -1,0 +1,1 @@
+- Bieg wolniejszy i bliższy prawdziwemu: 12,6 km/h zamiast 15, sprint 21,6 km/h zamiast 25; w sprincie dłuższy krok, więc kroki nie przebierają i nie stukają za szybko.

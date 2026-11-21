@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DomainState, findItem } from "@seki/core";
+import { BASE_STATS, type DomainState, findItem } from "@seki/core";
 import { Simulation, playerStatsOf } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
@@ -67,9 +67,9 @@ describe("armor per zone (plan E5)", () => {
       equipment: { ...d.equipment, torso: "i4" },
     });
     const { sim } = facingGuard(4, 0, vest);
-    expect(playerStatsOf(sim.domain).moveSpeed).toBeCloseTo(4.2 - 0.2);
+    expect(playerStatsOf(sim.domain).moveSpeed).toBeCloseTo(BASE_STATS.moveSpeed - 0.2);
     run(sim, 30, input({ moveZ: 1 }));
     const v = sim.player()!.velocity!;
-    expect(Math.hypot(v.x, v.z)).toBeCloseTo(4.0);
+    expect(Math.hypot(v.x, v.z)).toBeCloseTo(BASE_STATS.moveSpeed - 0.2);
   });
 });

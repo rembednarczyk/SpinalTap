@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterState } from "@seki/core";
+import { BASE_STATS, type CharacterState } from "@seki/core";
 import { Simulation, fallDamage, playerStatsOf } from "../src";
 import { BALCONY_TOP, MARKET_PLACE, OLD_MARKET_CHUNK, ROOF_WEST_TOP, market } from "./fixtures/old-market";
 import { collect, input, run, teleportPlayer } from "./helpers";
@@ -48,7 +48,7 @@ describe("a walk off the low roof over the fire escape's balcony (G-318)", () =>
   const onBalcony = fallDamage(ROOF_WEST_TOP - BALCONY_TOP);
 
   it("lands on the balcony, not 9 m down on the market, the stick held or let go", () => {
-    expect(playerStatsOf(Simulation.create({ seed: 1 }).domain).moveSpeed).toBeCloseTo(4.2, 5);
+    expect(playerStatsOf(Simulation.create({ seed: 1 }).domain).moveSpeed).toBeCloseTo(BASE_STATS.moveSpeed, 5);
     // Beside the ladder's catch (0.7 m from its line) on both sides, and along the balcony.
     for (const x of [68.4, 70.1, 71, 72.4]) {
       for (const hold of [true, false]) {

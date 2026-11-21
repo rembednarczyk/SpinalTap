@@ -64,7 +64,10 @@ describe("determinism on the test floor", () => {
     // with SAVE_SCHEMA_VERSION at 51 the run hashes to d6e95343, the golden of before.
     // v53 (ADR-0097 §5, a car's damage; no car on the floor) changes only the version: with
     // SAVE_SCHEMA_VERSION at 52 the run hashes to b5f19dce, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"4d78eca9"`);
+    // The run of 21.11 (user's notes: too fast from the start): the base move 3.5 m/s (4.2 before) and
+    // the sprint 1.7 times it (1.65), a rule of the simulation; the floor's start 2.7 m nearer the Hebi
+    // and the baton's approach 36 steps (30), so the same fight is played.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"21746311"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {

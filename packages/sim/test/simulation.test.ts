@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { M0_TARGET_TAG, QUEST_FIRST_CONTRACT, currentStep, killedFlag } from "@seki/core";
+import { BASE_STATS, M0_TARGET_TAG, QUEST_FIRST_CONTRACT, currentStep, killedFlag } from "@seki/core";
 import { GANGER_MAX_HP, KRAKOWSKIE_SITE_POINTS, Simulation, koiPoint } from "../src";
 import { STREET_START, alleySim, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
@@ -10,14 +10,14 @@ describe("simulation: movement and camera", () => {
     const sim = newSim();
     run(sim, 60, input({ moveZ: 1 }));
     const p = sim.player();
-    expect(p?.position.z).toBeCloseTo(STREET_START.z + 4.2, 1);
+    expect(p?.position.z).toBeCloseTo(STREET_START.z + BASE_STATS.moveSpeed, 1);
     expect(p?.position.x).toBeCloseTo(STREET_START.x, 5);
   });
 
   it("sprints faster than it walks", () => {
     const sim = newSim();
     run(sim, 60, input({ moveZ: 1, sprint: true }));
-    expect(sim.player()!.position.z - STREET_START.z).toBeGreaterThan(6.5);
+    expect(sim.player()!.position.z - STREET_START.z).toBeGreaterThan(BASE_STATS.moveSpeed * 1.5);
   });
 
   it("strafes right relative to the view", () => {
