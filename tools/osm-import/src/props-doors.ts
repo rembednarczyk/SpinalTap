@@ -12,6 +12,10 @@
  *    on its longest wall facing a street (a street's axis within `STREET_REACH` in front of it), in
  *    the slot nearest the wall's middle: every tenement is entered from its street, and the map
  *    tags almost none of those entrances.
+ * 4. **A shop, office or works building with no door at its back** (use `commercial` or `industrial`)
+ *    gets a steel fire exit (ADR-0096 stage 6, the exit door of `extra-props.glb`) on its longest wall
+ *    facing no street (a yard, a passage behind the row), in the slot nearest the wall's middle: the
+ *    back way out a building of public use keeps. One per building, after the rules above.
  * Each door stands in a slot of its wall (`doorSlots` in the renderer: between the panes the facade
  * shader paints or over a whole one, under the boards), and only where:
  * - the game's own doors (ADR-0038) are `GAME_DOOR_ROOM` away, and no passage (ADR-0048) runs
@@ -86,7 +90,7 @@ export interface DoorContext {
 /** A door placed: its piece (point on the wall's face, facing out) and why it is there. */
 export interface PlacedDoor {
   readonly item: StreetPropItem;
-  readonly rule: "entrance" | "venue" | "staircase";
+  readonly rule: "entrance" | "venue" | "staircase" | "exit";
   readonly from: string;
 }
 
@@ -265,6 +269,31 @@ const staircaseDoors = (rules: DoorRules, site: Site, walls: readonly DoorWall[]
   }
 };
 
+/** The uses that keep a fire exit at the back (rule 4). */
+const EXIT_USES: ReadonlySet<string> = new Set(["commercial", "industrial"]);
+/** The shortest back wall that takes one (m): a door, its jambs and room either side. */
+const EXIT_WALL = 4;
+
+/** Rule 4: a fire exit on the longest wall facing no street of each shop, office and works building. */
+const exitDoors = (rules: DoorRules, site: Site, walls: readonly DoorWall[], under: readonly (readonly Pt[])[]): void => {
+  const byBuilding = new Map<string, DoorWall[]>();
+  for (const w of walls) if (EXIT_USES.has(w.use)) byBuilding.set(w.building, [...(byBuilding.get(w.building) ?? []), w]);
+  for (const [building, own] of [...byBuilding].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
+    const backs = [...own].sort((p, q) => q.length - p.length).filter((x) => x.length >= EXIT_WALL && !facesStreet(site, x, under));
+    for (const w of backs) {
+      // A wall that has a door already is not the back way out.
+      if (rules.placed.some((d) => onWall(w, d.item).off < 0.1 && onWall(w, d.item).u > -0.1 && onWall(w, d.item).u < w.length + 0.1)) continue;
+      const item = slotsNear(w, w.length / 2, Infinity)
+        .map((s) => rules.fit(w, s, "exit"))
+        .find((x) => x !== null);
+      if (item) {
+        rules.placed.push({ item, rule: "exit", from: building });
+        break;
+      }
+    }
+  }
+};
+
 /** The map's entrances (`data/osm/points/entrances.json`, `pnpm osm:entrances`) as world points. */
 export const loadEntrances = (root = REPO): Entrance[] => {
   const file = join(root, "data/osm/points/entrances.json");
@@ -305,5 +334,6 @@ export const placeDoorsWithStats = (site: Site, walls: readonly DoorWall[], entr
   entranceDoors(rules, walls, entrances);
   venueDoors(rules, walls);
   staircaseDoors(rules, site, walls, ctx.underground ?? []);
+  exitDoors(rules, site, walls, ctx.underground ?? []);
   return { doors: rules.placed, rejected: rules.rejected };
 };

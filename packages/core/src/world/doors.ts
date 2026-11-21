@@ -10,7 +10,7 @@
  * that takes a whole window or shop window of the ground floor), a security door with a code
  * panel (a bank) and a roller shutter (a service or garage entrance).
  */
-export const DOOR_MODELS = ["steel", "steel-double", "shop", "tall", "code", "shutter"] as const;
+export const DOOR_MODELS = ["steel", "steel-double", "shop", "tall", "code", "shutter", "exit"] as const;
 export type DoorModel = (typeof DOOR_MODELS)[number];
 
 /** Narrowest and lowest door the variant holds, and its steps (m). */
