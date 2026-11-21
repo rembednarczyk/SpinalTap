@@ -1,5 +1,8 @@
 import type { CarPose, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
+import type { Struck } from "./thrown-types";
+
+export type { Struck } from "./thrown-types";
 import type { Entity } from "../components";
 import type { SimContext } from "../context";
 
@@ -17,16 +20,6 @@ const DOWN = 0.8;
 /** Where the throw carries the hips (the clip table, leg lengths of 0.86 m): to the figure's right, and ahead. */
 const THROWN_SIDE = 1.63;
 const THROWN_AHEAD = 0.24;
-
-/** On the road after a blow: the phase, its clip time, the figure's facing and where it lies. */
-export interface Struck {
-  phase: "thrown" | "down" | "getup";
-  t: number;
-  /** The figure's facing: the throw goes to its right. */
-  readonly yaw: number;
-  /** Where it was hit, then where it lies. */
-  spot: Vec3;
-}
 
 /** Throws `e` from where it stands along `away` (a unit vector on the ground). */
 export const strike = (world: World<Entity>, e: Entity, away: { x: number; z: number }): void => {

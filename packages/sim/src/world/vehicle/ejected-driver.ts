@@ -1,4 +1,7 @@
 import type { CarPose, EntityId, Vec3 } from "@seki/core";
+import type { EjectedDriver } from "./thrown-types";
+
+export type { EjectedDriver } from "./thrown-types";
 import { castViewOf } from "../../content/cast";
 import type { Entity } from "../components";
 import type { SimContext } from "../context";
@@ -21,23 +24,6 @@ const RUN = { speed: 5.5, seconds: 8 } as const;
 /** Where the pull carries the hips (the clip table, leg lengths of 0.86 m): out to the car's left by 0.9 leg. */
 const PULLED_OUT = 0.77;
 const RADIUS = 0.38;
-
-/** Pulled out, then on the road (`struck`), then off at a run. */
-type Phase = "pulled" | "down" | "run";
-
-/** A driver out of a taken car, the clip time of its phase and the car it came from. */
-export interface EjectedDriver {
-  phase: Phase;
-  /** Seconds into the phase's clip (or the phase, for `down` and `run`). */
-  t: number;
-  /** The car's heading when taken. */
-  readonly yaw: number;
-  /** The driver's hips in the seat, then the spot on the road it is thrown from. */
-  spot: Vec3;
-  readonly floor: number;
-  /** The way he runs (a unit vector on the ground), once up. */
-  away?: { x: number; z: number };
-}
 
 /** The car's left (the driver's door) in the world, for heading `yaw`. */
 const leftOf = (yaw: number): { x: number; z: number } => ({ x: -Math.cos(yaw), z: Math.sin(yaw) });
