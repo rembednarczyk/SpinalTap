@@ -267,6 +267,8 @@ export interface DomainEvents {
   VehicleHorn: { vehicleId: EntityId; at: Vec3 };
   /** The player's car hit something: `energy` the kinetic energy taken out of the crash (J), at a world point. */
   VehicleHit: { vehicleId: EntityId; other: EntityId | null; energy: number; at: Vec3 };
+  /** The player's car taken past a wreck's worth of hits (ADR-0097 §5): its engine dies. */
+  VehicleWrecked: { vehicleId: EntityId; at: Vec3 };
   /** The player's car ran into someone on foot. */
   VehicleRanOver: { vehicleId: EntityId; victim: EntityId; speed: number };
   GearChanged: { vehicleId: EntityId; gear: number };

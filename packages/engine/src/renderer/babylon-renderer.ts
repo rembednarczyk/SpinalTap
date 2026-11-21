@@ -418,7 +418,7 @@ export class BabylonRenderer implements RenderPort {
     this.metro.update(dt);
     this.characters.update(dt, this.stage.options.reference);
     this.crowd.update(dt, this.stage.options.reference);
-    this.vehicles.update();
+    this.vehicles.update(dt);
     this.drones.update(dt, this.stage.options.reference);
     this.capsule.update();
     this.alchemia.update();

@@ -69,6 +69,8 @@ export interface Transform {
    * body over to its right side positive. Absent: level (the street's traffic).
    */
   readonly tilt?: { readonly pitch: number; readonly roll: number };
+  /** A car's damage, 0 whole .. 1 a wreck (ADR-0097 §5): it smokes past half. Absent: whole. */
+  readonly damage?: number;
   /**
    * A car's four wheels (ADR-0097 §3), in the simulation's order (front left, front right, rear left,
    * rear right): how far each has rolled, its steer and its spring's travel, for the close-up's wheels.

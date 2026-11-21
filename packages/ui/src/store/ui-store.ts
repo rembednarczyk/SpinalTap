@@ -87,6 +87,8 @@ export interface VehicleVm {
   readonly revs: number;
   readonly abs: boolean;
   readonly tc: boolean;
+  /** Its damage, 0 whole .. 1 a wreck (ADR-0097 §5), in twentieths. */
+  readonly damage: number;
 }
 
 export interface SessionUiState {

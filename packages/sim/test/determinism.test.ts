@@ -62,7 +62,9 @@ describe("determinism on the test floor", () => {
     // only the version: with SAVE_SCHEMA_VERSION at 49 the run hashes to 5c7c3abb, the golden of before.
     // v52 (ADR-0097, the player's cars in the save; none on the floor) changes only the version:
     // with SAVE_SCHEMA_VERSION at 51 the run hashes to d6e95343, the golden of before.
-    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"b5f19dce"`);
+    // v53 (ADR-0097 §5, a car's damage; no car on the floor) changes only the version: with
+    // SAVE_SCHEMA_VERSION at 52 the run hashes to b5f19dce, the golden of before.
+    expect(hashOf(floorRun(1234))).toMatchInlineSnapshot(`"4d78eca9"`);
   });
 
   it("the same run on 'hard' (ADR-0066) ends elsewhere, and the same each time", () => {
