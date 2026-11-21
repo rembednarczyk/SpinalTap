@@ -302,6 +302,12 @@ export interface BuildingVertical {
    * tiers that no longer fit.
    */
   readonly landmarks?: readonly { readonly outline: readonly GroundPoint[]; readonly top: number }[];
+  /**
+   * The shop districts of the 2077 layer (Lubartowska and Podzamcze, Nabrzeże; ADR-0096 rule 6):
+   * the venues' ground floors get the fronts of the Asian Shop Pack under their boards. The Old
+   * Town and Krakowskie Przedmieście keep their own.
+   */
+  readonly shopfronts?: true;
 }
 
 /**
