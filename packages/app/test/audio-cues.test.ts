@@ -41,7 +41,23 @@ describe("weapon, loot and trade cues (E12)", () => {
     bus.emit("LootTaken", { containerKey: "loot:guard", lines: [{ kind: "eddies", qty: 12 }], left: 0 });
     bus.emit("ItemSold", { shopId: "oyaji", defId: "scrap", qty: 2, price: 24 });
     bus.emit("ItemRepaired", { uid: "i2", defId: "seki_jacket", price: 20, parts: 1 });
-    expect(cues).toEqual(["reload", "weapon-switch", "loot-pickup", "sell", "repair"]);
+    expect(cues).toEqual(["reload", "draw-smg", "loot-pickup", "sell", "repair"]);
+  });
+
+  it("draws each weapon with its own handling, the one in hand out of the holster, and puts it away (user notes of 21.11)", () => {
+    const { bus, cues, ui } = setup();
+    for (const weapon of ["unity9", "oni44", "hebi_smg", "raijin12", "tessen_ar5", "kagero_dmr", "baton", "shirasaya"] as const) bus.emit("WeaponSwitched", { entityId: PLAYER, slot: "primary", weapon });
+    bus.emit("WeaponSwitched", { entityId: NPC, slot: "primary", weapon: "raijin12" });
+    expect(cues).toEqual(["draw-pistol", "draw-revolver", "draw-smg", "draw-shotgun", "draw-rifle", "draw-rifle", "draw-baton", "draw-blade"]);
+    cues.length = 0;
+    // Out of the holster: the weapon the HUD's strip has in hand; a hand it names nothing in, the plain click.
+    ui.setState({ weapons: { slots: [{ slot: "primary", key: 1, name: "item.raijin12.name", rarity: null, icon: null }], active: "primary", loaded: 6, magazine: 6, reserve: 12, ammoName: null, reloading: false, holstered: true } });
+    bus.emit("WeaponToggled", { entityId: PLAYER, drawn: true });
+    bus.emit("WeaponToggled", { entityId: PLAYER, drawn: false });
+    ui.setState({ weapons: null });
+    bus.emit("WeaponToggled", { entityId: PLAYER, drawn: true });
+    bus.emit("WeaponToggled", { entityId: NPC, drawn: true });
+    expect(cues).toEqual(["draw-shotgun", "holster", "weapon-switch"]);
   });
 
   it("a magazine change plays the recorded reload, a shell into a tube only its click", () => {
@@ -155,6 +171,6 @@ describe("weapon, loot and trade cues (E12)", () => {
 
   it("every new cue has a recording", () => {
     const cues = audioSampleManifest("https://example.test/audio/").cues ?? {};
-    for (const cue of ["reload", "weapon-switch", "loot-pickup", "sell", "repair"] as const) expect(cues[cue]?.urls.length, cue).toBeGreaterThan(0);
+    for (const cue of ["reload", "weapon-switch", "loot-pickup", "sell", "repair", "draw-pistol", "draw-revolver", "draw-smg", "draw-shotgun", "draw-rifle", "draw-baton", "draw-blade", "holster"] as const) expect(cues[cue]?.urls.length, cue).toBeGreaterThan(0);
   });
 });

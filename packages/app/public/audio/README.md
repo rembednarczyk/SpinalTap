@@ -4,7 +4,7 @@ Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie 
 
 Wszystkie pliki są na licencji **CC0 1.0** (domena publiczna, https://creativecommons.org/publicdomain/zero/1.0/): bez obowiązku atrybucji, użycie komercyjne dozwolone. Autorów i tak wymieniamy.
 
-Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
+Format: OGG Vorbis, 44,1 kHz. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
 
 ## Źródła
 
@@ -15,6 +15,9 @@ Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przy
 | Sci-fi Sounds | Kenney | CC0 (License.txt w paczce) | https://kenney.nl/assets/sci-fi-sounds | `kenney_sci-fi-sounds.zip` |
 | The Free Firearm Sound Library (Prepared SFX Library) | Ben Jaszczak i in. (freefirearmsfx.com), mirror OGA: bart | CC0 (strona OGA: "CC0 NO RIGHTS RESERVED") | https://opengameart.org/content/the-free-firearm-sound-library | `Prepared SFX Library.7z` (194 MB, z niego 14 plików) |
 | Handgun Reload Sound Effect | zer0_sol | CC0 (strona OGA) | https://opengameart.org/content/handgun-reload-sound-effect | `reload.wav` |
+| Gun Reload Sounds | SpringySpringo | CC0 (strona OGA) | https://opengameart.org/content/gun-reload-sounds | `gunreload1.wav`, `assaultriflereload1_0.wav`, `shotguncock_0.wav` (pobrane 21.11) |
+| Gun Reload lock or Click Sound | pauliuw | CC0 (strona OGA) | https://opengameart.org/content/gun-reload-lock-or-click-sound | `gun_reload_lock_or_click_sound.mp3` (pobrane 21.11) |
+| Weapons and Apparel SFX Library | Vehicle (Jan Schupke) | CC0 (readme.txt w paczce) | https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | `weapons-apparel.zip` (pobrane 21.11) |
 | Shotgun Reload Sound Effects | zer0_sol | CC0 (strona OGA: „Feel free to use these sounds without attribution”) | https://opengameart.org/content/shotgun-reload-sound-effects | `shotgunsounds.zip` (pobrane 21.11) |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
 | RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
@@ -69,6 +72,14 @@ Format: OGG Vorbis, 44,1 kHz. Pliki z 18.11 (paczka RPG, alarm, syrena) są przy
 | `land-step-000.ogg`, `land-step-001.ogg` | RPG Sound Pack, `footstep05.ogg`, `footstep06.ogg` | `land` (z syntezą niskiego tąpnięcia) |
 | `land-hard-000.ogg` | RPG Sound Pack, `dropLeather.ogg` | `land-hard` (z syntezą) |
 | `charge-clamp-000.ogg` | RPG Sound Pack, `metalLatch.ogg` (pierwsze 0,22 s) | `charge-plant` (z syntezą piknięć uzbrojenia) |
+| `draw-pistol-000.ogg` | Handgun Reload Sound Effect, `reload.wav` (od 1,00 s do 1,40 s: zamek puszczony do przodu) | `draw-pistol` (pistolet dobyty albo wybrany) |
+| `draw-revolver-000.ogg` | Gun Reload lock or Click Sound, `gun_reload_lock_or_click_sound.mp3` (0-0,34 s, -6 dB) | `draw-revolver` |
+| `draw-smg-000.ogg` | Gun Reload Sounds, `gunreload1.wav` (od 1,22 s do 1,54 s: zamek) | `draw-smg` |
+| `draw-shotgun-000.ogg` | Gun Reload Sounds, `shotguncock_0.wav` (od 0,02 s do 0,45 s: czółenko) | `draw-shotgun` |
+| `draw-rifle-000.ogg` | Gun Reload Sounds, `assaultriflereload1_0.wav` (od 1,00 s do 1,45 s: rączka zamka) | `draw-rifle` |
+| `draw-baton-000.ogg` | Weapons and Apparel SFX Library, `knife-unsheathe-04.wav` (od 0,02 s do 0,36 s) | `draw-baton` (pałka) |
+| `draw-blade-000.ogg`, `draw-blade-001.ogg` | Weapons and Apparel SFX Library, `seax-unsheathe-01.wav` (0-0,30 s), `seax-unsheathe-03.wav` (od 0,05 s do 0,33 s) | `draw-blade` (miecz z pochwy) |
+| `holster-000.ogg`, `holster-001.ogg` | Weapons and Apparel SFX Library, `knife-sheathe-02.wav` (od 0,10 s do 0,42 s), `knife-sheathe-05.wav` (od 0,04 s do 0,34 s) | `holster` (broń schowana) |
 | `alarm-klaxon-000.ogg` | Alarm (ezduzziteh), `alarm_2.ogg` (pierwsze 0,96 s, dwa tony) | `alarm` (podniesiony alarm W-3) |
 | `alarm-siren-000.ogg` | Sirens and Alarm Noise (aquinn), `siren.mp3` (3,48-5,0 s, jedno wycie) | `alarm-siren` (co 2,4 s w trakcie alarmu) |
 | `rain-loop.ogg` | Rain (loopable), `1.ogg` (27 s, stereo) | pętla deszczu na szynie `ambience` (synteza pod spodem na 30%) |

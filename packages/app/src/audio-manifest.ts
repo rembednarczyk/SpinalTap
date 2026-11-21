@@ -42,6 +42,16 @@ const SOUNDS = {
     // The pump racked after the last shell, back and forth in one recorded stroke (zer0_sol, 21.11).
     "shotgun-pump": { urls: ["shotgun-rack-000.ogg"], gain: 0.65, pitch: 0.03, send: 0.18 },
     "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
+    // Each weapon's own handling as it comes out (user notes of 21.11, sources in README): a pistol's slide,
+    // a revolver's hammer, an SMG's bolt, a shotgun's pump, a rifle's charging handle; a baton and a blade out of the sheath.
+    "draw-pistol": { urls: ["draw-pistol-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.1 },
+    "draw-revolver": { urls: ["draw-revolver-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.1 },
+    "draw-smg": { urls: ["draw-smg-000.ogg"], gain: 0.45, pitch: 0.04, send: 0.1 },
+    "draw-shotgun": { urls: ["draw-shotgun-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.12 },
+    "draw-rifle": { urls: ["draw-rifle-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.12 },
+    "draw-baton": { urls: ["draw-baton-000.ogg"], gain: 0.55, pitch: 0.05, send: 0.1 },
+    "draw-blade": { urls: range("draw-blade-", ["000", "001"]), gain: 0.5, pitch: 0.04, send: 0.2 },
+    holster: { urls: range("holster-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.05 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.
     sell: { urls: range("sell-tin-", ["000", "001"]), gain: 0.45, pitch: 0.05, layerSynth: true },

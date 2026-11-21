@@ -1,1 +1,2 @@
 - Ładowanie strzelby brzmi jak prawdziwa broń: każdy nabój to nagranie wsuwania naboju do magazynka z trzaskiem podajnika, a po ostatnim słychać przeładowanie czółenka. Wcześniej były to stuknięcia metalu z ogólnej paczki dźwięków.
+- Każda broń ma własny dźwięk przy wyciąganiu i przełączaniu: zamek pistoletu, kurek rewolweru, zamek pistoletu maszynowego, czółenko strzelby, rączka zamka karabinu, pałka i miecz wysuwane z pochwy. Chowanie broni brzmi jak wsunięcie do kabury.
