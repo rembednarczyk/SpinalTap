@@ -1,0 +1,1 @@
+- Auto: potrącenie rani pieszego tym bardziej, im szybciej auto jedzie; przy dużej prędkości zabija, a świadkowie mogą to zgłosić jako morderstwo.

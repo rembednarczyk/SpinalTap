@@ -181,7 +181,8 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
   - przechodniów tła: schodzą z drogi bez przestępstwa, jak dotąd;
   - kogoś, kto już leży: nie zostaje uderzony drugi raz.
 - W trakcie postać jest przypięta do miejsca. System pojazdu działa po ruchu i cofa to, co w kroku przesunęła jej SI.
-- Odłożone: obrażenia i śmierć pieszych (ścieżka obrażeń i umierania SI), postacie tłumu rysowane bez rigu (bez klipu, tylko przypięte).
+- Zrobione 21.11: obrażenia z potrącenia. Każdy m/s ponad próg potrącenia (4 m/s) to 14 punktów (`runOverDamage`): przy 30 km/h ok. 60, przy 40 km/h blisko 100, przy 50 km/h więcej niż zdrowie przechodnia. Obrażenia idą zwykłą ścieżką (`applyDamage`, `lastHitBy` gracza, gdy to ona prowadzi, `DamageDealt`), więc zabity trafia do systemu śmierci, który robi z tego morderstwo, jeśli ofiara nie walczyła; zabity nie dostaje rzutu klipem, tylko pada jak po każdym ciosie. Test w `vehicle-carjack`.
+- Odłożone: postacie tłumu rysowane bez rigu (bez klipu, tylko przypięte).
 - Test sesji: auto na pełnym gazie wjeżdża w pieszego, ten zostaje rzucony, jest przypięty, przechodzi przez wstawanie i staje 1,2–2,2 m od miejsca, w którym upadł.
 
 
