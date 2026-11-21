@@ -1,0 +1,1 @@
+- Auta na ulicach mają całe bryły zamiast poszarpanych: wersja z bliska ma więcej szczegółu (do 2,5 tys. trójkątów, ze spojlerem i pełnymi kołami), wersje na telefon bez dziur i oderwanych kół. Postacie w tłumie na telefonie mają ręce i nogi bez kolców i ubytków.

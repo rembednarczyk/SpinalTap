@@ -1,0 +1,15 @@
+{
+  "name": "@seki/mesh-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mesh tools of the bakes (tools/city_*.py): meshoptimizer's quadric simplifier and gltfpack, pinned (decision of the user 20.11).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "gltfpack": "1.3.0",
+    "meshoptimizer": "1.3.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -52,6 +52,8 @@ export interface MapBuilding {
   readonly rise?: number;
   /** Density (0..1) of the cables, ads, pipes and neon this building hangs over the street (ADR-0051). */
   readonly clutter?: number;
+  /** The venues' fronts from the Asian Shop Pack under their boards (ADR-0096 rule 6). */
+  readonly shopfronts?: true;
   /** Landmarks next to it the superstructure keeps off (G-050): world outlines and tops (world y). */
   readonly landmarks?: readonly { readonly ring: readonly P2[]; readonly top: number }[];
   /** The map's venues in or at it (ADR-0064 stage 4): world points, 2077 names, neon colours. */

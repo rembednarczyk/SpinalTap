@@ -5,7 +5,7 @@ import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
 import type { BladeHousing } from "./blade-housings";
 import { shopBlades, shopBoardOn } from "./sign-plan";
 import { housingBottom } from "./blade-housings";
-import { venueBoardOn } from "./venue-plan";
+import { venueBoardOn, venueBoards } from "./venue-plan";
 
 /**
  * Facade props of the map city (ADR-0058): the near facade plans (wall clutter, rooftop gear of
@@ -15,7 +15,7 @@ import { venueBoardOn } from "./venue-plan";
  * The slots are baked into the cell's near mesh, so they cost vertices, not draw calls.
  */
 
-export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "dish-big" | "antenna" | "awning" | "awning-flat" | BladeHousing["kind"];
+export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "dish-big" | "antenna" | "awning" | "awning-flat" | BladeHousing["kind"] | ShopfrontKind;
 
 /**
  * A spot for a prop. On a wall `at` is the wall under the middle of the prop's back (at its
@@ -27,6 +27,8 @@ export interface PropSlot {
   readonly at: Vec;
   readonly out: Vec;
   readonly width?: number;
+  /** The height a front fills, from its foot (ADR-0096 rule 6). */
+  readonly height?: number;
 }
 
 /** Takes a slot; true when a prop will stand there (the plan then leaves its own decor out). */
@@ -115,6 +117,11 @@ export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { mo
       const h = AWNING_HEIGHT[slot.kind];
       return one(slot.kind, (m) => onWall(m, slot.at, slot.out, { x: w / m.size.x, y: h / m.size.y, z: depth / m.size.z }));
     }
+    case "shopfront-wide":
+    case "shopfront-door":
+    case "shopfront-counter":
+      // Stretched to the venue's stretch of wall and the ground floor under its board, its depth as baked.
+      return one(slot.kind, (m) => onWall(m, slot.at, slot.out, { x: (slot.width ?? m.size.x) / m.size.x, y: (slot.height ?? m.size.y) / m.size.y, z: 1 }));
     case "blade-frame":
     case "blade-narrow":
     case "blade-led":
@@ -195,4 +202,30 @@ export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer, obstacles: O
 /** The housings of the blade signs (ADR-0096 rule 5), each at the foot of its plane on the wall, on every quality. */
 export const planBladeHousings = (f: FacadeFrame, place: PropPlacer): void => {
   for (const b of shopBlades(f)) place({ kind: b.housing.kind, at: wallPoint(b.wall, b.u, housingBottom(b.housing, b.y)), out: wallOut(b.wall) });
+};
+
+/** The fronts of the Asian Shop Pack (ADR-0096 rule 6). */
+export type ShopfrontKind = "shopfront-wide" | "shopfront-door" | "shopfront-counter";
+
+/** The least height of a front (m): a door's under the board, else none. */
+const FRONT_LEAST = 2.2;
+/** A stretch this wide takes the whole shopfront, a narrower one a door or a hatch (m). */
+const FRONT_WIDE = 4.5;
+
+/**
+ * The venues' fronts in the shop districts (ADR-0096 rule 6): under each venue's board, as wide as
+ * the board, from the ground floor up to the board's bottom; the whole shopfront on a wide
+ * stretch, a door with a window or a hatch with a counter (by a hash of the building and the
+ * board) on a narrow one. None by a place of remembrance, on the Old Town and Krakowskie (no
+ * `shopfronts`), nor on phones (detail, as the awnings).
+ */
+export const planShopfronts = (f: FacadeFrame, place: PropPlacer): void => {
+  if (!f.b.shopfronts) return;
+  venueBoards(f).forEach((b, k) => {
+    if (b.hushed) return;
+    const height = b.y - b.height / 2 - f.b.base - 0.05;
+    if (height < FRONT_LEAST) return;
+    const kind: ShopfrontKind = b.width >= FRONT_WIDE ? "shopfront-wide" : propHash(f.b.look + k * 7919, 8) % 2 === 0 ? "shopfront-door" : "shopfront-counter";
+    place({ kind, at: wallPoint(b.wall, b.u, f.b.base), out: wallOut(b.wall), width: b.width, height });
+  });
 };

@@ -27,7 +27,7 @@ export interface VehicleSpec {
   /** Distance between the axles and between the wheels of an axle (m). */
   readonly wheelbase: number;
   readonly track: number;
-  /** Share of the wheelbase the front axle lies ahead of the centre of mass (0..1). */
+  /** Share of the wheelbase the front axle lies ahead of the centre of mass (0..1): the front axle carries the rest of the weight (0.47 of it here). */
   readonly frontShare: number;
   readonly wheelRadius: number;
   /** A wheel's rotational inertia (kg·m²). */
@@ -66,7 +66,7 @@ export const CYBER_SPEC: VehicleSpec = {
   comHeight: 0.48,
   wheelbase: 2.65,
   track: 1.58,
-  frontShare: 0.47,
+  frontShare: 0.53,
   wheelRadius: 0.33,
   wheelInertia: 1.2,
   suspension: { rest: 0.34, travel: 0.16, spring: [48000, 52000], bump: 2600, rebound: 3800, stop: 250000 },

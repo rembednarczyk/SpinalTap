@@ -16,3 +16,4 @@ packages:
   - "tools/map-refresh"
   - "tools/city-cache"
   - "tools/animations"
+  - "tools/mesh-tools"

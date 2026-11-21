@@ -1,0 +1,1 @@
+- W dzielnicach sklepowych (Lubartowska, Podzamcze, doki) lokale mają pod szyldem prawdziwe fronty: witryny z drzwiami, drzwi z oknem albo okienko z ladą.

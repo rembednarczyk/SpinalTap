@@ -7,7 +7,8 @@ standing with a hand on the hip, each pose with two of the pack's hairstyles of 
 `figure-<pose>-<body>` (pose `sit`, `perch`, `stand`, `hips`; body `a` the man's build, `b` the woman's). The
 perched sitter is the sitting one with its shins turned back under the seat (`tucked`), for a seat that stands
 low over the paving. Each pose and body also has a phone version (style `lite` too) of its first hairstyle,
-clustered down to `LITE` triangles.
+simplified down to `LITE` triangles by quadric error (`city_qem`, meshoptimizer; vertex clustering tore the
+arms and legs, audit of 20.11).
 
 The pack's flat materials mark the parts, which the engine paints per figure from its look (`figure-models.ts`):
 the skin `brick`, the top `fabric-teal`, the trousers or skirt `trim`, the shoes `tyre`, the hair `dark`, a hair
@@ -26,7 +27,8 @@ Usage: python3 -I tools/city_kit.py --crowd DIR --out DIR (DIR as filled by tool
 """
 import os, zlib
 import numpy as np
-from city_ccby import simplify, weld
+from city_ccby import weld
+from city_qem import qem_simplify
 from city_kit_gltf import png_bytes, write_glb
 from city_kit_palette import GRID, SWATCHES, palette_images, swatch_uv
 from city_street_e2 import obj_triangles
@@ -161,7 +163,7 @@ def build_crowd(folder, out_dir):
                 # The phones' version of the first hairstyle only: at their distances the hair is a dark cap.
                 for lite, target in ((False, FULL),) + (((True, LITE),) if n == 0 else ()):
                     key = f"cr-{pose}-{body}{n}{'-lite' if lite else ''}"
-                    P, roles = simplify(P0, roles0, target)
+                    P, roles = qem_simplify(P0, roles0, target)
                     m = weld(key, P, smooth_normals(P), roles, swatch_uv, MAX_TRIS)
                     flat = P.reshape(-1, 3)
                     size = [round(float(v), 3) for v in flat.max(0) - flat.min(0)]
