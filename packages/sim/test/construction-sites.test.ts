@@ -29,12 +29,15 @@ describe("the building sites in the game (ADR-0087)", () => {
     const pieces = sitePieces([zielona!]);
     const kinds = new Set(pieces.map((p) => p.prop));
     // No scaffold: its only wall on the outline carries the board of FRYZURA Z PRZYTUPEM (G-893).
-    expect([...kinds].sort()).toEqual(["site-board", "site-cabin", "site-crane", "site-fence", "site-gate"]);
+    // The cones and barriers of its street side on Zielona (ADR-0096 rule 2) come as `clutter`.
+    expect([...kinds].sort()).toEqual(["clutter", "site-board", "site-cabin", "site-crane", "site-fence", "site-gate"]);
     const world = Object.values(WORLD_STREET_PROPS)
       .flat()
-      .filter((p) => SITE_KINDS.has(p.prop));
+      .filter((p) => SITE_KINDS.has(p.prop) || p.prop === "clutter");
     // On the game's ground, which the dig leaves as the map has it there: within a few centimetres of the generator's foot.
-    for (const p of pieces) expect(world.some((w) => w.prop === p.prop && w.x === p.x && w.z === p.z && Math.abs(w.y - p.y) < 0.05), `${p.prop} ${p.x},${p.z}`).toBe(true);
+    // The cones and barriers outside the fence stand on the pavement's shaping, which the generator does not see: 10 cm.
+    const near = (p: { prop: string }) => (p.prop === "clutter" ? 0.1 : 0.05);
+    for (const p of pieces) expect(world.some((w) => w.prop === p.prop && w.x === p.x && w.z === p.z && Math.abs(w.y - p.y) < near(p)), `${p.prop} ${p.x},${p.z}`).toBe(true);
   });
 
   it("puts a piece in the chunk holding it, half-open, and leaves out one in no chunk", () => {
