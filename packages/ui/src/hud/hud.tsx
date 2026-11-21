@@ -205,7 +205,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         // At the wheel (ADR-0097 §3): the speed and the gear.
         <div className="hud__vehicle" data-testid="vehicle">
           <span className="hud__vehicle-speed">{vehicle.kmh}</span>
-          <span className="hud__vehicle-unit">km/h</span>
+          <span className="hud__vehicle-unit">{t("hud.kmh")}</span>
           <span className="hud__vehicle-gear">{vehicle.gear}</span>
         </div>
       )}
