@@ -43,6 +43,7 @@ describe("credits (ADR-0063)", () => {
     const glbs = ASSETS.filter((f) => f.endsWith(".glb"));
     const found = glbs.flatMap((f) => creditsIn(f).map((id) => ({ f, id })));
     expect([...new Set(found.map((x) => x.id))].sort()).toEqual([
+      "sketchfab-asian-shop-pack",
       "sketchfab-avika-street-food-cart",
       "sketchfab-cctv-camera",
       "sketchfab-cyberpunk-car",

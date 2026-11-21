@@ -427,7 +427,7 @@
       "files": [
         { "path": "asian_shop_pack_free_gameready.glb", "url": "https://drive.usercontent.google.com/download?id=1Xml9dt5pbk4d-bKp4GKflYeGLbcfbSGa&export=download&confirm=t", "sha256": "d112556ddf8b02e7743d910ad1ca282a4bceebb890ca307051ab0fbe97e1f0e5" }
       ],
-      "used": []
+      "used": ["ex-front-wide", "ex-front-door", "ex-front-counter"]
     },
     {
       "id": "sketchfab-avika-street-food-cart",
