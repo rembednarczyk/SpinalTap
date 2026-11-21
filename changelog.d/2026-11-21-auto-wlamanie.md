@@ -1,0 +1,1 @@
+- Do zaparkowanego auta można się włamać: kilka sekund przy drzwiach, brzęk szyby i auto jest twoje; świadek zgłosi kradzież.

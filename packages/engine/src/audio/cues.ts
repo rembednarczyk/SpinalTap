@@ -332,6 +332,14 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sawtooth", freq: 230, to: 170, start: 0.04, dur: 0.3, gain: 0.05, filter: 2400, filterType: "bandpass", attack: 0.01 },
     ],
   },
+  // A parked car's window smashed (ADR-0097 §3), under Kenney's glass: a knock and a bright shatter of noise.
+  "car-glass": {
+    send: 0.2,
+    voices: [
+      { type: "sine", freq: 180, to: 90, dur: 0.08, gain: 0.2, attack: 0.002 },
+      { type: "noise", freq: 0, dur: 0.3, gain: 0.18, filter: 6000, filterTo: 2500, filterType: "highpass", attack: 0.001 },
+    ],
+  },
   "engine-stop": {
     send: 0.15,
     voices: [{ type: "sawtooth", freq: 40, to: 14, dur: 1.1, gain: 0.1, filter: 600, filterTo: 200, filterType: "lowpass", attack: 0.01 }],

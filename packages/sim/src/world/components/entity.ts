@@ -1,4 +1,4 @@
-import type { ActivityId, CarPose, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
+import type { ActivityId, CarPose, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, VehicleModel, ViewDescriptor } from "@seki/core";
 import type { CarState } from "../vehicle/state";
 import type { EjectedDriver } from "../vehicle/thrown-types";
 import type { Struck } from "../vehicle/thrown-types";
@@ -161,4 +161,14 @@ export interface Entity {
   struck?: Struck;
   /** A car with its physics (ADR-0097): the player's, or one she left. Not saved. */
   car?: CarState;
+  /** A parked car's solid (ADR-0050) she can break into (ADR-0097): which, its body and facing. A static prop, not saved. */
+  parkedCar?: ParkedCarRef;
+}
+
+export interface ParkedCarRef {
+  /** Its place in `PARKED_CARS`. */
+  readonly index: number;
+  readonly model: VehicleModel;
+  readonly tint: number;
+  readonly yaw: number;
 }

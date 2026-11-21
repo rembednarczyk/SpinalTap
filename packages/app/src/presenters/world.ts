@@ -71,6 +71,10 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     bus.on("VehicleHorn", () => audio.play("horn")),
     // Her car hitting a wall, a post or a car (ADR-0097 §3): a bump or a crash by the energy taken out.
     bus.on("VehicleHit", (e) => audio.play(hitCue(e.energy))),
+    // A parked car broken into (ADR-0097 §3): its window smashed.
+    bus.on("VehicleEntered", (e) => {
+      if (e.from === "parked") audio.play("car-glass");
+    }),
     // The hit that wrecked her car (ADR-0097 §5): its engine dies.
     bus.on("VehicleWrecked", () => audio.play("engine-stop")),
     bus.on("TimeSkipped", (e) =>
