@@ -6,7 +6,7 @@
  * glass on it at all, the venues' boards on it and whether a holo-ad may hang on it. It reads the
  * renderer's modules: Node loads it through Vite's module runner (`props-build.ts`), the tests directly.
  */
-import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, metaStorey, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type FacadeFrame, type Wall, frameWallMeta, metaStorey, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
@@ -48,8 +48,10 @@ export const cityDecalWalls = (views: readonly DrawnView[]): DecalWall[] => {
     const boards = b.landmark ? [] : framedBoards(b);
     const building = `${b.at.x.toFixed(1)},${b.at.z.toFixed(1)}`;
     return f.walls.flatMap((w): DecalWall[] => {
-      // A wall on the map's edge faces nothing: no decal there (G-556).
-      if (hiddenWall(f, w) || w.edge) return [];
+      // A wall on the map's edge faces nothing: no decal there (G-556). A blind wall a neighbour covers at
+      // its three samples (`coveredTo`) takes none either: a decal's spot along it may lie within the
+      // neighbour, though the renderer draws the open stretches of such a wall (`hiddenWall`, G-959).
+      if ((w.blind && w.coveredTo >= f.top - 0.1) || w.edge) return [];
       return [
         {
           building,
