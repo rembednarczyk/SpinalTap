@@ -45,6 +45,10 @@
 /* ---- the pad ---- */
 .touch-mode .touch__top { top: var(--zone-top); right: var(--zone-right); }
 .touch-mode .touch__actions { right: var(--zone-right); bottom: var(--zone-bottom); }
+/* The car's dashboard (ADR-0097 §3): over the middle of the top band on a phone, between the
+   objective and the wallet, where neither the pad's row nor its cluster lies. */
+.touch-mode .hud__vehicle { top: var(--zone-top); left: 50%; right: auto; bottom: auto; transform: translateX(-50%); padding: 4px 10px; }
+.touch-mode .hud__vehicle-speed { font-size: 26px; }
 .touch-mode .touch__stick-hint { left: max(56px * var(--touch-look, 1), calc(var(--safe-left) + 40px * var(--touch-look, 1))); bottom: max(80px * var(--touch-look, 1), calc(var(--safe-bottom) + 70px * var(--touch-look, 1))); }
 
 /* ---- top right: left of and under the pad's row ---- */

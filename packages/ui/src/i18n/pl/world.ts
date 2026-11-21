@@ -258,6 +258,8 @@ export const plWorld = {
   "contract.hooks": "Odkryte haki",
   "hud.health": "Zdrowie",
   "hud.kmh": "km/h",
+  "hud.abs": "ABS",
+  "hud.tc": "TC",
   "hud.openJournal": "Otwórz dziennik",
   "hud.ability.ready": "gotowe",
   "hud.medkits": "Apteczki × {count}",
