@@ -67,6 +67,7 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
 | `car-bump-000.ogg`, `car-bump-001.ogg` | Impact Sounds, `impactMetal_medium_000-001.ogg` (bez zmian) | `car-bump` (auto gracza lekko w coś uderza) |
 | `car-crash-000.ogg`, `car-crash-001.ogg`, `car-crash-002.ogg` | Impact Sounds, `impactMetal_heavy_000.ogg`, `_001.ogg`, `_003.ogg` (bez zmian) | `car-crash` (zderzenie auta gracza, z syntezą huku i trzasku) |
+| `car-glass-000.ogg`, `car-glass-001.ogg` | Impact Sounds, `impactGlass_heavy_001.ogg`, `_004.ogg` (bez zmian) | `car-glass` (wybita szyba przy włamaniu do zaparkowanego auta) |
 | `blast-crunch-003.ogg`, `blast-crunch-004.ogg` | Sci-fi Sounds, `explosionCrunch_003.ogg`, `explosionCrunch_004.ogg` (bez zmian; paczka pobrana 17.11 z mirroru OGA https://opengameart.org/content/sci-fi-sounds, `sci-fi_sounds.zip`, License.txt: CC0) | `explosion` (wybuch ładunków W-3, z syntezą niskiego huku) |
 | `shotgun-rack-000.ogg` | Shotgun Reload Sound Effects, `Rack.mp3` (od 0,60 s do 1,06 s, mono, normalizacja do -14 LUFS, wyciszenie ostatnich 0,06 s): czółenko w tył i w przód | `shotgun-pump` (przeładowanie po ostatnim naboju) |
 | `impact-melee-000.ogg` | RPG Sound Pack, `chop.ogg` | `impact-melee` (uderzenie broni białej) |

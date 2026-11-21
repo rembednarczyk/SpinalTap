@@ -187,6 +187,12 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 
 
 
+## Dźwięk silnika benzynowego słyszalny na telefonie (21.11, uwagi użytkownika)
+- Uwaga: słychać tylko cewkę, a miał być silnik benzynowy z cewką w tle. Przyczyna: pętla domasx2 to w 98% dudnienie 20–100 Hz (podstawa 43 Hz, w grze 30–95 Hz przy prędkości odtwarzania 0,7–2,2). Głośnik telefonu i laptopa takich częstotliwości nie oddaje, więc słychać było tylko cewkę (2,6–6 kHz).
+- Teraz pętla to `Car_Engine_Loop` z paczki GGBotNet (CC0, z tej samej paczki są drzwi, gaszenie i klakson). 74% energii ma w paśmie 300–1000 Hz, główne prążki 165 i 410 Hz. Pierwsze 0,15 s przenika w koniec, więc pętla nie trzaska (skok na styku 0,014 przy typowym kroku 0,008; w surowym pliku 0,30). Mono, szczyt −3 dB, Vorbis q4, wzmocnienie 0,6.
+- Klakson: nagranie z paczki ma szczyt 2,7 (przesterowane). Wzmocnienie spada z 0,4 na 0,3, żeby nie przekraczał pełnej skali.
+- Sprawdzone nagraniem dźwięku z gry w przeglądarce (podsłuch wyjścia `AudioContext`): przy gazie 70–80% energii jest w paśmie 150–1000 Hz, cewka (2,5–7 kHz) ma 4–6%.
+
 ## Ruch uliczny widzi auto gracza, porzucone auto na ręcznym (21.11)
 - Na zrzutach z przejmowania auta ruch wjeżdżał w stojące auto gracza: `lookAhead` w ruchu ulicznym patrzył na ciała i na pojazdy ruchu, a auta z fizyką (`car`) nie znał. Teraz widzi je jak pojazd przed sobą na swoim pasie (bezpieczna prędkość modelu jazdy za poprzednikiem Gippsa, 1981: droga hamowania v²/2a i odstęp `FOLLOW_GAP`), z obrysem auta obróconym do pasa, więc auto stojące w poprzek zajmuje go szerzej niż stojące wzdłuż (`systems/traffic-player-cars.ts`).
 - Auto bez kierowcy dostawało zerowe sterowanie i staczało się po pochyłości ulicy. Auto porzucone stoi teraz na ręcznym (sam ręczny: wciśnięty hamulec na postoju wrzuca wsteczny), więc trzyma je kotwica postoju; pchnięte toczy się dalej.
@@ -196,8 +202,11 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
 - Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
 
-## Dźwięk silnika benzynowego słyszalny na telefonie (21.11, uwagi użytkownika)
-- Uwaga: słychać tylko cewkę, a miał być silnik benzynowy z cewką w tle. Przyczyna: pętla domasx2 to w 98% dudnienie 20–100 Hz (podstawa 43 Hz, w grze 30–95 Hz przy prędkości odtwarzania 0,7–2,2). Głośnik telefonu i laptopa takich częstotliwości nie oddaje, więc słychać było tylko cewkę (2,6–6 kHz).
-- Teraz pętla to `Car_Engine_Loop` z paczki GGBotNet (CC0, z tej samej paczki są drzwi, gaszenie i klakson). 74% energii ma w paśmie 300–1000 Hz, główne prążki 165 i 410 Hz. Pierwsze 0,15 s przenika w koniec, więc pętla nie trzaska (skok na styku 0,014 przy typowym kroku 0,008; w surowym pliku 0,30). Mono, szczyt −3 dB, Vorbis q4, wzmocnienie 0,6.
-- Klakson: nagranie z paczki ma szczyt 2,7 (przesterowane). Wzmocnienie spada z 0,4 na 0,3, żeby nie przekraczał pełnej skali.
-- Sprawdzone nagraniem dźwięku z gry w przeglądarce (podsłuch wyjścia `AudioContext`): przy gazie 70–80% energii jest w paśmie 150–1000 Hz, cewka (2,5–7 kHz) ma 4–6%.
+## Włamanie do zaparkowanego auta (21.11, plan auta)
+- Wzorzec: kradzież zaparkowanego auta z gier z otwartym światem (seria GTA): kilka sekund przy drzwiach, wybita szyba, przestępstwo, jeśli ktoś widzi. Różnica wobec planu z §3: bez zamka jak drzwi z ADR-0058 i bez osobnej szansy wykrycia. Wykrycie daje zwykła droga świadków (ADR-0029), a przestępstwo ma nowy rodzaj `theft` (kradzież auta, poziom pościgu 1, jak napaść).
+- Zaparkowane auta (ADR-0050) to statyczne bryły ulicy rysowane w scenerii. Bryła niesie `parkedCar` (miejsce w `PARKED_CARS`, model, kolor, kierunek), a podpowiedź `prompt.car.break` pojawia się, gdy obok nie ma auta z ruchu ani jej własnego. Klawisz interakcji uruchamia włamanie:
+  - bryła znika, w jej miejscu staje auto z fizyką tego samego modelu i koloru (`breakIn` w `vehicle-system.ts`);
+  - bohaterka pracuje przy drzwiach 2,2 s, potem gra klip wsiadania;
+  - aplikacja gra dźwięk wybitej szyby (`car-glass`, Kenney `impactGlass_heavy`).
+- Miejsce zostaje puste na zawsze. Flaga `parked-taken:<i>` w stanie domeny jest zapisywana, więc bez zmiany schematu. Strumieniowanie nie stawia bryły z powrotem przy wczytaniu chunku, a `RenderSync` zabiera jej widok ze scenerii, także rendererowi uruchomionemu po włamaniu.
+- Testy: `vehicle-break-in` (sim: podpowiedź, akt, flaga, brak bryły, jazda, sceneria, zapis i wczytanie), `audio-cues` (app: szyba tylko przy włamaniu).

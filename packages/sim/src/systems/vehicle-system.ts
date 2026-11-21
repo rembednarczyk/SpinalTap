@@ -1,4 +1,4 @@
-import { type EntityId, isDrivable, vehicleSpec } from "@seki/core";
+import { type EntityId, type Vec3, type VehicleModel, isDrivable, vehicleSpec } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { type V3, attitude, toWorld, v3 } from "../world/vehicle/frame";
@@ -18,6 +18,9 @@ import { circleTouches } from "../world/solids";
 import { STEP_HEIGHT } from "./step";
 import { PITCH_LIMIT } from "./player-control-system";
 import { PLAYER_CAR_ID_BASE, nextCarId } from "../world/vehicle/saved-cars";
+import { BREAK_IN_PROMPT, BREAK_IN_WAIT, type ParkedEntity, parkedCarToBreak } from "../world/vehicle/break-in";
+import { parkedTakenFlag } from "../content/parked-taken";
+import { raiseFlag } from "../world/domain-ops";
 
 export { PLAYER_CAR_ID_BASE };
 /** Most cars she leaves standing in the world; an older one goes when she takes another. */
@@ -69,21 +72,43 @@ export const carToTake = (ctx: SimContext, player: Entity): (Entity & { vehicle:
  */
 export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: NonNullable<Entity["vehicle"]> }): Car => {
   const view = v.view!.kind === "vehicle" ? v.view! : { kind: "vehicle" as const, model: "sedan" as const, tint: 0 };
-  const car = newCar(view.model, v.position.x, v.position.y, v.position.z, v.yaw);
   // It stopped for her: she pulls the door open and gets in (ADR-0097, clip of 21.11), the car still.
   // Its driver pulled out: an assault in the crime's rules (ADR-0029), if anyone sees it.
   offend(ctx, "assault", v.position);
   ctx.world.remove(v);
   ctx.streamer.streamedOut.add(v.id);
-  // Past her cars in the world: a loaded game brings them back under theirs (v52).
+  const e = addCar(ctx, view.model, view.tint, v.position, v.yaw);
+  // Its driver pulled out and thrown onto the road first (ADR-0097, clips of 21.11), then she gets in.
+  ejectDriver(ctx, DRIVER_ID_BASE + (e.id - PLAYER_CAR_ID_BASE), seatInWorld(e.car), v.yaw, v.position.y);
+  ctx.session.carAct = startAct("enter", JACK_WAIT);
+  ctx.bus.emit("VehicleEntered", { vehicleId: e.id, from: "traffic" });
+  placeSeat(player, e);
+  return e;
+};
+
+/** A car with physics for her in place of the street's, at the wheel: past her cars in the world (a loaded game brings them back under theirs, v52). */
+const addCar = (ctx: SimContext, model: VehicleModel, tint: number, at: Vec3, yaw: number): Car => {
+  const car = newCar(model, at.x, at.y, at.z, yaw);
   const id = nextCarId(ctx.world);
-  const e = ctx.world.add({ id, position: { ...v.position }, prevPosition: { ...v.position }, yaw: v.yaw, prevYaw: v.yaw, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, view: { kind: "vehicle", model: view.model, tint: view.tint }, car }) as Car;
+  const e = ctx.world.add({ id, position: { ...at }, prevPosition: { ...at }, yaw, prevYaw: yaw, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, view: { kind: "vehicle", model, tint }, car }) as Car;
   ctx.streamer.streamedOut.delete(id);
   ctx.session.driving = id;
-  // Its driver pulled out and thrown onto the road first (ADR-0097, clips of 21.11), then she gets in.
-  ejectDriver(ctx, DRIVER_ID_BASE + (id - PLAYER_CAR_ID_BASE), seatInWorld(car), v.yaw, v.position.y);
-  ctx.session.carAct = startAct("enter", JACK_WAIT);
-  ctx.bus.emit("VehicleEntered", { vehicleId: id, from: "traffic" });
+  return e;
+};
+
+/**
+ * Breaks into a parked car (ADR-0097 §3): a theft if anyone sees it (ADR-0029); the street's solid
+ * goes, its place stays empty for good (the flag, which the scenery and the streaming read), and
+ * she works at the door before the clip of getting in plays.
+ */
+export const breakIn = (ctx: SimContext, player: Entity, p: ParkedEntity): Car => {
+  const { index, model, tint, yaw } = p.parkedCar;
+  offend(ctx, "theft", p.position);
+  raiseFlag(ctx, parkedTakenFlag(index));
+  ctx.world.remove(p);
+  const e = addCar(ctx, model, tint, p.position, yaw);
+  ctx.session.carAct = startAct("enter", BREAK_IN_WAIT);
+  ctx.bus.emit("VehicleEntered", { vehicleId: e.id, from: "parked" });
   placeSeat(player, e);
   return e;
 };
@@ -236,6 +261,13 @@ export const createVehicleSystem = (): System => {
           } else if (v) {
             retireOldest(ctx);
             takeCar(ctx, player, v);
+            look = 0;
+          }
+        } else if (!driving && ctx.session.focusPrompt === BREAK_IN_PROMPT) {
+          const parked = parkedCarToBreak(ctx, player);
+          if (parked) {
+            retireOldest(ctx);
+            breakIn(ctx, player, parked);
             look = 0;
           }
         }

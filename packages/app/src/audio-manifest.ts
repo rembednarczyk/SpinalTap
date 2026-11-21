@@ -119,6 +119,8 @@ const SOUNDS = {
     // a crash some 6 dB over it with the synth's thud and crunch under it.
     "car-bump": { urls: range("car-bump-", ["000", "001"]), gain: 0.8, pitch: 0.06, send: 0.15 },
     "car-crash": { urls: range("car-crash-", ["000", "001", "002"]), gain: 1.6, pitch: 0.05, send: 0.3, layerSynth: true },
+    // The window she smashes breaking into a parked car (ADR-0097 §3): Kenney's heavy glass, at the bump's level.
+    "car-glass": { urls: range("car-glass-", ["000", "001"]), gain: 0.8, pitch: 0.05, send: 0.2 },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },

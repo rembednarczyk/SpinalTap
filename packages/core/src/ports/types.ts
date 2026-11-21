@@ -555,6 +555,8 @@ export type AudioCue =
   // Her car hitting something (ADR-0097 §3): a knock against a kerb post or a slow bump, a crash.
   | "car-bump"
   | "car-crash"
+  // A parked car's window smashed as she breaks into it (ADR-0097 §3).
+  | "car-glass"
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
   | "explosion"
   | "alarm"
