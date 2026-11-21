@@ -1,5 +1,5 @@
 import { type AudioCue, type EngineSound, type EntityId, vehicleSpec } from "@seki/core";
-import { type Simulation, drivenCar } from "@seki/sim";
+import { type Simulation, carKmh, carSkid, drivenCar } from "@seki/sim";
 
 /** Where she is with the car she drives (ADR-0097). */
 type Seat = "out" | "entering" | "in" | "exiting";
@@ -67,11 +67,22 @@ export class CarAudio {
 }
 
 /** The engine of the car she drives: its revs from idle to the limiter, its throttle; null with no car. */
+/** The energy (J) from which a hit is a crash: some 24 km/h into a wall for the sedan's 1350 kg; under it a bump. */
+export const CRASH_ENERGY = 30_000;
+
+/** The sound of her car hitting something, by the kinetic energy taken out of it. */
+export const hitCue = (energy: number): AudioCue => (energy >= CRASH_ENERGY ? "car-crash" : "car-bump");
+
+/** The speed (km/h) from which the tyres' slide is heard in full. */
+export const SQUEAL_PACE = 20;
+
 export const engineOf = (sim: Pick<Simulation, "session" | "world">): EngineSound | null => {
   const car = drivenCar(sim);
   if (!car) return null;
   const { idle, limiter } = vehicleSpec(car.model).engine;
-  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle };
+  // The tyres' slide for their squeal, none at a walking pace (a slip angle at a crawl is no slide).
+  const pace = Math.min(1, Math.abs(carKmh(car)) / SQUEAL_PACE);
+  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle, skid: carSkid(car) * pace };
 };
 
 /** The blip as she sits down: the revs up to `peak` of the range in `rise` seconds, back down with time constant `fall`, over in `length`. */
