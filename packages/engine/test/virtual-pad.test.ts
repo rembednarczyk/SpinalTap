@@ -2,6 +2,38 @@ import { describe, expect, it } from "vitest";
 import { STICK_SPRINT_THRESHOLD, VirtualPad } from "../src/input/virtual-pad";
 
 describe("VirtualPad", () => {
+  it("drives with the touch pedals, the slider, the handbrake and the horn (ADR-0097 §4)", () => {
+    const pad = new VirtualPad();
+    pad.press("gas");
+    pad.setSteer(-0.4);
+    let f = pad.poll();
+    expect(f.moveZ).toBe(1);
+    expect(f.moveX).toBeCloseTo(-0.4);
+    expect(f.horn).toBeUndefined();
+    // Both pedals: they cancel out, as W and S do.
+    pad.press("brake");
+    expect(pad.poll().moveZ).toBe(0);
+    pad.release("gas");
+    expect(pad.poll().moveZ).toBe(-1);
+    // Held, the handbrake and the horn last from poll to poll (a jump is one press).
+    pad.press("handbrake");
+    pad.press("horn");
+    f = pad.poll();
+    expect([f.jump, f.horn]).toEqual([true, true]);
+    f = pad.poll();
+    expect([f.jump, f.horn]).toEqual([true, true]);
+    pad.release("handbrake");
+    pad.release("horn");
+    f = pad.poll();
+    expect(f.jump).toBe(false);
+    expect(f.horn).toBeUndefined();
+    // The slider clamps; a reset lets go of it.
+    pad.setSteer(3);
+    expect(pad.poll().moveX).toBe(1);
+    pad.reset();
+    expect(pad.poll()).toMatchObject({ moveX: 0, moveZ: 0 });
+  });
+
   it("maps the stick to move axes and clamps it to the unit circle", () => {
     const pad = new VirtualPad();
     pad.setStick(3, 4);

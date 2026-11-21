@@ -128,7 +128,7 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 
 ## Wdrożenie etapu 7 w części potrzebnej do jazdy (21.11): wejścia
 - Pad: prawy spust to gaz, lewy hamulec (analogowo, z martwą strefą 5%), lewa gałka skręt, A ręczny; pole `drive` w klatce tylko wtedy, gdy spust jest wciśnięty, inaczej auto jedzie z osi ruchu jak z klawiatury (gałka do przodu to gaz). Klawiatura: W/S gaz i hamulec z wstecznym, A/D skręt, spacja ręczny, wygładzane w `sim`. Dotyk: gałka ruchu i przycisk skoku dają to samo co klawiatura, bez zmian w interfejsie dotykowym.
-- Odłożone: kierownica przez Gamepad API z osobnymi pedałami i sprzęgłem, przechył telefonu, ustawienia czułości i wspomagań (ABS i kontrola trakcji są zawsze włączone), scena jazdy w `npr-perf` (CI na wolnych runnerach już dziś mieści się na granicy 25 minut shardu).
+- Odłożone: kierownica przez Gamepad API z osobnymi pedałami i sprzęgłem, przechył telefonu, scena jazdy w `npr-perf` (CI na wolnych runnerach już dziś mieści się na granicy 25 minut shardu). Wspomagania mają ustawienie od 21.11 (punkt niżej), a dotyk osobny układ jazdy (sekcja „Jazda na telefonie”).
 - Zrobione 21.11: ustawienie „Wspomaganie jazdy” (Ogólne): `full` (skręt z przyczepności, ABS i kontrola trakcji, jak dotąd), `abs` (tylko ABS i zwykły zakres skrętu `rackLimit`, malejący z prędkością jak przed poprawką z 21.11) i `off` (bez wspomagań). Aplikacja porównuje ustawienie z sesją symulacji co krok i w razie różnicy wysyła `set-driving-assist` (`driving-assist-feed.ts`); sesja go nie zapisuje, a auto, które prowadzi, bierze je przed krokiem (`CarState.assist`), auta bez kierowcy mają pełne. Wzorzec: poziomy wspomagań z gier wyścigowych (pomoc w kierowaniu, ABS, TC przełączane w opcjach). Testy: `vehicle-driving-assist` (sim), `driving-assist-feed` (app, także wczytanie ustawień).
 ## Wysiadanie na prawo (21.11, polecenie użytkownika)
 - Wysiadanie najpierw po lewej (strona kierowcy), a gdy tam stoi bryła wysokości ciała (wyższa niż stopień `STEP_HEIGHT`) albo auto ruchu, po prawej. Miejsce to koło ciała bohaterki (`BODY_RADIUS`) 0,7 m za bokiem nadwozia i 0,4 m przed środkiem auta. Z obiema stronami zamkniętymi zostaje w aucie.
@@ -204,3 +204,15 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
   - aplikacja gra dźwięk wybitej szyby (`car-glass`, Kenney `impactGlass_heavy`).
 - Miejsce zostaje puste na zawsze. Flaga `parked-taken:<i>` w stanie domeny jest zapisywana, więc bez zmiany schematu. Strumieniowanie nie stawia bryły z powrotem przy wczytaniu chunku, a `RenderSync` zabiera jej widok ze scenerii, także rendererowi uruchomionemu po włamaniu.
 - Testy: `vehicle-break-in` (sim: podpowiedź, akt, flaga, brak bryły, jazda, sceneria, zapis i wczytanie), `audio-cues` (app: szyba tylko przy włamaniu).
+
+## Jazda na telefonie (21.11, plan auta)
+- Dotąd dotyk dawał tylko gałkę ruchu i przycisk skoku. Ręczny działał jeden krok, bo skok jest naciśnięciem, a klaksonu nie było.
+- Za kierownicą pad dotykowy zmienia się na układ jazdy (`touch/drive-controls.tsx`):
+  - suwak skrętu pojawia się pod lewym kciukiem jak gałka i liczy tylko ruch w bok;
+  - pedały gazu i hamulca są po prawej (hamulec na postoju włącza wsteczny);
+  - nad hamulcem ręczny, obok klakson i strzał z okna; „Użyj” do wysiadania zostaje tam, gdzie zawsze;
+  - przeciąganie po ekranie dalej obraca widok.
+- Wzorzec: sterowanie dotykowe gier wyścigowych na telefon (pedały w prawym rogu, skręt lewym kciukiem). Od przyciskowych strzałek różnimy się suwakiem, który daje skręt analogowo, bez przechyłu telefonu.
+- `VirtualPad` podaje pedały i suwak jako osie ruchu, tak jak W/S i A/D, więc `sim` wygładza je tempem klawiatury jak dotąd. Ręczny trzymany to `jump` przez cały czas trzymania, klakson to `horn`. Bez nowych pól w `InputFrame` i bez zmian w `sim`.
+- Wsiadanie i wysiadanie zdejmuje palce z poprzedniego układu (`reset`), żeby gałka trzymana w chwili wejścia nie jechała dalej.
+- Testy: `virtual-pad` (engine), `touch-drive` (ui).

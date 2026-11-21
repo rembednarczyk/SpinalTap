@@ -1,0 +1,1 @@
+- Na telefonie za kierownicą pojawiają się pedały gazu i hamulca, suwak skrętu, ręczny i klakson.

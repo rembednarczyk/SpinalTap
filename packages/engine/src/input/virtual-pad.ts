@@ -4,7 +4,10 @@ import type { InputFrame, WeaponSlotInput } from "@seki/core";
  * On-screen buttons. `dash` (ADR-0036) is an edge like jump; the HUD places its button next to
  * the jump button under the action name `dash`.
  */
-export type PadButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload" | "dash";
+export type PadButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload" | "dash" | DriveButton;
+
+/** The touch controls at the wheel (ADR-0097 §4): the pedals, the handbrake and the horn, all held. */
+export type DriveButton = "gas" | "brake" | "handbrake" | "horn";
 
 /**
  * What the touch fire button does (ADR-0072): "aims" fires and aims down sights at once, so one
@@ -23,6 +26,8 @@ export const STICK_SPRINT_THRESHOLD = 0.92;
 export class VirtualPad {
   private stickX = 0;
   private stickZ = 0;
+  /** The touch steering's slider at the wheel, in [-1, 1] (right positive, as the stick's x). */
+  private steer = 0;
   private yaw = 0;
   private pitch = 0;
   private readonly held = new Set<PadButton>();
@@ -43,6 +48,11 @@ export class VirtualPad {
     const k = len > 1 ? 1 / len : 1;
     this.stickX = x * k;
     this.stickZ = z * k;
+  }
+
+  /** The steering slider at the wheel (ADR-0097 §4): right positive, clamped to [-1, 1]. */
+  setSteer(x: number): void {
+    this.steer = Math.max(-1, Math.min(1, x));
   }
 
   /** Adds look rotation in radians (positive pitch looks down). */
@@ -68,6 +78,7 @@ export class VirtualPad {
   /** Lifts every finger: stick centred, buttons released, buffered input dropped. */
   reset(): void {
     this.setStick(0, 0);
+    this.steer = 0;
     this.held.clear();
     this.flush();
   }
@@ -96,9 +107,13 @@ export class VirtualPad {
 
   poll(): InputFrame {
     const edge = (b: PadButton) => this.pressed.has(b);
+    // At the wheel (ADR-0097 §4) the pedals and the slider are the movement axes, as W/S and A/D
+    // are: the simulation eases them at the keyboard's rates and reads `jump` as the handbrake.
+    const gas = this.held.has("gas") || edge("gas");
+    const brake = this.held.has("brake") || edge("brake");
     const frame: InputFrame = {
-      moveX: this.stickX,
-      moveZ: this.stickZ,
+      moveX: this.steer !== 0 ? this.steer : this.stickX,
+      moveZ: gas || brake ? (gas ? 1 : 0) - (brake ? 1 : 0) : this.stickZ,
       lookYaw: this.yaw,
       lookPitch: this.pitch,
       sprint: this.held.has("sprint") || Math.hypot(this.stickX, this.stickZ) >= STICK_SPRINT_THRESHOLD,
@@ -108,7 +123,8 @@ export class VirtualPad {
       // A tap shorter than a step still reaches the frame: in toggle mode it is what latches (ADR-0072).
       aim: this.held.has("aim") || edge("aim"),
       interact: edge("interact"),
-      jump: edge("jump"),
+      // The handbrake is held as long as the finger stays on it; a jump is one press.
+      jump: edge("jump") || this.held.has("handbrake"),
       toggleCamera: edge("toggleCamera"),
       ability: edge("ability"),
       useItem: edge("useItem"),
@@ -120,6 +136,7 @@ export class VirtualPad {
       scan: false,
       quickhack: 0,
       dash: edge("dash"),
+      ...(this.held.has("horn") || edge("horn") ? { horn: true } : {}),
     };
     this.flush();
     return frame;
