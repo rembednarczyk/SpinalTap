@@ -238,6 +238,8 @@ export const createVehicleSystem = (): System => {
       const ground = worldGround(ctx);
       for (const e of [...ctx.world.with("car").entities].sort((a, b) => a.id - b.id) as Car[]) {
         const mine = e.id === ctx.session.driving;
+        // Her assists while she drives it; a car left standing keeps all of them.
+        e.car.assist = mine ? ctx.session.drivingAssist : "full";
         driveCar(e.car, mine ? (ctx.session.carAct ? HELD : ctx.input) : null, ground, ctx.dt);
         const wall = collideSolids(ctx, e.car);
         const traffic = collideTraffic(ctx, e.car, e.id);

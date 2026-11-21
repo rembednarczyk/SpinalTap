@@ -1,4 +1,4 @@
-import type { GameCommand } from "@seki/core";
+import { DRIVING_ASSISTS, type GameCommand } from "@seki/core";
 import type { SimContext } from "./context";
 import { acceptContract, applyBreach, completeContract, deliverContract } from "./contract-commands";
 import { applyItemCommand } from "./item-commands";
@@ -72,6 +72,10 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "drop-body": dropBody,
   // Difficulty (ADR-0066).
   "set-difficulty": setDifficulty,
+  // The player's driving assists (ADR-0097 §4).
+  "set-driving-assist": (ctx, cmd) => {
+    if ((DRIVING_ASSISTS as readonly string[]).includes(cmd.assist)) ctx.session.drivingAssist = cmd.assist;
+  },
 };
 
 /** Dispatches a command to its handler; an unknown type (a corrupt replay) changes nothing. */

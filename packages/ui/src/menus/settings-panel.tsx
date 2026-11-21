@@ -3,7 +3,7 @@ import { LOCALES, type Locale } from "@seki/core";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import { type AimAssistMode, type AimMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
+import { type AimAssistMode, type AimMode, type DrivingAssistMode, type CameraShoulder, type ControlBindingVm, type GraphicsQuality, PAD_DEADZONE_SETTING_RANGE, PAD_SENSITIVITY_RANGE, type PadCurveMode, type SettingsVm, type TouchFireMode } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -31,6 +31,12 @@ const PAD_CURVES: Options<PadCurveMode> = [
   ["linear", "settings.padCurve.linear"],
   ["classic", "settings.padCurve.classic"],
   ["precise", "settings.padCurve.precise"],
+];
+
+const DRIVING_ASSIST: Options<DrivingAssistMode> = [
+  ["full", "settings.drivingAssist.full"],
+  ["abs", "settings.drivingAssist.abs"],
+  ["off", "settings.drivingAssist.off"],
 ];
 
 const AIM_ASSIST: Options<AimAssistMode> = [
@@ -136,6 +142,7 @@ const General = ({ settings, set }: SectionProps) => {
       <Toggle label="settings.autosave" on={settings.autosave} onChange={(autosave) => set({ autosave })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />
       <Choice label="settings.damageNumbers" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
+      <Choice label="settings.drivingAssist" value={settings.drivingAssist} options={DRIVING_ASSIST} onChange={(drivingAssist) => set({ drivingAssist })} />
       <Toggle label="settings.mapMarkers" on={settings.mapMarkers} onChange={(mapMarkers) => set({ mapMarkers })} />
       <Toggle label="settings.highlights" on={settings.highlights} onChange={(highlights) => set({ highlights })} />
     </>

@@ -88,6 +88,13 @@ export interface CarPose {
 }
 export type CarAct = "drive" | "horn" | "enter" | "exit" | "pulled" | "thrown" | "getup";
 
+/**
+ * How much the car helps the driver (ADR-0097 §4, the player's setting): `full` steering kept to the
+ * tyres' grip at speed, ABS and traction control; `abs` ABS only, the rack's own lock; `off` none.
+ */
+export type DrivingAssist = "full" | "abs" | "off";
+export const DRIVING_ASSISTS: readonly DrivingAssist[] = ["full", "abs", "off"];
+
 /** What a takedown grab is doing (ADR-0075): holding, choking out or killing. */
 export type GrabPhase = "hold" | "choke" | "kill";
 
