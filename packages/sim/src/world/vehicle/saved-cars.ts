@@ -46,6 +46,7 @@ export const carsSnapshot = (world: World<Entity>, session: Pick<SessionState, "
       asleep: c.asleep,
       still: c.still,
       ...(c.hold ? { hold: v(c.hold) } : {}),
+      ...(c.damage > 0 ? { damage: c.damage } : {}),
       ...(mine ? { driving: true as const } : {}),
       ...(mine && session.carAct ? { act: { kind: session.carAct.kind, t: session.carAct.t } } : {}),
     };
@@ -72,6 +73,7 @@ const carOf = (s: CarSnapshot): CarState => {
   c.asleep = s.asleep;
   c.still = s.still;
   c.hold = s.hold ? v(s.hold) : null;
+  c.damage = s.damage ?? 0;
   return c;
 };
 

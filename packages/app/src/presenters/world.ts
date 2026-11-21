@@ -68,6 +68,8 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     bus.on("VehicleHorned", () => audio.play("horn")),
     // Her own horn in the car she drives (ADR-0097), once a press.
     bus.on("VehicleHorn", () => audio.play("horn")),
+    // The hit that wrecked her car (ADR-0097 §5): its engine dies.
+    bus.on("VehicleWrecked", () => audio.play("engine-stop")),
     bus.on("TimeSkipped", (e) =>
       toast("system", t("world.timeSkipped", { clock: formatClock(e.clock) }), t("world.later", { hours: Math.floor(e.minutes / 60), minutes: e.minutes % 60 })),
     ),

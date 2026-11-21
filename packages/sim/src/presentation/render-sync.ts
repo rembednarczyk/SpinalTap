@@ -132,7 +132,7 @@ export class RenderSync {
         // At the wheel and the car's tilt (ADR-0097).
         ...(e.seated !== undefined ? { seat: "driver" as const } : {}),
         ...(e.carPose ? { car: betweenSteps(e, e.carPose, alpha) } : {}),
-        ...(e.car ? { tilt: carTilt(e.car) } : {}),
+        ...(e.car ? { tilt: carTilt(e.car), ...(e.car.damage > 0 ? { damage: e.car.damage } : {}) } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

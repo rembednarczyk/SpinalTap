@@ -69,7 +69,8 @@ export class CarAudio {
 /** The engine of the car she drives: its revs from idle to the limiter, its throttle; null with no car. */
 export const engineOf = (sim: Pick<Simulation, "session" | "world">): EngineSound | null => {
   const car = drivenCar(sim);
-  if (!car) return null;
+  // A wreck's engine is dead (ADR-0097 §5): no loop.
+  if (!car || car.damage >= 1) return null;
   const { idle, limiter } = vehicleSpec(car.model).engine;
   return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle };
 };

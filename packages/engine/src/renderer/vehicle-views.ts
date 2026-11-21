@@ -6,6 +6,7 @@ import { type VehicleTemplate, paintOf, vehicleTemplates } from "./vehicle-model
 import { pickVariant } from "./vehicle-variants";
 import type { CarAt } from "./alchemia/parking-traffic";
 import { CloseUpPool, foldVertices, placeTemplate } from "./vehicle-closeups";
+import { CarSmoke } from "./car-smoke";
 
 export type VehicleDescriptor = Extract<ViewDescriptor, { kind: "vehicle" }>;
 
@@ -151,6 +152,12 @@ class Fleet {
   /** Where each one is and its heading. */
   *cars(): IterableIterator<CarAt> {
     for (const m of this.members.values()) yield { x: m.transform.position.x, z: m.transform.position.z, yaw: m.transform.yaw };
+  }
+
+  /** The damaged vehicles' transforms, nearest to `eye` first (their smoke). */
+  damaged(eye: { x: number; z: number }): Transform[] {
+    const near = (t: Transform) => Math.hypot(t.position.x - eye.x, t.position.z - eye.z);
+    return [...this.members.values()].map((m) => m.transform).filter((t) => (t.damage ?? 0) > 0).sort((a, b) => near(a) - near(b));
   }
 
   clear(): void {
@@ -334,10 +341,18 @@ class Fleet {
 export class VehicleViews {
   private readonly driving: Fleet;
   private readonly parked: Fleet;
+  /** Smoke from the damaged cars' bonnets (ADR-0097 §5). */
+  private readonly smoke: CarSmoke;
 
   constructor(private readonly deps: VehicleViewsDeps) {
     this.driving = new Fleet(deps, "vehicles", "driving");
     this.parked = new Fleet(deps, "parked", "high");
+    this.smoke = new CarSmoke(deps.scene);
+  }
+
+  /** True while a damaged car smokes (tests, stats). */
+  get smoking(): boolean {
+    return this.smoke.drawn;
   }
 
   has(id: EntityId): boolean {
@@ -380,12 +395,13 @@ export class VehicleViews {
     this.parked.clear();
   }
 
-  /** Call once per frame before rendering; nothing is drawn before the kit has loaded. */
-  update(): void {
+  /** Call once per frame (`dt` s on) before rendering; nothing is drawn before the kit has loaded. */
+  update(dt = 0): void {
     const kit = this.deps.kit();
     if (!kit) return;
     const eye = this.deps.eye();
     this.driving.update(kit, eye);
     this.parked.update(kit, eye);
+    this.smoke.update(dt, this.driving.damaged(eye));
   }
 }

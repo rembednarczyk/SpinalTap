@@ -104,10 +104,11 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // Re-recorded for v51 (ADR-0095, act III's ending in the story, none here): without it, as v50,
   // the runs hash to the goldens of before (the `v50` column), and the older columns as they were.
   // Re-recorded for v52 (ADR-0097, the player's cars in the save, none here): the version only; as
-  // v51 the runs hash to the goldens of before (the `v51` column).
-  for (const [seed, level, golden, v51, v50, v49, v48, v47, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "a93819a1", "59506546", "0360fe4a", "ddd30c98", "1c996967", "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
-    [5, 3, "49a29a2f", "bd5316b8", "78291878", "fd67e712", "54118583", "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
+  // v51 the runs hash to the goldens of before (the `v51` column). Re-recorded for v53 (ADR-0097 §5, a
+  // car's damage, no car here): the version only; as v52 the runs hash to the goldens of before (`v52`).
+  for (const [seed, level, golden, v52, v51, v50, v49, v48, v47, v40, v32, v31, v30, v28, v27] of [
+    [21, 2, "7a557170", "a93819a1", "59506546", "0360fe4a", "ddd30c98", "1c996967", "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
+    [5, 3, "ab9a7a86", "49a29a2f", "bd5316b8", "78291878", "fd67e712", "54118583", "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
@@ -127,11 +128,12 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
         expect({ n: e.security.n, side: first.get(e.id) }).toEqual({ n: e.security.n, side: e.security.n % 2 === 0 ? 1 : -1 });
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
-      const v52 = sim.snapshot(null, "t", "");
-      expect(stateHash(v52)).toBe(golden);
-      expect(stateHash({ ...v52, version: 51 } as unknown as SaveSnapshot)).toBe(v51);
-      const { act3Ending: _a3, ...story50 } = v52.domain.story;
-      const now = { ...v52, domain: { ...v52.domain, story: story50 } } as unknown as SaveSnapshot;
+      const v53 = sim.snapshot(null, "t", "");
+      expect(stateHash(v53)).toBe(golden);
+      expect(stateHash({ ...v53, version: 52 } as unknown as SaveSnapshot)).toBe(v52);
+      expect(stateHash({ ...v53, version: 51 } as unknown as SaveSnapshot)).toBe(v51);
+      const { act3Ending: _a3, ...story50 } = v53.domain.story;
+      const now = { ...v53, domain: { ...v53.domain, story: story50 } } as unknown as SaveSnapshot;
       const snap = beforeV41(now);
       expect(stateHash({ ...now, version: 50 } as unknown as SaveSnapshot)).toBe(v50);
       expect(stateHash({ ...now, version: 49 } as unknown as SaveSnapshot)).toBe(v49);

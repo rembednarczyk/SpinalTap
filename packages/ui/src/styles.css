@@ -210,6 +210,30 @@ kbd {
     opacity: 0.35;
   }
 }
+/* The body's damage (ADR-0097 §5): a thin bar filling red. */
+.hud__vehicle-damage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.hud__vehicle-damage-label {
+  opacity: 0.8;
+}
+.hud__vehicle-damage-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--panel-edge);
+}
+.hud__vehicle-damage-fill {
+  display: block;
+  height: 100%;
+  background: #ff2a6d;
+}
+.hud__vehicle-damage--wreck .hud__vehicle-damage-label {
+  color: #ff2a6d;
+  font-weight: 700;
+}
 /* The assists' lamps: dim at rest, amber while they work. */
 .hud__lamp {
   font-size: 11px;

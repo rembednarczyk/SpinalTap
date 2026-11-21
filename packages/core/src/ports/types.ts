@@ -69,6 +69,8 @@ export interface Transform {
    * body over to its right side positive. Absent: level (the street's traffic).
    */
   readonly tilt?: { readonly pitch: number; readonly roll: number };
+  /** A car's damage, 0 whole .. 1 a wreck (ADR-0097 §5): it smokes past half. Absent: whole. */
+  readonly damage?: number;
 }
 
 /**
