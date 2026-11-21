@@ -24,10 +24,15 @@ const PORT = Number(process.env.E2E_PORT ?? 4173);
  * of #853 past the 25 min (fpp-hands 4.6 and 3.4, smoke 9.9, ui-scale 4.6), while groups 1 and 4
  * took 5.8-8 and 6.2-12.6. fpp-hands moves with the first: its desktop test to group 1, its phone
  * test (by title) to group 4. About 12, 15 and 12-16 min on that runner.
+ *
+ * Then group 3 grew to 23.4 min on a median runner (#861: touch-layout 8.8, graphics-toggles 4.6,
+ * wait-window 3.2, touch 3.1, dialogue-fit 2.2, hud-layout 1.1), groups 1, 2 and 4 some 8-10.
+ * graphics-toggles and touch go with group 1 (their phone tests, by title, to group 4: all of touch),
+ * wait-window to group 2: about 12, 12, 12.5 and 14 min on that runner.
  */
-const GROUP_ONE = /(npr-perf|gpu-queue|models|fpp-hands)\.spec\.ts$/;
-const GROUP_TWO = /(smoke|ui-scale)\.spec\.ts$/;
-/** The npr-perf scenes, gpu-queue and fpp-hands tests of group 4, by title. */
+const GROUP_ONE = /(npr-perf|gpu-queue|models|fpp-hands|graphics-toggles|touch)\.spec\.ts$/;
+const GROUP_TWO = /(smoke|ui-scale|wait-window)\.spec\.ts$/;
+/** The npr-perf scenes, gpu-queue, fpp-hands, graphics-toggles and touch tests of group 4, by title. */
 const GROUP_FOUR = /P-2|Zielona|W-3|phone|GPU|WebGL/;
 const group = process.env.E2E_GROUP;
 const groups =
