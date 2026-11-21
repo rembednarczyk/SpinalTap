@@ -1,7 +1,7 @@
 import { type AudioCue, type EngineSound, vehicleSpec } from "@seki/core";
 import type { Simulation } from "@seki/sim";
 import { describe, expect, it } from "vitest";
-import { CarAudio, engineOf } from "../src/presenters/car-audio";
+import { BLIP, CarAudio, engineOf } from "../src/presenters/car-audio";
 
 /** A simulation as the car's sounds read it: the car she drives and her act at it. */
 const fakeSim = () => {
@@ -23,27 +23,28 @@ describe("the car she drives as heard (ADR-0097)", () => {
     const { sim, session } = fakeSim();
     const ears = listen();
     const audio = new CarAudio(ears.ports);
-    audio.frame(sim);
+    audio.frame(sim, 1 / 60);
     expect(ears.played).toEqual([]);
     session.driving = 900;
     session.carAct = { kind: "enter", t: 0 };
-    audio.frame(sim);
-    audio.frame(sim);
+    audio.frame(sim, 1 / 60);
+    audio.frame(sim, 1 / 60);
     expect(ears.played).toEqual(["car-door-open"]);
     // No engine while she climbs in.
     expect(ears.engine.at(-1)).toBeNull();
     session.carAct = null;
-    audio.frame(sim);
-    expect(ears.played.slice(1)).toEqual(["car-door-close", "engine-start"]);
+    audio.frame(sim, 1 / 60);
+    // No starter (user's notes of 21.11): the door shuts and the engine's revs rise a moment.
+    expect(ears.played.slice(1)).toEqual(["car-door-close"]);
     expect(ears.engine.at(-1)).not.toBeNull();
     session.carAct = { kind: "exit", t: 0 };
-    audio.frame(sim);
-    expect(ears.played.slice(3)).toEqual(["engine-stop", "car-door-open"]);
+    audio.frame(sim, 1 / 60);
+    expect(ears.played.slice(2)).toEqual(["engine-stop", "car-door-open"]);
     expect(ears.engine.at(-1)).toBeNull();
     session.driving = null;
     session.carAct = null;
-    audio.frame(sim);
-    expect(ears.played.slice(5)).toEqual(["car-door-close"]);
+    audio.frame(sim, 1 / 60);
+    expect(ears.played.slice(4)).toEqual(["car-door-close"]);
   });
 
   it("gets out at once on the right side: the engine stops, the door opens and shuts", () => {
@@ -51,24 +52,41 @@ describe("the car she drives as heard (ADR-0097)", () => {
     const ears = listen();
     const audio = new CarAudio(ears.ports);
     session.driving = 900;
-    audio.frame(sim);
+    audio.frame(sim, 1 / 60);
     ears.played.length = 0;
     session.driving = null;
-    audio.frame(sim);
+    audio.frame(sim, 1 / 60);
     expect(ears.played).toEqual(["engine-stop", "car-door-open", "car-door-close"]);
   });
 
-  it("sends the engine's revs from idle to the limiter, its throttle and its speed", () => {
+  it("sends the engine's revs from idle to the limiter and its throttle", () => {
     const { sim, session, car, spec } = fakeSim();
     expect(engineOf(sim)).toBeNull();
     session.driving = 900;
-    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0, speed: 0 });
+    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0 });
     car.rpm = spec.engine.limiter;
     car.controls.throttle = 0.7;
     car.vel = { x: 0, y: 0, z: -12 };
-    const e = engineOf(sim)!;
-    expect(e).toMatchObject({ rpm: 1, throttle: 0.7 });
-    // Its wheels' speed, forwards or back (the electric motor's whine).
-    expect(e.speed).toBeCloseTo(12, 6);
+    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7 });
+  });
+
+  it("blips the revs as she sits down, up and back to idle within the blip's length, and then follows the engine", () => {
+    const { sim, session } = fakeSim();
+    const ears = listen();
+    const audio = new CarAudio(ears.ports);
+    session.driving = 900;
+    session.carAct = { kind: "enter", t: 0 };
+    audio.frame(sim, 1 / 60);
+    session.carAct = null;
+    const revs: number[] = [];
+    for (let t = 0; t < BLIP.length + 0.5; t += 1 / 60) {
+      audio.frame(sim, 1 / 60);
+      revs.push(ears.engine.at(-1)!.rpm);
+    }
+    const peak = Math.max(...revs);
+    expect(peak).toBeGreaterThan(0.4);
+    expect(revs.indexOf(peak)).toBeLessThan(15);
+    // Back to the engine's own idle once the blip is over.
+    expect(revs.at(-1)).toBe(0);
   });
 });

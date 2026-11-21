@@ -65,7 +65,7 @@ describe("weapon, loot and trade cues (E12)", () => {
     bus.emit("VehicleHorn", { vehicleId: 900, at: { x: 0, y: 0, z: 0 } });
     expect(cues).toEqual(["horn"]);
     const m = audioSampleManifest("https://game.test/audio/");
-    for (const cue of ["horn", "car-door-open", "car-door-close", "engine-start", "engine-stop"] as const) expect(m.cues?.[cue]?.urls.length, cue).toBe(1);
+    for (const cue of ["horn", "car-door-open", "car-door-close", "engine-stop"] as const) expect(m.cues?.[cue]?.urls.length, cue).toBe(1);
     expect(m.engine?.url).toBe("https://game.test/audio/engine-loop-000.ogg");
   });
 
