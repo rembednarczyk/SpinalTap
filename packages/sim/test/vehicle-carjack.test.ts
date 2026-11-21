@@ -45,7 +45,7 @@ const takenAndStopped = (): { sim: Simulation; mine: () => Entity } => {
   const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
   for (let i = 0; i < 60; i++) sim.step(press({ moveZ: 1 }));
   // Brake to a stop and let go (held on, the brake would put it in reverse).
-  const speed = () => Math.hypot(mine().velocity.x, mine().velocity.z);
+  const speed = () => Math.hypot(mine().velocity?.x ?? 0, mine().velocity?.z ?? 0);
   for (let i = 0; i < 240 && speed() > 0.5; i++) sim.step(press({ moveZ: -1 }));
   for (let i = 0; i < 30; i++) sim.step();
   return { sim, mine };
