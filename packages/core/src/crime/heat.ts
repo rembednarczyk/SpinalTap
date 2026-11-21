@@ -3,7 +3,7 @@
  * then phones it in, a camera, or a patrol. Heat is the district security's pursuit of the
  * player, from 0 (none) to 3, and drops after the player stays out of sight long enough.
  */
-export type CrimeKind = "gunfire" | "assault" | "murder" | "trespass" | "hacking";
+export type CrimeKind = "gunfire" | "assault" | "murder" | "trespass" | "hacking" | "theft";
 
 /** How a crime reached the security: a civilian's call takes a few seconds and can be cut off. */
 export type WitnessChannel = "civilian" | "camera" | "patrol";

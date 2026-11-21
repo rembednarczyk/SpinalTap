@@ -415,6 +415,10 @@ export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars()
   .map((c) => ({ ...c, y: Math.round(restingY(underBody(c.x, c.z, c.yaw, c.model)) * 100) / 100 }));
 
 /** The view of a parked car: drawn by the scenery. */
+let indexOfCar: Map<ParkedCar, number> | null = null;
+/** A car's place in `PARKED_CARS`; undefined for one parked elsewhere (P-1's bays). */
+const parkedIndex = (c: ParkedCar): number | undefined => (indexOfCar ??= new Map(PARKED_CARS.map((p, i) => [p, i]))).get(c);
+
 export const parkedView = (c: ParkedCar): ViewDescriptor => ({ kind: "vehicle", model: c.model, tint: c.tint, parked: true });
 
 /**
@@ -428,11 +432,13 @@ export const parkedProp = (c: ParkedCar, floor?: number): StaticProp => {
   const corner = (a: number, b: number) => ({ x: fx * length * b + fz * width * a, z: fz * length * b - fx * width * a });
   // On a floor of its own (under the street, ADR-0074 stage 4) the terrain is not under it.
   const low = floor ?? Math.min(...underBody(c.x, c.z, c.yaw, c.model).map((p) => groundY(p.x, p.z)));
+  const index = parkedIndex(c);
   return {
     center: { x: c.x, y: c.y, z: c.z },
     view: parkedView(c),
     solid: true,
     prisms: [{ points: [corner(-0.5, -0.5), corner(0.5, -0.5), corner(0.5, 0.5), corner(-0.5, 0.5)], bottom: Math.min(-0.3, low - c.y - 0.1), top: height }],
     scenery: true,
+    ...(index !== undefined ? { parked: { index, yaw: c.yaw } } : {}),
   };
 };

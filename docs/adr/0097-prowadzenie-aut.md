@@ -194,3 +194,12 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 ## Podpowiedź „Wysiądź” (21.11, polecenie użytkownika)
 - Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
 - Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
+
+## Włamanie do zaparkowanego auta (21.11, plan auta)
+- Wzorzec: kradzież zaparkowanego auta z gier z otwartym światem (seria GTA): kilka sekund przy drzwiach, wybita szyba, przestępstwo, jeśli ktoś widzi. Różnica wobec planu z §3: bez zamka jak drzwi z ADR-0058 i bez osobnej szansy wykrycia. Wykrycie daje zwykła droga świadków (ADR-0029), a przestępstwo ma nowy rodzaj `theft` (kradzież auta, poziom pościgu 1, jak napaść).
+- Zaparkowane auta (ADR-0050) to statyczne bryły ulicy rysowane w scenerii. Bryła niesie `parkedCar` (miejsce w `PARKED_CARS`, model, kolor, kierunek), a podpowiedź `prompt.car.break` pojawia się, gdy obok nie ma auta z ruchu ani jej własnego. Klawisz interakcji uruchamia włamanie:
+  - bryła znika, w jej miejscu staje auto z fizyką tego samego modelu i koloru (`breakIn` w `vehicle-system.ts`);
+  - bohaterka pracuje przy drzwiach 2,2 s, potem gra klip wsiadania;
+  - aplikacja gra dźwięk wybitej szyby (`car-glass`, Kenney `impactGlass_heavy`).
+- Miejsce zostaje puste na zawsze. Flaga `parked-taken:<i>` w stanie domeny jest zapisywana, więc bez zmiany schematu. Strumieniowanie nie stawia bryły z powrotem przy wczytaniu chunku, a `RenderSync` zabiera jej widok ze scenerii, także rendererowi uruchomionemu po włamaniu.
+- Testy: `vehicle-break-in` (sim: podpowiedź, akt, flaga, brak bryły, jazda, sceneria, zapis i wczytanie), `audio-cues` (app: szyba tylko przy włamaniu).

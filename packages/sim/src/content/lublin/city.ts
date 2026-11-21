@@ -33,6 +33,8 @@ export interface SceneryItem {
   readonly at: Vec3;
   /** Facing (a parked car, ADR-0050); 0 when absent. */
   readonly yaw?: number;
+  /** A parked car's place in `PARKED_CARS`: its view goes once she breaks into it (ADR-0097). */
+  readonly parked?: number;
 }
 
 const insideRect = (r: GroundRect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
