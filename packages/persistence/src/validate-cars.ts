@@ -25,6 +25,7 @@ const findCarError = (c: unknown): string | null => {
   if (controls) return controls;
   if (c.hold !== undefined && !isVec(c.hold)) return "car hold";
   if (c.driving !== undefined && c.driving !== true) return "car driving";
+  if (c.damage !== undefined && !(isNum(c.damage) && c.damage >= 0 && c.damage <= 1)) return "car damage";
   const act = c.act;
   if (act !== undefined && !(c.driving === true && isObject(act) && (act.kind === "enter" || act.kind === "exit") && isNum(act.t))) return "car act";
   return null;

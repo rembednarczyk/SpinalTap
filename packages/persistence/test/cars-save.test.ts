@@ -57,4 +57,14 @@ describe("the player's cars in the save (v51 to v52, ADR-0097)", () => {
     expect(errorOf([{ ...CAR, driving: undefined, act: { kind: "enter", t: 0 } }])).toBe("car act");
     expect(errorOf("cars")).toBe("cars");
   });
+
+  it("keeps a car's damage (v53, ADR-0097 §5): a v52 save changes only the version, its cars whole; damage within 0..1", () => {
+    const old = { version: 52, tick: 5, entities: [] };
+    expect(MIGRATIONS[52]!(old)).toEqual({ ...old, version: 53 });
+    const cars = [{ ...CAR, damage: 0.45 }].map((c) => JSON.parse(JSON.stringify(c)) as CarSnapshot);
+    expect(decodeSave("slot", encodeSave(snapshot({ cars }))).cars?.[0]?.damage).toBe(0.45);
+    expect(errorOf([{ ...CAR, damage: 1 }])).toBeNull();
+    expect(errorOf([{ ...CAR, damage: 1.5 }])).toBe("car damage");
+    expect(errorOf([{ ...CAR, damage: -0.1 }])).toBe("car damage");
+  });
 });

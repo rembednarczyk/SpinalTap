@@ -1,0 +1,1 @@
+- Auto: zderzenia uszkadzają auto. Mocno uszkodzone dymi spod maski i traci moc, a po czwartym mocnym zderzeniu zostaje wrakiem, który nie pojedzie. Stan uszkodzeń widać w HUD i zostaje w zapisie gry.

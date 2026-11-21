@@ -165,6 +165,14 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Test sesji: kierowca bez klucza przechodzi fazy w kolejności, odbiega dalej niż 25 m i znika.
 - Zrzuty 21.11 pokazały, że auto z ruchu wjeżdża w stojące auto gracza: ruch uliczny nie widzi aut z fizyką jako przeszkody. Do poprawy osobno.
 
+## Uszkodzenia (21.11, plan auta)
+- Wzorzec: pasek wytrzymałości nadwozia z gier akcji i zręcznościowych wyścigów (silnik słabnie po przekroczeniu części uszkodzeń, wrak nie jedzie), bez deformacji paneli z symulatorów. Jedna liczba `CarState.damage` (0 całe .. 1 wrak, `damage.ts`) rośnie o energię każdego `VehicleHit` przez `DAMAGE_ENERGY` = 400 kJ: trzy zderzenia ze ścianą przy 50 km/h (po 130 kJ dla 1,35 t) zostawiają auto sprawne, czwarte robi z niego wrak (`VehicleWrecked`, gaśnie silnik).
+- Od 0,4 moment silnika maleje płynnie do 0,35 tuż przed wrakiem; wrak nie ma napędu, pętla silnika milknie.
+- Zapis v53: `CarSnapshot.damage` (nieobecne: całe), migracja 52 → 53 zmienia tylko wersję; złote hashe zmienia sama wersja (przy 52 dają poprzednie).
+- Obraz: `Transform.damage`; od połowy uszkodzeń spod maski idzie dym (`car-smoke.ts`): pętla 8 kłębów na auto (najbliższe 4 auta), jasna para przy 0,5, ciemny gęsty dym przy wraku; kłęby to cienkie instancje jednej kuli (jedno wywołanie rysowania, gdy coś dymi, żadne poza tym), jak dym wybuchów.
+- HUD: pasek uszkodzeń pod obrotomierzem (`hud.damage`, przy wraku `hud.wreck`).
+- Testy: `vehicle-damage` (sim: suma energii, wrak raz, słabszy silnik, wrak stoi), sesja w `vehicle-carjack` (ściana, uszkodzenia, zapis i wczytanie), `cars-save` (v53, walidacja 0..1), `car-smoke` (engine), `vehicle-dash` (ui), `vehicle-hud` (app).
+
 ## Potrąceni piesi (21.11, klip użytkownika „Hit By Car”)
 - Pieszy uderzony autem szybciej niż 4 m/s (napaść, zdarzenie `VehicleRanOver`, jak dotąd) zostaje rzucony na jezdnię wzdłuż kierunku jazdy auta. Leży 0,8 s, wstaje w miejscu, gdzie upadł (ok. 1,6 m dalej), i wraca do własnej SI (zwykle ucieka przed przestępstwem). Wspólny moduł `struck.ts` prowadzi ten sam ciąg dla kierowcy wyrzuconego z przejętego auta.
 - Do kogo to nie dotyczy:

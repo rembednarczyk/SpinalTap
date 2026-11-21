@@ -31,6 +31,15 @@ export const VehicleDash = ({ vehicle }: { vehicle: VehicleVm }) => {
           {t("hud.tc")}
         </span>
       </div>
+      {vehicle.damage > 0 && (
+        // The body's damage (ADR-0097 §5): the bar fills red towards a wreck.
+        <div className={`hud__vehicle-damage${vehicle.damage >= 1 ? " hud__vehicle-damage--wreck" : ""}`} data-testid="vehicle-damage">
+          <span className="hud__vehicle-damage-label">{t(vehicle.damage >= 1 ? "hud.wreck" : "hud.damage")}</span>
+          <span className="hud__vehicle-damage-bar">
+            <span className="hud__vehicle-damage-fill" style={{ width: `${Math.round(vehicle.damage * 100)}%` }} />
+          </span>
+        </div>
+      )}
     </div>
   );
 };
