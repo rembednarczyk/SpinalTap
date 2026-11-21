@@ -22,7 +22,6 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | Weapons and Apparel SFX Library | Vehicle (Jan Schupke) | CC0 (readme.txt w paczce) | https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | `weapons-apparel.zip` (pobrane 21.11) |
 | Shotgun Reload Sound Effects | zer0_sol | CC0 (strona OGA: „Feel free to use these sounds without attribution”) | https://opengameart.org/content/shotgun-reload-sound-effects | `shotgunsounds.zip` (pobrane 21.11) |
 | Car Sound Effects Pack (Low Quality) | GGBotNet | CC0 (strona OGA) | https://opengameart.org/content/car-sound-effects-pack-low-quality | `car_sound_effects_pack.zip` (pobrane 21.11, nagrania telefonem, 64 kb/s) |
-| racing car engine sound loops | domasx2 (z nagrania public domain z pdsounds.org) | CC0 (strona OGA) | https://opengameart.org/content/racing-car-engine-sound-loops | `loop_0.wav` (pobrane 21.11) |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
 | RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
 | Alarm | ezduzziteh | CC0 (strona OGA) | https://opengameart.org/content/alarm-1 | `alarm_2.ogg` (pobrane 18.11) |
@@ -93,6 +92,6 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | `car-door-open-000.ogg` | GGBotNet, `Car_Door_Open.ogg` | `car-door-open` |
 | `car-door-close-000.ogg` | GGBotNet, `Car_Door_Close.ogg` | `car-door-close` |
 | `engine-stop-000.ogg` | GGBotNet, `Car_Engine_Turning_Off.ogg` (do 1,82 s) | `engine-stop` |
-| `engine-loop-000.ogg` | domasx2, `loop_0.wav` | pętla silnika auta gracza (`EngineLoop`, wysokość od obrotów) |
+| `engine-loop-000.ogg` | GGBotNet, `Car_Engine_Loop.ogg` (bez pierwszych 0,15 s, które przenikają w koniec, więc pętla nie trzaska; mono, szczyt −3 dB, Vorbis q4) | pętla silnika auta gracza (`EngineLoop`, wysokość od obrotów). Do 21.11 była tu pętla domasx2 (`loop_0.wav`), w 98% dudnienie 30–95 Hz, którego głośnik telefonu i laptopa nie oddaje: słychać było samą cewkę (uwagi użytkownika z 21.11) |
 
 Łącznie ok. 1,4 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).

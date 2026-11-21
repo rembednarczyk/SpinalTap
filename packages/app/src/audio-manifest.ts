@@ -110,7 +110,8 @@ const SOUNDS = {
     "charge-plant": { urls: ["charge-clamp-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.35, layerSynth: true },
     alarm: { urls: ["alarm-klaxon-000.ogg"], gain: 0.35, pitch: 0, send: 0.6 },
     // Cars (ADR-0050, ADR-0097): a real horn for the street's and her own, her car's doors and its engine started and stopped.
-    horn: { urls: ["car-horn-000.ogg"], gain: 0.4, pitch: 0.03, send: 0.45 },
+    // The horn recording peaks at 2.7 (clipped hot in the pack): at 0.3 it stays under full scale (21.11).
+    horn: { urls: ["car-horn-000.ogg"], gain: 0.3, pitch: 0.03, send: 0.45 },
     "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
     "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
     "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
@@ -122,7 +123,8 @@ const SOUNDS = {
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },
-  engine: { url: "engine-loop-000.ogg", gain: 0.35 },
+  // GGBotNet's petrol engine (21.11): its body in 150 Hz .. 1 kHz, which a phone's speaker plays; the coil stays under it.
+  engine: { url: "engine-loop-000.ogg", gain: 0.6 },
 } as const satisfies AudioSampleManifest;
 
 const resolveSet = (set: SampleSet, base: string): SampleSet => ({ ...set, urls: set.urls.map((u) => new URL(u, base).href) });
