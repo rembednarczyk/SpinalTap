@@ -1,3 +1,4 @@
+import { CarChaseView } from "./car-chase";
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
 import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
 import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
@@ -17,6 +18,7 @@ const TPP_DISTANCE = 2.2;
 const CAR_DISTANCE = 6.5;
 const CAR_EYE = 1.9;
 const WALL_MARGIN = 0.25;
+
 const BLEND_SPEED = 6;
 /** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
 export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
@@ -83,6 +85,8 @@ export class CameraRig {
   cameraMotion = true;
   /** The FPP melee viewmodel's guard and swing. */
   private readonly meleeView = new ViewMelee();
+  /** Behind the car she drives, after PodRcr's chase view (ADR-0097). */
+  private readonly carChase: CarChaseView;
   private ads = 0;
   private readonly gunHolder: TransformNode;
   private readonly meleeHolder: TransformNode;
@@ -123,6 +127,7 @@ export class CameraRig {
     private readonly isBlocker: (mesh: AbstractMesh) => boolean,
   ) {
     this.camera = new FreeCamera("main-camera", new Vector3(0, 1.6, 0), scene);
+    this.carChase = new CarChaseView(scene, isBlocker, () => this.occluder);
     this.camera.minZ = 0.04;
     this.camera.maxZ = 320;
     this.camera.fov = BASE_FOV;
@@ -363,6 +368,9 @@ export class CameraRig {
       yaw + Math.cos(t) * 0.005 * bob + Math.sin(t * 29 + 1.3) * 0.03 * sh,
       Math.sin(t * 23) * 0.02 * sh,
     );
+
+    if (seat && target.car) this.carChase.place(this.camera, target.car, p, yaw, dt);
+    else this.carChase.reset();
 
     const fpp = this.blend < 0.35;
     // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view
