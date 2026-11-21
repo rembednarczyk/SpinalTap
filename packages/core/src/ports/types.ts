@@ -500,6 +500,16 @@ export type AudioCue =
   // A melee blow landing: the knock under the hit's punch (user notes of 18.11).
   | "impact-melee"
   | "weapon-switch"
+  // A weapon drawn, switched to or out of its holster (user notes of 21.11): one per kind, its own handling.
+  | "draw-pistol"
+  | "draw-revolver"
+  | "draw-smg"
+  | "draw-shotgun"
+  | "draw-rifle"
+  | "draw-baton"
+  | "draw-blade"
+  // A weapon put away: into the holster or the sheath.
+  | "holster"
   | "loot-pickup"
   | "sell"
   | "repair"
