@@ -6,6 +6,11 @@ import { type CarState, forwardSpeed, newCar } from "../world/vehicle/state";
 import { driveCar, wake } from "../world/vehicle/step";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
+import { BODY } from "../world/factory";
+import { BODY_RADIUS } from "../content/walker-size";
+import { solidIndexOf } from "../world/solid-index";
+import { circleTouches } from "../world/solids";
+import { STEP_HEIGHT } from "./step";
 
 /** Ids of the player's cars: past every route's block of the traffic's ids (`VEHICLE_ID_BASE`). */
 export const PLAYER_CAR_ID_BASE = 3_990_000;
@@ -74,17 +79,46 @@ const placeSeat = (player: Entity, car: Car): void => {
   player.fall = undefined;
 };
 
-/** Gets out on the driver's side (left), or the right if a solid stands there. */
-const getOut = (ctx: SimContext, player: Entity, car: Car): void => {
+/** How far out of the car's side she steps (m) and where along it, ahead of the middle. */
+const STEP_OUT = 0.7;
+const STEP_ALONG = 0.4;
+
+/** True when her body fits at (x, z) on the car's floor: no solid of her height there, no street vehicle. */
+const roomFor = (ctx: SimContext, x: number, y: number, z: number, self: EntityId): boolean => {
+  const r = BODY_RADIUS;
+  const near = { x: 0, z: 0 };
+  for (const c of solidIndexOf(ctx.world).collidersNear(x - r, z - r, x + r, z + r)) {
+    if (c.box.max.y <= y + STEP_HEIGHT || c.box.min.y >= y + BODY.height) continue;
+    if (circleTouches(c, x, z, r, near)) return false;
+  }
+  for (const v of ctx.world.with("vehicle")) {
+    if (v.id === self || Math.abs(v.position.y - y) > 2) continue;
+    const [tx, tz] = [Math.sin(v.yaw), Math.cos(v.yaw)];
+    const dx = x - v.position.x;
+    const dz = z - v.position.z;
+    if (Math.abs(dx * tx + dz * tz) < v.vehicle.half.l + r && Math.abs(dx * tz - dz * tx) < v.vehicle.half.w + r) return false;
+  }
+  return true;
+};
+
+/**
+ * Gets out on the driver's side (left), or the right when a wall or a car stands at the left;
+ * with both sides shut she stays in. Returns whether she got out.
+ */
+const getOut = (ctx: SimContext, player: Entity, car: Car): boolean => {
   const half = vehicleSpec(car.car.model).half;
-  const left = toWorld(car.car.q, v3(-(half.x + 0.7), 0, 0.4));
   const y = car.position.y;
-  player.position = { x: car.position.x + left.x, y, z: car.position.z + left.z };
+  const side = [-1, 1]
+    .map((s) => toWorld(car.car.q, v3(s * (half.x + STEP_OUT), 0, STEP_ALONG)))
+    .find((o) => roomFor(ctx, car.position.x + o.x, y, car.position.z + o.z, car.id));
+  if (!side) return false;
+  player.position = { x: car.position.x + side.x, y, z: car.position.z + side.z };
   player.prevPosition = { ...player.position };
   player.velocity = { x: 0, y: 0, z: 0 };
   ctx.session.driving = null;
   delete player.seated;
   ctx.bus.emit("VehicleExited", { vehicleId: car.id });
+  return true;
 };
 
 /**
