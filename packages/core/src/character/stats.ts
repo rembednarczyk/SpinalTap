@@ -38,7 +38,9 @@ export const BASE_STATS: DerivedStats = {
   critMultiplier: 1.8,
   damageBonus: 0,
   armor: 2,
-  moveSpeed: 4.2,
+  // A run of 3.5 m/s (12.6 km/h, user's notes of 21.11: 4.2 was too fast from the start), about the
+  // run clip's own pace (3.65 m/s at 171 steps a minute); the sprint is 1.7 times it (`SPRINT_MULTIPLIER`).
+  moveSpeed: 3.5,
   maxHp: 100,
   aimStability: 0,
   headArmor: 0,

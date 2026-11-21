@@ -186,7 +186,8 @@ export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
   keeper("oyaji", { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "prompt.shop.oyaji", radius: 3 }, OYAJI_MAX_HP),
   { kind: "npc", spawn: { key: "hana", position: HANA_SPOT, yaw: HANA_YAW }, preset: "civilian", faction: "civilians", interactable: { kind: "dialogue", dialogueId: "hana", prompt: "prompt.talk.hana", radius: 2.4 } },
   REN,
-  keeper("sachiko", { kind: "dialogue", dialogueId: "sachiko", prompt: "prompt.shop.sachiko", radius: 2.4 }),
+  // Reach 3 m like the other keepers (2.4 left the customer's spot before her kiosk, 2.42 m off, just out of it).
+  keeper("sachiko", { kind: "dialogue", dialogueId: "sachiko", prompt: "prompt.shop.sachiko", radius: 3 }),
   { kind: "ganger", spawn: { key: "hebi-lookout", position: HEBI_LOOKOUT_POST, yaw: HEBI_LOOKOUT_YAW, tag: null } },
   KUROSAWA,
   ...CLEANERS,

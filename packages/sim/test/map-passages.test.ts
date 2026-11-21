@@ -87,7 +87,7 @@ describe("through Brama Grodzka on the axis of its fronts (G-136)", () => {
     run(sim, 2);
     for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
     let worst = 0;
-    for (let i = 0; i < 6 * 60; i++) {
+    for (let i = 0; i < 8 * 60; i++) {
       sim.step(input({ moveZ: 1 }));
       const at = alongLine(a, b, sim.player()!.position);
       if (at.s < SPAN + 1) worst = Math.max(worst, Math.abs(at.off));

@@ -23,6 +23,16 @@ const FULL = 0.9;
 /** Up to `WALK` m/s the walk clips, from `RUN` the run clips, mixed between. */
 const WALK = 2;
 const RUN = 4;
+/**
+ * A run faster than its clip's own pace lengthens the stride, as runners do, rather than only
+ * quickening the steps: from `STRIDE_FROM` m/s it grows to `STRIDE_GROW` more at `STRIDE_FULL`
+ * (the sprint), so a sprint keeps some 210 steps a minute and the footfalls (and their sounds) a
+ * runner's, not the clip's 1.6 times quicker (user's notes of 21.11).
+ */
+const STRIDE_FROM = 3.6;
+const STRIDE_FULL = 6;
+const STRIDE_GROW = 0.35;
+export const strideReach = (speed: number): number => 1 + STRIDE_GROW * Math.min(1, Math.max(0, (speed - STRIDE_FROM) / (STRIDE_FULL - STRIDE_FROM)));
 /** How fast the heading eases to the way it moves, per second. */
 const TURN = 10;
 
@@ -178,7 +188,7 @@ export const poseLegsFromClips = (rig: CharacterRig, at: { x: number; z: number 
   const mix = legWeights(s.heading, (speed - WALK) / (RUN - WALK), crouch, rig.masculine ?? false, rig.hurt ?? 0);
   const scale = Math.abs(rig.root.scaling.y) || 1;
   const pace = rig.pace ?? 1;
-  s.phase += (speed * dt) / (Math.max(0.5, strideOf(mix) * pace) * RIG_LEG * scale);
+  s.phase += (speed * dt) / (Math.max(0.5, strideOf(mix) * pace * strideReach(speed)) * RIG_LEG * scale);
   const j = sampleLegs(mix, s.phase);
   const b = rig.body;
   const unlean = Quaternion.Inverse(b.rotationQuaternion ?? Quaternion.FromEulerAngles(b.rotation.x, b.rotation.y, b.rotation.z));

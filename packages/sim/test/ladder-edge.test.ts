@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CharacterState, InputFrame, Vec3 } from "@seki/core";
+import { BASE_STATS, type CharacterState, type InputFrame, type Vec3 } from "@seki/core";
 import { AIR_ACCEL, COYOTE_TIME, SIM_DT, Simulation, gangerEntity, ground, playerStatsOf } from "../src";
 import { market, oldMarketFloor } from "./fixtures/old-market";
 import type { LadderDef } from "../src/world/components";
@@ -169,7 +169,7 @@ const shoulder = (sim: Simulation): void => {
 
 describe("what does not catch the top of a ladder (G-308)", () => {
   const LEGS: Body = { cyberware: { optics: "hitomi_optics_mk1", skeleton: "kitsune_tendons" } };
-  /** The legs and both memories of running: a walk of 5.4 m/s, over the dash's 6 m/s tail less a step of steering. */
+  /** The legs and both memories of running: a walk 1.2 m/s over the base (4.7 m/s since the run of 21.11, 5.4 before), the fastest walk there is. */
   const FAST: Body = { ...LEGS, memories: ["street_runner", "crash_night"] };
   /** Where she stands `side` metres along the edge from the exit, facing the way over it. */
   const beside = (l: LadderDef, side: number): { at: Vec3; yaw: number } => {
@@ -193,7 +193,7 @@ describe("what does not catch the top of a ladder (G-308)", () => {
       // Before: from 0.6-1.5 m back the tail of the dash was under 1.1 times this walk, and caught.
       for (const d of [0.3, 0.6, 0.9, 1.2, 1.5]) {
         const sim = standing(near, back(d), yaw, FAST);
-        expect(playerStatsOf(sim.domain).moveSpeed).toBeCloseTo(5.4, 5);
+        expect(playerStatsOf(sim.domain).moveSpeed).toBeCloseTo(BASE_STATS.moveSpeed + 1.2, 5);
         sim.step(input({ moveZ: 1, dash: true }));
         expect(walk(sim, input({ moveZ: 1 })), `${d} m back`).toMatchObject({ caught: false, landed: 1 });
       }

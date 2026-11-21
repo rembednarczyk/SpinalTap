@@ -248,7 +248,7 @@ describe("W-3's culvert (ADR-0082 stage 2)", () => {
     expect(sim.player()!.position.x).toBeLessThan(L.CULVERT_CRAWL.minX);
     teleportPlayer(sim, w3(2480, L.CULVERT_CRAWL.floor, mid), Math.PI / 2);
     run(sim, 10, input({ crouch: true }));
-    run(sim, 30, input({ moveZ: 1 }));
+    run(sim, 40, input({ moveZ: 1 }));
     expect(sim.player()!.posture?.amount).toBe(1);
     expect(sim.player()!.position.x).toBeGreaterThan(2481);
   });

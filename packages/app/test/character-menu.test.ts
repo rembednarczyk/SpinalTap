@@ -157,7 +157,7 @@ describe("stats and look for the menu", () => {
     const { session } = await setup();
     const s = characterStats(session.sim.domain, 90, 100);
     // Starting optics: +4% crit chance and a 10% steadier hand.
-    expect(s).toMatchObject({ hp: 90, maxHp: 100, critMultiplier: 1.8, moveSpeed: 4.2 });
+    expect(s).toMatchObject({ hp: 90, maxHp: 100, critMultiplier: 1.8, moveSpeed: 3.5 });
     expect(s.critChance).toBeCloseTo(0.12);
     expect(s.armor).toEqual({ head: 2, torso: 3, arm: 3, leg: 3 });
     expect(s.spread).toBeCloseTo((0.02 * 0.9 * 180) / Math.PI);

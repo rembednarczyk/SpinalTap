@@ -60,13 +60,17 @@ const startTpp = async (page: Page, query: string) => {
 /** Pages whose game in TPP is already running (`cityScenes`): a scene there only moves the player. */
 const running = new WeakSet<Page>();
 
+/** The scenes' walks were counted at the run of 4.2 m/s; at 3.5 the same ground takes 1.2 times the steps. */
+const WALK_SCALE = 4.2 / 3.5;
+
 /** The player put at a spot of Lublin (ADR-0045) in TPP and walked a little; a new game first unless the page runs one. */
 const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; y?: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
   if (!running.has(page)) await startTpp(page, query);
   if (at.frame) await teleportTo(page, await place(page, at.frame, at.x, at.z), at.yaw);
   else if (at.y !== undefined) await teleportTo(page, { x: at.x, y: at.y, z: at.z }, at.yaw);
   else await teleport(page, at.x, at.z, at.yaw);
-  await step(page, at.walk, { moveZ: 1 });
+  // As far as the scenes were set up for: the run is 3.5 m/s since 21.11 (4.2 before), so 1.2 times the steps.
+  await step(page, Math.round(at.walk * WALK_SCALE), { moveZ: 1 });
 };
 
 /**

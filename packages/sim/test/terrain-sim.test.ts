@@ -57,7 +57,7 @@ describe("terrain and prisms in the simulation (ADR-0043)", () => {
     expect(p.y).toBeLessThan(hill(80, p.z) + 1.5);
     // Heading north-east into the bank: it keeps going north along its foot.
     const slide = terrainSim({ x: 70, z: 20 }, Math.PI / 4);
-    run(slide, 60 * 6, input({ moveZ: 1 }));
+    run(slide, 60 * 8, input({ moveZ: 1 }));
     const q = player(slide).position;
     expect(q.x).toBeLessThan(81);
     expect(q.z).toBeGreaterThan(35);
