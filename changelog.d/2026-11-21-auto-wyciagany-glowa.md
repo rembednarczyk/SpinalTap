@@ -1,0 +1,1 @@
+- Auto: kierowca w aucie i kierowca wyciągany z przejętego auta nie przebijają już głową dachu: modele z dłuższymi nogami siedzą na fotelu, a wyciągany wstaje dopiero, gdy wychodzi przez drzwi.
