@@ -41,6 +41,12 @@ W `createSystems()` po sterowaniu gracza, przed ruchem pieszych i ruchem aut. Ka
 6. **Bryła sztywna**: suma sił i momentów, całkowanie półniejawnym Eulerem (najpierw prędkości, potem pozycja i obrót kwaternionem z normalizacją), tensor w układzie nadwozia.
 7. **Kolizje nadwozia**: prostopadłościan auta przeciw bryłom `SolidIndex` (ściany, słupki, meble, bryły budów), autom ruchu ulicznego (kinematyczne: auto gracza odbija się od nich z ich prędkością, one hamują i stają, jak dziś przy pieszym na pasie) i pieszym (bryły ciał: impuls, przewrócenie, obrażenia, przestępstwo i reakcja gangów ADR-0091). Impuls z odbiciem i tarciem w punkcie najgłębszego wnikania, rozsunięcie, maksymalnie kilka iteracji na podkrok. Uszkodzenia z energii uderzenia (siła silnika, skręt, wygląd).
 8. **Wspomagania** (pkt 4 „Wzorca”): ABS zdejmuje moment hamujący przy `κ < −κ_max`, kontrola trakcji przy `κ > κ_max`, kontrola stabilności hamuje pojedyncze koło przy nadsterowności.
+   - Zrobione 21.11 (uwagi użytkownika: auto szybko wpada w dziwne poślizgi). Pomiar z klawiatury (pełny skręt i gaz): przy 100 km/h skręt 13° dawał przodowi 30° poślizgu i obrót w 1,5 s bez gazu, a na pierwszym biegu wewnętrzne koło tylne buksowało z poślizgiem 5,5. Zmiany:
+     - ograniczenie skrętu z przyczepności (`steerLimit`): kąt najciaśniejszego zakrętu przy 85% μg (`L·μg/v²`) i 0,03 rad zapasu, pełny skręt przy wolnej jeździe;
+     - kontrola trakcji proporcjonalna: od κ = 0,12 moment maleje liniowo do zera przy 0,32 (wcześniej tylko połowa);
+     - szersze tylne opony (`tyre.rearGrip` 1,15): auto ma 53% masy z tyłu i bez tego miało neutralne albo nadsterowne wyważenie.
+     
+     Po zmianach tylne opony mają najwyżej ok. 7° poślizgu przy 30, 60 i 100 km/h, z gazem i bez. Kontrola stabilności zostaje na później, jeśli będzie potrzebna.
 
 Budżet: jedno auto gracza z pełną fizyką. Auta ruchu ulicznego zostają kinematyczne (bez zmian w `traffic-system`); auto zaparkowane albo porzucone przez gracza zasypia po zatrzymaniu (bez podkroków) i budzi się przy uderzeniu albo wejściu.
 
