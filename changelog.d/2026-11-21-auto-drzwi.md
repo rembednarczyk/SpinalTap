@@ -1,0 +1,1 @@
+- Drzwi kierowcy otwierają się do góry, nożycowo, przy wsiadaniu, wysiadaniu i wyciąganiu kierowcy.

@@ -36,6 +36,7 @@ from city_street_e2 import drop_specks, is_ccby
 from city_vehicle_roles import settle_roles
 from city_vehicle_skin import fitted_normals, skin_images, skin_model
 from city_vehicle_wheels import wheels
+from city_vehicle_doors import door
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = os.path.join(HERE, '..', 'packages', 'app', 'public', 'city', 'city-kit.glb')
@@ -434,10 +435,23 @@ def build_vehicles(folder, out_dir):
             if order is None:
                 m = skin_model(f'{key}-hi', P, N, tex['uv'])
             else:
-                m = skin_model(f'{key}-hi', P[order], N[order], tex['uv'][order], [w['tris'] for w in found])
+                # The driver's door cut out of the body after the wheels (21.11): it opens upward in the engine.
+                n_wheel = sum(w['tris'] for w in found)
+                in_wheel = np.zeros(len(P), bool)
+                in_wheel[order[len(order) - n_wheel:]] = True
+                d = door(P, np.array([r == 'glass-dark' for r in roles]), in_wheel)
+                in_door = np.zeros(len(P), bool)
+                in_door[d] = True
+                # Body (without the door), the wheels as they were, the door last.
+                order = np.concatenate([order[~in_door[order]], d]) if len(d) else order
+                tail = [w['tris'] for w in found] + ([len(d)] if len(d) else [])
+                m = skin_model(f'{key}-hi', P[order], N[order], tex['uv'][order], tail)
             flat = P.reshape(-1, 3)
             out.append(m)
             wheel_extras = {'wheels': [{'first': a, 'count': n, 'axle': w['axle'], 'radius': w['radius']} for (a, n), w in zip(m['parts'], found)]} if 'parts' in m else {}
+            if 'parts' in m and len(m['parts']) > len(found):
+                a, n = m['parts'][len(found)]
+                wheel_extras['door'] = {'first': a, 'count': n}
             extras[m['key']] = {'size': [round(float(x), 3) for x in np.ptp(flat, 0)], 'styles': ['veh-hi'], 'skin': key, **wheel_extras, **({'credit': credit} if credit else {})}
             images += list(zip((f'skin:{key}', f'skin-glow:{key}'), skin_images(tex['base'], tex['emissive'], tex['uv'], roles)))
             print(f"{m['key']:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} skin {key}")

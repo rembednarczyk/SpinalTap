@@ -71,6 +71,8 @@ export interface Transform {
   readonly tilt?: { readonly pitch: number; readonly roll: number };
   /** A car's damage, 0 whole .. 1 a wreck (ADR-0097 §5): it smokes past half. Absent: whole. */
   readonly damage?: number;
+  /** How far a car's driver's door is open, 0 shut .. 1 up (ADR-0097, scissor doors of 21.11). Absent: shut. */
+  readonly door?: number;
   /**
    * A car's four wheels (ADR-0097 §3), in the simulation's order (front left, front right, rear left,
    * rear right): how far each has rolled, its steer and its spring's travel, for the close-up's wheels.

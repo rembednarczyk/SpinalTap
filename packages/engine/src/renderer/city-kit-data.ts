@@ -31,6 +31,8 @@ export interface KitModel {
   readonly skin?: string;
   /** A car close-up's wheels (ADR-0097 §3): [first vertex, vertex count] of each, the parts the engine turns. */
   readonly wheels?: readonly (readonly [number, number])[];
+  /** A car close-up's driver's door (ADR-0097, 21.11): [first vertex, vertex count], the part the engine opens. */
+  readonly door?: readonly [number, number];
 }
 
 /** A model's own texture (`KitModel.skin`): PNG bytes in the kit's alpha code (ADR-0022), and what of it glows. */
@@ -145,6 +147,7 @@ export const parseCityKit = (bytes: ArrayBuffer): CityKitData => {
       indices,
       ...(typeof ex.skin === "string" ? { skin: ex.skin } : {}),
       ...wheelsOf(ex.wheels),
+      ...doorOf(ex.door),
     });
   }
   const skins = readSkins(json, bin);
@@ -155,6 +158,14 @@ export const parseCityKit = (bytes: ArrayBuffer): CityKitData => {
 const wheelsOf = (raw: unknown): { wheels?: readonly (readonly [number, number])[] } => {
   const wheels = arr(raw).map((w) => obj(w)).map((w) => [num(w.first), num(w.count)] as const);
   return wheels.length > 0 && wheels.every(([, n]) => n > 0) ? { wheels } : {};
+};
+
+/** A close-up's door part from its extras ({first, count}), or nothing. */
+const doorOf = (raw: unknown): { door?: readonly [number, number] } => {
+  if (raw === undefined) return {};
+  const d = obj(raw);
+  const count = num(d.count);
+  return count > 0 ? { door: [num(d.first), count] } : {};
 };
 
 /** The file's skins: its images named `skin:<name>`, each with its `skin-glow:<name>` when there is one. */

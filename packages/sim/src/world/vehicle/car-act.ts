@@ -52,3 +52,26 @@ export const seatInWorld = (car: CarState): Vec3 => {
   const p = add(car.pos, toWorld(car.q, v3(s.x, s.y - restHeight(spec), s.z)));
   return { x: p.x, y: p.y, z: p.z };
 };
+
+/**
+ * The driver's door (user's request of 21.11: doors opening upward, scissor doors as on the
+ * Lamborghini Countach, so she and a driver thrown out pass through an open side with the clips as
+ * they are). Up while she gets in, until she is sat and pulls it down for the clip's last part, and
+ * while she gets out; down otherwise. Seconds of the clip before the end of getting in it comes down.
+ */
+const DOOR_SHUT_BEFORE = 0.9;
+/** How fast it goes up or down (share of its travel per second): some half a second each way. */
+const DOOR_RATE = 2.2;
+
+/** Where the door of a car is heading: up for the act played at it (`act`, null for a car nobody is at). */
+export const doorTarget = (act: CarActState | null): number => {
+  if (!act) return 0;
+  if (act.kind === "exit") return 1;
+  return act.t < CAR_ACT.enter.to - DOOR_SHUT_BEFORE ? 1 : 0;
+};
+
+/** Moves the door `dt` seconds toward `target`. */
+export const stepDoor = (car: CarState, target: number, dt: number): void => {
+  const step = DOOR_RATE * dt;
+  car.door = target > car.door ? Math.min(target, car.door + step) : Math.max(target, car.door - step);
+};

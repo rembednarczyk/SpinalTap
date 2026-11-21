@@ -65,7 +65,8 @@ def skin_images(base, emissive, uv, roles):
 def skin_model(key, P, N, uv, tail=()):
     """A model on its own UVs: triangles P [T, 3, 3] with normals N [T, 3, 3] and UVs [T, 3, 2], welded.
 
-    `tail`: the triangle counts of the parts at its end (the wheels, `city_vehicle_wheels`), in turn; the model
+    `tail`: the triangle counts of the parts at its end (the wheels, `city_vehicle_wheels`, then the driver's
+    door, `city_vehicle_doors`), in turn; the model
     then has 'parts', the first vertex and the vertex count of each (parts share no vertex with the rest)."""
     verts = {}
     pos, nor, uvs, ind = [], [], [], []
@@ -74,6 +75,8 @@ def skin_model(key, P, N, uv, tail=()):
     for t in range(len(P)):
         if len(firsts) < len(starts) and t == starts[len(firsts)]:
             firsts.append(len(pos))
+            # A part shares no vertex with what comes before it: the door, cut out of the body, would otherwise.
+            verts = {}
         for k in range(3):
             p = np.round(P[t, k], 4)
             n = N[t, k] / max(np.linalg.norm(N[t, k]), 1e-9)

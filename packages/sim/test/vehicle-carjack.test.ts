@@ -138,6 +138,31 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect([...sim.world].some((e) => e.id === left.id && e.car)).toBe(true);
   });
 
+  it("opens its driver's door upward while she gets in and out, and shuts it once she sits or stands clear (scissor doors, 21.11)", () => {
+    const { sim } = inTheWay();
+    for (let i = 0; i < 300 && sim.session.focusPrompt !== TAKE_CAR_PROMPT; i++) sim.step();
+    sim.step(press({ interact: true }));
+    const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
+    const car = mine();
+    // Up within the wait at the door, while its driver is thrown out.
+    for (let i = 0; i < 45; i++) sim.step();
+    expect(car.car!.door).toBe(1);
+    expect(sim.session.carAct?.kind).toBe("enter");
+    // Down before the clip of getting in ends: she is sat and has pulled it shut.
+    untilActDone(sim);
+    for (let i = 0; i < 30; i++) sim.step();
+    expect(car.car!.door).toBe(0);
+    // Out: up while she gets out, down after she stands clear.
+    sim.step(press({ interact: true }));
+    for (let i = 0; i < 45; i++) sim.step();
+    expect(sim.session.carAct?.kind).toBe("exit");
+    expect(car.car!.door).toBe(1);
+    untilActDone(sim);
+    expect(car.car!.door).toBeGreaterThan(0.5);
+    for (let i = 0; i < 40; i++) sim.step();
+    expect(car.car!.door).toBe(0);
+  });
+
   it("keeps her step's start at the wheel as the car's, so she is drawn between the steps with it (user's notes of 21.11: the camera shook)", () => {
     const { sim, mine } = takenAndStopped();
     for (let i = 0; i < 90; i++) sim.step(press({ moveZ: 1, moveX: -0.5 }));

@@ -3,7 +3,7 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { type V3, attitude, toWorld, v3 } from "../world/vehicle/frame";
 import { type CarState, forwardSpeed, newCar } from "../world/vehicle/state";
-import { type CarActState, HELD, JACK_WAIT, seatInWorld, startAct, stepAct } from "../world/vehicle/car-act";
+import { type CarActState, HELD, JACK_WAIT, doorTarget, seatInWorld, startAct, stepAct, stepDoor } from "../world/vehicle/car-act";
 import { DRIVER_ID_BASE, ejectDriver, stepEjectedDrivers } from "../world/vehicle/ejected-driver";
 import { stepStruckBodies } from "../world/vehicle/struck";
 import { driveCar, wake } from "../world/vehicle/step";
@@ -280,6 +280,8 @@ export const createVehicleSystem = (): System => {
           const act = ctx.session.carAct;
           if (player.seated !== undefined) player.carPose = { act: act ? act.kind : horn ? "horn" : "drive", t: act ? act.t : horn ? hornTime : seatTime, yaw: attitude(e.car.q).yaw, seat: seatInWorld(e.car), floor: e.position.y };
         }
+        // The driver's door up while she gets in or out of it, down after (the picture only).
+        stepDoor(e.car, doorTarget(e.id === ctx.session.driving ? ctx.session.carAct : null), ctx.dt);
       }
     },
   };
