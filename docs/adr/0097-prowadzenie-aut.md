@@ -194,3 +194,15 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 ## Podpowiedź „Wysiądź” (21.11, polecenie użytkownika)
 - Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
 - Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
+
+## Jazda na telefonie (21.11, plan auta)
+- Dotąd dotyk dawał tylko gałkę ruchu i przycisk skoku. Ręczny działał jeden krok, bo skok jest naciśnięciem, a klaksonu nie było.
+- Za kierownicą pad dotykowy zmienia się na układ jazdy (`touch/drive-controls.tsx`):
+  - suwak skrętu pojawia się pod lewym kciukiem jak gałka i liczy tylko ruch w bok;
+  - pedały gazu i hamulca są po prawej (hamulec na postoju włącza wsteczny);
+  - nad hamulcem ręczny, obok klakson i strzał z okna; „Użyj” do wysiadania zostaje tam, gdzie zawsze;
+  - przeciąganie po ekranie dalej obraca widok.
+- Wzorzec: sterowanie dotykowe gier wyścigowych na telefon (pedały w prawym rogu, skręt lewym kciukiem). Od przyciskowych strzałek różnimy się suwakiem, który daje skręt analogowo, bez przechyłu telefonu.
+- `VirtualPad` podaje pedały i suwak jako osie ruchu, tak jak W/S i A/D, więc `sim` wygładza je tempem klawiatury jak dotąd. Ręczny trzymany to `jump` przez cały czas trzymania, klakson to `horn`. Bez nowych pól w `InputFrame` i bez zmian w `sim`.
+- Wsiadanie i wysiadanie zdejmuje palce z poprzedniego układu (`reset`), żeby gałka trzymana w chwili wejścia nie jechała dalej.
+- Testy: `virtual-pad` (engine), `touch-drive` (ui).

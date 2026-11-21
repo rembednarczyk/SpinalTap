@@ -185,3 +185,31 @@
   .metro { padding: 12px 16px; }
   .metro__stop { min-height: 46px; }
 }
+/* At the wheel (ADR-0097 §4): the pedals bottom right, the handbrake over the brake, the horn and the
+   shot out of the window left of them, "Use" (get out) where it always is. */
+.touch-mode .touch__actions--drive .touch__btn--gas { right: 8px; bottom: 10px; width: 80px; height: 150px; border-radius: 16px; font-size: 26px; color: var(--ok); }
+.touch-mode .touch__actions--drive .touch__btn--brake { right: 100px; bottom: 10px; width: 80px; height: 100px; border-radius: 16px; font-size: 26px; color: var(--amber); }
+.touch-mode .touch__actions--drive .touch__btn--handbrake { right: 114px; bottom: 122px; width: 52px; height: 52px; font-family: var(--font-ui); font-weight: 700; }
+.touch-mode .touch__actions--drive .touch__btn--horn { right: 192px; bottom: 10px; width: 52px; height: 52px; }
+.touch-mode .touch__actions--drive .touch__btn--fire { right: 188px; bottom: 74px; width: 60px; height: 60px; font-size: 22px; }
+/* The steering slider: a track under the left thumb, the knob sliding along it. */
+.touch__steer {
+  position: fixed;
+  width: 200px;
+  height: 52px;
+  margin: -26px 0 0 -100px;
+  border-radius: 26px;
+  background: rgba(8, 14, 20, 0.45);
+  border: 1px solid var(--panel-edge);
+}
+.touch__steer-knob {
+  position: absolute;
+  left: 76px;
+  top: 2px;
+  width: 48px;
+  height: 46px;
+  border-radius: 23px;
+  background: rgba(95, 242, 255, 0.35);
+  border: 1px solid var(--cyan);
+}
+.touch__steer-hint { width: 160px; height: 52px; border-radius: 26px; }

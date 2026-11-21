@@ -4,6 +4,7 @@ import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../us
 import { useUnspentPoints } from "../hud/xp-hud";
 import { ActionArc, FireButton, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
+import { DriveControls } from "./drive-controls";
 import { useUiScale } from "../scale/use-ui-scale";
 import type { TouchPadSink } from "./touch-pad-sink";
 
@@ -117,15 +118,13 @@ const TopBar = ({ spread }: { spread: number }) => {
  * ability only with its implant. The rest unfolds behind "more".
  */
 export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
-  const t = useT();
   const hack = useHackIntents();
-  const hasAbility = useUi((s) => s.ability !== null);
-  // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
-  const aimOn = useUi((s) => s.aiming || s.blocking);
   const look = useLookDrag(pad);
   const { touchSpread } = useUiScale(true);
   const [more, setMore] = useState(false);
   const [crouchOn, setCrouchOn] = useState(false);
+  // At the wheel (ADR-0097 §4) the pedals, the steering slider, the handbrake and the horn.
+  const driving = useUi((s) => s.vehicle !== null);
 
   // Lift every finger when the controls go away (dialogue, shop, pause); the scanner too.
   useEffect(
@@ -135,6 +134,8 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
     },
     [pad, hack],
   );
+  // Getting in or out swaps the pad under the thumbs: what they held on one goes with it.
+  useEffect(() => pad.reset(), [pad, driving]);
 
   return (
     <div className="touch ui-layer ui-layer--touch" data-testid="touch-controls">
@@ -148,9 +149,40 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         onPointerUp={look.end}
         onPointerCancel={look.end}
       />
-      <Stick pad={pad} />
       <TopBar spread={touchSpread} />
-      <div className="touch__actions" style={toCorner(touchSpread, "100% 100%")}>
+      {driving ? (
+        <DriveControls pad={pad} style={toCorner(touchSpread, "100% 100%")} />
+      ) : (
+        <OnFoot pad={pad} more={more} setMore={setMore} crouchOn={crouchOn} setCrouchOn={setCrouchOn} spread={touchSpread} />
+      )}
+    </div>
+  );
+};
+
+/** The pad on foot: the floating stick, fire, aim, jump, the arc and "Use". */
+const OnFoot = ({
+  pad,
+  more,
+  setMore,
+  crouchOn,
+  setCrouchOn,
+  spread,
+}: {
+  pad: TouchPadSink;
+  more: boolean;
+  setMore: (on: boolean) => void;
+  crouchOn: boolean;
+  setCrouchOn: (on: boolean) => void;
+  spread: number;
+}) => {
+  const t = useT();
+  const hasAbility = useUi((s) => s.ability !== null);
+  // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
+  const aimOn = useUi((s) => s.aiming || s.blocking);
+  return (
+    <>
+      <Stick pad={pad} />
+      <div className="touch__actions" style={toCorner(spread, "100% 100%")}>
         <FireButton pad={pad} />
         <ActionArc pad={pad} more={more} onMore={() => setMore(!more)} />
         <PadButtonView pad={pad} button="aim" label="◎" hint={t("touch.aim")} className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
@@ -159,6 +191,6 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <UseButton pad={pad} />
         {more && <MoreActions pad={pad} crouchOn={crouchOn} setCrouchOn={setCrouchOn} />}
       </div>
-    </div>
+    </>
   );
 };
