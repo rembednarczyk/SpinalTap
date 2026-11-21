@@ -40,7 +40,7 @@ const playerOf = (sim: Simulation): Entity => [...sim.world].find((e) => e.playe
 /** Steps until her getting in or out is through (the clip's span at its pace, under 3 s); the steps it took. */
 const untilActDone = (sim: Simulation): number => {
   let n = 0;
-  while (sim.session.carAct && n < 240) {
+  while (sim.session.carAct && n < 400) {
     sim.step();
     n++;
   }
@@ -105,8 +105,9 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     sim.step(press({ moveZ: 1 }));
     expect(playerOf(sim).carPose?.act).toBe("enter");
     const steps = untilActDone(sim);
-    expect(steps).toBeGreaterThan(120);
-    expect(steps).toBeLessThan(200);
+    // At the door while its driver is pulled out (1.5 s), then in (2.7 s).
+    expect(steps).toBeGreaterThan(210);
+    expect(steps).toBeLessThan(290);
     expect(playerOf(sim).carPose?.act).toBe("drive");
     const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
     const from = { ...mine().position };
@@ -164,5 +165,28 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     sim.step(press({ horn: true }));
     expect(honks).toHaveLength(2);
     expect(mine().id).toBe(sim.session.driving);
+  });
+
+  it("pulls its driver out, throws him onto the road, and he gets up and runs off out of the way", () => {
+    const { sim, car } = inTheWay();
+    for (let i = 0; i < 300 && sim.session.focusPrompt !== TAKE_CAR_PROMPT; i++) sim.step();
+    sim.step(press({ interact: true }));
+    const driver = () => [...sim.world].find((e) => e.ejected !== undefined);
+    const d = driver()!;
+    expect(d).toBeDefined();
+    expect(d.key).toBeUndefined();
+    const seen = new Set<string>();
+    let far = 0;
+    for (let i = 0; i < 60 * 16 && driver(); i++) {
+      sim.step();
+      const e = driver();
+      if (!e) break;
+      seen.add(e.carPose?.act ?? "run");
+      far = Math.max(far, Math.hypot(e.position.x - car.position.x, e.position.z - car.position.z));
+    }
+    expect([...seen]).toEqual(["pulled", "thrown", "getup", "run"]);
+    expect(far).toBeGreaterThan(25);
+    // Out of the way, he leaves the world: nothing of him in a save.
+    expect(driver()).toBeUndefined();
   });
 });

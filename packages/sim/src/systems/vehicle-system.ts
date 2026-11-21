@@ -3,7 +3,8 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { type V3, attitude, toWorld, v3 } from "../world/vehicle/frame";
 import { type CarState, forwardSpeed, newCar } from "../world/vehicle/state";
-import { type CarActState, HELD, seatInWorld, startAct, stepAct } from "../world/vehicle/car-act";
+import { type CarActState, HELD, JACK_WAIT, seatInWorld, startAct, stepAct } from "../world/vehicle/car-act";
+import { DRIVER_ID_BASE, ejectDriver, stepEjectedDrivers } from "../world/vehicle/ejected-driver";
 import { driveCar, wake } from "../world/vehicle/step";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
@@ -65,7 +66,9 @@ export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: 
   const e = ctx.world.add({ id, position: { ...v.position }, prevPosition: { ...v.position }, yaw: v.yaw, prevYaw: v.yaw, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, view: { kind: "vehicle", model: view.model, tint: view.tint }, car }) as Car;
   ctx.streamer.streamedOut.delete(id);
   ctx.session.driving = id;
-  ctx.session.carAct = startAct("enter");
+  // Its driver pulled out and thrown onto the road first (ADR-0097, clips of 21.11), then she gets in.
+  ejectDriver(ctx, DRIVER_ID_BASE + next, seatInWorld(car), v.yaw, v.position.y);
+  ctx.session.carAct = startAct("enter", JACK_WAIT);
   ctx.bus.emit("VehicleEntered", { vehicleId: id, from: "traffic" });
   placeSeat(player, e);
   return e;
@@ -162,6 +165,7 @@ export const createVehicleSystem = (): System => {
   return {
     name: "vehicle",
     run(ctx) {
+      stepEjectedDrivers(ctx);
       const player = ctx.world.with("player").first ?? null;
       if (!player || ctx.session.gameOver) return;
       const driving = ctx.session.driving !== null ? ((ctx.world.with("car").entities.find((c) => c.id === ctx.session.driving) as Car | undefined) ?? null) : null;

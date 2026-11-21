@@ -138,3 +138,16 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
   - rozglądanie myszką obraca kamerę wokół auta, a symulacja sprowadza je z powrotem za auto;
   - ściana albo teren mapy między autem a kamerą przyciąga ją do auta (promień od punktu 1,2 m nad autem, jak kamera zza ramienia).
 - Test `car-chase.test.ts`: za autem na prostej, na śladzie w zakręcie, obrót myszką.
+
+## Kierowca wyrzucany z przejętego auta (21.11, propozycja użytkownika)
+- Wzorzec: przejęcie auta z gier z otwartym światem, w którym kierowca zostaje wyciągnięty, upada, wstaje i ucieka. Tu kierowca jest przejściową postacią (`ejected-driver.ts`): bez klucza, nie trafia do zapisu i nie jest niczyim celem. Znika po 8 s biegu.
+- Fazy (czas klipu prowadzi symulacja, renderer nakłada klip jak przy wsiadaniu):
+  - wyrwanie z fotela („Removing Driver”, klip ofiary), 0–3,6 s klipu w tempie 1,6;
+  - rzut na jezdnię („Hit By Car” od uderzenia, 2,6–4,8 s), postać obrócona tyłem do kierunku auta, bo klip rzuca w prawo postaci, czyli od boku auta;
+  - 0,8 s leżenia;
+  - wstawanie: przejście z ostatniej klatki rzutu w przysiad „hard landing” i dalej do stania;
+  - bieg 5,5 m/s drogą wolną od ścian (najchętniej za auto i od jego boku, sprawdzane co sekundę na 8 m), z odsuwaniem od brył.
+- Przesunięcia bioder w klipach (wyrwanie 0,77 m w lewo od fotela, rzut 1,63 m dalej i 0,24 m do tyłu) wzięte z tablicy klipów, żeby postać po wstaniu stała tam, gdzie upadła.
+- Bohaterka czeka przy drzwiach 1,5 s, aż kierowca wyleci, potem wsiada (cały przejęcie ok. 4,2 s).
+- Test sesji: kierowca bez klucza przechodzi fazy w kolejności, odbiega dalej niż 25 m i znika.
+- Zrzuty 21.11 pokazały, że auto z ruchu wjeżdża w stojące auto gracza: ruch uliczny nie widzi aut z fizyką jako przeszkody. Do poprawy osobno.

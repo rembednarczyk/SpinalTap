@@ -1,5 +1,6 @@
 import type { ActivityId, CarPose, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
 import type { CarState } from "../vehicle/state";
+import type { EjectedDriver } from "../vehicle/ejected-driver";
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
@@ -151,8 +152,10 @@ export interface Entity {
   vehicle?: VehicleState;
   /** The car the player sits in (ADR-0097), on the player. Not saved. */
   seated?: EntityId;
-  /** What the player does at her car, for the renderer's clips (ADR-0097, clips of 21.11). Not saved. */
+  /** What the player does at her car, or a taken car's driver out of it, for the renderer's clips (ADR-0097, clips of 21.11). Not saved. */
   carPose?: CarPose;
+  /** A taken street car's driver, pulled out, thrown down and running off (ADR-0097). Unkeyed, not saved. */
+  ejected?: EjectedDriver;
   /** A car with its physics (ADR-0097): the player's, or one she left. Not saved. */
   car?: CarState;
 }

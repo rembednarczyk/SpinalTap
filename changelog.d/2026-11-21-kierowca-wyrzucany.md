@@ -1,0 +1,1 @@
+- Przy przejęciu auta kierowca zostaje wyciągnięty z fotela i rzucony na jezdnię. Potem wstaje i ucieka, a bohaterka w tym czasie wsiada.
