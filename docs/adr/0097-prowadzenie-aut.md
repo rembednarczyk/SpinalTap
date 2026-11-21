@@ -139,6 +139,7 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
   - ściana albo teren mapy między autem a kamerą przyciąga ją do auta (promień od punktu 1,2 m nad autem, jak kamera zza ramienia).
 - Test `car-chase.test.ts`: za autem na prostej, na śladzie w zakręcie, obrót myszką.
 
+
 ## Ruch uliczny widzi auto gracza, porzucone auto na ręcznym (21.11)
 - Na zrzutach z przejmowania auta ruch wjeżdżał w stojące auto gracza: `lookAhead` w ruchu ulicznym patrzył na ciała i na pojazdy ruchu, a auta z fizyką (`car`) nie znał. Teraz widzi je jak pojazd przed sobą na swoim pasie (bezpieczna prędkość modelu jazdy za poprzednikiem Gippsa, 1981: droga hamowania v²/2a i odstęp `FOLLOW_GAP`), z obrysem auta obróconym do pasa, więc auto stojące w poprzek zajmuje go szerzej niż stojące wzdłuż (`systems/traffic-player-cars.ts`).
 - Auto bez kierowcy dostawało zerowe sterowanie i staczało się po pochyłości ulicy. Auto porzucone stoi teraz na ręcznym (sam ręczny: wciśnięty hamulec na postoju wrzuca wsteczny), więc trzyma je kotwica postoju; pchnięte toczy się dalej.
