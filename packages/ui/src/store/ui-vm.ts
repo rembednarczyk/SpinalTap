@@ -290,6 +290,8 @@ export const PAD_SENSITIVITY_RANGE: readonly [number, number] = [0.2, 3];
 export const PAD_DEADZONE_SETTING_RANGE: readonly [number, number] = [0.05, 0.3];
 /** Aim assist for touch and pad look, never the mouse (ADR-0072): only on enemies fighting the player. */
 export type AimAssistMode = "off" | "light" | "standard";
+/** The car's driving assists (ADR-0097 §4), the simulation's `DrivingAssist`. */
+export type DrivingAssistMode = "full" | "abs" | "off";
 
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
@@ -326,6 +328,8 @@ export interface SettingsVm {
   readonly padCurve: PadCurveMode;
   /** Aim assist on touch (and pad) look: a slowdown over an enemy in combat and a pull on raising the sights. */
   readonly aimAssist: AimAssistMode;
+  /** How much the car helps her drive (ADR-0097 §4): steering kept to the grip, ABS and traction control; ABS only; none. */
+  readonly drivingAssist: DrivingAssistMode;
   /**
    * Horizontal field of view from the hip, degrees (ADR-0049): the same width of the street on
    * any screen; the camera works out the vertical angle for the screen's proportions.
@@ -409,6 +413,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   padDeadzone: 0.12,
   padCurve: "classic",
   aimAssist: "standard",
+  drivingAssist: "full",
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
   musicVolume: 0.55,
