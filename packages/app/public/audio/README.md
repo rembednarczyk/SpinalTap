@@ -1,10 +1,10 @@
 # Nagrania audio (CC0)
 
-Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie cue → pliki jest w `packages/app/src/audio-manifest.ts`. Brak pliku albo błąd dekodowania (np. Vorbis w starym Safari) cicho wraca do syntezy. `?audio=off` wyłącza nagrania. Proceduralne zostają (stan 18.11): muzyka, klakson aut (`horn`), koniec wgrywania wirusa (`upload-done`), szum miasta, para i deszcz pod nagraniem (`ambience.ts`), warstwy hali W-3 (`w3-scape.ts`), radio (muzyka i lektor z formantów, ADR-0036).
+Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie cue → pliki jest w `packages/app/src/audio-manifest.ts`. Brak pliku albo błąd dekodowania (np. Vorbis w starym Safari) cicho wraca do syntezy. `?audio=off` wyłącza nagrania. Proceduralne zostają (stan 18.11, klakson nagrany od 21.11): muzyka, koniec wgrywania wirusa (`upload-done`), szum miasta, para i deszcz pod nagraniem (`ambience.ts`), warstwy hali W-3 (`w3-scape.ts`), radio (muzyka i lektor z formantów, ADR-0036).
 
 Wszystkie pliki są na licencji **CC0 1.0** (domena publiczna, https://creativecommons.org/publicdomain/zero/1.0/): bez obowiązku atrybucji, użycie komercyjne dozwolone. Autorów i tak wymieniamy.
 
-Format: OGG Vorbis, 44,1 kHz. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
+Format: OGG Vorbis, 44,1 kHz. Dźwięki auta (21.11) są zgrane do mono, Vorbis q4, bez przycinania (gaszenie silnika ucięte na 1,82 s, przed ciszą); pętla silnika bez zmian poza kodekiem. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
 
 ## Źródła
 
@@ -19,6 +19,8 @@ Format: OGG Vorbis, 44,1 kHz. Dźwięki dobycia broni i chowania (21.11) są prz
 | Gun Reload lock or Click Sound | pauliuw | CC0 (strona OGA) | https://opengameart.org/content/gun-reload-lock-or-click-sound | `gun_reload_lock_or_click_sound.mp3` (pobrane 21.11) |
 | Weapons and Apparel SFX Library | Vehicle (Jan Schupke) | CC0 (readme.txt w paczce) | https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | `weapons-apparel.zip` (pobrane 21.11) |
 | Shotgun Reload Sound Effects | zer0_sol | CC0 (strona OGA: „Feel free to use these sounds without attribution”) | https://opengameart.org/content/shotgun-reload-sound-effects | `shotgunsounds.zip` (pobrane 21.11) |
+| Car Sound Effects Pack (Low Quality) | GGBotNet | CC0 (strona OGA) | https://opengameart.org/content/car-sound-effects-pack-low-quality | `car_sound_effects_pack.zip` (pobrane 21.11, nagrania telefonem, 64 kb/s) |
+| racing car engine sound loops | domasx2 (z nagrania public domain z pdsounds.org) | CC0 (strona OGA) | https://opengameart.org/content/racing-car-engine-sound-loops | `loop_0.wav` (pobrane 21.11) |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
 | RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
 | Alarm | ezduzziteh | CC0 (strona OGA) | https://opengameart.org/content/alarm-1 | `alarm_2.ogg` (pobrane 18.11) |
@@ -83,5 +85,11 @@ Format: OGG Vorbis, 44,1 kHz. Dźwięki dobycia broni i chowania (21.11) są prz
 | `alarm-klaxon-000.ogg` | Alarm (ezduzziteh), `alarm_2.ogg` (pierwsze 0,96 s, dwa tony) | `alarm` (podniesiony alarm W-3) |
 | `alarm-siren-000.ogg` | Sirens and Alarm Noise (aquinn), `siren.mp3` (3,48-5,0 s, jedno wycie) | `alarm-siren` (co 2,4 s w trakcie alarmu) |
 | `rain-loop.ogg` | Rain (loopable), `1.ogg` (27 s, stereo) | pętla deszczu na szynie `ambience` (synteza pod spodem na 30%) |
+| `car-horn-000.ogg` | GGBotNet, `Car_Horn.ogg` | `horn` (klakson aut z ruchu i auta gracza) |
+| `car-door-open-000.ogg` | GGBotNet, `Car_Door_Open.ogg` | `car-door-open` |
+| `car-door-close-000.ogg` | GGBotNet, `Car_Door_Close.ogg` | `car-door-close` |
+| `engine-start-000.ogg` | GGBotNet, `Car_Engine_Start_Up.ogg` | `engine-start` |
+| `engine-stop-000.ogg` | GGBotNet, `Car_Engine_Turning_Off.ogg` (do 1,82 s) | `engine-stop` |
+| `engine-loop-000.ogg` | domasx2, `loop_0.wav` | pętla silnika auta gracza (`EngineLoop`, wysokość od obrotów) |
 
 Łącznie ok. 1,4 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).

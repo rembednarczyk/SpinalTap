@@ -2,6 +2,7 @@ import { type AudioBus, type AudioCue, type AudioListenerPose, type AudioPort, t
 import { AmbientScape } from "./ambience";
 import { applyBus } from "./audio-graph";
 import { AudioContextHost } from "./audio-context-host";
+import { EngineLoop } from "./engine-loop";
 import { DialogueLines, type SpeechState, type VoiceUrl } from "./dialogue-lines";
 import { LayeredMusic } from "./layered-music";
 import { MixState } from "./mixer";
@@ -73,6 +74,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly w3: W3Scape;
   private readonly clock: SoundscapeClock;
   private readonly lines: DialogueLines;
+  /** The engine of the car she drives (ADR-0097): `set` every frame, null with no car. */
+  readonly engine: EngineLoop;
   /** The voiced line speaking now and the duck under it (debug, tests). */
   readonly speech: SpeechState;
   /** Last start of each cue; identical cues in the same instant would only phase and cost voices. */
@@ -93,6 +96,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     // Voice files are many and large: their own bank, filled line by line, not with the samples.
     this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl, this.mix);
     this.speech = this.lines;
+    this.engine = new EngineLoop(this.sampleBank, this.samples.engine, () => this.host.graph);
   }
   /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
   get recordedRain(): boolean {
@@ -181,6 +185,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.w3.stop(now);
     this.music.stop(g, now);
     this.radio.stop(now);
+    this.engine.stop(now);
     this.lines.stop(now);
     if (g) this.lines.applyDuck(g, now);
   }
@@ -243,5 +248,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     if (!g) return;
     this.lines.applyDuck(g, g.ctx.currentTime);
     this.clock.tick(g);
+    // Its recording decoded after she got in: the engine starts on the next step.
+    this.engine.apply(g, g.ctx.currentTime);
   }
 }

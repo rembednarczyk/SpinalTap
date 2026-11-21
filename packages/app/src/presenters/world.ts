@@ -66,6 +66,8 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     // A car held up by the player sounds its horn (ADR-0050).
     bus.on("VehicleHorned", () => audio.play("horn")),
+    // Her own horn in the car she drives (ADR-0097), once a press.
+    bus.on("VehicleHorn", () => audio.play("horn")),
     bus.on("TimeSkipped", (e) =>
       toast("system", t("world.timeSkipped", { clock: formatClock(e.clock) }), t("world.later", { hours: Math.floor(e.minutes / 60), minutes: e.minutes % 60 })),
     ),

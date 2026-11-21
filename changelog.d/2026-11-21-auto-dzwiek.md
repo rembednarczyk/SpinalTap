@@ -1,0 +1,1 @@
+- Auto słychać: silnik z obrotów i gazu, a nad nim gwizd silnika elektrycznego hybrydy, który rośnie z prędkością. Rozruch po wejściu, gaszenie przy wysiadaniu, drzwi i nagrany klakson (B, na padzie lewa gałka). Klakson aut z ruchu też jest nagraniem.

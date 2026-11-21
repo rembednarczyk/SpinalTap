@@ -523,6 +523,11 @@ export type AudioCue =
   | "land-hard"
   // A car's horn at the player in its way (ADR-0050).
   | "horn"
+  // The car she drives (ADR-0097): its door opened and shut, its engine started and stopped.
+  | "car-door-open"
+  | "car-door-close"
+  | "engine-start"
+  | "engine-stop"
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
   | "explosion"
   | "alarm"

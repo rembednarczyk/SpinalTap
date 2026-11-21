@@ -31,6 +31,17 @@ export interface AudioListenerPose {
 }
 
 /**
+ * The engine of the car the player drives (ADR-0097), sent to the audio adapter's engine once per
+ * rendered frame while she drives: `rpm` its revs as a share from idle (0) to the limiter (1), `throttle` the pedal 0..1,
+ * `speed` how fast its wheels carry it (m/s; the hybrid's electric motor whines with them).
+ */
+export interface EngineSound {
+  readonly rpm: number;
+  readonly throttle: number;
+  readonly speed: number;
+}
+
+/**
  * Continuous audio state (ADR-0013): music mood, listener for positional ambience and
  * footsteps, bus volumes for the settings screen. Separate from `AudioPort` so one-shot cues
  * stay a one-method contract and fakes in tests stay trivial.
