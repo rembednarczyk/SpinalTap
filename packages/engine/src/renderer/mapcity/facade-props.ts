@@ -2,7 +2,9 @@ import { prng } from "../city-kit-data";
 import { type CityProps, type PropXform, addPropToSink, facing, onWall, pickProp, pickUnit, pointSeed, propHash } from "../city-props";
 import type { MeshSink, Vec } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
-import { shopBoardOn } from "./sign-plan";
+import type { BladeHousing } from "./blade-housings";
+import { shopBlades, shopBoardOn } from "./sign-plan";
+import { housingBottom } from "./blade-housings";
 import { venueBoardOn } from "./venue-plan";
 
 /**
@@ -13,7 +15,7 @@ import { venueBoardOn } from "./venue-plan";
  * The slots are baked into the cell's near mesh, so they cost vertices, not draw calls.
  */
 
-export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "dish-big" | "antenna" | "awning" | "awning-flat";
+export type PropKind = "ac-wall" | "ac-firewall" | "ac-roof" | "pipe" | "pipe-corner" | "dish" | "dish-roof" | "dish-big" | "antenna" | "awning" | "awning-flat" | BladeHousing["kind"];
 
 /**
  * A spot for a prop. On a wall `at` is the wall under the middle of the prop's back (at its
@@ -113,6 +115,11 @@ export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { mo
       const h = AWNING_HEIGHT[slot.kind];
       return one(slot.kind, (m) => onWall(m, slot.at, slot.out, { x: w / m.size.x, y: h / m.size.y, z: depth / m.size.z }));
     }
+    case "blade-frame":
+    case "blade-narrow":
+    case "blade-led":
+      // The housing as baked, its panel where the blade's light lies (`blade-housings.ts`).
+      return one(slot.kind, (m) => onWall(m, slot.at, slot.out, uniform(1)));
     case "pipe": {
       const m = pickProp(props, "pipe", seed, lite);
       const run = slot.width ?? 2.4;
@@ -129,8 +136,8 @@ export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { mo
   }
 };
 
-/** Kinds a phone gets: the air conditioners, in their cheap versions. */
-const LITE_KINDS: ReadonlySet<PropKind> = new Set(["ac-wall", "ac-firewall", "ac-roof"]);
+/** Kinds a phone gets: the air conditioners, in their cheap versions, and the blade signs' housings (their light hangs on them). */
+const LITE_KINDS: ReadonlySet<PropKind> = new Set(["ac-wall", "ac-firewall", "ac-roof", "blade-frame", "blade-narrow", "blade-led"]);
 
 /** Bakes the slots into a mesh. */
 export const bakeSlots = (sink: MeshSink, props: CityProps, slots: readonly PropSlot[], lite: boolean): void => {
@@ -183,4 +190,9 @@ export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer, obstacles: O
       place({ kind, at: wallPoint(w, u, y), out: wallOut(w), width });
     }
   }
+};
+
+/** The housings of the blade signs (ADR-0096 rule 5), each at the foot of its plane on the wall, on every quality. */
+export const planBladeHousings = (f: FacadeFrame, place: PropPlacer): void => {
+  for (const b of shopBlades(f)) place({ kind: b.housing.kind, at: wallPoint(b.wall, b.u, housingBottom(b.housing, b.y)), out: wallOut(b.wall) });
 };

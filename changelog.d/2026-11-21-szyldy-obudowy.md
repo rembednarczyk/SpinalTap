@@ -1,0 +1,1 @@
+- Szyldy wysięgnikowe na budynkach bez lokali wiszą w obudowach: ramie z podporą do ściany, wąskiej ramie z odciągiem albo skrzynce LED. Wcześniej świecił sam napis bez oprawy.
