@@ -1,0 +1,1 @@
+- Przy budowie na Zielonej 5A wzdłuż ogrodzenia od ulicy stoją pachołki, na rogu bariera, a przy bramie metalowa barierka. Gracz i przechodnie ich nie przenikają.
