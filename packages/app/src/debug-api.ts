@@ -45,6 +45,9 @@ export interface DebugApi {
     residents: number;
     /** Vehicles driving round the player (ADR-0050). */
     vehicles: number;
+    /** At the wheel of a car (ADR-0097), and getting in or out of it ("enter", "exit"), else null. */
+    driving: boolean;
+    carAct: string | null;
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
@@ -138,6 +141,8 @@ export const createDebugApi = (
       clock: formatClock(sim.clock),
       residents: [...sim.world].filter((e) => e.view?.kind === "crowd").length,
       vehicles: [...sim.world].filter((e) => e.vehicle !== undefined).length,
+      driving: sim.session.driving !== null,
+      carAct: sim.session.carAct?.kind ?? null,
     };
   },
   perf,

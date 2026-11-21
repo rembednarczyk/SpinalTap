@@ -117,6 +117,7 @@ export const en = {
   "control.prevWeapon": "Previous weapon",
   "control.toggleCamera": "FPP / TPP view",
   "control.swapShoulder": "Swap shoulder (TPP)",
+  "control.horn": "Horn (car)",
   // Settings.
   "settings.heading": "Settings",
   "settings.tab.general": "General",

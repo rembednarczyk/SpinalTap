@@ -209,9 +209,10 @@ export const createVehicleSystem = (): System => {
           hornHeld = horn;
           seatTime += ctx.dt;
           hornTime += ctx.dt;
+          const playing = ctx.session.carAct;
+          if (playing && stepAct(playing, ctx.dt)) endAct(ctx, player, e, playing);
           const act = ctx.session.carAct;
-          player.carPose = { act: act ? act.kind : horn ? "horn" : "drive", t: act ? act.t : horn ? hornTime : seatTime, yaw: attitude(e.car.q).yaw, seat: seatInWorld(e.car) };
-          if (act && stepAct(act, ctx.dt)) endAct(ctx, player, e, act);
+          if (player.seated !== undefined) player.carPose = { act: act ? act.kind : horn ? "horn" : "drive", t: act ? act.t : horn ? hornTime : seatTime, yaw: attitude(e.car.q).yaw, seat: seatInWorld(e.car), floor: e.position.y };
         }
       }
     },

@@ -74,13 +74,15 @@ export interface Transform {
 /**
  * At a car (ADR-0097): `drive` at the wheel, `horn` pressing it, `enter` getting in from the
  * driver's door, `exit` getting out of it. `t` is seconds into the clip (the simulation plays it at
- * its own pace), `yaw` the car's heading, `seat` the driver's hips in the world.
+ * its own pace), `yaw` the car's heading, `seat` the driver's hips in the world and `floor` the
+ * ground's height by the door (where she stands outside).
  */
 export interface CarPose {
   readonly act: CarAct;
   readonly t: number;
   readonly yaw: number;
   readonly seat: Vec3;
+  readonly floor: number;
 }
 export type CarAct = "drive" | "horn" | "enter" | "exit";
 

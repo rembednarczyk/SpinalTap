@@ -54,7 +54,7 @@ export interface InputFrame {
    * eased in the simulation, and `jump` as the handbrake.
    */
   readonly drive?: DriveInput;
-  /** The car's horn held (ADR-0097): H on the keyboard, the left stick pressed on a pad. Absent: not held. */
+  /** The car's horn held (ADR-0097): B on the keyboard, the left stick pressed on a pad. Absent: not held. */
   readonly horn?: boolean;
 }
 
