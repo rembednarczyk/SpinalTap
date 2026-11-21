@@ -1,5 +1,5 @@
 import { type Contract, type EntityId, contractAlarmFlag, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
-import { TAKE_CAR_PROMPT, carToTake } from "./vehicle-system";
+import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT, canGetOut, carToTake } from "./vehicle-system";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -159,12 +159,15 @@ export const interactionSystem: System = {
     if (session.dialogueActive || session.gameOver) return;
     const player = world.with("player").first;
     if (!player) return;
-    // At the wheel (ADR-0097) only the car listens to the key: the vehicle system gets her out.
+    // At the wheel (ADR-0097) only the car listens to the key: "Get out" while she can, and the
+    // vehicle system gets her out (on a phone the prompt is what puts up the "Use" button).
     if (session.driving !== null) {
-      if (session.focusId !== null || session.focusPrompt !== null) {
-        session.focusId = null;
-        session.focusPrompt = null;
-        ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
+      const prompt = canGetOut(ctx) ? EXIT_CAR_PROMPT : null;
+      const focusId = prompt ? session.driving : null;
+      if (focusId !== session.focusId || prompt !== session.focusPrompt) {
+        session.focusId = focusId;
+        session.focusPrompt = prompt;
+        ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt });
       }
       return;
     }
