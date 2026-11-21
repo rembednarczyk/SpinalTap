@@ -1,0 +1,1 @@
+- Ustawienia: nowa opcja „Wspomaganie jazdy”: pełne (jak dotąd), tylko ABS albo wyłączone, dla graczy, którzy chcą prowadzić auto bez pomocy.

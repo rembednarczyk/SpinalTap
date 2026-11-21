@@ -1,4 +1,4 @@
-import { type VehicleModel, type VehicleSpec, vehicleSpec } from "@seki/core";
+import { type DrivingAssist, type VehicleModel, type VehicleSpec, vehicleSpec } from "@seki/core";
 import { type Quat, type V3, fromYaw, toWorld, v3 } from "./frame";
 
 /** The wheels in order: front left, front right, rear left, rear right. */
@@ -59,6 +59,8 @@ export interface CarState {
   still: number;
   /** Where a braked, all but stopped car is held (static friction the tyres' slip model lacks at a standstill), or null. */
   hold: V3 | null;
+  /** The driver's assists (ADR-0097 §4): her setting while she drives, all of them otherwise. */
+  assist: DrivingAssist;
   /** 0 whole .. 1 a wreck (`damage.ts`). */
   damage: number;
 }
@@ -85,6 +87,7 @@ export const newCar = (model: VehicleModel, x: number, groundY: number, z: numbe
     asleep: false,
     still: 0,
     hold: null,
+    assist: "full",
     damage: 0,
   };
 };

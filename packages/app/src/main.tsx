@@ -21,6 +21,7 @@ import { pointerFocus } from "./pointer-focus";
 import { feedTouchFire } from "./touch-fire";
 import { connectWorldRays } from "./world-rays";
 import { feedAimAssist } from "./aim-assist-feed";
+import { feedDrivingAssist } from "./driving-assist-feed";
 import { feedTelemetry } from "./telemetry-feed";
 import { feedLookTuning, viewLook } from "./look-tuning";
 import { type SettingsStorage, applyEffects, applyVolumes, defaultAimMode, defaultRenderResolution, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings } from "./settings";
@@ -196,6 +197,7 @@ const loop = new FixedStepLoop(browserClock, {
     applyControls(s);
     feedTouchFire(input.virtualPad, s, session.sim.player());
     feedAimAssist(input.aimAssist, s, session.sim, input.shoulder.left);
+    feedDrivingAssist(s, session.sim);
     const frame = input.poll();
     // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
     renderer.rig.leftShoulder = frame.leftShoulder === true;

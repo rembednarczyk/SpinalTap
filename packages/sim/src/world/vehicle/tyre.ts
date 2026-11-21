@@ -39,9 +39,15 @@ export const steerLimit = (spec: VehicleSpec, v: number): number =>
  * which falls with speed as the tyres' grip allows (`steerLimit`, ADR-0097 pkt 4 of the pattern), and Ackermann's inner wheel turning
  * more than the outer by the linkage's share of the geometry.
  */
+/**
+ * The rack's own lock at speed `v` without the steering assist (ADR-0097 §4, the setting's `abs` and
+ * `off`): only the ratio's slow fall with speed, as before the assist; past the tyres' grip the car slides.
+ */
+export const rackLimit = (spec: VehicleSpec, v: number): number => spec.steer.max / (1 + v / 18);
+
 export const steerAngles = (car: CarState, spec: VehicleSpec): readonly number[] => {
   const v = Math.abs(forwardSpeed(car));
-  const centre = car.controls.steer * steerLimit(spec, v);
+  const centre = car.controls.steer * (car.assist === "full" ? steerLimit(spec, v) : rackLimit(spec, v));
   if (Math.abs(centre) < 1e-6) return [0, 0, 0, 0];
   const radius = spec.wheelbase / Math.tan(Math.abs(centre));
   const inner = Math.atan(spec.wheelbase / Math.max(radius - spec.track / 2, 0.5));
@@ -102,11 +108,12 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
     const kappa0 = (w.omega * r - vx) / denom;
     // Assists: ease the brake of a locking wheel, the drive of a spinning one.
     w.eased = null;
-    if (brake > 0 && kappa0 < ABS_SLIP && Math.abs(vx) > 2) {
+    // The driver's setting (ADR-0097 §4): ABS on `full` and `abs`, traction control on `full` only.
+    if (car.assist !== "off" && brake > 0 && kappa0 < ABS_SLIP && Math.abs(vx) > 2) {
       brake *= 0.4;
       w.eased = "abs";
     }
-    if (drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) {
+    if (car.assist === "full" && drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) {
       drive *= Math.max(0, 1 - (kappa0 * Math.sign(vx || 1) - TC_SLIP) / TC_SPAN);
       w.eased = "tc";
     }
