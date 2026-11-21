@@ -1,4 +1,5 @@
 import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, WOUND_CRITICAL, WOUND_FROM, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
+import { carTilt } from "../world/vehicle/world-car";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
@@ -115,6 +116,9 @@ export class RenderSync {
         ...hurtOf(e),
         // In a takedown's grab (ADR-0075 stage 2): the renderer's grab clips.
         ...(grab ? { grab } : {}),
+        // At the wheel and the car's tilt (ADR-0097).
+        ...(e.seated !== undefined ? { seat: "driver" as const } : {}),
+        ...(e.car ? { tilt: carTilt(e.car) } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

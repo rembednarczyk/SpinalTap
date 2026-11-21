@@ -104,6 +104,18 @@ describe("the car on flat ground (ADR-0097 stage 2)", () => {
     expect(mean).toBeLessThan(1.15);
   });
 
+  it("keeps its gear with the wheels in the air on full throttle (a kerb's jump): the box reads the road speed", () => {
+    const car = settled();
+    run(car, pedal({ throttle: 1 }), 1.2);
+    const gear = car.gear;
+    // Off a kerb: half a metre over the ground, the driven wheels spin free under the throttle.
+    car.pos = { ...car.pos, y: car.pos.y + 0.6 };
+    for (let k = 0; k < 18; k++) {
+      driveCar(car, pedal({ throttle: 1 }), flat, DT);
+      expect(car.gear, `step ${k}`).toBe(gear);
+    }
+  });
+
   it("loses speed coasting only to drag and rolling: never gains it", () => {
     const car = settled();
     run(car, pedal({ throttle: 1 }), 20, flat, (c) => kmh(c) >= 80);

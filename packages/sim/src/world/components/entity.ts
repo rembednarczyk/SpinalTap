@@ -1,4 +1,5 @@
 import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
+import type { CarState } from "../vehicle/state";
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
@@ -148,4 +149,8 @@ export interface Entity {
   passerby?: Passerby;
   /** A vehicle of the traffic (ADR-0050): unkeyed, not saved, rebuilt from the seed and the clock. */
   vehicle?: VehicleState;
+  /** The car the player sits in (ADR-0097), on the player. Not saved. */
+  seated?: EntityId;
+  /** A car with its physics (ADR-0097): the player's, or one she left. Not saved. */
+  car?: CarState;
 }

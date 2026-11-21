@@ -1,4 +1,5 @@
 import { type Contract, type EntityId, contractAlarmFlag, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
+import { TAKE_CAR_PROMPT, carToTake } from "./vehicle-system";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -158,10 +159,21 @@ export const interactionSystem: System = {
     if (session.dialogueActive || session.gameOver) return;
     const player = world.with("player").first;
     if (!player) return;
+    // At the wheel (ADR-0097) only the car listens to the key: the vehicle system gets her out.
+    if (session.driving !== null) {
+      if (session.focusId !== null || session.focusPrompt !== null) {
+        session.focusId = null;
+        session.focusPrompt = null;
+        ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
+      }
+      return;
+    }
     const { best, bestDist } = nearest(ctx, player);
     const action = bodyAction(session, bestDist);
-    const focusId = action ? action.id : (best?.id ?? null);
-    const prompt = action ? action.prompt : (best?.interactable.prompt ?? null);
+    // Nothing else in reach: a street car she can take holds the prompt (the vehicle system takes it).
+    const car = !action && !best ? carToTake(ctx, player) : null;
+    const focusId = action ? action.id : (best?.id ?? car?.id ?? null);
+    const prompt = action ? action.prompt : (best?.interactable.prompt ?? (car ? TAKE_CAR_PROMPT : null));
     if (focusId !== session.focusId || prompt !== session.focusPrompt) {
       session.focusId = focusId;
       session.focusPrompt = prompt;
