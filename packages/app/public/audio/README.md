@@ -6,6 +6,8 @@ Wszystkie pliki są na licencji **CC0 1.0** (domena publiczna, https://creativec
 
 Format: OGG Vorbis, 44,1 kHz. Dźwięki auta (21.11) są zgrane do mono, Vorbis q4, bez przycinania (gaszenie silnika ucięte na 1,82 s, przed ciszą); pętla silnika bez zmian poza kodekiem. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
 
+Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy manifest z poziomu zmierzonego w pliku (najgłośniejsze 50 ms RMS, `python3 -I tools/audio_levels.py`, tabela `WEAPON_MEASURED`) i celu klasy (`WEAPON_LEVELS`: strzał gracza −24 dB, strzał innych −29 dB, obsługa −32 dB). Nowy dźwięk broni: zmierz go i dopisz do tabeli.
+
 ## Źródła
 
 | Paczka | Autor | Licencja | Link | Pobranie |

@@ -1,0 +1,1 @@
+- Auto nie wpada już w poślizgi przy skręcie z klawiatury: skręt kół maleje z prędkością do tego, co utrzymają opony, kontrola trakcji nie daje kołom buksować, a szersze tylne opony (jak w sportowym aucie z napędem na tył) trzymają tył w zakręcie.

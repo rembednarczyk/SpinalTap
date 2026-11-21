@@ -43,7 +43,8 @@ export interface VehicleSpec {
   };
   /** Anti-roll bars' rates, front and rear (N/m of difference in compression). */
   readonly antiRoll: readonly [front: number, rear: number];
-  readonly tyre: { readonly lateral: PacejkaCoefficients; readonly longitudinal: PacejkaCoefficients; readonly relaxation: number; readonly lowSpeed: number; readonly rolling: number };
+  /** Tyres: the magic formula's coefficients, relaxation length (m), low-speed floor (m/s), rolling resistance; `rearGrip` the rear's grip over the front's (wider rear tyres). */
+  readonly tyre: { readonly lateral: PacejkaCoefficients; readonly longitudinal: PacejkaCoefficients; readonly relaxation: number; readonly lowSpeed: number; readonly rolling: number; readonly rearGrip: number };
   /** Engine torque by rpm (points, linear between), idle and limiter rpm, engine braking (N·m at the limiter). */
   readonly engine: { readonly torque: readonly (readonly [rpm: number, nm: number])[]; readonly idle: number; readonly limiter: number; readonly braking: number; readonly inertia: number };
   /** Forward ratios, reverse ratio, final drive, shift time (s), the automatic's up- and downshift rpm. */
@@ -77,6 +78,9 @@ export const CYBER_SPEC: VehicleSpec = {
     relaxation: 0.35,
     lowSpeed: 1.5,
     rolling: 0.012,
+    // Wider tyres at the back, as on a rear-driven sports car with its weight behind the middle (53%): at
+    // the limit it pushes wide at the front instead of swinging its tail (user's notes of 21.11: it slid).
+    rearGrip: 1.15,
   },
   engine: {
     torque: [

@@ -5,16 +5,43 @@ import { type CarState, forwardSpeed, isFront, isLeft } from "./state";
 
 /** Slip past which ABS eases a wheel's brake and traction control its drive (ADR-0097 §2.8). */
 const ABS_SLIP = -0.12;
-const TC_SLIP = 0.15;
+const TC_SLIP = 0.12;
+/**
+ * Traction control's span: past `TC_SLIP` the drive falls in proportion to the slip, none left this far
+ * over it (a proportional TCS, as a car's ECU cuts the torque; user's notes of 21.11). Halving the
+ * drive, as before, left first gear's torque several times the grip of the inside wheel in a turn:
+ * it spun at a slip of 5 and the tail came round.
+ */
+const TC_SPAN = 0.2;
+/**
+ * The share of the tyres' grip the steering asks for at most, and the small angle over the turn's own
+ * the front may slip by (rad): in a steady turn the steer is the turn's angle `L/R` and the difference
+ * of the axles' slips, not a tyre's whole slip, so a car steered to its tyres' peak slip on top turns
+ * past its grip (13 m/s² asked of 10, and the tail goes).
+ */
+const STEER_GRIP = 0.85;
+const STEER_MARGIN = 0.03;
+const GRAVITY = 9.81;
+
+/**
+ * The most the front wheels steer at speed `v` (m/s): speed-sensitive steering, the assist arcade and
+ * sim-cade games give a keyboard and a pad (a key is all or nothing). The angle of the tightest turn the
+ * tyres hold at most of their grip (the wheelbase over the radius of a circle at `STEER_GRIP`·μg,
+ * `L·μg/v²`) and a little over, never past the rack's lock; at walking pace the full lock. Before, the lock only fell as
+ * `1/(1 + v/18)`: 13° at 100 km/h where some 8° is all the tyres hold, the front at 30° of slip and the
+ * car round in a second and a half without any throttle (user's notes of 21.11).
+ */
+export const steerLimit = (spec: VehicleSpec, v: number): number =>
+  Math.min(spec.steer.max, (spec.wheelbase * STEER_GRIP * spec.tyre.lateral.d * GRAVITY) / Math.max(v * v, 1e-6) + STEER_MARGIN);
 
 /**
  * The front wheels' steer (rad, positive left): the driver's share of the most the rack gives,
- * which falls with speed (ADR-0097 pkt 4 of the pattern), and Ackermann's inner wheel turning
+ * which falls with speed as the tyres' grip allows (`steerLimit`, ADR-0097 pkt 4 of the pattern), and Ackermann's inner wheel turning
  * more than the outer by the linkage's share of the geometry.
  */
 export const steerAngles = (car: CarState, spec: VehicleSpec): readonly number[] => {
   const v = Math.abs(forwardSpeed(car));
-  const centre = car.controls.steer * (spec.steer.max / (1 + v / 18));
+  const centre = car.controls.steer * steerLimit(spec, v);
   if (Math.abs(centre) < 1e-6) return [0, 0, 0, 0];
   const radius = spec.wheelbase / Math.tan(Math.abs(centre));
   const inner = Math.atan(spec.wheelbase / Math.max(radius - spec.track / 2, 0.5));
@@ -48,6 +75,7 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
   const steer = steerAngles(car, spec);
   const out: { at: V3; force: V3 }[] = [];
   car.wheels.forEach((w, i) => {
+    const g = isFront(i) ? grip : grip * t.rearGrip;
     let drive = torques.drive[i]!;
     let brake = torques.brake[i]!;
     if (!w.contact || w.load <= 0) {
@@ -72,19 +100,19 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
     const kappa0 = (w.omega * r - vx) / denom;
     // Assists: ease the brake of a locking wheel, the drive of a spinning one.
     if (brake > 0 && kappa0 < ABS_SLIP && Math.abs(vx) > 2) brake *= 0.4;
-    if (drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) drive *= 0.5;
-    const fx0 = magic(t.longitudinal, kappa0) * w.load * grip;
-    const kw = (slope(t.longitudinal, kappa0) * w.load * grip * r) / denom;
+    if (drive * Math.sign(vx || 1) > 0 && kappa0 * Math.sign(vx || 1) > TC_SLIP) drive *= Math.max(0, 1 - (kappa0 * Math.sign(vx || 1) - TC_SLIP) / TC_SPAN);
+    const fx0 = magic(t.longitudinal, kappa0) * w.load * g;
+    const kw = (slope(t.longitudinal, kappa0) * w.load * g * r) / denom;
     const inertia = I + dt * r * kw;
     let omega = w.omega + (dt * (drive - r * fx0)) / inertia;
     const stop = (brake * dt) / inertia;
     omega = Math.abs(omega) <= stop ? 0 : omega - Math.sign(omega) * stop;
     w.omega = omega;
     const kappa = (omega * r - vx) / denom;
-    let fx = magic(t.longitudinal, kappa) * w.load * grip - t.rolling * w.load * Math.max(-1, Math.min(1, vx / 0.5));
-    let fy = -magic(t.lateral, w.alpha) * w.load * grip;
-    const mx = t.longitudinal.d * w.load * grip;
-    const my = t.lateral.d * w.load * grip;
+    let fx = magic(t.longitudinal, kappa) * w.load * g - t.rolling * w.load * Math.max(-1, Math.min(1, vx / 0.5));
+    let fy = -magic(t.lateral, w.alpha) * w.load * g;
+    const mx = t.longitudinal.d * w.load * g;
+    const my = t.lateral.d * w.load * g;
     const e = (fx / mx) ** 2 + (fy / my) ** 2;
     if (e > 1) {
       const k = 1 / Math.sqrt(e);
