@@ -121,7 +121,8 @@ export const carTilt = (car: CarState): { pitch: number; roll: number } => {
 const RUN_OVER = 4;
 
 /**
- * People on foot against the car (ADR-0097 §2.7): nobody stands in its body; each is pushed out
+ * People on foot against the car (ADR-0097 §2.7): nobody stands in its body, the background
+ * passers-by neither; each is pushed out
  * of its footprint the shorter way, and one hit faster than `RUN_OVER` is run over (an assault in
  * the crime's rules, ADR-0029/0091). Their falls and injuries come with the bodies' physics.
  */
@@ -130,7 +131,7 @@ export const collideBodies = (ctx: SimContext, car: CarState, self: EntityId): v
   const f = toWorld(car.q, v3(0, 0, 1));
   const speed = Math.hypot(car.vel.x, car.vel.z);
   for (const b of ctx.world.with("body")) {
-    if (b.player || b.passerby) continue;
+    if (b.player) continue;
     const r = b.body.radius;
     const dx = b.position.x - car.pos.x;
     const dz = b.position.z - car.pos.z;
@@ -143,7 +144,8 @@ export const collideBodies = (ctx: SimContext, car: CarState, self: EntityId): v
       inLat < inFwd
         ? { x: b.position.x + f.z * Math.sign(lat || 1) * inLat, y: b.position.y, z: b.position.z - f.x * Math.sign(lat || 1) * inLat }
         : { x: b.position.x + f.x * Math.sign(fwd || 1) * inFwd, y: b.position.y, z: b.position.z + f.z * Math.sign(fwd || 1) * inFwd };
-    if (speed > RUN_OVER) {
+    // A background passer-by (ADR-0040) steps out of the way: no crime, it never changes the saved state.
+    if (speed > RUN_OVER && !b.passerby) {
       ctx.bus.emit("VehicleRanOver", { vehicleId: self, victim: b.id, speed });
       offend(ctx, "assault", b.position, undefined, b.id);
     }
