@@ -38,6 +38,7 @@ import { withCarry } from "./world/bodies";
 import { resumeSession } from "./world/session-resume";
 import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
 import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
+import { carsSnapshot, restoreCars } from "./world/vehicle/saved-cars";
 import { restoreThreat, threatSnapshot } from "./world/threat-save";
 import { calmStreet } from "./systems/ai/civilian-ai-system";
 import { type EnemyScaling, enemyScalingOf } from "./world/enemy-grade";
@@ -144,6 +145,8 @@ export class Simulation {
     // A profile asked for in the fight still waits for its end (G-171).
     sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
     resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
+    // Her cars (ADR-0097, v52): she back at the wheel of the one she drove.
+    restoreCars(sim.world, sim.session, sim.player() ?? null, snapshot.cars);
     // Saved in the step across the top of a ladder (ADR-0021): onto the rungs or the roof.
     const player = sim.player();
     if (player) resumeOnLadderTop(sim.world, player, sim.session.carrying !== null);
@@ -277,6 +280,7 @@ export class Simulation {
     const reinforcements = reinforcementsSnapshot(this.world, this.session.watch);
     const strayBodies = strayBodiesSnapshot(this.world);
     const threat = threatSnapshot(this.world, this.streamer, this.session);
+    const cars = carsSnapshot(this.world, this.session);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
@@ -292,6 +296,7 @@ export class Simulation {
       ...(reinforcements ? { reinforcements } : {}),
       ...(strayBodies.length > 0 ? { strayBodies } : {}),
       ...(threat ? { lastThreat: threat } : {}),
+      ...(cars.length > 0 ? { cars } : {}),
       narrative,
       meta: { label, objective },
     };
