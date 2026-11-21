@@ -1,0 +1,2 @@
+- Auta z ruchu ulicznego zatrzymują się za autem, które gracz zostawił na jezdni, zamiast w nie wjeżdżać.
+- Porzucone auto stoi na ręcznym i nie stacza się z pochyłej ulicy.
