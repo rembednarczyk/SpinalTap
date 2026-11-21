@@ -18,6 +18,9 @@ import { poseArm } from "./pose-lay";
  * The clips' car is taller than ours: seated, Mixamo's hips sit only a fifth of a leg under its
  * standing ones. So the hips' height goes by how far the figure stands in the clip at that moment:
  * seated, on our seat; standing, a standing figure's height over the ground by the door.
+ * Pulled out, the clip's driver rises in his tall seat before he is dragged out sideways; under our
+ * roof (1.15 m) his head would go through it (user's notes of 21.11). There he stands only as far
+ * as his hips have come out of the door (`OUT`).
  */
 
 interface Act {
@@ -40,6 +43,18 @@ const ON_GROUND: ReadonlySet<CarAct> = new Set(["thrown", "getup"]);
 /** Getting up starts from how the throw left the figure, and eases into the landing's crouch over this long (s of clip). */
 const GETUP_EASE = 0.35;
 const GETUP_FROM = 0.9;
+
+/**
+ * Pulled out: how far the hips go out of the seat sideways (leg lengths, the clip's -x) before he
+ * may start to stand, and by when he stands as the clip has him: his head out of the door by then.
+ */
+const OUT = { from: 0.3, to: 0.7 } as const;
+const smooth = (k: number): number => k * k * (3 - 2 * k);
+/** How far out of the door the pulled driver is (0..1); 1 for every other act. */
+const outOfDoor = (act: CarAct, f: BodyFrame): number => {
+  if (act !== "pulled") return 1;
+  return smooth(Math.min(1, Math.max(0, (-f.hips.x - OUT.from) / (OUT.to - OUT.from))));
+};
 
 /** How high the hips stand in a clip's standing end over its seated one (leg lengths): the enter's start, the exit's end. */
 const standingRise = (clip: BodyClip, last: boolean): number => clip.hips[(last ? clip.frames - 1 : 0) * 3 + 1] ?? 0;
@@ -65,11 +80,12 @@ const frameOf = (car: CarPose, act: Act): BodyFrame => {
 export const poseAtCar = (rig: CharacterRig, car: CarPose): void => {
   const act = ACTS[car.act];
   const f = frameOf(car, act);
-  const hipH = rig.legL.position.y;
+  // A dressed model hangs on the body with its hips its own legs' length over its feet: those go on the seat.
+  const hipH = rig.hips ?? rig.legL.position.y;
   // 0 seated .. 1 standing: on the seat, or a standing figure's hips over the ground by the door.
   // On the ground the clip's hips go from a standing figure's over `floor`.
   const rise = RISE[car.act];
-  const stand = rise > 1e-3 ? Math.max(0, Math.min(1, f.hips.y / rise)) : 0;
+  const stand = rise > 1e-3 ? Math.min(outOfDoor(car.act, f), Math.max(0, Math.min(1, f.hips.y / rise))) : 0;
   const hipsY = ON_GROUND.has(car.act) ? car.floor + hipH + f.hips.y * RIG_LEG : car.seat.y + stand * (car.floor + hipH - car.seat.y);
   rig.root.rotation.set(0, car.yaw + act.turn, 0);
   rig.root.position.set(car.seat.x, hipsY - hipH - f.hips.y * RIG_LEG, car.seat.z);

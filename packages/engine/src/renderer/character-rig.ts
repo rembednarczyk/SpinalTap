@@ -26,6 +26,8 @@ export interface CharacterRig {
   grip: TwoHandGrip | null;
   /** The arms the hold is solved for while an imported model is dressed over the rig; null: the rig's own. */
   reach: ArmReach | null;
+  /** The dressed model's hip joints over its feet (m), where they differ from the rig's own; unset: the rig's. */
+  hips?: number;
   /** How far the fingers of the left and the right hand close, 0 open .. 1 a fist (imported models). */
   readonly fist: [number, number];
   readonly meshes: Mesh[];

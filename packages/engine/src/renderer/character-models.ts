@@ -210,6 +210,7 @@ export class CharacterModels {
     this.dressed.delete(rig);
     this.retries.delete(rig);
     rig.reach = null;
+    delete rig.hips;
     if (this.builtMasculine.has(rig)) rig.masculine = this.builtMasculine.get(rig);
   }
 
@@ -309,6 +310,8 @@ export class CharacterModels {
     this.dressed.set(rig, { model, url: at.url, retarget, springs, poolKey: at.poolKey, worn, variant: at.wearing.id, budget: at.wearing.budget });
     // The rig solves a two-handed hold for the model's arms, which it no longer shows itself.
     rig.reach = retarget.reach;
+    // Its hips sit where its own legs put them (seated at a car's wheel, `poseAtCar`).
+    rig.hips = retarget.hipHeight;
     // The model's build decides the gait (a woman on a man's file walks as a man, and the other way).
     this.builtMasculine.set(rig, rig.masculine);
     rig.masculine = retarget.masculine;
