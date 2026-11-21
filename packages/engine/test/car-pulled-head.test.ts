@@ -11,13 +11,13 @@ import { poseAtCar } from "../src/renderer/clips/car-clips";
  * inside the car until he is out of its door. Mixamo's car is taller than ours, so in the clip he
  * rises in the seat before he is pulled out sideways; here he rises as he comes out of the door.
  * The car stands at the origin heading +Z, its driver's door on its left (-X); the street car's
- * seat (`driverSeat` of a 1.82 m wide car) and its roof at about 1.15 m.
+ * seat (`driverSeat` of a 1.82 m wide car) and its roof at about 1.05 m over it.
  */
 
 const scene = new Scene(new NullEngine());
 const materials = new ToonMaterials(scene);
 const SIDE = 0.91;
-const SEAT = { x: -0.38, y: 0.26, z: -0.36 };
+const SEAT = { x: -0.38, y: 0.15, z: -0.36 };
 /** The pull's span the simulation plays (s of clip, `ejected-driver.ts`). */
 const PULL_TO = 3.6;
 

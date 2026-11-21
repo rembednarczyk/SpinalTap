@@ -195,3 +195,8 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 ## Podpowiedź „Wysiądź” (21.11, polecenie użytkownika)
 - Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
 - Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
+
+## Głowa Seki nad dachem nowego auta (21.11, uwagi użytkownika)
+- Poprawka z #872 ustawiła biodra kierowcy 0,26 m nad ziemią pod dach 1,15 m. Pełny model auta z bliska (#861, auto 4d_Bob) ma dach nad fotelem na 1,05 m. Głowa bohaterki sięgała ok. 1,07 m (staw `C_Head` 0,85 m plus ok. 0,23 m głowy), więc wychodziła przez dach.
+- `DRIVER_HIPS` w `driverSeat` ma teraz 0,15 m: niski fotel jak w Countachu. Staw głowy bohaterki jest na 0,74 m, najwyższego modelu z tłumu na 0,75 m, czubek głowy ok. 0,97 m pod dachem 1,05 m.
+- Test `car-seat-model` bierze wysokość fotela z `driverSeat` i wymaga stawu głowy poniżej 0,78 m. Przy starym fotelu pada (0,85 m), przy nowym przechodzi. `car-pulled-head` dostał nowy fotel.

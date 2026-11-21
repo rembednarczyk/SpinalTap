@@ -1,0 +1,1 @@
+- Auto: głowa Seki nie wystaje już przez dach, fotel kierowcy jest niżej, pod niski dach auta.
