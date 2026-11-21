@@ -58,6 +58,11 @@ export interface SessionState {
    * Transient, not saved.
    */
   pendingDifficulty: DifficultyProfile | null;
+  /**
+   * The car the player drives (ADR-0097), null on foot. Transient, not saved: a game saved at the
+   * wheel loads with her on foot beside it (the car's save comes with ADR-0097 stage 6).
+   */
+  driving: EntityId | null;
 }
 
 /**
@@ -185,6 +190,7 @@ export const freshSession = (): SessionState => ({
   hideSpot: null,
   dropRoom: true,
   pendingDifficulty: null,
+  driving: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

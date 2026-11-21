@@ -40,8 +40,11 @@ export const automatic = (car: CarState, spec: VehicleSpec, dt: number): { throt
     else if (c.throttle > 0.1 && car.gear < 0 && v > -0.3) change(1);
   }
   if (car.gear > 0 && car.shift <= 0) {
-    if (car.rpm > box.up && car.gear < box.ratios.length) change(car.gear + 1);
-    else if (car.rpm < box.down && car.gear > 1) change(car.gear - 1);
+    // The box reads the road speed, not the driven wheels' spin: a wheel spinning in a slide or on
+    // a loose surface would shift it up to a gear the car cannot pull (seen at 29 km/h in fifth).
+    const rpm = (Math.abs(v) / spec.wheelRadius) * Math.abs(gearRatio(spec, car.gear)) * RPM;
+    if (rpm > box.up && car.gear < box.ratios.length) change(car.gear + 1);
+    else if (rpm < box.down && car.gear > 1) change(car.gear - 1);
   }
   car.shift = Math.max(0, car.shift - dt);
   return car.gear < 0 ? { throttle: c.brake, brake: c.throttle, shifted } : { throttle: c.throttle, brake: c.brake, shifted };

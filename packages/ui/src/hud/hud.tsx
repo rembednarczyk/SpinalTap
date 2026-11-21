@@ -152,6 +152,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const cameraMode = useUi((s) => s.cameraMode);
   const prompt = useUi((s) => s.prompt);
   const promptHold = useUi((s) => s.promptHold);
+  const vehicle = useUi((s) => s.vehicle);
   const controls = useUi((s) => s.controls);
   const combat = useUi((s) => s.combat);
   const always = useUi((s) => s.settings.hudAlwaysShow);
@@ -200,6 +201,14 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <div className="hud__camera">
         {cameraMode} · [{keyOf(controls, "toggleCamera", "V", t)}]
       </div>
+      {vehicle && (
+        // At the wheel (ADR-0097 §3): the speed and the gear.
+        <div className="hud__vehicle" data-testid="vehicle">
+          <span className="hud__vehicle-speed">{vehicle.kmh}</span>
+          <span className="hud__vehicle-unit">{t("hud.kmh")}</span>
+          <span className="hud__vehicle-gear">{vehicle.gear}</span>
+        </div>
+      )}
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <span className="hud__prompt-action" data-testid="prompt-main">

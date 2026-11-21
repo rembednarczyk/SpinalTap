@@ -1,4 +1,5 @@
 import type { DomainEvents, EntityId, EventBus } from "@seki/core";
+import { VehicleHud } from "./presenters/vehicle-hud";
 import type { Entity } from "@seki/sim";
 import { type UiState, type UiStore, patchUi } from "@seki/ui";
 import type { PhoneInbox, PhoneQueue } from "./phone";
@@ -46,7 +47,7 @@ export class Wave1Hud {
     const cards = new ContractCards(ctx);
     this.heat = new HeatHud(ctx);
     this.combat = new CombatFeedback(ctx);
-    this.parts = [this.phone, cards, this.heat, this.combat, new HackingHud(ctx), new TessenHuntHud(ctx)];
+    this.parts = [this.phone, cards, this.heat, this.combat, new HackingHud(ctx), new TessenHuntHud(ctx), new VehicleHud()];
   }
 
   get queue(): PhoneQueue {

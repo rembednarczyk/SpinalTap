@@ -1,0 +1,1 @@
+- Gdy przy drzwiach kierowcy stoi ściana albo inne auto, bohaterka wysiada drugą stroną. Z obiema stronami zastawionymi zostaje w aucie.

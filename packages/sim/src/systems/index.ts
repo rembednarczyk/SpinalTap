@@ -37,6 +37,7 @@ import { createPasserbySystem } from "./passerby-system";
 import { createCrowdSystem } from "./crowd-system";
 import { activitySystem } from "./activity-system";
 import { createTrafficSystem } from "./traffic-system";
+import { createVehicleSystem } from "./vehicle-system";
 import { takedownSystem } from "./takedown-system";
 import { carrySystem } from "./carry-system";
 import { difficultySystem } from "../world/difficulty";
@@ -123,6 +124,8 @@ export { GRAB_TIME, TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownC
  * knockback), so an event follows where the step left her.
  * ADR-0065: the takedowns after combat (a hit on the player this step breaks the hold), before
  * interaction (the prompt) and death (a lethal takedown dies in the same step).
+ * ADR-0097: the cars right after the movement (her body stays put while she drives) and before
+ * the traffic, which sees the car where this step left it.
  * ADR-0066: the difficulty first, so a profile that waited for the end of a fight is in force for
  * the whole of the next step.
  */
@@ -150,6 +153,7 @@ export const createSystems = (): readonly System[] => [
   doorSystem,
   shuttleSystem,
   movementSystem,
+  createVehicleSystem(),
   createTrafficSystem(),
   activitySystem,
   weaponSystem,

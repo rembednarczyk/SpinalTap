@@ -420,6 +420,8 @@ export const movementSystem: System = {
     const bodies = inCreationOrder(world.with("body")).filter((b) => !b.passerby);
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
       if (e.climb) continue;
+      // At the wheel (ADR-0097) the vehicle system seats her.
+      if (e.player && ctx.session.driving !== null) continue;
       const dt = e.player ? ctx.dt : enemyDt;
       if (e.mantle) {
         stepMantle(e.mantle, e, dt);
