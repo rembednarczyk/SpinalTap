@@ -94,6 +94,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   if (prop.seeThrough) e.seeThrough = true;
   if (prop.sightThrough) e.sightThrough = true;
   if (prop.hide) e.hide = prop.hide;
+  if (prop.parked && prop.view.kind === "vehicle") e.parkedCar = { index: prop.parked.index, model: prop.view.model, tint: prop.view.tint, yaw: prop.parked.yaw };
   const parts = prop.solid ? prismDefsOf(prop) : null;
   if (parts) {
     e.prisms = prismsAt(parts, prop.center);
