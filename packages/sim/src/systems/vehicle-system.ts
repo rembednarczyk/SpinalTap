@@ -16,6 +16,7 @@ import { BODY_RADIUS } from "../content/walker-size";
 import { solidIndexOf } from "../world/solid-index";
 import { circleTouches } from "../world/solids";
 import { STEP_HEIGHT } from "./step";
+import { PITCH_LIMIT } from "./player-control-system";
 import { PLAYER_CAR_ID_BASE, nextCarId } from "../world/vehicle/saved-cars";
 
 export { PLAYER_CAR_ID_BASE };
@@ -264,6 +265,8 @@ export const createVehicleSystem = (): System => {
           // Free look round the car with the mouse, back behind it when let go.
           look = ctx.input.lookYaw !== 0 ? look + ctx.input.lookYaw : look * Math.max(0, 1 - LOOK_BACK * ctx.dt);
           player.yaw = attitude(e.car.q).yaw + look;
+          // Her look up and down (the shot out of the window, ADR-0097 §3), as on foot.
+          player.pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, player.pitch + ctx.input.lookPitch));
           const horn = !ctx.session.carAct && ctx.input.horn === true;
           if (horn && !hornHeld) {
             hornTime = 0;
