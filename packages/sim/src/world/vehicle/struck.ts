@@ -1,4 +1,4 @@
-import type { CarPose, Vec3 } from "@seki/core";
+import type { CarPose } from "@seki/core";
 import type { World } from "miniplex";
 import type { Struck } from "./thrown-types";
 
