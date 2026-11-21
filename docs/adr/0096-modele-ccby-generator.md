@@ -60,3 +60,8 @@ Każdy etap: `pnpm osm:props`, `scan:diff`, przegląd topografii, `npr-perf` (wy
 - Dzielnice sklepowe warstwy 2077 (Targ z Lubartowską i Podzamczem, doki na Nabrzeżu) dostają w opisie budynku `vertical.shopfronts` (kontrakt w `core`, tabela dzielnic w `sim`, `vertical.ts`); Stare Miasto, kanał i Krakowskie bez zmian.
 - Pod każdym szyldem lokalu (`venueBoards`, te same miejsca i strefy wolne) staje front z paczki, rozciągnięty do szerokości szyldu i od posadzki parteru do dolnej krawędzi szyldu: cały front sklepu z drzwiami i witrynami na odcinku od 4,5 m, węższy dostaje drzwi z oknem albo okienko z ladą (hash budynku i szyldu). Głębokość frontu jak w modelu (0,28–0,37 m). Bez frontu przy miejscu pamięci (jak szyld) i na telefonie (detal, jak markizy).
 - Modele: Object_4, Object_62 i Object_46 z Asian Shop Pack (1971, 734 i 574 trójkątów), kolory do palety, napisy z tekstur pominięte (napis daje szyld lokalu); drzwi z Object_62 w kolorze metalu, bo jego tekstura czyta się jednym kolorem.
+
+## Etap 7 (21.11): odłożony z powodem
+- Robot jako manekin w witrynie kliniki Moriego: klinika (ADR-0038/0045) nie ma witryny, jej front to ściana ze szklanymi drzwiami, a fasada mapy zasłania pokój poza wycięciem drzwi. Robot stałby niewidoczny i tylko obciążał grę (decyzja użytkownika 21.11: rekwizyt kosztujący trójkąty tam, gdzie go widać). Wraca, gdy klinika dostanie wycięcie witryny w fasadzie (rodzaj wycięcia jak drzwi z ADR-0045).
+- Mieszkanie i sypialnia (Cyberpunk Apartment, Neon Bedroom) jako wnętrza ADR-0061 wchodzą z zadaniem, które ich użyje; dziś żadne zadanie fabuły ich nie potrzebuje.
+- Pozostałe źródła ADR-0096 są w grze (etapy 1–6).
