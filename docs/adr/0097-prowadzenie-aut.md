@@ -116,3 +116,7 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Renderer: przechył i pochylenie auta w buforze aut (`tilt` w transformacji), postać bohaterki ukryta za kierownicą (`seat`), kamera pościgowa 6,5 m za autem w każdym trybie. HUD: prędkościomierz i bieg (`VehicleHud`). Teksty: `prompt.car.take` po angielsku i polsku.
 - Zapis: auto nie jest zapisywane; gra zapisana za kierownicą wczytuje się z bohaterką pieszo (stan sesji). Zapis auta z podbiciem schematu zostaje na etap 6.
 - Test sesji `vehicle-carjack.test.ts`: na Alei Tysiąclecia auto staje przed nią, podpowiedź się pojawia, klawisz je przejmuje, gaz rozpędza (ponad 15 m w 3 s), ona siedzi w nim, hamulec zatrzymuje, wysiadanie stawia ją 1–2,5 m obok, auto zostaje.
+
+## Wdrożenie etapu 7 w części potrzebnej do jazdy (21.11): wejścia
+- Pad: prawy spust to gaz, lewy hamulec (analogowo, z martwą strefą 5%), lewa gałka skręt, A ręczny; pole `drive` w klatce tylko wtedy, gdy spust jest wciśnięty, inaczej auto jedzie z osi ruchu jak z klawiatury (gałka do przodu to gaz). Klawiatura: W/S gaz i hamulec z wstecznym, A/D skręt, spacja ręczny, wygładzane w `sim`. Dotyk: gałka ruchu i przycisk skoku dają to samo co klawiatura, bez zmian w interfejsie dotykowym.
+- Odłożone: kierownica przez Gamepad API z osobnymi pedałami i sprzęgłem, przechył telefonu, ustawienia czułości i wspomagań (ABS i kontrola trakcji są zawsze włączone), scena jazdy w `npr-perf` (CI na wolnych runnerach już dziś mieści się na granicy 25 minut shardu).

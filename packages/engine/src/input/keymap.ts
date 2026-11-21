@@ -1,4 +1,5 @@
 import type {
+  DriveInput,
   InputFrame,
   QuickhackSlotInput,
   WeaponCycleInput,
@@ -169,6 +170,8 @@ export interface PadState {
   readonly pressed: readonly boolean[];
   /** B was tapped twice within `DOUBLE_TAP_SECONDS` (see `DoubleTap`): the dash. */
   readonly dash?: boolean;
+  /** The triggers' travel, 0..1 (left, right): a car's brake and throttle (ADR-0097 §4). */
+  readonly triggers?: readonly [left: number, right: number];
 }
 
 /** Longest gap between the two taps of a double tap. */
@@ -256,7 +259,24 @@ export const mapGamepad = (pad: PadState, dt: number, tuning: PadTuning = DEFAUL
   const move = shapeStick(pad.axes[0], pad.axes[1], tuning.deadzone);
   const look = shapeStick(pad.axes[2], pad.axes[3], tuning.deadzone, PAD_CURVE_EXPONENT[tuning.curve]);
   const speed = PAD_LOOK_SPEED * tuning.sensitivity * dt;
-  return { ...padButtons(pad), moveX: move.x, moveZ: -move.y, lookYaw: look.x * speed, lookPitch: look.y * speed };
+  const drive = padDrive(pad, move.x);
+  return { ...padButtons(pad), moveX: move.x, moveZ: -move.y, lookYaw: look.x * speed, lookPitch: look.y * speed, ...(drive ? { drive } : {}) };
+};
+
+/** A trigger's travel under which it counts as let go. */
+const TRIGGER_DEADZONE = 0.05;
+
+/**
+ * The pad at the wheel (ADR-0097 §4): the right trigger the throttle, the left the brake, the
+ * left stick's x the steer (positive left), A the handbrake. Only while a trigger is pulled or
+ * the stick turned: otherwise the car reads the movement axes, as from the keyboard.
+ */
+const padDrive = (pad: PadState, steerX: number): DriveInput | null => {
+  const [l, r] = pad.triggers ?? [0, 0];
+  const throttle = r > TRIGGER_DEADZONE ? r : 0;
+  const brake = l > TRIGGER_DEADZONE ? l : 0;
+  if (throttle === 0 && brake === 0) return null;
+  return { throttle, brake, steer: -steerX, handbrake: pad.buttons[0] ?? false };
 };
 
 /** Everything but the sticks of a standard-mapping pad. */
@@ -307,6 +327,8 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   scan: a.scan || b.scan,
   quickhack: a.quickhack || b.quickhack,
   dash: a.dash || b.dash,
+  // A device's own driving axes (ADR-0097 §4): the pad's, when its triggers are in use.
+  ...(a.drive ?? b.drive ? { drive: (a.drive ?? b.drive)! } : {}),
 });
 
 /** How a button behaves: held down, or pressed once to start and again to stop. */
