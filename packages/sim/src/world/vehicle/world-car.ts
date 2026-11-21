@@ -1,4 +1,4 @@
-import { type EntityId, terrainHeightAt, vehicleSpec } from "@seki/core";
+import { type CarWheelPose, type EntityId, terrainHeightAt, vehicleSpec } from "@seki/core";
 import { surfaceLiftAt } from "../../content/lublin/roads";
 import { offend } from "../street";
 import type { Entity } from "../components";
@@ -8,6 +8,7 @@ import { pushCircleOut } from "../solids";
 import { type V3, attitude, dot, length, scale, sub, toWorld, v3 } from "./frame";
 import { type CarState, restHeight } from "./state";
 import { strike } from "./struck";
+import { steerAngles } from "./tyre";
 import type { CarGround } from "./suspension";
 
 /**
@@ -122,6 +123,17 @@ export const placeEntity = (e: Entity, car: CarState): void => {
 export const carTilt = (car: CarState): { pitch: number; roll: number } => {
   const a = attitude(car.q);
   return { pitch: a.pitch, roll: a.roll };
+};
+
+/**
+ * Its wheels as drawn (ADR-0097 §3): how far each has rolled, the front's steer, and how far each spring
+ * has pushed its wheel up from its static sag (the travel from where the standing car rests on it).
+ */
+export const carWheels = (car: CarState): CarWheelPose[] => {
+  const spec = vehicleSpec(car.model);
+  const steer = steerAngles(car, spec);
+  const sag = (spec.mass * 9.81) / 4 / spec.suspension.spring[0];
+  return car.wheels.map((w, i) => ({ rolled: w.rolled, steer: steer[i] ?? 0, lift: w.compression - sag }));
 };
 
 /** Speed over which a car shoving someone aside runs them over (m/s): a crime, and the event for the sound and the HUD. */

@@ -2,12 +2,16 @@ import type { Transform } from "@seki/core";
 import { type GlowLayer, type Mesh, MeshClass, type Plane, type Scene, type ShaderMaterial, type Vector3, VertexBuffer } from "../babylon";
 import { rampPitch } from "./alchemia/parking-traffic";
 import type { VehicleTemplate } from "./vehicle-models";
+import { poseWheels } from "./vehicle-wheels";
 
 /**
  * Writes a template turned by the yaw and moved to the transform into `positions` and `normals` at
  * vertex `offset`; on Alchemia's ramp down to P-1 its nose tipped to the ramp's grade first
- * (`rampPitch`), a car with physics (ADR-0097) by its own tilt.
+ * (`rampPitch`), a car with physics (ADR-0097) by its own tilt, its wheels turned on it.
  */
+/** Scratch for a template with its wheels posed (`poseWheels`), written and read within one `placeTemplate`. */
+const posed = { positions: new Float32Array(0), normals: new Float32Array(0) };
+
 export const placeTemplate = (t: VehicleTemplate, positions: Float32Array, normals: Float32Array, offset: number, tr: Transform): void => {
   const c = Math.cos(tr.yaw);
   const s = Math.sin(tr.yaw);
@@ -17,8 +21,10 @@ export const placeTemplate = (t: VehicleTemplate, positions: Float32Array, norma
   const [cp, sp] = [Math.cos(pitch), Math.sin(pitch)];
   const [cr, sr] = [Math.cos(roll), Math.sin(roll)];
   const { x: px, y: py, z: pz } = tr.position;
-  const src = t.positions;
-  const nsrc = t.normals;
+  // A car with physics turns its close-up's wheels first (ADR-0097 §3).
+  const shape = poseWheels(t, t.wheels, tr.wheels, posed);
+  const src = shape.positions;
+  const nsrc = shape.normals;
   let o = offset * 3;
   for (let i = 0; i < src.length; i += 3, o += 3) {
     // Over to its right about its own z (its right side down), nose up about its own x (its front +z), then its heading about y.
