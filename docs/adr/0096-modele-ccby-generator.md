@@ -55,3 +55,8 @@ Każdy etap: `pnpm osm:props`, `scan:diff`, przegląd topografii, `npr-perf` (wy
 - Wymiary tablic zmierzone na modelach źródłowych (`blade-housings.ts`), test sprawdza je na wypieczonym pliku: rozmiar, płytki przy ścianie, nic nie wystaje przez światło. Tablice obudów wypiekane na ciemno (bez napisów paczki); napis daje atlas gry.
 - Telefon dostaje obudowy (światło bez obudowy byłoby bryłą zastępczą), 156–204 trójkątów na szyld. Przed wczytaniem pliku zostaje samo światło, jak dotąd.
 - W Krakowskim 10 szyldów wysięgnikowych z atlasu (4 ramy, 2 wąskie, 4 LED); reszta budynków ma szyldy lokali (ADR-0064).
+
+## Wdrożenie etapu 5 (21.11): witryny lokali z Asian Shop Pack
+- Dzielnice sklepowe warstwy 2077 (Targ z Lubartowską i Podzamczem, doki na Nabrzeżu) dostają w opisie budynku `vertical.shopfronts` (kontrakt w `core`, tabela dzielnic w `sim`, `vertical.ts`); Stare Miasto, kanał i Krakowskie bez zmian.
+- Pod każdym szyldem lokalu (`venueBoards`, te same miejsca i strefy wolne) staje front z paczki, rozciągnięty do szerokości szyldu i od posadzki parteru do dolnej krawędzi szyldu: cały front sklepu z drzwiami i witrynami na odcinku od 4,5 m, węższy dostaje drzwi z oknem albo okienko z ladą (hash budynku i szyldu). Głębokość frontu jak w modelu (0,28–0,37 m). Bez frontu przy miejscu pamięci (jak szyld) i na telefonie (detal, jak markizy).
+- Modele: Object_4, Object_62 i Object_46 z Asian Shop Pack (1971, 734 i 574 trójkątów), kolory do palety, napisy z tekstur pominięte (napis daje szyld lokalu); drzwi z Object_62 w kolorze metalu, bo jego tekstura czyta się jednym kolorem.

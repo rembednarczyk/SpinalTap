@@ -1,7 +1,7 @@
 import type { MeshSink } from "../mesh-sink";
 import { doorwayFrames } from "./doorway-frame";
 import type { FacadeFrame } from "./facade-frame";
-import { type ObstacleQuery, type PropPlacer, planBladeHousings, planFacadeExtras } from "./facade-props";
+import { type ObstacleQuery, type PropPlacer, planBladeHousings, planFacadeExtras, planShopfronts } from "./facade-props";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { isLandmarkFrame, planFarLandmark, planLandmarkCables, planLandmarkSigns, planNearLandmark } from "./landmarks";
 import { type SignGround, planBuildingSigns } from "./sign-plan";
@@ -47,5 +47,6 @@ export const planNearFrames = (sink: MeshSink, frames: readonly FacadeFrame[], l
     if (!lite) planWallClutter(sink, f, place);
     if (!lite && place) planFacadeExtras(f, place, obstacles);
     if (place) planBladeHousings(f, place);
+    if (!lite && place) planShopfronts(f, place);
   }
 };
