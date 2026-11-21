@@ -299,7 +299,9 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
  * ADR-0050): the player's, and a passer-by's who stepped out within its stopping distance (G-953).
  * Not one a floor above or below (the car park over P-1): as the movement's push between bodies.
  */
-const pushOut = (who: Entity, v: Vehicle): void => {
+const pushOut = (who: Entity, v: Vehicle, driving = false): void => {
+  // At the wheel (ADR-0097) her body is in her car: the car's own collision keeps them apart.
+  if (who.player && driving) return;
   if (!who.player && Math.abs(who.position.y - v.position.y) >= (who.body?.height ?? 0)) return;
   const st = v.vehicle;
   const tx = Math.sin(v.yaw);
@@ -560,6 +562,6 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   v.velocity = { x: (next.x - v.position.x) / dt, y: 0, z: (next.z - v.position.z) / dt };
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;
-  if (player) pushOut(player, v);
+  if (player) pushOut(player, v, ctx.session.driving !== null);
   for (const b of ahead.near) pushOut(b, v);
 };

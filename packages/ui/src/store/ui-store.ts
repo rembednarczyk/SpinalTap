@@ -90,6 +90,8 @@ export interface SessionUiState {
    * the prompt and on the touch fire button; null for nothing.
    */
   readonly promptHold: string | null;
+  /** The car she drives (ADR-0097 §3): speed (km/h, whole) and gear ("R", "N", "1".."6"); null on foot. Written by the app's vehicle presenter. */
+  readonly vehicle: { readonly kmh: number; readonly gear: string } | null;
   readonly toasts: readonly Toast[];
   readonly slots: readonly SlotVm[];
   readonly hasSaves: boolean;
@@ -310,6 +312,7 @@ export const initialUiState: UiState = {
   cameraMode: "FPP",
   prompt: null,
   promptHold: null,
+  vehicle: null,
   dialogue: null,
   toasts: [],
   hitMarker: 0,

@@ -56,6 +56,13 @@ export interface Transform {
    * The renderer plays the grab's clips from it; the events only cue the sound. Absent outside a grab.
    */
   readonly grab?: GrabPhase;
+  /** At the wheel of a car (ADR-0097): the renderer leaves her figure out and the camera chases the car. */
+  readonly seat?: "driver";
+  /**
+   * A car's tilt on its springs (ADR-0097 §2a): pitch with the nose down positive, roll with the
+   * body over to its right side positive. Absent: level (the street's traffic).
+   */
+  readonly tilt?: { readonly pitch: number; readonly roll: number };
 }
 
 /** What a takedown grab is doing (ADR-0075): holding, choking out or killing. */

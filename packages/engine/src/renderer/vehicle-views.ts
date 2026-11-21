@@ -273,23 +273,32 @@ class Fleet {
   private place(t: VehicleTemplate, offset: number, tr: Transform): void {
     const c = Math.cos(tr.yaw);
     const s = Math.sin(tr.yaw);
-    const pitch = rampPitch(tr.position.x, tr.position.z, tr.yaw);
+    // A car with physics (ADR-0097) brings its own tilt: its nose up is the negative of its pitch.
+    const pitch = tr.tilt ? -tr.tilt.pitch : rampPitch(tr.position.x, tr.position.z, tr.yaw);
+    const roll = tr.tilt?.roll ?? 0;
     const [cp, sp] = [Math.cos(pitch), Math.sin(pitch)];
+    const [cr, sr] = [Math.cos(roll), Math.sin(roll)];
     const { x: px, y: py, z: pz } = tr.position;
     const src = t.positions;
     const nsrc = t.normals;
     let o = offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
-      // Nose up about its own x (its front +z), then its heading about y.
-      const x = src[i] as number;
-      const y = (src[i + 1] as number) * cp + (src[i + 2] as number) * sp;
-      const z = (src[i + 2] as number) * cp - (src[i + 1] as number) * sp;
+      // Over to its right about its own z (its right side down), nose up about its own x (its front +z), then its heading about y.
+      const x0 = src[i] as number;
+      const y0 = src[i + 1] as number;
+      const x = x0 * cr + y0 * sr;
+      const yr = y0 * cr - x0 * sr;
+      const y = yr * cp + (src[i + 2] as number) * sp;
+      const z = (src[i + 2] as number) * cp - yr * sp;
       this.positions[o] = px + x * c + z * s;
       this.positions[o + 1] = py + y;
       this.positions[o + 2] = pz - x * s + z * c;
-      const nx = nsrc[i] as number;
-      const ny = (nsrc[i + 1] as number) * cp + (nsrc[i + 2] as number) * sp;
-      const nz = (nsrc[i + 2] as number) * cp - (nsrc[i + 1] as number) * sp;
+      const nx0 = nsrc[i] as number;
+      const ny0 = nsrc[i + 1] as number;
+      const nx = nx0 * cr + ny0 * sr;
+      const nyr = ny0 * cr - nx0 * sr;
+      const ny = nyr * cp + (nsrc[i + 2] as number) * sp;
+      const nz = (nsrc[i + 2] as number) * cp - nyr * sp;
       this.normals[o] = nx * c + nz * s;
       this.normals[o + 1] = ny;
       this.normals[o + 2] = -nx * s + nz * c;

@@ -280,6 +280,11 @@ export const playerControlSystem: System = {
     const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = withPlayerMaxHp(p.health, ctx.state.domain);
+      // At the wheel (ADR-0097) the car takes the input; her body sits still in it.
+      if (ctx.session.driving !== null) {
+        p.velocity = { x: 0, y: 0, z: 0 };
+        continue;
+      }
       const frozen = playerHeld(ctx);
       // Let go under a ceiling too low to stand (the culvert, ADR-0082), the crouch holds.
       if (p.posture) updateCrouch(p.posture, input.crouch || (p.posture.amount > 0 && !roomToStand(ctx.world, p)), frozen, ctx.dt);

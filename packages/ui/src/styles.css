@@ -153,6 +153,32 @@ kbd {
   color: var(--ink-dim);
 }
 
+.hud__vehicle {
+  position: absolute;
+  right: 24px;
+  bottom: 120px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  font-variant-numeric: tabular-nums;
+}
+.hud__vehicle-speed {
+  font-size: 34px;
+  min-width: 3ch;
+  text-align: right;
+}
+.hud__vehicle-unit {
+  font-size: 13px;
+  opacity: 0.7;
+}
+.hud__vehicle-gear {
+  font-size: 22px;
+  margin-left: 6px;
+  color: var(--accent, #00e5ff);
+}
 .hud__prompt {
   position: absolute;
   left: 50%;

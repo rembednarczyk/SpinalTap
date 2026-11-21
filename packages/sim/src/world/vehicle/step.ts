@@ -153,3 +153,6 @@ export const wake = (car: CarState): void => {
 
 /** Speed in km/h along the heading, for the HUD. */
 export const kmh = (car: CarState): number => forwardSpeed(car) * 3.6;
+
+/** The gear for the HUD: "R", "N" or its number. */
+export const gearName = (car: CarState): string => (car.gear < 0 ? "R" : car.gear === 0 ? "N" : String(car.gear));

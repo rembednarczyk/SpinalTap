@@ -13,6 +13,9 @@ import { buildViewmodelProps } from "./viewmodel-props";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
+/** The chase camera behind a car (ADR-0097 §3): its distance and the eye's height over the car's floor (m). */
+const CAR_DISTANCE = 6.5;
+const CAR_EYE = 1.9;
 const WALL_MARGIN = 0.25;
 const BLEND_SPEED = 6;
 /** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
@@ -300,7 +303,9 @@ export class CameraRig {
       return;
     }
     if (!target) return;
-    const goal = this.mode === "TPP" ? 1 : 0;
+    // At the wheel (ADR-0097 §3) the camera chases the car from behind, whatever the mode on foot.
+    const seat = target.seat === "driver";
+    const goal = this.mode === "TPP" || seat ? 1 : 0;
     this.blend += Math.sign(goal - this.blend) * Math.min(Math.abs(goal - this.blend), dt * BLEND_SPEED);
     this.recoil = Math.max(0, this.recoil - dt * 9);
 
@@ -314,12 +319,12 @@ export class CameraRig {
     const { crouch, side: grabSide } = this.chokeArms.eye(target.crouch ?? 0);
     // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
     const beside = grabSide * (1 - this.blend);
-    const eye = new Vector3(p.x + Math.cos(yaw) * beside, p.y + eyeHeightAt(crouch), p.z - Math.sin(yaw) * beside);
-    const side = this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
+    const eye = new Vector3(p.x + Math.cos(yaw) * beside, p.y + (seat ? CAR_EYE : eyeHeightAt(crouch)), p.z - Math.sin(yaw) * beside);
+    const side = seat ? 0 : this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
     const shoulder = eye.add(new Vector3(Math.cos(yaw) * side, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * side).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
-    let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
+    let distance = (seat ? CAR_DISTANCE : TPP_DISTANCE) * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
       const hit = this.scene.pickWithRay(new Ray(shoulder, back, distance + WALL_MARGIN), this.isBlocker);
       if (hit?.hit) distance = Math.max(0.2, Math.min(distance, hit.distance - WALL_MARGIN));
@@ -387,7 +392,7 @@ export class CameraRig {
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.poseArms({ viewmodel: this.viewmodel.isEnabled(false) ? this.viewmodel : null, look: this.look, aim: ads, choke: this.chokeArms.forearms() });
-    this.onBodyVisibility(!fpp);
+    this.onBodyVisibility(!fpp && !seat);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
 }
