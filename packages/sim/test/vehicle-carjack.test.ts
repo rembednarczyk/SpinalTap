@@ -317,4 +317,32 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect(again.session.driving).toBeNull();
     expect(playerOf(again).seated).toBeUndefined();
   });
+
+  it("takes damage driving into a wall, keeps it in the save, and smokes in the picture past half (ADR-0097 §5)", () => {
+    const { sim, mine } = takenAndStopped();
+    const car = mine();
+    // A wall 12 m ahead across the car's way.
+    const [tx, tz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+    const c = { x: car.position.x + tx * 12, y: car.position.y, z: car.position.z + tz * 12 };
+    sim.world.add({
+      id: 4_990_010,
+      position: { ...c, y: c.y + 1.5 },
+      prevPosition: { ...c, y: c.y + 1.5 },
+      yaw: 0,
+      prevYaw: 0,
+      pitch: 0,
+      view: { kind: "block", size: { x: 6, y: 3, z: 6 }, material: "metal" },
+      solid: { min: { x: c.x - 3, y: c.y, z: c.z - 3 }, max: { x: c.x + 3, y: c.y + 3, z: c.z + 3 } },
+    });
+    const hits: number[] = [];
+    sim.bus.on("VehicleHit", (e) => hits.push(e.energy));
+    for (let i = 0; i < 240 && hits.length === 0; i++) sim.step(press({ moveZ: 1 }));
+    expect(hits.length).toBeGreaterThan(0);
+    expect(mine().car!.damage).toBeGreaterThan(0);
+    expect(mine().car!.damage).toBeLessThan(1);
+    const snap = JSON.parse(JSON.stringify(sim.snapshot(null, "t", ""))) as ReturnType<Simulation["snapshot"]>;
+    expect(snap.cars![0]!.damage).toBeCloseTo(mine().car!.damage, 9);
+    const loaded = Simulation.fromSnapshot(snap, undefined, "off", "high");
+    expect([...loaded.world].find((e) => e.id === loaded.session.driving)!.car!.damage).toBeCloseTo(mine().car!.damage, 9);
+  });
 });

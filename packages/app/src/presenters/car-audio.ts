@@ -78,7 +78,8 @@ export const SQUEAL_PACE = 20;
 
 export const engineOf = (sim: Pick<Simulation, "session" | "world">): EngineSound | null => {
   const car = drivenCar(sim);
-  if (!car) return null;
+  // A wreck's engine is dead (ADR-0097 §5): no loop.
+  if (!car || car.damage >= 1) return null;
   const { idle, limiter } = vehicleSpec(car.model).engine;
   // The tyres' slide for their squeal, none at a walking pace (a slip angle at a crawl is no slide).
   const pace = Math.min(1, Math.abs(carKmh(car)) / SQUEAL_PACE);

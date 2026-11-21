@@ -1,5 +1,5 @@
 import { type ActivityId, type AppearanceDescriptor, type CarPose, type DomainState, ENEMY_TYPES, type EntityId, type GrabPhase, type RenderPort, type Transform, WOUND_CRITICAL, WOUND_FROM, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
-import { carTilt } from "../world/vehicle/world-car";
+import { carTilt, carWheels } from "../world/vehicle/world-car";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
@@ -132,7 +132,7 @@ export class RenderSync {
         // At the wheel and the car's tilt (ADR-0097).
         ...(e.seated !== undefined ? { seat: "driver" as const } : {}),
         ...(e.carPose ? { car: betweenSteps(e, e.carPose, alpha) } : {}),
-        ...(e.car ? { tilt: carTilt(e.car) } : {}),
+        ...(e.car ? { tilt: carTilt(e.car), wheels: carWheels(e.car), ...(e.car.damage > 0 ? { damage: e.car.damage } : {}) } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

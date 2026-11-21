@@ -7,6 +7,7 @@ import type { DriveInput } from "../ports/input-port";
 import type { VehicleModel } from "../ports/types";
 
 /**
+ * v53: a car's damage (ADR-0097 §5), optional on each saved car (`damage`, 0..1); an older save's cars are whole.
  * v52: the player's cars (ADR-0097), optional (`cars`): the one she drives and those she left
  * standing, each with its body's whole state, so a loaded game drives on as the saved one would.
  * An older save has none: she loads on foot, as before.
@@ -101,7 +102,7 @@ import type { VehicleModel } from "../ports/types";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 52;
+export const SAVE_SCHEMA_VERSION = 53;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -441,6 +442,8 @@ export interface CarSnapshot {
   readonly driving?: true;
   /** Getting in or out of it, and the clip's time (s). Absent at the wheel or with none. */
   readonly act?: { readonly kind: "enter" | "exit"; readonly t: number };
+  /** Its damage, 0 whole .. 1 a wreck (ADR-0097 §5, v53). Absent: whole. */
+  readonly damage?: number;
 }
 
 export interface SaveSnapshot {

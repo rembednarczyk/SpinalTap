@@ -27,6 +27,7 @@ const carOf = (rpm: number, eased: "abs" | "tc" | null = null): CarState =>
     asleep: false,
     still: 0,
     hold: null,
+    damage: 0.42,
   }) as CarState;
 
 const frame = (tick: number, car: CarState | null): HudPartFrame => ({
@@ -40,7 +41,7 @@ const frame = (tick: number, car: CarState | null): HudPartFrame => ({
 describe("the car's dashboard (ADR-0097 §3)", () => {
   it("shows the speed, the gear and the revs from idle to the limiter in twentieths", () => {
     const hud = new VehicleHud();
-    expect(hud.frame(frame(0, carOf(idle))).vehicle).toEqual({ kmh: 36, gear: "3", revs: 0, abs: false, tc: false });
+    expect(hud.frame(frame(0, carOf(idle))).vehicle).toEqual({ kmh: 36, gear: "3", revs: 0, abs: false, tc: false, damage: 0.4 });
     expect(hud.frame(frame(1, carOf(idle + 0.52 * (limiter - idle)))).vehicle?.revs).toBeCloseTo(0.5, 9);
     expect(hud.frame(frame(2, carOf(limiter + 500))).vehicle?.revs).toBe(1);
   });

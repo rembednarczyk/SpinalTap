@@ -33,6 +33,7 @@ export class VehicleHud implements HudPart {
         revs: snap(carRevs(car), 0.05),
         abs: f.tick - this.lit.abs < LAMP_HOLD,
         tc: f.tick - this.lit.tc < LAMP_HOLD,
+        damage: snap(car.damage, 0.05),
       },
     };
   }

@@ -1,4 +1,5 @@
 import { type VehicleSpec, engineTorque } from "@seki/core";
+import { enginePower } from "./damage";
 import { type CarState, forwardSpeed, isFront } from "./state";
 
 /** Torques on each wheel's axle this substep (N·m): the drive (signed, forward positive) and the brake (≥ 0, against the spin). */
@@ -66,7 +67,8 @@ export const wheelTorques = (car: CarState, spec: VehicleSpec, pedals: { throttl
   car.rpm = Math.max(spec.engine.idle, Math.min(fromWheels, spec.engine.limiter * 1.05));
   const cut = car.shift > 0 || ratio === 0 || car.rpm >= spec.engine.limiter;
   const throttle = cut ? 0 : pedals.throttle;
-  const engine = engineTorque(spec, car.rpm) * throttle - (1 - throttle) * spec.engine.braking * (car.rpm / spec.engine.limiter);
+  // A damaged engine gives less, a wreck's none (`damage.ts`).
+  const engine = engineTorque(spec, car.rpm) * enginePower(car.damage) * throttle - (1 - throttle) * spec.engine.braking * (car.rpm / spec.engine.limiter);
   // Engine braking only while the clutch holds (the wheels turn the engine over idle).
   const torque = throttle === 0 && fromWheels <= spec.engine.idle ? 0 : engine;
   const axle = torque * ratio * spec.gearbox.efficiency;

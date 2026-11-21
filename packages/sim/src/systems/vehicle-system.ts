@@ -7,6 +7,7 @@ import { type CarActState, HELD, JACK_WAIT, seatInWorld, startAct, stepAct } fro
 import { DRIVER_ID_BASE, ejectDriver, stepEjectedDrivers } from "../world/vehicle/ejected-driver";
 import { stepStruckBodies } from "../world/vehicle/struck";
 import { driveCar, wake } from "../world/vehicle/step";
+import { takeHit } from "../world/vehicle/damage";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
 import { BODY } from "../world/factory";
@@ -247,7 +248,10 @@ export const createVehicleSystem = (): System => {
         const speed = Math.max(wall, traffic.speed);
         if (speed > HIT_SPEED) {
           wake(e.car);
-          ctx.bus.emit("VehicleHit", { vehicleId: e.id, other: traffic.speed >= wall ? traffic.other : null, energy: 0.5 * vehicleSpec(e.car.model).mass * speed * speed, at: { ...e.position } });
+          const energy = 0.5 * vehicleSpec(e.car.model).mass * speed * speed;
+          ctx.bus.emit("VehicleHit", { vehicleId: e.id, other: traffic.speed >= wall ? traffic.other : null, energy, at: { ...e.position } });
+          // The body takes the hit (ADR-0097 §5): past a wreck's worth the engine dies.
+          if (takeHit(e.car, energy)) ctx.bus.emit("VehicleWrecked", { vehicleId: e.id, at: { ...e.position } });
         }
         placeEntity(e, e.car);
         if (mine) {

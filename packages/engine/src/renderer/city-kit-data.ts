@@ -29,6 +29,8 @@ export interface KitModel {
   readonly indices: Uint32Array;
   /** On a texture of its own (a vehicle's close-up, user's notes of 21.11): its UVs are that skin's, not the palette's. */
   readonly skin?: string;
+  /** A car close-up's wheels (ADR-0097 §3): [first vertex, vertex count] of each, the parts the engine turns. */
+  readonly wheels?: readonly (readonly [number, number])[];
 }
 
 /** A model's own texture (`KitModel.skin`): PNG bytes in the kit's alpha code (ADR-0022), and what of it glows. */
@@ -142,10 +144,17 @@ export const parseCityKit = (bytes: ArrayBuffer): CityKitData => {
       uvs,
       indices,
       ...(typeof ex.skin === "string" ? { skin: ex.skin } : {}),
+      ...wheelsOf(ex.wheels),
     });
   }
   const skins = readSkins(json, bin);
   return { models, swatches, grid: num(extras.grid, 16), ...(skins.size > 0 ? { skins } : {}) };
+};
+
+/** A close-up's wheel parts from its extras ({first, count} each), or nothing. */
+const wheelsOf = (raw: unknown): { wheels?: readonly (readonly [number, number])[] } => {
+  const wheels = arr(raw).map((w) => obj(w)).map((w) => [num(w.first), num(w.count)] as const);
+  return wheels.length > 0 && wheels.every(([, n]) => n > 0) ? { wheels } : {};
 };
 
 /** The file's skins: its images named `skin:<name>`, each with its `skin-glow:<name>` when there is one. */
