@@ -1,0 +1,1 @@
+- Auto: za kierownicą strzela się tylko z broni na jedną rękę (pistolet, rewolwer, pistolet maszynowy), z okna kierowcy, w kierunku spojrzenia; karabin i strzelba w aucie milczą.
