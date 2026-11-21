@@ -1,0 +1,1 @@
+- Auto: silnik brzmi jak benzynowy także z głośnika telefonu (wcześniej słychać było tylko cewkę), klakson bez przesteru.
