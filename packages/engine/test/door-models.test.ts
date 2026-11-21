@@ -19,7 +19,8 @@ const file = (name: string): ArrayBuffer => {
 };
 const doorBytes = file("door-props.glb");
 const doors = parseCityProps(doorBytes);
-const props = mergeCityProps(parseCityProps(file("city-props.glb")), doors);
+// The fire exit's leaf is in `extra-props.glb` (ADR-0096 stage 6), the game loads both.
+const props = mergeCityProps(mergeCityProps(parseCityProps(file("city-props.glb")), doors), parseCityProps(file("extra-props.glb")));
 
 /** A door piece at the origin facing +z (yaw 0), its variant for `model`, `width` x `height`. */
 const piece = (model: DoorModel, width: number, height: number): WorldProp => ({ prop: "door", x: 0, y: 0, z: 0, yaw: 0, shape: DOOR_MODELS.indexOf(model), scale: 1, variant: doorVariant({ model, width, height }) });
