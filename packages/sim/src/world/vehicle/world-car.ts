@@ -1,4 +1,4 @@
-import { type CarWheelPose, type EntityId, terrainHeightAt, vehicleSpec } from "@seki/core";
+import { type CarWheelPose, type EntityId, applyDamage, terrainHeightAt, vehicleSpec } from "@seki/core";
 import { surfaceLiftAt } from "../../content/lublin/roads";
 import { offend } from "../street";
 import type { Entity } from "../components";
@@ -138,6 +138,26 @@ export const carWheels = (car: CarState): CarWheelPose[] => {
 
 /** Speed over which a car shoving someone aside runs them over (m/s): a crime, and the event for the sound and the HUD. */
 const RUN_OVER = 4;
+/**
+ * The harm of being run over (ADR-0097 §5, "obrażenia pieszych"): this many points for each m/s over
+ * `RUN_OVER`. At 30 km/h some 60, at 40 km/h near 100, at 50 km/h past any passer-by's health.
+ */
+export const RUN_OVER_HARM = 14;
+
+/** The damage of being run over at `speed` (m/s), in whole points (pure; tests). */
+export const runOverDamage = (speed: number): number => Math.max(0, Math.round(RUN_OVER_HARM * (speed - RUN_OVER)));
+
+/** Damage from the car to `b` at `speed`, the player's at the wheel of `self`; true when it killed. */
+const hurtByCar = (ctx: SimContext, b: Entity, speed: number, self: EntityId): boolean => {
+  const amount = runOverDamage(speed);
+  if (!b.health || amount <= 0 || b.health.current <= 0) return false;
+  b.health = applyDamage(b.health, amount);
+  const driver = self === ctx.session.driving ? ctx.world.with("player").first : undefined;
+  if (driver) b.lastHitBy = driver.id;
+  if (b.ai && !b.unconscious) b.ai.alerted = true;
+  ctx.bus.emit("DamageDealt", { sourceId: driver?.id ?? self, targetId: b.id, amount, critical: false, zone: "torso", at: { ...b.position } });
+  return b.health.current <= 0;
+};
 
 /**
  * People on foot against the car (ADR-0097 §2.7): nobody stands in its body, the background
@@ -168,7 +188,9 @@ export const collideBodies = (ctx: SimContext, car: CarState, self: EntityId): v
     if (speed > RUN_OVER && !b.passerby) {
       ctx.bus.emit("VehicleRanOver", { vehicleId: self, victim: b.id, speed });
       offend(ctx, "assault", b.position, undefined, b.id);
-      if (!b.enemy) strike(ctx.world, b, { x: car.vel.x / speed, z: car.vel.z / speed });
+      // Hurt as by any blow, the driver's doing: killed, the death system makes it a murder if it was one.
+      const killed = hurtByCar(ctx, b, speed, self);
+      if (!b.enemy && !killed) strike(ctx.world, b, { x: car.vel.x / speed, z: car.vel.z / speed });
     }
   }
 };
