@@ -83,6 +83,7 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
       const free = w.omega + ((drive - Math.sign(w.omega) * 2) * dt) / I;
       const stop = (brake * dt) / I;
       w.omega = Math.abs(free) <= stop ? 0 : free - Math.sign(free) * stop;
+      w.rolled += w.omega * r * dt;
       w.fx = w.fy = w.slipRatio = 0;
       w.eased = null;
       return;
@@ -116,6 +117,7 @@ export const tyreForces = (car: CarState, spec: VehicleSpec, torques: WheelTorqu
     const stop = (brake * dt) / inertia;
     omega = Math.abs(omega) <= stop ? 0 : omega - Math.sign(omega) * stop;
     w.omega = omega;
+    w.rolled += omega * r * dt;
     const kappa = (omega * r - vx) / denom;
     let fx = magic(t.longitudinal, kappa) * w.load * g - t.rolling * w.load * Math.max(-1, Math.min(1, vx / 0.5));
     let fy = -magic(t.lateral, w.alpha) * w.load * g;

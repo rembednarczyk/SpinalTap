@@ -62,11 +62,18 @@ def skin_images(base, emissive, uv, roles):
     return _png(color), _png(glow)
 
 
-def skin_model(key, P, N, uv):
-    """A model on its own UVs: triangles P [T, 3, 3] with normals N [T, 3, 3] and UVs [T, 3, 2], welded."""
+def skin_model(key, P, N, uv, tail=()):
+    """A model on its own UVs: triangles P [T, 3, 3] with normals N [T, 3, 3] and UVs [T, 3, 2], welded.
+
+    `tail`: the triangle counts of the parts at its end (the wheels, `city_vehicle_wheels`), in turn; the model
+    then has 'parts', the first vertex and the vertex count of each (parts share no vertex with the rest)."""
     verts = {}
     pos, nor, uvs, ind = [], [], [], []
+    starts = np.cumsum([len(P) - sum(tail)] + list(tail))[:-1] if tail else []
+    firsts = []
     for t in range(len(P)):
+        if len(firsts) < len(starts) and t == starts[len(firsts)]:
+            firsts.append(len(pos))
         for k in range(3):
             p = np.round(P[t, k], 4)
             n = N[t, k] / max(np.linalg.norm(N[t, k]), 1e-9)
@@ -79,7 +86,11 @@ def skin_model(key, P, N, uv):
                 nor.append(n)
                 uvs.append(w)
             ind.append(vi)
-    return {'key': key, 'pos': np.array(pos, np.float32), 'nor': np.array(nor), 'uv': np.array(uvs), 'ind': np.array(ind, np.uint32), 'uv16': True}
+    m = {'key': key, 'pos': np.array(pos, np.float32), 'nor': np.array(nor), 'uv': np.array(uvs), 'ind': np.array(ind, np.uint32), 'uv16': True}
+    if tail:
+        ends = firsts[1:] + [len(pos)]
+        m['parts'] = [[int(a), int(b - a)] for a, b in zip(firsts, ends)]
+    return m
 
 
 def fitted_normals(N, before, after):
