@@ -84,11 +84,17 @@ export const takeCar = (ctx: SimContext, player: Entity, v: Entity & { vehicle: 
   return e;
 };
 
-/** The player in her seat: at the car, still, her body out of the way of the street. */
-const placeSeat = (player: Entity, car: Car): void => {
+/**
+ * The player in her seat: at the car, still, her body out of the way of the street. Sitting down
+ * (`snap`) she is there at once; driving on, her last place stays her step's start
+ * (`interpolationSystem`), so she is drawn between the steps as the car is. Set to her new place
+ * every step, she jumped from step to step while the car glided, and the camera behind her shook
+ * (user's notes of 21.11).
+ */
+const placeSeat = (player: Entity, car: Car, snap = true): void => {
   player.seated = car.id;
   player.position = { x: car.position.x, y: car.position.y, z: car.position.z };
-  player.prevPosition = { ...player.position };
+  if (snap) player.prevPosition = { ...player.position };
   player.velocity = { x: 0, y: 0, z: 0 };
   player.fall = undefined;
 };
@@ -211,11 +217,10 @@ export const createVehicleSystem = (): System => {
         }
         placeEntity(e, e.car);
         if (mine) {
-          placeSeat(player, e);
+          placeSeat(player, e, false);
           // Free look round the car with the mouse, back behind it when let go.
           look = ctx.input.lookYaw !== 0 ? look + ctx.input.lookYaw : look * Math.max(0, 1 - LOOK_BACK * ctx.dt);
           player.yaw = attitude(e.car.q).yaw + look;
-          player.prevYaw = player.yaw;
           const horn = !ctx.session.carAct && ctx.input.horn === true;
           if (horn && !hornHeld) {
             hornTime = 0;
