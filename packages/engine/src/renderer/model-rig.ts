@@ -97,6 +97,7 @@ export class HumanoidRetarget {
   private readonly anchors = new Map<AnchorBone, { bone: TransformNode; rest: Matrix }>();
   /** Height of the head bone over the rig body's origin (the feet), in metres. */
   private headY = 0;
+  private hipY = 0;
   private broad = false;
 
   private constructor(
@@ -182,6 +183,7 @@ export class HumanoidRetarget {
     const chest = CHEST.map((alias) => nodes.find((n) => normaliseBoneName(n.name, prefix) === alias)).find((n) => n !== undefined);
     if (chest) self.anchors.set("chest", { bone: chest, rest: self.modelRotation(chest).clone() });
     self.headY = self.bodyPosition(found.head!).y * (Math.abs(root.scaling.y) || 1);
+    self.hipY = ((self.bodyPosition(found.upperLegL!).y + self.bodyPosition(found.upperLegR!).y) / 2) * (Math.abs(root.scaling.y) || 1);
     // Shoulders against hips: the game's men 1.74, its women 1.41 (VRoid figures, 18.11).
     const span = (a: TransformNode, b: TransformNode) => Vector3.Distance(self.bodyPosition(a), self.bodyPosition(b));
     self.broad = span(found.upperArmL!, found.upperArmR!) / (span(found.upperLegL!, found.upperLegR!) || 1) > MASCULINE_RATIO;
@@ -273,6 +275,11 @@ export class HumanoidRetarget {
   /** Height of the model's head bone over its feet, in metres (to fit add-ons to the model's size). */
   get headHeight(): number {
     return this.headY;
+  }
+
+  /** Height of the model's hip joints over its feet, in metres (to seat it: its hips, not the rig's, on a seat). */
+  get hipHeight(): number {
+    return this.hipY;
   }
 
   /**

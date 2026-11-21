@@ -80,7 +80,8 @@ const frameOf = (car: CarPose, act: Act): BodyFrame => {
 export const poseAtCar = (rig: CharacterRig, car: CarPose): void => {
   const act = ACTS[car.act];
   const f = frameOf(car, act);
-  const hipH = rig.legL.position.y;
+  // A dressed model hangs on the body with its hips its own legs' length over its feet: those go on the seat.
+  const hipH = rig.hips ?? rig.legL.position.y;
   // 0 seated .. 1 standing: on the seat, or a standing figure's hips over the ground by the door.
   // On the ground the clip's hips go from a standing figure's over `floor`.
   const rise = RISE[car.act];
