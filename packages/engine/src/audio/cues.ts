@@ -48,6 +48,17 @@ const ENEMY_SHOT: Recipe = {
   ],
 };
 
+/** Two metallic clicks `gap` seconds apart, the first one higher: a slide, a bolt or a pump racked back and forth. */
+const click2 = (freq: number, gap: number): Recipe => ({
+  send: 0.12,
+  voices: [
+    { type: "noise", freq: 0, dur: 0.04, gain: 0.16, filter: freq * 1.6, filterType: "bandpass", q: 3, attack: 0.001 },
+    { type: "square", freq: freq * 0.5, to: freq * 0.3, dur: 0.04, gain: 0.06, filter: freq * 2, attack: 0.001 },
+    { type: "noise", freq: 0, start: gap, dur: 0.05, gain: 0.2, filter: freq * 1.2, filterType: "bandpass", q: 3, attack: 0.001 },
+    { type: "square", freq: freq * 0.4, to: freq * 0.25, start: gap, dur: 0.05, gain: 0.07, filter: freq * 1.6, attack: 0.001 },
+  ],
+});
+
 export const CUES: Readonly<Record<AudioCue, Recipe>> = {
   shot: SHOT,
   "shot-revolver": SHOT,
@@ -193,6 +204,31 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "noise", freq: 0, dur: 0.12, gain: 0.06, filter: 900, filterTo: 2400, filterType: "bandpass", q: 1.5, attack: 0.01 },
       { type: "triangle", freq: 1100, to: 700, start: 0.1, dur: 0.035, gain: 0.07, attack: 0.001 },
     ],
+  },
+  // A weapon's own handling as it is drawn (user notes of 21.11), synthesized only if its recording fails:
+  // a slide or bolt (two clicks), a revolver's hammer, a shotgun's pump, a baton's snap, a blade's ring.
+  "draw-pistol": click2(1500, 0.12),
+  "draw-revolver": click2(2200, 0.06),
+  "draw-smg": click2(1300, 0.1),
+  "draw-shotgun": click2(900, 0.16),
+  "draw-rifle": click2(1100, 0.14),
+  "draw-baton": {
+    send: 0.1,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.14, gain: 0.07, filter: 1200, filterTo: 4000, filterType: "bandpass", q: 1.5, attack: 0.01 },
+      { type: "square", freq: 700, to: 420, start: 0.13, dur: 0.04, gain: 0.08, filter: 2600, attack: 0.001 },
+    ],
+  },
+  "draw-blade": {
+    send: 0.2,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.22, gain: 0.08, filter: 3000, filterTo: 6500, filterType: "bandpass", q: 2, attack: 0.02 },
+      { type: "sine", freq: 2400, to: 2300, start: 0.18, dur: 0.3, gain: 0.04, attack: 0.002 },
+    ],
+  },
+  holster: {
+    send: 0.05,
+    voices: [{ type: "noise", freq: 0, dur: 0.18, gain: 0.06, filter: 2400, filterTo: 800, filterType: "bandpass", q: 1.2, attack: 0.02 }],
   },
   "loot-pickup": {
     priority: PRIORITY.ui,
