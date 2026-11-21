@@ -1,5 +1,5 @@
 import { type AudioCue, type EngineSound, type EntityId, vehicleSpec } from "@seki/core";
-import { type Simulation, drivenCar } from "@seki/sim";
+import { type Simulation, carKmh, drivenCar } from "@seki/sim";
 
 /** Where she is with the car she drives (ADR-0097). */
 type Seat = "out" | "entering" | "in" | "exiting";
@@ -60,5 +60,5 @@ export const engineOf = (sim: Pick<Simulation, "session" | "world">): EngineSoun
   const car = drivenCar(sim);
   if (!car) return null;
   const { idle, limiter } = vehicleSpec(car.model).engine;
-  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle };
+  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle, speed: Math.abs(carKmh(car)) / 3.6 };
 };

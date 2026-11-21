@@ -6,7 +6,7 @@ import { CarAudio, engineOf } from "../src/presenters/car-audio";
 /** A simulation as the car's sounds read it: the car she drives and her act at it. */
 const fakeSim = () => {
   const spec = vehicleSpec("sedan");
-  const car = { model: "sedan" as const, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false } };
+  const car = { model: "sedan" as const, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false }, q: { w: 1, x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 } };
   const session: { driving: number | null; carAct: { kind: "enter" | "exit"; t: number } | null } = { driving: null, carAct: null };
   const world = { with: () => ({ entities: session.driving === null ? [] : [{ id: session.driving, car }] }) };
   return { sim: { session, world } as unknown as Pick<Simulation, "session" | "world">, session, car, spec };
@@ -58,13 +58,17 @@ describe("the car she drives as heard (ADR-0097)", () => {
     expect(ears.played).toEqual(["engine-stop", "car-door-open", "car-door-close"]);
   });
 
-  it("sends the engine's revs from idle to the limiter and its throttle", () => {
+  it("sends the engine's revs from idle to the limiter, its throttle and its speed", () => {
     const { sim, session, car, spec } = fakeSim();
     expect(engineOf(sim)).toBeNull();
     session.driving = 900;
-    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0 });
+    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0, speed: 0 });
     car.rpm = spec.engine.limiter;
     car.controls.throttle = 0.7;
-    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7 });
+    car.vel = { x: 0, y: 0, z: -12 };
+    const e = engineOf(sim)!;
+    expect(e).toMatchObject({ rpm: 1, throttle: 0.7 });
+    // Its wheels' speed, forwards or back (the electric motor's whine).
+    expect(e.speed).toBeCloseTo(12, 6);
   });
 });
