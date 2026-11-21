@@ -9,17 +9,55 @@ import type { AudioSampleManifest, SampleSet } from "@seki/engine";
  */
 const range = (prefix: string, ids: readonly string[]): string[] => ids.map((id) => `${prefix}${id}.ogg`);
 
+/**
+ * The weapons' sounds mixed by class (user's notes of 21.11: the shotgun too loud, the weapons to one
+ * level): the player's shots the reference, the others' shots quieter, the handling (reloads, a shell
+ * into the tube, the pump, drawing and putting away) well under a shot, as game mixes keep foley under
+ * the gunfire. A set's gain brings its files from their measured level to its class's: the loudest
+ * 50 ms RMS of the file in dBFS, the mean of its takes (`python3 -I tools/audio_levels.py`). Before,
+ * the handling played 7 to 10 dB over the shots.
+ */
+export const WEAPON_LEVELS = { shot: -24, enemyShot: -29, handling: -32 } as const;
+/** Measured level of each weapon cue's files (dBFS, the loudest 50 ms, the mean of its takes). */
+export const WEAPON_MEASURED = {
+  shot: -18.9,
+  "shot-revolver": -23.4,
+  "shot-smg": -22.0,
+  "shot-shotgun": -19.9,
+  "shot-rifle": -21.0,
+  "enemy-shot": -18.5,
+  "enemy-shot-shotgun": -18.4,
+  "enemy-shot-rifle": -19.8,
+  reload: -10.3,
+  "reload-round": -15.5,
+  "shotgun-pump": -12.8,
+  "weapon-switch": -12.9,
+  "draw-pistol": -13.7,
+  "draw-revolver": -19.3,
+  "draw-smg": -9.9,
+  "draw-shotgun": -12.8,
+  "draw-rifle": -14.6,
+  "draw-baton": -22.3,
+  "draw-blade": -16.8,
+  holster: -22.8,
+} as const satisfies Partial<Record<AudioCue, number>>;
+/** A weapon cue's class: the player's shots, the others' shots, the handling. */
+export const weaponClass = (cue: keyof typeof WEAPON_MEASURED): keyof typeof WEAPON_LEVELS =>
+  cue.startsWith("enemy-shot") ? "enemyShot" : cue.startsWith("shot-") || cue === "shot" ? "shot" : "handling";
+/** The gain that brings a weapon cue's files to its class's level. */
+const level = (cue: keyof typeof WEAPON_MEASURED): number => Math.round(10 ** ((WEAPON_LEVELS[weaponClass(cue)] - WEAPON_MEASURED[cue]) / 20) * 1000) / 1000;
+
 const SOUNDS = {
   cues: {
     // One recorded set per weapon kind (Free Firearm Sound Library, 14.11): near for the player, mid for others.
-    shot: { urls: ["gun-pistol-ppq-near.ogg", "gun-pistol-1911-near.ogg"], gain: 0.55, pitch: 0.05, send: 0.55 },
-    "shot-revolver": { urls: ["gun-revolver-642-near.ogg"], gain: 0.6, pitch: 0.04, send: 0.6 },
-    "shot-smg": { urls: ["gun-smg-m45-near.ogg", "gun-smg-ppsh-near.ogg"], gain: 0.5, pitch: 0.05, send: 0.5 },
-    "shot-shotgun": { urls: ["gun-shotgun-nova-near.ogg", "gun-shotgun-model12-near.ogg"], gain: 0.6, pitch: 0.04, send: 0.65 },
-    "shot-rifle": { urls: ["gun-rifle-ar15-near.ogg", "gun-rifle-ak47-near.ogg"], gain: 0.55, pitch: 0.04, send: 0.6 },
-    "enemy-shot": { urls: ["gun-pistol-ppq-mid.ogg", "gun-smg-m45-mid.ogg"], gain: 0.32, pitch: 0.06, send: 0.85 },
-    "enemy-shot-shotgun": { urls: ["gun-shotgun-nova-mid.ogg"], gain: 0.34, pitch: 0.05, send: 0.85 },
-    "enemy-shot-rifle": { urls: ["gun-rifle-ar15-mid.ogg", "gun-rifle-sks-mid.ogg"], gain: 0.32, pitch: 0.05, send: 0.85 },
+    shot: { urls: ["gun-pistol-ppq-near.ogg", "gun-pistol-1911-near.ogg"], gain: level("shot"), pitch: 0.05, send: 0.55 },
+    "shot-revolver": { urls: ["gun-revolver-642-near.ogg"], gain: level("shot-revolver"), pitch: 0.04, send: 0.6 },
+    "shot-smg": { urls: ["gun-smg-m45-near.ogg", "gun-smg-ppsh-near.ogg"], gain: level("shot-smg"), pitch: 0.05, send: 0.5 },
+    "shot-shotgun": { urls: ["gun-shotgun-nova-near.ogg", "gun-shotgun-model12-near.ogg"], gain: level("shot-shotgun"), pitch: 0.04, send: 0.65 },
+    "shot-rifle": { urls: ["gun-rifle-ar15-near.ogg", "gun-rifle-ak47-near.ogg"], gain: level("shot-rifle"), pitch: 0.04, send: 0.6 },
+    "enemy-shot": { urls: ["gun-pistol-ppq-mid.ogg", "gun-smg-m45-mid.ogg"], gain: level("enemy-shot"), pitch: 0.06, send: 0.85 },
+    "enemy-shot-shotgun": { urls: ["gun-shotgun-nova-mid.ogg"], gain: level("enemy-shot-shotgun"), pitch: 0.05, send: 0.85 },
+    "enemy-shot-rifle": { urls: ["gun-rifle-ar15-mid.ogg", "gun-rifle-sks-mid.ogg"], gain: level("enemy-shot-rifle"), pitch: 0.05, send: 0.85 },
     hit: { urls: range("hit-punch-", ["000", "001", "002"]), gain: 0.5, pitch: 0.08, send: 0.15 },
     critical: { urls: range("crit-punch-", ["000", "001", "002"]), gain: 0.6, pitch: 0.06, send: 0.25, layerSynth: true },
     hurt: { urls: range("hurt-soft-", ["000", "001", "002"]), gain: 0.7, pitch: 0.08 },
@@ -35,23 +73,23 @@ const SOUNDS = {
     overdrive: { urls: ["cyber-overdrive.ogg"], gain: 0.35, pitch: 0.03, layerSynth: true },
     // Weapons, loot and trade (E12).
     // Magazine out, magazine in, slide racked (1.4 s); a per-round reload clicks a shell in.
-    reload: { urls: ["reload-handgun-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.15 },
+    reload: { urls: ["reload-handgun-000.ogg"], gain: level("reload"), pitch: 0.04, send: 0.15 },
     // One shell pushed into the tube, recorded on a real shotgun (zer0_sol, 21.11): the fingers on the
     // brass, then the follower's click 0.48 s on, as the round's 0.5 s ends. Four takes, no metal tap.
-    "reload-round": { urls: range("reload-shell-", ["000", "001", "002", "003"]), gain: 0.8, pitch: 0.03, send: 0.12 },
+    "reload-round": { urls: range("reload-shell-", ["000", "001", "002", "003"]), gain: level("reload-round"), pitch: 0.03, send: 0.12 },
     // The pump racked after the last shell, back and forth in one recorded stroke (zer0_sol, 21.11).
-    "shotgun-pump": { urls: ["shotgun-rack-000.ogg"], gain: 0.65, pitch: 0.03, send: 0.18 },
-    "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
+    "shotgun-pump": { urls: ["shotgun-rack-000.ogg"], gain: level("shotgun-pump"), pitch: 0.03, send: 0.18 },
+    "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: level("weapon-switch"), pitch: 0.06, send: 0.1 },
     // Each weapon's own handling as it comes out (user notes of 21.11, sources in README): a pistol's slide,
     // a revolver's hammer, an SMG's bolt, a shotgun's pump, a rifle's charging handle; a baton and a blade out of the sheath.
-    "draw-pistol": { urls: ["draw-pistol-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.1 },
-    "draw-revolver": { urls: ["draw-revolver-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.1 },
-    "draw-smg": { urls: ["draw-smg-000.ogg"], gain: 0.45, pitch: 0.04, send: 0.1 },
-    "draw-shotgun": { urls: ["draw-shotgun-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.12 },
-    "draw-rifle": { urls: ["draw-rifle-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.12 },
-    "draw-baton": { urls: ["draw-baton-000.ogg"], gain: 0.55, pitch: 0.05, send: 0.1 },
-    "draw-blade": { urls: range("draw-blade-", ["000", "001"]), gain: 0.5, pitch: 0.04, send: 0.2 },
-    holster: { urls: range("holster-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.05 },
+    "draw-pistol": { urls: ["draw-pistol-000.ogg"], gain: level("draw-pistol"), pitch: 0.04, send: 0.1 },
+    "draw-revolver": { urls: ["draw-revolver-000.ogg"], gain: level("draw-revolver"), pitch: 0.04, send: 0.1 },
+    "draw-smg": { urls: ["draw-smg-000.ogg"], gain: level("draw-smg"), pitch: 0.04, send: 0.1 },
+    "draw-shotgun": { urls: ["draw-shotgun-000.ogg"], gain: level("draw-shotgun"), pitch: 0.03, send: 0.12 },
+    "draw-rifle": { urls: ["draw-rifle-000.ogg"], gain: level("draw-rifle"), pitch: 0.03, send: 0.12 },
+    "draw-baton": { urls: ["draw-baton-000.ogg"], gain: level("draw-baton"), pitch: 0.05, send: 0.1 },
+    "draw-blade": { urls: range("draw-blade-", ["000", "001"]), gain: level("draw-blade"), pitch: 0.04, send: 0.2 },
+    holster: { urls: range("holster-", ["000", "001"]), gain: level("holster"), pitch: 0.05, send: 0.05 },
     "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
     // The tin clink sits on the synth's coin triad.
     sell: { urls: range("sell-tin-", ["000", "001"]), gain: 0.45, pitch: 0.05, layerSynth: true },

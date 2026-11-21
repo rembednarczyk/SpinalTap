@@ -1,0 +1,1 @@
+- Dźwięki broni są wyrównane: strzały wszystkich broni grają podobnie głośno, a przeładowanie, wkładanie łusek, pompka, dobycie i chowanie broni grają wyraźnie ciszej od strzału. Wcześniej były od niego o 7–10 dB głośniejsze, najbardziej było to słychać przy strzelbie.
