@@ -19,6 +19,9 @@ const toward = (from: number, to: number, rate: number, dt: number): number => {
   return Math.abs(d) <= step ? to : from + Math.sign(d) * step;
 };
 
+/** The controls of a car nobody drives: the handbrake alone (a held brake pedal at a standstill selects reverse, `automatic`). */
+const PARKED: DriveInput = { throttle: 0, brake: 0, steer: 0, handbrake: true };
+
 /**
  * The driver's input as the car takes it (ADR-0097 §1): a device's own axes as they are; else the
  * movement axes (forward throttle, back brake, strafe the steer with left positive) eased at the
@@ -33,15 +36,17 @@ export const easeControls = (car: CarState, input: InputFrame | DriveInput | nul
     c.handbrake = input.handbrake;
     return;
   }
-  const f = input as InputFrame | null;
-  const drive = f?.drive;
+  // Nobody at the wheel: left in park, on the handbrake, as a driver leaves a car (it rolls only when pushed).
+  if (!input) return easeControls(car, PARKED, dt);
+  const f = input as InputFrame;
+  const drive = f.drive;
   if (drive) return easeControls(car, drive, dt);
-  const z = f?.moveZ ?? 0;
-  const steer = -(f?.moveX ?? 0);
+  const z = f.moveZ;
+  const steer = -f.moveX;
   c.throttle = toward(c.throttle, Math.max(0, z), z > 0 ? EASE.pedalOn : EASE.pedalOff, dt);
   c.brake = toward(c.brake, Math.max(0, -z), z < 0 ? EASE.pedalOn : EASE.pedalOff, dt);
   c.steer = toward(c.steer, steer, steer !== 0 && Math.sign(steer) === Math.sign(c.steer || steer) ? EASE.steerIn : EASE.steerBack, dt);
-  c.handbrake = f?.jump === true;
+  c.handbrake = f.jump === true;
 };
 
 /** The body's inertia (diagonal, its own frame) from its box: m/3·(b² + c²) of the half extents. */
