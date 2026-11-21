@@ -166,6 +166,19 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Test sesji: kierowca bez klucza przechodzi fazy w kolejności, odbiega dalej niż 25 m i znika.
 - Zrzuty 21.11 pokazały, że auto z ruchu wjeżdża w stojące auto gracza: ruch uliczny nie widzi aut z fizyką jako przeszkody. Do poprawy osobno.
 
+## Drzwi otwierane do góry (21.11, prośba użytkownika)
+- Prośba: drzwi w aucie otwierane do góry, żeby nie zmieniać animacji wyrzucania kierowcy. Wzorzec: drzwi nożycowe (scissor doors) z Lamborghini Countach. Zawias jest u góry przedniej krawędzi drzwi, skrzydło obraca się w górę wokół poprzecznej osi auta i staje prawie pionowo nad przednim błotnikiem. Otwarta strona zostaje wolna, więc klipy wsiadania, wysiadania i wyrzucania kierowcy działają bez zmian.
+- Model źródłowy (auto 4d_Bob) ma jedno spawane nadwozie bez osobnych drzwi. `tools/city_vehicle_doors.py` wycina drzwi kierowcy po liniach modelu:
+  - zakres: od przedniej krawędzi za przednim kołem do słupka B, od progu po krawędź dachu, razem z szybą;
+  - trójkąt nadwozia należy do drzwi, gdy jego środek leży w prostopadłościanie drzwi;
+  - osobny element przechodzi do drzwi tylko w całości, a szyba trójkąt po trójkącie;
+  - w zbliżeniu (`veh-cyber-hi`) drzwi to osobny zakres wierzchołków po kołach (`extras.door`);
+  - nowy wypiek `vehicle-props.glb` zmienia tylko to zbliżenie.
+- Uwaga dla następnych wycięć: wczytanie modelu odbija oś z pliku i obraca model, więc lewa strona gry (strona kierowcy w `sim`) to w pliku +x.
+- `sim`: `CarState.door` (0 zamknięte .. 1 w górze, tylko obraz, bez zapisu), `doorTarget` i `stepDoor` w `car-act.ts`. Drzwi idą w górę przez cały akt wsiadania (także w czasie wyrzucania kierowcy), opadają 0,9 s klipu przed jego końcem, gdy bohaterka już siedzi. Przy wysiadaniu są w górze przez cały akt i opadają, gdy ona stoi obok. Ruch w każdą stronę trwa ok. 0,45 s. `Transform.door` w `core`.
+- `engine`: `vehicle-door.ts` wyznacza zawias z obrysu zakresu drzwi i obraca drzwi w górę o 80°, z wygładzeniem i odsunięciem 8 cm na zewnątrz, żeby skrzydło minęło błotnik i słupek A. Obrót idzie w tej samej kopii wierzchołków co koła, przed ustawieniem nadwozia: bez nowej siatki i bez wywołań rysowania.
+- Testy: `vehicle-door` (engine: zawias, obrót, drzwi w pliku po stronie kierowcy między kołami), `vehicle-carjack` (sim: drzwi w górze przy przejmowaniu i wysiadaniu, w dole po nich), samotest narzędzia.
+
 ## Uszkodzenia (21.11, plan auta)
 - Wzorzec: pasek wytrzymałości nadwozia z gier akcji i zręcznościowych wyścigów (silnik słabnie po przekroczeniu części uszkodzeń, wrak nie jedzie), bez deformacji paneli z symulatorów. Jedna liczba `CarState.damage` (0 całe .. 1 wrak, `damage.ts`) rośnie o energię każdego `VehicleHit` przez `DAMAGE_ENERGY` = 400 kJ: trzy zderzenia ze ścianą przy 50 km/h (po 130 kJ dla 1,35 t) zostawiają auto sprawne, czwarte robi z niego wrak (`VehicleWrecked`, gaśnie silnik).
 - Od 0,4 moment silnika maleje płynnie do 0,35 tuż przed wrakiem; wrak nie ma napędu, pętla silnika milknie.
@@ -181,7 +194,8 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
   - przechodniów tła: schodzą z drogi bez przestępstwa, jak dotąd;
   - kogoś, kto już leży: nie zostaje uderzony drugi raz.
 - W trakcie postać jest przypięta do miejsca. System pojazdu działa po ruchu i cofa to, co w kroku przesunęła jej SI.
-- Odłożone: obrażenia i śmierć pieszych (ścieżka obrażeń i umierania SI), postacie tłumu rysowane bez rigu (bez klipu, tylko przypięte).
+- Zrobione 21.11: obrażenia z potrącenia. Każdy m/s ponad próg potrącenia (4 m/s) to 14 punktów (`runOverDamage`): przy 30 km/h ok. 60, przy 40 km/h blisko 100, przy 50 km/h więcej niż zdrowie przechodnia. Obrażenia idą zwykłą ścieżką (`applyDamage`, `lastHitBy` gracza, gdy to ona prowadzi, `DamageDealt`), więc zabity trafia do systemu śmierci, który robi z tego morderstwo, jeśli ofiara nie walczyła; zabity nie dostaje rzutu klipem, tylko pada jak po każdym ciosie. Test w `vehicle-carjack`.
+- Odłożone: postacie tłumu rysowane bez rigu (bez klipu, tylko przypięte).
 - Test sesji: auto na pełnym gazie wjeżdża w pieszego, ten zostaje rzucony, jest przypięty, przechodzi przez wstawanie i staje 1,2–2,2 m od miejsca, w którym upadł.
 
 
@@ -195,15 +209,11 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Za kierownicą system interakcji czyścił podpowiedź, więc na telefonie nie było przycisku „Użyj” (pojawia się tylko z podpowiedzią) i nie dało się wysiąść, a na komputerze nic nie mówiło, że wysiada się klawiszem interakcji. Teraz, gdy auto jedzie wolniej niż 3 m/s i nie trwa akt wsiadania ani wysiadania, podpowiedź to `prompt.car.exit` („Wysiądź”), skupienie na aucie; HUD pokazuje ją z klawiszem, telefon z przyciskiem „Użyj”, pad z przyciskiem interakcji. Wysadza system pojazdu jak dotąd (`canGetOut` w `vehicle-system.ts` to ten sam warunek).
 - Test sesji w `vehicle-carjack.test.ts`: podpowiedź jest na postoju, znika przy jeździe i w czasie aktu wysiadania, wraca po zatrzymaniu; bez zmiany pada (podpowiedzi brak).
 
-## Drzwi otwierane do góry (21.11, prośba użytkownika)
-- Prośba: drzwi w aucie otwierane do góry, żeby nie zmieniać animacji wyrzucania kierowcy. Wzorzec: drzwi nożycowe (scissor doors) z Lamborghini Countach. Zawias jest u góry przedniej krawędzi drzwi, skrzydło obraca się w górę wokół poprzecznej osi auta i staje prawie pionowo nad przednim błotnikiem. Otwarta strona zostaje wolna, więc klipy wsiadania, wysiadania i wyrzucania kierowcy działają bez zmian.
-- Model źródłowy (auto 4d_Bob) ma jedno spawane nadwozie bez osobnych drzwi. `tools/city_vehicle_doors.py` wycina drzwi kierowcy po liniach modelu:
-  - zakres: od przedniej krawędzi za przednim kołem do słupka B, od progu po krawędź dachu, razem z szybą;
-  - trójkąt nadwozia należy do drzwi, gdy jego środek leży w prostopadłościanie drzwi;
-  - osobny element przechodzi do drzwi tylko w całości, a szyba trójkąt po trójkącie;
-  - w zbliżeniu (`veh-cyber-hi`) drzwi to osobny zakres wierzchołków po kołach (`extras.door`);
-  - nowy wypiek `vehicle-props.glb` zmienia tylko to zbliżenie.
-- Uwaga dla następnych wycięć: wczytanie modelu odbija oś z pliku i obraca model, więc lewa strona gry (strona kierowcy w `sim`) to w pliku +x.
-- `sim`: `CarState.door` (0 zamknięte .. 1 w górze, tylko obraz, bez zapisu), `doorTarget` i `stepDoor` w `car-act.ts`. Drzwi idą w górę przez cały akt wsiadania (także w czasie wyrzucania kierowcy), opadają 0,9 s klipu przed jego końcem, gdy bohaterka już siedzi. Przy wysiadaniu są w górze przez cały akt i opadają, gdy ona stoi obok. Ruch w każdą stronę trwa ok. 0,45 s. `Transform.door` w `core`.
-- `engine`: `vehicle-door.ts` wyznacza zawias z obrysu zakresu drzwi i obraca drzwi w górę o 80°, z wygładzeniem i odsunięciem 8 cm na zewnątrz, żeby skrzydło minęło błotnik i słupek A. Obrót idzie w tej samej kopii wierzchołków co koła, przed ustawieniem nadwozia: bez nowej siatki i bez wywołań rysowania.
-- Testy: `vehicle-door` (engine: zawias, obrót, drzwi w pliku po stronie kierowcy między kołami), `vehicle-carjack` (sim: drzwi w górze przy przejmowaniu i wysiadaniu, w dole po nich), samotest narzędzia.
+## Włamanie do zaparkowanego auta (21.11, plan auta)
+- Wzorzec: kradzież zaparkowanego auta z gier z otwartym światem (seria GTA): kilka sekund przy drzwiach, wybita szyba, przestępstwo, jeśli ktoś widzi. Różnica wobec planu z §3: bez zamka jak drzwi z ADR-0058 i bez osobnej szansy wykrycia. Wykrycie daje zwykła droga świadków (ADR-0029), a przestępstwo ma nowy rodzaj `theft` (kradzież auta, poziom pościgu 1, jak napaść).
+- Zaparkowane auta (ADR-0050) to statyczne bryły ulicy rysowane w scenerii. Bryła niesie `parkedCar` (miejsce w `PARKED_CARS`, model, kolor, kierunek), a podpowiedź `prompt.car.break` pojawia się, gdy obok nie ma auta z ruchu ani jej własnego. Klawisz interakcji uruchamia włamanie:
+  - bryła znika, w jej miejscu staje auto z fizyką tego samego modelu i koloru (`breakIn` w `vehicle-system.ts`);
+  - bohaterka pracuje przy drzwiach 2,2 s, potem gra klip wsiadania;
+  - aplikacja gra dźwięk wybitej szyby (`car-glass`, Kenney `impactGlass_heavy`).
+- Miejsce zostaje puste na zawsze. Flaga `parked-taken:<i>` w stanie domeny jest zapisywana, więc bez zmiany schematu. Strumieniowanie nie stawia bryły z powrotem przy wczytaniu chunku, a `RenderSync` zabiera jej widok ze scenerii, także rendererowi uruchomionemu po włamaniu.
+- Testy: `vehicle-break-in` (sim: podpowiedź, akt, flaga, brak bryły, jazda, sceneria, zapis i wczytanie), `audio-cues` (app: szyba tylko przy włamaniu).

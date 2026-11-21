@@ -25,7 +25,7 @@ export interface HeatState {
 export const NO_HEAT: HeatState = { level: 0, faction: null, searching: false, lastKnown: null, searchLeft: 0, cooldown: 0 };
 
 /** The level a fresh report of this crime brings the heat up to. Killing is worse than the rest. */
-export const CRIME_HEAT: Readonly<Record<CrimeKind, HeatLevel>> = { trespass: 1, hacking: 1, gunfire: 1, assault: 1, murder: 2 };
+export const CRIME_HEAT: Readonly<Record<CrimeKind, HeatLevel>> = { trespass: 1, hacking: 1, gunfire: 1, assault: 1, theft: 1, murder: 2 };
 
 /** Seconds of search (no contact) that drop the heat one level, per level. */
 export const HEAT_SEARCH_SECONDS: Readonly<Record<HeatLevel, number>> = { 0: 0, 1: 20, 2: 30, 3: 40 };

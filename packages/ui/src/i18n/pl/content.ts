@@ -44,6 +44,7 @@ export const plContent = {
   "prompt.takedown": "Chwyć",
   "prompt.car.take": "Przejmij auto",
   "prompt.car.exit": "Wysiądź",
+  "prompt.car.break": "Włam się do auta",
   "prompt.grab": "Ogłusz",
   "prompt.grab.kill": "Zabij",
   // Ciała (ADR-0065, etap 3): ten sam klawisz podnosi, upuszcza albo ukrywa.

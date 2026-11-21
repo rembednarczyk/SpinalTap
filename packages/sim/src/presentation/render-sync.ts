@@ -3,6 +3,7 @@ import { carTilt, carWheels } from "../world/vehicle/world-car";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
+import { takenParked } from "../content/parked-taken";
 
 /** Ids of the scenery's views (ADR-0045): far above the entities' and the crowd's. */
 export const SCENERY_ID_BASE = 5_000_000;
@@ -77,6 +78,11 @@ export class RenderSync {
 
   /** The scenery has been handed to the port (again after every reset). */
   private sceneryShown = false;
+  /** The parked cars of the scenery, as [scenery index, place in `PARKED_CARS`] (ADR-0050). */
+  private readonly parkedScenery: readonly (readonly [number, number])[];
+  /** The parked cars' views taken away (she broke into them, ADR-0097), and the flags last read for them. */
+  private readonly parkedGone = new Set<number>();
+  private parkedFlags: readonly string[] | null = null;
 
   /**
    * `scenery`: views the port draws for good, outside the entities (the map's terrain, surfaces
@@ -85,13 +91,33 @@ export class RenderSync {
   constructor(
     private readonly port: RenderPort,
     private readonly scenery: readonly SceneryItem[] = [],
-  ) {}
+  ) {
+    this.parkedScenery = scenery.flatMap((s, i) => (s.parked !== undefined ? [[i, s.parked] as const] : []));
+  }
 
-  /** Hands the scenery to the port, unless it has it already. */
-  private showScenery(): void {
+  /** Hands the scenery to the port, unless it has it already; the parked cars she took stay out. */
+  private showScenery(flags: readonly string[] | undefined): void {
     if (this.sceneryShown) return;
     this.sceneryShown = true;
-    this.scenery.forEach((s, i) => this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: s.yaw ?? 0, pitch: 0, speed: 0 }));
+    const taken = flags ? takenParked(flags) : new Set<number>();
+    this.parkedFlags = flags ?? null;
+    this.scenery.forEach((s, i) => {
+      if (s.parked !== undefined && taken.has(s.parked)) this.parkedGone.add(i);
+      else this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: s.yaw ?? 0, pitch: 0, speed: 0 });
+    });
+  }
+
+  /** Takes away the views of the parked cars she broke into since the flags were read last (ADR-0097). */
+  private hideTakenParked(flags: readonly string[] | undefined): void {
+    if (!flags || flags === this.parkedFlags) return;
+    this.parkedFlags = flags;
+    const taken = takenParked(flags);
+    if (taken.size === 0) return;
+    for (const [i, parked] of this.parkedScenery) {
+      if (!taken.has(parked) || this.parkedGone.has(i)) continue;
+      this.parkedGone.add(i);
+      this.port.despawn(SCENERY_ID_BASE + i, "removed");
+    }
   }
 
   /**
@@ -99,7 +125,8 @@ export class RenderSync {
    * Only the picture reads it: nothing here feeds back into the simulation.
    */
   sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState, takedown?: GrabView | null): void {
-    this.showScenery();
+    this.showScenery(domain?.flags);
+    this.hideTakenParked(domain?.flags);
     const seen = new Set<EntityId>();
     const phase = takedown ? grabPhaseOf(takedown) : null;
     for (const e of world.with("view")) {
@@ -165,6 +192,8 @@ export class RenderSync {
   reset(): void {
     this.port.clear();
     this.sceneryShown = false;
+    this.parkedGone.clear();
+    this.parkedFlags = null;
     this.spawned.clear();
     this.looks.clear();
     this.activities.clear();

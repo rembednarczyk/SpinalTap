@@ -71,6 +71,16 @@ describe("weapon, loot and trade cues (E12)", () => {
     expect(m.engine?.url).toBe("https://game.test/audio/engine-loop-000.ogg");
   });
 
+  it("breaking into a parked car smashes its window; taking a street car or her own does not (ADR-0097 §3)", () => {
+    const { bus, cues } = setup();
+    bus.emit("VehicleEntered", { vehicleId: 900, from: "traffic" });
+    bus.emit("VehicleEntered", { vehicleId: 900, from: "own" });
+    expect(cues).toEqual([]);
+    bus.emit("VehicleEntered", { vehicleId: 901, from: "parked" });
+    expect(cues).toEqual(["car-glass"]);
+    expect(audioSampleManifest("https://game.test/audio/").cues?.["car-glass"]?.urls.length).toBe(2);
+  });
+
   it("a magazine change plays the recorded reload, a shell into a tube only its click", () => {
     const { bus, cues } = setup();
     bus.emit("ReloadStarted", { entityId: PLAYER, duration: 1.4, perRound: false });
