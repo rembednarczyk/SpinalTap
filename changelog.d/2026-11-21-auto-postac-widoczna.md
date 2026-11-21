@@ -1,0 +1,1 @@
+- Postać przy wsiadaniu i wysiadaniu z auta jest widoczna cała, a nie jako sam obrys.
