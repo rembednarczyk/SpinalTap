@@ -19,10 +19,15 @@ const PORT = Number(process.env.E2E_PORT ?? 4173);
  * scenes 1.4-1.5 min each, gpu-queue 3.6, models 1.8). Group 4 takes the later npr-perf scenes
  * (P-2, Zielona, both W-3, both phones) and gpu-queue; group 1 keeps the reference frame, the
  * first seven scenes and models. On the slow runner of #847 that is about 15 and 12 min.
+ *
+ * Later on 21.11 group 2 was the long one: 18.7-21.5 min on median runners and on the slow runner
+ * of #853 past the 25 min (fpp-hands 4.6 and 3.4, smoke 9.9, ui-scale 4.6), while groups 1 and 4
+ * took 5.8-8 and 6.2-12.6. fpp-hands moves with the first: its desktop test to group 1, its phone
+ * test (by title) to group 4. About 12, 15 and 12-16 min on that runner.
  */
-const GROUP_ONE = /(npr-perf|gpu-queue|models)\.spec\.ts$/;
-const GROUP_TWO = /(smoke|fpp-hands|ui-scale)\.spec\.ts$/;
-/** The npr-perf scenes and gpu-queue tests of group 4, by title. */
+const GROUP_ONE = /(npr-perf|gpu-queue|models|fpp-hands)\.spec\.ts$/;
+const GROUP_TWO = /(smoke|ui-scale)\.spec\.ts$/;
+/** The npr-perf scenes, gpu-queue and fpp-hands tests of group 4, by title. */
 const GROUP_FOUR = /P-2|Zielona|W-3|phone|GPU|WebGL/;
 const group = process.env.E2E_GROUP;
 const groups =
