@@ -7,6 +7,7 @@ import { type CarActState, HELD, JACK_WAIT, seatInWorld, startAct, stepAct } fro
 import { DRIVER_ID_BASE, ejectDriver, stepEjectedDrivers } from "../world/vehicle/ejected-driver";
 import { stepStruckBodies } from "../world/vehicle/struck";
 import { driveCar, wake } from "../world/vehicle/step";
+import { FootZoneWatch } from "../world/vehicle/foot-zones";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
 import { BODY } from "../world/factory";
@@ -205,6 +206,8 @@ export const createVehicleSystem = (): System => {
   let seatTime = 0;
   let hornTime = 0;
   let hornHeld = false;
+  /** Her driving where feet belong (deptaki, pavements): a trespass after a stretch of it. */
+  const feet = new FootZoneWatch();
   return {
     name: "vehicle",
     run(ctx) {
@@ -235,6 +238,7 @@ export const createVehicleSystem = (): System => {
           }
         }
       }
+      if (!driving) feet.reset();
       const ground = worldGround(ctx);
       for (const e of [...ctx.world.with("car").entities].sort((a, b) => a.id - b.id) as Car[]) {
         const mine = e.id === ctx.session.driving;
@@ -250,6 +254,7 @@ export const createVehicleSystem = (): System => {
         placeEntity(e, e.car);
         if (mine) {
           placeSeat(player, e, false);
+          feet.step(ctx, e.position, Math.abs(forwardSpeed(e.car)), ctx.dt);
           // Free look round the car with the mouse, back behind it when let go.
           look = ctx.input.lookYaw !== 0 ? look + ctx.input.lookYaw : look * Math.max(0, 1 - LOOK_BACK * ctx.dt);
           player.yaw = attitude(e.car.q).yaw + look;

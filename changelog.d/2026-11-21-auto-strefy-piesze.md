@@ -1,0 +1,1 @@
+- Auto: jazda po deptaku Krakowskiego Przedmieścia, uliczkach Starego Miasta, chodnikach i trawnikach jest wykroczeniem: świadkowie mogą ją zgłosić i podnieść poziom poszukiwania.
