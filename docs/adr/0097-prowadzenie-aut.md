@@ -117,6 +117,9 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Zapis: auto nie jest zapisywane; gra zapisana za kierownicą wczytuje się z bohaterką pieszo (stan sesji). Zapis auta z podbiciem schematu zostaje na etap 6.
 - Test sesji `vehicle-carjack.test.ts`: na Alei Tysiąclecia auto staje przed nią, podpowiedź się pojawia, klawisz je przejmuje, gaz rozpędza (ponad 15 m w 3 s), ona siedzi w nim, hamulec zatrzymuje, wysiadanie stawia ją 1–2,5 m obok, auto zostaje.
 
+## Wdrożenie etapu 7 w części potrzebnej do jazdy (21.11): wejścia
+- Pad: prawy spust to gaz, lewy hamulec (analogowo, z martwą strefą 5%), lewa gałka skręt, A ręczny; pole `drive` w klatce tylko wtedy, gdy spust jest wciśnięty, inaczej auto jedzie z osi ruchu jak z klawiatury (gałka do przodu to gaz). Klawiatura: W/S gaz i hamulec z wstecznym, A/D skręt, spacja ręczny, wygładzane w `sim`. Dotyk: gałka ruchu i przycisk skoku dają to samo co klawiatura, bez zmian w interfejsie dotykowym.
+- Odłożone: kierownica przez Gamepad API z osobnymi pedałami i sprzęgłem, przechył telefonu, ustawienia czułości i wspomagań (ABS i kontrola trakcji są zawsze włączone), scena jazdy w `npr-perf` (CI na wolnych runnerach już dziś mieści się na granicy 25 minut shardu).
 ## Wysiadanie na prawo (21.11, polecenie użytkownika)
 - Wysiadanie najpierw po lewej (strona kierowcy), a gdy tam stoi bryła wysokości ciała (wyższa niż stopień `STEP_HEIGHT`) albo auto ruchu, po prawej. Miejsce to koło ciała bohaterki (`BODY_RADIUS`) 0,7 m za bokiem nadwozia i 0,4 m przed środkiem auta. Z obiema stronami zamkniętymi zostaje w aucie.
 - Test sesji `vehicle-carjack.test.ts`: słupek przy drzwiach kierowcy, wysiada po prawej; słupki po obu stronach, zostaje w środku. Bez zmiany test pada (wysiada w słupek po lewej).

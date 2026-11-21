@@ -268,7 +268,8 @@ export class BrowserInput implements InputPort {
     this.padPrev = buttons;
     this.padStick = pressed[PAD_LEFT_STICK] ?? false;
     const dash = this.padDash.update(pressed[1] ?? false, dt);
-    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt, this.lookTuning.pad);
+    const triggers = [pad.buttons[6]?.value ?? 0, pad.buttons[7]?.value ?? 0] as const;
+    return mapGamepad({ axes: pad.axes, buttons, pressed, dash, triggers }, dt, this.lookTuning.pad);
   }
 }
 
