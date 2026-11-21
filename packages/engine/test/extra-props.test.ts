@@ -36,6 +36,9 @@ const KEYS = [
   "ex-atm-wall",
   "ex-dish",
   "ex-exit-door",
+  "ex-blade-frame",
+  "ex-blade-narrow",
+  "ex-blade-led",
 ];
 
 /** Real heights (m) the models were scaled to. */
@@ -48,7 +51,7 @@ describe("extra-props.glb (ADR-0096 stage 1)", () => {
     expect(bytes.byteLength).toBeLessThan(2.5 * 1024 * 1024);
     expect(extras.swatches).toEqual(props.swatches);
     const json = new TextDecoder().decode(new Uint8Array(bytes, 20, new DataView(bytes, 12, 4).getUint32(0, true)));
-    for (const id of ["sketchfab-street-asset-pack", "sketchfab-mini-atm", "sketchfab-satellite-comms", "sketchfab-fire-escape-doors"]) expect(json).toContain(`"credit":"${id}"`);
+    for (const id of ["sketchfab-street-asset-pack", "sketchfab-mini-atm", "sketchfab-satellite-comms", "sketchfab-fire-escape-doors", "sketchfab-taiwan-signboard", "sketchfab-cyberpunk-led-neon-sign"]) expect(json).toContain(`"credit":"${id}"`);
   });
 
   it("stands each model on the ground at its real height", () => {

@@ -35,7 +35,7 @@ const box = (x: number, z: number, hx: number, hz: number, top: number): Box => 
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`); a tree's solid is by `treeGirth`. */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4, clutter: 9 };
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4, clutter: 16 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /**
  * A tree's size, as `treeScale` of `@seki/core` (G-422, G-423): an oak's or a poplar's from its step
@@ -127,6 +127,13 @@ export const CLUTTER_SOLIDS: readonly ({ readonly hx: number; readonly hz: numbe
   null,
   { hx: 0.42, hz: 0.42, top: 1.05 },
   null,
+  { hx: 0.2, hz: 0.2, top: 0.75 },
+  { hx: 0.78, hz: 0.35, top: 0.81 },
+  { hx: 0.53, hz: 0.3, top: 0.8 },
+  { hx: 1.0, hz: 0.25, top: 1.1 },
+  { hx: 1.0, hz: 0.25, top: 1.1 },
+  { hx: 1.42, hz: 0.3, top: 1.1 },
+  { hx: 1.38, hz: 0.3, top: 1.1 },
 ];
 
 /** The parts of each solid kind, by shape. Heights are above the foot. */

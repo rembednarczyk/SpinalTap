@@ -30,6 +30,7 @@ MAX_TRIS = 6000
 LIFT = {'ex-atm-wall': 0.8}
 
 STREET = ('sketchfab-street-asset-pack', 'street_asset_pack.glb')
+TAIWAN = ('sketchfab-taiwan-signboard', 'taiwan_style_signboard_lowpoly.glb')
 
 
 def starts(*prefixes):
@@ -68,7 +69,15 @@ EXTRAS = [
     ('ex-dish', ('sketchfab-satellite-comms', 'satellite_comms.glb'), None, ['roof-dish'], 0, 0, 3.4),
     # A steel double door at a back wall (ADR-0096 rule 7): 2.1 m with its frame, face to +Z.
     ('ex-exit-door', ('sketchfab-fire-escape-doors', 'fire_escape__exit_doors.glb'), None, ['exit-door'], 90, 0, 2.1),
+    # The housings of the blade signs (ADR-0096 rule 5): the plane of the sign across the wall (local YZ),
+    # its arms' wall plates at -Z. Heights put the panel at 2.4 m (the Taiwan frames) and 1.7 m (the LED
+    # sign); the renderer lights the panel with the atlas's blade (`blade-housings.ts`).
+    ('ex-blade-frame', TAIWAN, exact('board02_metal_0', 'board02_board_0'), ['blade-frame'], 90, 0, 3.585),
+    ('ex-blade-narrow', TAIWAN, exact('board13_metal_0', 'board13_board_0'), ['blade-narrow'], 90, 0, 4.336),
+    ('ex-blade-led', ('sketchfab-cyberpunk-led-neon-sign', 'cyberpunk_animated_japanese_led_neon_sign.glb'), exact('Object_36'), ['blade-led'], -90, 0, 1.778),
 ]
+# Models placed by their box's middle (`onWall`), not their foot's: a frame whose stay reaches down to one side.
+BOX_CENTRED = {'ex-blade-frame', 'ex-blade-narrow', 'ex-blade-led'}
 
 
 def source_file(folder, source, name):
@@ -82,7 +91,7 @@ def source_file(folder, source, name):
     return found[0]
 
 
-def bake_extra(folder, src, keep, yaw, pitch, height):
+def bake_extra(folder, src, keep, yaw, pitch, height, box=False):
     path = source_file(folder, *src)
     P, _, mat, uv, j, blob = scene_triangles(path, keep)
     if len(P) == 0:
@@ -97,7 +106,7 @@ def bake_extra(folder, src, keep, yaw, pitch, height):
     P, roles = simplify(P, roles, MAX_TRIS)
     flat = P.reshape(-1, 3)
     lo, hi = flat.min(0), flat.max(0)
-    foot = flat[flat[:, 1] < lo[1] + 0.05 * (hi[1] - lo[1])]
+    foot = flat if box else flat[flat[:, 1] < lo[1] + 0.05 * (hi[1] - lo[1])]
     fl, fh = foot.min(0), foot.max(0)
     P = P - np.array([(fl[0] + fh[0]) / 2, lo[1], (fl[2] + fh[2]) / 2])
     return P, roles, [round(float(x), 3) for x in hi - lo]
@@ -106,7 +115,10 @@ def bake_extra(folder, src, keep, yaw, pitch, height):
 def build_extras(folder, out_dir):
     out, extras = [], {}
     for key, src, keep, styles, yaw, pitch, height in EXTRAS:
-        P, roles, size = bake_extra(folder, src, keep, yaw, pitch, height)
+        P, roles, size = bake_extra(folder, src, keep, yaw, pitch, height, key in BOX_CENTRED)
+        if key in BOX_CENTRED:
+            # The panel's printed colours (the pack's own lettering) go dark: the game's blade lights it.
+            roles = ['dark' if r.startswith(('neon', 'win', 'fabric')) else r for r in roles]
         P = P + np.array([0, LIFT.get(key, 0), 0])
         m = weld(key, P, flat_normals(P), roles, swatch_uv, MAX_TRIS)
         out.append(m)

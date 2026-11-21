@@ -16,12 +16,14 @@
  * 6. (stage 2) the scaffold along a neighbour's wall on the outline (`construction-scaffold.ts`),
  *    before the containers and the dig, which keep off it; the fence's panels in its way give way;
  * 7. (stage 2) the tower crane of the full set (`construction-crane.ts`), off everything else.
+ * 8. (ADR-0096 rule 2) the cones and barriers on the pavement of its street side (`construction-barriers.ts`).
  * The draws of stage 2 (the banner, the beacon's phase) come after stage 1's, so a site of stage 1
  * keeps its looks.
  */
 import { mulberry32 } from "../../../packages/core/src/math/mulberry32.ts";
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { SITE_CABIN, SITE_CRANE, SITE_LOOKS, SITE_STACKED, siteFenceLayout } from "../../../packages/core/src/world/sites.ts";
+import { siteBarriers } from "./construction-barriers.ts";
 import { type SiteGround } from "./construction-ground.ts";
 import { type CranePlan, NARROW, aspectAlong, cranePiece, planCrane } from "./construction-crane.ts";
 import { type DigPlan, digShape, planDig } from "./construction-dig.ts";
@@ -194,7 +196,9 @@ export const planSite = (o: SiteOutline, g: SiteGround): SitePlan => {
   const dig = set === "fence" ? null : planDig(ring, area, digGround, longAxisDegrees(ring), share, digShape(depth));
   const [banner, phase] = [pick(SITE_LOOKS.banners), pick(SITE_CRANE.phases)];
   const crane = set === "full" && aspectAlong(o.ring, longAxisDegrees(o.ring)) <= NARROW ? siteCrane(o.ring, ring, g, { gate: gateAt, dig, yard, scaffold }) : null;
-  const pieces = [...fence, ...yard, ...(scaffold ? [scaffoldPiece(scaffold, g, banner)] : []), ...(crane ? [cranePiece(crane, g, phase)] : [])];
+  // ADR-0096 rule 2: the street side's cones and barriers, by hashes of the id, after every draw of the stream.
+  const street = siteBarriers(o.id, edges, runs, gate, g);
+  const pieces = [...fence, ...yard, ...(scaffold ? [scaffoldPiece(scaffold, g, banner)] : []), ...(crane ? [cranePiece(crane, g, phase)] : []), ...street];
   const fenced = runs.reduce((s, r) => s + r.to - r.from, 0);
   const outline = o.ring.map((p) => ({ x: Math.round(p.x * 100) / 100 + 0, z: Math.round(p.z * 100) / 100 + 0 }));
   return { id: o.id, seed, set, area: Math.round(area), outline, gate, board: gate ? board : null, dig, crane, scaffold, pieces, unfenced: Math.round(edges.reduce((s, e) => s + e.len, 0) - fenced) };

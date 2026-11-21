@@ -110,6 +110,12 @@ export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): Site
       return (s === null || s === "green") && !fronts.some((r) => pointInRing(p, r)) && !byBarrier(p);
     },
     open: (p) => site.chunkAt(p) !== null && site.standable(p),
+    verge: (p) => {
+      if (!site.chunkAt(p) || site.deckAt(p) !== null || !site.standable(p)) return false;
+      const s = site.surfaceAt(p);
+      // A frontage's fill (the strip between the building line and the pavement) is ground a cone may stand on.
+      return (s === null || s === "green" || s === "walk") && !byBarrier(p);
+    },
     heightAt: (p) => site.heightAt(p),
     cellAt: (p) => site.chunkAt(p)?.terrain.cell ?? Infinity,
     driveDistance: (p) => Math.min(Infinity, ...drive.map((s) => lineDistance(p, s.line))),
