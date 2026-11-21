@@ -1,5 +1,5 @@
 import type { BlockSkin, EntityId, Vec3 } from "@seki/core";
-import { Color3, Constants, type GlowLayer, type Mesh, MeshClass, RawTexture, type Scene, type ShaderMaterial, VertexData } from "../babylon";
+import { Color3, Constants, type GlowLayer, type Mesh, MeshClass, RawTexture, type Scene, type ShaderMaterial, Texture, VertexData } from "../babylon";
 import { KIT_GRID, kitDetailCodes } from "../npr/detail-kit";
 import type { ToonMaterials } from "../npr/toon-material";
 import {
@@ -145,10 +145,13 @@ export class CityKit {
   private readonly glowColor = new Color3(1, 1, 1);
   /** Facade props (ADR-0058), once their file has loaded, and the kit UVs of their swatches. */
   private props: { readonly data: CityProps; readonly uvs: readonly (readonly [number, number])[] } | null = null;
+  /** The props' own textures as materials (`skinMaterial`), null for a name without one. */
+  private readonly skins = new Map<string, ShaderMaterial | null>();
+  private selfLit = 1;
 
   constructor(
     private readonly scene: Scene,
-    materials: ToonMaterials,
+    private readonly materials: ToonMaterials,
     private readonly glow: GlowLayer | null,
     readonly data: CityKitData,
     private readonly options: CityKitOptions = {},
@@ -215,6 +218,25 @@ export class CityKit {
     return this.props;
   }
 
+  /**
+   * A props model's own texture (`KitModel.skin`: a vehicle's close-up, user's notes of 21.11) as a
+   * material in the kit's code: the same toon shading, its alpha telling lit, tinted and self-lit
+   * texels apart, its glow twin for the glow layer, the time of day as the kit's. Null before the
+   * props have loaded or for a name they lack.
+   */
+  skinMaterial(name: string): ShaderMaterial | null {
+    if (!this.skins.has(name)) {
+      const skin = this.props?.data.skins?.get(name);
+      if (!skin) return null;
+      const texture = (bytes: Uint8Array, tag: string) => new Texture(`data:${tag}`, this.scene, false, false, Texture.TRILINEAR_SAMPLINGMODE, null, null, bytes, false);
+      const m = this.materials.forCityKit(texture(skin.color, `skin-${name}`));
+      Object.assign(m, { emissiveTexture: skin.glow ? texture(skin.glow, `skin-glow-${name}`) : null, emissiveColor: this.glowColor });
+      m.setFloat("selfLit", this.selfLit);
+      this.skins.set(name, m);
+    }
+    return this.skins.get(name) ?? null;
+  }
+
   /** The facade props have loaded: every cell is rebuilt with them. */
   setProps(props: CityProps): void {
     this.props = { data: props, uvs: kitUvs(props, this.data) };
@@ -263,7 +285,9 @@ export class CityKit {
   /** Daylight 0..1 (ADR-0017): lit windows and neon dim by day. */
   setDaylight(daylight: number): void {
     const t = Math.max(0, Math.min(1, daylight));
-    this.material.setFloat("selfLit", 1 - 0.5 * t);
+    this.selfLit = 1 - 0.5 * t;
+    this.material.setFloat("selfLit", this.selfLit);
+    for (const m of this.skins.values()) m?.setFloat("selfLit", this.selfLit);
     const g = 0.55 * (1 - 0.7 * t);
     this.glowColor.set(g, g, g);
   }

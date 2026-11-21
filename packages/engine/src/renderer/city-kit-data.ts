@@ -27,6 +27,14 @@ export interface KitModel {
   readonly normals: Float32Array;
   readonly uvs: Float32Array;
   readonly indices: Uint32Array;
+  /** On a texture of its own (a vehicle's close-up, user's notes of 21.11): its UVs are that skin's, not the palette's. */
+  readonly skin?: string;
+}
+
+/** A model's own texture (`KitModel.skin`): PNG bytes in the kit's alpha code (ADR-0022), and what of it glows. */
+export interface KitSkin {
+  readonly color: Uint8Array;
+  readonly glow: Uint8Array | null;
 }
 
 export interface CityKitData {
@@ -34,6 +42,8 @@ export interface CityKitData {
   readonly swatches: readonly KitSwatch[];
   /** Swatches per palette row (and rows). */
   readonly grid: number;
+  /** The models' own textures by name (images `skin:<name>` and `skin-glow:<name>` of the file). */
+  readonly skins?: ReadonlyMap<string, KitSkin>;
 }
 
 type Json = Record<string, unknown>;
@@ -131,9 +141,28 @@ export const parseCityKit = (bytes: ArrayBuffer): CityKitData => {
       normals,
       uvs,
       indices,
+      ...(typeof ex.skin === "string" ? { skin: ex.skin } : {}),
     });
   }
-  return { models, swatches, grid: num(extras.grid, 16) };
+  const skins = readSkins(json, bin);
+  return { models, swatches, grid: num(extras.grid, 16), ...(skins.size > 0 ? { skins } : {}) };
+};
+
+/** The file's skins: its images named `skin:<name>`, each with its `skin-glow:<name>` when there is one. */
+const readSkins = (json: Json, bin: DataView): Map<string, KitSkin> => {
+  const bytes = (image: Json): Uint8Array => {
+    const view = obj(arr(json.bufferViews)[num(image.bufferView, -1)]);
+    return new Uint8Array(bin.buffer.slice(bin.byteOffset + num(view.byteOffset), bin.byteOffset + num(view.byteOffset) + num(view.byteLength)));
+  };
+  const images = arr(json.images).map(obj);
+  const skins = new Map<string, KitSkin>();
+  for (const image of images) {
+    const name = String(image.name ?? "");
+    if (!name.startsWith("skin:")) continue;
+    const glow = images.find((i) => i.name === `skin-glow:${name.slice(5)}`);
+    skins.set(name.slice(5), { color: bytes(image), glow: glow ? bytes(glow) : null });
+  }
+  return skins;
 };
 
 /**

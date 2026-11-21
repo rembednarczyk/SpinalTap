@@ -4,7 +4,8 @@ import type { RenderQuality } from "../npr/quality";
 import type { CityKit } from "./city-kit";
 import { type VehicleTemplate, paintOf, vehicleTemplates } from "./vehicle-models";
 import { pickVariant } from "./vehicle-variants";
-import { type CarAt, rampPitch } from "./alchemia/parking-traffic";
+import type { CarAt } from "./alchemia/parking-traffic";
+import { CloseUpPool, foldVertices, placeTemplate } from "./vehicle-closeups";
 
 export type VehicleDescriptor = Extract<ViewDescriptor, { kind: "vehicle" }>;
 
@@ -91,11 +92,8 @@ class Fleet {
   private normals = new Float32Array(0);
   private readonly min = new Vector3();
   private readonly max = new Vector3();
-  private colors = new Float32Array(0);
-  /** The close-ups' pool: its first vertex, a place's vertices (one topology: the sports car's), who holds each place. */
-  private poolBase = 0;
-  private poolVerts = 0;
-  private poolOwners: (Member | null)[] = [];
+  /** The close-ups of the nearest few, in a mesh of their own on their skin (user's notes of 21.11). */
+  private readonly closeUps: CloseUpPool<Member>;
   /** Positions of the vehicles drawn now, x y z each: what the view test looks at. */
   private readonly drawn: number[] = [];
   private kitSeen: CityKit | null = null;
@@ -106,7 +104,9 @@ class Fleet {
     private readonly name: string,
     /** Its pool of close-ups in `VEHICLE_LOD`: the parked cars' (`high`) or the driving ones' (`driving`). */
     private readonly pool: "high" | "driving",
-  ) {}
+  ) {
+    this.closeUps = new CloseUpPool<Member>(deps.scene, name, deps.glow, (planes) => this.inView(planes));
+  }
 
   has(id: EntityId): boolean {
     return this.members.has(id);
@@ -128,7 +128,7 @@ class Fleet {
       else if (m.shown === "high") high++;
       else if (m.shown === "far") far++;
     }
-    return { driving: this.members.size - parked, parked, near: near + high, high, far, meshes: this.mesh?.isEnabled() ? 1 : 0 };
+    return { driving: this.members.size - parked, parked, near: near + high, high, far, meshes: (this.mesh?.isEnabled() ? 1 : 0) + (this.closeUps.drawn ? 1 : 0) };
   }
 
   spawn(id: EntityId, view: VehicleDescriptor, t: Transform): void {
@@ -188,7 +188,6 @@ class Fleet {
     this.max.set(-Infinity, -Infinity, -Infinity);
     let any = false;
     let wrote = this.releaseHigh(this.closest(eye));
-    let painted = wrote;
     this.drawn.length = 0;
     for (const m of this.members.values()) {
       const pair = m.pair;
@@ -198,9 +197,9 @@ class Fleet {
       const want: Shown = dist > lod.draw ? "none" : dist > lod.near ? "far" : m.shown === "high" || this.wantsHigh.has(m) ? "high" : "near";
       const changed = want !== m.shown;
       if (changed) {
-        if (m.shown === "near") this.fold(m.offset, pair.near.vertexCount, p);
-        if (m.shown === "far") this.fold(m.offset + pair.near.vertexCount, pair.far.vertexCount, p);
-        if (want === "high") painted = this.takeSlot(m) || painted;
+        if (m.shown === "near") foldVertices(this.positions, m.offset, pair.near.vertexCount, p);
+        if (m.shown === "far") foldVertices(this.positions, m.offset + pair.near.vertexCount, pair.far.vertexCount, p);
+        if (want === "high" && pair.high) this.closeUps.take(m, pair.high);
         m.shown = want === "high" && m.slot < 0 ? "near" : want;
         wrote = true;
       }
@@ -209,18 +208,18 @@ class Fleet {
       this.drawn.push(p.x, p.y, p.z);
       if (changed || !m.view.parked) {
         wrote = true;
-        if (m.shown === "high") this.place(pair.high!, this.poolBase + m.slot * this.poolVerts, m.transform);
-        else if (m.shown === "near") this.place(pair.near, m.offset, m.transform);
-        else this.place(pair.far, m.offset + pair.near.vertexCount, m.transform);
+        if (m.shown === "high") this.closeUps.place(m.slot, pair.high!, m.transform);
+        else if (m.shown === "near") placeTemplate(pair.near, this.positions, this.normals, m.offset, m.transform);
+        else placeTemplate(pair.far, this.positions, this.normals, m.offset + pair.near.vertexCount, m.transform);
       }
       this.min.set(Math.min(this.min.x, p.x - PAD), Math.min(this.min.y, p.y - 1), Math.min(this.min.z, p.z - PAD));
       this.max.set(Math.max(this.max.x, p.x + PAD), Math.max(this.max.y, p.y + 7), Math.max(this.max.z, p.z + PAD));
     }
+    this.closeUps.upload(this.min, this.max);
     if (mesh.isEnabled(false) !== any) mesh.setEnabled(any);
     if (!any || !wrote) return;
     mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions, false, false);
     mesh.updateVerticesData(VertexBuffer.NormalKind, this.normals, false, false);
-    if (painted) mesh.updateVerticesData(VertexBuffer.ColorKind, this.colors, false, false);
     mesh.buildBoundingInfo(this.min, this.max);
   }
 
@@ -230,91 +229,29 @@ class Fleet {
   private closest(eye: { x: number; z: number }): ReadonlySet<Member> {
     this.wantsHigh.clear();
     const lod = VEHICLE_LOD[this.deps.quality];
-    if (this.poolOwners.length === 0) return this.wantsHigh;
+    if (this.closeUps.places === 0) return this.wantsHigh;
     const near: [number, Member][] = [];
     for (const m of this.members.values()) {
-      if (m.pair?.high?.vertexCount !== this.poolVerts) continue;
+      if (m.pair?.high?.vertexCount !== this.closeUps.vertexCount) continue;
       const p = m.transform.position;
       const d = Math.hypot(p.x - eye.x, p.z - eye.z);
       if (d <= Math.min(lod.highReach, lod.near)) near.push([d, m]);
     }
     near.sort((a, b) => a[0] - b[0]);
-    for (const [, m] of near.slice(0, this.poolOwners.length)) this.wantsHigh.add(m);
+    for (const [, m] of near.slice(0, this.closeUps.places)) this.wantsHigh.add(m);
     return this.wantsHigh;
   }
 
-  /** Gives back the places of those no longer among the nearest: their close-up folded, their near version drawn again. True when it wrote. */
+  /** Gives back the places of those no longer among the nearest: their close-up folded, their near version drawn again. True when it gave one back. */
   private releaseHigh(keep: ReadonlySet<Member>): boolean {
-    let wrote = false;
-    this.poolOwners.forEach((m, slot) => {
-      if (!m || keep.has(m)) return;
-      this.fold(this.poolBase + slot * this.poolVerts, this.poolVerts, m.transform.position);
-      this.poolOwners[slot] = null;
-      m.slot = -1;
+    let gave = false;
+    for (const [slot, m] of [...this.closeUps.holders()]) {
+      if (!m || keep.has(m)) continue;
+      this.closeUps.release(slot, m.transform.position);
       m.shown = "none";
-      wrote = true;
-    });
-    return wrote;
-  }
-
-  /** A free place of the pool for `m`, painted in its colours; false when none is free. */
-  private takeSlot(m: Member): boolean {
-    const slot = this.poolOwners.indexOf(null);
-    if (slot < 0 || !m.pair?.high) return false;
-    this.poolOwners[slot] = m;
-    m.slot = slot;
-    // Its own near and far versions stay folded while it wears its close-up.
-    this.colors.set(m.pair.high.colors, (this.poolBase + slot * this.poolVerts) * 4);
-    return true;
-  }
-
-  /**
-   * Writes a template turned by the yaw and moved to the transform into the shared buffers; on
-   * Alchemia's ramp down to P-1 its nose tipped to the ramp's grade first (`rampPitch`).
-   */
-  private place(t: VehicleTemplate, offset: number, tr: Transform): void {
-    const c = Math.cos(tr.yaw);
-    const s = Math.sin(tr.yaw);
-    // A car with physics (ADR-0097) brings its own tilt: its nose up is the negative of its pitch.
-    const pitch = tr.tilt ? -tr.tilt.pitch : rampPitch(tr.position.x, tr.position.z, tr.yaw);
-    const roll = tr.tilt?.roll ?? 0;
-    const [cp, sp] = [Math.cos(pitch), Math.sin(pitch)];
-    const [cr, sr] = [Math.cos(roll), Math.sin(roll)];
-    const { x: px, y: py, z: pz } = tr.position;
-    const src = t.positions;
-    const nsrc = t.normals;
-    let o = offset * 3;
-    for (let i = 0; i < src.length; i += 3, o += 3) {
-      // Over to its right about its own z (its right side down), nose up about its own x (its front +z), then its heading about y.
-      const x0 = src[i] as number;
-      const y0 = src[i + 1] as number;
-      const x = x0 * cr + y0 * sr;
-      const yr = y0 * cr - x0 * sr;
-      const y = yr * cp + (src[i + 2] as number) * sp;
-      const z = (src[i + 2] as number) * cp - yr * sp;
-      this.positions[o] = px + x * c + z * s;
-      this.positions[o + 1] = py + y;
-      this.positions[o + 2] = pz - x * s + z * c;
-      const nx0 = nsrc[i] as number;
-      const ny0 = nsrc[i + 1] as number;
-      const nx = nx0 * cr + ny0 * sr;
-      const nyr = ny0 * cr - nx0 * sr;
-      const ny = nyr * cp + (nsrc[i + 2] as number) * sp;
-      const nz = (nsrc[i + 2] as number) * cp - nyr * sp;
-      this.normals[o] = nx * c + nz * s;
-      this.normals[o + 1] = ny;
-      this.normals[o + 2] = -nx * s + nz * c;
+      gave = true;
     }
-  }
-
-  /** Folds vertices into a point, so their triangles draw nothing. */
-  private fold(offset: number, count: number, p: { x: number; y: number; z: number }): void {
-    const end = (offset + count) * 3;
-    for (let o = offset * 3; o < end; o += 3) {
-      this.positions[o] = p.x;
-      this.positions[o + 1] = p.y;
-      this.positions[o + 2] = p.z;
-    }
+    return gave;
   }
 
   /** Lays out the shared buffers for the vehicles there are now: colours, UVs and triangles change only here. */
@@ -333,13 +270,8 @@ class Fleet {
       total += m.pair.near.vertexCount + m.pair.far.vertexCount;
       triangles += m.pair.near.indices.length + m.pair.far.indices.length;
     }
-    // The close-ups' pool after the vehicles' own versions: every place laid out for one close-up.
-    const places = high ? VEHICLE_LOD[this.deps.quality][this.pool] : 0;
-    this.poolBase = total;
-    this.poolVerts = high?.vertexCount ?? 0;
-    this.poolOwners = Array.from({ length: places }, () => null);
-    total += places * this.poolVerts;
-    triangles += places * (high?.indices.length ?? 0);
+    // The close-ups' pool in its own mesh, on the close-up's skin when it has one (else the kit's palette).
+    this.closeUps.layout(high, VEHICLE_LOD[this.deps.quality][this.pool], (high?.skin ? kit.skinMaterial(high.skin) : null) ?? kit.material);
     if (total === 0) {
       this.mesh?.setEnabled(false);
       return;
@@ -348,7 +280,6 @@ class Fleet {
     this.normals = new Float32Array(total * 3);
     const uvs = new Float32Array(total * 2);
     const colors = new Float32Array(total * 4);
-    this.colors = colors;
     const indices = new Uint32Array(triangles);
     let k = 0;
     for (const m of this.members.values()) {
@@ -358,15 +289,9 @@ class Fleet {
         uvs.set(t.uvs, at * 2);
         colors.set(t.colors, at * 4);
         for (const i of t.indices) indices[k++] = i + at;
-        this.fold(at, t.vertexCount, m.transform.position);
+        foldVertices(this.positions, at, t.vertexCount, m.transform.position);
         at += t.vertexCount;
       }
-    }
-    for (let slot = 0; high && slot < places; slot++) {
-      const at = this.poolBase + slot * this.poolVerts;
-      uvs.set(high.uvs, at * 2);
-      colors.set(high.colors, at * 4);
-      for (const i of high.indices) indices[k++] = i + at;
     }
     const mesh = this.mesh ?? this.createMesh(kit);
     mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true, 3);

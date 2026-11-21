@@ -157,7 +157,7 @@ describe("vehicle views with the vehicles' file (ADR-0058 stage 4)", () => {
   const verts = (scene: Scene, name: string) => scene.getMeshByName(name)?.getTotalVertices() ?? 0;
   const at = (x: number, z: number) => ({ position: { x, y: 0, z }, yaw: 0, pitch: 0, speed: 0 });
 
-  it("takes the looks once the props have loaded, the phone's versions on low, still in one mesh", () => {
+  it("takes the looks once the props have loaded, the phone's versions on low, in one mesh (and the close-ups' own while one is shown)", () => {
     const counts: Record<string, number> = {};
     for (const quality of ["high", "low"] as const) {
       const scene = new Scene(new NullEngine());
@@ -168,12 +168,32 @@ describe("vehicle views with the vehicles' file (ADR-0058 stage 4)", () => {
       const before = verts(scene, "parked");
       city.setProps(props);
       views.update();
-      expect(views.stats).toMatchObject({ parked: VEHICLE_MODELS.length, meshes: 1 });
+      expect(views.stats).toMatchObject({ parked: VEHICLE_MODELS.length, meshes: views.stats.high > 0 ? 2 : 1 });
       counts[`${quality}:before`] = before;
       counts[quality] = verts(scene, "parked");
     }
     expect(counts.high).not.toBe(counts["high:before"]);
     expect(counts.low).toBeLessThan(counts.high!);
+  });
+
+  it("draws the close-up whole on its own skin, the original's texture in the kit's code, its paint on every vertex (user's notes of 21.11)", () => {
+    const hi = vehicles.models.get("veh-cyber-hi")!;
+    expect(hi.skin).toBe("veh-cyber");
+    expect(vehicles.skins?.get("veh-cyber")?.color.length).toBeGreaterThan(100_000);
+    expect(vehicles.skins?.get("veh-cyber")?.glow).not.toBeNull();
+    // Its UVs spread over its texture, at 16 bits: not the palette's swatch corners.
+    expect(new Set(Array.from(hi.uvs, (u) => Math.round(u * 1000))).size).toBeGreaterThan(500);
+    const scene = new Scene(new NullEngine());
+    const city = new CityKit(scene, new ToonMaterials(scene), null, kit, { labels: false });
+    city.setProps(props);
+    const views = new VehicleViews({ scene, kit: () => city, glow: null, eye: () => ({ x: 0, z: 0 }), quality: "high" });
+    for (let i = 0; i < 4; i++) views.spawn(i + 1, { kind: "vehicle", model: "sedan", tint: 7 + i, parked: true }, at(0, 5 + i * 3));
+    views.update();
+    expect(views.stats.high).toBeGreaterThan(0);
+    const closeUps = scene.getMeshByName("parked-hi")!;
+    expect(closeUps.isEnabled()).toBe(true);
+    expect(closeUps.material).toBe(city.skinMaterial("veh-cyber"));
+    expect(closeUps.material).not.toBe(city.material);
   });
 
   it("puts the close-up on the nearest few only, as many as the pool's places, none on phones; a car leaving gives its place to the next", () => {

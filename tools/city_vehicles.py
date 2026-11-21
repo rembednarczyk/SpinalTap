@@ -34,6 +34,7 @@ from city_props import material_image, nearest_neon, texel_mean
 from city_street import box_tris
 from city_street_e2 import drop_specks, is_ccby
 from city_vehicle_roles import settle_roles
+from city_vehicle_skin import fitted_normals, skin_images, skin_model
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KIT = os.path.join(HERE, '..', 'packages', 'app', 'public', 'city', 'city-kit.glb')
@@ -62,9 +63,10 @@ DIRTY_BANDS = [(0.12, 'tyre'), (0.3, 'trim'), (0.45, 'metal'), (9, 'paint')]
 #   roof: role of the up-facing triangles of the top tenth; lengthen: (z0, z1) shares of the length stretched
 #   proportional: its height scaled as its length (not stretched to the body's)
 #   settle: its roles settled over its mesh (dark rims, no specks; `city_vehicle_roles`)
+#   skin: its close-up `-hi` whole on its own UVs and texture (`city_vehicle_skin`, user's notes of 21.11)
 VEHICLES = [
     # Every vehicle of the street but the trolleybus wears it (decision of the user of 19.11), the nearest few in its close-up `-hi`: the whole of 4d_Bob's car, 11.4 thousand triangles (the user's decision of 21.11: the car is in plain view, the full 12 thousand).
-    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 12000, 'settle': True}),
+    ('veh-cyber', 'hatchback', CYBER, 180, {'proportional': True, 'bands': CYBER_BANDS, 'glass': (0.6, 0.85, (-0.3, 0.3)), 'high': 12000, 'settle': True, 'skin': True}),
     ('veh-dirty', 'sedan', DIRTY, 0, {'proportional': True, 'bands': DIRTY_BANDS, 'materials': {'large_car_glass_mat': 'glass-dark', 'large_car_wheels_mat': 'tyre'}}),
     ('veh-suv', 'van', (KENNEY, 'x/Models/GLB format/suv.glb'), 0, {'kenney': True}),
     ('veh-pickup', 'van', (KENNEY, 'x/Models/GLB format/truck.glb'), 0, {'kenney': True}),
@@ -93,9 +95,10 @@ def band_role(v, bands):
     return next(r for top, r in bands if v < top)
 
 
-def textured_roles(path, opts):
-    """Roles of a textured glTF car: emissive texels as neon, materials by name, the rest by value bands."""
-    P, _, mat, uv, j, blob = scene_triangles(path)
+def textured_roles(path, opts, tex=None):
+    """Roles of a textured glTF car: emissive texels as neon, materials by name, the rest by value bands.
+    With `tex` (a dict) it also gets the normals, the UVs and its first material's images (the skin's)."""
+    P, N, mat, uv, j, blob = scene_triangles(path)
     mats = j.get('materials', [])
     folder = os.path.dirname(path)
     images = {}
@@ -106,6 +109,8 @@ def textured_roles(path, opts):
         if mi not in images:
             images[mi] = (material_image(j, blob, m, folder, 'base'), material_image(j, blob, m, folder, 'emissive'))
         base, em = images[mi]
+        if tex is not None and 'base' not in tex:
+            tex.update(base=base, emissive=em)
         named = opts.get('materials', {}).get(m.get('name', ''))
         bad = np.isnan(uv[t]).any()
         if em is not None and not bad and texel_mean(em, uv[t]).max() > 0.2:
@@ -123,6 +128,8 @@ def textured_roles(path, opts):
             roles.append('neon-amber')
         else:
             roles.append(band_role(v, opts['bands']))
+    if tex is not None:
+        tex.update(N=N, uv=uv)
     return P, roles
 
 
@@ -296,7 +303,9 @@ def kit_car(key):
     return turn(pos[ind], 180), roles
 
 
-def source(folder, key, src, yaw, body, opts):
+def source(folder, key, src, yaw, body, opts, tex=None):
+    """The fitted model and its roles; for a textured one with `tex` (a dict), its turned and fitted normals and
+    its UVs and images too (the skin of its close-up, `city_vehicle_skin`)."""
     path = os.path.join(folder, src[0], src[1])
     if src[1].endswith('.obj'):
         P, mats = obj_polygons(path)
@@ -304,10 +313,13 @@ def source(folder, key, src, yaw, body, opts):
     elif opts.get('kenney'):
         P, roles = kenney_roles(path)
     else:
-        P, roles = textured_roles(path, opts)
+        P, roles = textured_roles(path, opts, tex)
         if opts.get('settle'):
             roles = settle_roles(P, roles, opts.get('glass'))
     P = turn(P, yaw)
+    if tex is not None and 'N' in tex:
+        tex['N'] = turn(tex['N'], yaw)
+        tex['turned'] = P
     if 'lengthen' in opts:
         w, _, l = SIZE[body]
         flat = P.reshape(-1, 3)
@@ -367,9 +379,17 @@ def kept_models(path, keys):
         prim = j['meshes'][n['mesh']]['primitives'][0]
         a = prim['attributes']
         out.append({'key': n['name'], 'pos': accessor(j, blob, a['POSITION']).astype(np.float32), 'nor': accessor(j, blob, a['NORMAL']),
-                    'uv': accessor(j, blob, a['TEXCOORD_0']), 'ind': accessor(j, blob, prim['indices']).reshape(-1).astype(np.uint32)})
+                    'uv': accessor(j, blob, a['TEXCOORD_0']), 'ind': accessor(j, blob, prim['indices']).reshape(-1).astype(np.uint32),
+                    'uv16': j['accessors'][a['TEXCOORD_0']]['componentType'] == 5123})
         extras[n['name']] = n['extras']
-    return out, extras
+    # Their skins too (`city_vehicle_skin`): the images named after them.
+    skins = []
+    for im in j.get('images', []):
+        name = im.get('name', '')
+        if name.split(':')[-1] in keys and name.startswith(('skin:', 'skin-glow:')):
+            v = j['bufferViews'][im['bufferView']]
+            skins.append((name, bytes(blob[v.get('byteOffset', 0): v.get('byteOffset', 0) + v['byteLength']])))
+    return out, extras, skins
 
 
 def build_vehicles(folder, out_dir):
@@ -380,7 +400,7 @@ def build_vehicles(folder, out_dir):
         if not os.path.exists(dst):
             raise SystemExit(f'no source for {missing} and no {dst} to keep them from')
         print('kept from the file, their source missing:', ', '.join(missing))
-        kept, kept_extras = kept_models(dst, set(missing))
+        kept, kept_extras, kept_skins = kept_models(dst, set(missing))
         out.extend(kept)
         extras.update(kept_extras)
 
@@ -396,13 +416,24 @@ def build_vehicles(folder, out_dir):
         extras[key] = {'size': size, 'styles': styles, **({'credit': credit} if credit else {})}
         print(f"{key:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
 
+    images = list(kept_skins) if missing else []
     for key, body, src, yaw, opts in VEHICLES:
         if key in missing:
             continue
-        P, roles = source(folder, key, src, yaw, body, opts)
+        tex = {} if opts.get('skin') else None
+        P, roles = source(folder, key, src, yaw, body, opts, tex)
         credit = src[0] if is_ccby(src[0]) else None
         high = opts.get('high')
         near = opts.get('near', NEAR_TRIS)
+        if tex:
+            # The close-up whole, on its own UVs and texture (`city_vehicle_skin`): no swatches, no simplification.
+            m = skin_model(f'{key}-hi', P, fitted_normals(tex['N'], tex['turned'], P), tex['uv'])
+            flat = P.reshape(-1, 3)
+            out.append(m)
+            extras[m['key']] = {'size': [round(float(x), 3) for x in np.ptp(flat, 0)], 'styles': ['veh-hi'], 'skin': key, **({'credit': credit} if credit else {})}
+            images += list(zip((f'skin:{key}', f'skin-glow:{key}'), skin_images(tex['base'], tex['emissive'], tex['uv'], roles)))
+            print(f"{m['key']:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} skin {key}")
+            high = None
         for k, Q, r in lods(key, P, roles, high, near):
             style = f'veh-{body}' if k == key else 'veh-hi' if k.endswith('-hi') else 'veh-lite' if k.endswith('-lite') else 'veh-far'
             emit(k, body, Q, r, [style], credit, int(high * MAX_OVER) if k.endswith('-hi') else max(MAX_TRIS, int(near * MAX_OVER)) if k == key else MAX_TRIS)
@@ -412,5 +443,5 @@ def build_vehicles(folder, out_dir):
         for k, Q, r in lods(key, P, roles)[1:]:
             emit(k, body, Q, r, ['veh-lite' if k.endswith('-lite') else 'veh-far'], None)
     albedo, glow = palette_images()
-    write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
+    write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID, images)
     print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))
