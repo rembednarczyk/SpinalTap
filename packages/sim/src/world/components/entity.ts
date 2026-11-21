@@ -1,6 +1,7 @@
 import type { ActivityId, CarPose, EnemyTypeId, EntityId, FactionId, Health, LevelBand, Slope, StyleKind, Vec3, ViewDescriptor } from "@seki/core";
 import type { CarState } from "../vehicle/state";
 import type { EjectedDriver } from "../vehicle/ejected-driver";
+import type { Struck } from "../vehicle/struck";
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
@@ -156,6 +157,8 @@ export interface Entity {
   carPose?: CarPose;
   /** A taken street car's driver, pulled out, thrown down and running off (ADR-0097). Unkeyed, not saved. */
   ejected?: EjectedDriver;
+  /** Thrown onto the road by a car and getting up (ADR-0097): held in place meanwhile. Not saved. */
+  struck?: Struck;
   /** A car with its physics (ADR-0097): the player's, or one she left. Not saved. */
   car?: CarState;
 }

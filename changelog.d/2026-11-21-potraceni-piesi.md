@@ -1,0 +1,1 @@
+- Potrącony autem przechodzień przelatuje na jezdnię, chwilę leży i wstaje.

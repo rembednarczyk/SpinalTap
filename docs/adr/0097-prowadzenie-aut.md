@@ -151,3 +151,13 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Bohaterka czeka przy drzwiach 1,5 s, aż kierowca wyleci, potem wsiada (cały przejęcie ok. 4,2 s).
 - Test sesji: kierowca bez klucza przechodzi fazy w kolejności, odbiega dalej niż 25 m i znika.
 - Zrzuty 21.11 pokazały, że auto z ruchu wjeżdża w stojące auto gracza: ruch uliczny nie widzi aut z fizyką jako przeszkody. Do poprawy osobno.
+
+## Potrąceni piesi (21.11, klip użytkownika „Hit By Car”)
+- Pieszy uderzony autem szybciej niż 4 m/s (napaść, zdarzenie `VehicleRanOver`, jak dotąd) zostaje rzucony na jezdnię wzdłuż kierunku jazdy auta. Leży 0,8 s, wstaje w miejscu, gdzie upadł (ok. 1,6 m dalej), i wraca do własnej SI (zwykle ucieka przed przestępstwem). Wspólny moduł `struck.ts` prowadzi ten sam ciąg dla kierowcy wyrzuconego z przejętego auta.
+- Do kogo to nie dotyczy:
+  - uzbrojonych wrogów (`enemy`): dostają tylko pchnięcie i walczą dalej, bo SI strzelca nie umie przerwać ataku leżąc;
+  - przechodniów tła: schodzą z drogi bez przestępstwa, jak dotąd;
+  - kogoś, kto już leży: nie zostaje uderzony drugi raz.
+- W trakcie postać jest przypięta do miejsca. System pojazdu działa po ruchu i cofa to, co w kroku przesunęła jej SI.
+- Odłożone: obrażenia i śmierć pieszych (ścieżka obrażeń i umierania SI), postacie tłumu rysowane bez rigu (bez klipu, tylko przypięte).
+- Test sesji: auto na pełnym gazie wjeżdża w pieszego, ten zostaje rzucony, jest przypięty, przechodzi przez wstawanie i staje 1,2–2,2 m od miejsca, w którym upadł.

@@ -4,33 +4,26 @@ import type { Entity } from "../components";
 import type { SimContext } from "../context";
 import { solidIndexOf } from "../solid-index";
 import { circleTouches, pushCircleOut } from "../solids";
+import { stepStruck, strike } from "./struck";
 
 /*
  * The driver of a street car she takes (ADR-0097, the user's clips of 21.11): pulled out of the
- * seat (“Removing Driver”), thrown onto the road (“Hit By Car” from the blow on), down a moment,
- * back on the feet (“hard landing” from its crouch) and off at a run, away from the car, until out
- * of the way. A transient figure: unkeyed, never saved, nobody's target.
+ * seat (“Removing Driver”), thrown onto the road and back on its feet as anyone a car knocks
+ * down (`struck.ts`), and off at a run, away from the car, until out of the way. A transient figure: unkeyed, never saved, nobody's target.
  */
 
 /** Ids of the ejected drivers: past the player's cars (`PLAYER_CAR_ID_BASE`). */
 export const DRIVER_ID_BASE = 3_995_000;
 
-/** The spans of the clips played (seconds of clip) and their pace; `down` and `run` in seconds. */
+/** The span of the pull's clip played (seconds of clip) and its pace; the run in seconds. */
 const PULL = { from: 0, to: 3.6, rate: 1.6 } as const;
-const THROW = { from: 2.6, to: 4.8, rate: 1 } as const;
-const GETUP = { from: 0.9, to: 2, rate: 1 } as const;
-const DOWN = 0.8;
 const RUN = { speed: 5.5, seconds: 8 } as const;
-/**
- * Where the clips carry the hips (from the clip table, `body-clips.generated.ts`, leg lengths of
- * 0.86 m): pulled out to the car's left by 0.9 leg; thrown on by 1.9 legs and back along the car by 0.28.
- */
+/** Where the pull carries the hips (the clip table, leg lengths of 0.86 m): out to the car's left by 0.9 leg. */
 const PULLED_OUT = 0.77;
-const THROWN_OUT = 1.63;
-const THROWN_BACK = 0.24;
 const RADIUS = 0.38;
 
-type Phase = "pulled" | "thrown" | "down" | "getup" | "run";
+/** Pulled out, then on the road (`struck`), then off at a run. */
+type Phase = "pulled" | "down" | "run";
 
 /** A driver out of a taken car, the clip time of its phase and the car it came from. */
 export interface EjectedDriver {
@@ -65,61 +58,32 @@ export const ejectDriver = (ctx: SimContext, id: EntityId, seat: Vec3, yaw: numb
   });
 };
 
-/** The pose the renderer lays for the driver now (`Transform.car`), null running. */
-const poseOf = (d: EjectedDriver): CarPose | null => {
-  const ground = { x: d.spot.x, y: d.floor, z: d.spot.z };
-  switch (d.phase) {
-    case "pulled":
-      return { act: "pulled", t: d.t, yaw: d.yaw, seat: d.spot, floor: d.floor };
-    case "thrown":
-    case "down":
-      // Thrown away from the car: the clip throws to the figure's right, so it faces the car's back.
-      return { act: "thrown", t: d.phase === "down" ? THROW.to : d.t, yaw: d.yaw + Math.PI, seat: ground, floor: d.floor };
-    case "getup":
-      return { act: "getup", t: d.t, yaw: d.yaw + Math.PI, seat: ground, floor: d.floor };
-    case "run":
-      return null;
-  }
-};
-
 /** Plays the driver on by `dt`; true once it is out of the way (to be removed). */
 const stepDriver = (ctx: SimContext, e: Entity & { ejected: EjectedDriver }, dt: number): boolean => {
   const d = e.ejected;
   const left = leftOf(d.yaw);
   if (d.phase === "pulled") {
     d.t += dt * PULL.rate;
+    e.carPose = { act: "pulled", t: d.t, yaw: d.yaw, seat: d.spot, floor: d.floor } satisfies CarPose;
+    e.position = { x: d.spot.x, y: d.floor, z: d.spot.z };
+    e.prevPosition = { ...e.position };
     if (d.t >= PULL.to) {
-      d.phase = "thrown";
-      d.t = THROW.from;
-      d.spot = { x: d.spot.x + left.x * PULLED_OUT, y: d.floor, z: d.spot.z + left.z * PULLED_OUT };
+      // Out of the seat by the door, and thrown onto the road away from the car.
+      e.position = { x: d.spot.x + left.x * PULLED_OUT, y: d.floor, z: d.spot.z + left.z * PULLED_OUT };
+      strike(ctx.world, e, left);
+      [d.phase, d.t] = ["down", 0];
     }
-  } else if (d.phase === "thrown") {
-    d.t += dt * THROW.rate;
-    if (d.t >= THROW.to) [d.phase, d.t] = ["down", 0];
-  } else if (d.phase === "down") {
-    d.t += dt;
-    if (d.t >= DOWN) {
-      // The figure lies where the throw left it: up from there.
-      const back = { x: -Math.sin(d.yaw), z: -Math.cos(d.yaw) };
-      d.spot = { x: d.spot.x + left.x * THROWN_OUT + back.x * THROWN_BACK, y: d.floor, z: d.spot.z + left.z * THROWN_OUT + back.z * THROWN_BACK };
-      [d.phase, d.t] = ["getup", GETUP.from];
-    }
-  } else if (d.phase === "getup") {
-    d.t += dt * GETUP.rate;
-    if (d.t >= GETUP.to) [d.phase, d.t] = ["run", 0];
-  } else {
-    // A way clear of walls, picked when he sets off and once a second after.
-    if (d.t === 0 || Math.floor(d.t) !== Math.floor(d.t + dt)) d.away = wayOut(ctx, e.position, d.yaw);
-    d.t += dt;
-    run(ctx, e, d.away ?? left, dt);
-    return d.t >= RUN.seconds;
+    return false;
   }
-  const pose = poseOf(d);
-  e.position = { x: d.spot.x, y: d.floor, z: d.spot.z };
-  e.prevPosition = { ...e.position };
-  e.velocity = { x: 0, y: 0, z: 0 };
-  if (pose) e.carPose = pose;
-  return false;
+  if (d.phase === "down") {
+    if (!stepStruck(ctx.world, e, dt)) return false;
+    [d.phase, d.t] = ["run", 0];
+  }
+  // A way clear of walls, picked when he sets off and once a second after.
+  if (d.t === 0 || Math.floor(d.t) !== Math.floor(d.t + dt)) d.away = wayOut(ctx, e.position, d.yaw);
+  d.t += dt;
+  run(ctx, e, d.away ?? left, dt);
+  return d.t >= RUN.seconds;
 };
 
 /** True when nothing of body height stands on the line `dist` metres from `from` along `dir`. */

@@ -189,4 +189,36 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     // Out of the way, he leaves the world: nothing of him in a save.
     expect(driver()).toBeUndefined();
   });
+
+  it("throws someone it runs into onto the road, holds them there, and they get up where they fell", () => {
+    const { sim, mine } = takenAndStopped();
+    const car = mine();
+    const [fx, fz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+    // Someone standing 12 m ahead of the middle; full throttle into them.
+    const at = { x: car.position.x + fx * 12, y: car.position.y, z: car.position.z + fz * 12 };
+    const walker = sim.world.add({ id: 4_990_100, position: { ...at }, prevPosition: { ...at }, yaw: 0, prevYaw: 0, pitch: 0, velocity: { x: 0, y: 0, z: 0 }, body: { radius: 0.38, height: 1.8 }, view: { kind: "npc", preset: "civilian", look: 0 } });
+    const ranOver: unknown[] = [];
+    sim.bus.on("VehicleRanOver", (e) => ranOver.push(e));
+    for (let i = 0; i < 300 && !walker.struck; i++) sim.step(press({ moveZ: 1 }));
+    expect(walker.struck).toBeDefined();
+    expect(ranOver).toHaveLength(1);
+    sim.step();
+    expect(walker.carPose?.act).toBe("thrown");
+    const down = { ...walker.position };
+    // Pinned while down, whatever the step does.
+    for (let i = 0; i < 60; i++) sim.step();
+    expect(Math.hypot(walker.position.x - down.x, walker.position.z - down.z)).toBeLessThan(1e-9);
+    const acts = new Set<string>();
+    for (let i = 0; i < 60 * 6 && walker.struck; i++) {
+      sim.step();
+      acts.add(walker.carPose?.act ?? "up");
+    }
+    expect(walker.struck).toBeUndefined();
+    expect(walker.carPose).toBeUndefined();
+    expect([...acts]).toContain("getup");
+    // Up where the throw left them: some 1.6 m on from where they were hit.
+    const moved = Math.hypot(walker.position.x - down.x, walker.position.z - down.z);
+    expect(moved).toBeGreaterThan(1.2);
+    expect(moved).toBeLessThan(2.2);
+  });
 });

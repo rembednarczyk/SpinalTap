@@ -5,6 +5,7 @@ import { type V3, attitude, toWorld, v3 } from "../world/vehicle/frame";
 import { type CarState, forwardSpeed, newCar } from "../world/vehicle/state";
 import { type CarActState, HELD, JACK_WAIT, seatInWorld, startAct, stepAct } from "../world/vehicle/car-act";
 import { DRIVER_ID_BASE, ejectDriver, stepEjectedDrivers } from "../world/vehicle/ejected-driver";
+import { stepStruckBodies } from "../world/vehicle/struck";
 import { driveCar, wake } from "../world/vehicle/step";
 import { collideBodies, collideSolids, collideTraffic, placeEntity, worldGround } from "../world/vehicle/world-car";
 import { offend } from "../world/street";
@@ -166,6 +167,7 @@ export const createVehicleSystem = (): System => {
     name: "vehicle",
     run(ctx) {
       stepEjectedDrivers(ctx);
+      stepStruckBodies(ctx);
       const player = ctx.world.with("player").first ?? null;
       if (!player || ctx.session.gameOver) return;
       const driving = ctx.session.driving !== null ? ((ctx.world.with("car").entities.find((c) => c.id === ctx.session.driving) as Car | undefined) ?? null) : null;
