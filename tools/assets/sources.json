@@ -525,7 +525,7 @@
       "files": [
         { "path": "cyberpunk_animated_japanese_led_neon_sign.glb", "url": "https://drive.usercontent.google.com/download?id=1SaE5hegjUeuH3hOkWHZRIaKNFoiOXDWX&export=download&confirm=t", "sha256": "2751017216b673934e43bfc94032c0612f696c0741e00122b789f5ba0e727845" }
       ],
-      "used": []
+      "used": ["ex-blade-led"]
     },
     {
       "id": "sketchfab-cyberpunk-robot",
@@ -707,7 +707,7 @@
       "files": [
         { "path": "taiwan_style_signboard_lowpoly.glb", "url": "https://drive.usercontent.google.com/download?id=12dcgUO6vGXmSkNyfUVz-HiDD6WPYoij3&export=download&confirm=t", "sha256": "6461e2a746dcecc7ed4ddfd2fcce7e3e712c9ab9d82ec76af70d9129fc10d4ae" }
       ],
-      "used": []
+      "used": ["ex-blade-frame", "ex-blade-narrow"]
     },
     {
       "id": "game-icons-lorc",

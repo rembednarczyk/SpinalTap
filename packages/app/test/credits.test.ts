@@ -48,6 +48,7 @@ describe("credits (ADR-0063)", () => {
       "sketchfab-cyberpunk-car",
       "sketchfab-cyberpunk-doors-and-windows",
       "sketchfab-cyberpunk-drone",
+      "sketchfab-cyberpunk-led-neon-sign",
       "sketchfab-cyberpunk-scifi-door-3",
       "sketchfab-dirty-car",
       "sketchfab-electric-pole",
@@ -64,6 +65,7 @@ describe("credits (ADR-0063)", () => {
       "sketchfab-scifi-kiosk",
       "sketchfab-shipping-container",
       "sketchfab-street-asset-pack",
+      "sketchfab-taiwan-signboard",
       "sketchfab-vending-machine",
     ]);
     for (const { f, id } of found) {

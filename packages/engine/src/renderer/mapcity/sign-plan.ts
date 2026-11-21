@@ -1,9 +1,9 @@
-import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
+import { type BladeSpot, hasShopSigns, housingBottom, placeBlade, signStream } from "./blade-housings";
 import { hushedOnWall, quietStretches } from "./remembrance-clear";
-import { clearSpotFrom, clearStretches, fitFlatSign, wallNear } from "./sign-room";
+import { clearStretches, fitFlatSign, wallNear } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 
 /**
@@ -81,20 +81,17 @@ export const signReflection = (sink: MeshSink, w: Wall, u: number, ground: SignG
   quadUv(sink, [lay(u - width / 2, 0.15), lay(u + width / 2, 0.15), lay(u + width / 2, reach), lay(u - width / 2, reach)], { x: 0, y: 1, z: 0 }, color, UV, [seed, MAP_SIGN_KIND.reflection]);
 };
 
-const BLADE_HEIGHT = 2.4;
-/** How far the blade sign reaches out from the wall, from and to (metres). */
-const BLADE_OUT = [0.25, 1.0] as const;
-
-/** A blade sign sticking out of the wall at `u`: two faces back to back, both readable. */
-const blade = (sink: MeshSink, w: Wall, u: number, y: number, cell: number, color: Rgba): void => {
+/** A blade sign: two faces back to back on its housing's panel, both readable (ADR-0096 rule 5). */
+const blade = (sink: MeshSink, b: BladeSpot, color: Rgba): void => {
+  const w = b.wall;
   const dx = (w.b.x - w.a.x) / w.length;
   const dz = (w.b.z - w.a.z) / w.length;
-  const p = (out: number, yy: number, side: number): Vec => ({ x: w.a.x + dx * (u + side * 0.02) + w.nx * out, y: yy, z: w.a.z + dz * (u + side * 0.02) + w.nz * out });
-  const h = BLADE_HEIGHT;
-  const [o0, o1] = BLADE_OUT;
-  const corners = (side: number) => [p(o0, y - h / 2, side), p(o1, y - h / 2, side), p(o1, y + h / 2, side), p(o0, y + h / 2, side)] as const;
-  quadUv(sink, corners(1), { x: dx, y: 0, z: dz }, color, UV_MIRROR, [cell, MAP_SIGN_KIND.blade]);
-  quadUv(sink, corners(-1), { x: -dx, y: 0, z: -dz }, color, UV, [cell, MAP_SIGN_KIND.blade]);
+  const { panel, face } = b.housing;
+  const bottom = housingBottom(b.housing, b.y);
+  const p = (out: number, yy: number, side: number): Vec => ({ x: w.a.x + dx * (b.u + side * face) + w.nx * out, y: yy, z: w.a.z + dz * (b.u + side * face) + w.nz * out });
+  const corners = (side: number) => [p(panel.out0, bottom + panel.y0, side), p(panel.out1, bottom + panel.y0, side), p(panel.out1, bottom + panel.y1, side), p(panel.out0, bottom + panel.y1, side)] as const;
+  quadUv(sink, corners(1), { x: dx, y: 0, z: dz }, color, UV_MIRROR, [b.cell, MAP_SIGN_KIND.blade]);
+  quadUv(sink, corners(-1), { x: -dx, y: 0, z: -dz }, color, UV, [b.cell, MAP_SIGN_KIND.blade]);
 };
 
 const streetWalls = (f: FacadeFrame): Wall[] =>
@@ -171,36 +168,61 @@ export const shopBoardWidth = (w: Wall): number => Math.min(w.length * 0.55, 7);
 /** Height of the shop board on a street wall, centred 0.45 m under the ground floor's top. */
 export const shopBoardHeight = (w: Wall): number => Math.min(Math.max(shopBoardWidth(w) / 4, 0.6), 1.3);
 
-/** Shop boards, blades and their reflections on the street walls. */
-const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: SignGround): void => {
-  const walls = streetWalls(f).slice(0, f.style.signs);
-  const groundY = f.b.foot + 0.16;
-  for (const w of walls) {
+/** A shop board on a street wall, as drawn: its place, size, tint, atlas cell and reflection's seed. */
+interface ShopBoard {
+  readonly wall: Wall;
+  readonly u: number;
+  readonly width: number;
+  readonly height: number;
+  readonly color: string;
+  readonly cell: number;
+  readonly seed: number;
+}
+
+/**
+ * The atlas's shop boards and blades of a building, from the signs' stream in its order (each wall:
+ * the board's tint and place, its cell and seed on a shopfront, then a blade's chance, end, tint,
+ * cell and seed): `planBuildingSigns` draws them, the facade hangs the blades' housings (`shopBlades`).
+ */
+export const shopSignPlan = (f: FacadeFrame, rand: () => number): { boards: ShopBoard[]; blades: BladeSpot[] } => {
+  const boards: ShopBoard[] = [];
+  const blades: BladeSpot[] = [];
+  for (const w of streetWalls(f).slice(0, f.style.signs)) {
     const color = NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88";
     const width = shopBoardWidth(w);
-    const h = shopBoardHeight(w);
     const u = width / 2 + 0.5 + rand() * Math.max(w.length - width - 1, 0);
     if (f.style.shopfront) {
       const cell = Math.floor(rand() * MAP_SIGN_BOARDS.length);
-      const seed = rand();
-      // By a place of remembrance the board is left out, its draws kept, so the blade stays as it was (G-943).
-      if (!hushedOnWall(f.b.remembrance, w, u - width / 2, u + width / 2, 0.1)) {
-        flatOnWall(sink, w, u, f.b.base + f.ground - 0.45, 0.1, width, h, signTint(color, 1), [cell, MAP_SIGN_KIND.board]);
-        signReflection(sink, w, u, ground, groundY, width * 0.9, 6, signTint(color, 0.8), seed);
-      }
+      boards.push({ wall: w, u, width, height: shopBoardHeight(w), color, cell, seed: rand() });
     }
     if (rand() < 0.6) {
-      const end = rand() < 0.5 ? 0.9 : w.length - 0.9;
-      const bc = signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
+      const end = rand();
+      const tint = Math.floor(rand() * NEON.length);
       const cell = Math.floor(rand() * MAP_SIGN_BLADES.length);
-      const seed = rand();
-      const y = f.b.base + f.ground + 1.7;
-      // Off the end where a neighbour stands out in front of the wall (G-157), or none.
-      const u = clearSpotFrom(f, w, end, w.length - end, BLADE_OUT[0], BLADE_OUT[1], y - BLADE_HEIGHT / 2);
-      if (u === null || hushedOnWall(f.b.remembrance, w, u - 0.02, u + 0.02, BLADE_OUT[0], BLADE_OUT[1])) continue;
-      blade(sink, w, u, y, cell, bc);
-      signReflection(sink, w, u, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], seed);
+      const spot = placeBlade(f, w, { end, color: tint, cell, seed: rand() });
+      if (spot) blades.push(spot);
     }
+  }
+  return { boards, blades };
+};
+
+/** The blades of a building's shop signs, for their housings on the near facade. */
+export const shopBlades = (f: FacadeFrame): readonly BladeSpot[] => (hasShopSigns(f) ? shopSignPlan(f, signStream(f)).blades : []);
+
+/** Shop boards, blades and their reflections on the street walls. */
+const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: SignGround): void => {
+  const plan = shopSignPlan(f, rand);
+  const groundY = f.b.foot + 0.16;
+  for (const b of plan.boards) {
+    // By a place of remembrance the board is left out (G-943).
+    if (hushedOnWall(f.b.remembrance, b.wall, b.u - b.width / 2, b.u + b.width / 2, 0.1)) continue;
+    flatOnWall(sink, b.wall, b.u, f.b.base + f.ground - 0.45, 0.1, b.width, b.height, signTint(b.color, 1), [b.cell, MAP_SIGN_KIND.board]);
+    signReflection(sink, b.wall, b.u, ground, groundY, b.width * 0.9, 6, signTint(b.color, 0.8), b.seed);
+  }
+  for (const b of plan.blades) {
+    const bc = signTint(NEON[b.color] ?? "#00e5ff", 1);
+    blade(sink, b, bc);
+    signReflection(sink, b.wall, b.u, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], b.seed);
   }
 };
 
@@ -249,11 +271,11 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
  * `ground` is where the neon's streaks lie (without it, the outline's lowest ground).
  */
 export const planBuildingSigns = (sink: MeshSink, f: FacadeFrame, nameSlot: (name: string) => number | null, ground: SignGround = () => null): void => {
-  const rand = prng((f.b.look ^ 0x5191) >>> 0);
+  const rand = signStream(f);
   // A room or a gate the game cut into the building (ADR-0045) carries the game's own sign there.
   if (f.b.bracketSigns) bracketSigns(sink, f, ground);
   // The map's own venues (ADR-0064 stage 4) sign the building instead of the atlas's boards (`planVenueSigns`).
-  else if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0) && !f.b.venues?.length) shopSigns(sink, f, rand, ground);
+  else if (hasShopSigns(f)) shopSigns(sink, f, rand, ground);
   if (f.style.neonTrim && f.style.cornice) tubes(sink, f, f.style.neonTrim);
   holos(sink, f, rand);
   if (f.b.name) {
