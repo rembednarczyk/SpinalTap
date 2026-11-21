@@ -183,7 +183,7 @@ const turret = (sink: MeshSink, f: LandmarkFrame, c: P2, face0: Wall, spec: Cast
     if (Math.cos(am) * face0.nx + Math.sin(am) * face0.nz < 0.3) continue;
     const fa = { x: c.x + Math.cos(a0) * r, z: c.z + Math.sin(a0) * r };
     const fb = { x: c.x + Math.cos(a1) * r, z: c.z + Math.sin(a1) * r };
-    const facet: Wall = { a: fb, b: fa, length: Math.hypot(fb.x - fa.x, fb.z - fa.z), nx: Math.cos(am), nz: Math.sin(am), blind: false, coveredTo: -Infinity, bay: 0 };
+    const facet: Wall = { a: fb, b: fa, length: Math.hypot(fb.x - fa.x, fb.z - fa.z), nx: Math.cos(am), nz: Math.sin(am), blind: false, coveredTo: -Infinity, hiddenTo: -Infinity, bay: 0 };
     for (const [y0, y1] of [
       [walk - 4.6, walk - 3],
       [walk + 0.4, walk + 1.6],
