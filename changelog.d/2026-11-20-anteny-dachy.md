@@ -1,0 +1,1 @@
+- Na kilkunastu dużych dachach nadbudów stoją anteny satelitarne na pomostach, przy krawędzi dachu od ulicy i czaszą do ulicy, tak że widać je z chodnika.
