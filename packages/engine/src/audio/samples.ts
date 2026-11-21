@@ -25,11 +25,20 @@ export interface RainLoop {
   readonly synthLevel?: number;
 }
 
+/** The recorded engine loop of the car she drives (ADR-0097). */
+export interface EngineLoopSpec {
+  readonly url: string;
+  /** Linear gain at full throttle (default 1). */
+  readonly gain?: number;
+}
+
 /** Sound manifest handed over by the application (ADR-0013, addendum). */
 export interface AudioSampleManifest {
   readonly cues?: Partial<Readonly<Record<AudioCue, SampleSet>>>;
   readonly footsteps?: SampleSet;
   readonly rain?: RainLoop;
+  /** The engine of the car she drives (ADR-0097): one loop pitched with the revs. */
+  readonly engine?: EngineLoopSpec;
 }
 
 /** Every URL a manifest references, without duplicates. */
@@ -38,6 +47,7 @@ export const manifestUrls = (m: AudioSampleManifest): string[] => {
   for (const set of Object.values(m.cues ?? {})) for (const u of set?.urls ?? []) out.add(u);
   for (const u of m.footsteps?.urls ?? []) out.add(u);
   if (m.rain) out.add(m.rain.url);
+  if (m.engine) out.add(m.engine.url);
   return [...out];
 };
 

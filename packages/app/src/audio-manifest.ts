@@ -71,10 +71,17 @@ const SOUNDS = {
     // W-3 (ADR-0082): the charge's clamp over the synth's arming beeps, the alarm's two-tone klaxon, one wail of the siren.
     "charge-plant": { urls: ["charge-clamp-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.35, layerSynth: true },
     alarm: { urls: ["alarm-klaxon-000.ogg"], gain: 0.35, pitch: 0, send: 0.6 },
+    // Cars (ADR-0050, ADR-0097): a real horn for the street's and her own, her car's doors and its engine started and stopped.
+    horn: { urls: ["car-horn-000.ogg"], gain: 0.4, pitch: 0.03, send: 0.45 },
+    "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
+    "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
+    "engine-start": { urls: ["engine-start-000.ogg"], gain: 0.45, pitch: 0.02, send: 0.15 },
+    "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },
+  engine: { url: "engine-loop-000.ogg", gain: 0.35 },
 } as const satisfies AudioSampleManifest;
 
 const resolveSet = (set: SampleSet, base: string): SampleSet => ({ ...set, urls: set.urls.map((u) => new URL(u, base).href) });
@@ -87,6 +94,7 @@ export const audioSampleManifest = (base: string): AudioSampleManifest => {
     cues,
     footsteps: resolveSet(SOUNDS.footsteps, base),
     rain: { ...SOUNDS.rain, url: new URL(SOUNDS.rain.url, base).href },
+    engine: { ...SOUNDS.engine, url: new URL(SOUNDS.engine.url, base).href },
   };
 };
 
@@ -95,4 +103,5 @@ export const audioFiles = (): string[] => [
   ...Object.values(SOUNDS.cues).flatMap((s) => s.urls),
   ...SOUNDS.footsteps.urls,
   SOUNDS.rain.url,
+  SOUNDS.engine.url,
 ];

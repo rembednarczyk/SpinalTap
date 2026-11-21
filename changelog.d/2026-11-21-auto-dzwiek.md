@@ -1,0 +1,1 @@
+- Auto słychać: silnik z obrotów i gazu, rozruch po wejściu, gaszenie przy wysiadaniu, drzwi i nagrany klakson (B, na padzie lewa gałka). Klakson aut z ruchu też jest nagraniem.
