@@ -1,7 +1,7 @@
 import { segmentParam } from "@seki/core";
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type FacadeFrame, trimMeta, wallMeta } from "./facade-frame";
+import { type FacadeFrame, type Wall, trimMeta, wallMeta } from "./facade-frame";
 import type { PropPlacer } from "./facade-props";
 import { band, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
@@ -264,14 +264,34 @@ const rooftop = (sink: MeshSink, f: FacadeFrame, t: StackTier, rand: () => numbe
   place?.({ kind: "dish-roof", at: at(0.5, 0.85), out: front });
   place?.({ kind: "antenna", at: at(0.3, 0.15), out: front });
   place?.({ kind: "pipe-corner", at: at(0.75, 0.5), out: front });
-  // ADR-0096 rule 4: a ground station's dish on a roof of 8 m and more each way, its dish to the south.
-  if (t.u1 - t.u0 >= BIG_DISH_ROOF && t.v1 - t.v0 >= BIG_DISH_ROOF) place?.({ kind: "dish-big", at: at(0.72, 0.28), out: SOUTH });
+  // ADR-0096 rule 4: a ground station's dish on a roof of 8 m and more each way, by the roof's edge
+  // over the street and its dish to the street, where a walker sees it (decision of 21.11); none on a
+  // building whose every wall faces a neighbour.
+  const street = streetSide(f);
+  if (street && t.u1 - t.u0 >= BIG_DISH_ROOF && t.v1 - t.v0 >= BIG_DISH_ROOF) {
+    const mid = at(0.5, 0.5);
+    const toStreet = (p: Vec) => (p.x - mid.x) * street.x + (p.z - mid.z) * street.z;
+    const spot = DISH_SPOTS.map(([a, b]) => at(a, b)).reduce((best, p) => (toStreet(p) > toStreet(best) + 1e-6 ? p : best));
+    place?.({ kind: "dish-big", at: spot, out: street });
+  }
 };
 
 /** The least side of a roof that takes the big dish (m): its deck is 2.3 x 2.6 m, with room round it. */
 const BIG_DISH_ROOF = 8;
-/** South in the world (+z is north on the map). */
-const SOUTH: Vec = { x: 0, y: 0, z: -1 };
+/** The dish's spots by each edge of the roof, its deck inside the edge and clear of the fixed gear (`dish-roof`, `antenna`, `pipe-corner`). */
+const DISH_SPOTS: readonly (readonly [number, number])[] = [
+  [0.18, 0.62],
+  [0.82, 0.25],
+  [0.62, 0.18],
+  [0.22, 0.82],
+];
+
+/** The outward normal of the building's longest wall over a street (not against a neighbour, not on the map's edge), or null. */
+export const streetSide = (f: FacadeFrame): Vec | null => {
+  let best: Wall | null = null;
+  for (const w of f.walls) if (!w.blind && !w.edge && (!best || w.length > best.length)) best = w;
+  return best ? { x: best.nx, y: 0, z: best.nz } : null;
+};
 
 /** The detailed superstructure: tiers, a neon line under some tier tops, gear on the roof. */
 export const planNearVertical = (sink: MeshSink, f: FacadeFrame, place?: PropPlacer): void => {

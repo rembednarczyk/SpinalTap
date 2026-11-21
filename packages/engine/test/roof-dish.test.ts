@@ -8,7 +8,7 @@ import { facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { mapBuilding } from "../src/renderer/mapcity/map-building";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
-import { planNearVertical } from "../src/renderer/mapcity/vertical-plan";
+import { planNearVertical, stackTiers, streetSide } from "../src/renderer/mapcity/vertical-plan";
 
 /** The ground station's dish on the big roofs (ADR-0096 stage 3): one in four, the dish of `extra-props.glb`, facing its slot's way. */
 
@@ -43,6 +43,39 @@ describe("the big roof dish (ADR-0096 stage 3)", () => {
   it("is not drawn on phones (no cheap version, the slot is not one of theirs)", () => {
     const s = spots.find((x) => placeSlot(props, x, false).length > 0)!;
     expect(placeSlot(props, s, true).every((p) => p.model.key === "ex-dish")).toBe(true);
+  });
+
+  it("stands by the roof's edge over the street, its dish to the street; none where every wall faces a neighbour", () => {
+    let id = 0;
+    let checked = 0;
+    for (const c of LUBLIN_CHUNKS) {
+      for (const b of c.buildings) {
+        id += 1;
+        const view = buildingView(b, c.district);
+        if (view.kind !== "building") continue;
+        const at = { x: b.x, y: b.y, z: b.z };
+        const f = facadeFrame(mapBuilding(id, { ring: cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z }))), view, at }, () => null), () => null);
+        const slots: PropSlot[] = [];
+        planNearVertical(new MeshSink(), f, (slot) => slots.push(slot) > 0);
+        const dish = slots.find((s) => s.kind === "dish-big");
+        if (!dish) continue;
+        checked += 1;
+        const street = streetSide(f)!;
+        expect(dish.out).toEqual(street);
+        // On the street's half of the top tier: nearer the street than the roof's middle.
+        const tier = stackTiers(f).at(-1)!;
+        const xs = tier.ring.map((p) => p.x);
+        const zs = tier.ring.map((p) => p.z);
+        const mid = { x: (Math.min(...xs) + Math.max(...xs)) / 2, z: (Math.min(...zs) + Math.max(...zs)) / 2 };
+        expect((dish.at.x - mid.x) * street.x + (dish.at.z - mid.z) * street.z).toBeGreaterThan(0.5);
+        // With every wall against a neighbour, no street side and no dish.
+        const shut = { ...f, walls: f.walls.map((w) => ({ ...w, blind: true })) };
+        const none: PropSlot[] = [];
+        planNearVertical(new MeshSink(), shut, (slot) => none.push(slot) > 0);
+        expect(none.some((s) => s.kind === "dish-big")).toBe(false);
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
   });
 
   it("stands on a few dozen superstructures of the city, only on the big ones", () => {
