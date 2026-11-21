@@ -42,6 +42,7 @@ export class SlicedBake {
   private sink = new MeshSink();
   private readonly chunks: Chunk[] = [];
   private vertices = 0;
+  private closedIndices = 0;
   private packedMesh: PackedMesh | null = null;
 
   constructor(private readonly parts: readonly BakePart[]) {}
@@ -53,6 +54,11 @@ export class SlicedBake {
 
   get packed(): PackedMesh | null {
     return this.packedMesh;
+  }
+
+  /** Indices written so far, in the order of the parts: where the next part's triangles start in `packed`. */
+  get indexCount(): number {
+    return this.closedIndices + this.sink.indices.length;
   }
 
   /** Bakes parts until `stop()`, asked after each; the last part packs the chunks. */
@@ -80,6 +86,7 @@ export class SlicedBake {
     for (let i = 0; i < indices.length; i++) indices[i] = s.indices[i]! + base;
     this.chunks.push({ positions: Float32Array.from(s.positions), normals: Float32Array.from(s.normals), colors: Float32Array.from(s.colors), uvs: Float32Array.from(s.uvs), indices });
     this.vertices += s.vertexCount;
+    this.closedIndices += indices.length;
     this.sink = new MeshSink();
   }
 
