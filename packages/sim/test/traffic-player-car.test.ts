@@ -37,14 +37,16 @@ describe("the traffic and the player's car", () => {
       taken = sim.session.driving !== null;
     }
     expect(taken).toBe(true);
+    // Getting in and out may play out over steps (the acts of ADR-0097, once in main).
+    const acting = () => (sim.session as { carAct?: unknown }).carAct != null;
     // In and seated, she stops it and gets out; the car is then left on the lane's line, ahead of
     // where she took it (the traffic of that lane comes up behind it), and she far off.
-    for (let i = 0; i < 400 && sim.session.carAct; i++) sim.step();
+    for (let i = 0; i < 400 && acting(); i++) sim.step();
     const mine = [...sim.world].find((e) => e.id === sim.session.driving)!;
     for (let i = 0; i < 300 && Math.hypot(mine.car!.vel.x, mine.car!.vel.z) > 0.3; i++) sim.step(press({ drive: { throttle: 0, brake: 1, steer: 0, handbrake: true } }));
     for (let i = 0; i < 10 && sim.session.driving !== null; i++) sim.step(press({ interact: i % 2 === 0 }));
     expect(sim.session.driving).toBeNull();
-    for (let i = 0; i < 400 && sim.session.carAct; i++) sim.step();
+    for (let i = 0; i < 400 && acting(); i++) sim.step();
     const lane = TRAFFIC_ROUTES[route]!;
     const at = lanePose(lane, along + 30);
     const floor = ground(at.x, at.z);
