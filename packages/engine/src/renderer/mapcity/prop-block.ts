@@ -25,6 +25,7 @@ import { bakeDogs, clearOf, gateDogs, stallDog } from "./robodogs";
 import { type BakePart, type PackedMesh, SlicedBake, packedToMesh } from "./sliced-bake";
 import { bakeStreetModel } from "./street-models";
 import { bakePoles } from "./utility-poles";
+import { TileLayout, TileLod, inDetailTile } from "./detail-tiles";
 
 /**
  * A 256 m block of the map city's street furniture: its pieces, the detailed mesh baked when it
@@ -38,8 +39,11 @@ export interface PropBlock {
   near: Mesh | null;
   /** Its detailed mesh is baked for its pieces as they are now. */
   baked: boolean;
-  /** Its detailed mesh while it is being baked (`continueNear`). */
+  /** Its detailed mesh while it is being baked (`continueNear`), with the tiles of its trees and bollards. */
   job: SlicedBake | null;
+  layout?: TileLayout | null;
+  /** The level of each tile of its detailed mesh (`detail-tiles.ts`). */
+  lod?: TileLod | null;
   far: Mesh | null;
   dirty: boolean;
 }
@@ -138,10 +142,12 @@ const bakePiece = (deps: Pick<PropBakeDeps, "quality" | "poles">, sink: MeshSink
 };
 
 /** The parts of a block's detailed mesh in the order they are baked: a piece, the poles, the dogs, a pavilion, the stand-ins. */
-const nearSteps = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">): BakePart[] => {
+const nearSteps = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">, tiled = false): BakePart[] => {
   const { poles } = deps;
   const pieces = sortedPieces(block);
-  const steps: BakePart[] = pieces.filter((p) => !poles.isPole(p)).map((p) => (sink) => bakePiece(deps, sink, p));
+  // The trees and bollards after them, in tiles of two levels of detail when drawn (`detail-tiles.ts`).
+  const own = tiled ? pieces.filter((p) => !inDetailTile(p, deps.quality)) : pieces;
+  const steps: BakePart[] = own.filter((p) => !poles.isPole(p)).map((p) => (sink) => bakePiece(deps, sink, p));
   const { pole, props } = poles;
   if (pole && props) steps.push((sink) => bakePoles(sink, props, pole, pieces.filter((p) => poles.isPole(p))));
   steps.push((sink) => bakeBlockDogs(deps, sink, block, pieces));
@@ -175,7 +181,7 @@ export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: P
  * if `stop()` leaves time, else at the start of the next. True when it is made.
  */
 export const continueNear = (deps: PropBakeDeps, block: PropBlock, stop: () => boolean): boolean => {
-  const job = (block.job ??= new SlicedBake(nearSteps(deps, block)));
+  const job = (block.job ??= newJob(deps, block));
   if (!job.ready) {
     job.run(stop);
     if (!job.ready || stop()) return false;
@@ -184,18 +190,35 @@ export const continueNear = (deps: PropBakeDeps, block: PropBlock, stop: () => b
   return true;
 };
 
+/** A block's bake: its own pieces, then its trees and bollards in full and coarse per tile (`detail-tiles.ts`). */
+const newJob = (deps: PropBakeDeps, block: PropBlock): SlicedBake => {
+  let job: SlicedBake | null = null;
+  const layout = new TileLayout(sortedPieces(block), deps.quality, () => job!);
+  job = new SlicedBake([...nearSteps(deps, block, true), ...layout.parts]);
+  block.layout = layout;
+  return job;
+};
+
 const nearMesh = (deps: PropBakeDeps, block: PropBlock, packed: PackedMesh): void => {
   const m = packedToMesh(deps.scene, `props-${block.key}`, packed);
+  const layout = block.layout;
+  block.lod = null;
   if (m) {
     m.material = deps.materials.get("streetProp");
     m.setEnabled(false);
+    if (layout && layout.tiles.length > 0) {
+      block.lod = new TileLod(m, packed.indices, layout);
+      // Coarse until the next update reads the camera.
+      block.lod.show({ x: Infinity, z: Infinity });
+    }
   }
   block.job = null;
+  block.layout = null;
   block.baked = true;
   block.near = m;
 };
 
 /** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050), all at once. */
 export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
-  nearMesh(deps, block, (block.job ?? new SlicedBake(nearSteps(deps, block))).finish());
+  nearMesh(deps, block, (block.job ?? newJob(deps, block)).finish());
 };
