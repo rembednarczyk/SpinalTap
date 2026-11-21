@@ -11,6 +11,8 @@ export interface SiteGround {
   free(p: Pt): boolean;
   /** Ground a body may stand on outside a gate: no building, water or rails. */
   open(p: Pt): boolean;
+  /** Ground outside a site's fence its cones and barriers may stand on (ADR-0096 rule 2): pavement, grass or bare ground, no carriageway; none, none laid. */
+  verge?(p: Pt): boolean;
   /** The map's terrain (the import's NMT), before the game's shaping. */
   heightAt(p: Pt): number;
   /** Side of the terrain grid's cells at p (m). */
