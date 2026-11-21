@@ -1,6 +1,6 @@
-import { CarChase } from "./car-chase";
+import { CarChaseView } from "./car-chase";
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
-import { type CameraMode, type CarPose, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
+import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
 import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
@@ -18,10 +18,7 @@ const TPP_DISTANCE = 2.2;
 const CAR_DISTANCE = 6.5;
 const CAR_EYE = 1.9;
 const WALL_MARGIN = 0.25;
-/** The point over the car's ground the chase camera is pulled in towards past a wall (m). */
-const CHASE_PIVOT = 1.2;
-/** `a - b` turned into -π..π. */
-const angleDiff = (a: number, b: number): number => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
 const BLEND_SPEED = 6;
 /** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
 export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
@@ -89,7 +86,7 @@ export class CameraRig {
   /** The FPP melee viewmodel's guard and swing. */
   private readonly meleeView = new ViewMelee();
   /** Behind the car she drives, after PodRcr's chase view (ADR-0097). */
-  private readonly carChase = new CarChase();
+  private readonly carChase: CarChaseView;
   private ads = 0;
   private readonly gunHolder: TransformNode;
   private readonly meleeHolder: TransformNode;
@@ -130,6 +127,7 @@ export class CameraRig {
     private readonly isBlocker: (mesh: AbstractMesh) => boolean,
   ) {
     this.camera = new FreeCamera("main-camera", new Vector3(0, 1.6, 0), scene);
+    this.carChase = new CarChaseView(scene, isBlocker, () => this.occluder);
     this.camera.minZ = 0.04;
     this.camera.maxZ = 320;
     this.camera.fov = BASE_FOV;
@@ -371,7 +369,7 @@ export class CameraRig {
       Math.sin(t * 23) * 0.02 * sh,
     );
 
-    if (seat && target.car) this.chaseCar(target.car, p, yaw, dt);
+    if (seat && target.car) this.carChase.place(this.camera, target.car, p, yaw, dt);
     else this.carChase.reset();
 
     const fpp = this.blend < 0.35;
@@ -405,26 +403,5 @@ export class CameraRig {
     // At the wheel her figure sits in the car, with the clip of driving (ADR-0097, clips of 21.11).
     this.onBodyVisibility(seat || !fpp);
     this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
-  }
-
-  /**
-   * At the wheel (ADR-0097): the chase camera's place and aim (`CarChase`, PodRcr's chase view),
-   * pulled in to the car where a wall or the map's ground stands between them, as the shoulder's is.
-   */
-  private chaseCar(car: CarPose, at: Vec3, yaw: number, dt: number): void {
-    const ground = { x: at.x, y: car.floor, z: at.z };
-    const shot = this.carChase.update(ground, car.yaw, angleDiff(yaw, car.yaw), dt);
-    const pivot = new Vector3(ground.x, ground.y + CHASE_PIVOT, ground.z);
-    const to = new Vector3(shot.eye.x, shot.eye.y, shot.eye.z).subtract(pivot);
-    const full = to.length();
-    const dir = to.scale(1 / Math.max(full, 1e-6));
-    let reach = full;
-    const hit = this.scene.pickWithRay(new Ray(pivot, dir, full + WALL_MARGIN), this.isBlocker);
-    if (hit?.hit) reach = Math.max(0.5, Math.min(reach, hit.distance - WALL_MARGIN));
-    const t = this.occluder?.({ x: pivot.x, y: pivot.y, z: pivot.z }, { x: dir.x, y: dir.y, z: dir.z }, full + WALL_MARGIN) ?? null;
-    if (t !== null) reach = Math.max(0.5, Math.min(reach, t - WALL_MARGIN));
-    this.camera.position.copyFrom(pivot.add(dir.scale(reach)));
-    this.camera.setTarget(new Vector3(shot.target.x, shot.target.y, shot.target.z));
-    this.camera.fov *= 1 + shot.widen;
   }
 }
