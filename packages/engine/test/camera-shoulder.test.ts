@@ -70,6 +70,18 @@ describe("TPP camera aimed from close up (G-275)", () => {
     settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0 });
     expect(fade).toBe(0);
   });
+
+  it("keeps her figure solid at the car, getting in or out and at the wheel, the shoulder camera pulled in or not (user notes of 21.11)", () => {
+    const { camera } = aimedFigure(0);
+    let fade = 0;
+    camera.bodyFade.onChange = (f) => (fade = f);
+    // The car round her seat stands between the shoulder camera and her: pulled in close.
+    camera.setOccluder(() => 0.5);
+    for (const act of ["enter", "drive", "exit"] as const) {
+      settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, seat: "driver", car: { act, t: 1, yaw: 0, seat: { x: 0, y: 0.5, z: 0 }, floor: 0 } });
+      expect(fade, act).toBe(0);
+    }
+  });
 });
 
 /** The player as the simulation shoots for her: only what `aimOrigin` reads. */
