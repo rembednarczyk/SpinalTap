@@ -37,6 +37,46 @@ const inTheWay = (): { sim: Simulation; car: Car } => {
 
 const playerOf = (sim: Simulation): Entity => [...sim.world].find((e) => e.player)!;
 
+/** She takes the car in her way, drives it a little and brakes it to a stop; the car she sits in. */
+const takenAndStopped = (): { sim: Simulation; mine: () => Entity } => {
+  const { sim } = inTheWay();
+  for (let i = 0; i < 300 && sim.session.focusPrompt !== TAKE_CAR_PROMPT; i++) sim.step();
+  sim.step(press({ interact: true }));
+  const mine = () => [...sim.world].find((e) => e.id === sim.session.driving)!;
+  for (let i = 0; i < 60; i++) sim.step(press({ moveZ: 1 }));
+  // Brake to a stop and let go (held on, the brake would put it in reverse).
+  const speed = () => Math.hypot(mine().velocity.x, mine().velocity.z);
+  for (let i = 0; i < 240 && speed() > 0.5; i++) sim.step(press({ moveZ: -1 }));
+  for (let i = 0; i < 30; i++) sim.step();
+  return { sim, mine };
+};
+
+/**
+ * A post where she would step out of the car's `side` (-1 left, 1 right): 0.5 m square, 3 m tall,
+ * 1.6 m from the car's middle and 0.4 m ahead of it, clear of the body whatever the car's heading.
+ */
+const postBeside = (sim: Simulation, car: Entity, side: number, id: number): void => {
+  const [tx, tz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+  // The car's right in the world (left-handed, y up): its heading (sin, cos) turned to (cos, -sin).
+  const c = { x: car.position.x + tz * side * 1.6 + tx * 0.4, y: car.position.y, z: car.position.z - tx * side * 1.6 + tz * 0.4 };
+  sim.world.add({
+    id,
+    position: { ...c, y: c.y + 1.5 },
+    prevPosition: { ...c, y: c.y + 1.5 },
+    yaw: 0,
+    prevYaw: 0,
+    pitch: 0,
+    view: { kind: "block", size: { x: 0.5, y: 3, z: 0.5 }, material: "metal" },
+    solid: { min: { x: c.x - 0.25, y: c.y, z: c.z - 0.25 }, max: { x: c.x + 0.25, y: c.y + 3, z: c.z + 0.25 } },
+  });
+};
+
+/** Which side of the car she stands on: positive right, negative left. */
+const sideOf = (car: Entity, p: Entity["position"]): number => {
+  const [tx, tz] = [Math.sin(car.yaw), Math.cos(car.yaw)];
+  return (p.x - car.position.x) * tz - (p.z - car.position.z) * tx;
+};
+
 describe("taking a car from the traffic (ADR-0097)", () => {
   it("stops for her, offers itself, and drives off with her at the wheel; she gets out beside it", () => {
     const { sim, car } = inTheWay();
@@ -66,8 +106,26 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     const off = Math.hypot(p.x - left.position.x, p.z - left.position.z);
     expect(off).toBeGreaterThan(1);
     expect(off).toBeLessThan(2.5);
+    expect(sideOf(left, p)).toBeLessThan(-1);
     // The car stays, asleep, where she left it.
     for (let i = 0; i < 120; i++) sim.step();
     expect([...sim.world].some((e) => e.id === left.id && e.car)).toBe(true);
+  });
+
+  it("gets out on the right when a post stands at the driver's side, and stays in with both sides shut", () => {
+    const { sim, mine } = takenAndStopped();
+    const car = mine();
+    // A post where the driver's door opens: she gets out on the other side.
+    postBeside(sim, car, -1, 4_990_001);
+    sim.step(press({ interact: true }));
+    expect(sim.session.driving).toBeNull();
+    expect(sideOf(car, playerOf(sim).position)).toBeGreaterThan(1);
+
+    const second = takenAndStopped();
+    const car2 = second.mine();
+    postBeside(second.sim, car2, -1, 4_990_001);
+    postBeside(second.sim, car2, 1, 4_990_002);
+    second.sim.step(press({ interact: true }));
+    expect(second.sim.session.driving).toBe(car2.id);
   });
 });

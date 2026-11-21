@@ -116,3 +116,7 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - Renderer: przechył i pochylenie auta w buforze aut (`tilt` w transformacji), postać bohaterki ukryta za kierownicą (`seat`), kamera pościgowa 6,5 m za autem w każdym trybie. HUD: prędkościomierz i bieg (`VehicleHud`). Teksty: `prompt.car.take` po angielsku i polsku.
 - Zapis: auto nie jest zapisywane; gra zapisana za kierownicą wczytuje się z bohaterką pieszo (stan sesji). Zapis auta z podbiciem schematu zostaje na etap 6.
 - Test sesji `vehicle-carjack.test.ts`: na Alei Tysiąclecia auto staje przed nią, podpowiedź się pojawia, klawisz je przejmuje, gaz rozpędza (ponad 15 m w 3 s), ona siedzi w nim, hamulec zatrzymuje, wysiadanie stawia ją 1–2,5 m obok, auto zostaje.
+
+## Wysiadanie na prawo (21.11, polecenie użytkownika)
+- Wysiadanie najpierw po lewej (strona kierowcy), a gdy tam stoi bryła wysokości ciała (wyższa niż stopień `STEP_HEIGHT`) albo auto ruchu, po prawej. Miejsce to koło ciała bohaterki (`BODY_RADIUS`) 0,7 m za bokiem nadwozia i 0,4 m przed środkiem auta. Z obiema stronami zamkniętymi zostaje w aucie.
+- Test sesji `vehicle-carjack.test.ts`: słupek przy drzwiach kierowcy, wysiada po prawej; słupki po obu stronach, zostaje w środku. Bez zmiany test pada (wysiada w słupek po lewej).
