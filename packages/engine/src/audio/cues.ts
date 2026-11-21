@@ -299,6 +299,33 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sawtooth", freq: 196, dur: 0.5, gain: 0.05, attack: 0.02, filter: 900, filterType: "lowpass" },
     ],
   },
+  // The car she drives (ADR-0097), synthesized only if its recording fails: the latch and the door's
+  // thud, the starter's whirr under a rising engine, the engine dying away.
+  "car-door-open": {
+    send: 0.1,
+    voices: [
+      { type: "triangle", freq: 900, to: 600, dur: 0.04, gain: 0.08, attack: 0.001 },
+      { type: "noise", freq: 0, start: 0.03, dur: 0.18, gain: 0.05, filter: 700, filterType: "lowpass", attack: 0.01 },
+    ],
+  },
+  "car-door-close": {
+    send: 0.2,
+    voices: [
+      { type: "sine", freq: 110, to: 55, dur: 0.16, gain: 0.3, attack: 0.002 },
+      { type: "noise", freq: 0, dur: 0.08, gain: 0.12, filter: 1200, filterTo: 300, filterType: "lowpass", attack: 0.001 },
+    ],
+  },
+  "engine-start": {
+    send: 0.15,
+    voices: [
+      { type: "sawtooth", freq: 18, to: 24, dur: 0.7, gain: 0.08, filter: 500, filterType: "lowpass", attack: 0.02 },
+      { type: "sawtooth", freq: 30, to: 48, start: 0.6, dur: 0.9, gain: 0.12, filter: 700, filterType: "lowpass", attack: 0.05 },
+    ],
+  },
+  "engine-stop": {
+    send: 0.15,
+    voices: [{ type: "sawtooth", freq: 40, to: 14, dur: 1.1, gain: 0.1, filter: 600, filterTo: 200, filterType: "lowpass", attack: 0.01 }],
+  },
   // W-3 (ADR-0082 stage 3c). The blast: a crack, a low boom falling away and a rumble in the hall's
   // tail (the recorded crunch of the app's manifest goes over it).
   explosion: {

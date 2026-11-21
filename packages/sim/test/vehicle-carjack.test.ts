@@ -150,6 +150,31 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect(her.prevYaw).not.toBe(her.yaw);
   });
 
+  it("gets back into the car she left: it offers itself again, she sits in it and drives it on (user notes of 21.11)", () => {
+    const { sim, mine } = takenAndStopped();
+    const left = mine();
+    sim.step(press({ interact: true }));
+    untilActDone(sim);
+    expect(sim.session.driving).toBeNull();
+    // Out beside it, still in reach of its side: the prompt offers her own car, not a street one.
+    let offered = false;
+    for (let i = 0; i < 30 && !offered; i++) {
+      sim.step();
+      offered = sim.session.focusPrompt === TAKE_CAR_PROMPT && sim.session.focusId === left.id;
+    }
+    expect(offered).toBe(true);
+    const cars = [...sim.world].filter((e) => e.car).length;
+    sim.step(press({ interact: true }));
+    expect(sim.session.driving).toBe(left.id);
+    expect(sim.session.carAct?.kind).toBe("enter");
+    untilActDone(sim);
+    // The same car, no new one taken from the street.
+    expect([...sim.world].filter((e) => e.car)).toHaveLength(cars);
+    const from = { ...mine().position };
+    for (let i = 0; i < 120; i++) sim.step(press({ moveZ: 1 }));
+    expect(Math.hypot(mine().position.x - from.x, mine().position.z - from.z)).toBeGreaterThan(5);
+  });
+
   it("gets out on the right when a post stands at the driver's side, and stays in with both sides shut", () => {
     const { sim, mine } = takenAndStopped();
     const car = mine();

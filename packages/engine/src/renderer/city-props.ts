@@ -1,6 +1,6 @@
 import type { Vec3 } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, hexColor } from "./mesh-sink";
-import { type CityKitData, type GeometrySink, type KitModel, hexRgb, parseCityKit, swatchUv } from "./city-kit-data";
+import { type CityKitData, type GeometrySink, type KitModel, type KitSkin, hexRgb, parseCityKit, swatchUv } from "./city-kit-data";
 
 /**
  * Facade props from CC0 packs (ADR-0058): `city-props.glb`, baked by tools/city_kit.py on the
@@ -15,6 +15,8 @@ export interface CityProps {
   readonly grid: number;
   /** Models by the kinds they are placed as (`ac-wall`, `antenna`...), in file order. */
   readonly byStyle: ReadonlyMap<string, readonly KitModel[]>;
+  /** Textures of models of their own (`KitModel.skin`): the vehicles' close-ups. */
+  readonly skins?: ReadonlyMap<string, KitSkin>;
 }
 
 /** The phone's version of a kind: Kenney's few-dozen-triangle units. */
@@ -31,7 +33,7 @@ export const parseCityProps = (bytes: ArrayBuffer): CityProps => {
       byStyle.set(s, list);
     }
   }
-  return { models: data.models, swatches: data.swatches, grid: data.grid, byStyle };
+  return { models: data.models, swatches: data.swatches, grid: data.grid, byStyle, ...(data.skins ? { skins: data.skins } : {}) };
 };
 
 /**
@@ -49,7 +51,8 @@ export const mergeCityProps = (a: CityProps, b: CityProps): CityProps => {
   }
   const byStyle = new Map<string, KitModel[]>();
   for (const m of models.values()) for (const s of m.styles) byStyle.set(s, [...(byStyle.get(s) ?? []), m]);
-  return { models, swatches: a.swatches, grid: a.grid, byStyle };
+  const skins = new Map([...(a.skins ?? []), ...(b.skins ?? [])]);
+  return { models, swatches: a.swatches, grid: a.grid, byStyle, ...(skins.size > 0 ? { skins } : {}) };
 };
 
 /** A well-mixed hash of a seed and a salt (the same position always picks the same model). */

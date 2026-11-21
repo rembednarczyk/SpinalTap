@@ -11,6 +11,7 @@ import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
+import { CarAudio } from "./presenters/car-audio";
 import { keymapFor } from "./controls";
 import { pushToastTimed } from "./controllers/shared";
 import { bindAudioMix } from "./controllers/audio-mix";
@@ -116,6 +117,7 @@ applyVolumes(audio, settings);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
 
+const carAudio = new CarAudio(audio);
 const session = new GameSession({
   render: renderer,
   audio,
@@ -216,6 +218,8 @@ const loop = new FixedStepLoop(browserClock, {
     const player = renderer.cameraTargetTransform;
     // Her footfalls in the picture lead the footsteps' sound (user notes of 18.11).
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed, footfalls: renderer.footfalls.take() });
+    // The car she drives (ADR-0097): its doors, its engine's start and stop, its revs.
+    carAudio.frame(session.sim);
     // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
     // Behind the loading screen the preparation draws its own warm-up frames (ADR-0057).
     if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;

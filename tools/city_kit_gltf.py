@@ -147,9 +147,9 @@ def png_bytes(arr):
     return buf.getvalue()
 
 
-def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid):
-    """`models`: dicts with key, pos [V,3] float32, nor [V,3], uv [V,2] in 0..1, ind; `extras[key]`
-    goes to the model's node."""
+def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid, images=()):
+    """`models`: dicts with key, pos [V,3] float32, nor [V,3], uv [V,2] in 0..1, ind (and `uv16` for UVs on a
+    texture of their own, at 16 bits); `extras[key]` goes to the model's node; `images`: (name, png) more."""
     binbuf = bytearray()
     views, accessors, meshes, nodes = [], [], [], []
 
@@ -168,8 +168,10 @@ def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid):
         nrm = np.clip(np.round(m['nor'] * 127), -127, 127).astype(np.int8)
         nrm4 = np.zeros((len(nrm), 4), np.int8)
         nrm4[:, :3] = nrm
-        uv = np.clip(np.round(m['uv'] * 255), 0, 255).astype(np.uint8)
-        uv4 = np.zeros((len(uv), 4), np.uint8)
+        wide = m.get('uv16', False)
+        top, kind = (65535, np.uint16) if wide else (255, np.uint8)
+        uv = np.clip(np.round(m['uv'] * top), 0, top).astype(kind)
+        uv4 = np.zeros((len(uv), 2 if wide else 4), kind)
         uv4[:, :2] = uv
         ind = m['ind'].astype(np.uint16 if len(pos) < 65536 else np.uint32)
         a0 = len(accessors)
@@ -180,7 +182,7 @@ def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid):
         accessors.append({'bufferView': v, 'componentType': 5120, 'normalized': True, 'count': len(pos), 'type': 'VEC3'})
         v = add_view(uv4.tobytes(), 34962)
         views[v]['byteStride'] = 4
-        accessors.append({'bufferView': v, 'componentType': 5121, 'normalized': True, 'count': len(pos), 'type': 'VEC2'})
+        accessors.append({'bufferView': v, 'componentType': 5123 if wide else 5121, 'normalized': True, 'count': len(pos), 'type': 'VEC2'})
         accessors.append({'bufferView': add_view(ind.tobytes(), 34963), 'componentType': 5123 if ind.dtype == np.uint16 else 5125,
                           'count': len(ind), 'type': 'SCALAR'})
         meshes.append({'name': m['key'], 'primitives': [{'attributes': {'POSITION': a0, 'NORMAL': a0 + 1, 'TEXCOORD_0': a0 + 2},
@@ -188,6 +190,7 @@ def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid):
         nodes.append({'name': m['key'], 'mesh': len(meshes) - 1, 'extras': extras[m['key']]})
     img_albedo = add_view(albedo_png)
     img_glow = add_view(glow_png)
+    more = [{'name': name, 'bufferView': add_view(png), 'mimeType': 'image/png'} for name, png in images]
     while len(binbuf) % 4:
         binbuf.append(0)
     gltf = {
@@ -199,7 +202,7 @@ def write_glb(models, albedo_png, glow_png, dst, extras, swatches, grid):
                        'emissiveTexture': {'index': 1}, 'emissiveFactor': [1, 1, 1]}],
         'samplers': [{'magFilter': 9728, 'minFilter': 9728}],
         'images': [{'name': 'palette', 'bufferView': img_albedo, 'mimeType': 'image/png'},
-                   {'name': 'palette-glow', 'bufferView': img_glow, 'mimeType': 'image/png'}],
+                   {'name': 'palette-glow', 'bufferView': img_glow, 'mimeType': 'image/png'}, *more],
         'textures': [{'source': 0, 'sampler': 0}, {'source': 1, 'sampler': 0}],
         'accessors': accessors, 'bufferViews': views, 'buffers': [{'byteLength': len(binbuf)}],
     }
