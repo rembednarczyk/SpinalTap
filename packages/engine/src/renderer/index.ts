@@ -20,3 +20,4 @@ export * from "./signage";
 export * from "./signage-plan";
 export * from "./scan-highlight";
 export * from "./mapcity/prop-gallery";
+export { VehicleTelemetry } from "./vehicle-telemetry";
