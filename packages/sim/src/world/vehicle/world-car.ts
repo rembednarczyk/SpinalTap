@@ -72,29 +72,35 @@ export const collideSolids = (ctx: SimContext, car: CarState): number => {
 
 /**
  * The body against the street's vehicles (kinematic: they stop before anyone in their way, ADR-0050):
- * the car's centre kept out of their footprint grown by its half width; the speed into them lost.
+ * each of the body's circles kept out of their footprint grown by its radius, the car moved by the
+ * deepest push; the speed into them lost.
  */
 export const collideTraffic = (ctx: SimContext, car: CarState, self: EntityId): { speed: number; other: EntityId | null } => {
-  const half = vehicleSpec(car.model).half;
   let hit = { speed: 0, other: null as EntityId | null };
+  const circles = bodyCircles(car);
   for (const v of ctx.world.with("vehicle")) {
-    if (v.id === self) continue;
+    if (v.id === self || Math.abs(car.pos.y - v.position.y) > 3) continue;
     const st = v.vehicle;
     const tx = Math.sin(v.yaw);
     const tz = Math.cos(v.yaw);
-    const dx = car.pos.x - v.position.x;
-    const dz = car.pos.z - v.position.z;
-    const fwd = dx * tx + dz * tz;
-    const lat = dx * tz - dz * tx;
-    const inFwd = st.half.l + half.x - Math.abs(fwd);
-    const inLat = st.half.w + half.x - Math.abs(lat);
-    if (inFwd <= 0 || inLat <= 0 || Math.abs(car.pos.y - v.position.y) > 3) continue;
-    const n = inLat < inFwd ? v3(tz * Math.sign(lat || 1), 0, -tx * Math.sign(lat || 1)) : v3(tx * Math.sign(fwd || 1), 0, tz * Math.sign(fwd || 1));
-    const depth = Math.min(inLat, inFwd);
-    car.pos = v3(car.pos.x + n.x * depth, car.pos.y, car.pos.z + n.z * depth);
-    const into = dot(car.vel, n);
+    let best: { n: V3; depth: number } | null = null;
+    for (const c of circles) {
+      const dx = car.pos.x + c.at.x - v.position.x;
+      const dz = car.pos.z + c.at.z - v.position.z;
+      const fwd = dx * tx + dz * tz;
+      const lat = dx * tz - dz * tx;
+      const inFwd = st.half.l + c.r - Math.abs(fwd);
+      const inLat = st.half.w + c.r - Math.abs(lat);
+      if (inFwd <= 0 || inLat <= 0) continue;
+      const depth = Math.min(inLat, inFwd);
+      const n = inLat < inFwd ? v3(tz * Math.sign(lat || 1), 0, -tx * Math.sign(lat || 1)) : v3(tx * Math.sign(fwd || 1), 0, tz * Math.sign(fwd || 1));
+      if (!best || depth > best.depth) best = { n, depth };
+    }
+    if (!best) continue;
+    car.pos = v3(car.pos.x + best.n.x * best.depth, car.pos.y, car.pos.z + best.n.z * best.depth);
+    const into = dot(car.vel, best.n);
     if (into < 0) {
-      car.vel = sub(car.vel, scale(n, into * (1 + BOUNCE)));
+      car.vel = sub(car.vel, scale(best.n, into * (1 + BOUNCE)));
       if (-into > hit.speed) hit = { speed: -into, other: v.id };
     }
   }
