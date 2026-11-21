@@ -1,0 +1,1 @@
+- Auto: w tle silnika zamiast gwizdu hybrydy słychać cichy pisk cewki pod obciążeniem, a przy wsiadaniu zamiast rozruchu krótkie podbicie obrotów.

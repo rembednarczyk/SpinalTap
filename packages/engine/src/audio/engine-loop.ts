@@ -1,6 +1,6 @@
 import type { EngineSound } from "@seki/core";
 import type { Graph } from "./audio-graph";
-import { MotorWhine } from "./motor-whine";
+import { CoilWhine } from "./coil-whine";
 import type { EngineLoopSpec, SampleBank } from "./samples";
 
 /** Playback rate of the loop at idle and at the limiter: the recording is an idle's beat, pitched up with the revs. */
@@ -39,8 +39,8 @@ interface Running {
 export class EngineLoop {
   private want: EngineSound | null = null;
   private run: Running | null = null;
-  /** The hybrid's electric motor over the engine (user's notes of 21.11), synthesized: it needs no recording. */
-  private readonly whine = new MotorWhine();
+  /** A coil under load in the engine's background (user's notes of 21.11), synthesized: it needs no recording. */
+  private readonly whine = new CoilWhine();
 
   constructor(
     private readonly bank: SampleBank,
@@ -49,7 +49,7 @@ export class EngineLoop {
     private readonly graph: () => Graph | null,
   ) {}
 
-  /** True while the electric motor's whine plays (debug, tests). */
+  /** True while the coil's whine plays (debug, tests). */
   get whining(): boolean {
     return this.whine.playing;
   }
