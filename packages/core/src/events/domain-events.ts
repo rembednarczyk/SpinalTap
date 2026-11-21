@@ -259,6 +259,15 @@ export interface DomainEvents {
    * the target is gone (killed by someone else, streamed out).
    */
   TakedownBroken: { target: EntityId; reason: TakedownBreak };
+  // Driving (ADR-0097).
+  /** The player sat in a car: `from` the street's traffic (a carjacking, its driver thrown out) or a car standing. */
+  VehicleEntered: { vehicleId: EntityId; from: "traffic" | "parked" | "own" };
+  VehicleExited: { vehicleId: EntityId };
+  /** The player's car hit something: `energy` the kinetic energy taken out of the crash (J), at a world point. */
+  VehicleHit: { vehicleId: EntityId; other: EntityId | null; energy: number; at: Vec3 };
+  /** The player's car ran into someone on foot. */
+  VehicleRanOver: { vehicleId: EntityId; victim: EntityId; speed: number };
+  GearChanged: { vehicleId: EntityId; gear: number };
   /**
    * `finder` (an NPC or a camera) noticed `body`, someone knocked out (ADR-0065): an NPC walks
    * over to wake it, the security or a camera reports it, the street around it takes fright.
