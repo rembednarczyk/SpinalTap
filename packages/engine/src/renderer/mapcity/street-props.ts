@@ -122,6 +122,7 @@ export class StreetProps {
       b.near = null;
       b.baked = false;
       b.job = null;
+      b.lod = null;
       // The far poles too, enabled again by the next update's band.
       b.far?.dispose(false, false);
       b.far = null;
@@ -159,6 +160,7 @@ export class StreetProps {
       block.far = block.near = null;
       block.baked = false;
       block.job = null;
+      block.lod = null;
       block.band = "off";
       if (block.pieces.size === 0) this.blocks.delete(key);
       else buildFar(this.bake, block);
@@ -183,6 +185,7 @@ export class StreetProps {
       if (block.band === "near" && !block.baked) waiting += 1;
       const detailed = block.band === "near" && block.baked;
       block.near?.setEnabled(detailed);
+      if (detailed) block.lod?.show(eye);
       // The far mesh stands in for a near block until its detail is baked.
       block.far?.setEnabled(block.band === "far" || (block.band === "near" && !block.baked));
       if (detailed) for (const list of block.pieces.values()) for (const p of list) drawn[p.prop] = (drawn[p.prop] ?? 0) + 1;
