@@ -187,6 +187,11 @@ Havok ma sens po stronie renderera dla rzeczy, które nie wpływają na rozgrywk
 - HUD: pasek uszkodzeń pod obrotomierzem (`hud.damage`, przy wraku `hud.wreck`).
 - Testy: `vehicle-damage` (sim: suma energii, wrak raz, słabszy silnik, wrak stoi), sesja w `vehicle-carjack` (ściana, uszkodzenia, zapis i wczytanie), `cars-save` (v53, walidacja 0..1), `car-smoke` (engine), `vehicle-dash` (ui), `vehicle-hud` (app).
 
+## Głowa Seki nad dachem nowego auta (21.11, uwagi użytkownika)
+- Poprawka z #872 ustawiła biodra kierowcy 0,26 m nad ziemią pod dach 1,15 m. Pełny model auta z bliska (#861, auto 4d_Bob) ma dach nad fotelem na 1,05 m. Głowa bohaterki sięgała ok. 1,07 m (staw `C_Head` 0,85 m plus ok. 0,23 m głowy), więc wychodziła przez dach.
+- `DRIVER_HIPS` w `driverSeat` ma teraz 0,15 m: niski fotel jak w Countachu. Staw głowy bohaterki jest na 0,74 m, najwyższego modelu z tłumu na 0,75 m, czubek głowy ok. 0,97 m pod dachem 1,05 m.
+- Test `car-seat-model` bierze wysokość fotela z `driverSeat` i wymaga stawu głowy poniżej 0,78 m. Przy starym fotelu pada (0,85 m), przy nowym przechodzi. `car-pulled-head` dostał nowy fotel.
+
 ## Potrąceni piesi (21.11, klip użytkownika „Hit By Car”)
 - Pieszy uderzony autem szybciej niż 4 m/s (napaść, zdarzenie `VehicleRanOver`, jak dotąd) zostaje rzucony na jezdnię wzdłuż kierunku jazdy auta. Leży 0,8 s, wstaje w miejscu, gdzie upadł (ok. 1,6 m dalej), i wraca do własnej SI (zwykle ucieka przed przestępstwem). Wspólny moduł `struck.ts` prowadzi ten sam ciąg dla kierowcy wyrzuconego z przejętego auta.
 - Do kogo to nie dotyczy:

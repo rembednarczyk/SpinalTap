@@ -1,5 +1,5 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import type { CarPose, Transform } from "@seki/core";
+import { type CarPose, type Transform, driverSeat, vehicleSpec } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Scene, Vector3 } from "../src/babylon";
 import type { CameraRig } from "../src/camera/camera-rig";
@@ -12,12 +12,16 @@ import { readModelFile, serveModels } from "./game-models";
 /*
  * Seated at a car on the game's models (ADR-0097, user's notes of 21.11): a dressed model hangs on
  * the rig's body with its hips its own legs' length over its feet, so the rig's hips on the seat
- * left a long-legged model's hips up to 0.35 m over it and its head through the roof (1.15 m). Its
- * own hip joints go on the seat now, whatever its legs, and its head stays under the roof.
+ * left a long-legged model's hips up to 0.35 m over it and its head through the roof. Its own hip
+ * joints go on the seat now, whatever its legs, and its head stays under the roof: the sports car's
+ * close-up has it 1.05 m over the ground above the seat, and the head reaches some 0.23 m over its
+ * joint (`C_Head`), so the joint stays under 0.78 m (user's notes of 21.11: at the seat of 0.26 m the
+ * heroine's joint was at 0.85 m, her head through the roof).
  */
 
 const GAME = JSON.parse(new TextDecoder().decode(readModelFile("manifest.json"))) as CharacterModelManifest;
-const SEAT = { x: -0.38, y: 0.26, z: -0.36 };
+// The game's seat (`driverSeat`): its height is what keeps the head under the roof.
+const SEAT = { x: -0.38, y: driverSeat(vehicleSpec("hatchback")).y, z: -0.36 };
 afterEach(() => vi.unstubAllGlobals());
 
 const at = (n: { computeWorldMatrix(force: boolean): { getTranslation(): Vector3 } } | null): Vector3 => n!.computeWorldMatrix(true).getTranslation();
@@ -51,7 +55,7 @@ describe("a dressed model at a car's wheel (ADR-0097)", () => {
       expect(bone("C_Head"), `e${id} dressed`).not.toBeNull();
       const hips = (at(bone("L_UpperLeg")).y + at(bone("R_UpperLeg")).y) / 2;
       expect(hips, `e${id}'s hip joints`).toBeCloseTo(SEAT.y, 1);
-      expect(at(bone("C_Head")).y, `e${id}'s head`).toBeLessThan(0.9);
+      expect(at(bone("C_Head")).y, `e${id}'s head`).toBeLessThan(0.78);
     }
   });
 });
