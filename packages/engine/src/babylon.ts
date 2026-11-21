@@ -7,6 +7,7 @@ export { EngineStore } from "@babylonjs/core/Engines/engineStore";
 export { Scene } from "@babylonjs/core/scene";
 export { Viewport } from "@babylonjs/core/Maths/math.viewport";
 export { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+export type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 export { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 export type { Plane } from "@babylonjs/core/Maths/math.plane";
 export { GlowLayer } from "@babylonjs/core/Layers/glowLayer";

@@ -33,6 +33,7 @@ import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../worl
 import { dancesBullet, deflectShot, deflects } from "../world/deflect";
 import { playerHeld } from "../world/takedown";
 import { difficultyOf } from "../world/difficulty";
+import { driveByOrigin, firesFromCar } from "../world/vehicle/drive-by";
 
 /** Crit chances of NPC attacks (shots and swings). */
 export const NPC_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 } as const;
@@ -262,6 +263,9 @@ export const combatSystem: System = {
     for (const p of ctx.world.with("player", "combatant")) {
       // Melee weapons swing in the melee system; nobody fires while staggered or on a ladder.
       if (p.combatant.stats?.melee || (p.melee?.stagger ?? 0) > 0 || p.climb || p.mantle) continue;
+      // At the wheel (ADR-0097 §3) only a one-handed gun fires, out of the driver's window.
+      const car = ctx.session.driving === null ? undefined : ctx.world.with("car").entities.find((c) => c.id === ctx.session.driving)?.car;
+      if (ctx.session.driving !== null && (!car || ctx.session.carAct || !firesFromCar(p.combatant.weapon))) continue;
       if (!readyToFire(p.combatant, loadedOf(ctx, p))) continue;
       // A shotgun with a shell in gives way to the trigger mid-reload.
       p.combatant.reloading = 0;
@@ -270,7 +274,7 @@ export const combatSystem: System = {
         ctx,
         {
           shooter: p,
-          origin: aimOrigin(p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
+          origin: car ? driveByOrigin(p, car) : aimOrigin(p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
           dir: directionFromAngles(p.yaw, p.pitch),
           spread: aimSpreadOf(p, stats),
           critChance: stats.critChance,

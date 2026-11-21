@@ -9,6 +9,18 @@ import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor,
 export const PREPARE_STAGES = ["models", "cityKit", "city", "shaders"] as const;
 export type PrepareStage = (typeof PREPARE_STAGES)[number];
 
+/** One wheel of the driven car for the telemetry (ADR-0097 §3, `?telemetry=1`), in the world: the simulation's `carTelemetry`, the engine's `VehicleTelemetry` draws it. */
+export interface TelemetryWheel {
+  /** Its mount on the body, where the suspension's ray starts. */
+  readonly mount: Vec3;
+  /** Where the tyre touches the ground; null in the air. */
+  readonly contact: Vec3 | null;
+  /** The force the ground puts on the car there (N): the tyre's along and across, the spring's up. */
+  readonly force: Vec3;
+  /** How hard it slides, 0 gripping .. 1 sliding. */
+  readonly slip: number;
+}
+
 export interface RenderPort {
   spawn(entityId: EntityId, view: ViewDescriptor, transform: Transform): void;
   updateTransform(entityId: EntityId, t: Transform): void;

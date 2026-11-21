@@ -1,9 +1,10 @@
-import { EMPTY_INPUT, type InputFrame, hm } from "@seki/core";
+import { EMPTY_INPUT, type InputFrame, WEAPON_CATALOG, hm } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { Simulation, ground, type Entity } from "../src";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT } from "../src/systems/vehicle-system";
 import { lanePose } from "../src/world/traffic";
+import { firesFromCar } from "../src/world/vehicle/drive-by";
 import { RUN_OVER_HARM, runOverDamage } from "../src/world/vehicle/world-car";
 import { teleportPlayer } from "./helpers";
 
@@ -317,6 +318,33 @@ describe("taking a car from the traffic (ADR-0097)", () => {
     expect(Math.hypot(standing[0]!.position.x - left.position.x, standing[0]!.position.z - left.position.z)).toBeLessThan(0.05);
     expect(again.session.driving).toBeNull();
     expect(playerOf(again).seated).toBeUndefined();
+  });
+
+  it("fires a one-handed gun out of the driver's window, along her look, and never a long one (ADR-0097 §3)", () => {
+    const { sim, mine } = takenAndStopped();
+    const shots: { from: { x: number; y: number; z: number }; to: { x: number; y: number; z: number } }[] = [];
+    sim.bus.on("ShotFired", (e) => shots.push(e));
+    // The pistol of her start drawn, then the trigger with her look turned to the car's left.
+    sim.step(press({ weaponSlot: 2 }));
+    for (let i = 0; i < 60; i++) sim.step();
+    for (let i = 0; i < 10; i++) sim.step(press({ lookYaw: -0.1 }));
+    for (let i = 0; i < 30 && shots.length === 0; i++) sim.step(press({ fire: true }));
+    expect(shots.length).toBeGreaterThan(0);
+    const car = mine();
+    const [lx, lz] = [-Math.cos(car.yaw), Math.sin(car.yaw)];
+    const seat = playerOf(sim).position;
+    const out = (p: { x: number; z: number }) => (p.x - seat.x) * lx + (p.z - seat.z) * lz;
+    // Out of the window on the left, at a seated shoulder's height, and away to the left.
+    expect(out(shots[0]!.from)).toBeGreaterThan(0.3);
+    expect(shots[0]!.from.y - seat.y).toBeLessThan(0.8);
+    expect(out(shots[0]!.to)).toBeGreaterThan(1);
+  });
+
+  it("knows which guns fire one-handed from a car", () => {
+    const byClass = (c: string) => Object.values(WEAPON_CATALOG).find((w) => w.class === c)!.id;
+    expect(["pistol", "revolver", "smg"].map((c) => firesFromCar(byClass(c)))).toEqual([true, true, true]);
+    expect(["rifle", "shotgun", "blade"].map((c) => firesFromCar(byClass(c)))).toEqual([false, false, false]);
+    expect(firesFromCar(null)).toBe(false);
   });
 
   it("takes damage driving into a wall, keeps it in the save, and smokes in the picture past half (ADR-0097 §5)", () => {
