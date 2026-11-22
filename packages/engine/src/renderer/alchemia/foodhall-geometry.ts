@@ -108,11 +108,14 @@ export const foodhallPiece = (sink: GeometrySink, data: CityKitData, p: Alchemia
 /** A unit's open side: its middle, the way its sign reads (right of one facing the counter), the way out of it. */
 const openSide = (u: AlchemiaUnit): { readonly mid: { x: number; z: number }; readonly along: { x: number; z: number }; readonly out: { x: number; z: number }; readonly length: number } => {
   const q = u.rect;
-  const [mx, mz] = [(q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2];
-  if (u.open === "s") return { mid: { x: mx, z: q.minZ }, along: { x: 1, z: 0 }, out: { x: 0, z: -1 }, length: q.maxX - q.minX };
-  if (u.open === "n") return { mid: { x: mx, z: q.maxZ }, along: { x: -1, z: 0 }, out: { x: 0, z: 1 }, length: q.maxX - q.minX };
-  if (u.open === "e") return { mid: { x: q.maxX, z: mz }, along: { x: 0, z: 1 }, out: { x: 1, z: 0 }, length: q.maxZ - q.minZ };
-  return { mid: { x: q.minX, z: mz }, along: { x: 0, z: -1 }, out: { x: -1, z: 0 }, length: q.maxZ - q.minZ };
+  // Over the part of the side that opens (Oyaji's: the rest stands against the east row's unit).
+  const [x0, x1] = u.opening && (u.open === "n" || u.open === "s") ? u.opening : [q.minX, q.maxX];
+  const [z0, z1] = u.opening && (u.open === "e" || u.open === "w") ? u.opening : [q.minZ, q.maxZ];
+  const [mx, mz] = [(x0 + x1) / 2, (z0 + z1) / 2];
+  if (u.open === "s") return { mid: { x: mx, z: q.minZ }, along: { x: 1, z: 0 }, out: { x: 0, z: -1 }, length: x1 - x0 };
+  if (u.open === "n") return { mid: { x: mx, z: q.maxZ }, along: { x: -1, z: 0 }, out: { x: 0, z: 1 }, length: x1 - x0 };
+  if (u.open === "e") return { mid: { x: q.maxX, z: mz }, along: { x: 0, z: 1 }, out: { x: 1, z: 0 }, length: z1 - z0 };
+  return { mid: { x: q.minX, z: mz }, along: { x: 0, z: -1 }, out: { x: -1, z: 0 }, length: z1 - z0 };
 };
 
 /** A box `a0..a1` along a side from its middle, `o0..o1` out of it, `y0..y1` high. */
