@@ -27,16 +27,31 @@ Drobiazg:
 - miski, tace, pałeczki, kubki z parą, serwetki, butelki sosów (Blender);
 - telefon na ładowarce, rachunki, ulotki, kartony z dostaw na zapleczach (Blender).
 
+Z Blendera (`tools/blender/rooms/alchemia_foodhall.py`, plik `room-detail-alchemia-props.glb`, 22.11): okrągłe rzeczy, które siedzenia miały dotąd jako pudełka (komiksowy realizm, `docs/zasady-lokacji.md` §9):
+- papierowe lampiony (chochin) nad stołami i na girlandach wzdłuż balustrady atrium: lakierowane denka, papier na żebrach świecący ciepło, czerwony pas, frędzel (`rd-fh-lantern`, `rd-fh-lantern-small`); kable zostają kawałkami silnika;
+- miski zostawione na stołach: ramen z bulionem, makaronem i jajkiem albo donburi ze zdjętą pokrywką i czarką herbaty, na tacach, z pałeczkami (`rd-fh-ramen`, `rd-fh-donburi`); para nad gorącymi zostaje kawałkiem silnika;
+- kubek mrożonej herbaty, kubek przewrócony przy rozlanym napoju (`rd-fh-cup`, `rd-fh-spilled`);
+- stołek barowy przewrócony przy barze Fumiko (`rd-fh-stool`).
+
+Do zrobienia w kolejnych krokach: kuchnie lokali (frytownice, garnki, okapy) i lampiony lokali, dziś pudełka kawałków.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-fh-cup × 1
+- blender: rd-fh-donburi × 3
+- blender: rd-fh-lantern × 15
+- blender: rd-fh-lantern-small × 32
+- blender: rd-fh-ramen × 2
+- blender: rd-fh-spilled × 1
+- blender: rd-fh-stool × 1
 - model: vending-machine × 2
 - model: waste-bin × 2
-- piece: bench × 20
+- piece: bench × 19
 - piece: cable × 49
 - piece: carton × 29
 - piece: counter × 19
-- piece: cup × 22
+- piece: cup × 15
 - piece: display × 28
 - piece: duct × 15
 - piece: floor × 1
@@ -45,7 +60,6 @@ Drobiazg:
 - piece: goods × 52
 - piece: grille × 1
 - piece: lamp × 10
-- piece: lantern × 47
 - piece: led × 2
 - piece: machine × 55
 - piece: paper × 5

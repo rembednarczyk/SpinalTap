@@ -68,26 +68,32 @@ const STOOL_X = 404.75;
 /** The ledges to eat standing at along the atrium's balustrade, on the west and east galleries. */
 const LEDGES = [box(410.5, 410.85, 43.0, 47.0, F - 0.05, F + 1.05), box(425.15, 425.5, 43.0, 47.0, F - 0.05, F + 1.05)];
 
-/** A bowl on a table at (x, z): steaming when it was just left (§5). */
-const bowl = (x: number, z: number, hot: boolean): Piece[] => [
-  piece(box(x - 0.09, x + 0.09, z - 0.09, z + 0.09, F + TABLE, F + TABLE + 0.08), "cup", true, false),
-  ...(hot ? [piece(box(x - 0.015, x + 0.02, z - 0.015, z + 0.02, F + TABLE + 0.11, F + TABLE + 0.42), "steam", true, false)] : []),
+/**
+ * The bowls left on the tables (§5), steaming when just left: drawn by the rooms' detail (round bowls on trays,
+ * `foodhall-detail.ts`, ADR-0098), their steam here.
+ */
+export const FOODHALL_MEALS: readonly { readonly x: number; readonly z: number; readonly hot: boolean }[] = [
+  { x: 406.8, z: 41.0, hot: true },
+  { x: 406.8, z: 41.6, hot: false },
+  { x: 429.1, z: 43.4, hot: true },
+  { x: 415.8, z: 34.0, hot: true },
+  { x: 413.1, z: 14.4, hot: false },
+  { x: 406.4, z: 55.15, hot: true },
 ];
+
+/** A meal's steam over its bowl. */
+const steam = (m: (typeof FOODHALL_MEALS)[number]): Piece[] =>
+  m.hot ? [piece(box(m.x - 0.015, m.x + 0.02, m.z - 0.015, m.z + 0.02, F + TABLE + 0.11, F + TABLE + 0.42), "steam", true, false)] : [];
+
+/** The tables' top over the floor. */
+export const FOODHALL_TABLE_TOP = TABLE;
 
 /** The marks on the tables and the floor: bowls and cups, chopsticks' paper, a spilled drink, a stool on its side. */
 const traces = (): Piece[] => [
-  ...bowl(406.8, 41.0, true),
-  ...bowl(406.8, 41.6, false),
-  ...bowl(429.1, 43.4, true),
-  ...bowl(415.8, 34.0, true),
-  ...bowl(413.1, 14.4, false),
-  ...bowl(406.4, 55.15, true),
-  piece(box(406.6, 406.75, 46.0, 46.08, F + TABLE, F + TABLE + 0.12), "cup", true, false),
-  // A drink knocked over and spreading on the east table, the cup on its side by it.
+  ...FOODHALL_MEALS.flatMap(steam),
+  // A drink knocked over and spreading on the east table (its cup on its side by it, and a cup standing on the west
+  // table, and the stool knocked over by the bar, are the rooms' detail's: `foodhall-detail.ts`).
   piece(box(429.0, 429.35, 39.2, 39.8, F + TABLE, F + TABLE + 0.005), "water", true, false),
-  piece(box(429.3, 429.42, 39.75, 39.84, F + TABLE, F + TABLE + 0.07), "cup", true, false),
-  // A stool knocked over by the bar (drawn: it lies flat where it fell).
-  piece(box(405.0, 405.7, 53.9, 54.25, F, F + 0.32), "bench", true, false),
   // Wrappers and napkins under the tables.
   ...[
     [406.9, 43.4],
@@ -99,8 +105,8 @@ const traces = (): Piece[] => [
   ].map(([x, z]) => piece(box(x! - 0.12, x! + 0.12, z! - 0.16, z! + 0.16, F + 0.003, F + 0.008), "paper", true, false)),
 ];
 
-/** Paper lanterns on cables over a group (warm, §4: food), two or three along its table. */
-const lanterns = (g: Group): Piece[] => {
+/** Where the paper lanterns hang over a group (warm, §4: food), two or three along its table: their tops on their cables. */
+export const lanternSpots = (g: Group): { readonly x: number; readonly z: number; readonly top: number }[] => {
   const t = groupParts(g).table;
   const alongZ = g.along === "z";
   const len = alongZ ? t.z1 - t.z0 : t.x1 - t.x0;
@@ -108,12 +114,12 @@ const lanterns = (g: Group): Piece[] => {
   return Array.from({ length: n }, (_, i) => {
     const a = (len * (i + 0.5)) / n;
     const [x, z] = alongZ ? [(t.x0 + t.x1) / 2, t.z0 + a] : [t.x0 + a, (t.z0 + t.z1) / 2];
-    return [
-      piece(box(x - 0.18, x + 0.18, z - 0.18, z + 0.18, F + 2.3, F + 2.75), "lantern", true, false),
-      piece(box(x - 0.01, x + 0.01, z - 0.01, z + 0.01, F + 2.75, C), "cable", true, false),
-    ];
-  }).flat();
+    return { x, z, top: F + 2.75 };
+  });
 };
+
+/** The lanterns' cables over a group (the lanterns themselves are the rooms' detail's, round: `foodhall-detail.ts`). */
+const lanterns = (g: Group): Piece[] => lanternSpots(g).map(({ x, z, top }) => piece(box(x - 0.01, x + 0.01, z - 0.01, z + 0.01, top, C), "cable", true, false));
 
 /**
  * The services under the slab over the ring (the architecture's layer): a pipe run and a cable tray
@@ -132,25 +138,22 @@ const services = (): Piece[] => [
  * Strings of paper lanterns along the atrium's balustrade on all four sides, a cable sagging between
  * hooks under the slab and a lantern every 1.4 m (the night market's light, §4), over the gallery.
  */
-const festoons = (): Piece[] => {
-  const y = C - 0.75;
-  const lines: [number, number, number, number][] = [
-    [409.6, 426.4, 39.6, 39.6],
-    [409.6, 426.4, 50.4, 50.4],
-    [409.6, 409.6, 39.6, 50.4],
-    [426.4, 426.4, 39.6, 50.4],
-  ];
-  return lines.flatMap(([x0, x1, z0, z1]) => {
-    const len = Math.hypot(x1 - x0, z1 - z0);
-    const n = Math.floor(len / 1.4);
-    const out: Piece[] = [piece(box(Math.min(x0, x1) - 0.01, Math.max(x0, x1) + 0.01, Math.min(z0, z1) - 0.01, Math.max(z0, z1) + 0.01, y, y + 0.02), "cable", true, false)];
-    for (let i = 1; i < n; i++) {
-      const [x, z] = [x0 + ((x1 - x0) * i) / n, z0 + ((z1 - z0) * i) / n];
-      out.push(piece(box(x - 0.12, x + 0.12, z - 0.12, z + 0.12, y - 0.32, y - 0.02), "lantern", true, false));
-    }
-    return out;
-  });
-};
+const FESTOON_Y = C - 0.75;
+const FESTOON_LINES: readonly (readonly [number, number, number, number])[] = [
+  [409.6, 426.4, 39.6, 39.6],
+  [409.6, 426.4, 50.4, 50.4],
+  [409.6, 409.6, 39.6, 50.4],
+  [426.4, 426.4, 39.6, 50.4],
+];
+
+/** The strings' lanterns: a lantern every 1.4 m along each line, its top under the cable (drawn by the rooms' detail). */
+export const FESTOON_SPOTS: readonly { readonly x: number; readonly z: number; readonly top: number }[] = FESTOON_LINES.flatMap(([x0, x1, z0, z1]) => {
+  const n = Math.floor(Math.hypot(x1 - x0, z1 - z0) / 1.4);
+  return Array.from({ length: Math.max(0, n - 1) }, (_, k) => ({ x: x0 + ((x1 - x0) * (k + 1)) / n, z: z0 + ((z1 - z0) * (k + 1)) / n, top: FESTOON_Y - 0.02 }));
+});
+
+const festoons = (): Piece[] =>
+  FESTOON_LINES.map(([x0, x1, z0, z1]) => piece(box(Math.min(x0, x1) - 0.01, Math.max(x0, x1) + 0.01, Math.min(z0, z1) - 0.01, Math.max(z0, z1) + 0.01, FESTOON_Y, FESTOON_Y + 0.02), "cable", true, false));
 
 /** The seating's pieces: tables, benches, stools and ledges (solid), lanterns, services and marks (drawn). */
 export const seatingPieces = (): Piece[] => [

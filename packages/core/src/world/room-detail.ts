@@ -107,6 +107,14 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-p1-cabin-screen" },
   { key: "rd-p1-guard" },
   { key: "rd-p1-floor" },
+  // Alchemia's food hall on P3 (docs/pomieszczenia/alchemia-foodhall.md).
+  { key: "rd-fh-lantern" },
+  { key: "rd-fh-lantern-small" },
+  { key: "rd-fh-ramen" },
+  { key: "rd-fh-donburi" },
+  { key: "rd-fh-cup" },
+  { key: "rd-fh-spilled" },
+  { key: "rd-fh-stool" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

@@ -29,6 +29,8 @@ Drobiazg:
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-fh-lantern × 2
+- blender: rd-fh-ramen × 1
 - model: atm × 5
 - model: bench × 6
 - model: figure × 68
@@ -45,7 +47,7 @@ Drobiazg:
 - piece: chair × 55
 - piece: column × 1
 - piece: counter × 87
-- piece: cup × 94
+- piece: cup × 93
 - piece: display × 116
 - piece: duct × 52
 - piece: error × 19
@@ -57,7 +59,7 @@ Drobiazg:
 - piece: goods × 5407
 - piece: grille × 12
 - piece: lamp × 223
-- piece: lantern × 68
+- piece: lantern × 66
 - piece: led × 19
 - piece: led-green × 72
 - piece: lightbox × 31
