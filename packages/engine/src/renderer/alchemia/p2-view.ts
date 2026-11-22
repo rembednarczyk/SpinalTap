@@ -1,4 +1,5 @@
 import type { Vec3 } from "@seki/core";
+import { ALCHEMIA_LAMP_PREFIX } from "./alchemia-lights";
 import { ALCHEMIA_T1, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_STORE_PIECES, P2_CORRIDOR, P2_CUTTING, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH, SHELTER_HATCH_HEAD, SHELTER_PASSAGE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -42,21 +43,23 @@ const BEACON = (() => {
 const LAMP = {
   color: "#ff9a4a",
   range: 22,
-  // Its floor as lit as from the store's middle with 18 m of reach before (22.11): the half-dark kept.
-  intensity: 0.42,
+  // The half-dark kept (under half of P-1's light), its slot its own since the interior mode (§13, 60-30-10).
+  intensity: 0.6,
   position: { x: BEACON.x, y: P2.ceiling + 0.05, z: BEACON.z },
   clip: { minX: P2.minX, maxX: P2.maxX, minZ: P2.minZ, maxZ: P2.maxZ },
 } as const;
-export const P2_LAMP_KEY = "alchemia-p2";
+/** Keyed as Alchemia's lamps: in its interior mode (`AlchemiaInterior`) only these take the shader's slots. */
+export const P2_LAMP_KEY = `${ALCHEMIA_LAMP_PREFIX}p2`;
 
 const SHELTER_LAMP = {
-  color: "#ffd08a",
+  // The caged bulbs' warm amber, the shelter's only colour (§13).
+  color: "#ffb060",
   range: 16,
-  intensity: 0.35,
+  intensity: 0.6,
   position: { x: (SHELTER.minX + SHELTER.maxX) / 2, y: SHELTER.ceiling - 0.3, z: (SHELTER.minZ + SHELTER.maxZ) / 2 },
   clip: { minX: SHELTER.minX, maxX: SHELTER.maxX, minZ: SHELTER_GATE_STAIR.minZ, maxZ: SHELTER.maxZ },
 } as const;
-export const SHELTER_LAMP_KEY = "alchemia-shelter";
+export const SHELTER_LAMP_KEY = `${ALCHEMIA_LAMP_PREFIX}shelter`;
 
 /** P-2's store, its annex and its corridor. */
 const P2_PARTS: readonly Rect[] = [P2, P2_ANNEX, P2_CORRIDOR];

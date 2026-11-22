@@ -1,0 +1,1 @@
+- Parking P-1, magazyn P-2 z tunelem i schron pod Alchemią: świecą własne lampy (koguty robotów, oprawy korytarza, lampy w koszykach), a latarnie z placu nie przebijają już przez strop.
