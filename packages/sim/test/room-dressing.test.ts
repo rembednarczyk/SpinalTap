@@ -100,6 +100,23 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
       for (const e of ROOM_KITS[layout.kind].filter((k) => k.anchor === "floor-free")) expect(dressed.some((p) => key(p.variant) === e.key), layout.id).toBe(false);
   });
   const near = (x: number, z: number, r: GroundRect, d: number) => Math.hypot(x - Math.min(r.maxX, Math.max(r.minX, x)), z - Math.min(r.maxZ, Math.max(r.minZ, z))) <= d;
+  it("stands a wall's model with its back on its wall, not half its depth off it", () => {
+    const onWall = (x: number, z: number, layout: (typeof rooms)[number]["layout"]) =>
+      layout.walls.some((w) => {
+        const dx = w.b.x - w.a.x;
+        const dz = w.b.z - w.a.z;
+        const t = Math.max(0, Math.min(1, ((x - w.a.x) * dx + (z - w.a.z) * dz) / (dx * dx + dz * dz)));
+        return Math.hypot(x - (w.a.x + dx * t), z - (w.a.z + dz * t)) <= 0.03;
+      }) ||
+      (layout.doors ?? []).some((d) => near(x, z, d, 0.03));
+    let checked = 0;
+    for (const { layout, dressed } of rooms)
+      for (const p of dressed.filter((d) => ["rd-c-extinguisher", "rd-c-hydrant", "rd-c-fusebox", "rd-w3h-exit"].includes(key(d.variant)))) {
+        expect(onWall(p.x, p.z, layout), `${layout.id} ${key(p.variant)} ${p.x.toFixed(2)},${p.z.toFixed(2)}`).toBe(true);
+        checked++;
+      }
+    expect(checked).toBeGreaterThan(20);
+  });
   it("hangs an exit sign over the ways out, on their walls, short of the ceiling", () => {
     for (const { layout, dressed } of rooms)
       for (const p of dressed.filter((d) => key(d.variant) === "rd-w3h-exit")) {

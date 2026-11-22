@@ -197,7 +197,9 @@ const place = (room: RoomLayout, e: KitEntry, taken: DressTaken[]): StreetPropIt
     if (e.by && !(room.doors ?? []).some((d) => (e.by === "door" || d.weather) && Math.hypot(s.x - clampTo(s.x, d.minX, d.maxX), s.z - clampTo(s.z, d.minZ, d.maxZ)) <= BY_DOOR)) continue;
     if (e.apart && placedOf(taken, e.key).some((p) => Math.hypot(s.x - (p.minX + p.maxX) / 2, s.z - (p.minZ + p.maxZ) / 2) < e.apart!)) continue;
     taken.push(footprint(s, e.key));
-    out.push({ prop: "room-detail", x: s.x, y: s.y, z: s.z, yaw: s.yaw, variant: roomDetailShape(e.key) });
+    // A wall's model stands with its back on the wall: its origin half its depth behind its footprint's middle.
+    const back = e.back ? e.out / 2 : 0;
+    out.push({ prop: "room-detail", x: s.x - Math.sin(s.yaw) * back, y: s.y, z: s.z - Math.cos(s.yaw) * back, yaw: s.yaw, variant: roomDetailShape(e.key) });
   }
   return out;
 };
