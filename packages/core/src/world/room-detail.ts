@@ -193,6 +193,10 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-fh-prep", clutter: 4 },
   // W-3's assembly hall (§14, 22.11): what the welder left on each station by the belts.
   { key: "rd-w3h-station", fine: true, clutter: 5 },
+  // Alchemia's tunnel from P-2 to T2 (§14, 22.11): the butts by the store's end, the debris at the shelter's gate, the litter at the portal.
+  { key: "rd-p2t-butts", fine: true, clutter: 4 },
+  { key: "rd-p2t-gate", fine: true, clutter: 3 },
+  { key: "rd-p2t-litter", fine: true, clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
