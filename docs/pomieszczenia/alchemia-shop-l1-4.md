@@ -36,6 +36,7 @@ Frakcja: ulica.
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-c-papers × 1
 - blender: rd-gl-stock × 13
 - blender: rd-gl-stock-b × 14
 - blender: rd-gl-tattoo-b × 2
@@ -62,7 +63,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 20 m², wysokość 3,1 m
 - siatka 0,5 m: 1 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 13
-- warstwy wyposażenia: makro 12, mezo 19, mikro 10
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 9 rzeczy w nich, 1 luzem
+- warstwy wyposażenia: makro 12, mezo 19, mikro 13
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 12 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 8
 <!-- inwentarz-gry:end -->

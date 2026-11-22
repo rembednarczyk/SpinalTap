@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_UNITS, ALL_GALLERY_SHOPS, ATRIUM, FOODHALL_CEILING, FOODHALL_FLOOR, FRONT_ROOMS, GALLERY, MALL_LEVELS, galleryShopCeiling, galleryShopFloor } from "@seki/sim";
+import { ALCHEMIA_UNITS, ALL_GALLERY_SHOPS, EXIT_SIGNS, ATRIUM, FOODHALL_CEILING, FOODHALL_FLOOR, FRONT_ROOMS, GALLERY, MALL_LEVELS, galleryShopCeiling, galleryShopFloor } from "@seki/sim";
 import { type LightClip, type PointLightDef, mixHex } from "../../npr/lighting";
 
 /**
@@ -46,6 +46,13 @@ const STRIP = "#38d4ff";
 const LANTERN = "#ffb470";
 /** The food hall's kitchens: the heat lamps over the pass and the stoves' glow. */
 const KITCHEN = "#ff7c46";
+/**
+ * A counter of the game's people (Fumiko, Kenta, Goro, Sachiko, Oyaji): a whiter, brighter pool over the
+ * counter itself (§13's functional contrast: where she has business stands out of the hall).
+ */
+const KEEPER = "#ffe4c2";
+/** The way out's green (§13, the exit signs over the cores' doors). */
+const EXIT = "#3dff86";
 
 type Rect = { readonly x0: number; readonly x1: number; readonly z0: number; readonly z1: number };
 
@@ -81,7 +88,23 @@ const kitchenLamps = (): AlchemiaLamp[] =>
       z1: q.maxZ + (u.open === "n" ? SPILL : 0),
     };
     const reach = Math.max(q.maxX - q.minX, q.maxZ - q.minZ) / 2 + 3;
-    return lamp(`kitchen-${u.id}`, KITCHEN, (q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2, FOODHALL_CEILING, FOODHALL_FLOOR, reach, 1.0, r);
+    if (!u.keeper) return lamp(`kitchen-${u.id}`, KITCHEN, (q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2, FOODHALL_CEILING, FOODHALL_FLOOR, reach, 1.0, r);
+    // A keeper's: over the middle of the counter, 0.6 m in from the open side (along its opening, where it has one).
+    const [s0, s1] = u.opening ?? (u.open === "n" || u.open === "s" ? [q.minX, q.maxX] : [q.minZ, q.maxZ]);
+    const mid = (s0 + s1) / 2;
+    const at =
+      u.open === "n" ? { x: mid, z: q.maxZ - 0.6 } : u.open === "s" ? { x: mid, z: q.minZ + 0.6 } : u.open === "e" ? { x: q.maxX - 0.6, z: mid } : { x: q.minX + 0.6, z: mid };
+    return lamp(`kitchen-${u.id}`, KEEPER, at.x, at.z, FOODHALL_CEILING, FOODHALL_FLOOR, 6, 1.7, r);
+  });
+
+/** A green pool before each core's door under its exit sign, a metre and a half each way, on its floor. */
+const exitLamps = (): AlchemiaLamp[] =>
+  EXIT_SIGNS.map((p, i) => {
+    const x = (p.box.x0 + p.box.x1) / 2;
+    const z = (p.box.z0 + p.box.z1) / 2;
+    const floor = p.box.y0 - 2.18;
+    // At the sign itself, up to its top: the glow stays under the ceiling (G-509), on the door, the wall and the floor before it.
+    return lamp(`exit-${i}`, EXIT, x, z, p.box.y1, floor, 3.2, 0.55, { x0: x - 1.6, x1: x + 1.6, z0: z - 1.6, z1: z + 1.6 });
   });
 
 /** The gallery's storeys round the atrium: P0 (the old hall), P1 and P2, and P3 the food hall. */
@@ -109,9 +132,11 @@ const galleryLamps = (): AlchemiaLamp[] =>
   STOREYS.flatMap((s) => {
     const food = s.name === "p3";
     const strips = STRIPS.map((t) => lamp(`${s.name}-${t.name}`, food ? LANTERN : SODIUM, t.x, t.z, s.top, s.bottom, food ? 11 : 10, food ? 1.3 : 1.05, t.r));
+    // The atrium's cyan strips run under its slabs' edges (`mallSlab`'s lit edges): a lamp at the middle of each long edge, not in the void.
     const a = ATRIUM;
-    const atrium = lamp(`${s.name}-atrium`, STRIP, (a.x0 + a.x1) / 2, (a.z0 + a.z1) / 2, s.top, s.bottom, 9, 0.9, { x0: a.x0 - 1.5, x1: a.x1 + 1.5, z0: a.z0 - 1.5, z1: a.z1 + 1.5 });
-    return [...strips, atrium];
+    const band = { x0: a.x0 - 1.5, x1: a.x1 + 1.5, z0: a.z0 - 1.5, z1: a.z1 + 1.5 };
+    const atrium = [a.z0, a.z1].map((z, k) => lamp(`${s.name}-atrium-${k === 0 ? "s" : "n"}`, STRIP, (a.x0 + a.x1) / 2, z, s.top, s.bottom, 8, 0.75, band));
+    return [...strips, ...atrium];
   });
 
 /** The front's storeys' rooms (ADR-0093 O5): their arcades, corridors, café and bar, a warm fitting over each. */
@@ -121,7 +146,7 @@ const frontLamps = (): AlchemiaLamp[] =>
     return lamp(`front-${i}`, SODIUM, (r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2, r.top, r.bottom, reach, 0.9, { x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
   });
 
-export const ALCHEMIA_LAMPS: readonly AlchemiaLamp[] = [...galleryLamps(), ...shopLamps(), ...kitchenLamps(), ...frontLamps()];
+export const ALCHEMIA_LAMPS: readonly AlchemiaLamp[] = [...galleryLamps(), ...shopLamps(), ...kitchenLamps(), ...exitLamps(), ...frontLamps()];
 
 /** Distance from the eye to a lamp's room: across its clip and up or down to its storey. */
 const toRoom = (l: AlchemiaLamp, eye: Vec3): number => {

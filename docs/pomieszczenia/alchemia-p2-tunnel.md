@@ -25,13 +25,22 @@ Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §12 zgodne co do kontrastu: ciasny tunel między magazynem a otwartym wykopem T2. Dług: instalacje pod stropem; wymiary na siatce w pomiarach.
 - §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%.
 - §14 częściowo: 11 rzeczy drobiazgu w trzech skupiskach (u wylotu do magazynu, pod bramą schronu, przy portalu), nic luzem. Dług: duże obiekty (wózek serwisowy, szafka hydrantowa, skrzynka rozdzielcza) i instalacje pod stropem.
-- §15 dług: mokra posadzka przy portalu (deszcz z wykopu), połysk rur.
+- §15 częściowo: kałuża przy portalu, gdzie wpada deszcz z wykopu (`rd-c-puddle`, generator: `by: "weather"`). Dług: połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.
 - §17 dług: przeciąg i kapanie ze źródła (portal, dylatacja); ruch: migająca oprawa.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-c-bottles × 1
+- blender: rd-c-cable × 1
+- blender: rd-c-cartons × 1
+- blender: rd-c-cups × 1
+- blender: rd-c-drain × 3
+- blender: rd-c-extinguisher × 1
+- blender: rd-c-fusebox × 1
+- blender: rd-c-hydrant × 1
+- blender: rd-c-puddle × 1
 - blender: rd-p2t-butts × 1
 - blender: rd-p2t-gate × 1
 - blender: rd-p2t-litter × 1
@@ -39,8 +48,8 @@ Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 241 m², wysokość 2,3 m
 - siatka 0,5 m: 0 z 2 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 0, mikro 11
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 11 rzeczy w nich, 0 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 4
+- warstwy wyposażenia: makro 0, mezo 4, mikro 18
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 5 skupisk, 17 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

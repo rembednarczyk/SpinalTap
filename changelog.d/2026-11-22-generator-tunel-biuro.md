@@ -1,0 +1,1 @@
+- Tunel z P-2 na T2: gaśnica przy portalu, szafka hydrantowa, skrzynka rozdzielcza z kablem, kratki odpływu wzdłuż ścian, karton z butelkami i kałuża tam, gdzie wpada deszcz; w biurze Tessenu gaśnica przy drzwiach i skrzynka rozdzielcza. Rozstawia je generator wnętrz (ADR-0099).

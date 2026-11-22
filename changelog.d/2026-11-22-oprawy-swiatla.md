@@ -1,0 +1,1 @@
+- W galerii Alchemii nad pasami P1 i P2 wiszą panele świetlne, a światło atrium pada z pasów LED na krawędziach płyt; poświata P-2 płynie z kogutów robotów.

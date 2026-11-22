@@ -34,7 +34,7 @@ Drobiazg:
 Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 - §12 dług: 0 z 2 wymiarów na siatce. Korporacja: symetria biurek i lady przepustek do sprawdzenia.
 - §13 częściowo: 1 widoczne źródło w bryłach; świetlówki i monitory powiązać z oprawami. Drzwi do hali wyróżnione czerwoną lampką: zgodne. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 97,9%, światło 2%, akcenty 0,1%, poza pasmem: baza 97,9% > 75%; światło 2% < 18%; akcenty 0,1% < 3%.
-- §14 zgodne co do sterylności (korporacja, §16): 11 rzeczy drobiazgu, skupiska na biurku i na tablicy, 27% luzem (karton akt, kubki w koszu).
+- §14 zgodne co do sterylności (korporacja, §16): 11 rzeczy drobiazgu, skupiska na biurku i na tablicy, 27% luzem (karton akt, kubki w koszu). Generator wnętrz (ADR-0099, zestaw `office`) dokłada tylko gaśnicę przy drzwiach i skrzynkę rozdzielczą, bez drobiazgu.
 - §15 dług: czarne szkło i szczotkowana stal lady.
 - §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
 - §17 do sprawdzenia: szum pomp zza ściany.
@@ -42,6 +42,8 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-c-extinguisher × 1
+- blender: rd-c-fusebox × 1
 - blender: rd-tessen-bench × 1
 - blender: rd-tessen-board × 1
 - blender: rd-tessen-cabinet × 1
@@ -52,8 +54,8 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 88 m², wysokość 4,0 m
 - siatka 0,5 m: 0 z 2 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1
-- warstwy wyposażenia: makro 2, mezo 1, mikro 11
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 2
+- warstwy wyposażenia: makro 2, mezo 2, mikro 11
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 8 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->
