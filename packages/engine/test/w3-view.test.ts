@@ -11,7 +11,7 @@ import { parseCityKit, swatchUv } from "../src/renderer/city-kit-data";
 import { closeOff } from "../src/renderer/mapcity/interior-mode";
 import { inW3Hall } from "../src/renderer/tessen-w3/w3-interior-cull";
 import { w3InsideGeometry } from "../src/renderer/tessen-w3/w3-inside-geometry";
-import { W3_LAMP_PREFIX, w3LampsFor } from "../src/renderer/tessen-w3/w3-lights";
+import { W3_LAMP_PREFIX, W3_LAMPS_ON, w3LampsFor } from "../src/renderer/tessen-w3/w3-lights";
 import { linePose } from "../src/renderer/tessen-w3/w3-line-anim";
 import { LINE_BOXES, lineGeometry } from "../src/renderer/tessen-w3/w3-line-geometry";
 import { W3View, eyeInW3 } from "../src/renderer/tessen-w3/w3-view";
@@ -113,9 +113,9 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     expect(swatches(linePose(0, undefined, true, { alarm: false, screens: "infected", wrecks: [] })).violet).toBe(5);
   });
 
-  it("puts on the two lamps nearest the eye's room: the hall's, the server room's glow, the basement's", () => {
+  it("puts on the lamps nearest the eye's room: the hall's, the server room's glow, the basement's", () => {
     const keys = (x: number, y: number, z: number) => w3LampsFor(w3(x, y, z)).map((l) => l.key.slice(W3_LAMP_PREFIX.length));
-    expect(keys(2520, 1.6, 418)).toEqual(["hall-w", "hall-e"]);
+    expect(keys(2520, 1.6, 418)).toEqual(["hall-sw", "hall-nw", "hall-se", "hall-ne", "screen-s1", "screen-s3", "gate"]);
     expect(keys(2566, 1.6, 436)[0]).toBe("server-n");
     expect(keys(2530, -3, 402)[0]).toBe("basement");
     expect(keys(2560, 1.6, 418)[0]).toBe("chamber");
@@ -146,8 +146,8 @@ describe("W-3's hall baked in the engine (ADR-0082 stage 2b)", () => {
     materials.setLightFocus(eye.x, eye.z, v.lightScope);
     expect(v.stats.meshes).toBe(3);
     expect(v.interior).toBe(true);
-    expect(v.lampsOn.map((l) => l.key)).toEqual([`${W3_LAMP_PREFIX}hall-w`, `${W3_LAMP_PREFIX}hall-e`]);
-    expect(materials.lightCount).toBe(2);
+    expect(v.lampsOn.map((l) => l.key).slice(0, 2)).toEqual([`${W3_LAMP_PREFIX}hall-sw`, `${W3_LAMP_PREFIX}hall-nw`]);
+    expect(materials.lightCount).toBe(W3_LAMPS_ON);
     // Out through the wagon gate onto the yard: the street's lamp is back, the hall's fade with the
     // distance, and the yard's two floodlights are on again (stage 4, `W3Fx`).
     Object.assign(eye, w3(2490, 1.6, 418));

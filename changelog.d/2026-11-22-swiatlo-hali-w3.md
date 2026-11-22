@@ -1,0 +1,1 @@
+- Hala W-3 jaśniejsza: białe światło spod świetlówek nad alejką, turkusowa poświata ekranów stanowisk i czerwień świateł nad bramą komory testów.

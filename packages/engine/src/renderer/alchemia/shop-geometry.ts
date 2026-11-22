@@ -21,24 +21,30 @@ interface TradeLook {
   readonly display: string;
   /** The goods' colours (the kit's paint tinted). */
   readonly goods: readonly string[];
-  /** The partitions' paint. */
+  /**
+   * The partitions' paint: mid tones at most, so a wall the shop's lamp misses stays in the dark base of the 60-30-10
+   * rule (`docs/zasady-lokacji.md` §13) under the interior's ambient, and the lamp's pool reads as its light.
+   */
   readonly wall: string;
 }
 
 const LOOK: Readonly<Record<GalleryShopTrade, TradeLook>> = {
-  implants: { sign: "neon-cyan", lamp: "win-white", display: "win-teal", goods: ["#c9d2dc", "#7ff3ff", "#59606f", "#e8eef4"], wall: "#d8e2ea" },
+  implants: { sign: "neon-cyan", lamp: "win-white", display: "win-teal", goods: ["#c9d2dc", "#7ff3ff", "#59606f", "#e8eef4"], wall: "#939ca4" },
   electronics: { sign: "neon-blue", lamp: "win-white", display: "office", goods: ["#15171c", "#3a3f4b", "#3f8cff", "#b4bac4", "#ff2e88"], wall: "#9aa4b4" },
-  clothing: { sign: "neon-pink", lamp: "win-warm", display: "win-pink", goods: ["#167a80", "#8e2457", "#9c6a1c", "#15171c", "#e6d6b4", "#c43a7a"], wall: "#e6d2d8" },
-  pharmacy: { sign: "neon-green", lamp: "win-white", display: "win-teal", goods: ["#f2f4f6", "#39ff8a", "#e8e0d0", "#3f8cff", "#ff4040"], wall: "#e8f0ec" },
+  clothing: { sign: "neon-pink", lamp: "win-warm", display: "win-pink", goods: ["#167a80", "#8e2457", "#9c6a1c", "#15171c", "#e6d6b4", "#c43a7a"], wall: "#a08e94" },
+  pharmacy: { sign: "neon-green", lamp: "win-white", display: "win-teal", goods: ["#f2f4f6", "#39ff8a", "#e8e0d0", "#3f8cff", "#ff4040"], wall: "#a0aaa5" },
   arms: { sign: "neon-red", lamp: "win-warm", display: "win-teal", goods: ["#15171c", "#30343e", "#596070", "#5b3a2c"], wall: "#6a6e78" },
   repair: { sign: "neon-amber", lamp: "win-white", display: "win-teal", goods: ["#3a3f4b", "#596070", "#ffb000", "#15171c", "#2f6f9a"], wall: "#b8b2a4" },
   pawn: { sign: "neon-amber", lamp: "win-warm", display: "win-teal", goods: ["#ffb000", "#b4bac4", "#5b3a2c", "#15171c", "#8e2457", "#e6d6b4"], wall: "#c8b89a" },
   tattoo: { sign: "neon-violet", lamp: "win-pink", display: "win-pink", goods: ["#15171c", "#b46cff", "#ff2e88", "#e6d6b4"], wall: "#4a3a5a" },
-  "synth-food": { sign: "neon-amber", lamp: "win-warm", display: "win-warm", goods: ["#ff4040", "#ffb000", "#39ff8a", "#ff8fd8", "#f2f4f6", "#3f8cff"], wall: "#f0e2c8" },
+  "synth-food": { sign: "neon-amber", lamp: "win-warm", display: "win-warm", goods: ["#ff4040", "#ffb000", "#39ff8a", "#ff8fd8", "#f2f4f6", "#3f8cff"], wall: "#a89c86" },
   vr: { sign: "neon-violet", lamp: "win-teal", display: "win-pink", goods: ["#15171c", "#b46cff", "#00e5ff", "#3a3f4b"], wall: "#3a3f5a" },
   crypto: { sign: "neon-green", lamp: "win-white", display: "win-teal", goods: ["#15171c", "#39ff8a", "#ffb000", "#596070"], wall: "#2e3a3a" },
-  florist: { sign: "neon-pink", lamp: "win-warm", display: "win-warm", goods: ["#ff2e88", "#ffb000", "#f2f4f6", "#b46cff", "#ff4040", "#39ff8a"], wall: "#e8eadc" },
+  florist: { sign: "neon-pink", lamp: "win-warm", display: "win-warm", goods: ["#ff2e88", "#ffb000", "#f2f4f6", "#b46cff", "#ff4040", "#39ff8a"], wall: "#a2a496" },
 };
+
+/** A trade's partitions' paint (its lamp's exposure is set by it, `alchemia-lights.ts`). */
+export const shopWall = (trade: GalleryShopTrade): string => LOOK[trade].wall;
 
 const X: Vec3 = { x: 1, y: 0, z: 0 };
 const Y: Vec3 = { x: 0, y: 1, z: 0 };
