@@ -88,7 +88,7 @@ def bottle_shelf():
             seed = hashf(s, k, 7)
             if seed > 0.12 and not (s == 0 and abs(x) < 0.6):
                 bottle(m, x, z1 - 0.2, y, seed)
-            x += 0.13 + 0.06 * hashf(k, s)
+            x += 0.17 + 0.08 * hashf(k, s)
             k += 1
     # The sake kettle and the cash box on the counter top of the back bar.
     m.lathe(-0.3, 0.05, [(0.1, 0), (0.12, 0.08), (0.1, 0.16), (0.04, 0.2), (0.0, 0.21)], 'metal', seg=12, y0=0.9)

@@ -12,31 +12,43 @@ Zimne, sine światło lampy operacyjnej nad fotelem, ciepła żarówka nad biurk
 Miejsce zadań i usług: wszczepy, leczenie, rozmowy z Morim. Gracz wchodzi z deptaku, rozmawia przy biurku, siada na fotelu. Jedno wejście od ulicy i zaplecze za kotarą (droga ucieczki w zadaniach).
 
 ## Inwentarz docelowy
+Stan: zrobione (Blender, `tools/blender/rooms/clinic.py`, 22.11) albo do zrobienia.
+
 Architektura:
-- kafle ścienne do 1,6 m z łatami, listwa, sufit z rurami i korytem kablowym (Blender: panel kafli, koryto, rury z kołnierzami);
-- kotara na szynie do zaplecza (Blender);
-- okno na deptak z żaluzją do połowy (Blender).
+- kafle ścienne do 1,6 m z łatami, sufit z rurami i korytem kablowym (do zrobienia);
+- kotara na szynie do zaplecza, okno na deptak z żaluzją (do zrobienia).
 
 Duże obiekty:
-- fotel zabiegowy na hydraulicznej kolumnie z podnóżkiem i pasami (Blender);
-- lampa operacyjna na ramieniu z sufitu, sześć soczewek (Blender);
-- wózek narzędziowy z trzema szufladami i tacą (Blender);
-- biurko z dwoma monitorami, jeden z pęknięciem (Blender);
-- szafa lekowa ze szklanymi drzwiami i autoklaw z czerwoną diodą (Blender);
-- sejf lombardu w kącie (Blender);
-- kosz na odpady medyczne (model gry: `waste-bin` albo Blender).
+- fotel zabiegowy na hydraulicznej kolumnie, oparcie uniesione pod kątem, podnóżek, podłokietniki z pasami, pedał (zrobione: `rd-clinic-chair`);
+- lampa operacyjna z sufitu, dwie głowice po sześć soczewek (zrobione: `rd-clinic-lamp`);
+- wózek narzędziowy z trzema szufladami i tacą (zrobione: `rd-clinic-cart`);
+- lada recepcji z perforowanym frontem, monitorem na ramieniu i czytnikiem kart (zrobione: `rd-clinic-reception`);
+- ławka w poczekalni z czterech siedzisk, jedno pęknięte (zrobione: `rd-clinic-bench`);
+- szafa lekowa ze szklanymi drzwiami, autoklaw z czerwoną diodą (zrobione: `rd-clinic-cabinet`);
+- sejf lombardu, biurko Moriego z dwoma monitorami (do zrobienia: wymaga brył symulacji);
+- pojemnik na odpady medyczne (zrobione: `rd-clinic-sharps`).
 
 Drobiazg:
-- taca z narzędziami i zakrwawioną gazą, strzykawki, ampułki (Blender, zestaw drobnych);
-- popielniczka z niedopałkami na biurku, kubek z zimną kawą (Blender);
-- wydruki, karty pacjentów, plakat anatomiczny na ścianie (Blender: płaskie);
-- kable z taśmą od monitorów do listwy (Blender).
+- taca z narzędziami i zakrwawioną gazą, rękawiczki, strzykawka (zrobione: `rd-clinic-cart`);
+- karty pacjentów, zimna kawa, popielniczka pełna niedopałków, długopis na ladzie (zrobione: `rd-clinic-counter-things`);
+- ramki monitorów „PULS 48”, plakat anatomiczny, kable z taśmą (do zrobienia).
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- prop: blok (concrete) × 4
-- prop: blok (glass) × 2
-- prop: blok (metal) × 7
-- prop: neon × 5
+- blender: rd-clinic-bench × 1
+- blender: rd-clinic-cabinet × 1
+- blender: rd-clinic-cart × 1
+- blender: rd-clinic-chair × 1
+- blender: rd-clinic-counter-things × 1
+- blender: rd-clinic-lamp × 1
+- blender: rd-clinic-reception × 1
+- blender: rd-clinic-sharps × 1
+- prop: blok (concrete) × 3
+- prop: blok (concrete), rysunek osobno × 1
+- prop: blok (glass), rysunek osobno × 2
+- prop: blok (metal) × 1
+- prop: blok (metal), rysunek osobno × 6
+- prop: neon × 3
+- prop: neon, rysunek osobno × 2
 <!-- inwentarz-gry:end -->

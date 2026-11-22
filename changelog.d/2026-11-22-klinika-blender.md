@@ -1,0 +1,1 @@
+- Klinika doktora Moriego z prawdziwym wyposażeniem: fotel zabiegowy z uniesionym oparciem, lampa operacyjna z dwiema głowicami, wózek z narzędziami, szafa lekowa z autoklawem, lada recepcji i ławka w poczekalni, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

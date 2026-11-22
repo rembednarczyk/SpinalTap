@@ -131,22 +131,23 @@ const clinic = (): StaticProp[] => [
   box(-12.2, -11.9, 0, CEILING, 1.3, 4.8),
   box(-12.2, -11.9, 0, CEILING, 6.4, 7.7),
   box(-12.2, -11.9, DOOR_TOP, CEILING, 4.8, 6.4),
-  // Waiting room.
-  box(-11.4, -8.6, 0, 0.45, 7.1, 7.6, "metal"),
-  box(-10.6, -9.8, 0, 1.05, 1.4, 3),
+  // Waiting room. Since ADR-0098 the models of `clinic-detail.ts` draw the bench, the counter, the chair,
+  // the lamps, the cart and the cabinet: their solids stay, unseen.
+  drawn(box(-11.4, -8.6, 0, 0.45, 7.1, 7.6, "metal")),
+  drawn(box(-10.6, -9.8, 0, 1.05, 1.4, 3)),
   neon(-11.85, 2, 3, v(0.05, 0.6, 1.2), "#00e5ff", "NUMER 7"),
   // Surgery: the chair (seat and headrest at the south end), lamps, monitors, cart, cabinet.
-  box(-15, -14.2, 0, CLINIC_CHAIR_TOP, 1.7, 3.7, "metal"),
-  box(-15, -14.2, CLINIC_CHAIR_TOP, 1.15, 1.6, 1.85, "metal"),
-  slab(-14.6, 3.45, 2.8, v(0.08, 0.9, 0.08), "metal"),
-  slab(-14.6, 2.95, 2.4, v(0.8, 0.12, 0.6), "glass"),
-  slab(-14.6, 2.95, 3.3, v(0.8, 0.12, 0.6), "glass"),
-  neon(-14.6, 2.86, 2.4, v(0.7, 0.05, 0.05), "#eafcff"),
-  neon(-14.6, 2.86, 3.3, v(0.7, 0.05, 0.05), "#eafcff"),
+  drawn(box(-15, -14.2, 0, CLINIC_CHAIR_TOP, 1.7, 3.7, "metal")),
+  drawn(box(-15, -14.2, CLINIC_CHAIR_TOP, 1.15, 1.6, 1.85, "metal")),
+  drawn(slab(-14.6, 3.45, 2.8, v(0.08, 0.9, 0.08), "metal")),
+  drawn(slab(-14.6, 2.95, 2.4, v(0.8, 0.12, 0.6), "glass")),
+  drawn(slab(-14.6, 2.95, 3.3, v(0.8, 0.12, 0.6), "glass")),
+  drawn(neon(-14.6, 2.86, 2.4, v(0.7, 0.05, 0.05), "#eafcff")),
+  drawn(neon(-14.6, 2.86, 3.3, v(0.7, 0.05, 0.05), "#eafcff")),
   neon(-16.95, 1.9, 3.2, v(0.05, 0.6, 1.1), "#39ffd0", "PULS 48"),
   neon(-16.95, 1.9, 4.6, v(0.05, 0.5, 0.9), "#ff4d6d"),
-  box(-13.4, -12.8, 0, 0.9, 1.6, 2.2, "metal"),
-  box(-17, -16.4, 0, 2, 6.2, 7.7, "metal"),
+  drawn(box(-13.4, -12.8, 0, 0.9, 1.6, 2.2, "metal")),
+  drawn(box(-17, -16.4, 0, 2, 6.2, 7.7, "metal")),
 ];
 
 /** The bar's double door in the front wall, an opening of 2.2 m. */

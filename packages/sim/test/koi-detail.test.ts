@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, KOI_DETAIL, S7_INTERIORS, WORLD_SCENERY } from "../src";
+import { INTERIORS, KOI_DETAIL, ROOM_DETAIL_SCENERY, S7_INTERIORS, WORLD_SCENERY } from "../src";
 
 /**
  * Neon Koi's detail built by Blender after its card (ADR-0098, `docs/pomieszczenia/neon-koi.md`): its
@@ -25,7 +25,8 @@ describe("Neon Koi's detail (ADR-0098)", () => {
     expect(drawn.filter((p) => p.view.kind === "neon")).toHaveLength(2);
   });
 
-  it("is the scenery's last view, so the ids before it stay", () => {
-    expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: KOI_DETAIL });
+  it("is the first of the rooms' detail's views, the scenery's last, so the ids before them stay", () => {
+    expect(WORLD_SCENERY.slice(-ROOM_DETAIL_SCENERY.length)).toEqual(ROOM_DETAIL_SCENERY);
+    expect(ROOM_DETAIL_SCENERY[0]!.view).toEqual({ kind: "street-props", items: KOI_DETAIL });
   });
 });

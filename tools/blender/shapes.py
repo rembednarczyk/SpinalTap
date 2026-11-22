@@ -68,6 +68,22 @@ class Model:
             faces = [f for f in faces if f.is_valid] + list(out['faces'])
         self._finish(faces, role)
 
+    def obox(self, centre, ax, ay, half, role, bevel=0.0):
+        """A box turned in the game's frame: its centre, its x and y axes (unit vectors; z is their cross product) and half sizes."""
+        a, b = Vector(ax).normalized(), Vector(ay).normalized()
+        c = a.cross(b)
+        r = bmesh.ops.create_cube(self.bm, size=1.0)
+        verts = r['verts']
+        for v in verts:
+            g = Vector(centre) + a * (v.co.x * 2 * half[0]) + b * (v.co.z * 2 * half[1]) + c * (-v.co.y * 2 * half[2])
+            v.co = _b(g.x, g.y, g.z)
+        faces = list({f for v in verts for f in v.link_faces})
+        if bevel > 0:
+            edges = list({e for v in verts for e in v.link_edges})
+            out = bmesh.ops.bevel(self.bm, geom=verts + edges, offset=min(bevel, *[h / 1.1 for h in half]), segments=1, affect='EDGES', profile=0.5)
+            faces = [f for f in faces if f.is_valid] + list(out['faces'])
+        self._finish(faces, role)
+
     def lathe(self, cx, cz, profile, role, seg=12, y0=0.0, cap=True):
         """A solid of revolution round the upright axis at (cx, cz): `profile` is [(radius, height)] bottom up."""
         rings = []

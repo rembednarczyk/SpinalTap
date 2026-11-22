@@ -1,5 +1,6 @@
+import { CLINIC_DETAIL } from "./clinic-detail";
 import { KOI_DETAIL } from "./koi-detail";
-import type { TerrainGrid } from "@seki/core";
+import type { TerrainGrid, StreetPropItem} from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
 import { KANAL_ALLEY_STASH, KANAL_SCENERY } from "./district-kanal";
@@ -171,6 +172,15 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: TRASA_PODZIEMNA_CHUNK, district: "kanal", bounds: TRASA_PODZIEMNA_BOUNDS, props: TRASA_PODZIEMNA_PROPS, actors: [] },
 ];
 
+/** A room's detail (ADR-0098) as a view of the scenery, in the chunk of its first piece. */
+const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: mapChunkOf(items[0]!.x, items[0]!.z), view: { kind: "street-props", items }, at: { x: 0, y: 0, z: 0 } });
+
+/**
+ * The rooms' detail built by Blender after their cards (ADR-0098), one view a room in the order the rooms
+ * came: the scenery's last views, so every id before them stays (a new room goes last).
+ */
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL)];
+
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and
  * the buildings of every chunk, whether the chunk is streamed in or not. The buildings' props
@@ -205,8 +215,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: C7_PROPS }, at: { x: 0, y: 0, z: 0 } },
   // The game's machines, benches and planters in the front's arcades, its units' models and sellers, the café's and the bar's people (ADR-0093 O5), last.
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: FRONT_ROOM_MODELS }, at: { x: 0, y: 0, z: 0 } },
-  // The rooms' detail built by Blender after their cards (ADR-0098): Neon Koi's, last so every id above stays.
-  { chunk: mapChunkOf(KOI_DETAIL[0]!.x, KOI_DETAIL[0]!.z), view: { kind: "street-props", items: KOI_DETAIL }, at: { x: 0, y: 0, z: 0 } },
+  // The rooms' detail built by Blender after their cards (ADR-0098), last so every id above stays.
+  ...ROOM_DETAIL_SCENERY,
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
