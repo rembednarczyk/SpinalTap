@@ -54,6 +54,18 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-capsule-towel" },
   { key: "rd-capsule-charger" },
   { key: "rd-capsule-rules" },
+  // The basement under W-3's hall and its culvert (docs/pomieszczenia/w3-basement.md).
+  { key: "rd-w3b-pipes" },
+  { key: "rd-w3b-pump" },
+  { key: "rd-w3b-panel" },
+  { key: "rd-w3b-bulb" },
+  { key: "rd-w3b-handrail-a" },
+  { key: "rd-w3b-handrail-b" },
+  { key: "rd-w3b-brick-wide" },
+  { key: "rd-w3b-brick-tall" },
+  { key: "rd-w3b-grate" },
+  { key: "rd-w3b-stash" },
+  { key: "rd-w3b-water" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
