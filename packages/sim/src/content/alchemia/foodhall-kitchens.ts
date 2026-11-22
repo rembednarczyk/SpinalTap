@@ -35,6 +35,15 @@ const frame = (q: UnitDef) => {
   return { w, d, put };
 };
 
+/**
+ * A round thing of a kitchen drawn by the rooms' detail (ADR-0098, comic realism: a pot is round, not a box): its
+ * model's key and the box it stands in (`foodhall-detail.ts` stands the model on the box's foot, in its middle).
+ */
+export interface KitchenRound {
+  readonly key: "rd-fh-pot" | "rd-fh-bowls" | "rd-fh-teacup" | "rd-fh-gas";
+  readonly box: Piece["box"];
+}
+
 /** What stands on a kitchen's line by its kind: the cooker's box and what is on it. */
 const COOKER: Readonly<Record<string, { readonly kind: PieceKind; readonly h: number; readonly pots: number }>> = {
   ramen: { kind: "machine", h: 0.05, pots: 3 },
@@ -46,25 +55,31 @@ const COOKER: Readonly<Record<string, { readonly kind: PieceKind; readonly h: nu
   wok: { kind: "machine", h: 0.06, pots: 2 },
 };
 
-/** One food unit's kitchen. */
-const kitchen = (q: UnitDef): Piece[] => {
+/** One food unit's kitchen: its pieces, and its round things for the rooms' detail. */
+const kitchen = (q: UnitDef): { readonly pieces: Piece[]; readonly round: KitchenRound[] } => {
   const { w, d, put } = frame(q);
   const W = UNIT_WALL;
   const line = d - 0.65;
   const cook = COOKER[q.cuisine] ?? COOKER.thai!;
+  const round: KitchenRound[] = [
+    // The pots on the cooker, the stack of bowls at the line's far end, the gas bottles by it, the cup by the till.
+    ...Array.from({ length: cook.pots }, (_, i): KitchenRound => ({ key: "rd-fh-pot", box: put(0.7 + i * 0.42, 1.05 + i * 0.42, line + 0.12, line + 0.47, 0.9 + cook.h, 1.2 + cook.h - i * 0.05, "goods").box })),
+    { key: "rd-fh-bowls", box: put(w - 0.65, w - 0.35, line + 0.15, line + 0.45, 0.9, 1.1, "cup").box },
+    { key: "rd-fh-gas", box: put(w - 0.65, w - 0.35, line - 0.4, line - 0.1, -0.05, 0.9, "machine").box },
+    { key: "rd-fh-gas", box: put(w - 1.0, w - 0.7, line - 0.4, line - 0.1, -0.05, 0.9, "machine").box },
+    { key: "rd-fh-teacup", box: put(w - 1.55, w - 1.47, 0.35, 0.43, 1.0, 1.11, "cup").box },
+  ];
   const out: Piece[] = [
     // The line along the back, solid to the hip.
     put(W + 0.05, w - W - 0.05, line, d - 0.02, -0.05, 0.9, "counter", true),
-    // The cooker on it, its pots and the steam off the first one (§5).
+    // The cooker on it and the steam off its first pot (§5; the pots are round, `round`).
     put(0.6, 1.9, line + 0.05, d - 0.08, 0.9, 0.9 + cook.h, cook.kind),
-    ...Array.from({ length: cook.pots }, (_, i) => put(0.7 + i * 0.42, 1.05 + i * 0.42, line + 0.12, line + 0.47, 0.9 + cook.h, 1.2 + cook.h - i * 0.05, "goods")),
     put(0.85, 0.9, line + 0.27, line + 0.32, 1.25 + cook.h, 1.7 + cook.h, "steam"),
     // The hood over the cooker, its duct up the back to the slab.
     put(0.45, 2.05, line - 0.15, d - 0.02, 2.0, 2.35, "duct"),
     put(1.05, 1.45, d - 0.42, d - 0.02, 2.35, C - F, "duct"),
-    // Prep space: cartons of stock and a stack of bowls at the line's far end.
+    // Prep space: cartons of stock at the line's far end (a stack of bowls by them, `round`).
     put(w - 1.3, w - 0.75, line + 0.08, d - 0.1, 0.9, 1.15, "carton"),
-    put(w - 0.65, w - 0.35, line + 0.15, line + 0.45, 0.9, 1.1, "cup"),
     // The menu over the line: three screens in dark bezels hung off the slab, their light on the keeper's back.
     ...[0, 1, 2].flatMap((i) => {
       const u0 = 0.5 + i * 0.85;
@@ -74,23 +89,20 @@ const kitchen = (q: UnitDef): Piece[] => {
         put(u0 + 0.36, u0 + 0.39, line - 0.08, line - 0.06, 2.1, C - F, "cable"),
       ];
     }),
-    // Gas bottles for the cooker by the line's far end, a bucket of scraps by them.
-    put(w - 0.65, w - 0.35, line - 0.4, line - 0.1, -0.05, 0.9, "machine"),
-    put(w - 1.0, w - 0.7, line - 0.4, line - 0.1, -0.05, 0.9, "machine"),
+    // A bucket of scraps by the gas bottles (`round`) at the line's far end.
     put(w - 1.45, w - 1.1, line - 0.4, line - 0.05, -0.05, 0.4, "carton"),
     // A fridge before the line's start by the side partition.
     put(W + 0.05, W + 0.75, line - 0.75, line - 0.05, -0.05, 1.9, "machine", true),
-    // The till on the counter, its cable down from the slab, a cup by it; cartons stacked by the counter's end.
+    // The till on the counter, its cable down from the slab (a cup by it, `round`); cartons stacked by the counter's end.
     put(w - 1.2, w - 0.85, 0.25, 0.55, 1.0, 1.05, "machine"),
     put(w - 1.18, w - 0.87, 0.38, 0.42, 1.05, 1.32, "display"),
     put(w - 1.04, w - 1.01, 0.4, 0.43, 1.32, C - F, "cable"),
-    put(w - 1.55, w - 1.47, 0.35, 0.43, 1.0, 1.11, "cup"),
     put(W + 0.1, W + 0.6, 2.0, 2.5, -0.05, 0.5, "carton"),
     put(W + 0.15, W + 0.55, 2.05, 2.45, 0.5, 0.85, "carton"),
     // A light strip over the keeper under the slab.
     put(0.4, w - 0.4, 1.2, 1.3, C - F - 0.06, C - F - 0.02, "lamp"),
   ];
-  return out;
+  return { pieces: out, round };
 };
 
 /** Sachiko's kiosk: shelves of everything along its back and sides (solid), a lamp under its roof, the cartons she sells from. */
@@ -139,4 +151,7 @@ const arms = (q: UnitDef): Piece[] => {
 
 /** Every unit's fittings, in `ALCHEMIA_UNITS`' order: none behind a shutter. */
 export const kitchenPieces = (): Piece[] =>
-  ALCHEMIA_UNITS.flatMap((u) => (u.shut ? [] : u.id === "sachiko" ? kiosk(u) : u.id === "oyaji" ? arms(u) : kitchen(u)));
+  ALCHEMIA_UNITS.flatMap((u) => (u.shut ? [] : u.id === "sachiko" ? kiosk(u) : u.id === "oyaji" ? arms(u) : kitchen(u).pieces));
+
+/** The food units' round things for the rooms' detail (`foodhall-detail.ts`), in `ALCHEMIA_UNITS`' order: none behind a shutter. */
+export const KITCHEN_ROUND: readonly KitchenRound[] = ALCHEMIA_UNITS.flatMap((u) => (u.shut || u.id === "sachiko" || u.id === "oyaji" ? [] : kitchen(u).round));

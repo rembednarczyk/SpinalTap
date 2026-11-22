@@ -31,37 +31,42 @@ Z Blendera (`tools/blender/rooms/alchemia_foodhall.py`, plik `room-detail-alchem
 - papierowe lampiony (chochin) nad stołami i na girlandach wzdłuż balustrady atrium: lakierowane denka, papier na żebrach świecący ciepło, czerwony pas, frędzel (`rd-fh-lantern`, `rd-fh-lantern-small`); kable zostają kawałkami silnika;
 - miski zostawione na stołach: ramen z bulionem, makaronem i jajkiem albo donburi ze zdjętą pokrywką i czarką herbaty, na tacach, z pałeczkami (`rd-fh-ramen`, `rd-fh-donburi`); para nad gorącymi zostaje kawałkiem silnika;
 - kubek mrożonej herbaty, kubek przewrócony przy rozlanym napoju (`rd-fh-cup`, `rd-fh-spilled`);
-- stołek barowy przewrócony przy barze Fumiko (`rd-fh-stool`).
+- stołek barowy przewrócony przy barze Fumiko (`rd-fh-stool`);
+- w kuchniach lokali: garnki z pokrywką i chochlą na kuchenkach, stosy misek, czarki herbaty przy kasach, czerwone butle gazowe z reduktorem (`rd-fh-pot`, `rd-fh-bowls`, `rd-fh-teacup`, `rd-fh-gas`; miejsca z generatora kuchni, `KITCHEN_ROUND`).
 
-Do zrobienia w kolejnych krokach: kuchnie lokali (frytownice, garnki, okapy) i lampiony lokali, dziś pudełka kawałków.
+Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dziś pudełka kawałków.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-fh-bowls × 6
 - blender: rd-fh-cup × 1
 - blender: rd-fh-donburi × 3
+- blender: rd-fh-gas × 12
 - blender: rd-fh-lantern × 15
 - blender: rd-fh-lantern-small × 32
+- blender: rd-fh-pot × 11
 - blender: rd-fh-ramen × 2
 - blender: rd-fh-spilled × 1
 - blender: rd-fh-stool × 1
+- blender: rd-fh-teacup × 7
 - model: vending-machine × 2
 - model: waste-bin × 2
 - piece: bench × 19
 - piece: cable × 49
 - piece: carton × 29
 - piece: counter × 19
-- piece: cup × 15
+- piece: cup × 2
 - piece: display × 28
 - piece: duct × 15
 - piece: floor × 1
 - piece: frame × 2
 - piece: glass × 2
-- piece: goods × 52
+- piece: goods × 41
 - piece: grille × 1
 - piece: lamp × 10
 - piece: led × 2
-- piece: machine × 55
+- piece: machine × 43
 - piece: paper × 5
 - piece: parapet × 7
 - piece: partition × 24

@@ -115,6 +115,10 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-fh-cup" },
   { key: "rd-fh-spilled" },
   { key: "rd-fh-stool" },
+  { key: "rd-fh-pot" },
+  { key: "rd-fh-bowls" },
+  { key: "rd-fh-teacup" },
+  { key: "rd-fh-gas" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
