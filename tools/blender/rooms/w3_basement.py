@@ -27,12 +27,11 @@ def pipes():
     while x < n / 2:
         m.box(x - 0.025, x + 0.025, 0.08, 0.3, -0.02, 0.02, 'dark')
         m.box(x - 0.025, x + 0.025, 0.1, 0.3, 0.2, 0.24, 'dark')
-        m.box(x - 0.06, x + 0.06, 0.29, 0.3, -0.05, 0.27, 'dark')
         if k % 4 == 0:
             m.tube((x + 0.5, 0.0, 0.0), (x + 0.56, 0.0, 0.0), 0.12, 'pipe', seg=12)
             m.box(x + 0.48, x + 0.6, -0.22 - 0.2 * hashf(x, 1.0), -0.08, 0.07, 0.075, 'rust')
         k += 1
-        x += 1.5
+        x += 2.0
     return m
 
 
@@ -44,15 +43,15 @@ def pump():
     m.box(-0.65, 0.55, 0.0, 0.15, -0.35, 0.35, 'wall-dark', bevel=0.02)
     m.box(-0.62, 0.5, 0.15, 0.2, -0.25, 0.25, 'metal')
     # The motor, lying along x, its cooling fins and its terminal box.
-    m.tube((-0.6, 0.38, 0.0), (-0.08, 0.38, 0.0), 0.17, 'fabric-teal', seg=16)
-    for k in range(6):
-        x = -0.55 + k * 0.08
-        m.tube((x, 0.38, 0.0), (x + 0.02, 0.38, 0.0), 0.185, 'fabric-teal', seg=16)
+    m.tube((-0.6, 0.38, 0.0), (-0.08, 0.38, 0.0), 0.17, 'fabric-teal', seg=12)
+    for k in range(3):
+        x = -0.52 + k * 0.14
+        m.tube((x, 0.38, 0.0), (x + 0.03, 0.38, 0.0), 0.185, 'fabric-teal', seg=12)
     m.box(-0.4, -0.22, 0.52, 0.62, -0.08, 0.08, 'fabric-teal', bevel=0.01)
     m.tube((-0.31, 0.62, 0.0), (-0.31, 0.75, 0.0), 0.015, 'cable', seg=6)
     m.box(-0.08, 0.1, 0.24, 0.52, -0.14, 0.14, 'neon-amber', bevel=0.01)
     # The volute, its suction pipe down into the sump, the sump's grate.
-    m.tube((0.28, 0.38, -0.12), (0.28, 0.38, 0.12), 0.22, 'fabric-teal', seg=16)
+    m.tube((0.28, 0.38, -0.12), (0.28, 0.38, 0.12), 0.22, 'fabric-teal', seg=12)
     m.tube((0.28, 0.38, 0.12), (0.28, 0.38, 0.32), 0.07, 'pipe', seg=10)
     m.tube((0.28, 0.38, 0.32), (0.28, -0.05, 0.32), 0.07, 'pipe', seg=10)
     m.box(0.08, 0.48, 0.0, 0.012, 0.22, 0.42, 'dark')
@@ -63,9 +62,9 @@ def pump():
     m.tube((0.28, 0.6, 0.0), (0.28, 0.9, 0.0), 0.06, 'pipe', seg=10)
     m.tube((0.28, 0.9, 0.0), (0.7, 0.9, 0.0), 0.06, 'pipe', seg=10)
     m.tube((0.7, 0.9, 0.0), (0.7, 0.78, -0.1), 0.06, 'pipe', seg=10)
-    m.cyl(0.7, -0.1, 0.17, 0.0, 0.72, 'metal', seg=16)
-    m.lathe(0.7, -0.1, [(0.2, 0.0), (0.2, 0.04), (0.12, 0.08), (0.0, 0.09)], 'metal', seg=16, y0=0.72)
-    for k in range(8):
+    m.cyl(0.7, -0.1, 0.17, 0.0, 0.72, 'metal', seg=12)
+    m.lathe(0.7, -0.1, [(0.2, 0.0), (0.2, 0.04), (0.12, 0.08), (0.0, 0.09)], 'metal', seg=12, y0=0.72)
+    for k in range(0, 8, 2):
         a = 2 * math.pi * k / 8
         m.cyl(0.7 + 0.18 * math.cos(a), -0.1 + 0.18 * math.sin(a), 0.012, 0.76, 0.79, 'dark', seg=6)
     # The rising main from the housing up to the pipes, a gate valve's wheel and a gauge on it.
