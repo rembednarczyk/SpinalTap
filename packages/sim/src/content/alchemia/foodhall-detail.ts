@@ -1,5 +1,6 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { KITCHEN_ROUND } from "./foodhall-kitchens";
+import { FUMIKO_P0_ROUND } from "./fumiko-p0";
 import { FESTOON_SPOTS, FOODHALL_MEALS, FOODHALL_TABLE_TOP, TABLE_GROUPS, lanternSpots } from "./foodhall-seating";
 import { FOODHALL_FLOOR } from "./units";
 
@@ -28,4 +29,6 @@ export const FOODHALL_DETAIL: readonly StreetPropItem[] = [
   item("rd-fh-stool", 405.0, FOODHALL_FLOOR, 54.075, 0),
   // The kitchens' pots, stacks of bowls, cups and gas bottles, each in the middle of the box it had, on its foot (no lower than the floor).
   ...KITCHEN_ROUND.map((r) => item(r.key, (r.box.x0 + r.box.x1) / 2, Math.max(r.box.y0, FOODHALL_FLOOR), (r.box.z0 + r.box.z1) / 2, 0)),
+  // Fumiko's second place on P0: her pots, bowls and the cup in the hatch.
+  ...FUMIKO_P0_ROUND.map((r) => item(r.key, (r.box.x0 + r.box.x1) / 2, r.box.y0, (r.box.z0 + r.box.z1) / 2, 0)),
 ];

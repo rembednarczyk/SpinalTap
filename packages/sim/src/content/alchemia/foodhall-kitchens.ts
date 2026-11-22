@@ -118,7 +118,6 @@ const kiosk = (q: UnitDef): Piece[] => {
     put(w - W - 0.6, w - W - 0.1, 1.6, 2.2, -0.05, 0.9, "machine", true),
     put(0.5, w - 0.5, 1.6, 1.7, 2.3, 2.34, "lamp"),
     put(W + 0.1, W + 0.6, 1.8, 2.3, -0.05, 0.45, "carton"),
-    put(1.2, 1.28, 0.3, 0.38, 1.0, 1.11, "cup"),
     put(1.22, 1.26, 0.32, 0.36, 1.14, 1.4, "steam"),
   );
   return out;
@@ -139,7 +138,6 @@ const arms = (q: UnitDef): Piece[] => {
     // A glass case of sights and grips along the glass by the counter's south end, clear of his flap and his stool.
     put(w - 0.65, w - 0.15, 2.2, 3.4, -0.05, 0.55, "counter", true),
     put(w - 0.6, w - 0.2, 2.25, 3.35, 0.97, 1.0, "vitrine"),
-    put(1.6, 1.68, 0.4, 0.48, 1.1, 1.21, "cup"),
     put(1.0, 3.2, 1.9, 2.0, C - F - 0.06, C - F - 0.02, "lamp"),
     // The back room's crates, stacked, a lamp over them.
     piece(box(r.minX + 0.2, r.minX + 1.4, r.minZ + 0.2, r.minZ + 1.2, F - 0.05, F + 1.2), "carton", true),
@@ -153,5 +151,12 @@ const arms = (q: UnitDef): Piece[] => {
 export const kitchenPieces = (): Piece[] =>
   ALCHEMIA_UNITS.flatMap((u) => (u.shut ? [] : u.id === "sachiko" ? kiosk(u) : u.id === "oyaji" ? arms(u) : kitchen(u).pieces));
 
-/** The food units' round things for the rooms' detail (`foodhall-detail.ts`), in `ALCHEMIA_UNITS`' order: none behind a shutter. */
-export const KITCHEN_ROUND: readonly KitchenRound[] = ALCHEMIA_UNITS.flatMap((u) => (u.shut || u.id === "sachiko" || u.id === "oyaji" ? [] : kitchen(u).round));
+/** Sachiko's and Oyaji's cups on their counters (Sachiko's steaming), as `kiosk` and `arms` had them. */
+const keeperCup = (q: UnitDef): KitchenRound => {
+  const { put } = frame(q);
+  const b = q.id === "sachiko" ? put(1.2, 1.28, 0.3, 0.38, 1.0, 1.11, "cup").box : put(1.6, 1.68, 0.4, 0.48, 1.1, 1.21, "cup").box;
+  return { key: "rd-fh-teacup", box: b };
+};
+
+/** The units' round things for the rooms' detail (`foodhall-detail.ts`), in `ALCHEMIA_UNITS`' order: none behind a shutter. */
+export const KITCHEN_ROUND: readonly KitchenRound[] = ALCHEMIA_UNITS.flatMap((u) => (u.shut ? [] : u.id === "sachiko" || u.id === "oyaji" ? [keeperCup(u)] : kitchen(u).round));

@@ -49,14 +49,13 @@ Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dzi
 - blender: rd-fh-ramen × 2
 - blender: rd-fh-spilled × 1
 - blender: rd-fh-stool × 1
-- blender: rd-fh-teacup × 7
+- blender: rd-fh-teacup × 9
 - model: vending-machine × 2
 - model: waste-bin × 2
 - piece: bench × 19
 - piece: cable × 49
 - piece: carton × 29
 - piece: counter × 19
-- piece: cup × 2
 - piece: display × 28
 - piece: duct × 15
 - piece: floor × 1

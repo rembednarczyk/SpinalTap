@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { ALCHEMIA_UNITS, FOODHALL_DETAIL, INTERIORS, ROOM_DETAIL_SCENERY, kitchenPieces, seatingPieces } from "../src";
+import { ALCHEMIA_UNITS, FOODHALL_DETAIL, INTERIORS, ROOM_DETAIL_SCENERY, fumikoWindowPieces, kitchenPieces, seatingPieces } from "../src";
 
 /**
  * The food hall's round things after its card (ADR-0098, comic realism): its lanterns, meals, cups and the knocked
@@ -29,10 +29,11 @@ describe("the food hall's detail (ADR-0098)", () => {
     expect(pieces.filter((p) => p.kind === "bench" && !p.solid)).toEqual([]);
   });
 
-  it("gives the kitchens round pots, bowls and gas bottles, their boxes gone (Sachiko's and Oyaji's cups stay)", () => {
+  it("gives the kitchens round pots, bowls, cups and gas bottles, their boxes gone (Fumiko's place on P0 too)", () => {
     const keys = FOODHALL_DETAIL.map((p) => key(p.variant));
     for (const k of ["rd-fh-pot", "rd-fh-bowls", "rd-fh-teacup", "rd-fh-gas"]) expect(keys.filter((x) => x === k).length, k).toBeGreaterThan(0);
-    expect(kitchenPieces().filter((p) => p.kind === "cup").length).toBe(2);
+    expect(kitchenPieces().filter((p) => p.kind === "cup")).toEqual([]);
+    expect(fumikoWindowPieces().filter((p) => p.kind === "cup" || (p.kind === "goods" && !p.solid))).toEqual([]);
   });
 
   it("is one of the rooms' detail's views", () => {
