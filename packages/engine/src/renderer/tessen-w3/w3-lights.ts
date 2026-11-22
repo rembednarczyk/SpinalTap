@@ -4,10 +4,12 @@ import type { PointLightDef } from "../../npr/lighting";
 import { W3_SERVER_ROOMS } from "./w3-inside-geometry";
 
 /**
- * W-3's lamps (ADR-0082 §4: no moon inside, two point lights and the strips' glow). The toon
- * shader's lights pass through walls (G-263), so each is clipped to its room's ground rectangle,
- * and only the two nearest the eye are on at a time: the hall's fluorescent light, the chamber's,
- * the server rooms' teal glow, the basement's. Pure data.
+ * W-3's lamps (ADR-0082 §4: no moon inside, the lamps and the strips' glow). The toon shader's
+ * lights pass through walls (G-263), so each is clipped to its room's ground rectangle, and only
+ * the nearest to the eye are on at a time: the hall's fluorescent light, the chamber's, the server
+ * rooms' teal glow, the basement's. The hall keeps the 60-30-10 rule of light (`docs/zasady-lokacji.md`
+ * §13): four lamps under its strips for the motivated light, the stations' screens and the chamber
+ * gate's red lights for the accents, each lamp by the fitting it comes from. Pure data.
  */
 
 export interface W3Lamp {
@@ -20,8 +22,10 @@ export interface W3Lamp {
 
 /** The lamps' keys begin with this: in the hall only they are on (`ToonMaterials.setLightFocus`). */
 export const W3_LAMP_PREFIX = "w3-lamp-";
-/** How many lamps are on at once (ADR-0082 §4). */
-export const W3_LAMPS_ON = 2;
+/** How many lamps are on at once: the hall's seven (of the shader's eight slots, the flashlight apart). */
+export const W3_LAMPS_ON = 7;
+/** How many while the eye is outside, seeing the hall through its gates. */
+export const W3_LAMPS_OUT = 2;
 
 type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
 
@@ -37,8 +41,16 @@ const [serverS, serverN] = W3_SERVER_ROOMS as [Rect, Rect];
 const B = W3_LAYOUT.BASEMENT;
 
 export const W3_LAMPS: readonly W3Lamp[] = [
-  lamp("hall-w", "#dfe9ff", { x: 2520, y: 9, z: 418 }, 17, 1.7, hall, 0, 16),
-  lamp("hall-e", "#dfe9ff", { x: 2538, y: 9, z: 418 }, 17, 1.7, hall, 0, 16),
+  // Under the strips' second and fourth rows (`w3-inside-geometry.ts`, 14.1 m up), over the aisle's edges.
+  lamp("hall-sw", "#dfe9ff", { x: 2519, y: 13.6, z: 413.2 }, 22, 1.0, hall, 0, 16),
+  lamp("hall-nw", "#dfe9ff", { x: 2519, y: 13.6, z: 422.8 }, 22, 1.0, hall, 0, 16),
+  lamp("hall-se", "#dfe9ff", { x: 2537, y: 13.6, z: 413.2 }, 22, 1.0, hall, 0, 16),
+  lamp("hall-ne", "#dfe9ff", { x: 2537, y: 13.6, z: 422.8 }, 22, 1.0, hall, 0, 16),
+  // The teal of stations S1 and S3's screens (`STATIONS`, the line's mesh) on their desks and the aisle's floor.
+  lamp("screen-s1", "#45e8ff", { x: 2519, y: 1.35, z: 413.3 }, 5.5, 2.6, hall, 0, 4),
+  lamp("screen-s3", "#45e8ff", { x: 2519, y: 1.35, z: 422.7 }, 5.5, 2.6, hall, 0, 4),
+  // The red lights over the chamber's gate from the hall (`warnings`), on the gate and the floor before it.
+  lamp("gate", "#ff3a2e", { x: 2547.2, y: 6.4, z: 418 }, 11, 3.0, hall, 0, 16),
   lamp("chamber", "#cfdcff", { x: 2560, y: 9, z: 418 }, 16, 1.5, W3_CHAMBER, 0, 13.4),
   lamp("server-n", "#45e8ff", { x: 2566, y: 4.6, z: 436 }, 9, 1.1, serverN, 0, 10),
   lamp("server-s", "#45e8ff", { x: 2565, y: 4.6, z: 400 }, 9, 1.1, serverS, 0, 5),

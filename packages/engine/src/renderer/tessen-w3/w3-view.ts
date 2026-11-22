@@ -9,7 +9,7 @@ import { w3Dress } from "./w3-dress";
 import { W3Fx, W3_FX_RANGE } from "./w3-fx";
 import { w3InsideGeometry } from "./w3-inside-geometry";
 import { W3_INTERIOR_RANGE, w3InteriorDistance } from "./w3-interior-cull";
-import { type W3Lamp, W3_LAMP_PREFIX, w3LampsFor } from "./w3-lights";
+import { type W3Lamp, W3_LAMP_PREFIX, W3_LAMPS_ON, W3_LAMPS_OUT, w3LampsFor } from "./w3-lights";
 import { LINE_IDLE, type LineMission, linePose } from "./w3-line-anim";
 import { lineGeometry } from "./w3-line-geometry";
 
@@ -183,9 +183,12 @@ export class W3View {
     m.updateVerticesData(VertexBuffer.UVKind, s.uvs);
   }
 
-  /** The two lamps nearest the eye on, the others off; all of them only while the inside is drawn. */
+  /**
+   * The lamps nearest the eye on, the others off; all of them only while the inside is drawn. Out on
+   * the yard only two take the shader's slots, so the yard's floodlights and the street lamps keep theirs.
+   */
   private updateLamps(eye: Vec3): void {
-    const next = w3LampsFor(eye);
+    const next = w3LampsFor(eye, this.interior ? W3_LAMPS_ON : W3_LAMPS_OUT);
     if (next.every((l, i) => l === this.lamps[i]) && next.length === this.lamps.length) return;
     for (const l of this.lamps) if (!next.includes(l)) this.deps.materials.removeLight(l.key);
     this.lamps = next;
