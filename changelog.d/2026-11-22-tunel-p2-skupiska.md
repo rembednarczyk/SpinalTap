@@ -1,0 +1,1 @@
+- Tunel z P-2 Alchemii na T2: niedopałki, puszka i zapalniczka u wylotu do magazynu, odpryski i rękawica pod bramą schronu ze śladami łomu, liście i śmieci nawiane przy portalu (zasady lokacji §14, drobiazg w skupiskach).

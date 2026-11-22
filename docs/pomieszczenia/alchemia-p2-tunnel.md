@@ -17,14 +17,14 @@ Tunel rysuje silnik Alchemii (`alchemia/p2.ts`): ściany, strop, posadzka, porta
 Do zrobienia (kolejka zasad, §12–§17):
 - architektura: rury i korytko kablowe pod stropem przez całą długość, kratki odpływu w posadzce, odbojnice przy ścianach (Blender);
 - duże obiekty: wózek serwisowy przy szybie windy, szafka hydrantowa, skrzynka rozdzielcza (Blender);
-- drobiazg w skupiskach: niedopałki i puszka przy szybie windy, ślad łomu i gruz przy bramie schronu, liście i śmieci nawiane przy portalu (Blender);
+- drobiazg w skupiskach (od 22.11, `tools/blender/rooms/alchemia_p2.py`): niedopałki, zgnieciona puszka, zapalniczka i podarta paczka papierosów przy zachodniej ścianie u wylotu do magazynu (`rd-p2t-butts`); odpryski betonu i farby, grudka tynku, rękawica i jasne rysy łomu na ościeżnicy bramy schronu (`rd-p2t-gate`); liście, rozmokła gazeta, kubek po zupce i butelka nawiane przy portalu (`rd-p2t-litter`);
 - światło: oprawy w kratkach jako bryły rysunku, jedna migająca; zielony znak wyjścia nad portalem i nad bramą schronu (kontrast funkcjonalny).
 
 ## Frakcja i zasady
 Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §12 zgodne co do kontrastu: ciasny tunel między magazynem a otwartym wykopem T2. Dług: instalacje pod stropem; wymiary na siatce w pomiarach.
 - §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%.
-- §14 dług: brak wyposażenia i drobiazgu w bryłach i rysunku.
+- §14 częściowo: 11 rzeczy drobiazgu w trzech skupiskach (u wylotu do magazynu, pod bramą schronu, przy portalu), nic luzem. Dług: duże obiekty (wózek serwisowy, szafka hydrantowa, skrzynka rozdzielcza) i instalacje pod stropem.
 - §15 dług: mokra posadzka przy portalu (deszcz z wykopu), połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.
 - §17 dług: przeciąg i kapanie ze źródła (portal, dylatacja); ruch: migająca oprawa.
@@ -32,13 +32,15 @@ Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- (gra nie ma tu jeszcze nic poza bryłą pomieszczenia)
+- blender: rd-p2t-butts × 1
+- blender: rd-p2t-gate × 1
+- blender: rd-p2t-litter × 1
 
 Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 241 m², wysokość 2,3 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 0, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 0, mezo 0, mikro 11
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 11 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

@@ -117,4 +117,53 @@ def oil():
     return m
 
 
-MODELS = [tech, cabinet, pipes, lamp, oil]
+def butts():
+    """Where somebody waits at the tunnel's end by the car store (§14's clutter cluster): cigarette butts ground out on the
+    concrete, a crushed can of beer, a cheap lighter, a ripped cigarette pack (0.5 x 0.06 x 0.4; foot on the floor)."""
+    m = Model('rd-p2t-butts')
+    for k in range(7):
+        a = k * 2.4
+        x, z = 0.12 * math.cos(a) * (0.4 + 0.1 * k), 0.1 * math.sin(a) * (0.5 + 0.08 * k)
+        m.tube((x, 0.006, z), (x + 0.022 * math.cos(a * 1.7), 0.006, z + 0.022 * math.sin(a * 1.7)), 0.005, 'win-white' if k % 3 else 'fabric-amber', seg=6)
+    m.tube((0.14, 0.025, 0.1), (0.2, 0.03, 0.14), 0.028, 'metal', seg=10)
+    m.lathe(0.2, 0.14, [(0.03, 0.0), (0.015, 0.012), (0.0, 0.014)], 'neon-red', seg=10, y0=0.02)
+    m.box(-0.2, -0.17, 0.0, 0.012, -0.08, -0.03, 'neon-pink', bevel=0.003)
+    m.box(-0.06, 0.03, 0.0, 0.02, -0.17, -0.12, 'win-white', bevel=0.004)
+    m.box(-0.06, 0.03, 0.02, 0.022, -0.17, -0.12, 'neon-red')
+    return m
+
+
+def gate_debris():
+    """At the shelter's gate in the tunnel's east wall: chips of concrete and paint the crowbar levered off its frame, a
+    lump of plaster, a work glove dropped, the crowbar's bright scars on the frame's edge (0.7 x 1.3 x 0.4; foot on the
+    floor, the wall at -z)."""
+    m = Model('rd-p2t-gate')
+    for k in range(9):
+        x = -0.3 + 0.07 * k + 0.02 * math.sin(k * 3.1)
+        z = 0.05 + 0.1 * abs(math.sin(k * 1.9))
+        r = 0.012 + 0.008 * (k % 3)
+        m.box(x - r, x + r, 0.0, r * 1.2, z - r, z + r * 0.8, 'wall' if k % 2 else 'trim', bevel=0.003)
+    m.box(0.12, 0.26, 0.0, 0.06, 0.12, 0.24, 'wall', bevel=0.02)
+    m.box(-0.18, -0.06, 0.0, 0.025, 0.2, 0.3, 'fabric-amber', bevel=0.01)
+    for y, h in ((0.95, 0.12), (1.18, 0.08)):
+        m.box(-0.33, -0.3, y, y + h, 0.0, 0.006, 'metal')
+    return m
+
+
+def litter():
+    """What the rain and the draught blow in at the portal from the cutting: dead leaves, a soaked newspaper flattened on
+    the wet concrete, a noodle cup, a plastic bottle (0.9 x 0.08 x 0.6; foot on the floor)."""
+    m = Model('rd-p2t-litter')
+    for k in range(8):
+        a = k * 2.2
+        x, z = 0.38 * math.cos(a) * (0.3 + 0.08 * k), 0.24 * math.sin(a) * (0.4 + 0.07 * k)
+        m.box(x - 0.03, x + 0.03, 0.0, 0.004, z - 0.018, z + 0.018, 'plant' if k % 3 else 'fabric-amber')
+    m.box(-0.28, 0.02, 0.0, 0.004, -0.05, 0.17, 'trim-light')
+    m.box(-0.24, -0.04, 0.004, 0.005, -0.02, 0.06, 'dark')
+    m.tube((0.12, 0.04, -0.12), (0.2, 0.045, -0.08), 0.04, 'win-white', seg=12)
+    m.tube((0.28, 0.03, 0.12), (0.46, 0.032, 0.18), 0.03, 'glass-blue', seg=10)
+    m.tube((0.46, 0.032, 0.18), (0.51, 0.033, 0.2), 0.012, 'neon-cyan', seg=8)
+    return m
+
+
+MODELS = [tech, cabinet, pipes, lamp, oil, butts, gate_debris, litter]
