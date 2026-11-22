@@ -96,7 +96,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     // Voice files are many and large: their own bank, filled line by line, not with the samples.
     this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl, this.mix);
     this.speech = this.lines;
-    this.engine = new EngineLoop(this.sampleBank, this.samples.engine, () => this.host.graph);
+    this.engine = new EngineLoop(this.sampleBank, this.samples.engine, () => this.host.graph, this.samples.carLoops);
   }
   /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
   get recordedRain(): boolean {

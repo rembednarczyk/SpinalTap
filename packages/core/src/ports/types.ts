@@ -554,9 +554,14 @@ export type AudioCue =
   | "car-door-open"
   | "car-door-close"
   | "engine-stop"
-  // Her car hitting something (ADR-0097 §3): a knock against a kerb post or a slow bump, a crash.
+  // Her car hitting something (ADR-0097 §3, recorded since 22.11): a tap at a crawl, a bump, a crash, a heavy crash with glass.
+  | "car-tap"
   | "car-bump"
   | "car-crash"
+  | "car-crash-heavy"
+  // Her car's gearbox changing gear, and its parking sensor beeping as she backs towards something (22.11).
+  | "car-shift"
+  | "car-sensor"
   // A parked car's window smashed as she breaks into it (ADR-0097 §3).
   | "car-glass"
   // W-3 (ADR-0082 stage 3c): the charges going off, the klaxon of an alarm raised, one wail of its siren.
