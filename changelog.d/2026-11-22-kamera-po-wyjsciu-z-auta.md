@@ -1,0 +1,1 @@
+- Po wyjściu z auta kamera wraca do tej sprzed wsiadania: ten sam widok (z oczu albo zza pleców) i to samo pochylenie. Klawisz zmiany widoku za kierownicą nie zmienia już po cichu kamery na piechotę.
