@@ -22,4 +22,9 @@ export const TESSEN_OFFICE_DETAIL: readonly StreetPropItem[] = [
   item("rd-tessen-bench", 2494.9, 0, 438.2, -Math.PI / 2),
   item("rd-tessen-board", 2490.5, 1.3, SOUTH_WALL + 0.025, 0),
   item("rd-tessen-lights", 2491, CEILING - 0.005, 441, 0),
+  // ADR-0099 batch 2: the chair pushed back from the desk and turned as its user left it, the shredder at the desk's north
+  // end, binders on the filing cabinet's top.
+  item("rd-k-office-chair", 2488.25, 0, 441.2, -Math.PI / 2 + 0.35),
+  item("rd-k-shredder", 2486.73, 0, 443.2, Math.PI / 2),
+  item("rd-k-binders", 2490.3, 1.8, 445.1, Math.PI),
 ];

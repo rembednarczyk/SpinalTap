@@ -36,6 +36,7 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 - §13 zgodne: tryb wnętrza z lampami przy oprawach (`room-lights.ts`, od 22.11): chłodna biel podwieszanych świetlówek, turkus ekranów terminalu przy biurku. Drzwi do hali wyróżnione czerwoną lampką. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 58,7%, światło 37,6%, akcenty 3,7% (wcześniej 97,9 / 2 / 0,1).
 - §14 zgodne co do sterylności (korporacja, §16): 11 rzeczy drobiazgu, skupiska na biurku i na tablicy, 27% luzem (karton akt, kubki w koszu). Generator wnętrz (ADR-0099, zestaw `office`) dokłada tylko gaśnicę przy drzwiach i skrzynkę rozdzielczą, bez drobiazgu.
 - §15 dług: czarne szkło i szczotkowana stal lady.
+- Partia 2 ADR-0099: fotel na kółkach odsunięty od biurka (`rd-k-office-chair`), niszczarka przy biurku (`rd-k-shredder`), segregatory na szafce (`rd-k-binders`). Na telefonie bez nich (drobny detal, budżet bloku W-3).
 - §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
 - §17 do sprawdzenia: szum pomp zza ściany.
 
@@ -44,6 +45,9 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
 - blender: rd-c-extinguisher × 1
 - blender: rd-c-fusebox × 1
+- blender: rd-k-binders × 1
+- blender: rd-k-office-chair × 1
+- blender: rd-k-shredder × 1
 - blender: rd-tessen-bench × 1
 - blender: rd-tessen-board × 1
 - blender: rd-tessen-cabinet × 1
@@ -55,7 +59,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 88 m², wysokość 4,0 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 2
-- warstwy wyposażenia: makro 2, mezo 2, mikro 11
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 8 rzeczy w nich, 3 luzem
+- warstwy wyposażenia: makro 2, mezo 4, mikro 17
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 14 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->

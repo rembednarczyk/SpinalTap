@@ -34,6 +34,11 @@ export interface KitEntry {
   readonly by?: "door" | "weather";
   /** Two of it stand at least this far apart (m): gullies along a corridor, not in a heap. */
   readonly apart?: number;
+  /**
+   * The model's origin is on its back (a wall's things, `tools/blender/rooms/common.py`: back on z = 0, front to +z),
+   * not in its middle: it stands with its back on the wall, its footprint `out` in front of it.
+   */
+  readonly back?: true;
 }
 
 /** The kinds of rooms with a kit. */
@@ -58,16 +63,16 @@ const PLATFORM: readonly KitEntry[] = [
  * cartons left with the bottles and cups of whoever waits, a puddle where the rain comes in (§15).
  */
 const SERVICE_CORRIDOR: readonly KitEntry[] = [
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 10 },
-  { key: "rd-c-hydrant", anchor: "floor-wall", role: "hero", along: 0.7, out: 0.27, count: [1, 1] },
-  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 10, back: true },
+  { key: "rd-c-hydrant", anchor: "floor-wall", role: "hero", along: 0.7, out: 0.27, count: [1, 1], back: true },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1], back: true },
   { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
   { key: "rd-c-puddle", anchor: "floor-wall", role: "hero", along: 0.85, out: 0.6, count: [1, 1], by: "weather" },
   { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 2], near: ["rd-c-cartons"] },
   { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-c-cartons"] },
   { key: "rd-c-cable", anchor: "floor-wall", role: "clutter", along: 0.42, out: 0.3, count: [1, 1], near: ["rd-c-fusebox"] },
-  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3], back: true },
 ];
 
 /**
@@ -75,8 +80,8 @@ const SERVICE_CORRIDOR: readonly KitEntry[] = [
  * extinguisher by the door, the fuse box, a box of files waiting to go; nothing loose (a cable alone would lie loose).
  */
 const OFFICE: readonly KitEntry[] = [
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door" },
-  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door", back: true },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1], back: true },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
 ];
 
@@ -89,7 +94,7 @@ const SHOP: readonly KitEntry[] = [
   { key: "rd-c-papers", anchor: "surface-top", role: "hero", along: 0.38, out: 0.27, count: [1, 1] },
   { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door", back: true },
 ];
 
 /** A shop of the technical trades (electronics, repair, crypto, VR, implants): its counter's laptop open on an error and a cable by it. */
@@ -99,7 +104,7 @@ const SHOP_TECH: readonly KitEntry[] = [
   { key: "rd-c-cable", anchor: "surface-top", role: "clutter", along: 0.42, out: 0.3, count: [0, 1], near: ["rd-c-papers"] },
   { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door", back: true },
 ];
 
 /**
@@ -108,13 +113,13 @@ const SHOP_TECH: readonly KitEntry[] = [
  * wall (§15), and the Hebi's things round his laptop on the cover crate: a delivery's cartons, bottles and a cup.
  */
 const SHELTER: readonly KitEntry[] = [
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door" },
-  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door", back: true },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1], back: true },
   { key: "rd-c-puddle", anchor: "floor-wall", role: "hero", along: 0.85, out: 0.6, count: [1, 1] },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
   { key: "rd-c-bottles", anchor: "surface-top", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-shelter-hebi"] },
   { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-shelter-hebi"] },
-  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 2] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 2], back: true },
 ];
 /**
  * A car park's deck (Alchemia's P-1, `docs/pomieszczenia/alchemia-parking.md`; the street's faction, §16): the fire kit by
@@ -122,14 +127,14 @@ const SHELTER: readonly KitEntry[] = [
  * cabins what the waiting drivers leave: a delivery's cartons, bottles, a cup (§14).
  */
 const CAR_PARK: readonly KitEntry[] = [
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 6 },
-  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 6, back: true },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1], back: true },
   { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
   { key: "rd-c-puddle", anchor: "floor-free", role: "hero", along: 0.85, out: 0.6, count: [2, 3], apart: 4 },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
   { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-c-cartons"] },
   { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-cartons"] },
-  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3], back: true },
 ];
 /**
  * A factory's assembly hall (Tessen's W-3, `docs/pomieszczenia/w3-hall.md`; technique's faction under a corporation, §16:
@@ -137,11 +142,14 @@ const CAR_PARK: readonly KitEntry[] = [
  * bases (§15), the cartons of a delivery of parts by a wall; no cable alone (it would lie loose, §14).
  */
 const ASSEMBLY_HALL: readonly KitEntry[] = [
-  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [2, 3], by: "door", apart: 8 },
-  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 2], apart: 10 },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [2, 3], by: "door", apart: 8, back: true },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 2], apart: 10, back: true },
   { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
   { key: "rd-c-puddle", anchor: "floor-free", role: "hero", along: 0.85, out: 0.6, count: [2, 3], apart: 6 },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 2], apart: 6 },
+  // Batch 2: the line's control cabinets by the walls, the shift's lockers (one open).
+  { key: "rd-k-control-cabinet", anchor: "floor-wall", role: "hero", along: 0.8, out: 0.46, count: [2, 3], apart: 8, back: true },
+  { key: "rd-k-lockers", anchor: "floor-wall", role: "hero", along: 1.2, out: 0.9, count: [1, 1], back: true },
 ];
 export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   platform: PLATFORM,

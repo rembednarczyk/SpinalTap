@@ -70,6 +70,9 @@ export const TESSEN_OFFICE_LAYOUT: RoomLayout = {
     { minX: 2489, maxX: 2491, minZ: 444.8, maxZ: 445.4 },
     { minX: 2494.6, maxX: 2495.2, minZ: 437.1, maxZ: 439.3 },
     { minX: 2489.9, maxX: 2491.1, minZ: OFFICE.minZ, maxZ: OFFICE.minZ + 0.3 },
+    // The chair pushed back from the desk and the shredder at its north end (`office-detail.ts`).
+    { minX: 2487.85, maxX: 2488.65, minZ: 440.8, maxZ: 441.6 },
+    { minX: 2486.55, maxX: 2486.95, minZ: 442.95, maxZ: 443.45 },
   ],
 };
 
