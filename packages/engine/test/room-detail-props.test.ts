@@ -10,7 +10,7 @@ import { mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/c
  * `ROOM_DETAIL_SHAPES` a model of the file, light enough for a room's furniture and its file small.
  */
 /** The files, one a district (`FILE` of each room's module in `tools/blender/rooms/`). */
-const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb"] as const;
+const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb", "room-detail-stare-props.glb"] as const;
 const read = (name: string): ArrayBuffer =>
   ((b: Uint8Array) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer)(
     (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url)),

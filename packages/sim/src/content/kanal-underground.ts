@@ -32,6 +32,9 @@ const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
   interior: true,
 });
 
+/** A prop of the cellars drawn by a model of their detail (ADR-0098): its solid stays, its view goes. */
+const drawn = (p: StaticProp): StaticProp => ({ ...p, scenery: true });
+
 const { minX: HX0, maxX: HX1, minZ: HZ0, maxZ: HZ1 } = T.stairs;
 /** The vestibule's sides where it opens into the stair hall. */
 const VZ0 = T.vestibule.from.z - T.vestibule.width / 2;
@@ -42,6 +45,9 @@ const STAIRS_END = 582.5;
 const SOUTH_X0 = 582.6;
 const WEST_Z0 = -64.5;
 const WEST_Z1 = -62.4;
+/** The ribs under the south corridor's vault (z) and the west corridor's (x). */
+export const RIBS_Z = [-59.6, -61.4, -63.4] as const;
+export const RIBS_X = [584.2, 580.8, 577.2] as const;
 /** The loch: x 575.5..582.3, z -62.1..HZ0 - WALL, its doorway at the west end. */
 const LOCH_X0 = 575.5;
 const LOCH_DOOR = 577.5;
@@ -75,8 +81,9 @@ const cellars = (): StaticProp[] => [
   box(LOCH_DOOR, SOUTH_X0, F - 0.3, C, WEST_Z1, WEST_Z1 + WALL),
   box(LOCH_DOOR - 0.05, LOCH_DOOR + 0.05, F + 2.1, C, WEST_Z1 - 0.15, WEST_Z1 + WALL + 0.15, "metal"),
   // Ribs of the vault across the corridors, every few metres.
-  ...[-59.6, -61.4, -63.4].map((z) => box(SOUTH_X0, HX1, C - 0.35, C, z - 0.15, z + 0.15)),
-  ...[584.2, 580.8, 577.2].map((x) => box(x - 0.15, x + 0.15, C - 0.35, C, WEST_Z0, WEST_Z1)),
+  // The ribs under the vaults: since ADR-0098 the brick arches of `trasa-detail.ts` draw them, their solids stay.
+  ...RIBS_Z.map((z) => drawn(box(SOUTH_X0, HX1, C - 0.35, C, z - 0.15, z + 0.15))),
+  ...RIBS_X.map((x) => drawn(box(x - 0.15, x + 0.15, C - 0.35, C, WEST_Z0, WEST_Z1))),
 ];
 
 /** Warm lamps along the way and the loch's old sign; the sign over the Trybunał's door. */
@@ -90,7 +97,8 @@ const lights = (): StaticProp[] => [
 ];
 
 /** Mei's old stage in the loch: a low crate of a platform and a speaker. */
-const stage = (): StaticProp[] => [box(578, 581.5, F, F + 0.25, -60.6, HZ0 - WALL, "metal"), box(581.6, 582.2, F, F + 1.1, -59.4, -58.6, "metal")];
+// Since ADR-0098 drawn by the platform and the speaker of `trasa-detail.ts`: their solids stay.
+const stage = (): StaticProp[] => [drawn(box(578, 581.5, F, F + 0.25, -60.6, HZ0 - WALL, "metal")), drawn(box(581.6, 582.2, F, F + 1.1, -59.4, -58.6, "metal"))];
 
 export const TRASA_PODZIEMNA_PROPS: readonly StaticProp[] = [...hall(), ...cellars(), ...lights(), ...stage()];
 

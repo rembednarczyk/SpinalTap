@@ -1,0 +1,1 @@
+- Trasa Podziemna z ceglanymi łukami pod sklepieniami, sceną Mei z kolumną i futerałem, tablicami trasy, barierką z liną i posłaniem bezdomnego, zbudowanymi w Blenderze według karty pomieszczenia (ADR-0098).

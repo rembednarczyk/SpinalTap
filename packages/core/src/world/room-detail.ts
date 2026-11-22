@@ -36,6 +36,15 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-tessen-bench" },
   { key: "rd-tessen-board" },
   { key: "rd-tessen-lights" },
+  // Trasa Podziemna under the Rynek (docs/pomieszczenia/trasa-podziemna.md).
+  { key: "rd-trasa-arch-24" },
+  { key: "rd-trasa-arch-21" },
+  { key: "rd-trasa-stage" },
+  { key: "rd-trasa-speaker" },
+  { key: "rd-trasa-board" },
+  { key: "rd-trasa-rope" },
+  { key: "rd-trasa-bedding" },
+  { key: "rd-trasa-lamp" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

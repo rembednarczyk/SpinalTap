@@ -12,25 +12,40 @@ Kamienne sklepienia, ceglane łuki, wilgotne ściany z wykwitami soli. Stare lam
 Miejsce zadania („m4-ulica”): torba w lochu, ślad Mei. Ciasne korytarze, jedno wejście z Trybunału, schronienie przed patrolami.
 
 ## Inwentarz docelowy
+Stan: zrobione (Blender, `tools/blender/rooms/trasa.py`, 22.11) albo do zrobienia.
+
 Architektura:
-- sklepienia kolebkowe z cegły, kamienne progi, wnęki (Blender);
-- muzealne lampy ścienne na kinkietach, kable do LED-ów (Blender);
-- barierki muzealne z liną (Blender).
+- łuki ceglane pod sklepieniami korytarzy: klińce na łuku odcinkowym i wypełnienie do stropu, w miejscu sześciu żeber (zrobione: `rd-trasa-arch-24`, `rd-trasa-arch-21`);
+- muzealna lampa ścienna na kinkiecie, kabel z taśmą do LED-ów (zrobione: `rd-trasa-lamp`, jedna przy ciepłym pasku w korytarzu południowym);
+- barierka muzealna z czerwoną liną na mosiężnych słupkach (zrobione: `rd-trasa-rope`);
+- ceglane ściany i kamienne progi zamiast gładkich bloków (do zrobienia: powłoka korytarzy).
 
 Duże obiekty:
-- tablice informacyjne trasy na stojakach (Blender);
-- gabloty z dawnymi znaleziskami, pęknięte (Blender);
-- posłanie bezdomnego z kartonu i koca (Blender).
+- tablice informacyjne trasy na stojakach, wyblakłe, z naklejkami gangów (zrobione: `rd-trasa-board`, dwie);
+- scena Mei w lochu: podest z desek, wykładzina, statyw z mikrofonem, otwarty futerał z monetami, skrzynka (zrobione: `rd-trasa-stage`);
+- kolumna głośnikowa przy scenie (zrobione: `rd-trasa-speaker`);
+- posłanie bezdomnego z kartonów i koca, kurtka zamiast poduszki (zrobione: `rd-trasa-bedding`);
+- gabloty z dawnymi znaleziskami (do zrobienia).
 
 Drobiazg:
-- torba w lochu (Blender), futerał po gitarze, monety (Blender);
-- puszki, butelki, niedopałki, naklejki na tablicach (Blender i płaskie).
+- monety w futerale (zrobione: `rd-trasa-stage`), puszki i butelki przy posłaniu (zrobione: `rd-trasa-bedding`);
+- torba w lochu (skrytka gry, osobny widok), niedopałki, naklejki na ścianach (do zrobienia).
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- prop: blok (concrete) × 10
+- blender: rd-trasa-arch-21 × 3
+- blender: rd-trasa-arch-24 × 3
+- blender: rd-trasa-bedding × 1
+- blender: rd-trasa-board × 2
+- blender: rd-trasa-lamp × 1
+- blender: rd-trasa-rope × 1
+- blender: rd-trasa-speaker × 1
+- blender: rd-trasa-stage × 1
+- prop: blok (concrete) × 4
+- prop: blok (concrete), rysunek osobno × 6
 - prop: blok (concrete, pochyły) × 1
-- prop: blok (metal) × 3
+- prop: blok (metal) × 1
+- prop: blok (metal), rysunek osobno × 2
 - prop: neon × 6
 <!-- inwentarz-gry:end -->
