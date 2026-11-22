@@ -90,7 +90,7 @@ export {
   shopFloor as galleryShopFloor,
   shopFrame as galleryShopFrame,
 } from "./shops-plan";
-export { ALL_SHOP_BUILDS, FRONT_SHOP_BUILDS, GALLERY_CROWD, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
+export { ALL_SHOP_BUILDS, FRONT_SHOP_BUILDS, FRONT_SHOP_DETAIL, GALLERY_CROWD, GALLERY_DETAIL, SHOP_BUILDS, SHOP_PIECES, SHOP_PROPS, SHOP_SOLIDS, type ShopBuild } from "./shops";
 export { FOODHALL_PROPS, FUMIKO_STOOLS, TABLE_GROUPS, groupParts, seatingPieces } from "./foodhall-seating";
 export { kitchenPieces } from "./foodhall-kitchens";
 export { FUMIKO_WINDOW, FUMIKO_WINDOW_SPOT, FUMIKO_WINDOW_YAW, beforeHatch, fumikoWindowPieces } from "./fumiko-p0";

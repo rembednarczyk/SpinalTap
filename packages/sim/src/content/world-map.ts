@@ -10,6 +10,7 @@ import { SHELTER_DETAIL } from "./alchemia/shelter-detail";
 import { P2_DETAIL } from "./alchemia/p2-detail";
 import { P1_DETAIL } from "./alchemia/p1-detail";
 import { FOODHALL_DETAIL } from "./alchemia/foodhall-detail";
+import { FRONT_SHOP_DETAIL, GALLERY_DETAIL } from "./alchemia/shops";
 import type { TerrainGrid, StreetPropItem} from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
@@ -189,7 +190,7 @@ const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: 
  * The rooms' detail built by Blender after their cards (ADR-0098), one view a room in the order the rooms
  * came: the scenery's last views, so every id before them stays (a new room goes last).
  */
-export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL)];
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(GALLERY_DETAIL), roomDetail(FRONT_SHOP_DETAIL)];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and

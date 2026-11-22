@@ -26,6 +26,8 @@ Drobiazg:
 - towar na półkach według branż (Blender, kilka kształtów na branżę);
 - kubki, kartony, paragony, kable, laptop z błędem (Blender).
 
+Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Zostają pudełka: towar w gablotach, ubrania na wieszakach i manekinach, szafki nad ladą płytkich sklepów, sprzęt przy ladzie.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -34,6 +36,28 @@ Drobiazg:
 - blender: rd-fh-pot × 2
 - blender: rd-fh-ramen × 1
 - blender: rd-fh-teacup × 1
+- blender: rd-gl-arms × 61
+- blender: rd-gl-arms-b × 81
+- blender: rd-gl-electronics × 58
+- blender: rd-gl-electronics-b × 52
+- blender: rd-gl-florist × 37
+- blender: rd-gl-florist-b × 54
+- blender: rd-gl-food × 49
+- blender: rd-gl-food-b × 73
+- blender: rd-gl-implants × 32
+- blender: rd-gl-implants-b × 31
+- blender: rd-gl-pawn × 41
+- blender: rd-gl-pawn-b × 35
+- blender: rd-gl-pharmacy × 41
+- blender: rd-gl-pharmacy-b × 40
+- blender: rd-gl-repair × 72
+- blender: rd-gl-repair-b × 57
+- blender: rd-gl-stock × 671
+- blender: rd-gl-stock-b × 672
+- blender: rd-gl-tattoo × 13
+- blender: rd-gl-tattoo-b × 17
+- blender: rd-gl-vr × 45
+- blender: rd-gl-vr-b × 65
 - model: atm × 5
 - model: bench × 6
 - model: figure × 68
@@ -59,7 +83,7 @@ Drobiazg:
 - piece: food × 6
 - piece: frame × 6
 - piece: glass × 10
-- piece: goods × 5405
+- piece: goods × 728
 - piece: grille × 12
 - piece: lamp × 223
 - piece: lantern × 66

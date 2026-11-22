@@ -29,6 +29,8 @@ export interface ShopBuild {
   /** Solids not drawn (the game's models' boxes, a fixture drawn as its parts). */
   readonly solids: readonly Piece[];
   readonly props: readonly StreetPropItem[];
+  /** The rooms' detail built by Blender (ADR-0098): the goods on its shelves. */
+  readonly detail: readonly StreetPropItem[];
   /** Its sales floor's slots (in its frame), null for a shut one. */
   readonly layout: Layout | null;
   /** Its sales floor's size: along the front and in from it. */
@@ -102,7 +104,7 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
   const top = k.c - k.y;
   if (k.shop.sales !== undefined) {
     const u0 = sales.w + W;
-    shelves(k, slot(u0 + 0.1, w - 0.2, d - 0.55, d - 0.05), 2.2, "v1", 80);
+    shelves(k, slot(u0 + 0.1, w - 0.2, d - 0.55, d - 0.05), 2.2, "v1", 80, true);
     cartons(k, { u: (u0 + w) / 2, v: 1.0 }, 3, 81);
     cartons(k, { u: w - 0.6, v: 2.2 }, 2, 82);
     draw(k, slot(u0 + 0.4, w - 0.4, d * 0.45 - 0.05, d * 0.45 + 0.05), top - 0.06, top - 0.02, "lamp");
@@ -110,7 +112,7 @@ const backRoom = (k: Fit, sales: { w: number; s: number }): void => {
   }
   const v0 = sales.s + W;
   const deep = d - v0 > 1.5;
-  shelves(k, slot(W + 0.1, w - W - 0.1, d - (deep ? 0.55 : 0.45), d - 0.05), deep ? 2.2 : 1.8, "v1", 80);
+  shelves(k, slot(W + 0.1, w - W - 0.1, d - (deep ? 0.55 : 0.45), d - 0.05), deep ? 2.2 : 1.8, "v1", 80, true);
   if (deep) {
     cartons(k, { u: 0.6, v: v0 + 0.55 }, 3, 81);
     cartons(k, { u: w * 0.5, v: v0 + 0.55 }, 2, 82);
@@ -190,6 +192,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
     pieces: k.pieces,
     solids: [...k.solids, ...modelBoxes(k.props)],
     props: k.props,
+    detail: k.detail,
     layout: shop.state === "shut" ? null : L,
     sales,
     seller,
@@ -210,6 +213,10 @@ export const ALL_SHOP_BUILDS: readonly ShopBuild[] = [...SHOP_BUILDS, ...FRONT_S
 export const SHOP_PIECES: readonly Piece[] = SHOP_BUILDS.flatMap((b) => b.pieces);
 /** Their solids: the drawn ones and those of the fixtures drawn as parts and of the game's models. */
 export const SHOP_SOLIDS: readonly Piece[] = SHOP_BUILDS.flatMap((b) => [...b.pieces.filter((p) => p.solid), ...b.solids]);
+/** The goods on their shelves, Blender's models (ADR-0098, `docs/pomieszczenia/alchemia-gallery.md`). */
+export const GALLERY_DETAIL: readonly StreetPropItem[] = SHOP_BUILDS.flatMap((b) => b.detail);
+/** The front's units' (O5). */
+export const FRONT_SHOP_DETAIL: readonly StreetPropItem[] = FRONT_SHOP_BUILDS.flatMap((b) => b.detail);
 /** The game's models in them: drinks machines, cash machines, cabinets, ticket machines, shrubs as plastic flowers, the sellers. */
 export const SHOP_PROPS: readonly StreetPropItem[] = SHOP_BUILDS.flatMap((b) => b.props);
 

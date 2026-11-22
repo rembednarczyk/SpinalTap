@@ -140,6 +140,14 @@ class Model:
         # Wound in the game's frame, mirrored by `_b`: listed backwards.
         self._finish([self.bm.faces.new(list(reversed(vs)))], role)
 
+    def mirrored(self, key):
+        """The same model mirrored across x under another key: the same goods in the other order (a second variant)."""
+        bmesh.ops.scale(self.bm, vec=Vector((-1.0, 1.0, 1.0)), verts=list(self.bm.verts))
+        # A mirror turns the faces inwards: back out.
+        bmesh.ops.reverse_faces(self.bm, faces=list(self.bm.faces))
+        self.key = key
+        return self
+
     def to_object(self):
         """The model as a Blender object at the origin, its materials named by role, its faces triangulated."""
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=1e-5)
