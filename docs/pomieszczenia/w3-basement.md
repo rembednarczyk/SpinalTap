@@ -30,7 +30,7 @@ Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`
 ## Frakcja i zasady
 Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 - §12 zgodne: 5 z 6 wymiarów na siatce; niski przepust (1,5 m) przed piwnicą.
-- §13 dług: w pomiarach 0 źródeł w bryłach (lampy W-3 w silniku); powiązać żarówkę w kratce i światło awaryjne z oprawami. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 73,9%, światło 26,1%, akcenty 0%, poza pasmem: akcenty 0% < 3%.
+- §13 zgodne (światło): lampy W-3 w silniku (`w3-lights.ts`) przy oprawach z karty: biała pod świetlówkami stropu (słabsza), ciepłe plamy dwóch żarówek w koszyczkach (`rd-w3b-bulb`) i czerwień klosza oprawy awaryjnej nad skrzynką elektryczną (`rd-w3b-panel`). 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 73,9%, światło 26,1%, akcenty 0%; po niej baza 65,7%, światło 30,4%, akcenty 4%, zgodne.
 - §14 zgodne: 8 rzeczy drobiazgu (skrytka przemytników, śmieci w mule), 25% luzem; rury, poręcze i łaty cegieł to instalacje (§12), nie drobiazg.
 - §15 zgodne: woda w przepuście, mokre ściany.
 - §16 zgodne.
