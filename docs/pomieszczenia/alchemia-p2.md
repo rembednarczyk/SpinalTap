@@ -31,7 +31,7 @@ Odłożone: siatki zabezpieczające na regałach.
 ## Frakcja i zasady
 Frakcja: technika (zautomatyzowany magazyn aut).
 - §12 dług: wymiary poza siatką (pomiary). Strop 2,3–2,5 m zgodny z §6. Tunel do portalu wydzielony jako osobne wnętrze (22.11).
-- §13 częściowo: pomarańczowa poświata wisi nad kogutem robotów nad pasem (od 22.11, wcześniej na środku magazynu bez oprawy), lampy z Blendera nad przejściem. Dług: drzwi do klatki i portal bez barwy nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 81,5%, światło 17,4%, akcenty 1,1%, poza pasmem: baza 81,5% > 75%; światło 17,4% < 18%; akcenty 1,1% < 3%.
+- §13 częściowo: pomarańczowa poświata wisi nad kogutem robotów nad pasem (od 22.11, wcześniej na środku magazynu bez oprawy), lampy z Blendera nad przejściem. Dług: drzwi do klatki i portal bez barwy nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 81,5%, światło 17,4%, akcenty 1,1%, poza pasmem: baza 81,5% > 75%; światło 17,4% < 18%; akcenty 1,1% < 3%; po trybie wnętrza Alchemii (lampy przy kogutach robotów nad pasem, pomarańcz, wcześniej świeciły tu latarnie placu przez strop): baza 79,4%, światło 18,7%, akcenty 1,9%, poza pasmem: baza 79,4% > 75%; akcenty 1,9% < 3%. Półmrok z karty zostaje.
 - §14 częściowo: drobiazg z Blendera, 7 rzeczy, skupisko przy rzeczach technika, plama oleju ze szmatą luzem (29%); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dług: skupisko przy stanowisku serwisowym.
 - §15 dług: plama oleju jest w detalu; połysk szyn i mokry beton pod wyciekiem.
 - §16 zgodne: zimna zieleń diod, sprzęt dominuje.

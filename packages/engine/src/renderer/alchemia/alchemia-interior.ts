@@ -1,10 +1,16 @@
 import type { Vec3 } from "@seki/core";
 import { interiorAt } from "@seki/sim";
 import type { ToonMaterials } from "../../npr/toon-material";
-import { ALCHEMIA_LAMP_PREFIX, type AlchemiaLamp, alchemiaLampsFor } from "./alchemia-lights";
+import { ALCHEMIA_LAMPS_ON, ALCHEMIA_LAMP_PREFIX, type AlchemiaLamp, alchemiaLampsFor } from "./alchemia-lights";
+
+/**
+ * Under it: the car park's P-1 and P-2, P-2's tunnel, the shelter. Each has its one lamp of its own view (`parking-view.ts`,
+ * `p2-view.ts`), keyed as Alchemia's; in the street's mode the square's lamps over them took all the shader's slots (§13).
+ */
+const UNDER = ["alchemia-parking", "alchemia-p2", "alchemia-p2-tunnel", "alchemia-shelter"];
 
 /** Alchemia's interiors with its own light (`interior-areas.ts`): the gallery's floors with the front's storeys, and the food hall. */
-const LIT = new Set(["alchemia-gallery", "alchemia-foodhall"]);
+const LIT = new Set(["alchemia-gallery", "alchemia-foodhall", ...UNDER]);
 /** Its shops and the front's units, each an interior of its own inside the gallery since 22.11: lit as the gallery. */
 const lit = (id: string): boolean => LIT.has(id) || id.startsWith("alchemia-shop-");
 /** The interior the eye is in holds this far past its walls, so a step in its doorway does not flicker the light. */
@@ -39,7 +45,8 @@ export class AlchemiaInterior {
     const at = drawn ? interiorAt(eye, this.held, HOLD) : null;
     this.held = at && lit(at.id) ? at.id : null;
     this.interior = this.held !== null;
-    this.light(this.interior ? alchemiaLampsFor(eye) : []);
+    // Under it, one slot is its room's own lamp (its view's).
+    this.light(this.interior ? alchemiaLampsFor(eye, UNDER.includes(this.held ?? "") ? ALCHEMIA_LAMPS_ON - 1 : ALCHEMIA_LAMPS_ON) : []);
   }
 
   private light(next: readonly AlchemiaLamp[]): void {

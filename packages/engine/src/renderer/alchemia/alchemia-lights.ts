@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_UNITS, ALL_GALLERY_SHOPS, EXIT_SIGNS, ATRIUM, FOODHALL_CEILING, FOODHALL_FLOOR, FRONT_ROOMS, GALLERY, MALL_LEVELS, galleryShopCeiling, galleryShopFloor } from "@seki/sim";
+import { ALCHEMIA_UNITS, ALL_GALLERY_SHOPS, EXIT_SIGNS, ATRIUM, FOODHALL_CEILING, FOODHALL_FLOOR, FRONT_ROOMS, GALLERY, INTERIORS, MALL_LEVELS, P2_STORE_PIECES, SHELTER_PIECES, galleryShopCeiling, galleryShopFloor } from "@seki/sim";
 import { type LightClip, type PointLightDef, mixHex } from "../../npr/lighting";
 import { shopWall } from "./shop-geometry";
 
@@ -167,7 +167,32 @@ const frontLamps = (): AlchemiaLamp[] =>
     return lamp(`front-${i}`, SODIUM, (r.minX + r.maxX) / 2, (r.minZ + r.maxZ) / 2, r.top, r.bottom, reach, 0.9, { x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ });
   });
 
-export const ALCHEMIA_LAMPS: readonly AlchemiaLamp[] = [...galleryLamps(), ...shopLamps(), ...kitchenLamps(), ...exitLamps(), ...frontLamps()];
+/**
+ * Under the hall: a lamp by each of the beacons in P-2's store and its corridor and the shelter's caged lamps (§13, no
+ * light from nowhere), clipped to the room it hangs in: the store's orange of the robots' beacons, the corridor's cold
+ * white, the shelter's warm amber. Before 22.11 the square's lamps lit them through the slabs (G-263).
+ */
+const UNDER_LIGHT: Readonly<Record<string, { readonly color: string; readonly range: number; readonly intensity: number }>> = {
+  "alchemia-p2": { color: "#ff9a4a", range: 12, intensity: 1.7 },
+  "alchemia-p2-tunnel": { color: "#d6e4ff", range: 8, intensity: 1.0 },
+  "alchemia-shelter": { color: "#ffb060", range: 10.5, intensity: 2.0 },
+};
+const underLamps = (): AlchemiaLamp[] =>
+  [...P2_STORE_PIECES, ...SHELTER_PIECES]
+    .filter((p) => p.kind === "beacon")
+    .flatMap((p, i) => {
+      const x = (p.box.x0 + p.box.x1) / 2;
+      const y = (p.box.y0 + p.box.y1) / 2;
+      const z = (p.box.z0 + p.box.z1) / 2;
+      for (const def of INTERIORS) {
+        const look = UNDER_LIGHT[def.id];
+        const r = look && def.rooms.find((q) => x >= q.minX && x <= q.maxX && z >= q.minZ && z <= q.maxZ && y >= q.bottom - 0.5 && y <= q.top + 0.5);
+        if (look && r) return [lamp(`under-${i}`, look.color, x, z, r.top, r.bottom, look.range, look.intensity, { x0: r.minX, x1: r.maxX, z0: r.minZ, z1: r.maxZ })];
+      }
+      return [];
+    });
+
+export const ALCHEMIA_LAMPS: readonly AlchemiaLamp[] = [...galleryLamps(), ...shopLamps(), ...kitchenLamps(), ...exitLamps(), ...frontLamps(), ...underLamps()];
 
 /** Distance from the eye to a lamp's room: across its clip and up or down to its storey. */
 const toRoom = (l: AlchemiaLamp, eye: Vec3): number => {
