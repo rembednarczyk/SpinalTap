@@ -28,6 +28,7 @@ import {
   ROOM_ID_BASE,
   Simulation,
   groundY,
+  DEPTAK_NIGHT_SOLID_PROPS,
 } from "../src";
 import { teleportPlayer } from "./helpers";
 
@@ -107,7 +108,7 @@ describe("Alchemia's front over P-1 (B1)", () => {
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5) and the
     // deptak's (C7), then the front's storeys as rooms (O5), the last of Alchemia's. Since O5 the front's own slot holds only its
     // solids on the ground (the green steps, the house with arcades' piers): one walks in its storeys, a prop per tile among the last.
-    const slot = ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length)!;
+    const slot = ALCHEMIA_PROPS.at(-1 - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - (FRONT_O5_PROPS.length + DEPTAK_NIGHT_SOLID_PROPS.length))!;
     expect(slot.prisms).toHaveLength(frontPieces().filter((p) => p.solid && p.box.y0 <= -2.9 && (p.kind === "green" || p.kind === "plaster")).length);
   });
 

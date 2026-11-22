@@ -57,6 +57,7 @@ import {
   groundY,
   interiorAt,
   p2StairY,
+  DEPTAK_NIGHT_SOLID_PROPS,
 } from "../src";
 import { lineOfSight } from "../src/world/hitscan";
 import { routeAcrossLevels } from "../src/world/nav";
@@ -226,7 +227,7 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
     // Solids of one prop each: the shell with the cutting, the flight, the store; the last of Alchemia's before the front's (B1).
     // The gallery round the atrium (ADR-0093 O1) last.
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
-    const after = 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length + DEPTAK_SOLID_PROPS.length + FRONT_O5_PROPS.length;
+    const after = 1 + P2_ROBOTS.length + SHELTER_PROPS.length + CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length + DEPTAK_SOLID_PROPS.length + (FRONT_O5_PROPS.length + DEPTAK_NIGHT_SOLID_PROPS.length);
     expect(ALCHEMIA_PROPS.slice(-P2_PROPS.length - after, -after)).toEqual(P2_PROPS);
   });
 });
