@@ -11,10 +11,11 @@ const touch = async (page: Page) => {
   const send = (type: "touchStart" | "touchMove" | "touchEnd", x: number, y: number) =>
     cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }] });
   return {
-    async drag(from: [number, number], to: [number, number], holdMs: number) {
+    /** Holds the finger at `to` for `hold` ms, or until `hold` resolves (a state of the game, not the clock: ADR-0046). */
+    async drag(from: [number, number], to: [number, number], hold: number | (() => Promise<unknown>)) {
       await send("touchStart", ...from);
       for (let i = 1; i <= 5; i++) await send("touchMove", from[0] + ((to[0] - from[0]) * i) / 5, from[1] + ((to[1] - from[1]) * i) / 5);
-      await page.waitForTimeout(holdMs);
+      await (typeof hold === "number" ? page.waitForTimeout(hold) : hold());
       await send("touchEnd", ...to);
     },
   };
@@ -35,7 +36,18 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   // clinic (ADR-0045): forward is along the view, not +Z.
   const start = (await gameState(page)).player!;
   const facing = await page.evaluate(() => window.__seki!.session.sim.player()!.yaw);
-  await fingers.drag([140, 300], [140, 230], 1500);
+  // Held until the walk is past 1.6 m from the start, however slow the frames (a slow runner drew too few of them in a
+  // fixed 1.5 s, 22.11): the stick moves the body, the check below is its direction.
+  const walked = () =>
+    page.waitForFunction(
+      ([x, z]) => {
+        const p = window.__seki!.state().player!;
+        return Math.hypot(p.x - x, p.z - z) > 1.6;
+      },
+      [start.x, start.z] as const,
+      { timeout: 30_000 },
+    );
+  await fingers.drag([140, 300], [140, 230], walked);
   const moved = (await gameState(page)).player!;
   const ahead = (moved.x - start.x) * Math.sin(facing) + (moved.z - start.z) * Math.cos(facing);
   const aside = (moved.x - start.x) * Math.cos(facing) - (moved.z - start.z) * Math.sin(facing);
