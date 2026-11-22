@@ -1,0 +1,1 @@
+- Megabloki w dzień bez rdzawego brązu: bledną w szaroniebieską mgłę (perspektywa powietrzna), okna jako ciemne szkło z niebem zamiast pomarańczowych kropek; noc bez zmian.
