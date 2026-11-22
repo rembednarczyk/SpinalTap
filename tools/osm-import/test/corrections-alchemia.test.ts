@@ -70,15 +70,15 @@ describe("the ways the game replaces (ADR-0042, ADR-0074 stage 7)", () => {
     expect((chunk.markings ?? []).filter((m) => m.kind === "lane-dash" && onDeptak(m))).toHaveLength(0);
   });
 
-  it("drives from Bajkowskiego's carriageway onto the ramp's top across the footway, which runs on over it", () => {
-    // Along the ramp's lanes from the carriageway to its top: asphalt, the footway, asphalt, asphalt to the top.
+  it("drives from Bajkowskiego's carriageway onto the ramp's top on asphalt all the way, across the footway (user's notes of 22.11)", () => {
+    // Along the ramp's lanes from the carriageway to its top: asphalt, the footway cut at the driveway as at a street's mouth.
     for (const x of [411.6, 414.9]) {
       const way: string[] = [];
       for (let z = -13.6; z <= -5.6; z += 0.2) {
         const s = surfaceAt(x, z) ?? "bare";
         if (way[way.length - 1] !== s) way.push(s);
       }
-      expect(way, `x ${x}`).toEqual(["road", "footway", "road"]);
+      expect(way, `x ${x}`).toEqual(["road"]);
     }
   });
 
