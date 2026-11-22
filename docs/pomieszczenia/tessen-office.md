@@ -12,24 +12,31 @@ Zimne światło świetlówek, błękit monitorów z podglądem kamer, czerwona l
 Miejsce infiltracji (zadanie z kodem do drzwi): terminal przepustek, szafka z kartami, podgląd kamer. Jedno wejście od strony bramy i schody na platformę.
 
 ## Inwentarz docelowy
+Stan: zrobione (Blender, `tools/blender/rooms/tessen_office.py`, 22.11) albo do zrobienia.
+
 Architektura:
-- lada z szybą i okienkiem do podawania kart (Blender);
-- sufit podwieszany z kasetonami i świetlówkami (Blender);
-- listwy kablowe po ścianach (Blender).
+- lada z szybą i okienkiem do podawania kart (do zrobienia: wymaga bryły symulacji);
+- sufit podwieszany ze świetlówkami (zrobione: `rd-tessen-lights`, dwie oprawy);
+- listwy kablowe po ścianach (do zrobienia).
 
 Duże obiekty:
-- biurko strażnika z trzema monitorami podglądu i klawiaturą (Blender);
-- fotel biurowy na kółkach (Blender);
-- szafka na karty dostępu z zamkiem szyfrowym (Blender);
-- drukarka kart i niszczarka (Blender);
-- szafa na dokumenty (Blender).
+- biurko strażnika na dwóch kontenerkach z szufladami, trzy monitory podglądu kamer na belce, klawiatura terminala, drukarka kart (zrobione: `rd-tessen-desk`);
+- trzy szafy na akta po cztery szuflady i szafka na karty dostępu z zamkiem szyfrowym i czerwoną diodą (zrobione: `rd-tessen-cabinet`);
+- ławka dla kierowców przy drzwiach (zrobione: `rd-tessen-bench`);
+- fotel biurowy na kółkach, niszczarka (do zrobienia).
 
 Drobiazg:
-- kubki po kawie w koszu, paprotka w doniczce, lista dyżurów na tablicy korkowej (Blender);
-- zdjęcie z otwarcia zakładu w ramce, karty dostępu rozsypane na blacie (Blender).
+- kubki po kawie w koszu i na biurku, kanapka w folii, karty dostępu na blacie (zrobione: `rd-tessen-desk`, `rd-tessen-bench`);
+- paprotka w doniczce (zrobione: `rd-tessen-bench`);
+- tablica korkowa z grafikiem dyżurów pisanym ręcznie, zdjęcie z otwarcia zakładu, karteczki na pinezkach (zrobione: `rd-tessen-board`).
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- prop: blok (metal) × 3
+- blender: rd-tessen-bench × 1
+- blender: rd-tessen-board × 1
+- blender: rd-tessen-cabinet × 1
+- blender: rd-tessen-desk × 1
+- blender: rd-tessen-lights × 1
+- prop: blok (metal), rysunek osobno × 3
 <!-- inwentarz-gry:end -->

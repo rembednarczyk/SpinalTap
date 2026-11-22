@@ -1,5 +1,5 @@
 /**
- * The room detail of ADR-0098 (`room-detail`): one model of `room-detail-props.glb` per shape, the shape
+ * The room detail of ADR-0098 (`room-detail`): one model of the `room-detail*-props.glb` files (one a district) per shape, the shape
  * in a piece's `variant`. The models are built by Blender from the scripts in `tools/blender/` after the
  * rooms' cards (`docs/pomieszczenia/`); the simulation keeps its own solids for them (the blocks of the
  * room, drawn no more, `scenery`), so a shape here has no solid of its own. The renderer bakes the model
@@ -30,6 +30,12 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-clinic-cabinet" },
   { key: "rd-clinic-counter-things" },
   { key: "rd-clinic-sharps" },
+  // Tessen's pass office in W-3's tower (docs/pomieszczenia/tessen-office.md).
+  { key: "rd-tessen-desk" },
+  { key: "rd-tessen-cabinet" },
+  { key: "rd-tessen-bench" },
+  { key: "rd-tessen-board" },
+  { key: "rd-tessen-lights" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

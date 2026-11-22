@@ -210,4 +210,6 @@ def counter_things():
     return m
 
 
+# The props file the room's models go to (one a district, each under its budget, ADR-0098).
+FILE = 'room-detail-props.glb'
 MODELS = [bar_counter, bottle_shelf, bar_stool, cafe_table, cafe_chair, jukebox, aquarium, counter_things]
