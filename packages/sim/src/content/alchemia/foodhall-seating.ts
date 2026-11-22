@@ -36,7 +36,8 @@ interface Group {
 export const TABLE_GROUPS: readonly Group[] = [
   { x0: 406.0, x1: 407.6, z0: 40.2, z1: 43.0, along: "z" },
   { x0: 406.0, x1: 407.6, z0: 44.6, z1: 47.4, along: "z" },
-  { x0: 428.3, x1: 429.9, z0: 38.0, z1: 40.8, along: "z" },
+  // A metre and more before Oyaji's counter for his customers (22.11, his counter turned onto this strip): 38.0-40.8 until then.
+  { x0: 428.3, x1: 429.9, z0: 39.2, z1: 41.4, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 42.4, z1: 45.2, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 46.6, z1: 48.8, along: "z" },
   // West of the door into L3 (ADR-0093 O5; x 416.0-417.6 until then), and the second moved through it into L3's dining room.

@@ -32,6 +32,12 @@ export interface UnitDef {
   readonly shut?: true;
   /** Its sign over the counter, in neon (O3): a proper name in the world's language, the same in every language (ADR-0056). */
   readonly sign: string;
+  /**
+   * The part of its open side that opens onto the floor (`from`..`to` along it, x on a north or south side, z on an
+   * east or west one), when the rest of it stands against the next unit: its counter, its keeper, its customer and its
+   * sign there. The whole side when absent.
+   */
+  readonly opening?: readonly [number, number];
 }
 
 /** The food hall's floor (P3) and the underside of the roof's slab over it. */
@@ -49,8 +55,9 @@ const EAST_ROW = 431.6;
  * The units in the ring (19 numbers between the gallery's 3 m round the atrium, x 408-428 and z
  * 37-53, and the glass): three on the west strip and three on the east one, 4.2 m deep, their
  * counters to the seating strip before them; three on the north strip and two on the south one, 4.8
- * m deep, their counters to the gallery; Oyaji's in the south-east corner, his counter west to the
- * strip by the gallery's corner. Kept clear: the cores' corridors, both lifts' lobbies, the
+ * m deep, their counters to the gallery; Oyaji's in the south-east corner, his counter north onto the
+ * east strip's aisle by the gallery's corner (22.11: it faced west into the blind nook by Sachiko's kiosk,
+ * unseen from the food court, user's note), its east end against the east row's first unit. Kept clear: the cores' corridors, both lifts' lobbies, the
  * escalators' landing and the south seating between the hall's lift and Sachiko's kiosk.
  */
 export const ALCHEMIA_UNITS: readonly UnitDef[] = [
@@ -59,7 +66,7 @@ export const ALCHEMIA_UNITS: readonly UnitDef[] = [
   { id: "kenta", keeper: "kenta", cuisine: "okonomiyaki", rect: r(408, 413.67, 53, G.maxZ), open: "s", sign: "OKONOMIYAKI" },
   { id: "goro", keeper: "goro", cuisine: "umbrellas-tea", rect: r(413.67, 419.33, 53, G.maxZ), open: "s", sign: "KASA TEA" },
   { id: "cafe", cuisine: "coffee", rect: r(419.33, 425, 53, G.maxZ), open: "s", sign: "KAWA" },
-  { id: "oyaji", keeper: "oyaji", cuisine: "arms", rect: r(428, G.maxX, G.minZ, 37), open: "w", sign: "ARMS" },
+  { id: "oyaji", keeper: "oyaji", cuisine: "arms", rect: r(428, G.maxX, G.minZ, 37), open: "n", opening: [428, EAST_ROW], sign: "ARMS" },
   { id: "thai", cuisine: "thai", rect: r(G.minX, WEST_ROW, 39.8, 44.4), open: "e", sign: "THAI" },
   { id: "korean", cuisine: "korean", rect: r(G.minX, WEST_ROW, 44.4, 49.0), open: "e", shut: true, sign: "SEOUL" },
   { id: "greek", cuisine: "greek", rect: r(EAST_ROW, G.maxX, 37, 41.2), open: "w", sign: "GYROS" },
@@ -100,9 +107,10 @@ export const OPEN_YAW: Readonly<Record<UnitOpen, number>> = { n: NORTH, s: SOUTH
 
 /** A point `out` metres out of a unit's open side (in when negative), `across` from its middle along it. */
 export const atUnit = (id: string, out: number, across = 0, up = 0): Vec3 => {
-  const { rect: q, open } = unitOf(id);
-  const mx = (q.minX + q.maxX) / 2 + across;
-  const mz = (q.minZ + q.maxZ) / 2 + across;
+  const { rect: q, open, opening } = unitOf(id);
+  const along = opening ? (opening[0] + opening[1]) / 2 : null;
+  const mx = (open === "n" || open === "s" ? (along ?? (q.minX + q.maxX) / 2) : (q.minX + q.maxX) / 2) + across;
+  const mz = (open === "e" || open === "w" ? (along ?? (q.minZ + q.maxZ) / 2) : (q.minZ + q.maxZ) / 2) + across;
   if (open === "n") return onP3(mx, q.maxZ + out, up);
   if (open === "s") return onP3(mx, q.minZ - out, up);
   if (open === "e") return onP3(q.maxX + out, mz, up);
@@ -125,28 +133,31 @@ export const KEEPER_YAW: Readonly<Record<KeeperKey, number>> = {
   fumiko: OPEN_YAW.e,
   sachiko: OPEN_YAW.n,
   goro: OPEN_YAW.s,
-  oyaji: OPEN_YAW.w,
+  oyaji: OPEN_YAW.n,
 };
 
 /** Where a customer stands before a keeper's counter: `out` metres out of the open side, facing in. */
 export const beforeKeeper = (key: KeeperKey, out = CUSTOMER_OUT, across = 0): Vec3 => atUnit(key, out, across);
 
-/**
- * The door of Oyaji's back room at its north end, and the flap at his counter's north end before it:
- * the way the Hebi came in by his back door onto T1 when his shop was on P0 (`mall-nav.ts`).
- */
+/** The door of Oyaji's back room at its north end, behind his counter's east end. */
 export const OYAJI_BACK_DOOR = { minZ: 35.4, maxZ: 36.6 } as const;
+/**
+ * The flap at the west end of Oyaji's counter, by his shop's west wall: the way the Hebi come in to him (`mall-nav.ts`;
+ * by his back door onto T1 when his shop was on P0).
+ */
+export const OYAJI_FLAP = 0.9;
 
 /** The counter along a unit's open side, inside it (Fumiko's from her flap to the glass, Oyaji's from the glass to his). */
 export const counterBox = (u: UnitDef, top: number): Box => {
   const q = u.rect;
   const y0 = FOODHALL_FLOOR - 0.05;
   const y1 = FOODHALL_FLOOR + top;
+  // Oyaji's from his flap at its west end (the Hebi's way in to him) to the east row's wall.
+  if (u.id === "oyaji" && u.opening) return box(u.opening[0] + UNIT_WALL + OYAJI_FLAP, u.opening[1], q.maxZ - COUNTER_DEPTH, q.maxZ, y0, y1);
   if (u.open === "n") return box(q.minX + 0.6, q.maxX - 0.6, q.maxZ - COUNTER_DEPTH, q.maxZ, y0, y1);
   if (u.open === "s") return box(q.minX + 0.6, q.maxX - 0.6, q.minZ, q.minZ + COUNTER_DEPTH, y0, y1);
   if (u.open === "e") return u.id === "fumiko" ? box(q.maxX - COUNTER_DEPTH, q.maxX, q.minZ + UNIT_WALL + FUMIKO_FLAP, q.maxZ, y0, y1) : box(q.maxX - COUNTER_DEPTH, q.maxX, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
-  // Oyaji's from the glass's end of it to his flap at its north end, by the back room's door.
-  return u.id === "oyaji" ? box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, OYAJI_BACK_DOOR.minZ, y0, y1) : box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
+  return box(q.minX, q.minX + COUNTER_DEPTH, q.minZ + 0.6, q.maxZ - 0.6, y0, y1);
 };
 
 /** A shutter across the open side, down to the floor. */
