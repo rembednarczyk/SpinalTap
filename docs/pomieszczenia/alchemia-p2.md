@@ -12,20 +12,28 @@ Półmrok, pomarańczowe koguty robotów, zielone diody szyn. Strop nisko, 2,3 m
 Miejsce skradania i zadania w Alchemii (przejście do schronu, kryjówka Hebi). Wejście schodami z P-1 i korytarzem z portalu na T2.
 
 ## Inwentarz docelowy
-Architektura:
-- szyny robotów w posadzce, regały palet, siatki zabezpieczające (Blender);
-- strop z rurami i oprawami w kratkach (Blender).
+Magazyn rysuje silnik Alchemii i scenografia (`alchemia/p2-store.ts`):
+- dwa rzędy palet z autami (model gry `sedan`);
+- słupy i belki regałów, szyny w posadzce pasa;
+- pomarańczowe koguty;
+- dwa roboty jeżdżące po pasie;
+- sterownia z konsolą i oknem na przejście serwisowe.
 
-Duże obiekty:
-- palety z autami (model gry: auta `vehicle-props.glb`);
-- roboty transportowe z kogutem (Blender);
-- szafa sterownicza z ekranem (Blender).
+Z Blendera (`tools/blender/rooms/alchemia_p2.py`, plik `room-detail-alchemia-props.glb`), tylko rysunek:
+- rzeczy technika przy drzwiach sterowni: kombinezon na haku, czerwona skrzynka z kluczami i podniesionym wiekiem, kanister smaru, ścierki (`rd-p2-tech`);
+- szafa sterownicza w sterowni z ekranem planu magazynu, rzędem lampek (czerwona: robot numer trzy), stacyjkami i grzybkiem bezpieczeństwa (`rd-p2-cabinet`);
+- rura tryskaczy z głowicami i rura spustowa pod stropem wzdłuż ściany wschodniej (`rd-p2-pipes`);
+- trzy oprawy w kratkach nad przejściem serwisowym (`rd-p2-lamp`);
+- plamy oleju na pasie robotów (`rd-p2-oil`).
 
-Drobiazg:
-- skrzynka z narzędziami, kombinezon na haku, kanister smaru, ścierki (Blender).
+Odłożone: siatki zabezpieczające na regałach.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- (gra nie ma tu jeszcze nic poza bryłą pomieszczenia)
+- blender: rd-p2-cabinet × 1
+- blender: rd-p2-lamp × 3
+- blender: rd-p2-oil × 1
+- blender: rd-p2-pipes × 1
+- blender: rd-p2-tech × 1
 <!-- inwentarz-gry:end -->
