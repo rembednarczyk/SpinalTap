@@ -5,6 +5,9 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
+import { GalleryDetailView } from "./gallery-detail-view";
+import type { CityProps } from "../city-props";
+import type { RenderQuality } from "../../npr/quality";
 import { P2View, eyeInP2, eyeInShelter } from "./p2-view";
 import { ParkingView } from "./parking-view";
 import type { CarAt } from "./parking-traffic";
@@ -63,6 +66,9 @@ export interface AlchemiaDeps {
   readonly eye: () => Vec3;
   /** The traffic's cars as drawn (P-1's shutters go up before them, ADR-0074 §4). */
   readonly cars?: () => Iterable<CarAt>;
+  /** The props files once loaded: the shops' goods are their models (ADR-0098). None without them. */
+  readonly props?: () => CityProps | null;
+  readonly quality?: RenderQuality;
 }
 
 /**
@@ -106,10 +112,13 @@ export class AlchemiaView {
   readonly parking: ParkingView;
   /** Its car park's P-2 under P-1 (ADR-0074 stage 5a): a part of its own. */
   readonly p2: P2View;
+  /** Its shops' goods, Blender's models (ADR-0098): drawn with the inside, a part of its own. */
+  readonly goods: GalleryDetailView;
 
   constructor(private readonly deps: AlchemiaDeps) {
     this.parking = new ParkingView(deps);
     this.p2 = new P2View(deps);
+    this.goods = new GalleryDetailView({ scene: deps.scene, materials: deps.materials, props: deps.props ?? (() => null), quality: deps.quality ?? "high" });
   }
 
   /** The meshes drawn last frame and their triangles (debug, tests). */
@@ -164,6 +173,7 @@ export class AlchemiaView {
     if (this.outside && this.outside.isEnabled(false) !== out) this.outside.setEnabled(out);
     if (this.tiers && this.tiers.isEnabled(false) !== out) this.tiers.setEnabled(out);
     if (this.inside && this.inside.isEnabled(false) !== inn) this.inside.setEnabled(inn);
+    this.goods.show(inn && this.inside !== null);
     const level = inn && this.inside !== null ? fade : 0;
     if (level === this.level) return;
     this.level = level;

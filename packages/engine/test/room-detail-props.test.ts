@@ -4,13 +4,15 @@ import { ROOM_DETAIL_SHAPES } from "@seki/core";
 import { KOI_DETAIL } from "@seki/sim";
 import { describe, expect, it } from "vitest";
 import { facing, mergeCityProps, parseCityProps, transformProp, triangleCount } from "../src/renderer/city-props";
+import { bakeRoomDetail } from "../src/renderer/mapcity/room-detail-models";
+import { MeshSink } from "../src/renderer/mesh-sink";
 
 /**
  * The rooms' detail of `room-detail-props.glb` (ADR-0098, `tools/city_blender.py`): every shape of
  * `ROOM_DETAIL_SHAPES` a model of the file, light enough for a room's furniture and its file small.
  */
 /** The files, one a district (`FILE` of each room's module in `tools/blender/rooms/`). */
-const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb", "room-detail-stare-props.glb", "room-detail-w3-props.glb", "room-detail-metro-props.glb", "room-detail-alchemia-props.glb"] as const;
+const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb", "room-detail-stare-props.glb", "room-detail-w3-props.glb", "room-detail-metro-props.glb", "room-detail-alchemia-props.glb", "room-detail-galeria-props.glb"] as const;
 const read = (name: string): ArrayBuffer =>
   ((b: Uint8Array) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer)(
     (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url)),
@@ -21,6 +23,20 @@ const props = files.map(parseCityProps).reduce((a, b) => mergeCityProps(a, b));
 describe("room-detail-props.glb (ADR-0098)", () => {
   it("has a model for every shape of the rooms' detail, by its key", () => {
     for (const s of ROOM_DETAIL_SHAPES) expect(props.models.get(s.key), s.key).toBeDefined();
+    for (const s of ROOM_DETAIL_SHAPES) if (s.lod) expect(props.models.get(s.lod), s.lod).toBeDefined();
+  });
+
+  it("bakes a shape's phone model on low quality (the gallery's goods in a few boxes), its own on the others", () => {
+    const shape = ROOM_DETAIL_SHAPES.findIndex((s) => s.key === "rd-gl-food");
+    const p = { prop: "room-detail" as const, x: 0, y: 0, z: 0, yaw: 0, shape, scale: 1 };
+    const verts = (quality: "low" | "high") => {
+      const sink = new MeshSink();
+      bakeRoomDetail(sink, props, p, quality);
+      return sink.vertexCount;
+    };
+    expect(verts("low")).toBe(props.models.get("rd-gl-food-lod")!.positions.length / 3);
+    expect(verts("high")).toBe(props.models.get("rd-gl-food")!.positions.length / 3);
+    expect(verts("low") * 4).toBeLessThan(verts("high"));
   });
 
   it("is light: at most 16 thousand triangles a model, each file under 768 KiB", () => {

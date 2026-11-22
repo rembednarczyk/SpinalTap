@@ -38,8 +38,10 @@ describe("Alchemia's gallery shops in the drawing (ADR-0093 O2)", () => {
         const [x, y, z] = [inside.positions[k]!, inside.positions[k + 1]!, inside.positions[k + 2]!];
         if (x > q.x0 - 0.1 && x < q.x1 + 0.1 && z > q.z0 - 0.1 && z < q.z1 + 0.1 && y > y0 - 0.1 && y < y1 + 0.1) n++;
       }
-      // A shut one is its shell and its shutter; an open one is full of goods.
-      expect(n, b.shop.id).toBeGreaterThan(b.shop.state === "shut" ? 100 : 1500);
+      // A shut one is its shell and its shutter; a vacant one its shell, papered glass and cartons; an open one full of
+      // fittings, and of goods: Blender's on its shelves, in its cases and on its rails (ADR-0098), the back room's stock too.
+      expect(n, b.shop.id).toBeGreaterThan(b.shop.state === "shut" ? 100 : b.shop.state === "vacant" ? 1000 : 1500);
+      if (b.shop.state !== "shut") expect(b.detail.length, b.shop.id).toBeGreaterThan(15);
     }
   });
 

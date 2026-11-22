@@ -1,4 +1,4 @@
-import { type Fit, type Layout, type Slot, cartons, cup, draw, glassCase, litter, model, rail, screen, shelves, shopHash } from "./shop-fittings";
+import { type Fit, type Layout, type Slot, block, cartons, cup, detail, draw, glassCase, litter, model, rail, screen, shelves, shopHash } from "./shop-fittings";
 
 /*
  * Each trade's fittings on its shop's layout (ADR-0093 O2): what stands on the wall racks' places, the
@@ -83,13 +83,12 @@ const workbench = (k: Fit, s: Slot): void => {
   drop(k, m.u, m.v, 0.95);
 };
 
-/** Mannequins in a window: a stand (solid), a torso of plaster in clothes (drawn). */
+/** Mannequins in a window, dressed, facing the gallery (Blender's, drawn), each its stand's box a solid. */
 const mannequins = (k: Fit, s: Slot): void => {
   for (let u = s.u0 + 0.45; u < s.u1 - 0.3; u += 0.95) {
     const v = (s.v0 + s.v1) / 2;
-    draw(k, slot(u - 0.03, u + 0.03, v - 0.03, v + 0.03), 0, 1.05, "rack", true);
-    draw(k, slot(u - 0.2, u + 0.2, v - 0.12, v + 0.12), 1.05, 1.65, "goods");
-    draw(k, slot(u - 0.08, u + 0.08, v - 0.08, v + 0.08), 1.68, 1.9, "plaster");
+    block(k, slot(u - 0.18, u + 0.18, v - 0.15, v + 0.15), 1.8);
+    detail(k, "rd-gl-mannequin", u, v, 0, "out");
   }
 };
 
