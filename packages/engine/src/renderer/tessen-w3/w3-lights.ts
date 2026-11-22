@@ -57,7 +57,12 @@ export const W3_LAMPS: readonly W3Lamp[] = [
   lamp("armoury-s", "#ffd9a8", { x: 2552, y: 4.6, z: 400 }, 9, 1.0, { minX: 2546, maxX: serverS.minX, minZ: 396, maxZ: 404 }, 0, 5),
   lamp("row-n", "#e8eef8", { x: 2530, y: 4.6, z: 435 }, 22, 0.9, { minX: W3_ROW_N.minX, maxX: serverN.minX, minZ: W3_ROW_N.minZ, maxZ: W3_ROW_N.maxZ }, 0, 5),
   lamp("row-s", "#e8eef8", { x: 2526, y: 4.6, z: 401 }, 24, 0.9, { minX: 2500, maxX: 2546, minZ: 396, maxZ: 406 }, 0, 5),
-  lamp("basement", "#d4dcea", { x: 2530, y: -0.8, z: 402 }, 20, 0.9, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
+  lamp("basement", "#d4dcea", { x: 2530, y: -0.8, z: 402 }, 20, 0.7, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
+  // The card's "one bulb in a cage and the red emergency light" (`basement-detail.ts`): the two caged bulbs' warm pools
+  // and the bulkhead's red lens over the electrical cabinet on the east wall, the basement's accents.
+  lamp("bulb-e", "#ff9a3c", { x: 2534, y: -0.85, z: 404.5 }, 5.5, 4.2, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
+  lamp("bulb-w", "#ff9a3c", { x: 2521, y: -0.85, z: 398.8 }, 5.5, 4.2, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
+  lamp("emergency", "#ff2a22", { x: 2545.6, y: -2.4, z: 404.5 }, 6, 2.2, { minX: B.minX - 6, maxX: B.maxX, minZ: B.minZ, maxZ: B.maxZ }, -4.5, -0.4),
 ];
 
 /** Distance from the eye to a lamp's room: across its rectangle and up or down to its floors. */
