@@ -54,14 +54,13 @@ Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 - blender: rd-shelter-oil-lamp × 2
 - blender: rd-shelter-prints × 1
 - blender: rd-shelter-shards × 1
-- blender: rd-w3h-exit × 2
 - prop: blok (metal) × 2
 
 Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 220 m², wysokość 2,3 / 5,3 / 2,8 m
 - siatka 0,5 m: 0 z 8 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 3
-- warstwy wyposażenia: makro 2, mezo 8, mikro 20
+- warstwy wyposażenia: makro 2, mezo 6, mikro 20
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 18 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 2
 <!-- inwentarz-gry:end -->

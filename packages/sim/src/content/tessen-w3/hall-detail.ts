@@ -1,6 +1,6 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { W3_PALLETS } from "./hall-inside";
-import { HALL_DOORS, TRACK_WALK_N } from "./layout";
+import { BELT_L1, BELT_L2, HALL_DOORS, STATIONS, TRACK_WALK_N } from "./layout";
 import { W3_ASSEMBLY, W3_Y } from "./site";
 
 /*
@@ -18,6 +18,8 @@ const item = (key: string, x: number, y: number, z: number, yaw: number): Street
 const SOUTH = W3_ASSEMBLY.minZ + 0.3;
 const NORTH = W3_ASSEMBLY.maxZ - 0.3;
 const WEST = W3_ASSEMBLY.minX + 0.3;
+/** The stations' tops by the belts (`hall-inside.ts`: 1.1 m). */
+const STATION_TOP = 1.1;
 /** The doors' signs over their 2.6 m openings. */
 const OVER_DOOR = 2.75;
 
@@ -38,6 +40,11 @@ export const W3_HALL_DETAIL: readonly StreetPropItem[] = [
   item("rd-w3h-trays", (W3_ASSEMBLY.minX + W3_ASSEMBLY.maxX) / 2, 6.5, SOUTH, 0),
   // The night shift's thermos, sandwich and hard hat on the walk of track N.
   item("rd-w3h-break", 2523, 12, (TRACK_WALK_N.minZ + TRACK_WALK_N.maxZ) / 2 + 0.2, Math.PI),
+  // What the welders left on the stations' tops by the belts (§14's clusters), facing the aisle.
+  item("rd-w3h-station", STATIONS.S1.x, STATION_TOP, BELT_L1.maxZ + 0.25, 0),
+  item("rd-w3h-station", STATIONS.S2.x, STATION_TOP, BELT_L1.maxZ + 0.25, 0),
+  item("rd-w3h-station", STATIONS.S3.x, STATION_TOP, BELT_L2.minZ - 0.25, Math.PI),
+  item("rd-w3h-station", STATIONS.S4.x, STATION_TOP, BELT_L2.minZ - 0.25, Math.PI),
   // Exit signs over the north doors; warning plates on the south, north and west walls.
   ...HALL_DOORS.map((x) => item("rd-w3h-exit", x, OVER_DOOR, NORTH, Math.PI)),
   item("rd-w3h-warning", 2533.2, 1.4, SOUTH, 0),

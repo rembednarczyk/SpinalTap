@@ -69,6 +69,8 @@ export const thingsIn = (i: InteriorDef): Thing[] => {
     for (const p of [...c.props, ...(c.street ?? [])]) {
       const v = p.view as { kind: string; size?: { x: number; y: number; z: number } };
       if (v.kind === "street-props" || v.kind === "building") continue;
+      // A marker of a centimetre (an anchor the game keys a point by) is no thing.
+      if (v.size && Math.max(v.size.x, v.size.y, v.size.z) < 0.05) continue;
       if (!inAny(i, p.center.x, p.center.y, p.center.z)) continue;
       // A big interior block is a wall, a floor or a flight: architecture.
       const big = v.size !== undefined && Math.max(v.size.x, v.size.z) >= 2.5;

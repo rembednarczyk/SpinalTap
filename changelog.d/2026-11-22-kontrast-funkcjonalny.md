@@ -1,0 +1,1 @@
+- Alchemia: nad drzwiami klatek schodowych na każdym piętrze zielony znak wyjścia z zieloną poświatą, a lady Fumiko, Kenty, Goro, Oyajiego i Sachiko w food hallu pod jaśniejszym, bielszym światłem (zasady lokacji §13).
