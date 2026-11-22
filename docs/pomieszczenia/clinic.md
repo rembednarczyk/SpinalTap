@@ -36,7 +36,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: technika (ripperdoc); druga: ulica (kafle, wiadro).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje na wierzchu do dodania pod stropem.
-- §13 zgodne co do źródeł (lampa operacyjna, żarówka, dioda), 6 widocznych. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 87,8%, światło 10,8%, akcenty 1,4%, poza pasmem: baza 87,8% > 75%; światło 10,8% < 18%; akcenty 1,4% < 3%.
+- §13 zgodne: tryb wnętrza z lampami przy oprawach (`room-lights.ts`, od 22.11): oprawa świetlówkowa poczekalni (`rd-tessen-lights` pod stropem), lampa zabiegowa nad fotelem, turkus znaków NUMER 7 i PULS 48. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 53,8%, światło 41,1%, akcenty 5,1% (wcześniej 87,8 / 10,8 / 1,4).
 - §14 zgodne: 14 rzeczy drobiazgu w trzech skupiskach (wózek z narzędziami, szafka z lekami, lada recepcji), nic luzem.
 - §15 dług: kafle i stal z połyskiem, kałuża przy umywalce (umywalka jest od partii 2 ADR-0099: `rd-k-washbasin` na południowej ścianie gabinetu przy wezgłowiu fotela, z lustrem, mydłem, ręcznikami i koszem; kotara na szynie `rd-k-curtain` między fotelem a przejściem).
 - §16 zgodne: zimne światło techniki na brudnej ulicy.
@@ -55,6 +55,7 @@ Frakcja: technika (ripperdoc); druga: ulica (kafle, wiadro).
 - blender: rd-clinic-sharps × 1
 - blender: rd-k-curtain × 1
 - blender: rd-k-washbasin × 1
+- blender: rd-tessen-lights × 1
 - prop: blok (concrete) × 3
 - prop: blok (concrete), rysunek osobno × 1
 - prop: blok (glass), rysunek osobno × 2
@@ -67,7 +68,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 62 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 3
-- warstwy wyposażenia: makro 6, mezo 16, mikro 14
+- warstwy wyposażenia: makro 6, mezo 17, mikro 14
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 14 rzeczy w nich, 0 luzem
-- widoczne źródła światła (lampy, neony, ekrany, szyldy): 6
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 7
 <!-- inwentarz-gry:end -->

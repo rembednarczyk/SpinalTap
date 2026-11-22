@@ -1,0 +1,1 @@
+- Neon Koi, klinika i biuro Tessenu mają nocą własne światło z widocznych opraw: różowy neon i akwarium w barze, świetlówki i turkusowe znaki w klinice, świetlówki i ekrany w biurze. Wcześniej te pokoje były prawie czarne.
