@@ -7,12 +7,13 @@ import { INTERIORS, METRO_DETAIL, METRO_PLATFORMS, ROOM_DETAIL_SCENERY } from ".
  * platform, placed from its layout, every piece inside its platform's room, drawn only.
  */
 describe("the metro platforms' detail (ADR-0098)", () => {
-  it("gives every platform its set, inside its own room", () => {
+  it("gives every platform its set placed by hand and its kit's dressing (ADR-0099), inside its own room", () => {
     expect(METRO_DETAIL).toHaveLength(METRO_PLATFORMS.length);
     METRO_PLATFORMS.forEach((e, i) => {
       const rooms = INTERIORS.find((r) => r.id === `metro-${e.station}`)!.rooms;
       const set = METRO_DETAIL[i]!;
-      expect(set).toHaveLength(7);
+      // The seven placed by hand first, then the generator's.
+      expect(set.length).toBeGreaterThan(7);
       for (const p of set) {
         const name = p.prop === "room-detail" ? ROOM_DETAIL_SHAPES[p.variant]!.key : p.prop;
         const inside = rooms.some((r) => p.x >= r.minX - 0.01 && p.x <= r.maxX + 0.01 && p.z >= r.minZ - 0.01 && p.z <= r.maxZ + 0.01 && p.y >= r.bottom - 0.01 && p.y <= r.top + 0.01);
