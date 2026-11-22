@@ -4,6 +4,7 @@ import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, ownWayRo
 import { DEPTAK_MOUTH } from "../src/content/traffic-deptak";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
 import { onRoad, surfacesAt } from "../src/content/lublin/roads";
+import { LUBLIN_STREET_PROPS } from "../src/content/lublin";
 import { vehiclePlan } from "../src/world/traffic";
 
 /** Alchemia's P-1 in the street's traffic (ADR-0074 §4, G-491, G-510). */
@@ -132,5 +133,24 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
     expect(ownWayRoom(OUT!, 1, w)).toEqual([0, 0]);
     expect(ownWayRoom(IN!, 1, w)).toBeNull();
     expect(ownWayRoom(CITY_ROUTES[0]!, 1, w)).toBeNull();
+  });
+});
+
+describe("the driveway from Bajkowskiego to P-1's ramp (T-241, user's notes of 22.11)", () => {
+  /** Between the ramp's walls, from the ramp's top to the carriageway's edge. */
+  const MOUTH = { minX: 409.7, maxX: 418.3, minZ: -13, maxZ: -5.5 } as const;
+
+  it("is asphalt all the way from the ramp's top to the carriageway, across the footway", () => {
+    const off: string[] = [];
+    for (let x = MOUTH.minX + 0.3; x < MOUTH.maxX; x += 1)
+      for (let z = MOUTH.maxZ - 0.2; z > MOUTH.minZ; z -= 0.5) if (!surfacesAt(x, z).includes("road")) off.push(`${x.toFixed(1)},${z.toFixed(1)} ${surfacesAt(x, z).join("+")}`);
+    expect(off).toEqual([]);
+  });
+
+  it("has no bollard standing across its mouth", () => {
+    const posts = Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((p) => p.prop === "bollard" && p.x > MOUTH.minX - 0.3 && p.x < MOUTH.maxX + 0.3 && p.z > MOUTH.minZ - 1 && p.z < MOUTH.maxZ);
+    expect(posts.map((p) => `${p.x},${p.z}`)).toEqual([]);
   });
 });
