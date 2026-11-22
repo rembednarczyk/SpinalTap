@@ -14,6 +14,12 @@ export interface RoomDetailShape {
    * walker meets is never fine.
    */
   readonly fine?: true;
+  /**
+   * The phone's model of it (`docs/zasady-lokacji.md` §9: simplified only on the phone and from afar): the same thing's
+   * outline in a few plain boxes, where there are so many (the goods on a gallery's shelves) that the full one costs
+   * the phone too many triangles. Its key in the same file; no shape of its own.
+   */
+  readonly lod?: string;
 }
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
@@ -125,6 +131,39 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-fh-bowls" },
   { key: "rd-fh-teacup" },
   { key: "rd-fh-gas" },
+  // Alchemia's gallery (docs/pomieszczenia/alchemia-gallery.md): half a metre of a shelf's goods by trade, its mirror, the phone's in boxes.
+  { key: "rd-gl-pharmacy", lod: "rd-gl-pharmacy-lod" },
+  { key: "rd-gl-electronics", lod: "rd-gl-electronics-lod" },
+  { key: "rd-gl-food", lod: "rd-gl-food-lod" },
+  { key: "rd-gl-pawn", lod: "rd-gl-pawn-lod" },
+  { key: "rd-gl-repair", lod: "rd-gl-repair-lod" },
+  { key: "rd-gl-implants", lod: "rd-gl-implants-lod" },
+  { key: "rd-gl-arms", lod: "rd-gl-arms-lod" },
+  { key: "rd-gl-tattoo", lod: "rd-gl-tattoo-lod" },
+  { key: "rd-gl-vr", lod: "rd-gl-vr-lod" },
+  { key: "rd-gl-florist", lod: "rd-gl-florist-lod" },
+  { key: "rd-gl-stock", lod: "rd-gl-stock-lod" },
+  { key: "rd-gl-pharmacy-b", lod: "rd-gl-pharmacy-lod" },
+  { key: "rd-gl-electronics-b", lod: "rd-gl-electronics-lod" },
+  { key: "rd-gl-food-b", lod: "rd-gl-food-lod" },
+  { key: "rd-gl-pawn-b", lod: "rd-gl-pawn-lod" },
+  { key: "rd-gl-repair-b", lod: "rd-gl-repair-lod" },
+  { key: "rd-gl-implants-b", lod: "rd-gl-implants-lod" },
+  { key: "rd-gl-arms-b", lod: "rd-gl-arms-lod" },
+  { key: "rd-gl-tattoo-b", lod: "rd-gl-tattoo-lod" },
+  { key: "rd-gl-vr-b", lod: "rd-gl-vr-lod" },
+  { key: "rd-gl-florist-b", lod: "rd-gl-florist-lod" },
+  { key: "rd-gl-stock-b", lod: "rd-gl-stock-lod" },
+  // The gallery's glass cases by trade, its clothes rails, its windows' mannequins (each with the phone's).
+  { key: "rd-gl-case-implants", lod: "rd-gl-case-implants-lod" },
+  { key: "rd-gl-case-electronics", lod: "rd-gl-case-electronics-lod" },
+  { key: "rd-gl-case-pharmacy", lod: "rd-gl-case-pharmacy-lod" },
+  { key: "rd-gl-case-arms", lod: "rd-gl-case-arms-lod" },
+  { key: "rd-gl-case-repair", lod: "rd-gl-case-repair-lod" },
+  { key: "rd-gl-case-pawn", lod: "rd-gl-case-pawn-lod" },
+  { key: "rd-gl-case-crypto", lod: "rd-gl-case-crypto-lod" },
+  { key: "rd-gl-garments", lod: "rd-gl-garments-lod" },
+  { key: "rd-gl-mannequin", lod: "rd-gl-mannequin-lod" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

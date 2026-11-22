@@ -16,6 +16,6 @@ import type { WorldProp } from "./prop-batch";
 export const bakeRoomDetail = (sink: MeshSink, props: CityProps | null, p: WorldProp, quality: RenderQuality): void => {
   const shape = ROOM_DETAIL_SHAPES[p.shape];
   if (!shape || (quality === "low" && shape.fine)) return;
-  const model = props ? props.models.get(shape.key) : undefined;
+  const model = props ? props.models.get(quality === "low" && shape.lod ? shape.lod : shape.key) : undefined;
   if (model) addPropToSink(sink, props!, model, pieceXform(p));
 };

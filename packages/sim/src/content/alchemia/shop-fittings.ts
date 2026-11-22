@@ -1,6 +1,7 @@
-import type { StreetPropItem, StreetPropKind } from "@seki/core";
+import { type StreetPropItem, type StreetPropKind, roomDetailShape } from "@seki/core";
 import { type Piece, type PieceKind, piece } from "./plan";
 import { SHOP_DOOR, type ShopDef, type ShopFrame, shopCeiling, shopFloor, shopFrame, shopWall } from "./shops-plan";
+import type { ShopTrade } from "./shop-types";
 
 /*
  * A shop's fittings in its frame (ADR-0093 O2, `docs/zasady-lokacji.md` §2): where its wall racks, its
@@ -127,11 +128,13 @@ export interface Fit {
   readonly solids: Piece[];
   /** The game's models (street furniture) in it. */
   readonly props: StreetPropItem[];
+  /** The rooms' detail built by Blender (ADR-0098): the goods on its shelves. Drawn only. */
+  readonly detail: StreetPropItem[];
   /** The marks of somebody just gone (`docs/zasady-lokacji.md` §5), by name. */
   readonly traces: string[];
 }
 
-export const newFit = (shop: ShopDef): Fit => ({ shop, f: shopFrame(shop), y: shopFloor(shop), c: shopCeiling(shop), wall: shopWall(shop), pieces: [], solids: [], props: [], traces: [] });
+export const newFit = (shop: ShopDef): Fit => ({ shop, f: shopFrame(shop), y: shopFloor(shop), c: shopCeiling(shop), wall: shopWall(shop), pieces: [], solids: [], props: [], detail: [], traces: [] });
 
 /** A drawn box of the shop's frame, `y0`..`y1` over its floor; solid when `solid`. */
 export const draw = (k: Fit, s: Slot, y0: number, y1: number, kind: PieceKind, solid = false): void => {
@@ -152,11 +155,53 @@ export const model = (k: Fit, prop: StreetPropKind, u: number, v: number, to: Fa
   k.props.push({ prop, x: p.x, y: k.y + up, z: p.z, yaw: yawOf(k, to), variant });
 };
 
+/** A model of the rooms' detail (ADR-0098) at (u, v), its foot `up` over the floor, its front (+z) turned `to`. */
+export const detail = (k: Fit, key: string, u: number, v: number, up: number, to: Facing): void => {
+  const p = k.f.point(u, v);
+  const [du, dv] = to === "out" ? [0, -1] : to === "in" ? [0, 1] : to === "+u" ? [1, 0] : [-1, 0];
+  const q = k.f.point(u + du, v + dv);
+  // A model's front is +z at yaw 0, (sin yaw, cos yaw) turned.
+  k.detail.push({ prop: "room-detail", x: p.x, y: k.y + up, z: p.z, yaw: Math.atan2(q.x - p.x, q.z - p.z), variant: roomDetailShape(key) });
+};
+
+/** Half a metre of a shelf's goods, one model a trade (`tools/blender/rooms/alchemia_gallery.py`). */
+const GOODS_RUN = 0.52;
+/** What lies in a glass case by trade (a florist's or a clothes shop's has none: the pawn's odds and ends). */
+const CASE_GOODS: Readonly<Record<ShopTrade, string>> = {
+  implants: "rd-gl-case-implants",
+  electronics: "rd-gl-case-electronics",
+  clothing: "rd-gl-case-pawn",
+  pharmacy: "rd-gl-case-pharmacy",
+  arms: "rd-gl-case-arms",
+  repair: "rd-gl-case-repair",
+  pawn: "rd-gl-case-pawn",
+  tattoo: "rd-gl-case-pawn",
+  "synth-food": "rd-gl-case-pharmacy",
+  vr: "rd-gl-case-electronics",
+  crypto: "rd-gl-case-crypto",
+  florist: "rd-gl-case-pawn",
+};
+const SHELF_GOODS: Readonly<Record<ShopTrade, string>> = {
+  implants: "rd-gl-implants",
+  electronics: "rd-gl-electronics",
+  clothing: "rd-gl-stock",
+  pharmacy: "rd-gl-pharmacy",
+  arms: "rd-gl-arms",
+  repair: "rd-gl-repair",
+  pawn: "rd-gl-pawn",
+  tattoo: "rd-gl-tattoo",
+  "synth-food": "rd-gl-food",
+  vr: "rd-gl-vr",
+  crypto: "rd-gl-stock",
+  florist: "rd-gl-florist",
+};
+
 /**
  * A shelf unit on a slot, `h` high, its back on the side away from the customers (`backAt`): uprights
- * at its ends, a back panel, shelves every 0.45 m, goods on each (drawn only), its box a solid.
+ * at its ends, a back panel, shelves every 0.45 m, goods on each by the shop's trade (Blender's models, drawn only;
+ * the back room's `stock`, cartons), its box a solid.
  */
-export const shelves = (k: Fit, s: Slot, h: number, backAt: "u0" | "u1" | "v0" | "v1", key: number): void => {
+export const shelves = (k: Fit, s: Slot, h: number, backAt: "u0" | "u1" | "v0" | "v1", key: number, stock = false): void => {
   block(k, s, h);
   const alongU = backAt === "v0" || backAt === "v1";
   const t = 0.04;
@@ -166,24 +211,22 @@ export const shelves = (k: Fit, s: Slot, h: number, backAt: "u0" | "u1" | "v0" |
   const ends: Slot[] = alongU ? [{ ...s, u1: s.u0 + t }, { ...s, u0: s.u1 - t }] : [{ ...s, v1: s.v0 + t }, { ...s, v0: s.v1 - t }];
   for (const e of ends) draw(k, e, 0, h, "rack");
   const len = alongU ? s.u1 - s.u0 : s.v1 - s.v0;
+  const goods = stock ? "rd-gl-stock" : SHELF_GOODS[k.shop.trade];
+  const n = Math.floor((len - 0.08) / GOODS_RUN);
+  const pad = (len - n * GOODS_RUN) / 2;
+  const to: Facing = backAt === "v1" ? "out" : backAt === "v0" ? "in" : backAt === "u0" ? "+u" : "-u";
   for (let y = 0.12, i = 0; y < h - 0.3; y += 0.45, i++) {
     draw(k, s, y, y + 0.03, "rack");
-    // Goods along the shelf in runs of 0.2-0.5 m, a gap now and then (a sold-out place).
-    for (let a = 0.06; a < len - 0.1; ) {
-      const g = shopHash(k.shop.id, key * 31 + i, a * 10);
-      const run = Math.min(0.14 + g * 0.22, len - 0.06 - a);
-      if (g > 0.12) {
-        const tall = 0.12 + ((g * 7) % 1) * 0.26;
-        const inset = 0.05;
-        const part: Slot = alongU ? { u0: s.u0 + a, u1: s.u0 + a + run, v0: s.v0 + inset, v1: s.v1 - inset } : { u0: s.u0 + inset, u1: s.u1 - inset, v0: s.v0 + a, v1: s.v0 + a + run };
-        draw(k, part, y + 0.03, y + 0.03 + tall, "goods");
-      }
-      a += run + 0.04;
+    // The goods half a metre at a time, their fronts to the customers, a gap now and then (a sold-out place), the model or its mirror.
+    for (let j = 0; j < n; j++) {
+      if (shopHash(k.shop.id, key * 31 + i, j * 10 + 3) < 0.12) continue;
+      const a = pad + (j + 0.5) * GOODS_RUN;
+      detail(k, shopHash(k.shop.id, key * 37 + i, j * 10 + 7) < 0.5 ? goods : `${goods}-b`, alongU ? s.u0 + a : (s.u0 + s.u1) / 2, alongU ? (s.v0 + s.v1) / 2 : s.v0 + a, y + 0.03, to);
     }
   }
 };
 
-/** A glass case on a slot: a solid base 0.55 high, its lit top of goods under a glass lid, 1.0 high in all. */
+/** A glass case on a slot: a solid base 0.55 high, its lit top with the trade's goods (Blender's) under a glass lid, 1.0 high in all. */
 export const glassCase = (k: Fit, s: Slot, key: number): void => {
   draw(k, s, 0, 0.55, "counter", true);
   block(k, s, 1.0);
@@ -191,18 +234,15 @@ export const glassCase = (k: Fit, s: Slot, key: number): void => {
   const alongU = s.u1 - s.u0 >= s.v1 - s.v0;
   for (let i = 0; i < n; i++) {
     if (shopHash(k.shop.id, key * 17 + i) < 0.2) continue;
-    const t0 = (i + 0.2) / n;
-    const t1 = (i + 0.75) / n;
-    const part: Slot = alongU
-      ? { u0: s.u0 + (s.u1 - s.u0) * t0, u1: s.u0 + (s.u1 - s.u0) * t1, v0: s.v0 + 0.1, v1: s.v1 - 0.1 }
-      : { u0: s.u0 + 0.1, u1: s.u1 - 0.1, v0: s.v0 + (s.v1 - s.v0) * t0, v1: s.v0 + (s.v1 - s.v0) * t1 };
-    draw(k, part, 0.55, 0.62 + shopHash(k.shop.id, key, i) * 0.15, "goods");
+    // Blender's piece of the trade on the lit top under the lid, its long side across the case.
+    const t = (i + 0.475) / n;
+    detail(k, CASE_GOODS[k.shop.trade], alongU ? s.u0 + (s.u1 - s.u0) * t : (s.u0 + s.u1) / 2, alongU ? (s.v0 + s.v1) / 2 : s.v0 + (s.v1 - s.v0) * t, 0.58, alongU ? "out" : "+u");
   }
   draw(k, { u0: s.u0 + 0.03, u1: s.u1 - 0.03, v0: s.v0 + 0.03, v1: s.v1 - 0.03 }, 0.56, 0.58, "lamp");
   draw(k, s, 0.97, 1.0, "vitrine");
 };
 
-/** A clothes rail on a slot: two posts and a bar 1.5 high, garments hanging off it (drawn), its box a solid. */
+/** A clothes rail on a slot: two posts and a bar 1.5 high, garments hanging off it (Blender's, drawn), its box a solid. */
 export const rail = (k: Fit, s: Slot, key: number): void => {
   block(k, s, 1.6);
   const alongU = s.u1 - s.u0 >= s.v1 - s.v0;
@@ -213,12 +253,12 @@ export const rail = (k: Fit, s: Slot, key: number): void => {
   for (const p of posts) draw(k, p, 0, 1.55, "rack");
   draw(k, alongU ? slot(s.u0, s.u1, mv - 0.015, mv + 0.015) : slot(mu - 0.015, mu + 0.015, s.v0, s.v1), 1.5, 1.55, "rack");
   const len = alongU ? s.u1 - s.u0 : s.v1 - s.v0;
-  for (let a = 0.1; a < len - 0.1; a += 0.09) {
-    const g = shopHash(k.shop.id, key * 13, a * 100);
-    if (g < 0.15) continue;
-    const half = 0.2 + g * 0.08;
-    const part = alongU ? slot(s.u0 + a, s.u0 + a + 0.05, mv - half, mv + half) : slot(mu - half, mu + half, s.v0 + a, s.v0 + a + 0.05);
-    draw(k, part, 1.45 - 0.55 - g * 0.4, 1.47, "goods");
+  // Half a metre of garments at a time on their hangers (Blender's), hanging from the bar; a gap where they sold.
+  const n = Math.floor((len - 0.1) / 0.5);
+  for (let j = 0; j < n; j++) {
+    if (shopHash(k.shop.id, key * 13, j * 10 + 1) < 0.15) continue;
+    const a = (len - n * 0.5) / 2 + (j + 0.5) * 0.5;
+    detail(k, "rd-gl-garments", alongU ? s.u0 + a : mu, alongU ? mv : s.v0 + a, 1.5, alongU ? "out" : "+u");
   }
 };
 

@@ -26,11 +26,13 @@ Drobiazg:
 - towar na półkach według branż (Blender, kilka kształtów na branżę);
 - kubki, kartony, paragony, kable, laptop z błędem (Blender).
 
+Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali, jak dawne pudełka, nie blok mebli miasta widoczny ze 170 m): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Dalej z Blendera: towar w gablotach według branży (wszczepy, elektronika, kosmetyki, broń, naprawy, lombard, kantor), ubrania na wieszakach (pół metra wieszaka na model) i ubrane manekiny w witrynach, wszystko z LOD na telefon. Zostają pudełka: szafki nad ladą płytkich sklepów, terminal, kubek i towar przy ladzie, rozsypany karton.
+
 ## Frakcja i zasady
 Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy, tunel i poziomy garażu wydzielić jako osobne wnętrza (polecenie 22.11, pierwsza pozycja kolejki).
 - §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
-- §14 zgodne na towarze (3472 z 3557 drobiazgu w skupiskach), dług: zaplecza sklepów i pasaże bez śladów obecności poza lokalami.
+- §14 zgodne na towarze (629 z 755 rzeczy drobiazgu w skupiskach, 17% luzem), dług: zaplecza sklepów i pasaże bez śladów obecności poza lokalami.
 - §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
 - §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
 - §17 do sprawdzenia: szum schodów ruchomych i muzyka sklepów ze źródła.
@@ -43,6 +45,37 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - blender: rd-fh-pot × 2
 - blender: rd-fh-ramen × 1
 - blender: rd-fh-teacup × 1
+- blender: rd-gl-arms × 61
+- blender: rd-gl-arms-b × 81
+- blender: rd-gl-case-arms × 51
+- blender: rd-gl-case-crypto × 7
+- blender: rd-gl-case-electronics × 14
+- blender: rd-gl-case-implants × 20
+- blender: rd-gl-case-pawn × 22
+- blender: rd-gl-case-pharmacy × 15
+- blender: rd-gl-case-repair × 20
+- blender: rd-gl-electronics × 58
+- blender: rd-gl-electronics-b × 52
+- blender: rd-gl-florist × 37
+- blender: rd-gl-florist-b × 54
+- blender: rd-gl-food × 49
+- blender: rd-gl-food-b × 73
+- blender: rd-gl-garments × 36
+- blender: rd-gl-implants × 32
+- blender: rd-gl-implants-b × 31
+- blender: rd-gl-mannequin × 7
+- blender: rd-gl-pawn × 41
+- blender: rd-gl-pawn-b × 35
+- blender: rd-gl-pharmacy × 41
+- blender: rd-gl-pharmacy-b × 40
+- blender: rd-gl-repair × 72
+- blender: rd-gl-repair-b × 57
+- blender: rd-gl-stock × 671
+- blender: rd-gl-stock-b × 672
+- blender: rd-gl-tattoo × 13
+- blender: rd-gl-tattoo-b × 17
+- blender: rd-gl-vr × 45
+- blender: rd-gl-vr-b × 65
 - model: atm × 5
 - model: bench × 6
 - model: figure × 68
@@ -68,7 +101,7 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - piece: food × 6
 - piece: frame × 6
 - piece: glass × 10
-- piece: goods × 5405
+- piece: goods × 365
 - piece: grille × 12
 - piece: lamp × 223
 - piece: lantern × 66
@@ -80,8 +113,8 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - piece: parapet × 16
 - piece: partition × 253
 - piece: pipe × 103
-- piece: plaster × 12
-- piece: rack × 904
+- piece: plaster × 5
+- piece: rack × 897
 - piece: roof × 94
 - piece: shopfront × 146
 - piece: shutter × 8
@@ -97,7 +130,7 @@ Pomiary zasad (§12–§16):
 - rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
 - siatka 0,5 m: 5 z 38 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1242
-- warstwy wyposażenia: makro 1005, mezo 3745, mikro 3557
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 129 skupisk, 3472 rzeczy w nich, 85 luzem
+- warstwy wyposażenia: makro 1005, mezo 1493, mikro 755
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 101 skupisk, 629 rzeczy w nich, 126 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 673
 <!-- inwentarz-gry:end -->
