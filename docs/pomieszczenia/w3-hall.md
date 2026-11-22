@@ -30,7 +30,7 @@ Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownic
 ## Frakcja i zasady
 Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 - §12 dług: 3 z 74 wymiarów na siatce. Kontrast: wejście przez biuro przepustek (ciasno) do hali (16 m): zgodne.
-- §13 dług: w pomiarach 0 źródeł w bryłach (9 lamp W-3 w silniku, bez opraw jako brył). Powiązać lampy z oprawami; drzwi do piwnicy i biura w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 91,6%, światło 8,3%, akcenty 0%, poza pasmem: baza 91,6% > 75%; światło 8,3% < 18%; akcenty 0% < 3%.
+- §13 częściowo: lampy W-3 mają oprawy w geometrii silnika (świetlówki pod każdym stropem, `w3-inside-geometry.ts`, sprawdzone 22.11), choć pomiar kart ich nie widzi, bo nie są bryłami. Dług: drzwi do piwnicy i biura w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 91,6%, światło 8,3%, akcenty 0%, poza pasmem: baza 91,6% > 75%; światło 8,3% < 18%; akcenty 0% < 3%.
 - §14 dług: 14 rzeczy drobiazgu, 6 luzem (43%; tablice ostrzegawcze i dwa bloki). Skupiska z przeciekiem i z rzeczami nocnej zmiany. Dalej: skupiska przy taśmach, stanowiskach spawania, szafkach.
 - §15 częściowo: kapanie w opisie; plamy oleju z połyskiem przy maszynach.
 - §16 zgodne: korporacja, która „nie sprząta, tylko liczy”.
