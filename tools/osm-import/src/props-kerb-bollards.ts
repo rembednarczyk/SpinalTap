@@ -212,6 +212,8 @@ export const gapAt = (w: World, s: KerbSample, along: Pt): string | null => {
   const inner = { x: s.kerb.x - s.out.x * 0.5, z: s.kerb.z - s.out.z * 0.5 };
   // A car park along the kerb, its bays within `PARK_REACH` in from the post (a strip drawn off the ground's kerb, Świętoduska).
   for (let d = 0; d <= PARK_REACH; d += 0.5) if (w.site.inKerbPark({ x: p.x - s.out.x * d, z: p.z - s.out.z * d })) return "parking";
+  // A post in a lot is in its bays, its setts no pavement (the deptak's lane w522482244, where the stalls stand, 21.11).
+  if (w.site.inLot(p)) return "parking";
   if (w.taxis.some((r) => pointInRing(p, r) || pointInRing(inner, r))) return "taxi";
   for (const o of w.placed.solids.queryRadius(p.x, p.z, 1)) {
     const room = o.prop === "tree" ? GAP_INSET + 0.3 : 0.25;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deptakCuts, squareDeptakEnds } from "../src/deptak-ends.ts";
+import { deptakCuts, deptakLanes, squareDeptakEnds } from "../src/deptak-ends.ts";
 import { type GroundOut } from "../src/model.ts";
 
 /** A ring's area (m²) from its flat outline. */
@@ -54,4 +54,18 @@ describe("the deptak's setts end square across it (user's notes of 21.11)", () =
     expect(cuts[1]!.at.z).toBeCloseTo(-2.3, 6);
     expect(cuts[1]!.out.z).toBeCloseTo(-1, 6);
   });
+
+  it("lays the deptak's lane as setts up to the cut, the lane past it as the map draws it", () => {
+    // A lane 3 m wide along +x past the cut at x = 8, its asphalt one piece.
+    const lane = { id: "w522482244", ring: [{ x: 0, z: 3 }, { x: 20, z: 3 }, { x: 20, z: 6 }, { x: 0, z: 6 }] };
+    const lanes = deptakLanes([lane, { ...lane, id: "w1" }], [cut]);
+    expect(lanes).toHaveLength(1);
+    const asphalt: GroundOut = { surface: "road", outline: [0, 3, 20, 3, 20, 6, 0, 6] };
+    const out = squareDeptakEnds([asphalt], [cut], lanes);
+    const setts = out.filter((g) => g.surface === "cobble");
+    expect(setts).toHaveLength(1);
+    expect(Math.max(...xs(setts[0]!.outline))).toBeCloseTo(8, 6);
+    expect(out.reduce((s, p) => s + area(p.outline), 0)).toBeCloseTo(60, 4);
+  });
 });
+

@@ -21,6 +21,12 @@ export interface CarFreeWay {
    * where the junction's asphalt cuts them along the other streets' slanting edges.
    */
   readonly trim?: { readonly start?: number; readonly end?: number };
+  /**
+   * The map's areas beside it laid as its setts up to its trimmed ends (user's notes of 21.11): a
+   * parking lane along the old carriageway, left a narrow strip of asphalt between the setts and the
+   * pavement. Past the ends it stays as the map draws it.
+   */
+  readonly lanes?: readonly string[];
 }
 
 export const CAR_FREE_WAYS: readonly CarFreeWay[] = [
@@ -32,6 +38,8 @@ export const CAR_FREE_WAYS: readonly CarFreeWay[] = [
     ref: "T-324",
     // Square at Olejna's south kerb (its half 1.7 m by the node), 1.8 m short of the node.
     trim: { end: 1.8 },
+    // The parking lane on its west side (z 27..43), where the stalls stand; north of Olejna it goes on along Lubartowska.
+    lanes: ["w522482244"],
   },
   {
     // Its 6 m south to Bajkowskiego (-15.8..-9.9), the deptak's mouth: no car lane ran along it (a chain

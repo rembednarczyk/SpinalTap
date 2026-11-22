@@ -4,7 +4,8 @@ import { MAP_CHUNKS } from "../src/content/lublin/sites";
 /*
  * The deptak's setts end square across it at the kerbs of the streets it meets (user's notes of
  * 21.11: the deptak "evenly finished", `tools/osm-import/src/deptak-ends.ts`): Olejna's south kerb at
- * the north end, Bajkowskiego's north kerb at the south. Past each line its junction's asphalt.
+ * the north end, Bajkowskiego's north kerb at the south. Past each line its junction's asphalt. The
+ * parking lane along its west side (the stalls' lane) is setts up to that line, no strip of asphalt.
  */
 
 type P = { readonly x: number; readonly z: number };
@@ -46,4 +47,14 @@ describe("the deptak's setts end square across it", () => {
       expect(ts.filter((t) => onSetts(at(t, -OFF))).map((t) => t.toFixed(2))).toEqual([]);
     });
   }
+
+  it("lays its parking lane w522482244 as setts up to Olejna's kerb, the lane north of it as asphalt", () => {
+    // The lane's middle line, from its south tip by metro B's way up Lubartowska past Olejna.
+    const [a, b] = [{ x: 443.9, z: 27.75 }, { x: 455.8, z: 60.9 }];
+    const at = (z: number): P => ({ x: a.x + ((b.x - a.x) * (z - a.z)) / (b.z - a.z), z });
+    const zs = (from: number, to: number): number[] => Array.from({ length: 13 }, (_, i) => from + ((to - from) * i) / 12);
+    expect(zs(28.5, 41.5).filter((z) => !onSetts(at(z))).map((z) => z.toFixed(1))).toEqual([]);
+    expect(zs(45, 58).filter((z) => onSetts(at(z))).map((z) => z.toFixed(1))).toEqual([]);
+  });
 });
+

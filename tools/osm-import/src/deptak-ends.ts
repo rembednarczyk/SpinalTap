@@ -10,8 +10,9 @@
  */
 import { FillRule, type Path64, difference, intersect, isPositive } from "clipper2-ts";
 import { CAR_FREE_WAYS } from "./corrections-car-free.ts";
-import { type Line } from "./features.ts";
-import { type Pt, ccw, pointAlong } from "./geometry.ts";
+import { type Area, type Line } from "./features.ts";
+import { type Pt, ccw, pointAlong, r1 } from "./geometry.ts";
+import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { type GroundOut } from "./model.ts";
 
 const SCALE = 1000;
@@ -59,23 +60,58 @@ const pastBox = (c: DeptakCut): Path64 => {
   return toPath(ccw(pts).flatMap((p) => [p.x, p.z]));
 };
 
-/** The ground with the setts past each cut laid as asphalt. A piece with a hole (none at a deptak's end) is left as it is. */
-export const squareDeptakEnds = (ground: readonly GroundOut[], cuts: readonly DeptakCut[]): GroundOut[] => {
-  if (cuts.length === 0) return [...ground];
+/** How far the deptak's side of a cut reaches (m): the whole map. */
+const FAR = 2000;
+
+/** The deptak's side of a cut: a box `FAR` across and back from it. */
+const insideBox = (c: DeptakCut): Path64 => {
+  const [nx, nz] = [-c.out.z, c.out.x];
+  const pts: Pt[] = [
+    { x: c.at.x + nx * FAR, z: c.at.z + nz * FAR },
+    { x: c.at.x - nx * FAR, z: c.at.z - nz * FAR },
+    { x: c.at.x - nx * FAR - c.out.x * FAR, z: c.at.z - nz * FAR - c.out.z * FAR },
+    { x: c.at.x + nx * FAR - c.out.x * FAR, z: c.at.z + nz * FAR - c.out.z * FAR },
+  ];
+  return toPath(ccw(pts).flatMap((p) => [p.x, p.z]));
+};
+
+/** The car-free ways' lanes (`CarFreeWay.lanes`) on the deptak's side of every cut: the ground the setts take over. */
+export const deptakLanes = (areas: readonly Pick<Area, "id" | "ring">[], cuts: readonly DeptakCut[]): Path64[] => {
+  const ids = new Set(CAR_FREE_WAYS.flatMap((w) => w.lanes ?? []));
+  // At the ground's 0.1 m, as its pieces are laid: the map's ring would leave a sliver of asphalt along the lane's edge.
+  let lanes = areas.filter((a) => ids.has(a.id)).map((a) => toPath(ccw([...a.ring]).flatMap((p) => [r1(p.x), r1(p.z)])));
+  for (const c of cuts) lanes = intersect(lanes, [insideBox(c)], FillRule.NonZero);
+  return lanes.filter((p) => isPositive(p) && area(p) >= CRUMB);
+};
+
+/**
+ * A piece split along a region: its part inside laid as `into`, the rest as it was. A bit of either
+ * under `CRUMB` goes with the part inside, so no ground is lost; a piece with a hole is left as it is.
+ */
+const split = (g: GroundOut, region: readonly Path64[], into: GroundSurface): GroundOut[] => {
+  const path = toPath(g.outline);
+  const inside = intersect([path], [...region], FillRule.NonZero);
+  if (!inside.some((p) => area(p) >= CRUMB)) return [g];
+  const outside = difference([path], [...region], FillRule.NonZero);
+  if ([...inside, ...outside].some((p) => !isPositive(p))) return [g];
+  const { outline: _, ...rest } = g;
+  return [
+    ...outside.filter((p) => area(p) >= CRUMB).map((p): GroundOut => ({ ...rest, outline: outline(p) })),
+    ...[...inside, ...outside.filter((p) => area(p) < CRUMB)].map((p): GroundOut => ({ ...rest, surface: into, outline: outline(p) })),
+  ];
+};
+
+/**
+ * The ground with the setts past each cut laid as asphalt, and the deptak's lanes before the cuts
+ * laid as setts (`deptakLanes`). A bridge's piece is left as it is.
+ */
+export const squareDeptakEnds = (ground: readonly GroundOut[], cuts: readonly DeptakCut[], lanes: readonly Path64[] = []): GroundOut[] => {
+  if (cuts.length === 0 && lanes.length === 0) return [...ground];
   const boxes = cuts.map(pastBox);
   return ground.flatMap((g): GroundOut[] => {
-    if (g.surface !== "cobble" || g.bridge) return [g];
-    const path = toPath(g.outline);
-    const past = intersect([path], boxes, FillRule.NonZero);
-    if (!past.some((p) => area(p) >= CRUMB)) return [g];
-    const kept = difference([path], boxes, FillRule.NonZero);
-    if ([...past, ...kept].some((p) => !isPositive(p))) return [g];
-    const { outline: _, ...rest } = g;
-    const setts = kept.filter((p) => area(p) >= CRUMB);
-    const asphalt = [...past, ...kept.filter((p) => area(p) < CRUMB)];
-    return [
-      ...setts.map((p): GroundOut => ({ ...rest, outline: outline(p) })),
-      ...asphalt.map((p): GroundOut => ({ ...rest, surface: "road", outline: outline(p) })),
-    ];
+    if (g.bridge) return [g];
+    if (g.surface === "cobble" && boxes.length > 0) return split(g, boxes, "road");
+    if (g.surface === "road" && lanes.length > 0) return split(g, lanes, "cobble");
+    return [g];
   });
 };

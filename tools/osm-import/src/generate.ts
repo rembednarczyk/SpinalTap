@@ -26,7 +26,7 @@ import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
 import { CROWD_DISTRICTS, partitionGround, walkAreas } from "./ground-partition.ts";
-import { deptakCuts, squareDeptakEnds } from "./deptak-ends.ts";
+import { deptakCuts, deptakLanes, squareDeptakEnds } from "./deptak-ends.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, groundJoints, isCarriageway, lineBands, markedCrossing, openPavings } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
@@ -184,8 +184,9 @@ const generateChunk = (
   const fills = fill ? fill(spec.rect, plain, shopOutlines(out, buildings)) : [];
   // One piece under each point of the ground (ADR-0078 step 3), the fills too; at a carriageway's edge the asphalt wins (decision 14.11).
   const layered = fill ? withFills(laid, fills) : laid;
-  // A deptak's setts end square at the kerb of the street it meets (`deptak-ends.ts`, 21.11).
-  const ground = squareDeptakEnds(partitionGround(layered, "carriageway"), deptakCuts(lines));
+  // A deptak's setts end square at the kerb of the street it meets and take its parking lane over (`deptak-ends.ts`, 21.11).
+  const cuts = deptakCuts(lines);
+  const ground = squareDeptakEnds(partitionGround(layered, "carriageway"), cuts, deptakLanes(kerb.carParks, cuts));
   const walk = CROWD_DISTRICTS.has(spec.district.id) ? walkAreas(layered) : [];
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
