@@ -10,7 +10,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
   1. Alchemia: każdy sklep i lokal frontu (52, `alchemia-shop-*`, `within: alchemia-gallery`) i tunel P-2 do portalu (`alchemia-p2-tunnel`) jako osobne wnętrza z kartami; poziomy garażu P-1 i P-2 były już osobne. Sklepy food hallu zostają częścią food hallu (otwarte lady w jednej sali). Po scaleniu #909: tryb wnętrza Alchemii obejmuje id sklepów.
   2. Narzędzie 60-30-10: pomiar udziału pikseli bazy, światła głównego i akcentów na zrzucie (raport w `tools`, ujęcia z kart), potem pomiar wszystkich kart.
   3. Światło znikąd: lampy silnika (W-3, Alchemia, kapsuła, perony) powiązane z oprawami jako bryłami albo detalem, z testem odległości lampy od oprawy.
-  4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia).
+  4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia). Alchemia w PR (gałąź feat/kontrast-funkcjonalny): znaki wyjścia z zielonym światłem nad drzwiami trzonów, jaśniejsze białe lady postaci w food hallu. Dalej: W-3 (drzwi, szafka 14, terminal kolektora), metro, klinika, Koi.
   5. Drobiazg w skupiskach: pomieszczenia z mikro 0 albo luzem powyżej 25% (food hall, P-1, P-2, schron, kapsuła, klinika, perony, Koi, Trasa, piwnica i hala W-3) według audytu kart.
   6. Połysk i wilgoć: każde pomieszczenie z co najmniej jedną powierzchnią z połyskiem albo mokrą, ze źródłem wody.
   7. Siatka 0,5 m dla nowych pomieszczeń (kontrola w teście kart dla wnętrz bez obrysu z danych) i odstępstwa starych zapisane w kartach.

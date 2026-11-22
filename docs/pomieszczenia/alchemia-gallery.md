@@ -31,7 +31,7 @@ Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali,
 ## Frakcja i zasady
 Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy i lokale frontu są od 22.11 osobnymi wnętrzami (`alchemia-shop-*`, karty obok); ta karta to pasaże, atrium, trzony i pomieszczenia frontu bez lokali.
-- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
+- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909); kontrast funkcjonalny: nad drzwiami obu trzonów na każdym piętrze zielony znak wyjścia (`exit-signs.ts`, ISO 7010 E001) i zielona plama światła przed drzwiami (`alchemia-lamp-exit-*`, test `functional-contrast.test.ts`). Dług: drzwi windy bez znaku; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
 - §14 częściowo: na pasażach 268 z 302 rzeczy drobiazgu w skupiskach (11% luzem); towar liczą karty sklepów. Dług: pasaże bez śladów obecności poza ławkami i kawiarnią frontu.
 - §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
 - §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
@@ -73,7 +73,7 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - piece: lamp × 43
 - piece: lantern × 66
 - piece: led × 15
-- piece: led-green × 72
+- piece: led-green × 77
 - piece: lightbox × 25
 - piece: machine × 12
 - piece: paper × 34
@@ -93,7 +93,7 @@ Pomiary zasad (§12–§16):
 - rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
 - siatka 0,5 m: 5 z 38 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 490
-- warstwy wyposażenia: makro 72, mezo 581, mikro 302
+- warstwy wyposażenia: makro 72, mezo 586, mikro 302
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 19 skupisk, 268 rzeczy w nich, 34 luzem
-- widoczne źródła światła (lampy, neony, ekrany, szyldy): 347
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 352
 <!-- inwentarz-gry:end -->

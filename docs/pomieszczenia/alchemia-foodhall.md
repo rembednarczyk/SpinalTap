@@ -39,7 +39,7 @@ Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dzi
 ## Frakcja i zasady
 Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §12 zgodne z wyjątkiem: obrys szkła z planszy (1 z 4 wymiarów na siatce, odstępstwo z §1). Instalacje pod stropem są. Wejście schodami ruchomymi z atrium otwiera się na halę.
-- §13 częściowo: lampiony i kuchnie jako źródła (PR #909). Dług: lady ludzi z zadań (Oyaji, Fumiko, Kenta) nie są wyróżnione światłem ani barwą; 60-30-10 do zmierzenia zrzutem.
+- §13 częściowo: lampiony i kuchnie jako źródła (PR #909); kontrast funkcjonalny: lady ludzi z zadań (Fumiko, Kenta, Goro, Oyaji, Sachiko) pod bielszą i jaśniejszą lampą nad samą ladą (`#ffe4c2`, 1,7 wobec 1,0 kuchni), test `functional-contrast.test.ts`. Dług: 60-30-10 do zmierzenia zrzutem.
 - §14 dług: 20 z 52 rzeczy drobiazgu luzem (38%), cel do 25%. Przenieść drobiazg w skupiska przy ladach i stołach.
 - §15 dług: brak połysku i wilgoci poza wodą. Mokra posadzka przy zmywakach, lakier na ladach.
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.
@@ -74,6 +74,7 @@ Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - piece: grille × 1
 - piece: lamp × 10
 - piece: led × 2
+- piece: led-green × 2
 - piece: machine × 43
 - piece: paper × 5
 - piece: parapet × 7
@@ -93,7 +94,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 903 m², wysokość 3,9 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 234
-- warstwy wyposażenia: makro 64, mezo 206, mikro 52
+- warstwy wyposażenia: makro 64, mezo 208, mikro 52
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 32 rzeczy w nich, 20 luzem
-- widoczne źródła światła (lampy, neony, ekrany, szyldy): 60
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 62
 <!-- inwentarz-gry:end -->
