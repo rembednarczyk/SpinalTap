@@ -9,7 +9,7 @@ import { FakeRender, steps, teleport } from "./story-helpers";
 
 /**
  * The front's storeys joined to Alchemia's gallery (ADR-0093 O5), headless: Seki walks from the
- * gallery's P2 through its south door into L2 to a unit's counter, a room of the gallery all the way;
+ * gallery's P2 through its south door into L2 to a unit's counter, a room of the gallery all the way to the shop's own;
  * from the food hall on P3 into L3 and out by its south door onto L2's terrace, out of the interior.
  */
 
@@ -36,7 +36,7 @@ const at = (session: GameSession): Vec3 => session.sim.player()!.position;
 const DOOR_X = (GALLERY_FRONT_DOOR.x0 + GALLERY_FRONT_DOOR.x1) / 2;
 
 describe("Alchemia's front joined to its gallery (ADR-0093 O5)", () => {
-  it("walks her from the gallery's P2 through its south door down L2's spine to BITBANK's counter, a room of the gallery all the way", () => {
+  it("walks her from the gallery's P2 through its south door down L2's spine to BITBANK's counter, a room of the gallery all the way to the shop's own", () => {
     const session = start();
     teleport(session, 416.8, 38.5, Math.PI, 0, MALL_LEVELS.p2);
     steps(session, 2);
@@ -49,7 +49,8 @@ describe("Alchemia's front joined to its gallery (ADR-0093 O5)", () => {
     for (const p of [{ x: DOOR_X, z: 33 }, { x: DOOR_X, z: 19.6 }, front(-1.0), front(1.2), bank.customer!]) walkAt(session, p, 400);
     expect(Math.hypot(at(session).x - bank.customer!.x, at(session).z - bank.customer!.z)).toBeLessThan(0.5);
     expect(at(session).y).toBeCloseTo(FRONT_FLOORS.l2, 1);
-    expect(session.sim.session.interior).toBe("alchemia-gallery");
+    // At its counter in BITBANK itself, a room of its own inside the gallery since 22.11.
+    expect(session.sim.session.interior).toBe("alchemia-shop-l2-s4");
   });
 
   it("walks her from the food hall into L3 and out by its south door onto L2's terrace, out of the interior", () => {

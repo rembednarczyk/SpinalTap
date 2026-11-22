@@ -76,13 +76,17 @@ export const P2_CUT: GroundCut = { bounds: { ...P2_CUTTING }, floor: F };
  */
 export const P2_VAULT: GroundVault = { bounds: { minX: P2_CORRIDOR.minX, maxX: P2_CORRIDOR.maxX, minZ: P2_CORRIDOR.minZ, maxZ: P2_CORRIDOR.maxZ }, floor: F - 2 };
 
-/** P-2 as an interior of ADR-0061: the store, its annex, the corridor up to its portal, the flight under P-1's floor. */
-export const P2_ROOMS: readonly (Rect & { readonly bottom: number; readonly top: number })[] = [
+type P2Room = Rect & { readonly bottom: number; readonly top: number };
+/** P-2's store as an interior of ADR-0061: the store, its annex, the flight under P-1's floor. */
+export const P2_STORE_ROOMS: readonly P2Room[] = [
   { minX: P2.minX + W, maxX: P2.maxX - W, minZ: P2.minZ + W, maxZ: P2.maxZ - W, bottom: F, top: C },
   { minX: P2.maxX - W, maxX: P2_ANNEX.maxX - W, minZ: P2_ANNEX.minZ + W, maxZ: P2.maxZ, bottom: F, top: C },
-  { minX: P2_CORRIDOR.minX + W, maxX: P2_CORRIDOR.maxX - W, minZ: P2.maxZ, maxZ: PORTAL.z0, bottom: F, top: C },
   { minX: P2_STAIR.minX, maxX: P2_STAIR.maxX, minZ: P2_STAIR.minZ, maxZ: P2_STAIR.maxZ, bottom: F, top: SLAB_TOP },
 ];
+/** Its tunnel north to the portal onto T2 (an interior of its own since 22.11, `docs/zasady-lokacji.md` §12). */
+export const P2_TUNNEL_ROOMS: readonly P2Room[] = [{ minX: P2_CORRIDOR.minX + W, maxX: P2_CORRIDOR.maxX - W, minZ: P2.maxZ, maxZ: PORTAL.z0, bottom: F, top: C }];
+/** P-2 whole: the store, its annex, the corridor up to its portal, the flight under P-1's floor. */
+export const P2_ROOMS: readonly P2Room[] = [...P2_STORE_ROOMS.slice(0, 2), ...P2_TUNNEL_ROOMS, P2_STORE_ROOMS[2]!];
 
 /** The store's, the annex's and the corridor's floors, ceilings and walls. */
 /**

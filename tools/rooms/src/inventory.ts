@@ -18,7 +18,10 @@ import { measuresOf } from "./measures";
 export type Inventory = ReadonlyMap<string, number>;
 
 const inside = (r: InteriorRoom, x: number, y: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ && y >= r.bottom - 0.3 && y <= r.top;
-const inAny = (i: InteriorDef, x: number, y: number, z: number): boolean => i.rooms.some((r) => inside(r, x, y, z));
+const inOwn = (i: InteriorDef, x: number, y: number, z: number): boolean => i.rooms.some((r) => inside(r, x, y, z));
+/** In the interior's rooms but not in one of the interiors inside it (a shop off the gallery counts for the shop, 22.11). */
+const inAny = (i: InteriorDef, x: number, y: number, z: number): boolean =>
+  inOwn(i, x, y, z) && !INTERIORS.some((c) => c.within === i.id && inOwn(c, x, y, z));
 
 /** A static prop's name in the inventory: its view's kind, a block by its material (and a sloped one as stairs or a ramp). */
 const propName = (view: { readonly kind: string; readonly material?: string; readonly slope?: unknown }): string => {

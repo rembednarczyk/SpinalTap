@@ -157,7 +157,7 @@ describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
     expect(interiorAt({ x: 421.7, y: F, z: 80 })?.id).toBe("alchemia-shelter");
     expect(interiorAt({ x: 421.7, y: shelterGateStairY(73), z: 73 })?.id).toBe("alchemia-shelter");
     expect(interiorAt({ x: 436.5, y: shelterHatchStairY(436.5), z: HATCH_Z })?.id).toBe("alchemia-shelter");
-    expect(interiorAt({ x: 417.4, y: P2.floor, z: 69.8 })?.id).toBe("alchemia-p2");
+    expect(interiorAt({ x: 417.4, y: P2.floor, z: 69.8 })?.id).toBe("alchemia-p2-tunnel");
     expect(interiorAt(onGround(430, 92))).toBeNull();
     expect(interiorAt(OUTSIDE)).toBeNull();
     for (const r of SHELTER_ROOMS) expect(r.bottom).toBe(F);

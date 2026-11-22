@@ -81,7 +81,8 @@ describe("the shelter under T2 (ADR-0074 stages 5d1, 5d2)", () => {
     const hp = me.health!.current;
     walkAt(session, WAY.at(-2)!, 300);
     expect(at(session).x).toBeLessThan(SHELTER_GATE_STAIR.minX - P2.wall);
-    expect(session.sim.session.interior).toBe("alchemia-p2");
+    // In P-2's corridor, its tunnel since 22.11.
+    expect(session.sim.session.interior).toBe("alchemia-p2-tunnel");
     // From the room up the hatch.
     teleport(session, WAY[1].x, WAY[1].z, Math.PI / 2, 0, SHELTER.floor);
     steps(session, 2);

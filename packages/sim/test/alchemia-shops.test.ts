@@ -159,7 +159,8 @@ describe("the gallery's shops on P0, P1 and P2 (ADR-0093 O2, O3)", () => {
   });
 
   it("names the gallery in the HUD on P0..P2 (ADR-0061; P0 since O3), the food hall on P3 over it and nothing on its roof", () => {
-    for (const b of BUILDS.filter((x) => x.customer)) expect(interiorAt(b.customer!)?.id, b.shop.id).toBe("alchemia-gallery");
+    // At a counter the player is in the shop, a room of its own inside the gallery since 22.11.
+    for (const b of BUILDS.filter((x) => x.customer)) expect(interiorAt(b.customer!)?.id, b.shop.id).toBe(`alchemia-shop-${b.shop.id}`);
     expect(interiorAt({ x: 418, y: L.p0, z: 51 })?.id).toBe("alchemia-gallery");
     expect(interiorAt({ x: 426.5, y: L.p3, z: 46 })?.id).toBe("alchemia-foodhall");
     expect(interiorAt({ x: 418, y: L.roof, z: 52 })).toBeNull();

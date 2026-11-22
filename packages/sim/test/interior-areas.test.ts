@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type DomainEvents } from "@seki/core";
-import { CLINIC_WAKE_SPOT, INTERIORS, Simulation, TRASA_PODZIEMNA_WALK, clinicPoint, w3, groundY, interiorAt, koiPoint, stateHash } from "../src";
+import { ALL_GALLERY_SHOPS, CLINIC_WAKE_SPOT, INTERIORS, Simulation, TRASA_PODZIEMNA_WALK, clinicPoint, w3, groundY, interiorAt, koiPoint, stateHash } from "../src";
 import { inBuilding } from "../src/content/lublin/places";
 import { TRASA_PODZIEMNA } from "../src/content/lublin/sites";
 import { INTERIOR_KEEP } from "../src/systems/interior-system";
@@ -44,7 +44,17 @@ const quiet = (seed = 3): Simulation => {
 describe("interiors as areas (ADR-0061)", () => {
   it("names every interior in the catalogues and keeps the ids unique", () => {
     // The metro's platforms (ADR-0071 stage 4) last, in the line's order.
-    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "w3-hall", "w3-basement", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking", "alchemia-p2", "alchemia-shelter", "alchemia-gallery"]);
+    const shops = INTERIORS.filter((i) => i.id.startsWith("alchemia-shop-"));
+    expect(INTERIORS.filter((i) => !shops.includes(i)).map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "w3-hall", "w3-basement", "trasa-podziemna", "capsule", "metro-shinsekai", "metro-kanal", "metro-targ", "metro-doki", "alchemia-foodhall", "alchemia-parking", "alchemia-p2", "alchemia-p2-tunnel", "alchemia-shelter", "alchemia-gallery"]);
+    // Each of Alchemia's shops and front units an interior of its own (22.11), inside the gallery and found before it.
+    expect(shops.map((i) => i.id)).toEqual(ALL_GALLERY_SHOPS.map((s) => `alchemia-shop-${s.id}`));
+    const gallery = INTERIORS.findIndex((i) => i.id === "alchemia-gallery");
+    for (const i of shops) {
+      expect(i.within).toBe("alchemia-gallery");
+      expect(i.autosave).toBe(false);
+      expect(INTERIORS.indexOf(i)).toBeLessThan(gallery);
+    }
+    expect(new Set(INTERIORS.map((i) => i.id)).size).toBe(INTERIORS.length);
     for (const i of INTERIORS) expect(i.name).toBe(`interior.${i.id}`);
   });
 
@@ -133,5 +143,35 @@ describe("interiors as areas (ADR-0061)", () => {
     b.session.interior = null;
     run(b, 3, input());
     expect(stateHash(a.snapshot(null, "t", ""))).toBe(stateHash(b.snapshot(null, "t", "")));
+  });
+});
+
+describe("Alchemia's shops and P-2's tunnel as rooms of their own (22.11)", () => {
+  const mid = (s: (typeof ALL_GALLERY_SHOPS)[number], y: number) => ({ x: (s.rect.x0 + s.rect.x1) / 2, y, z: (s.rect.z0 + s.rect.z1) / 2 });
+
+  it("finds every shop from its middle, and the gallery on the floor before it", () => {
+    for (const s of ALL_GALLERY_SHOPS) {
+      const room = INTERIORS.find((i) => i.id === `alchemia-shop-${s.id}`)!.rooms[0]!;
+      expect(interiorAt(mid(s, room.bottom + 0.1))?.id, s.id).toBe(`alchemia-shop-${s.id}`);
+    }
+    const p1 = ALL_GALLERY_SHOPS.find((s) => s.id === "p1-w1")!;
+    expect(interiorAt({ x: p1.rect.x1 + 1, y: -2.1, z: (p1.rect.z0 + p1.rect.z1) / 2 })?.id).toBe("alchemia-gallery");
+  });
+
+  it("steps from the gallery into a shop at its wall, the gallery's keep notwithstanding, and back out past the shop's", () => {
+    const s = ALL_GALLERY_SHOPS.find((x) => x.id === "p1-w1")!;
+    const z = (s.rect.z0 + s.rect.z1) / 2;
+    // Just inside the shop's front (x1, it opens east), held by the gallery.
+    expect(interiorAt({ x: s.rect.x1 - 0.1, y: -2.1, z }, "alchemia-gallery", INTERIOR_KEEP)?.id).toBe("alchemia-shop-p1-w1");
+    // Just out of it, held by the shop: it keeps the player a step, then the gallery.
+    expect(interiorAt({ x: s.rect.x1 + 0.1, y: -2.1, z }, "alchemia-shop-p1-w1", INTERIOR_KEEP)?.id).toBe("alchemia-shop-p1-w1");
+    expect(interiorAt({ x: s.rect.x1 + 0.5, y: -2.1, z }, "alchemia-shop-p1-w1", INTERIOR_KEEP)?.id).toBe("alchemia-gallery");
+  });
+
+  it("tells P-2's tunnel from its store", () => {
+    const tunnel = INTERIORS.find((i) => i.id === "alchemia-p2-tunnel")!.rooms[0]!;
+    const at = { x: (tunnel.minX + tunnel.maxX) / 2, y: tunnel.bottom + 0.1, z: (tunnel.minZ + tunnel.maxZ) / 2 };
+    expect(interiorAt(at)?.id).toBe("alchemia-p2-tunnel");
+    expect(interiorAt({ ...at, z: tunnel.minZ - 3 })?.id).toBe("alchemia-p2");
   });
 });

@@ -30,9 +30,9 @@ Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali,
 
 ## Frakcja i zasady
 Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
-- §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy, tunel i poziomy garażu wydzielić jako osobne wnętrza (polecenie 22.11, pierwsza pozycja kolejki).
+- §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy i lokale frontu są od 22.11 osobnymi wnętrzami (`alchemia-shop-*`, karty obok); ta karta to pasaże, atrium, trzony i pomieszczenia frontu bez lokali.
 - §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
-- §14 zgodne na towarze (629 z 755 rzeczy drobiazgu w skupiskach, 17% luzem), dług: zaplecza sklepów i pasaże bez śladów obecności poza lokalami.
+- §14 częściowo: na pasażach 268 z 302 rzeczy drobiazgu w skupiskach (11% luzem); towar liczą karty sklepów. Dług: pasaże bez śladów obecności poza ławkami i kawiarnią frontu.
 - §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
 - §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
 - §17 do sprawdzenia: szum schodów ruchomych i muzyka sklepów ze źródła.
@@ -45,92 +45,55 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - blender: rd-fh-pot × 2
 - blender: rd-fh-ramen × 1
 - blender: rd-fh-teacup × 1
-- blender: rd-gl-arms × 61
-- blender: rd-gl-arms-b × 81
-- blender: rd-gl-case-arms × 51
-- blender: rd-gl-case-crypto × 7
-- blender: rd-gl-case-electronics × 14
-- blender: rd-gl-case-implants × 20
-- blender: rd-gl-case-pawn × 22
-- blender: rd-gl-case-pharmacy × 15
-- blender: rd-gl-case-repair × 20
-- blender: rd-gl-electronics × 58
-- blender: rd-gl-electronics-b × 52
-- blender: rd-gl-florist × 37
-- blender: rd-gl-florist-b × 54
-- blender: rd-gl-food × 49
-- blender: rd-gl-food-b × 73
-- blender: rd-gl-garments × 36
-- blender: rd-gl-implants × 32
-- blender: rd-gl-implants-b × 31
-- blender: rd-gl-mannequin × 7
-- blender: rd-gl-pawn × 41
-- blender: rd-gl-pawn-b × 35
-- blender: rd-gl-pharmacy × 41
-- blender: rd-gl-pharmacy-b × 40
-- blender: rd-gl-repair × 72
-- blender: rd-gl-repair-b × 57
-- blender: rd-gl-stock × 671
-- blender: rd-gl-stock-b × 672
-- blender: rd-gl-tattoo × 13
-- blender: rd-gl-tattoo-b × 17
-- blender: rd-gl-vr × 45
-- blender: rd-gl-vr-b × 65
-- model: atm × 5
+- model: atm × 2
 - model: bench × 6
-- model: figure × 68
+- model: figure × 28
 - model: planter × 6
-- model: shrubs × 16
-- model: street-cabinet × 25
-- model: ticket-machine × 12
-- model: vending-machine × 12
+- model: shrubs × 4
+- model: street-cabinet × 1
+- model: vending-machine × 5
 - model: waste-bin × 4
 - piece: bench × 106
-- piece: cable × 266
-- piece: carton × 236
-- piece: ceiling-light × 208
+- piece: cable × 118
+- piece: carton × 14
+- piece: ceiling-light × 124
 - piece: chair × 55
 - piece: column × 1
-- piece: counter × 87
-- piece: cup × 91
-- piece: display × 116
-- piece: duct × 52
-- piece: error × 19
+- piece: counter × 10
+- piece: cup × 43
+- piece: display × 15
+- piece: duct × 4
+- piece: error × 1
 - piece: escalator × 18
 - piece: floor × 3
 - piece: food × 6
 - piece: frame × 6
 - piece: glass × 10
-- piece: goods × 365
-- piece: grille × 12
-- piece: lamp × 223
+- piece: goods × 167
+- piece: lamp × 43
 - piece: lantern × 66
-- piece: led × 19
+- piece: led × 15
 - piece: led-green × 72
-- piece: lightbox × 31
-- piece: machine × 139
-- piece: paper × 160
+- piece: lightbox × 25
+- piece: machine × 12
+- piece: paper × 34
 - piece: parapet × 16
-- piece: partition × 253
-- piece: pipe × 103
-- piece: plaster × 5
-- piece: rack × 897
-- piece: roof × 94
-- piece: shopfront × 146
-- piece: shutter × 8
-- piece: sign × 52
-- piece: steam × 64
-- piece: step × 221
-- piece: table × 44
-- piece: vitrine × 31
+- piece: partition × 6
+- piece: pipe × 7
+- piece: rack × 9
+- piece: roof × 49
+- piece: steam × 34
+- piece: step × 219
+- piece: table × 40
+- piece: vitrine × 1
 - piece: wall × 32
 - piece: water × 1
 
 Pomiary zasad (§12–§16):
 - rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
 - siatka 0,5 m: 5 z 38 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1242
-- warstwy wyposażenia: makro 1005, mezo 1493, mikro 755
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 101 skupisk, 629 rzeczy w nich, 126 luzem
-- widoczne źródła światła (lampy, neony, ekrany, szyldy): 673
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 490
+- warstwy wyposażenia: makro 72, mezo 581, mikro 302
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 19 skupisk, 268 rzeczy w nich, 34 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 347
 <!-- inwentarz-gry:end -->

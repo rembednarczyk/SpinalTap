@@ -322,7 +322,9 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
   });
 
   it("names the storeys the gallery in the HUD and puts their still crowd on their floors, in reach", () => {
-    for (const [x, y, z] of [[402, F.l1, 18], [431, F.l1e, 18], [410, F.l2, 19.6], [418, F.l3, 20]] as const) expect(interiorAt({ x, y, z })?.id, `${x},${z}`).toBe("alchemia-gallery");
+    for (const [x, y, z] of [[402, F.l1, 18], [410, F.l2, 19.6], [418, F.l3, 20]] as const) expect(interiorAt({ x, y, z })?.id, `${x},${z}`).toBe("alchemia-gallery");
+    // L1's east wing is a unit of its own since 22.11 (each shop a room).
+    expect(interiorAt({ x: 431, y: F.l1e, z: 18 })?.id).toBe("alchemia-shop-l1e-1");
     expect(interiorAt({ x: 412, y: F.l3, z: 8 })).toBeNull();
     expect(FRONT_CROWD.length).toBeGreaterThanOrEqual(20);
     for (const c of FRONT_CROWD) {

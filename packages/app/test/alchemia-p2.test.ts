@@ -65,7 +65,8 @@ describe("P-2 under Alchemia's P-1 (ADR-0074 stage 5a)", () => {
     walkAt(session, corridor, 300);
     walkAt(session, end, 2400);
     expect(flat(at(session), end)).toBeLessThan(0.5);
-    expect(session.sim.session.interior).toBe("alchemia-p2");
+    // At the corridor's end: P-2's tunnel, a room of its own since 22.11.
+    expect(session.sim.session.interior).toBe("alchemia-p2-tunnel");
     walkAt(session, out, 600);
     expect(flat(at(session), out)).toBeLessThan(0.5);
     steps(session, 10);
