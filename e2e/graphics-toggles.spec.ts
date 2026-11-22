@@ -36,7 +36,10 @@ test("desktop: contact shade and bloom switch off and on at once, without a relo
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
-  await teleport(page, 270, -81, Math.PI / 2);
+  // A light spot of Podzamcze (about 1.2 million triangles drawn): the switches' passes are the same anywhere, and on
+  // Krakowskie Przedmieście (270, -81; 6.9 million, the debt in `docs/backlog.md`) a frame took 4-7 s under SwiftShader,
+  // which put the five samples past the test's time on a slow runner (22.11).
+  await teleport(page, 520, -330, Math.PI / 2);
   await step(page, 30, { moveZ: 1 });
   // Stand still first: the moon shadow keeps its statics after a few frames without moving (#553),
   // so a frame taken while walking draws them again and counts 13 calls more than any later one.

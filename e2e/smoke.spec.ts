@@ -188,9 +188,10 @@ test("real input: the right mouse button aims and Space jumps in the running loo
   await newGame(page);
   await waitForPlay(page);
   await expect(page.getByTestId("hud")).toBeVisible();
-  // On the deptak in front of the clinic (ADR-0045): the light scene keeps the real loop
-  // ticking even on a slow SwiftShader runner.
-  await teleport(page, 321.4, -80);
+  // A light spot of Podzamcze (about 1.2 million triangles drawn): the real loop keeps ticking even on a slow
+  // SwiftShader runner. The deptak before the clinic (321.4, -80) was light once; with the city's props it draws over
+  // 5 million now and a frame there took seconds (22.11, `graphics-toggles.spec.ts` the same).
+  await teleport(page, 520, -330);
   // Into the canvas, so the mouse and the keys drive the game (pointer lock or its fallback).
   await page.mouse.click(640, 360);
   const before = (await gameState(page)).tick;
