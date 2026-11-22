@@ -1,0 +1,1 @@
+- Pokój kapsułowy na Jezuickiej ma drzwi przesuwne z czytnikiem kart, wieszak z torbą i czapką oraz ślady poprzedniego lokatora: worek ze śmieciami, naczynia w zlewie, jedzenie z automatu, ręcznik na łóżku, ładowarkę na skrzyni i kartę wynajmu na ścianie, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

@@ -12,13 +12,19 @@ Niebieski pasek LED nad łóżkiem, ciepłe lampki w szafkach, za oknem neon z u
 Kryjówka gracza z autozapisem: łóżko, aneks kuchenny, skrzynia. Jedno wejście od ulicy.
 
 ## Inwentarz docelowy
-Architektura i duże obiekty pochodzą z modelu igor.tesV „Futuristic Compact Room” (`room-props.glb`, CC-BY 4.0): aneks kuchenny, łóżko we wnęce pod szafkami, skrzynia. Do dodania w Blenderze:
-- drzwi wejściowe od środka z zamkiem na kartę i wieszakiem (Blender);
-- roleta w oknie do połowy (Blender).
+Architektura i duże obiekty pochodzą z modelu igor.tesV „Futuristic Compact Room” (`room-props.glb`, CC-BY 4.0): aneks kuchenny ze zlewem i piekarnikiem, łóżko we wnęce pod szafkami, regał w nogach łóżka, skrzynia. Ściany, sufit i ścianę z drzwiami dokłada gra. Wymiary powierzchni zmierzone w Blenderze na modelu: blat 0,87 m, dno zlewu 0,67 m, materac 0,92 m, wieko skrzyni 0,44 m.
 
-Drobiazg (Blender):
-- worek ze śmieciami przy drzwiach, kubek i talerz w zlewie, opakowania po jedzeniu z automatu;
-- ręcznik na łóżku, kable ładowarek, karta z instrukcją wynajmu na ścianie.
+Z Blendera (`tools/blender/rooms/capsule.py`):
+- drzwi przesuwne od środka, odsunięte na ścianę obok przejścia: stalowe skrzydło z uchwytem, blachą u dołu, wizjerem i zdrapaną naklejką, szyna nad przejściem, czytnik kart z zielonym światłem przy drugiej ościeżnicy (`rd-capsule-door`);
+- listwa z czterema wieszakami na ścianie przy drzwiach, na nich płócienna torba i czapka (`rd-capsule-hooks`);
+- worek ze śmieciami zawiązany na supeł, karton po pizzy oparty o ścianę, puszka, która nie trafiła (`rd-capsule-trash`);
+- w zlewie talerz z resztką sosu, kubek z łyżeczką, widelec (`rd-capsule-sink`);
+- na blacie jedzenie z automatu: kubek zupki z uchyloną pokrywką i pałeczkami, trójkątne pudełko po kanapce, zgnieciona paczka chipsów, energetyk, serwetki (`rd-capsule-food`);
+- ręcznik rzucony na łóżko, zwisający z krawędzi materaca (`rd-capsule-towel`);
+- na skrzyni telefon z zapalonym ekranem, powerbank, kabel do gniazdka w ścianie i drugi luźny kabel (`rd-capsule-charger`);
+- zalaminowana karta wynajmu z regulaminem, kodem QR do aplikacji i hasłem do wifi dopisanym markerem (`rd-capsule-rules`).
+
+Odłożone: roleta. Ściana frontowa wycięta w kamienicy ma tylko drzwi, a okna kamienicy są piętro wyżej, więc rolety nie ma na czym zawiesić. Okno w kapsule wymaga zmiany bryły pomieszczenia (`capsule-room.ts`) i jego rysunku w silniku.
 
 ## Inwentarz gry
 
