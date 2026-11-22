@@ -105,6 +105,14 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-p2-pipes" },
   { key: "rd-p2-lamp" },
   { key: "rd-p2-oil" },
+  // Alchemia's car park P-1 (docs/pomieszczenia/alchemia-parking.md).
+  { key: "rd-p1-column" },
+  { key: "rd-p1-charger" },
+  { key: "rd-p1-ceiling" },
+  { key: "rd-p1-barrier" },
+  { key: "rd-p1-cabin-screen" },
+  { key: "rd-p1-guard" },
+  { key: "rd-p1-floor" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
