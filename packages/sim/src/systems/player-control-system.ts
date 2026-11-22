@@ -277,7 +277,8 @@ export const playerControlSystem: System = {
   name: "player-control",
   run(ctx) {
     const { input } = ctx;
-    if (input.toggleCamera) toggleCameraMode(ctx);
+    // At the wheel the chase camera is the car's (ADR-0097 §3): the toggle leaves her camera on foot as it was.
+    if (input.toggleCamera && ctx.session.driving === null) toggleCameraMode(ctx);
     const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = withPlayerMaxHp(p.health, ctx.state.domain);
