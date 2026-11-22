@@ -131,9 +131,9 @@ const lanterns = (g: Group): Piece[] => lanternSpots(g).map(({ x, z, top }) => p
 const services = (): Piece[] => [
   piece(box(404.95, 405.05, 38.0, 52.8, C - 0.11, C - 0.01), "pipe", true, false),
   piece(box(408.2, 425.0, 52.35, 52.45, C - 0.11, C - 0.01), "pipe", true, false),
-  piece(box(430.95, 431.05, 37.4, 49.2, C - 0.11, C - 0.01), "pipe", true, false),
+  piece(box(430.95, 431.05, 37.6, 49.2, C - 0.11, C - 0.01), "pipe", true, false),
   piece(box(405.4, 405.7, 38.0, 52.8, C - 0.1, C - 0.05), "cable", true, false),
-  piece(box(430.5, 430.8, 37.4, 49.2, C - 0.1, C - 0.05), "cable", true, false),
+  piece(box(430.5, 430.8, 37.6, 49.2, C - 0.1, C - 0.05), "cable", true, false),
   piece(box(415.0, 421.2, 33.4, 34.0, C - 0.45, C - 0.08), "duct", true, false),
 ];
 
