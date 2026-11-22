@@ -7,6 +7,10 @@ import { SHELTER, SHELTER_HATCH, SHELTER_PASSAGE, SHELTER_PIECES } from "./alche
 import { SHELTER_DETAIL } from "./alchemia/shelter-detail";
 import { type DressTaken, type DressWall, type GroundRect, type RoomLayout, dressRoom, rectWalls } from "./room-dressing";
 import { W3_OFFICE } from "./tessen-w3/tower-pipes";
+import { W3_HALL_DETAIL } from "./tessen-w3/hall-detail";
+import { W3_PALLETS } from "./tessen-w3/hall-inside";
+import { AIRLOCK_N_DOOR, AIRLOCK_S_DOOR, AISLE, ARM_BASE, ARMS_X, BELT_L1, BELT_L2, BELT_X, CHAMBER_GATE_W, DOOR_W, HALL_DOORS, STAIR_N_DOOR, TRACK_LADDER } from "./tessen-w3/layout";
+import { W3_ASSEMBLY } from "./tessen-w3/site";
 import { W3_Y } from "./tessen-w3/site";
 
 /*
@@ -173,7 +177,58 @@ export const P1_LAYOUT: RoomLayout = {
   ],
 };
 
+/**
+ * Tessen's W-3 assembly hall (`docs/pomieszczenia/w3-hall.md`): its floor between the walls' faces, the line's belts with
+ * the arms' bases and the stations taken, the aisle between them kept for the wagon and the walkers; things stand by the
+ * long walls' strips and the west wall, oil pools by the arms' bases on the walls' side.
+ */
+const HALL_IN: GroundRect = { minX: W3_ASSEMBLY.minX + 0.3, maxX: W3_ASSEMBLY.maxX - 0.3, minZ: W3_ASSEMBLY.minZ + 0.3, maxZ: W3_ASSEMBLY.maxZ - 0.3 };
+const ARM = ARM_BASE.size;
+const WEST_DOORS: readonly (readonly [number, number])[] = [
+  [AIRLOCK_S_DOOR - DOOR_W / 2, AIRLOCK_S_DOOR + DOOR_W / 2],
+  [413.1, 422.9],
+  [AIRLOCK_N_DOOR - DOOR_W / 2, AIRLOCK_N_DOOR + DOOR_W / 2],
+  [STAIR_N_DOOR.z - STAIR_N_DOOR.width / 2, STAIR_N_DOOR.z + STAIR_N_DOOR.width / 2],
+];
+const NORTH_DOORS: readonly (readonly [number, number])[] = HALL_DOORS.map((x) => [x - DOOR_W / 2, x + DOOR_W / 2] as const);
+const CHAMBER_GATE: readonly [number, number] = [CHAMBER_GATE_W.minZ, CHAMBER_GATE_W.maxZ];
+
+export const W3_HALL_LAYOUT: RoomLayout = {
+  id: "w3-hall",
+  kind: "assembly-hall",
+  floor: W3_Y,
+  bounds: HALL_IN,
+  surfaces: [],
+  walls: rectWalls(HALL_IN, { w: WEST_DOORS, n: NORTH_DOORS, e: [CHAMBER_GATE] }),
+  doors: [
+    ...WEST_DOORS.map(([a, b]) => ({ minX: HALL_IN.minX, maxX: HALL_IN.minX + 0.3, minZ: a, maxZ: b })),
+    ...NORTH_DOORS.map(([a, b]) => ({ minX: a, maxX: b, minZ: HALL_IN.maxZ - 0.3, maxZ: HALL_IN.maxZ })),
+    { minX: HALL_IN.maxX - 0.3, maxX: HALL_IN.maxX, minZ: CHAMBER_GATE[0], maxZ: CHAMBER_GATE[1] },
+  ],
+  // Oil under the arms' bases: a patch on each one's walls' side, short of the walls' strips' things.
+  open: ARMS_X.flatMap((x) => [
+    { minX: x - ARM, maxX: x + ARM, minZ: BELT_L1.minZ - 0.1 - ARM - 1.1, maxZ: BELT_L1.minZ - 0.1 - ARM },
+    { minX: x - ARM, maxX: x + ARM, minZ: BELT_L2.maxZ + 0.1 + ARM, maxZ: BELT_L2.maxZ + 0.1 + ARM + 0.9 },
+  ]),
+  clear: [
+    { minX: HALL_IN.minX, maxX: HALL_IN.maxX, minZ: AISLE.minZ, maxZ: AISLE.maxZ },
+    ...WEST_DOORS.map(([a, b]) => ({ minX: HALL_IN.minX, maxX: HALL_IN.minX + 2, minZ: a - 0.6, maxZ: b + 0.6 })),
+    ...NORTH_DOORS.map(([a, b]) => ({ minX: a - 0.6, maxX: b + 0.6, minZ: HALL_IN.maxZ - 2, maxZ: HALL_IN.maxZ })),
+    { minX: HALL_IN.maxX - 2, maxX: HALL_IN.maxX, minZ: CHAMBER_GATE[0] - 0.6, maxZ: CHAMBER_GATE[1] + 0.6 },
+    // The ladder up to track N's walk, and its foot.
+    { minX: TRACK_LADDER.x - 0.9, maxX: TRACK_LADDER.x + 0.9, minZ: TRACK_LADDER.z - 1.4, maxZ: HALL_IN.maxZ },
+  ],
+  taken: [
+    // The belts with the arms' bases on their walls' sides, the stations on the aisle's.
+    { minX: BELT_X.minX, maxX: BELT_X.maxX, minZ: BELT_L1.minZ - 0.1 - ARM, maxZ: BELT_L1.maxZ + 0.5 },
+    { minX: BELT_X.minX, maxX: BELT_X.maxX, minZ: BELT_L2.minZ - 0.5, maxZ: BELT_L2.maxZ + 0.1 + ARM },
+    ...W3_PALLETS,
+    ...handTaken(W3_HALL_DETAIL.filter((p) => p.y < W3_Y + 3), HALL_IN, 0.7),
+  ],
+};
+
 export const P2_TUNNEL_DRESSING: readonly StreetPropItem[] = dressRoom(P2_TUNNEL_LAYOUT);
 export const TESSEN_OFFICE_DRESSING: readonly StreetPropItem[] = dressRoom(TESSEN_OFFICE_LAYOUT);
 export const SHELTER_DRESSING: readonly StreetPropItem[] = dressRoom(SHELTER_LAYOUT);
 export const P1_DRESSING: readonly StreetPropItem[] = dressRoom(P1_LAYOUT);
+export const W3_HALL_DRESSING: readonly StreetPropItem[] = dressRoom(W3_HALL_LAYOUT);

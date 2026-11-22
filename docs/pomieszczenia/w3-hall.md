@@ -26,6 +26,8 @@ Z Blendera (`tools/blender/rooms/w3_hall.py`, plik `room-detail-w3-props.glb`):
 
 Na telefonie (niska jakość) gra rysuje z tej listy tylko palety, bo stoją za bryły, które siatka hali pomija; resztę pomija jako drobiazg (`fine`, budżet trójkątów hali W-3 w `npr-perf`).
 
+Z generatora wnętrz (ADR-0099, zestaw `assembly-hall` w `room-kits.ts`, układ `W3_HALL_LAYOUT` w `room-dressing-rooms.ts`): gaśnice przy bramie komory testów i przy śluzie S, skrzynki rozdzielcze, kratki odpływu przy ścianach, plamy oleju przy podstawach ramion taśmy, kartony z dostawą części. Wolne zostają alejka między taśmami, przejścia do śluz, drzwi północne, brama komory i drabina na tor suwnicy. Na telefonie nic z tego (drobny detal, budżet hali).
+
 Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownicze w rzędach, zbiorniki w rzędach (dziś bloki).
 
 ## Frakcja i zasady
@@ -33,13 +35,18 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 - §12 dług: 3 z 74 wymiarów na siatce. Kontrast: wejście przez biuro przepustek (ciasno) do hali (16 m): zgodne.
 - §13 częściowo: lampy W-3 mają oprawy w geometrii silnika (świetlówki pod każdym stropem, `w3-inside-geometry.ts`, sprawdzone 22.11), choć pomiar kart ich nie widzi, bo nie są bryłami. Dług: drzwi do piwnicy i biura w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 91,6%, światło 8,3%, akcenty 0%, poza pasmem: baza 91,6% > 75%; światło 8,3% < 18%; akcenty 0% < 3%.
 - §14 zgodne: 31 rzeczy drobiazgu, 28 w sześciu skupiskach (przeciek, rzeczy nocnej zmiany, cztery stanowiska S1–S4 przy taśmach: maska spawalnicza, rękawice, kuweta śrub, puszka, tablet z listą kontrolną, `rd-w3h-station`), 3 luzem (10%, tablice ostrzegawcze na ścianach). Dalej: szafki w rzędach.
-- §15 częściowo: kapanie w opisie; plamy oleju z połyskiem przy maszynach.
+- §15 częściowo: kapanie w opisie; plamy oleju przy podstawach ramion i kratki odpływu (generator). Dług: połysk plam i posadzki.
 - §16 zgodne: korporacja, która „nie sprząta, tylko liczy”.
 - §17 częściowo: iskry i taśmy jako ruch; szum napędów ze źródła do sprawdzenia.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-c-cartons × 2
+- blender: rd-c-drain × 3
+- blender: rd-c-extinguisher × 2
+- blender: rd-c-fusebox × 2
+- blender: rd-c-puddle × 3
 - blender: rd-w3h-barrels × 1
 - blender: rd-w3h-break × 1
 - blender: rd-w3h-exit × 2
@@ -59,8 +66,8 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 Pomiary zasad (§12–§16):
 - rzut: 37 prostokąty, 3409 m², wysokość 16,0 / 13,4 / 10,0 / 5,0 / 4,5 / 2,6 / 7,5 / 6,0 m
 - siatka 0,5 m: 3 z 74 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 53
-- warstwy wyposażenia: makro 32, mezo 18, mikro 31
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 58
+- warstwy wyposażenia: makro 32, mezo 25, mikro 31
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 6 skupisk, 28 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

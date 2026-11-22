@@ -1,0 +1,1 @@
+- W hali W-3 przybyło rzeczy: gaśnice przy bramie komory i śluzie, skrzynki elektryczne, kratki odpływu, plamy oleju przy ramionach taśmy i kartony z częściami. Rozstawia je generator wnętrz (ADR-0099).

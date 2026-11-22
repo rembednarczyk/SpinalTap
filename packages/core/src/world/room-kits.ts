@@ -37,7 +37,7 @@ export interface KitEntry {
 }
 
 /** The kinds of rooms with a kit. */
-export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech" | "shelter" | "car-park";
+export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech" | "shelter" | "car-park" | "assembly-hall";
 
 /**
  * A metro platform (`docs/pomieszczenia/metro-*.md`, the street's faction, §16: dense): the litter of a wait by the
@@ -128,6 +128,18 @@ const CAR_PARK: readonly KitEntry[] = [
   { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-c-cartons"] },
   { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-cartons"] },
 ];
+/**
+ * A factory's assembly hall (Tessen's W-3, `docs/pomieszczenia/w3-hall.md`; technique's faction under a corporation, §16:
+ * kept, but worked in): the fire kit by every way out, the fuse boxes, gullies along the walls, oil pooled by the arms'
+ * bases (§15), the cartons of a delivery of parts by a wall; no cable alone (it would lie loose, §14).
+ */
+const ASSEMBLY_HALL: readonly KitEntry[] = [
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [2, 3], by: "door", apart: 8 },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 2], apart: 10 },
+  { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
+  { key: "rd-c-puddle", anchor: "floor-free", role: "hero", along: 0.85, out: 0.6, count: [2, 3], apart: 6 },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 2], apart: 6 },
+];
 export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   platform: PLATFORM,
   "service-corridor": SERVICE_CORRIDOR,
@@ -136,4 +148,5 @@ export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   "shop-tech": SHOP_TECH,
   shelter: SHELTER,
   "car-park": CAR_PARK,
+  "assembly-hall": ASSEMBLY_HALL,
 };
