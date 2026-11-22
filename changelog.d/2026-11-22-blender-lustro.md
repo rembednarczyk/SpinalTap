@@ -1,0 +1,1 @@
+- Detal pomieszczeń z Blendera nie jest już lustrzanym odbiciem: fotel w klinice Mori ma podniesione oparcie od strony głowy, a niesymetryczne drobiazgi w Neon Koi, biurze Tessenu i Trasie stoją tak, jak je zaprojektowano (ADR-0098).

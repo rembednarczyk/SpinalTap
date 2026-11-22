@@ -2,7 +2,7 @@
 
 Modele rzeczy z inwentarzy kart pomieszczeń (`docs/pomieszczenia/`), budowane skryptami w Blenderze bez okna. Wynik trafia do `packages/app/public/city/room-detail-props.glb`.
 
-- `shapes.py`: biblioteka kształtów we współrzędnych gry (x w bok, y w górę, z przód modelu, metry, stopa na y = 0). Zawiera pudła z fazkami, walce, rurki między punktami, bryły obrotowe z profilu i płaskie czworokąty. Każda ściana ma rolę palety zestawu miasta (`tools/city_kit_palette.py`) jako nazwę materiału.
+- `shapes.py`: biblioteka kształtów we współrzędnych gry (x w bok, y w górę, z przód modelu, metry, stopa na y = 0). Gra jest lewoskrętna jak Babylon, a Blender i glTF prawoskrętne: `Model` odbija x przy przejściu do Blendera i odwraca ściany, więc x modelu to x świata przy obrocie 0 (bez tego model w grze wychodził lustrzany). Zawiera pudła z fazkami, walce, rurki między punktami, bryły obrotowe z profilu i płaskie czworokąty. Każda ściana ma rolę palety zestawu miasta (`tools/city_kit_palette.py`) jako nazwę materiału.
 - `rooms/<pomieszczenie>.py`: modele jednego wnętrza według jego karty (`MODELS`: funkcje zwracające `shapes.Model`). Model stoi w ramce bryły symulacji, którą rysuje.
 - `build.py`: buduje wszystkie modele i eksportuje jeden glTF.
 - `../city_blender.py`: uruchamia `build.py`, wypieka role na UV palety i zapisuje plik rekwizytów z `extras` {size, styles}.

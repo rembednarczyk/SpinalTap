@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
 import { KOI_DETAIL } from "@seki/sim";
 import { describe, expect, it } from "vitest";
-import { mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/city-props";
+import { facing, mergeCityProps, parseCityProps, transformProp, triangleCount } from "../src/renderer/city-props";
 
 /**
  * The rooms' detail of `room-detail-props.glb` (ADR-0098, `tools/city_blender.py`): every shape of
@@ -35,5 +35,13 @@ describe("room-detail-props.glb (ADR-0098)", () => {
     expect(size("rd-koi-shelf").y).toBeCloseTo(2.4, 2);
     expect(size("rd-koi-jukebox").y).toBeLessThanOrEqual(1.6);
     expect(KOI_DETAIL.every((p) => p.prop === "room-detail")).toBe(true);
+  });
+
+  it("keeps a model's x the world's at yaw 0, not mirrored (the clinic chair's raised back at its head, the model's -x)", () => {
+    const chair = props.models.get("rd-clinic-chair")!;
+    const { positions } = transformProp(chair, facing({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 }, { x: 1, y: 1, z: 1 }));
+    let top = 0;
+    for (let i = 3; i < positions.length; i += 3) if ((positions[i + 1] ?? 0) > (positions[top + 1] ?? 0)) top = i;
+    expect(positions[top]).toBeLessThan(-0.3);
   });
 });
