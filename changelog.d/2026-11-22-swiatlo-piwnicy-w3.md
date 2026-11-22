@@ -1,0 +1,1 @@
+- Piwnica W-3: ciepłe światło żarówek w koszyczkach i czerwone światło awaryjne nad skrzynką elektryczną.
