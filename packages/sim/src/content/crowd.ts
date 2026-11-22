@@ -19,6 +19,7 @@ import { GALLERY_CROWD } from "./alchemia/shops";
 import { ROOF_CROWD } from "./alchemia/roof-garden";
 import { PLAZA_CROWD } from "./alchemia/front-plaza-cafe";
 import { DEPTAK_CROWD } from "./alchemia/deptak-stalls";
+import { DEPTAK_NIGHT_CROWD } from "./alchemia/deptak-night";
 import { FRONT_CROWD } from "./alchemia";
 
 /** The chunks of Lublin that hold the market (in Alchemia, ADR-0063) and the docks (ADR-0045). */
@@ -420,8 +421,10 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   ...PLAZA_CROWD,
   // And at the deptak's kiosks and stalls on Lubartowska (C7).
   ...DEPTAK_CROWD,
-  // And in the front's arcades, units, café and bar (ADR-0093 O5), last.
+  // And in the front's arcades, units, café and bar (ADR-0093 O5).
   ...FRONT_CROWD,
+  // And at the yatai at the deptak's south end (22.11), last.
+  ...DEPTAK_NIGHT_CROWD,
 ];
 
 /**
