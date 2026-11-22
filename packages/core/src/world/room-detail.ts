@@ -173,6 +173,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-gl-case-crypto", lod: "rd-gl-case-crypto-lod" },
   { key: "rd-gl-garments", lod: "rd-gl-garments-lod" },
   { key: "rd-gl-mannequin", lod: "rd-gl-mannequin-lod" },
+  // The food hall's clutter clusters (§14, 22.11): the tables' condiments and leftovers, the kitchens' tills and prep.
+  { key: "rd-fh-condiments", clutter: 4 },
+  { key: "rd-fh-leftovers", clutter: 3 },
+  { key: "rd-fh-till", clutter: 4 },
+  { key: "rd-fh-prep", clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

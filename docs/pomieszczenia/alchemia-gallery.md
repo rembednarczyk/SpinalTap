@@ -41,7 +41,9 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
 - blender: rd-fh-bowls × 1
+- blender: rd-fh-condiments × 1
 - blender: rd-fh-lantern × 2
+- blender: rd-fh-leftovers × 1
 - blender: rd-fh-pot × 2
 - blender: rd-fh-ramen × 1
 - blender: rd-fh-teacup × 1
@@ -93,7 +95,7 @@ Pomiary zasad (§12–§16):
 - rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
 - siatka 0,5 m: 5 z 38 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 490
-- warstwy wyposażenia: makro 58, mezo 590, mikro 273
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 11 skupisk, 232 rzeczy w nich, 41 luzem
+- warstwy wyposażenia: makro 58, mezo 590, mikro 280
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 12 skupisk, 240 rzeczy w nich, 40 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 347
 <!-- inwentarz-gry:end -->

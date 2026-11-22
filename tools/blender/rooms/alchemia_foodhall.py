@@ -144,6 +144,79 @@ def gas():
     return m
 
 
+def condiments():
+    """The table's condiments on a black tray (§14's clutter cluster): a soy dispenser of glass with its red cap, a shichimi
+    shaker, a pot of toothpicks, a cup of wrapped disposable chopsticks (0.24 x 0.16 x 0.14)."""
+    m = Model('rd-fh-condiments')
+    m.box(-0.12, 0.12, 0.0, 0.01, -0.07, 0.07, 'dark', bevel=0.003)
+    y = 0.01
+    m.lathe(-0.075, 0.0, [(0.025, 0.0), (0.03, 0.01), (0.03, 0.07), (0.02, 0.09), (0.0, 0.09)], 'glass-dark', seg=12, y0=y)
+    m.lathe(-0.075, 0.0, [(0.014, 0.0), (0.012, 0.02), (0.0, 0.022)], 'neon-red', seg=10, y0=y + 0.09)
+    m.tube((-0.075, y + 0.1, 0.0), (-0.05, y + 0.105, 0.0), 0.003, 'neon-red', seg=6)
+    m.lathe(-0.02, 0.02, [(0.018, 0.0), (0.018, 0.06), (0.0, 0.065)], 'fabric-amber', seg=10, y0=y)
+    m.lathe(-0.02, 0.02, [(0.019, 0.0), (0.019, 0.015), (0.0, 0.017)], 'neon-red', seg=10, y0=y + 0.06)
+    m.lathe(0.025, -0.03, [(0.016, 0.0), (0.016, 0.045), (0.0, 0.045)], 'trim', seg=10, y0=y)
+    for k in range(5):
+        a = k * 1.2566
+        m.tube((0.025 + 0.007 * math.cos(a), y + 0.04, -0.03 + 0.007 * math.sin(a)), (0.025 + 0.01 * math.cos(a), y + 0.07, -0.03 + 0.01 * math.sin(a)), 0.0015, 'trim-light', seg=4)
+    m.lathe(0.08, 0.0, [(0.026, 0.0), (0.03, 0.08), (0.0, 0.08)], 'metal', seg=12, y0=y)
+    for k in range(7):
+        a = k * 0.9
+        x, z = 0.08 + 0.014 * math.cos(a), 0.014 * math.sin(a)
+        m.box(x - 0.005, x + 0.005, y + 0.02, y + 0.13 + 0.01 * (k % 3), z - 0.003, z + 0.003, 'win-white' if k % 2 else 'fabric-amber')
+    return m
+
+
+def leftovers():
+    """What the eaters left by their tray: napkins crumpled into balls, the receipt with a ring from the glass, the water
+    glass with an inch left in it (0.3 x 0.11 x 0.2)."""
+    m = Model('rd-fh-leftovers')
+    for k, (x, z, r) in enumerate(((-0.1, 0.03, 0.03), (-0.06, -0.04, 0.025), (-0.12, -0.05, 0.02))):
+        m.lathe(x, z, [(r * 0.6, 0.0), (r, r * 0.5), (r * 0.8, r * 1.2), (r * 0.3 + 0.003 * k, r * 1.5), (0.0, r * 1.5)], 'win-white', seg=7)
+    m.box(0.0, 0.07, 0.0, 0.002, -0.07, 0.04, 'trim-light')
+    m.box(0.012, 0.058, 0.002, 0.003, -0.05, -0.045, 'dark')
+    m.lathe(0.09, 0.03, [(0.026, 0.0), (0.032, 0.11), (0.03, 0.11), (0.024, 0.005), (0.0, 0.005)], 'glass-blue', seg=14, cap=False)
+    m.lathe(0.09, 0.03, [(0.026, 0.0), (0.0, 0.001)], 'glass-blue', seg=14, y0=0.025)
+    return m
+
+
+def till():
+    """The till on a kitchen's counter by the keeper's cup: the card terminal on its stand with its screen lit, a spike of
+    order slips, a jar of tips with coins in it, a biro (0.34 x 0.16 x 0.2)."""
+    m = Model('rd-fh-till')
+    m.box(-0.17, -0.07, 0.0, 0.015, -0.06, 0.06, 'dark', bevel=0.004)
+    m.box(-0.155, -0.085, 0.015, 0.16, -0.035, 0.0, 'dark', bevel=0.006)
+    m.box(-0.148, -0.092, 0.08, 0.145, 0.0, 0.003, 'neon-green')
+    m.box(-0.15, -0.09, 0.025, 0.07, 0.0, 0.004, 'trim')
+    m.cyl(-0.02, 0.02, 0.025, 0.0, 0.008, 'metal', seg=10)
+    m.tube((-0.02, 0.008, 0.02), (-0.02, 0.15, 0.02), 0.0015, 'metal', seg=4)
+    for k in range(4):
+        y = 0.012 + k * 0.012
+        m.box(-0.06, 0.02, y, y + 0.002, -0.02 + 0.006 * k, 0.06 - 0.004 * k, 'trim-light')
+    m.lathe(0.09, 0.0, [(0.035, 0.0), (0.037, 0.12), (0.04, 0.125), (0.0, 0.125)], 'glass-blue', seg=14, cap=False)
+    m.lathe(0.09, 0.0, [(0.033, 0.0), (0.02, 0.025), (0.0, 0.03)], 'neon-amber', seg=10, y0=0.002)
+    m.box(0.07, 0.11, 0.06, 0.09, 0.037, 0.039, 'trim-light')
+    m.tube((-0.06, 0.004, -0.07), (0.07, 0.004, -0.05), 0.004, 'fabric-teal', seg=6)
+    return m
+
+
+def prep():
+    """By the stack of bowls on a kitchen's line: a steel bin of chopsticks, a jug with a ladle in it, two squeeze bottles
+    (a red sauce, a yellow mayo) (0.36 x 0.3 x 0.16)."""
+    m = Model('rd-fh-prep')
+    m.box(-0.18, -0.08, 0.0, 0.13, -0.05, 0.05, 'metal', bevel=0.004)
+    for k in range(9):
+        x, z = -0.165 + (k % 3) * 0.035, -0.03 + (k // 3) * 0.03
+        m.box(x, x + 0.006, 0.1, 0.24 + 0.01 * (k % 2), z, z + 0.006, 'fabric-amber')
+    m.lathe(-0.01, 0.0, [(0.045, 0.0), (0.05, 0.16), (0.055, 0.17), (0.0, 0.17)], 'metal', seg=14, cap=False)
+    m.lathe(-0.01, 0.0, [(0.045, 0.0), (0.0, 0.001)], 'metal', seg=14)
+    m.tube((-0.01, 0.06, 0.0), (0.03, 0.3, 0.02), 0.006, 'metal', seg=6)
+    m.lathe(0.03, 0.02, [(0.025, 0.0), (0.0, 0.01)], 'metal', seg=10, y0=0.3)
+    for x, role in ((0.09, 'neon-red'), (0.145, 'neon-amber')):
+        m.lathe(x, 0.0, [(0.022, 0.0), (0.024, 0.13), (0.012, 0.15), (0.004, 0.19), (0.0, 0.19)], role, seg=12)
+    return m
+
+
 MODELS = [lambda: lantern(0.18, 0.45, 'rd-fh-lantern'), lambda: lantern(0.12, 0.3, 'rd-fh-lantern-small'), lambda: meal(0, 'rd-fh-ramen'),
           lambda: meal(1, 'rd-fh-donburi'), cup, spilled, stool,
-          pot, bowls, teacup, gas]
+          pot, bowls, teacup, gas, condiments, leftovers, till, prep]
