@@ -26,18 +26,26 @@ Z Blendera (`tools/blender/rooms/alchemia_shelter.py`, plik `room-detail-alchemi
 
 Odłożone: prycze z desek; bez bryły stałyby na drodze.
 
+Z generatora wnętrz (ADR-0099, zestaw `shelter` w `room-kits.ts`, układ `SHELTER_LAYOUT` w `room-dressing-rooms.ts`): gaśnica muzeum przy włazie, skrzynka rozdzielcza na wschodniej ścianie obok skrzyni, kałuża z wilgoci od gruntu, kartony Hebi, butelki i kubek na skrzyni Hebi obok laptopa. Wolne zostają przejście od bramy, ścieżka śladów butów wzdłuż zachodniej ściany, róg skrytki i podest włazu.
+
 ## Frakcja i zasady
 Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 - §12 dług: 0 z 8 wymiarów na siatce (stary schron). Właz i biegi schodów (ciasno) przed salą: zgodne.
 - §13 częściowo: żółte gabloty, zielona lampka wyjścia. Dług: sprzęt Hebi bez zimnego źródła. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 73,3%, światło 26,5%, akcenty 0,1%, poza pasmem: akcenty 0,1% < 3%.
-- §14 zgodne: 14 rzeczy drobiazgu, 12 w trzech skupiskach (maski, szkło z cegłą, sprzęt Hebi), 14% luzem.
-- §15 dług: beton matowy wszędzie; wilgoć na ścianach od gruntu.
+- §14 zgodne: 20 rzeczy drobiazgu, 18 w trzech skupiskach (maski, szkło z cegłą, sprzęt Hebi z butelkami i kubkiem), 10% luzem.
+- §15 częściowo: kałuża z wilgoci od gruntu przy wschodniej ścianie (generator). Dług: beton matowy wszędzie, zacieki na ścianach.
 - §16 zgodne z ulicą; kontrast z elektroniką Hebi to cel.
 - §17 do sprawdzenia: cisza z kapaniem jako dźwięk źródła.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-c-bottles × 1
+- blender: rd-c-cartons × 1
+- blender: rd-c-cups × 1
+- blender: rd-c-extinguisher × 1
+- blender: rd-c-fusebox × 1
+- blender: rd-c-puddle × 1
 - blender: rd-shelter-conduit × 2
 - blender: rd-shelter-door × 1
 - blender: rd-shelter-hebi × 1
@@ -51,8 +59,8 @@ Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 220 m², wysokość 2,3 / 5,3 / 2,8 m
 - siatka 0,5 m: 0 z 8 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 2
-- warstwy wyposażenia: makro 2, mezo 3, mikro 14
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 12 rzeczy w nich, 2 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 3
+- warstwy wyposażenia: makro 2, mezo 6, mikro 20
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 18 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 2
 <!-- inwentarz-gry:end -->
