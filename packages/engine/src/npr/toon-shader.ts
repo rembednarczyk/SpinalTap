@@ -336,6 +336,12 @@ void main(void) {
 #endif
 
   float g = gloss;
+#ifdef CITYKIT
+  // The kit's glossy swatches (alpha about 0.9, KIT_GLOSS of city-kit.ts): glass, standing water, oil take the lamps' highlights tight.
+  float glossMask = step(0.85, texel.a) * (1.0 - step(0.95, texel.a));
+  g = mix(g, 1.6, glossMask);
+  float glossShine = glossMask;
+#endif
 #if defined(DRESS_FLAGS) && defined(VERTEXCOLOR)
   // Dressing flags in the vertex alpha (ADR-0027): 1 painted, 0.5 wet, 0 self-lit.
   float wetFlag = step(0.25, vColor.a) * (1.0 - step(0.75, vColor.a));
@@ -344,6 +350,9 @@ void main(void) {
 #endif
   // Highlights of the street lights: tight on glass and standing water, broad on the wet street.
   float shine = 18.0;
+#ifdef CITYKIT
+  shine = mix(shine, 28.0, glossShine);
+#endif
 #ifdef WATER_MASK
   // Three zones (ADR-0084): the whole street wet in the rain, darker and with a broad sheen;
   // standing water where the mask says, nearly black and a mirror; its soft rim a step between.

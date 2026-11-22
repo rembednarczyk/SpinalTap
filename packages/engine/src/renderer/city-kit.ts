@@ -91,9 +91,17 @@ const drawAtlas = (): Uint8ClampedArray | null => {
 };
 
 /**
+ * The kit's glossy swatches (`docs/zasady-lokacji.md` §15, ADR-0099 stage 6): glass and what reads as glass, the standing
+ * water of a puddle, the oil of a spill, a vitrine, a car's windows. Lit as the rest, the lamps' highlights tight on them,
+ * so beside matte concrete, rust and plaster a room has something that shines. Their alpha marks them for the shader.
+ */
+export const KIT_GLOSS: ReadonlySet<string> = new Set(["glass-dark", "glass-blue"]);
+export const GLOSS_ALPHA = 230;
+
+/**
  * The kit texture and its glow twin: palette swatches on top, the label atlas below. Alpha of
  * the colour texture tells the toon shader how to light a texel (ADR-0022): 255 lit, 128 lit
- * and tinted, 0 self-lit. The glow texture keeps only what shines.
+ * and tinted, 0 self-lit, `GLOSS_ALPHA` lit and glossy. The glow texture keeps only what shines.
  */
 const kitTextures = (data: CityKitData, labels: boolean): { color: Uint8Array; glow: Uint8Array } => {
   const { width, height, paletteHeight } = KIT_TEXTURE;
@@ -106,7 +114,7 @@ const kitTextures = (data: CityKitData, labels: boolean): { color: Uint8Array; g
     // Storefront glass fills whole walls: it blooms far less than a window or a neon tube, and
     // alpha just above 0 tells the shader to draw frames and shelving into it (ADR-0027, C1).
     const shop = s.name.startsWith("shop-");
-    const alpha = s.kind === "lit" ? 255 : s.kind === "tint" ? 128 : shop ? 40 : 0;
+    const alpha = s.kind === "lit" ? (KIT_GLOSS.has(s.name) ? GLOSS_ALPHA : 255) : s.kind === "tint" ? 128 : shop ? 40 : 0;
     const bloom = shop ? 0.25 : 1;
     const x0 = (i % data.grid) * cw;
     const y0 = Math.floor(i / data.grid) * ch;
