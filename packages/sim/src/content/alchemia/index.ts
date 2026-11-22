@@ -18,6 +18,7 @@ import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
 import { GALLERY_LIGHTS } from "./gallery-lights";
+import { EXIT_SIGNS } from "./exit-signs";
 import { unitPieces } from "./units";
 import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "./mall";
 import { frontPieces } from "./front";
@@ -60,6 +61,7 @@ export * from "./shelter";
 export * from "./car-lift";
 export { PARAPET_BEDS } from "./square";
 export * from "./mall-plan";
+export { EXIT_FLOORS, EXIT_SIGNS } from "./exit-signs";
 export { ATRIUM_COLUMN, MALL_HOLES, P1_DOORS, mallGlass, mallInsidePieces, mallOutsidePieces, mallSlabs, rectsMinus } from "./mall";
 export { CORE_GOING, coreLanes, coreRisers, coreSpan, corePieces, coreStoreys } from "./mall-cores";
 export { escalatorFlight, escalatorPieces, escalatorTread } from "./escalators";
@@ -195,6 +197,8 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...NIGHT,
   // The gallery's ceiling fittings over its strips (22.11, §13: no light from nowhere), last: drawn only.
   ...GALLERY_LIGHTS,
+  // The green exit signs over the cores' doors (22.11, §13: the way out stands out), last: drawn only.
+  ...EXIT_SIGNS,
 ];
 
 /** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
