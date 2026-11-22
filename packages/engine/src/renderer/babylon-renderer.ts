@@ -141,11 +141,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
-  private smallRoomsPart: RoomsInterior | null = null;
-  /** The old town's rooms' and Tessen's office's interior mode, lit by their practicals (§13); made on first use. */
-  private get smallRooms(): RoomsInterior {
-    return (this.smallRoomsPart ??= new RoomsInterior(this.materials));
-  }
+  /** The old town's rooms' and Tessen's office's interior mode, lit by their practicals (§13); the lamps reach the materials made in the constructor. */
+  private readonly smallRooms = new RoomsInterior({ addLight: (k, l) => this.materials.addLight(k, l), removeLight: (k) => this.materials.removeLight(k) });
   /** Tessen's W-3 hall from the inside: its baked rooms, the moving line, its lamps and the interior mode (ADR-0082 stage 2b). */
   private readonly w3: W3View;
   private readonly fx: ScreenFx;

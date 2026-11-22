@@ -3,6 +3,9 @@ import { interiorAt } from "@seki/sim";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { LIT_ROOMS, ROOM_LAMP_PREFIX, type RoomLamp, roomLampsFor } from "./room-lights";
 
+/** Where the rooms' lamps go: the toon materials' point lights, or a stand-in that reaches them later. */
+export type RoomLights = Pick<ToonMaterials, "addLight" | "removeLight">;
+
 /** The interior the eye is in holds this far past its walls, so a step in its doorway does not flicker the light. */
 const HOLD = 0.5;
 
@@ -17,7 +20,7 @@ export class RoomsInterior {
   private held: string | null = null;
   private lamps: readonly RoomLamp[] = [];
 
-  constructor(private readonly materials: ToonMaterials) {}
+  constructor(private readonly materials: RoomLights) {}
 
   /** Only the room's own lamps light it from inside (`ToonMaterials.setLightFocus`). */
   get lightScope(): string | null {
