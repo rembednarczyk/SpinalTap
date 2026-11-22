@@ -1,0 +1,1 @@
+- Schron pod T2 przy Alchemii ma drzwi pancerne z 1938 otwarte przy przejściu, maski gazowe i hełm na wieszaku, lampy naftowe na słupach, listę lokatorów w ramce, przewody w rurkach pod stropem, szkło zbitej gabloty, ślady butów w kurzu i laptop Hebi na skrzyni, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

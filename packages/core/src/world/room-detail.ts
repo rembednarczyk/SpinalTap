@@ -84,6 +84,15 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-metro-poster-a" },
   { key: "rd-metro-poster-b" },
   { key: "rd-metro-camera" },
+  // The air-raid shelter under Alchemia's T2 (docs/pomieszczenia/alchemia-shelter.md).
+  { key: "rd-shelter-door" },
+  { key: "rd-shelter-masks" },
+  { key: "rd-shelter-oil-lamp" },
+  { key: "rd-shelter-list" },
+  { key: "rd-shelter-conduit" },
+  { key: "rd-shelter-shards" },
+  { key: "rd-shelter-prints" },
+  { key: "rd-shelter-hebi" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
