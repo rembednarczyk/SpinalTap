@@ -83,6 +83,9 @@ const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
   solid,
 });
 
+/** A prop of a room drawn by a model of the room's detail (ADR-0098): its solid stays, its view goes. */
+const drawn = (p: StaticProp): StaticProp => ({ ...p, scenery: true });
+
 /**
  * Marks props as parts of an interior: `StaticProp.interior` for the minimap, and on block views
  * for the renderer, which draws them merged and without the moon shadow (ADR-0038).
@@ -166,21 +169,22 @@ const koi = (): StaticProp[] => [
   box(7, 7.3, 0, ROOM_STOREY, 4, 11),
   box(7.3, 17, CEILING, ROOM_STOREY, -6.7, 10.7),
   slab(12.15, 0.02, 2, v(9.7, 0.04, 17.4), "concrete"),
-  // Counter, shelf with its neon, stools (visual: a character can stand at one).
-  box(13.4, 14.2, 0, 1.1, -3.5, 6.5, "metal"),
-  box(16.4, 17, 0, 2.4, -3.5, 6.5, "metal"),
-  neon(16.35, 1.6, 1.5, v(0.05, 0.35, 8), "#ff2e88"),
-  ...[-2.5, -1, 0.5, 2, 5].map((z) => slab(12.8, 0.37, z, v(0.4, 0.74, 0.4), "metal")),
+  // Counter, shelf with its neon, stools (visual: a character can stand at one). Since ADR-0098 the
+  // models of `koi-detail.ts` draw them, the tables, chairs and the jukebox: their solids stay, unseen.
+  drawn(box(13.4, 14.2, 0, 1.1, -3.5, 6.5, "metal")),
+  drawn(box(16.4, 17, 0, 2.4, -3.5, 6.5, "metal")),
+  drawn(neon(16.35, 1.6, 1.5, v(0.05, 0.35, 8), "#ff2e88")),
+  ...[-2.5, -1, 0.5, 2, 5].map((z) => drawn(slab(12.8, 0.37, z, v(0.4, 0.74, 0.4), "metal"))),
   // Tables by the windows, a chair at each.
-  box(9.2, 10.1, 0, 0.75, -4.6, -3.7, "metal"),
-  box(9.2, 10.1, 0, 0.75, 6.8, 7.7, "metal"),
-  slab(10.6, 0.25, -4.15, v(0.45, 0.5, 0.45), "metal"),
-  slab(8.7, 0.25, 7.25, v(0.45, 0.5, 0.45), "metal"),
+  drawn(box(9.2, 10.1, 0, 0.75, -4.6, -3.7, "metal")),
+  drawn(box(9.2, 10.1, 0, 0.75, 6.8, 7.7, "metal")),
+  drawn(slab(10.6, 0.25, -4.15, v(0.45, 0.5, 0.45), "metal")),
+  drawn(slab(8.7, 0.25, 7.25, v(0.45, 0.5, 0.45), "metal")),
   // The stage and the jukebox.
   deck(10.5, 13, 8.6, 10.7, 0.3, 0.3, "metal"),
   neon(11.75, 2.6, 10.65, v(2.2, 0.4, 0.05), "#ff2e88", "KOI LIVE"),
-  box(15.6, 16.4, 0, 1.6, 9.9, 10.7, "metal"),
-  neon(16, 1, 9.85, v(0.6, 0.5, 0.05), "#ffb000", "JUKE"),
+  drawn(box(15.6, 16.4, 0, 1.6, 9.9, 10.7, "metal")),
+  drawn(neon(16, 1, 9.85, v(0.6, 0.5, 0.05), "#ffb000", "JUKE")),
 ];
 
 /** Signs on the street: over the clinic's door and over the bar's, facing the deptak. */

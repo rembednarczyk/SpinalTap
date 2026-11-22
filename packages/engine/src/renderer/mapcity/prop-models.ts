@@ -86,6 +86,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   "site-scaffold": () => plain(siteModel("site-scaffold", siteScaffoldVariant({ length: 8, height: 10, rise: 0, banner: 0 }), "high")),
   // ADR-0096: the city bakes the odds and ends only as models of `extra-props.glb` (`clutter-models.ts`); this is the gallery's stand-in.
   clutter: (s) => plain(clutterStandIn(s)),
+  // ADR-0098: the rooms' detail is only its models of `room-detail-props.glb` (`room-detail-models.ts`); the gallery's stand-in.
+  "room-detail": (s) => plain(clutterStandIn(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

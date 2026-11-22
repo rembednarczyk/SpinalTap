@@ -1,3 +1,4 @@
+import { KOI_DETAIL } from "./koi-detail";
 import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
@@ -204,6 +205,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: C7_PROPS }, at: { x: 0, y: 0, z: 0 } },
   // The game's machines, benches and planters in the front's arcades, its units' models and sellers, the café's and the bar's people (ADR-0093 O5), last.
   { chunk: ALCHEMIA_CHUNK, view: { kind: "street-props", items: FRONT_ROOM_MODELS }, at: { x: 0, y: 0, z: 0 } },
+  // The rooms' detail built by Blender after their cards (ADR-0098): Neon Koi's, last so every id above stays.
+  { chunk: mapChunkOf(KOI_DETAIL[0]!.x, KOI_DETAIL[0]!.z), view: { kind: "street-props", items: KOI_DETAIL }, at: { x: 0, y: 0, z: 0 } },
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */

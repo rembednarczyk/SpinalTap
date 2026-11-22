@@ -29,5 +29,5 @@ Drobiazg:
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- prop: vehicle × 10
+- prop: vehicle, rysunek osobno × 10
 <!-- inwentarz-gry:end -->

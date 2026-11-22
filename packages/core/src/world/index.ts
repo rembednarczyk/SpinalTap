@@ -12,5 +12,6 @@ export * from "./trees";
 export * from "./barriers";
 export * from "./sites";
 export * from "./clutter";
+export * from "./room-detail";
 export * from "./step-norm";
 export * from "./vehicle-spec";

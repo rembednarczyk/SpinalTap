@@ -317,7 +317,7 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
       if (b.shop.state !== "shut") expect(b.traces.length, b.shop.id).toBeGreaterThan(0);
     }
     // The models in the last view of the scenery.
-    expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: FRONT_ROOM_MODELS });
+    expect(WORLD_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: FRONT_ROOM_MODELS });
   });
 
   it("names the storeys the gallery in the HUD and puts their still crowd on their floors, in reach", () => {

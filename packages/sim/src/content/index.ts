@@ -9,6 +9,7 @@ export * from "./schedules";
 export * from "./devices";
 export * from "./doors";
 export * from "./interiors";
+export * from "./koi-detail";
 export * from "./interior-areas";
 export * from "./capsule-room";
 export * from "./alchemia";

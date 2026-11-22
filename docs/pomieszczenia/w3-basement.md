@@ -28,7 +28,8 @@ Drobiazg:
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- prop: blok (concrete) × 7
+- prop: blok (concrete), rysunek osobno × 7
 - prop: blok (concrete, pochyły) × 3
-- prop: blok (metal) × 7
+- prop: blok (metal) × 3
+- prop: blok (metal), rysunek osobno × 4
 <!-- inwentarz-gry:end -->

@@ -15,6 +15,7 @@ import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { bakeFigure } from "./figure-models";
 import { bakeClutter } from "./clutter-models";
+import { bakeRoomDetail } from "./room-detail-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
 import { chainModel, farModel, nearModel } from "./prop-models";
@@ -135,6 +136,8 @@ const bakePiece = (deps: Pick<PropBakeDeps, "quality" | "poles">, sink: MeshSink
   else if (p.prop === "figure") bakeFigure(sink, poles.props, p, deps.quality);
   // The odds and ends of ADR-0096: models of `extra-props.glb` only.
   else if (p.prop === "clutter") bakeClutter(sink, poles.props, p, deps.quality);
+  // The rooms' detail of ADR-0098: models of `room-detail-props.glb` only.
+  else if (p.prop === "room-detail") bakeRoomDetail(sink, poles.props, p);
   else if (!(models && bakeStreetModel(sink, models, p))) {
     bake(sink, nearModel(p.prop, p.shape, deps.quality), p);
     for (const c of p.chains ?? []) bake(sink, chainModel(c.end, deps.quality), { ...p, yaw: c.yaw });

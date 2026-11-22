@@ -111,7 +111,7 @@ describe("the deptak's stalls dressed (ADR-0074 C7)", () => {
     const prisms = DEPTAK_SOLID_PROPS.reduce((n, p) => n + (p.prisms?.length ?? 0), 0);
     expect(prisms).toBeGreaterThanOrEqual(SOLIDS.length);
     // Before the front's rooms' models (ADR-0093 O5), the last.
-    expect(WORLD_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: C7_PROPS });
+    expect(WORLD_SCENERY.at(-3)!.view).toEqual({ kind: "street-props", items: C7_PROPS });
   });
 
   it("stands a customer of the crowd before each kiosk's window and each vegetable stall's counter, facing it", () => {
