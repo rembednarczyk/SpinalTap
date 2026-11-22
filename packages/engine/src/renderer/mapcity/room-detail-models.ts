@@ -1,4 +1,5 @@
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
+import type { RenderQuality } from "../../npr/quality";
 import { type CityProps, addPropToSink } from "../city-props";
 import type { MeshSink } from "../mesh-sink";
 import { pieceXform } from "./market-models";
@@ -9,10 +10,12 @@ import type { WorldProp } from "./prop-batch";
  * `room-detail-props.glb` its shape names (`ROOM_DETAIL_SHAPES`), built by Blender after the room's card
  * (`docs/pomieszczenia/`), baked into the street furniture's block mesh like the other props: vertices,
  * not draw calls. Nothing before the file loads; the room's solids (the simulation's blocks) stay
- * without a view. On every quality: the furniture of a room is what a walker meets.
+ * without a view. On every quality the furniture of a room, what a walker meets; its small detail (`fine`) not on
+ * the phones, as the fine decals and most clutter (W-3's budget on a phone, `npr-perf`).
  */
-export const bakeRoomDetail = (sink: MeshSink, props: CityProps | null, p: WorldProp): void => {
-  const key = ROOM_DETAIL_SHAPES[p.shape]?.key;
-  const model = key && props ? props.models.get(key) : undefined;
+export const bakeRoomDetail = (sink: MeshSink, props: CityProps | null, p: WorldProp, quality: RenderQuality): void => {
+  const shape = ROOM_DETAIL_SHAPES[p.shape];
+  if (!shape || (quality === "low" && shape.fine)) return;
+  const model = props ? props.models.get(shape.key) : undefined;
   if (model) addPropToSink(sink, props!, model, pieceXform(p));
 };

@@ -17,18 +17,16 @@ def _pallet_base(m, w, d):
     """A wooden pallet (w along x, d along z): three runners under deck boards."""
     for z in (-d / 2 + 0.05, 0.0, d / 2 - 0.05):
         m.box(-w / 2, w / 2, 0.0, 0.1, z - 0.05, z + 0.05, 'fabric-amber')
-    k = 0
-    x = -w / 2
-    while x < w / 2 - 0.01:
-        m.box(x + 0.01, min(w / 2, x + 0.14) - 0.01, 0.1, 0.13, -d / 2, d / 2, 'fabric-amber')
-        x += 0.2
-        k += 1
+    # The deck boards, five across (the phones carry every pallet: it draws a solid).
+    for k in range(5):
+        x = -w / 2 + k * (w - 0.14) / 4
+        m.box(x, x + 0.14, 0.1, 0.13, -d / 2, d / 2, 'fabric-amber')
 
 
 def pallet(variant, key):
     """A pallet of the line's parts (2.4 x 1.4 x 1.2, the solid's box): on a wooden pallet, crates of rotor arms in two
-    layers with their stencilled bands and labels, or sacks of resin granulate and a coil of cable; wrapped in film up to
-    its top layer."""
+    layers with their stencilled bands, or two layers of sacks of resin granulate and a coil of cable; wrapped in film up
+    to its top layer. Light (the phones draw it: it stands for a solid the hall's mesh leaves out)."""
     m = Model(key)
     w, d, h = 2.4, 1.2, 1.4
     _pallet_base(m, w, d)
@@ -42,13 +40,12 @@ def pallet(variant, key):
                     top = y0 + 0.6 - (0.0 if layer == 0 or hashf(i, j) > 0.3 else 0.6)
                     if top <= y0:
                         continue
-                    m.box(x0, x0 + 0.76, y0, top, z0, z0 + 0.56, 'trim', bevel=0.012)
+                    m.box(x0, x0 + 0.76, y0, top, z0, z0 + 0.56, 'trim')
                     m.box(x0 + 0.02, x0 + 0.74, y0 + 0.2, y0 + 0.26, z0 + 0.56, z0 + 0.565, 'neon-amber')
-                    m.box(x0 + 0.5, x0 + 0.7, y0 + 0.35, y0 + 0.47, z0 + 0.56, z0 + 0.566, 'win-white')
         # The film round the bottom layer.
         m.box(-w / 2 - 0.005, w / 2 + 0.005, 0.15, 0.7, -d / 2 - 0.005, d / 2 + 0.005, 'glass-blue')
     else:
-        for layer in range(3):
+        for layer in range(2):
             y0 = 0.13 + layer * 0.24
             for i in range(4):
                 for j in range(2):
@@ -56,11 +53,12 @@ def pallet(variant, key):
                     z0 = -d / 2 + 0.03 + j * 0.57
                     if x0 + 0.55 > w / 2:
                         continue
-                    m.box(x0, x0 + 0.55, y0, y0 + 0.22, z0, z0 + 0.54, 'trim-light', bevel=0.06)
-                    m.box(x0 + 0.1, x0 + 0.45, y0 + 0.08, y0 + 0.14, z0 + 0.54, z0 + 0.545, 'neon-red')
+                    m.box(x0, x0 + 0.55, y0, y0 + 0.22, z0, z0 + 0.54, 'trim-light')
+                    if j == 1:
+                        m.box(x0 + 0.1, x0 + 0.45, y0 + 0.08, y0 + 0.14, z0 + 0.54, z0 + 0.545, 'neon-red')
         # A coil of cable on top.
         m.lathe(0.4, 0.0, [(0.3, 0.0), (0.32, 0.03), (0.32, 0.17), (0.3, 0.2), (0.15, 0.2), (0.13, 0.17), (0.13, 0.03), (0.15, 0.0)],
-                'cable', seg=16, y0=0.85)
+                'cable', seg=12, y0=0.61)
     return m
 
 
