@@ -40,7 +40,7 @@ Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dzi
 Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §12 zgodne z wyjątkiem: obrys szkła z planszy (1 z 4 wymiarów na siatce, odstępstwo z §1). Instalacje pod stropem są. Wejście schodami ruchomymi z atrium otwiera się na halę.
 - §13 częściowo: lampiony i kuchnie jako źródła (PR #909); kontrast funkcjonalny: lady ludzi z zadań (Fumiko, Kenta, Goro, Oyaji, Sachiko) pod bielszą i jaśniejszą lampą nad samą ladą (`#ffe4c2`, 1,7 wobec 1,0 kuchni), test `functional-contrast.test.ts`. Dług: 60-30-10 do zmierzenia zrzutem.
-- §14 dług: 27 z 59 rzeczy drobiazgu luzem (46%), cel do 25%. Luzem stoją pojedyncze kubki, miski i czarki na stołach i kartki na podłodze; para kuchni i ekrany menu nie liczą się do drobiazgu. Zebrać w skupiska przy ladach i stołach.
+- §14 zgodne: 161 ze 165 rzeczy drobiazgu w 23 skupiskach, 4 luzem (2%, ulotki na podłodze). Na każdym stole przyprawnik (sos sojowy, shichimi, wykałaczki, pałeczki), przy posiłkach serwetki, paragon i szklanka; na ladzie każdej kuchni i u Sachiko i Oyajiego kasa (terminal, szpikulec z bonami, słoik napiwków, długopis) przy kubku, przy stosie misek pałeczki, chochla w dzbanku i butelki z sosami (Blender, `rd-fh-condiments`, `rd-fh-leftovers`, `rd-fh-till`, `rd-fh-prep`).
 - §15 dług: brak połysku i wilgoci poza wodą. Mokra posadzka przy zmywakach, lakier na ladach.
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.
 - §17 do sprawdzenia: dźwięk kuchni i klimatyzacji ze źródła; ruch jest (para, ludzie).
@@ -49,16 +49,20 @@ Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
 - blender: rd-fh-bowls × 6
+- blender: rd-fh-condiments × 7
 - blender: rd-fh-cup × 1
 - blender: rd-fh-donburi × 3
 - blender: rd-fh-gas × 12
 - blender: rd-fh-lantern × 15
 - blender: rd-fh-lantern-small × 32
+- blender: rd-fh-leftovers × 6
 - blender: rd-fh-pot × 11
+- blender: rd-fh-prep × 6
 - blender: rd-fh-ramen × 2
 - blender: rd-fh-spilled × 1
 - blender: rd-fh-stool × 1
 - blender: rd-fh-teacup × 9
+- blender: rd-fh-till × 9
 - model: vending-machine × 2
 - model: waste-bin × 2
 - piece: bench × 19
@@ -94,7 +98,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 903 m², wysokość 3,9 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 234
-- warstwy wyposażenia: makro 50, mezo 203, mikro 59
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 32 rzeczy w nich, 27 luzem
+- warstwy wyposażenia: makro 50, mezo 203, mikro 165
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 23 skupisk, 161 rzeczy w nich, 4 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 62
 <!-- inwentarz-gry:end -->

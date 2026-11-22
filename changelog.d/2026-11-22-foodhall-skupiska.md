@@ -1,0 +1,1 @@
+- Food hall Alchemii: na stołach przyprawniki, przy zostawionych posiłkach serwetki, paragony i szklanki, a na ladach kuchni kasy z terminalem, bonami i słoikiem napiwków oraz pałeczki, chochle i butelki z sosami przy stosach misek (zasady lokacji §14, drobiazg w skupiskach).

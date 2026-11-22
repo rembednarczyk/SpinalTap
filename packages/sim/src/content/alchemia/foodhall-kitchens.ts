@@ -40,7 +40,7 @@ const frame = (q: UnitDef) => {
  * model's key and the box it stands in (`foodhall-detail.ts` stands the model on the box's foot, in its middle).
  */
 export interface KitchenRound {
-  readonly key: "rd-fh-pot" | "rd-fh-bowls" | "rd-fh-teacup" | "rd-fh-gas";
+  readonly key: "rd-fh-pot" | "rd-fh-bowls" | "rd-fh-teacup" | "rd-fh-gas" | "rd-fh-till" | "rd-fh-prep";
   readonly box: Piece["box"];
 }
 
@@ -68,6 +68,9 @@ const kitchen = (q: UnitDef): { readonly pieces: Piece[]; readonly round: Kitche
     { key: "rd-fh-gas", box: put(w - 0.65, w - 0.35, line - 0.4, line - 0.1, -0.05, 0.9, "machine").box },
     { key: "rd-fh-gas", box: put(w - 1.0, w - 0.7, line - 0.4, line - 0.1, -0.05, 0.9, "machine").box },
     { key: "rd-fh-teacup", box: put(w - 1.55, w - 1.47, 0.35, 0.43, 1.0, 1.11, "cup").box },
+    // The till by the cup on the counter, the chopsticks, ladle and sauces by the bowls (§14's clusters, 22.11).
+    { key: "rd-fh-till", box: put(w - 1.4, w - 1.06, 0.31, 0.47, 1.0, 1.2, "cup").box },
+    { key: "rd-fh-prep", box: put(w - 1.05, w - 0.69, line + 0.15, line + 0.45, 0.9, 1.2, "cup").box },
   ];
   const out: Piece[] = [
     // The line along the back, solid to the hip.
@@ -162,5 +165,14 @@ const keeperCup = (q: UnitDef): KitchenRound => {
   return { key: "rd-fh-teacup", box: b };
 };
 
+/** Sachiko's and Oyaji's tills on their counters beside their cups (§14's clusters, 22.11). */
+const keeperTill = (q: UnitDef): KitchenRound => {
+  const { put } = frame(q);
+  const b = q.id === "sachiko" ? put(0.74, 1.1, 0.26, 0.42, 1.0, 1.2, "cup").box : box(q.rect.minX + 2.45, q.rect.minX + 2.81, q.rect.maxZ - 0.54, q.rect.maxZ - 0.38, F + 1.1, F + 1.3);
+  return { key: "rd-fh-till", box: b };
+};
+
 /** The units' round things for the rooms' detail (`foodhall-detail.ts`), in `ALCHEMIA_UNITS`' order: none behind a shutter. */
-export const KITCHEN_ROUND: readonly KitchenRound[] = ALCHEMIA_UNITS.flatMap((u) => (u.shut ? [] : u.id === "sachiko" || u.id === "oyaji" ? [keeperCup(u)] : kitchen(u).round));
+export const KITCHEN_ROUND: readonly KitchenRound[] = ALCHEMIA_UNITS.flatMap((u) =>
+  u.shut ? [] : u.id === "sachiko" || u.id === "oyaji" ? [keeperCup(u), keeperTill(u)] : kitchen(u).round,
+);

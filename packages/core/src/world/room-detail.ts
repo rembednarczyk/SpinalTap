@@ -186,6 +186,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-c-fusebox", fine: true, services: true },
   { key: "rd-c-drain", fine: true, services: true },
   { key: "rd-c-puddle", fine: true, clutter: 0 },
+  // The food hall's clutter clusters (§14, 22.11): the tables' condiments and leftovers, the kitchens' tills and prep.
+  { key: "rd-fh-condiments", clutter: 4 },
+  { key: "rd-fh-leftovers", clutter: 3 },
+  { key: "rd-fh-till", clutter: 4 },
+  { key: "rd-fh-prep", clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
