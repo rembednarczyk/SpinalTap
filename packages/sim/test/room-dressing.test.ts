@@ -32,7 +32,8 @@ describe("the rooms' dressing generator (ADR-0099) on the platforms", () => {
       for (const p of dressed) {
         const k = `${layout.id} ${key(p.variant)} ${p.x.toFixed(2)},${p.z.toFixed(2)}`;
         expect(inRect(p.x, p.z, layout.bounds), k).toBe(true);
-        expect(layout.clear.some((r) => inRect(p.x, p.z, r)), k).toBe(false);
+        // What is kept clear is the floor: an exit sign hangs over a way out by design.
+        if (key(p.variant) !== "rd-w3h-exit") expect(layout.clear.some((r) => inRect(p.x, p.z, r)), k).toBe(false);
         const onTop = p.y > layout.floor + 0.2;
         if (onTop) expect(layout.surfaces.some((s) => inRect(p.x, p.z, s) && Math.abs(s.top - p.y) < 1e-6), k).toBe(true);
         else expect(layout.taken.filter((t) => !t.onTop).some((t) => inRect(p.x, p.z, t)), k).toBe(false);
@@ -85,7 +86,7 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
   it("gives the shelter its whole kit, the Hebi's bottles and cup on his crate by his laptop", () => {
     for (const e of ROOM_KITS.shelter) expect(SHELTER_DRESSING.filter((p) => key(p.variant) === e.key).length, e.key).toBeGreaterThanOrEqual(e.count[0]);
     const laptop = SHELTER_LAYOUT.taken.find((t) => t.key === "rd-shelter-hebi")!;
-    for (const p of SHELTER_DRESSING.filter((d) => d.y > SHELTER_LAYOUT.floor + 0.5)) {
+    for (const p of SHELTER_DRESSING.filter((d) => d.y > SHELTER_LAYOUT.floor + 0.5 && key(d.variant) !== "rd-w3h-exit")) {
       expect(inRect(p.x, p.z, SHELTER_LAYOUT.surfaces[0]!), key(p.variant)).toBe(true);
       expect(Math.hypot(p.x - (laptop.minX + laptop.maxX) / 2, p.z - (laptop.minZ + laptop.maxZ) / 2), key(p.variant)).toBeLessThanOrEqual(1.2);
     }
@@ -99,6 +100,16 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
       for (const e of ROOM_KITS[layout.kind].filter((k) => k.anchor === "floor-free")) expect(dressed.some((p) => key(p.variant) === e.key), layout.id).toBe(false);
   });
   const near = (x: number, z: number, r: GroundRect, d: number) => Math.hypot(x - Math.min(r.maxX, Math.max(r.minX, x)), z - Math.min(r.maxZ, Math.max(r.minZ, z))) <= d;
+  it("hangs an exit sign over the ways out, on their walls, short of the ceiling", () => {
+    for (const { layout, dressed } of rooms)
+      for (const p of dressed.filter((d) => key(d.variant) === "rd-w3h-exit")) {
+        const k = `${layout.id} ${p.x.toFixed(2)},${p.z.toFixed(2)}`;
+        expect((layout.doors ?? []).some((d) => near(p.x, p.z, d, 0.3)), k).toBe(true);
+        expect(p.y - layout.floor, k).toBeGreaterThan(1.8);
+        if (layout.ceiling !== undefined) expect(p.y - layout.floor + 0.35, k).toBeLessThanOrEqual(layout.ceiling);
+      }
+    for (const d of [P2_TUNNEL_DRESSING, SHELTER_DRESSING, P1_DRESSING]) expect(d.filter((p) => key(p.variant) === "rd-w3h-exit").length).toBeGreaterThanOrEqual(2);
+  });
 
   it("stands each kit's things in their room, out of the clear and the taken, each within its kit's count", () => {
     for (const { layout, dressed } of rooms) {
@@ -107,7 +118,8 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
       for (const p of dressed) {
         const k = `${layout.id} ${key(p.variant)} ${p.x.toFixed(2)},${p.z.toFixed(2)}`;
         expect(inRect(p.x, p.z, layout.bounds), k).toBe(true);
-        expect(layout.clear.some((r) => inRect(p.x, p.z, r)), k).toBe(false);
+        // What is kept clear is the floor: an exit sign hangs over a way out by design.
+        if (key(p.variant) !== "rd-w3h-exit") expect(layout.clear.some((r) => inRect(p.x, p.z, r)), k).toBe(false);
         expect(layout.taken.some((t) => (p.y > layout.floor + 0.5) === (t.onTop === true) && inRect(p.x, p.z, t)), k).toBe(false);
       }
     }

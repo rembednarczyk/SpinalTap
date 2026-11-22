@@ -6,9 +6,9 @@
 
 /**
  * Where a shape stands (ADR-0099 §1): on the floor with its back to a wall, on a surface's top (a bench, a counter,
- * a table), on a wall at a height, or on the floor out of the ways.
+ * a table), on a wall at a height, on the floor out of the ways, or on the wall over a way out (an exit sign).
  */
-export type RoomAnchor = "floor-wall" | "surface-top" | "wall" | "floor-free";
+export type RoomAnchor = "floor-wall" | "surface-top" | "wall" | "floor-free" | "over-door";
 
 /** Its part in the room (§14): the thing a cluster gathers round, or the small things of the cluster. */
 export type RoomRole = "hero" | "clutter";
@@ -67,6 +67,7 @@ const SERVICE_CORRIDOR: readonly KitEntry[] = [
   { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 2], near: ["rd-c-cartons"] },
   { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-c-cartons"] },
   { key: "rd-c-cable", anchor: "floor-wall", role: "clutter", along: 0.42, out: 0.3, count: [1, 1], near: ["rd-c-fusebox"] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3] },
 ];
 
 /**
@@ -113,6 +114,7 @@ const SHELTER: readonly KitEntry[] = [
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
   { key: "rd-c-bottles", anchor: "surface-top", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-shelter-hebi"] },
   { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-shelter-hebi"] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 2] },
 ];
 /**
  * A car park's deck (Alchemia's P-1, `docs/pomieszczenia/alchemia-parking.md`; the street's faction, §16): the fire kit by
@@ -127,6 +129,7 @@ const CAR_PARK: readonly KitEntry[] = [
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
   { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-c-cartons"] },
   { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-cartons"] },
+  { key: "rd-w3h-exit", anchor: "over-door", role: "hero", along: 0.4, out: 0.08, count: [2, 3] },
 ];
 /**
  * A factory's assembly hall (Tessen's W-3, `docs/pomieszczenia/w3-hall.md`; technique's faction under a corporation, §16:

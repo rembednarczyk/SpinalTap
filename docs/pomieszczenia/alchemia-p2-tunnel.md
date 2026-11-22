@@ -41,12 +41,13 @@ Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - blender: rd-c-fusebox × 1
 - blender: rd-c-hydrant × 1
 - blender: rd-c-puddle × 1
+- blender: rd-w3h-exit × 2
 
 Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 241 m², wysokość 2,3 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 4
-- warstwy wyposażenia: makro 0, mezo 4, mikro 7
+- warstwy wyposażenia: makro 0, mezo 6, mikro 7
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 6 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

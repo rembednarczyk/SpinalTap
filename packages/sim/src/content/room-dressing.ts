@@ -49,8 +49,14 @@ export interface RoomLayout {
   /** Kept clear: nothing stands there (doors, a stairs' foot, ways, an edge). */
   readonly clear: readonly GroundRect[];
   readonly taken: readonly DressTaken[];
-  /** The room's doors and openings: what a kit's `by` stands near (`weather`: the rain and the wind come in there). */
-  readonly doors?: readonly (GroundRect & { readonly weather?: true })[];
+  /**
+   * The room's doors and openings, each a strip on the floor against its wall: what a kit's `by` stands near (`weather`:
+   * the rain and the wind come in there), what an exit sign hangs over (`top` the opening's height, `inward` into the room
+   * when the strip lies inside it, not on its outline).
+   */
+  readonly doors?: readonly (GroundRect & { readonly weather?: true; readonly top?: number; readonly inward?: { readonly x: number; readonly z: number } })[];
+  /** The ceiling's underside over the floor: an exit sign hangs short of it. */
+  readonly ceiling?: number;
   /** Where a `floor-free` thing may stand, out of the ways: an empty bay, a corner. Without it, nowhere. */
   readonly open?: readonly GroundRect[];
 }
@@ -116,10 +122,30 @@ const freeSpots = (r: GroundRect, e: KitEntry, floor: number): Spot[] => {
   return out;
 };
 
+/** An opening's top over the floor when the layout does not give it, and a sign's height with its hangers. */
+const DOOR_TOP = 2.1;
+const SIGN_H = 0.4;
+
+/** The spot over each of the room's ways out, on the wall it is in: an exit sign's, its face to the room. */
+const overDoorSpots = (room: RoomLayout, e: KitEntry): Spot[] =>
+  (room.doors ?? []).map((d) => {
+    const b = room.bounds;
+    // The strip is thin across its wall: the wall runs along x when the strip is shallower in z.
+    const alongX = d.maxZ - d.minZ < d.maxX - d.minX;
+    const into = d.inward ?? (alongX ? { x: 0, z: Math.abs(d.maxZ - b.maxZ) < Math.abs(d.minZ - b.minZ) ? -1 : 1 } : { x: Math.abs(d.maxX - b.maxX) < Math.abs(d.minX - b.minX) ? -1 : 1, z: 0 });
+    // The wall's face is the strip's side away from the room.
+    const face = alongX ? { x: (d.minX + d.maxX) / 2, z: into.z < 0 ? d.maxZ : d.minZ } : { x: into.x < 0 ? d.maxX : d.minX, z: (d.minZ + d.maxZ) / 2 };
+    const up = Math.min((d.top ?? DOOR_TOP) + 0.1, (room.ceiling ?? Infinity) - SIGN_H);
+    const off = e.out / 2 + 0.02;
+    const [hx, hz] = alongX ? [e.along / 2, e.out / 2] : [e.out / 2, e.along / 2];
+    return { x: face.x + into.x * off, z: face.z + into.z * off, y: room.floor + up, yaw: Math.atan2(into.x, into.z), hx, hz, onTop: true };
+  });
+
 /** The spots of a kit entry's anchor in the room. */
 const spotsOf = (room: RoomLayout, e: KitEntry): Spot[] => {
   if (e.anchor === "surface-top") return room.surfaces.flatMap((s) => topSpots(s, e));
   if (e.anchor === "floor-free") return (room.open ?? []).flatMap((r) => freeSpots(r, e, room.floor));
+  if (e.anchor === "over-door") return overDoorSpots(room, e);
   return room.walls.flatMap((w) => wallSpots(w, e, room.floor));
 };
 
