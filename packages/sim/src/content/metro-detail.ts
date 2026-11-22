@@ -2,6 +2,7 @@ import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { METRO_PLATFORMS } from "./metro";
 import { inwardYaw, spotFrame } from "./metro-pavilion";
 import { FLIGHT, PLATFORM, type PlatformDef } from "./metro-platform";
+import { type DressTaken, type RoomLayout, dressRoom } from "./room-dressing";
 
 /*
  * The metro's platforms' detail after their cards (`docs/pomieszczenia/metro-*.md`, ADR-0098): the models Blender builds
@@ -38,5 +39,53 @@ const detail = (p: PlatformDef, index: number): StreetPropItem[] => {
   ];
 };
 
-/** Each platform's detail, in the order of `METRO_PLATFORMS`. */
-export const METRO_DETAIL: readonly (readonly StreetPropItem[])[] = METRO_PLATFORMS.map((e, i) => detail(e.platform, i));
+/** The safety strip and the screen doors along the platform's edge: nothing stands this near it. */
+const EDGE_CLEAR = 1.0;
+/** Kept clear before the stairs' foot and at the platform's ends (the end walls' doorways). */
+const STAIRS_CLEAR = 3.5;
+const END_CLEAR = 1.5;
+
+/**
+ * A platform as a room for the dressing generator (ADR-0099): its back wall, its benches' tops, its stairs' foot,
+ * ends, edge and ticket machine kept clear, the benches and the things placed by hand (`detail`) taken.
+ */
+export const platformLayout = (p: PlatformDef, id: string, hand: readonly StreetPropItem[]): RoomLayout => {
+  const { point, rect } = spotFrame(p.spot);
+  const o = point(0, 0);
+  const i = point(1, 0);
+  const inward = { x: i.x - o.x, z: i.z - o.z };
+  const half = FLIGHT.width / 2;
+  const yaw = inwardYaw(p.spot, 1);
+  const m = p.machine;
+  const ms = Math.max(p.machineSize.x, p.machineSize.z) / 2 + 1;
+  // The things placed by hand on the floor (the validator, the bin) and on the first bench (the litter): taken, the
+  // bin a hero the butts gather round.
+  const handTaken = hand
+    .filter((h) => h.y < p.floor + PLATFORM.ceiling - 1)
+    .map((h): DressTaken => {
+      const onTop = h.y > p.floor + 0.2;
+      const r = onTop ? 0.45 : 0.35;
+      return { minX: h.x - r, maxX: h.x + r, minZ: h.z - r, maxZ: h.z + r, key: h.prop === "waste-bin" ? "waste-bin" : undefined, onTop };
+    });
+  return {
+    id,
+    kind: "platform",
+    floor: p.floor,
+    bounds: rect(p.u.back, p.u.edge - EDGE_CLEAR, p.w0, p.w1),
+    walls: [{ a: point(p.u.back, p.w0 + 0.3), b: point(p.u.back, p.w1 - 0.3), inward }],
+    surfaces: p.benches.map((w) => ({ ...rect(p.u.back + 0.05, p.u.back + 0.45, w - 0.95, w + 0.95), top: p.floor + 0.45, yaw })),
+    clear: [
+      rect(p.u.back, p.u.back + STAIRS_CLEAR, -half - 1, half + 1),
+      rect(p.u.back, p.u.edge, p.w0, p.w0 + END_CLEAR),
+      rect(p.u.back, p.u.edge, p.w1 - END_CLEAR, p.w1),
+      { minX: m.x - ms, maxX: m.x + ms, minZ: m.z - ms, maxZ: m.z + ms },
+    ],
+    taken: [...p.benches.map((w) => rect(p.u.back, p.u.back + 0.5, w - 1, w + 1)), ...handTaken],
+  };
+};
+
+/** Each platform's detail, in the order of `METRO_PLATFORMS`: placed by hand, then dressed by its kit (ADR-0099). */
+export const METRO_DETAIL: readonly (readonly StreetPropItem[])[] = METRO_PLATFORMS.map((e, i) => {
+  const hand = detail(e.platform, i);
+  return [...hand, ...dressRoom(platformLayout(e.platform, `metro-${e.station}`, hand))];
+});
