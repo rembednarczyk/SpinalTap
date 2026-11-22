@@ -1,0 +1,1 @@
+- Piwnica pod halą W-3 ma rury pod stropem, zespół pompowy z filtrem, skrzynkę elektryczną z lampą awaryjną, żarówki w koszyczkach, poręcze schodów i cegłę spod tynku, a przepust ma odchyloną kratę z kłódką, wodę z mułem i skrytkę szmuglerów ze znakiem kredą. Wszystko zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

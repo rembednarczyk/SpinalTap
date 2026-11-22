@@ -52,8 +52,8 @@ describe("the capsule room's detail (ADR-0098)", () => {
     }
   });
 
-  it("is the last of the rooms' detail's views, the scenery's last", () => {
+  it("follows the Old Town's rooms in the rooms' detail's views, at the scenery's end", () => {
     expect(WORLD_SCENERY.slice(-ROOM_DETAIL_SCENERY.length)).toEqual(ROOM_DETAIL_SCENERY);
-    expect(ROOM_DETAIL_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: CAPSULE_DETAIL });
+    expect(ROOM_DETAIL_SCENERY.at(-2)!.view).toEqual({ kind: "street-props", items: CAPSULE_DETAIL });
   });
 });
