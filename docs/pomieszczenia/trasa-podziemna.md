@@ -31,6 +31,15 @@ Drobiazg:
 - monety w futerale (zrobione: `rd-trasa-stage`), puszki i butelki przy posłaniu (zrobione: `rd-trasa-bedding`);
 - torba w lochu (skrytka gry, osobny widok), niedopałki, naklejki na ścianach (do zrobienia).
 
+## Frakcja i zasady
+Frakcja: ulica (gangi w starych piwnicach); druga: historia (muzeum).
+- §12 zgodne: ciasne przejścia i wyższa sala (7,6 m), 3 z 8 wymiarów na siatce (stare piwnice, §1).
+- §13 zgodne co do źródeł (7 widocznych: lampy muzealne, LED-y na kablach). Dług: drogi wyjścia w barwie nawigacji.
+- §14 dług: mikro 0. Skupiska przy obozowisku gangu i przy tablicach.
+- §15 częściowo: wilgotne ściany w opisie; do sprawdzenia połysk w grze.
+- §16 zgodne.
+- §17 do sprawdzenia: kapanie i echo.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -48,4 +57,12 @@ Drobiazg:
 - prop: blok (metal) × 1
 - prop: blok (metal), rysunek osobno × 2
 - prop: neon × 6
+
+Pomiary zasad (§12–§16):
+- rzut: 4 prostokąty, 104 m², wysokość 3,6 / 7,6 / 2,7 m
+- siatka 0,5 m: 3 z 8 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 7
+- warstwy wyposażenia: makro 11, mezo 15, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 7
 <!-- inwentarz-gry:end -->

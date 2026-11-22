@@ -30,6 +30,15 @@ Drobiazg:
 - paprotka w doniczce (zrobione: `rd-tessen-bench`);
 - tablica korkowa z grafikiem dyżurów pisanym ręcznie, zdjęcie z otwarcia zakładu, karteczki na pinezkach (zrobione: `rd-tessen-board`).
 
+## Frakcja i zasady
+Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
+- §12 dług: 0 z 2 wymiarów na siatce. Korporacja: symetria biurek i lady przepustek do sprawdzenia.
+- §13 częściowo: 1 widoczne źródło w bryłach; świetlówki i monitory powiązać z oprawami. Drzwi do hali wyróżnione czerwoną lampką: zgodne.
+- §14 zgodne co do sterylności (korporacja, §16); kubki w koszu i paprotka jako jedyne skupisko.
+- §15 dług: czarne szkło i szczotkowana stal lady.
+- §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
+- §17 do sprawdzenia: szum pomp zza ściany.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -39,4 +48,12 @@ Drobiazg:
 - blender: rd-tessen-desk × 1
 - blender: rd-tessen-lights × 1
 - prop: blok (metal), rysunek osobno × 3
+
+Pomiary zasad (§12–§16):
+- rzut: 1 prostokąt, 88 m², wysokość 4,0 m
+- siatka 0,5 m: 0 z 2 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1
+- warstwy wyposażenia: makro 2, mezo 5, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->

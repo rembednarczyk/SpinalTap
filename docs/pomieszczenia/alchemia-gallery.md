@@ -26,6 +26,15 @@ Drobiazg:
 - towar na półkach według branż (Blender, kilka kształtów na branżę);
 - kubki, kartony, paragony, kable, laptop z błędem (Blender).
 
+## Frakcja i zasady
+Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
+- §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy, tunel i poziomy garażu wydzielić jako osobne wnętrza (polecenie 22.11, pierwsza pozycja kolejki).
+- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
+- §14 zgodne na towarze (3472 z 3557 drobiazgu w skupiskach), dług: zaplecza sklepów i pasaże bez śladów obecności poza lokalami.
+- §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
+- §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
+- §17 do sprawdzenia: szum schodów ruchomych i muzyka sklepów ze źródła.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -83,4 +92,12 @@ Drobiazg:
 - piece: vitrine × 31
 - piece: wall × 32
 - piece: water × 1
+
+Pomiary zasad (§12–§16):
+- rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
+- siatka 0,5 m: 5 z 38 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1242
+- warstwy wyposażenia: makro 1005, mezo 3745, mikro 3557
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 129 skupisk, 3472 rzeczy w nich, 85 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 673
 <!-- inwentarz-gry:end -->

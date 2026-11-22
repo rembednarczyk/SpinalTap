@@ -99,3 +99,54 @@ Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym
 - Detal z inwentarza budujemy w Blenderze bez okna, skryptem w repozytorium: model jako funkcja wymiarów i ziarna, w prawdziwym kształcie (§9), na palecie zestawu miasta. Rozstawienie w grze jest deterministyczne (§5).
 - Zasady §1–§10 obowiązują dalej. Karta jest ich zastosowaniem do konkretnego miejsca.
 
+
+## 12. Architektura i skala: blockout (zasady użytkownika 22.11)
+Wzorzec: level blockout z modułową siatką (whitebox i „modular kit”, jak w wykładzie Joela Burgessa o modułowych poziomach Skyrima, GDC 2013) i sekwencja przestrzeni „ciasno, potem otwarcie” (compression and release).
+- **Wertykalność i gęstość.** Poza korporacją pomieszczenia są niskie i zabudowane: antresole, schody, wnęki, podesty, a na wierzchu instalacje (rury, korytka kablowe, kanały wentylacyjne), które dociążają górę kadru. Każde pomieszczenie wyższe niż 2,6 m ma pod stropem co najmniej jedną linię instalacji.
+- **Siatka modularna.** Rzut ścian i podłóg składamy w module 0,5 m (moduł ściany 1 m albo 2 m, wnęki i przejścia po 0,5 m), wysokości co 0,1 m, z wymiarami z §6. Dzięki temu moduły łączą się bez szczelin, a bryły symulacji pokrywają się z rysunkiem (§7). Odstępstwo od siatki ma powód: obrys prawdziwego budynku z danych (§1) albo plansza. Karta pokazuje liczbę wymiarów na siatce w pomiarach.
+- **Kontrast przestrzenny.** Droga do ważnego miejsca prowadzi przez ciasny odcinek (korytarz do 1,5 m, strop do 2,4 m), po którym przestrzeń otwiera się szeroko albo w górę (atrium, hala, wielopoziomowy klub). Duże wnętrze bez ciasnego przedsionka to błąd kompozycji.
+- **Próg między pomieszczeniami** (zasada dodana): przejście z jednego pomieszczenia do drugiego zmienia co najmniej jedną rzecz naraz: światło, materiał podłogi albo wysokość stropu. Gracz czuje, że wszedł gdzie indziej.
+- **Każde pomieszczenie jest osobnym wnętrzem** (polecenie użytkownika 22.11): sklep, lokal, tunel, poziom garażu, klatka mają własny wpis w `INTERIORS`, własną kartę i własne światło. Wnętrze zagnieżdżone w większym (sklep w galerii) wskazuje rodzica polem `within`.
+
+## 13. Światło (zasady użytkownika 22.11)
+Wzorzec: lighting by practicals z filmu i level designu (każde światło ma widoczne źródło) i proporcja barw 60-30-10 z projektowania wnętrz.
+- **60-30-10 w kolorze światła:**
+  - 60% kadru to baza neutralna: ciemne, chłodne cienie albo przygaszone tło (ambient), które budują głębię;
+  - 30% to światło motywowane, główne: chłodne albo ciepłe z konkretnego źródła (jarzeniówka, okno z księżycem, ekran, lampion);
+  - 10% to akcenty neonowe: nasycona magenta, cyjan, pomarańcz, tylko punktowo i tylko na realnym źródle (neon, dioda, hologram).
+  Sprawdzamy to zrzutem: narzędzie zrzutów liczy udział pikseli w trzech grupach (kolejka w `docs/backlog.md`).
+- **Brak światła znikąd.** Każde światło silnika (`PointLightDef`, zestaw wnętrza, poświata) ma swój przedmiot w świecie: lampę, ekran, neon, okno. Lampa wisi przy swojej oprawie, a nie w powietrzu. Rozproszone tło wnętrza (ambient) jest światłem odbitym od tych źródeł, więc ma ich barwę.
+- **Światło w swoim pomieszczeniu** (zasada dodana, z pracy nad Alchemią 22.11): światło shadera nie zna ścian (G-263), więc każda lampa jest przycięta do rzutu i kondygnacji swojego pomieszczenia (`LightClip` z `minY` i `maxY`), wisi tuż nad sufitem (G-509), a świeci kilka najbliższych oku. Wnętrze z własnym światłem ma tryb wnętrza: swój zestaw (`indoorRig`) zamiast nieba.
+- **Kontrast funkcjonalny (nawigacja).** Drzwi, terminale, skrzynki z łupem i osłony są jaśniejsze albo w barwie odróżniającej je od reszty pomieszczenia. Barwy nawigacji z §4: zielone wejścia i drogi, czerwony alarm i zagrożenie. Gracz po wejściu wie, gdzie iść, zanim przeczyta jakikolwiek napis.
+- **Pora dnia.** Wnętrze z oknami albo atrium sprawdzamy zrzutem w nocy i w dzień. Bez okien wygląda tak samo o każdej porze.
+
+## 14. Trzy warstwy wyposażenia (zasady użytkownika 22.11)
+Wzorzec: set dressing w trzech przejściach (macro, meso, micro) i clutter clusters z praktyki level artu. Rozwija §2.
+1. **Makro (duże bryły):** meble, szafy serwerowe, lady, regały, filary. Wyznaczają układ pomieszczenia i osłony w walce. Są bryłą symulacji (§7).
+2. **Mezo (przedmioty średnie):** monitory, krzesła, skrzynie, kable po podłodze, lampy. Nadają pomieszczeniu funkcję (warsztat, mieszkanie, biuro).
+3. **Mikro (drobiazg i narracja):** puszki, niedopałki, narzędzia, dokumenty, naklejki, plamy i zabrudzenia na ścianach. Leżą **w skupiskach** przy miejscach, gdzie ktoś coś robi (lada, biurko, stół, kąt), a nie równo po podłodze. Skupisko to co najmniej 3 rzeczy w promieniu 1,2 m; co najmniej trzy czwarte drobiazgu leży w skupiskach.
+- Pomiary w karcie (`pnpm rooms:write`) liczą architekturę i trzy warstwy, skupiska i drobiazg luzem oraz widoczne źródła światła. Liczą tylko to, co symulacja daje rysunkowi. Rzeczy rysowane osobnym kodem silnika opisuje karta.
+- Puste pomieszczenie (zero mikro poza korporacją, makro bez mezo) to dług w kolejce, nie stan docelowy.
+
+## 15. Powierzchnie i materiały (zasady użytkownika 22.11)
+Gra rysuje NPR (tusz, płaskie światło), bez PBR. Zasadę przenosimy na kanały shadera toon: połysk (`gloss`), mokre (`wet`, odbicie sondy), samoświecenie (`selfLit`, kolory emisyjne zestawu).
+- **Zróżnicowany połysk.** W każdym pomieszczeniu obok matowych, zniszczonych powierzchni (beton, rdza, brudny tynk, drewno) jest coś z połyskiem albo wilgocią: kałuża, szkło, chrom, lakier, plastik. Mokra posadzka tylko tam, gdzie woda ma skąd przyjść (deszcz przez atrium, przeciek, mycie).
+- **Emisja z umiarem.** Świecące materiały mają kontrolowaną jasność: nie przepalają obrazu przy poświacie (glow layer) i nie oślepiają. Jasny neon jest mały, duża plansza świeci słabiej. Akcent emisyjny wlicza się do 10% z §13.
+
+## 16. Frakcja miejsca: szybka matryca (zasady użytkownika 22.11)
+Każda karta ma frakcję, która rządzi miejscem, a reguły §12–§15 dobieramy według niej:
+
+| Cecha | Ulica / slumsy | Technologia / hakerzy | Korporacje |
+|---|---|---|---|
+| Geometria | asymetryczna, prowizoryczna, dobudówki | ciasna, zdominowana przez sprzęt i kable | symetryczna, monumentalna, minimalizm |
+| Materiały | beton, rdza, folia, drewno, brud | plastik, metal, maty antystatyczne, szkło | marmur, czarne szkło, złoto, szczotkowana stal |
+| Oświetlenie | migoczące jarzeniówki, ciepły brudny żółty, neony | zimne światło monitorów, niebieski, zieleń | ciepłe, ukryte oświetlenie architektoniczne, biel |
+
+- Miejsce mieszane (sklep elektroniczny w galerii, warsztat w piwnicy korporacji) ma frakcję główną i drugą, a kontrast między nimi jest celem (§3).
+- Korporacja jest jedynym wyjątkiem od §2 i §14 (gęsto, drobiazg): tam sterylność jest treścią.
+
+## 17. Zasady dodane i proces audytu (22.11)
+- **Dźwięk ze źródła.** Jak światło: każdy stały dźwięk pomieszczenia (szum wentylacji, brzęczenie świetlówki, kuchnia, serwery) ma przedmiot, z którego płynie, i cichnie za ścianą (ambience ADR-0060).
+- **Skala człowieka.** W każdym pomieszczeniu są przedmioty, po których gracz odczyta skalę: drzwi 2,1 m, blat 0,9 m, krzesło 0,45 m, poręcz 1,1 m. Bez nich wnętrze w NPR wygląda jak makieta.
+- **Ruch i życie.** Co najmniej jedna rzecz się rusza albo zmienia: wentylator, migająca świetlówka, para, ekran, człowiek przy pracy (§5).
+- **Karta z audytem.** Każda karta ma część `## Frakcja i zasady`: wiersz `Frakcja:` i listę §12–§17 z oceną (zgodne, dług) oraz tym, co trzeba zrobić. Test kart wymaga tej części. Dług trafia do kolejki w `docs/backlog.md` („Zasady pomieszczeń w całej grze”), jedno pomieszczenie na jedną gałąź i jeden PR.

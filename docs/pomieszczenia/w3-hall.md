@@ -27,6 +27,15 @@ Na telefonie (niska jakość) gra rysuje z tej listy tylko palety, bo stoją za 
 
 Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownicze w rzędach, zbiorniki w rzędach (dziś bloki).
 
+## Frakcja i zasady
+Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
+- §12 dług: 3 z 74 wymiarów na siatce. Kontrast: wejście przez biuro przepustek (ciasno) do hali (16 m): zgodne.
+- §13 dług: w pomiarach 0 źródeł w bryłach (9 lamp W-3 w silniku, bez opraw jako brył). Powiązać lampy z oprawami; drzwi do piwnicy i biura w barwie nawigacji.
+- §14 dług: 13 rzeczy mikro, wszystkie luzem. Skupiska przy taśmach, stanowiskach spawania, szafkach.
+- §15 częściowo: kapanie w opisie; plamy oleju z połyskiem przy maszynach.
+- §16 zgodne: korporacja, która „nie sprząta, tylko liczy”.
+- §17 częściowo: iskry i taśmy jako ruch; szum napędów ze źródła do sprawdzenia.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -44,4 +53,12 @@ Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownic
 - prop: blok (metal) × 13
 - prop: blok (metal), rysunek osobno × 63
 - prop: blok (metal, pochyły) × 1
+
+Pomiary zasad (§12–§16):
+- rzut: 37 prostokąty, 3409 m², wysokość 16,0 / 13,4 / 10,0 / 5,0 / 4,5 / 2,6 / 7,5 / 6,0 m
+- siatka 0,5 m: 3 z 74 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 52
+- warstwy wyposażenia: makro 32, mezo 14, mikro 13
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 13 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

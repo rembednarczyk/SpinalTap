@@ -2,6 +2,7 @@ import { ROOM_DETAIL_SHAPES, type StreetPropItem } from "../../../packages/core/
 import { ALCHEMIA_PIECES } from "../../../packages/sim/src/content/alchemia";
 import { type InteriorDef, type InteriorRoom, INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
+import { measuresOf } from "./measures";
 
 /*
  * The inventory of a room as the game has it (the rule of room cards, `docs/zasady-lokacji.md` §11):
@@ -70,9 +71,10 @@ export const renderInventory = (inv: Inventory): string => {
 export const START = "<!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->";
 export const END = "<!-- inwentarz-gry:end -->";
 
-/** A card's text with its generated block put in (between the markers), or appended at its end. */
-export const withInventory = (text: string, inv: Inventory): string => {
-  const block = `${START}\n${renderInventory(inv)}\n${END}`;
+/** A card's text with its generated block put in (between the markers), or appended at its end; with the room, the rules' measures under it (§12–§16). */
+export const withInventory = (text: string, inv: Inventory, room?: InteriorDef): string => {
+  const measures = room ? `\n\nPomiary zasad (§12–§16):\n${measuresOf(room).join("\n")}` : "";
+  const block = `${START}\n${renderInventory(inv)}${measures}\n${END}`;
   const a = text.indexOf(START);
   const b = text.indexOf(END);
   if (a >= 0 && b > a) return `${text.slice(0, a)}${block}${text.slice(b + END.length)}`;
