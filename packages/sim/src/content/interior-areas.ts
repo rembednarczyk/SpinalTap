@@ -6,7 +6,8 @@ import { METRO_PLATFORMS } from "./metro";
 import { P0_ROOM } from "./alchemia/foodhall";
 import { P1_ROOMS } from "./alchemia/parking";
 import { METRO_DOOR_ROOM } from "./alchemia/metro-door";
-import { P2_ROOMS } from "./alchemia/p2";
+import { P2_STORE_ROOMS, P2_TUNNEL_ROOMS } from "./alchemia/p2";
+import { ALL_SHOPS, shopCeiling, shopFloor } from "./alchemia/shops-plan";
 import { SHELTER_ROOMS } from "./alchemia/shelter";
 import { FOODHALL_ROOMS, GALLERY_ROOMS } from "./alchemia/mall-plan";
 import { FRONT_ROOMS } from "./alchemia/front-shell";
@@ -41,6 +42,11 @@ export interface InteriorDef {
   readonly building: string | null;
   readonly rooms: readonly InteriorRoom[];
   /**
+   * The interior this one stands in (a shop in Alchemia's gallery, 22.11): inside it, the player
+   * steps into this one even while the bigger one still holds them (`interiorAt`'s keep).
+   */
+  readonly within?: string;
+  /**
    * Stepping in saves no game (ADR-0082: inside W-3's fence the autosave waits for the metro or
    * a job taken); absent, it does (ADR-0061).
    */
@@ -67,7 +73,21 @@ const TESSEN_OFFICE_ROOM: InteriorRoom = {
   top: W3_Y + W3_OFFICE.top,
 };
 
-/** Every interior the player can walk into. A new one is one more entry (ADR-0061). */
+/**
+ * Each of Alchemia's shops and units on the front an interior of its own (the user's rule of 22.11,
+ * `docs/zasady-lokacji.md` §12), inside its gallery: from its floor up to its ceiling within its walls.
+ * Walking from one shop to the next saves no game (the gallery's step in does).
+ */
+const SHOP_INTERIORS: readonly InteriorDef[] = ALL_SHOPS.map((s) => ({
+  id: `alchemia-shop-${s.id}`,
+  name: `interior.alchemia-shop-${s.id}`,
+  building: null,
+  rooms: [{ minX: s.rect.x0, maxX: s.rect.x1, minZ: s.rect.z0, maxZ: s.rect.z1, bottom: shopFloor(s), top: shopCeiling(s) }],
+  within: "alchemia-gallery",
+  autosave: false,
+}));
+
+/** Every interior the player can walk into. A new one is one more entry (ADR-0061); one inside another comes before it. */
 export const INTERIORS: readonly InteriorDef[] = [
   { id: "clinic", name: "interior.clinic", building: CLINIC_SITE.building, rooms: [oldRoom(clinicPoint, -17, -7.3, 1.3, 7.7, CLINIC_SITE.floor)] },
   { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor)] },
@@ -84,11 +104,15 @@ export const INTERIORS: readonly InteriorDef[] = [
   // Its car park's upper level P-1 under T0 (stage 4): the deck, the apron and the stair core's foot.
   { id: "alchemia-parking", name: "interior.alchemia-parking", building: null, rooms: [...P1_ROOMS, METRO_DOOR_ROOM] },
   // Its lower level P-2 under P-1 (stage 5a): the automated store, the corridor north to its portal, the flight down.
-  { id: "alchemia-p2", name: "interior.alchemia-p2", building: null, rooms: P2_ROOMS },
+  { id: "alchemia-p2", name: "interior.alchemia-p2", building: null, rooms: P2_STORE_ROOMS },
+  // Its tunnel north to the portal onto T2, apart from the store since 22.11 (§12: each room an interior).
+  { id: "alchemia-p2-tunnel", name: "interior.alchemia-p2-tunnel", building: null, rooms: P2_TUNNEL_ROOMS },
   // The air-raid shelter under T2 by P-2's north end (stage 5d1): its room, the passage, both flights.
   { id: "alchemia-shelter", name: "interior.alchemia-shelter", building: null, rooms: SHELTER_ROOMS },
   // Its gallery round the atrium (ADR-0093 O2): its shops' floors P0 (the old hall, O3), P1 and P2, and the front's storeys
   // joined to it, its arcades, units, café and bar (O5).
+  // Its shops first: each inside the gallery's rooms, found before it.
+  ...SHOP_INTERIORS,
   { id: "alchemia-gallery", name: "interior.alchemia-gallery", building: null, rooms: [P0_ROOM, ...GALLERY_ROOMS.map(room), ...FRONT_ROOMS] },
 ];
 
@@ -104,6 +128,8 @@ const inRoom = (r: InteriorRoom, p: Vec3, margin: number): boolean =>
  */
 export const interiorAt = (p: Vec3, current: string | null = null, keep = 0): InteriorDef | null => {
   const held = current === null ? undefined : INTERIORS.find((i) => i.id === current);
-  if (held?.rooms.some((r) => inRoom(r, p, keep))) return held;
-  return INTERIORS.find((i) => i.rooms.some((r) => inRoom(r, p, 0))) ?? null;
+  const at = INTERIORS.find((i) => i.rooms.some((r) => inRoom(r, p, 0))) ?? null;
+  // A room inside the held one (a shop off the gallery) takes over at its walls; otherwise the held one holds past them.
+  if (held && at?.within !== held.id && held.rooms.some((r) => inRoom(r, p, keep))) return held;
+  return at;
 };

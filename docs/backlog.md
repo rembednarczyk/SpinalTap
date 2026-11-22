@@ -7,7 +7,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
 
 ## Następne
 - **[22.11, polecenie użytkownika: zasady pomieszczeń w całej grze]** Reguły w `docs/zasady-lokacji.md` §12–§17 (blockout na siatce, światło 60-30-10, warstwy makro, mezo, mikro w skupiskach, połysk i emisja, frakcja miejsca, dźwięk ze źródła), pomiary w kartach (`tools/rooms/src/measures.ts`), część „Frakcja i zasady” z audytem w każdej karcie. Kolejka, jedno pomieszczenie albo jedna zmiana systemowa na PR, ze zrzutami przed i po:
-  1. Alchemia: każdy sklep i lokal frontu, tunel P-2 do portalu i poziomy garażu jako osobne wnętrza (`within`, karta każdego, światło trybu wnętrza po nowych id). Sklepy food hallu zostają częścią food hallu (otwarte lady w jednej sali).
+  1. Alchemia: każdy sklep i lokal frontu (52, `alchemia-shop-*`, `within: alchemia-gallery`) i tunel P-2 do portalu (`alchemia-p2-tunnel`) jako osobne wnętrza z kartami; poziomy garażu P-1 i P-2 były już osobne. Sklepy food hallu zostają częścią food hallu (otwarte lady w jednej sali). Po scaleniu #909: tryb wnętrza Alchemii obejmuje id sklepów.
   2. Narzędzie 60-30-10: pomiar udziału pikseli bazy, światła głównego i akcentów na zrzucie (raport w `tools`, ujęcia z kart), potem pomiar wszystkich kart.
   3. Światło znikąd: lampy silnika (W-3, Alchemia, kapsuła, perony) powiązane z oprawami jako bryłami albo detalem, z testem odległości lampy od oprawy.
   4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia).

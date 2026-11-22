@@ -1,0 +1,1 @@
+- Każdy sklep i lokal w Alchemii oraz tunel z poziomu -2 na T2 to teraz osobne pomieszczenie z własną nazwą (wejście do sklepu z galerii nie zapisuje gry).

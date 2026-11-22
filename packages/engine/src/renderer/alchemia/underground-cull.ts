@@ -17,7 +17,7 @@ const BELOW = 0.5;
 
 type Room = (typeof INTERIORS)[number]["rooms"][number];
 
-const ROOMS: readonly Room[] = INTERIORS.filter((i) => i.id === "alchemia-p2" || i.id === "alchemia-shelter").flatMap((i) => i.rooms);
+const ROOMS: readonly Room[] = INTERIORS.filter((i) => i.id === "alchemia-p2" || i.id === "alchemia-p2-tunnel" || i.id === "alchemia-shelter").flatMap((i) => i.rooms);
 const BOUNDS = {
   minX: Math.min(...ROOMS.map((r) => r.minX)),
   maxX: Math.max(...ROOMS.map((r) => r.maxX)),

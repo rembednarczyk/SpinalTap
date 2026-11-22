@@ -1,6 +1,6 @@
 import { ROOM_DETAIL_SHAPES } from "../../../packages/core/src";
 import { ALCHEMIA_PIECES } from "../../../packages/sim/src/content/alchemia";
-import type { InteriorDef, InteriorRoom } from "../../../packages/sim/src/content/interior-areas";
+import { type InteriorDef, type InteriorRoom, INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 
 /*
@@ -53,7 +53,10 @@ interface Thing {
 }
 
 const inside = (r: InteriorRoom, x: number, y: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ && y >= r.bottom - 0.3 && y <= r.top;
-const inAny = (i: InteriorDef, x: number, y: number, z: number): boolean => i.rooms.some((r) => inside(r, x, y, z));
+const inOwn = (i: InteriorDef, x: number, y: number, z: number): boolean => i.rooms.some((r) => inside(r, x, y, z));
+/** In the interior's rooms but not in one of the interiors inside it (a shop off the gallery counts for the shop, 22.11). */
+const inAny = (i: InteriorDef, x: number, y: number, z: number): boolean =>
+  inOwn(i, x, y, z) && !INTERIORS.some((c) => c.within === i.id && inOwn(c, x, y, z));
 
 /** Everything the game puts in an interior, with its layer and place (the inventory's three sources). */
 export const thingsIn = (i: InteriorDef): Thing[] => {

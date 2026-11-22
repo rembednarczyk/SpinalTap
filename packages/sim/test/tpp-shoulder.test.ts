@@ -90,6 +90,7 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
   it("from inside the rooms, crouched and aimed with a wall on the right, start past a wall no more often than before G-275", () => {
     let leaks = 0;
     let galleryLeaks = 0;
+    let shopLeaks = 0;
     let places = 0;
     for (const def of INTERIORS) {
       for (const r of def.rooms) {
@@ -117,7 +118,8 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
             const o = aimOrigin(p, "TPP");
             // Past a wall, in the open on the other side, with a clear metre of flight from there.
             if (!lineOfSight(w, eye, o, false) && !inSolid(o) && hitscan(w, o, { x: Math.sin(s.yaw), y: 0, z: Math.cos(s.yaw) }, 30, -1).distance > 1) {
-              if (def.id === "alchemia-gallery" || def.id === "alchemia-foodhall") galleryLeaks++;
+              if (def.within === "alchemia-gallery") shopLeaks++;
+              else if (def.id === "alchemia-gallery" || def.id === "alchemia-foodhall") galleryLeaks++;
               else leaks++;
             }
           }
@@ -135,6 +137,10 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     // east of it (`mall.ts`) took all nine. The 5 left stood in the shaft by P1's gate, gone with its walls
     // and gates 0.2 thick (G-939, the test below).
     expect(galleryLeaks).toBe(0);
+    // Alchemia's shops, each a room of its own since 22.11, measured apart: their side walls and partitions
+    // are 0.1..0.2 m, so the aim line 0.55 m out starts in the next shop or on the gallery (G-961). Measured
+    // when they became rooms, not raised by it: a baseline that only falls.
+    expect(shopLeaks).toBeLessThanOrEqual(1261);
   });
 
   it("by Alchemia's lifts, in the shaft or out by it at any level, crouched and aimed, never start past the shaft's walls or gates (G-939)", () => {

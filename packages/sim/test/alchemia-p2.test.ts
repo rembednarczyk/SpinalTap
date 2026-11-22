@@ -194,9 +194,10 @@ describe("P-2 under P-1 (ADR-0074 stage 5a)", () => {
     expect(solidOf([...ALCHEMIA_PIECES, ...P1_PIECES, ...P2_SHELL_PIECES, ...P2_CUTTING_PIECES]).filter((p) => overlap(p.box, inside) > 0)).toEqual([]);
   });
 
-  it("is the interior `alchemia-p2` in its store, its corridor and on its flight, not in the cutting, on P-1 or on T1 over it", () => {
+  it("is the interior `alchemia-p2` in its store and on its flight, its tunnel in the corridor, not in the cutting, on P-1 or on T1 over it", () => {
     expect(interiorAt(STORE)?.id).toBe("alchemia-p2");
-    expect(interiorAt({ x: 415, y: F, z: 60 })?.id).toBe("alchemia-p2");
+    // Its corridor to the portal is a room of its own since 22.11: the tunnel.
+    expect(interiorAt({ x: 415, y: F, z: 60 })?.id).toBe("alchemia-p2-tunnel");
     expect(interiorAt({ x: 417, y: p2StairY(417), z: 30.6 })?.id).toBe("alchemia-p2");
     expect(interiorAt({ x: 419.3, y: F, z: 27 })?.id).toBe("alchemia-p2");
     expect(interiorAt({ x: 416, y: F, z: 85 })).toBeNull();
