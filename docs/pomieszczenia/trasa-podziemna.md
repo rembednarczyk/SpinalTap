@@ -35,7 +35,7 @@ Drobiazg:
 Frakcja: ulica (gangi w starych piwnicach); druga: historia (muzeum).
 - §12 zgodne: ciasne przejścia i wyższa sala (7,6 m), 3 z 8 wymiarów na siatce (stare piwnice, §1).
 - §13 zgodne co do źródeł (7 widocznych: lampy muzealne, LED-y na kablach). Dług: drogi wyjścia w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 27,4%, światło 69,8%, akcenty 2,9%, poza pasmem: baza 27,4% < 50%; światło 69,8% > 42%; akcenty 2,9% < 3%.
-- §14 dług: mikro 0. Skupiska przy obozowisku gangu i przy tablicach.
+- §14 zgodne: 14 rzeczy drobiazgu w czterech skupiskach (legowisko, scena, tablice), nic luzem.
 - §15 częściowo: wilgotne ściany w opisie; do sprawdzenia połysk w grze.
 - §16 zgodne.
 - §17 do sprawdzenia: kapanie i echo.
@@ -62,7 +62,7 @@ Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 104 m², wysokość 3,6 / 7,6 / 2,7 m
 - siatka 0,5 m: 3 z 8 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 7
-- warstwy wyposażenia: makro 11, mezo 15, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 11, mezo 11, mikro 14
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 4 skupisk, 14 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 7
 <!-- inwentarz-gry:end -->

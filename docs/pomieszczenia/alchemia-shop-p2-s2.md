@@ -19,7 +19,7 @@ Lokal buduje generator galerii (`alchemia/shops.ts`, `shop-fittings.ts`, `shop-t
 Frakcja: ulica.
 - §12 częściowo: rzut z planu galerii (5,5 × 10,4 m); jedno wejście od pasażu. Dług: instalacje pod stropem lokalu i próg (zmiana światła lub posadzki) w drzwiach.
 - §13 częściowo: jedyne źródło to szyld; zgodne z brakiem światła znikąd.
-- §14 dług: 1 rzecz drobiazgu, 100% luzem (cel do 25%).
+- §14 dług: bez drobiazgu w pomiarze (cel: skupiska, do 25% luzem).
 - §15 dług: posadzka i lada matowe; połysk gablot i szkła witryny do sprawdzenia, mokre ślady butów przy drzwiach.
 - §16 zgodne co do barwy branży; geometria z generatora branż jest symetryczna, a ulica chce dobudówek i prowizorki (dług).
 - §17 dług: dźwięk lokalu (muzyka, lodówka, maszynka) ze źródła w środku; ruch: sprzedawca stoi, bez pracy przy ladzie.
@@ -37,7 +37,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 57 m², wysokość 3,9 m
 - siatka 0,5 m: 1 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 10
-- warstwy wyposażenia: makro 0, mezo 1, mikro 1
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 1 luzem
+- warstwy wyposażenia: makro 0, mezo 2, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->

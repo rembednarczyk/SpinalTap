@@ -40,7 +40,7 @@ Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dzi
 Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §12 zgodne z wyjątkiem: obrys szkła z planszy (1 z 4 wymiarów na siatce, odstępstwo z §1). Instalacje pod stropem są. Wejście schodami ruchomymi z atrium otwiera się na halę.
 - §13 częściowo: lampiony i kuchnie jako źródła (PR #909). Dług: lady ludzi z zadań (Oyaji, Fumiko, Kenta) nie są wyróżnione światłem ani barwą. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 76,2%, światło 18,2%, akcenty 5,5%, poza pasmem: baza 76,2% > 75%.
-- §14 dług: 20 z 52 rzeczy drobiazgu luzem (38%), cel do 25%. Przenieść drobiazg w skupiska przy ladach i stołach.
+- §14 dług: 27 z 59 rzeczy drobiazgu luzem (46%), cel do 25%. Luzem stoją pojedyncze kubki, miski i czarki na stołach i kartki na podłodze; para kuchni i ekrany menu nie liczą się do drobiazgu. Zebrać w skupiska przy ladach i stołach.
 - §15 dług: brak połysku i wilgoci poza wodą. Mokra posadzka przy zmywakach, lakier na ladach.
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.
 - §17 do sprawdzenia: dźwięk kuchni i klimatyzacji ze źródła; ruch jest (para, ludzie).
@@ -93,7 +93,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 903 m², wysokość 3,9 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 234
-- warstwy wyposażenia: makro 64, mezo 206, mikro 52
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 32 rzeczy w nich, 20 luzem
+- warstwy wyposażenia: makro 50, mezo 201, mikro 59
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 32 rzeczy w nich, 27 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 60
 <!-- inwentarz-gry:end -->

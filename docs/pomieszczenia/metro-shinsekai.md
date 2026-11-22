@@ -36,7 +36,7 @@ Odłożone:
 Frakcja: ulica (transport miejski).
 - §12 zgodne co do kontrastu: zejście drugim biegiem na peron. 1 z 4 wymiarów na siatce.
 - §13 częściowo: lampy peronu mają oprawy w geometrii silnika (pasy świetlne w stropie, sprawdzone 22.11); dług: wejście do wagonu wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 30,6%, światło 40,7%, akcenty 28,7%, poza pasmem: baza 30,6% < 50%; akcenty 28,7% > 15%.
-- §14 dług: mikro 0. Skupiska przy ławce i automacie.
+- §14 zgodne: 13 rzeczy drobiazgu, 8% luzem; ręcznie gazeta, plakat i kosz, a generator wnętrz (ADR-0099, zestaw `platform`) dokłada worki śmieci pod ścianą z przewróconymi kubkami obok i gazety z kubkami na ławkach.
 - §15 dług: połysk płytek, mokre ślady butów.
 - §16 zgodne.
 - §17 do sprawdzenia: gwar Shinsekai z góry schodów.
@@ -44,8 +44,11 @@ Frakcja: ulica (transport miejski).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-capsule-trash × 1
+- blender: rd-fh-cup × 2
+- blender: rd-fh-spilled × 1
 - blender: rd-metro-camera × 1
-- blender: rd-metro-litter × 1
+- blender: rd-metro-litter × 2
 - blender: rd-metro-poster-a × 1
 - blender: rd-metro-timetable × 1
 - blender: rd-metro-validator × 1
@@ -56,7 +59,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 149 m², wysokość 7,8 / 4,2 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 7, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
-- widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
+- warstwy wyposażenia: makro 0, mezo 5, mikro 13
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 12 rzeczy w nich, 1 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->

@@ -31,7 +31,7 @@ Z Blendera (`tools/blender/rooms/alchemia_p1.py`, plik `room-detail-alchemia-pro
 Frakcja: ulica.
 - §12 dług: 2 z 8 wymiarów na siatce. Niski strop zgodny. Rampa wjazdowa (ciasno) otwiera się na halę parkingu: zgodne.
 - §13 częściowo: lampa silnika wisi 2 m od zielonej diody nad wjazdem, a świetlówki pod stropem rysuje geometria parkingu i detal (`rd-p1-ceiling`), więc światło ma oprawy (sprawdzone 22.11). Dług: wyjścia (klatka, drzwi metra) w zieleni nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 58,7%, światło 39,3%, akcenty 2%, poza pasmem: akcenty 2% < 3%.
-- §14 dług: mikro 0 w bryłach symulacji, drobiazg tylko w detalu (bilety, kubek). Skupiska przy kasie, przy kabinach i przy autach.
+- §14 częściowo: 7 rzeczy drobiazgu w dwóch skupiskach (konsola strażnika, bilety i pachołek przy kasie), nic luzem. Dług: skupiska przy kabinach i przy autach.
 - §15 częściowo: kałuże pod autami w opisie, do sprawdzenia w grze; połysk lakieru aut jest.
 - §16 zgodne: beton, pasy ostrzegawcze; dodać migającą świetlówkę.
 - §17 do sprawdzenia: szum wentylacji i silników.
@@ -51,8 +51,8 @@ Frakcja: ulica.
 Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 573 m², wysokość 2,7 / 4,2 m
 - siatka 0,5 m: 2 z 8 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 25, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1
+- warstwy wyposażenia: makro 0, mezo 22, mikro 7
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 7 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->
