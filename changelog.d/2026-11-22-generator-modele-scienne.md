@@ -1,0 +1,1 @@
+- Gaśnice, hydranty, skrzynki elektryczne i znaki wyjścia rozstawiane przez generator wnętrz wiszą teraz na ścianie, a nie kilkanaście centymetrów przed nią.
