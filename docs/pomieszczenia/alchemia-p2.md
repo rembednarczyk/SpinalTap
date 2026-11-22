@@ -32,7 +32,7 @@ Odłożone: siatki zabezpieczające na regałach.
 Frakcja: technika (zautomatyzowany magazyn aut).
 - §12 dług: wymiary poza siatką (pomiary). Strop 2,3–2,5 m zgodny z §6. Tunel do portalu wydzielony jako osobne wnętrze (22.11).
 - §13 częściowo: lampy z Blendera (3) i koguty robotów. Dług: drzwi do klatki i portal bez barwy nawigacji.
-- §14 dług: bryły symulacji puste (makro 0, mikro 0 w pomiarach); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dodać drobiazg w skupiskach przy szafie technika i przy stanowisku serwisowym.
+- §14 częściowo: drobiazg z Blendera, 7 rzeczy, skupisko przy rzeczach technika, plama oleju ze szmatą luzem (29%); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dług: skupisko przy stanowisku serwisowym.
 - §15 dług: plama oleju jest w detalu; połysk szyn i mokry beton pod wyciekiem.
 - §16 zgodne: zimna zieleń diod, sprzęt dominuje.
 - §17 do sprawdzenia: stukot robotów ze źródła (ruch jest).
@@ -49,8 +49,8 @@ Frakcja: technika (zautomatyzowany magazyn aut).
 Pomiary zasad (§12–§16):
 - rzut: 3 prostokąty, 716 m², wysokość 2,3 / 2,5 m
 - siatka 0,5 m: 0 z 6 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 7, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1
+- warstwy wyposażenia: makro 0, mezo 4, mikro 7
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 5 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 3
 <!-- inwentarz-gry:end -->

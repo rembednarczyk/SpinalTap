@@ -11,7 +11,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
   2. Narzędzie 60-30-10: pomiar udziału pikseli bazy, światła głównego i akcentów na zrzucie (raport w `tools`, ujęcia z kart), potem pomiar wszystkich kart.
   3. Światło znikąd: lampy silnika (W-3, Alchemia, kapsuła, perony) powiązane z oprawami jako bryłami albo detalem, z testem odległości lampy od oprawy.
   4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia).
-  5. Drobiazg w skupiskach: pomieszczenia z mikro 0 albo luzem powyżej 25% (food hall, P-1, P-2, schron, kapsuła, klinika, perony, Koi, Trasa, piwnica i hala W-3) według audytu kart.
+  5. Drobiazg w skupiskach: pomieszczenia z mikro 0 albo luzem powyżej 25% według audytu kart. Najpierw pomiar (gałąź feat/skupiska-drobiazgu): model z Blendera, który sam jest skupiskiem, liczy się jako tyle rzeczy w jednym miejscu (`clutter`), instalacje do architektury (`services`), para i ekrany menu poza drobiazgiem. Po nim mikro 0 nie ma już żadna karta poza tunelem P-2; do zrobienia kolejno: food hall (27 z 59 luzem), hala W-3 (6 z 14), perony (po 4 rzeczy na peron), tunel P-2 (0), P-2 (2 z 7), biuro Tessen (3 z 11), sklepy z długiem w kartach.
   6. Połysk i wilgoć: każde pomieszczenie z co najmniej jedną powierzchnią z połyskiem albo mokrą, ze źródłem wody.
   7. Siatka 0,5 m dla nowych pomieszczeń (kontrola w teście kart dla wnętrz bez obrysu z danych) i odstępstwa starych zapisane w kartach.
   8. Dźwięk ze źródła: ambience wnętrz (ADR-0060) przypięte do przedmiotów.

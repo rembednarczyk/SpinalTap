@@ -30,7 +30,7 @@ Odłożone: prycze z desek; bez bryły stałyby na drodze.
 Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 - §12 dług: 0 z 8 wymiarów na siatce (stary schron). Właz i biegi schodów (ciasno) przed salą: zgodne.
 - §13 częściowo: żółte gabloty, zielona lampka wyjścia. Dług: sprzęt Hebi bez zimnego źródła.
-- §14 dług: mikro 0 w bryłach; drobiazg tylko w detalu. Skupiska przy stole Hebi.
+- §14 zgodne: 14 rzeczy drobiazgu, 12 w trzech skupiskach (maski, szkło z cegłą, sprzęt Hebi), 14% luzem.
 - §15 dług: beton matowy wszędzie; wilgoć na ścianach od gruntu.
 - §16 zgodne z ulicą; kontrast z elektroniką Hebi to cel.
 - §17 do sprawdzenia: cisza z kapaniem jako dźwięk źródła.
@@ -51,8 +51,8 @@ Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 220 m², wysokość 2,3 / 5,3 / 2,8 m
 - siatka 0,5 m: 0 z 8 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 2, mezo 10, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 2
+- warstwy wyposażenia: makro 2, mezo 3, mikro 14
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 12 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 2
 <!-- inwentarz-gry:end -->

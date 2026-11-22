@@ -36,7 +36,7 @@ Odłożone:
 Frakcja: ulica (transport miejski).
 - §12 zgodne co do kontrastu: zejście drugim biegiem na peron. 1 z 4 wymiarów na siatce.
 - §13 dług: 0 źródeł w bryłach (rysuje silnik); wejście do wagonu wyróżnione.
-- §14 dług: mikro 0. Skupiska przy ławce i koszu.
+- §14 dług: 4 rzeczy drobiazgu, skupisko na ławce (gazeta, kubek, bilet), plakat luzem (25%). Za mało drobiazgu jak na peron; dalej skupiska przy ławce i koszu.
 - §15 dług: wilgoć od kanału, połysk płytek.
 - §16 zgodne.
 - §17 do sprawdzenia: woda z kanału jako dźwięk źródła.
@@ -56,7 +56,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 147 m², wysokość 7,6 / 4,2 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 7, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 0, mezo 5, mikro 4
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 3 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->
