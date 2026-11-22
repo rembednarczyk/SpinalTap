@@ -1,0 +1,1 @@
+- Sklepy Alchemii mają ślady pracy na ladzie: papiery przy kasie, kubki, a w sklepach z elektroniką, naprawami, kryptowalutami, VR i implantami laptop z kablem; karton albo gaśnica tam, gdzie jest miejsce. Rozstawia je generator wnętrz (ADR-0099).

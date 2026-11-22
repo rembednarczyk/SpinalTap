@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES, ROOM_KITS } from "@seki/core";
-import { METRO_PLATFORMS, P2_TUNNEL_DRESSING, P2_TUNNEL_LAYOUT, TESSEN_OFFICE_DRESSING, TESSEN_OFFICE_LAYOUT, type GroundRect, dressRoom, platformLayout } from "../src";
+import { ALL_SHOP_BUILDS, METRO_PLATFORMS, P2_TUNNEL_DRESSING, SHOP_DRESSING, shopDressingLayout as shopDressLayout, P2_TUNNEL_LAYOUT, TESSEN_OFFICE_DRESSING, TESSEN_OFFICE_LAYOUT, type GroundRect, dressRoom, platformLayout } from "../src";
 import { METRO_DETAIL } from "../src";
 
 const key = (variant: number) => ROOM_DETAIL_SHAPES[variant]!.key;
@@ -64,10 +64,24 @@ describe("the rooms' dressing generator (ADR-0099) on the platforms", () => {
  * clear and taken, the clutter by its heroes, a `by` shape by its door, an `apart` shape apart, the same every time.
  */
 describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
-  const rooms = [
-    { layout: P2_TUNNEL_LAYOUT, dressed: P2_TUNNEL_DRESSING },
-    { layout: TESSEN_OFFICE_LAYOUT, dressed: TESSEN_OFFICE_DRESSING },
-  ];
+  const shops = ALL_SHOP_BUILDS.flatMap((b) => {
+    const layout = shopDressLayout(b);
+    return layout ? [{ layout, dressed: dressRoom(layout) }] : [];
+  });
+  const rooms = [{ layout: P2_TUNNEL_LAYOUT, dressed: P2_TUNNEL_DRESSING }, { layout: TESSEN_OFFICE_LAYOUT, dressed: TESSEN_OFFICE_DRESSING }, ...shops];
+
+  it("dresses every open shop of Alchemia's, the papers on its counter's top (its till and cup left free)", () => {
+    expect(shops.length).toBeGreaterThanOrEqual(40);
+    expect(shops.flatMap((s) => s.dressed)).toEqual(SHOP_DRESSING);
+    const papered = shops.filter((s) => s.dressed.some((p) => key(p.variant) === "rd-c-papers"));
+    expect(papered.length / shops.length).toBeGreaterThan(0.8);
+    for (const { layout, dressed } of shops)
+      for (const p of dressed.filter((d) => d.y > layout.floor + 0.5)) {
+        const k = `${layout.id} ${key(p.variant)}`;
+        expect(layout.surfaces.some((s) => inRect(p.x, p.z, s)), k).toBe(true);
+        expect(layout.taken.filter((t) => t.onTop).some((t) => inRect(p.x, p.z, t)), k).toBe(false);
+      }
+  });
   const near = (x: number, z: number, r: GroundRect, d: number) => Math.hypot(x - Math.min(r.maxX, Math.max(r.minX, x)), z - Math.min(r.maxZ, Math.max(r.minZ, z))) <= d;
 
   it("stands each kit's things in their room, out of the clear and the taken, each within its kit's count", () => {
@@ -78,7 +92,7 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
         const k = `${layout.id} ${key(p.variant)} ${p.x.toFixed(2)},${p.z.toFixed(2)}`;
         expect(inRect(p.x, p.z, layout.bounds), k).toBe(true);
         expect(layout.clear.some((r) => inRect(p.x, p.z, r)), k).toBe(false);
-        expect(layout.taken.some((t) => inRect(p.x, p.z, t)), k).toBe(false);
+        expect(layout.taken.some((t) => (p.y > layout.floor + 0.5) === (t.onTop === true) && inRect(p.x, p.z, t)), k).toBe(false);
       }
     }
   });

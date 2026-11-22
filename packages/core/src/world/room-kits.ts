@@ -37,7 +37,7 @@ export interface KitEntry {
 }
 
 /** The kinds of rooms with a kit. */
-export type RoomKitKind = "platform" | "service-corridor" | "office";
+export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech";
 
 /**
  * A metro platform (`docs/pomieszczenia/metro-*.md`, the street's faction, §16: dense): the litter of a wait by the
@@ -79,4 +79,32 @@ const OFFICE: readonly KitEntry[] = [
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
 ];
 
-export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = { platform: PLATFORM, "service-corridor": SERVICE_CORRIDOR, office: OFFICE };
+/**
+ * A shop of Alchemia's gallery and front (`docs/pomieszczenia/alchemia-shop-*.md`; the street's faction in a mall, §16):
+ * the day's receipts and flyers by the till on the counter with a cup by them, the cartons of a delivery in a back
+ * corner, the extinguisher by the door. Its goods, racks and the till itself are the shop's fit-out (`shop-trades.ts`).
+ */
+const SHOP: readonly KitEntry[] = [
+  { key: "rd-c-papers", anchor: "surface-top", role: "hero", along: 0.38, out: 0.27, count: [1, 1] },
+  { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+];
+
+/** A shop of the technical trades (electronics, repair, crypto, VR, implants): its counter's laptop open on an error and a cable by it. */
+const SHOP_TECH: readonly KitEntry[] = [
+  { key: "rd-c-papers", anchor: "surface-top", role: "hero", along: 0.38, out: 0.27, count: [1, 1] },
+  { key: "rd-c-laptop", anchor: "surface-top", role: "clutter", along: 0.35, out: 0.25, count: [1, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cable", anchor: "surface-top", role: "clutter", along: 0.42, out: 0.3, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+];
+
+export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
+  platform: PLATFORM,
+  "service-corridor": SERVICE_CORRIDOR,
+  office: OFFICE,
+  shop: SHOP,
+  "shop-tech": SHOP_TECH,
+};
