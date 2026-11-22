@@ -3,7 +3,10 @@
 Runs inside Blender (`blender -b --python tools/blender/build.py`). A model is a function of its sizes (and,
 where it varies, a seed): no randomness from the clock, so the same script gives the same file. Coordinates
 are the game's: x across, y up, z out of the model's front, in metres, the foot on y = 0; `Model` turns them
-into Blender's (z up, -y forward), which the glTF exporter turns back. Every face carries a role of the city
+into Blender's (z up, -y forward), which the glTF exporter turns back. The game's frame is Babylon's, left-handed:
+the engine reads a glTF into it by negating z and turns a prop's front (-z) to its yaw, so a model's x would come
+out mirrored. `Model` mirrors x on the way in (and each shape turns its faces back outwards), so x here is the world's
+x at yaw 0. Every face carries a role of the city
 kit's palette (`tools/city_kit_palette.py`) as its material's name; `tools/city_blender.py` bakes the roles
 into the palette's UVs.
 
@@ -28,7 +31,8 @@ def hashf(*xs):
 
 
 def _b(x, y, z):
-    return Vector((x, -z, y))
+    # x mirrored: Blender and glTF are right-handed, the game left-handed (see above).
+    return Vector((-x, -z, y))
 
 
 class Model:
@@ -61,6 +65,8 @@ class Model:
             gz = (z0 + z1) / 2 - v.co.y * sz
             v.co = _b(gx, gy, gz)
         faces = list({f for v in verts for f in v.link_faces})
+        # The mirror of `_b` turned the cube's faces inwards: back out, before the bevel (which follows them).
+        bmesh.ops.reverse_faces(self.bm, faces=faces)
         if bevel > 0:
             edges = list({e for v in verts for e in v.link_edges})
             out = bmesh.ops.bevel(self.bm, geom=verts + edges, offset=min(bevel, sx / 2.2, sy / 2.2, sz / 2.2), segments=1, affect='EDGES', profile=0.5)
@@ -78,6 +84,8 @@ class Model:
             g = Vector(centre) + a * (v.co.x * 2 * half[0]) + b * (v.co.z * 2 * half[1]) + c * (-v.co.y * 2 * half[2])
             v.co = _b(g.x, g.y, g.z)
         faces = list({f for v in verts for f in v.link_faces})
+        # The mirror of `_b` turned the cube's faces inwards: back out, before the bevel (which follows them).
+        bmesh.ops.reverse_faces(self.bm, faces=faces)
         if bevel > 0:
             edges = list({e for v in verts for e in v.link_edges})
             out = bmesh.ops.bevel(self.bm, geom=verts + edges, offset=min(bevel, *[h / 1.1 for h in half]), segments=1, affect='EDGES', profile=0.5)
@@ -103,6 +111,8 @@ class Model:
                 faces.append(self.bm.faces.new(list(reversed(rings[0]))))
             if profile[-1][0] > 1e-4:
                 faces.append(self.bm.faces.new(rings[-1]))
+        # Wound in the game's frame, mirrored by `_b`: turned back out.
+        bmesh.ops.reverse_faces(self.bm, faces=faces)
         self._finish(faces, role, smooth=True)
         for f in faces[-2:] if cap else []:
             f.smooth = False
@@ -127,7 +137,8 @@ class Model:
     def quad(self, corners, role):
         """A flat quad (a label, a sticker, a sheet of paper) from four corners in the game's frame, counter-clockwise seen from its front."""
         vs = [self.bm.verts.new(_b(*c)) for c in corners]
-        self._finish([self.bm.faces.new(vs)], role)
+        # Wound in the game's frame, mirrored by `_b`: listed backwards.
+        self._finish([self.bm.faces.new(list(reversed(vs)))], role)
 
     def to_object(self):
         """The model as a Blender object at the origin, its materials named by role, its faces triangulated."""
