@@ -33,6 +33,10 @@ const MACRO_MODELS = new Set(["vending", "kiosk", "tree", "car", "bus-stop", "co
 const ARCHITECTURE = /^(partition|step|stairs?|cable|roof|shopfront|pipe|duct|wall|parapet|escalator|grille|glass|shutter|frame|floor|water|slab|beam|column|pillar|rail)$/;
 /** Flat things on walls and floors (posters, stickers, stains, a terminal's error): the micro layer's narration (§14). */
 const DECALS = /^(paper|poster|sticker|decal|stain|error|graffiti|tag)$/;
+/** What is drawn but is no thing (a kitchen's steam, a haze): not counted in any layer. */
+const EFFECTS = /^(steam|smoke|haze|mist|fog)$/;
+/** The fittings of a counter by their kind: a menu's screen, a coffee machine, a till (§14's meso, whatever their box). */
+const FITTINGS = /^(display|machine|till|register)$/;
 /** Names of things that give light (a lamp, a neon, a screen): §13's visible sources. */
 const LIGHTS = /lamp|lantern|lampion|neon|led|screen|monitor|ekran|light|sign|holo|tv/i;
 
@@ -40,7 +44,7 @@ const LIGHTS = /lamp|lantern|lampion|neon|led|screen|monitor|ekran|light|sign|ho
 const pieceLayer = (kind: string, dx: number, dy: number, dz: number): Layer => {
   if (ARCHITECTURE.test(kind)) return "architektura";
   if (DECALS.test(kind)) return "mikro";
-  if (LIGHTS.test(kind)) return "mezo";
+  if (LIGHTS.test(kind) || FITTINGS.test(kind)) return "mezo";
   return layerOfSize(dx, dy, dz);
 };
 
@@ -79,7 +83,18 @@ export const thingsIn = (i: InteriorDef): Thing[] => {
       const z = s.at.z + item.z;
       if (!inAny(i, x, y, z)) continue;
       const shape = item.prop === "room-detail" ? ROOM_DETAIL_SHAPES[item.variant % ROOM_DETAIL_SHAPES.length] : undefined;
-      const layer: Layer = shape ? (shape.fine ? "mikro" : "mezo") : MACRO_MODELS.has(item.prop) ? "makro" : "mezo";
+      // A model that is a clutter cluster (§14) is as many hand-sized things in one place; one with none is meso.
+      if (shape?.clutter) for (let k = 0; k < shape.clutter; k++) out.push({ name: shape.key, layer: "mikro", x, y, z });
+      if (shape?.clutter) continue;
+      const layer: Layer = shape?.services
+        ? "architektura"
+        : shape
+          ? shape.fine && shape.clutter === undefined
+            ? "mikro"
+            : "mezo"
+          : MACRO_MODELS.has(item.prop)
+            ? "makro"
+            : "mezo";
       out.push({ name: shape?.key ?? item.prop, layer, x, y, z });
     }
   }
@@ -87,7 +102,7 @@ export const thingsIn = (i: InteriorDef): Thing[] => {
     const b = p.box;
     const x = (b.x0 + b.x1) / 2;
     const z = (b.z0 + b.z1) / 2;
-    if (!inAny(i, x, b.y0, z)) continue;
+    if (!inAny(i, x, b.y0, z) || EFFECTS.test(p.kind)) continue;
     out.push({ name: p.kind, layer: pieceLayer(p.kind, b.x1 - b.x0, b.y1 - b.y0, b.z1 - b.z0), x, y: b.y0, z });
   }
   return out;

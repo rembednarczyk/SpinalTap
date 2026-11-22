@@ -31,7 +31,7 @@ Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`
 Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 - §12 zgodne: 5 z 6 wymiarów na siatce; niski przepust (1,5 m) przed piwnicą.
 - §13 dług: w pomiarach 0 źródeł w bryłach (lampy W-3 w silniku); powiązać żarówkę w kratce i światło awaryjne z oprawami. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 73,9%, światło 26,1%, akcenty 0%, poza pasmem: akcenty 0% < 3%.
-- §14 dług: 12 rzeczy mikro, wszystkie luzem. Zebrać w skupiska przy pompie i przy kracie.
+- §14 zgodne: 8 rzeczy drobiazgu (skrytka przemytników, śmieci w mule), 25% luzem; rury, poręcze i łaty cegieł to instalacje (§12), nie drobiazg.
 - §15 zgodne: woda w przepuście, mokre ściany.
 - §16 zgodne.
 - §17 do sprawdzenia: kapanie i pompa ze źródła.
@@ -58,8 +58,8 @@ Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 Pomiary zasad (§12–§16):
 - rzut: 3 prostokąty, 490 m², wysokość 4,1 / 1,5 / 4,4 m
 - siatka 0,5 m: 5 z 6 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 12
-- warstwy wyposażenia: makro 3, mezo 2, mikro 12
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 12 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 17
+- warstwy wyposażenia: makro 3, mezo 5, mikro 8
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 6 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

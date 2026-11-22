@@ -65,7 +65,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 49 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 14
-- warstwy wyposażenia: makro 26, mezo 29, mikro 5
+- warstwy wyposażenia: makro 22, mezo 33, mikro 5
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 1 skupisk, 3 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 8
 <!-- inwentarz-gry:end -->
