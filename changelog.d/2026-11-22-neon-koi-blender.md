@@ -1,0 +1,1 @@
+- Bar Neon Koi z prawdziwymi meblami: lada z desek z rurą na nogi, regał z butelkami, stołki, stoliki z krzesłami, szafa grająca i akwarium z koi, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

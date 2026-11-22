@@ -1,4 +1,4 @@
-import type { StreetPropItem } from "../../../packages/core/src";
+import { ROOM_DETAIL_SHAPES, type StreetPropItem } from "../../../packages/core/src";
 import { ALCHEMIA_PIECES } from "../../../packages/sim/src/content/alchemia";
 import { type InteriorDef, type InteriorRoom, INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -44,9 +44,16 @@ export const inventoryOf = (i: InteriorDef): Inventory => {
   for (const c of WORLD_CHUNKS)
     for (const p of [...c.props, ...(c.street ?? [])]) {
       if (p.view.kind === "street-props" || p.view.kind === "building") continue;
-      if (inAny(i, p.center.x, p.center.y, p.center.z)) count(m, `prop: ${propName(p.view as { kind: string; material?: string; slope?: unknown })}`);
+      const name = propName(p.view as { kind: string; material?: string; slope?: unknown });
+      // A solid drawn apart from its entity (by a model of the room's detail, ADR-0098, or by the scenery, as W-3's hall) is counted as such.
+      if (inAny(i, p.center.x, p.center.y, p.center.z)) count(m, `prop: ${name}${p.scenery ? ", rysunek osobno" : ""}`);
     }
-  for (const s of streetItems()) if (inAny(i, s.x, s.y, s.z)) count(m, `model: ${s.item.prop}`);
+  for (const s of streetItems()) {
+    if (!inAny(i, s.x, s.y, s.z)) continue;
+    // The rooms' detail by its model's key (Blender's, `tools/blender/`).
+    const key = s.item.prop === "room-detail" ? ROOM_DETAIL_SHAPES[s.item.variant % ROOM_DETAIL_SHAPES.length]?.key : undefined;
+    count(m, key ? `blender: ${key}` : `model: ${s.item.prop}`);
+  }
   for (const p of ALCHEMIA_PIECES) {
     const b = p.box;
     if (inAny(i, (b.x0 + b.x1) / 2, b.y0, (b.z0 + b.z1) / 2)) count(m, `piece: ${p.kind}`);

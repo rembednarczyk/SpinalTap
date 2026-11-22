@@ -1,0 +1,35 @@
+"""Builds the room detail's models in Blender without a window and exports them as one glTF (ADR-0098).
+
+    blender -b --factory-startup --python tools/blender/build.py -- OUT.glb
+
+Each room's module in `rooms/` lists its models (`MODELS`, functions giving a `shapes.Model`); every model
+becomes one object at the origin named by its key, its faces' materials named by the palette's roles.
+`tools/city_blender.py` runs this and bakes the result into `room-detail-props.glb`.
+"""
+import os
+import sys
+
+import bpy
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [HERE, os.path.join(HERE, 'rooms')]
+
+import neon_koi  # noqa: E402
+
+ROOMS = [neon_koi]
+
+
+def main():
+    out = sys.argv[sys.argv.index('--') + 1]
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    keys = []
+    for room in ROOMS:
+        for make in room.MODELS:
+            obj = make().to_object()
+            keys.append(obj.name)
+    bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', use_selection=False, export_apply=True,
+                              export_yup=True, export_normals=True, export_texcoords=False, export_materials='EXPORT')
+    print('BUILT', len(keys), ' '.join(keys))
+
+
+main()
