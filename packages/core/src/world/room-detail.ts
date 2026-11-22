@@ -21,6 +21,15 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-koi-jukebox" },
   { key: "rd-koi-aquarium" },
   { key: "rd-koi-counter-things" },
+  // Doktor Mori's clinic (docs/pomieszczenia/clinic.md).
+  { key: "rd-clinic-bench" },
+  { key: "rd-clinic-reception" },
+  { key: "rd-clinic-chair" },
+  { key: "rd-clinic-lamp" },
+  { key: "rd-clinic-cart" },
+  { key: "rd-clinic-cabinet" },
+  { key: "rd-clinic-counter-things" },
+  { key: "rd-clinic-sharps" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

@@ -14,9 +14,11 @@ import bpy
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [HERE, os.path.join(HERE, 'rooms')]
 
+import clinic  # noqa: E402
 import neon_koi  # noqa: E402
 
-ROOMS = [neon_koi]
+# In the order the rooms came: their models' keys go into ROOM_DETAIL_SHAPES in the same order.
+ROOMS = [neon_koi, clinic]
 
 
 def main():
