@@ -66,8 +66,8 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 Pomiary zasad (§12–§16):
 - rzut: 37 prostokąty, 3409 m², wysokość 16,0 / 13,4 / 10,0 / 5,0 / 4,5 / 2,6 / 7,5 / 6,0 m
 - siatka 0,5 m: 3 z 74 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 53
-- warstwy wyposażenia: makro 32, mezo 18, mikro 31
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 58
+- warstwy wyposażenia: makro 32, mezo 25, mikro 31
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 6 skupisk, 28 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->
