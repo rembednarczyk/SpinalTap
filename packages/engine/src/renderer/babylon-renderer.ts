@@ -426,7 +426,7 @@ export class BabylonRenderer implements RenderPort {
     this.alchemia.p2.update();
     this.w3.update(dt, this.stage.options.reference);
     // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
-    this.fx.indoorFade.set(this.w3.interior);
+    this.fx.indoorFade.set(this.w3.interior || this.alchemia.rooms.interior, this.w3.interior ? "w3" : "alchemia");
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
@@ -438,7 +438,7 @@ export class BabylonRenderer implements RenderPort {
     // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus, this.rig.camera);
-    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope);
+    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope ?? this.alchemia.rooms.lightScope);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
     // The probe never re-renders in the metro.

@@ -15,7 +15,7 @@ import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../
 import { Grading } from "../npr/grading";
 import { applyMsaa } from "../npr/msaa";
 import { qualityTier } from "../npr/quality";
-import { INDOOR_RIG, mixRig, rigForDaylight } from "../npr/lighting";
+import { indoorRig, mixRig, rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type Atmosphere, createSplashes, createSteam } from "./atmosphere";
@@ -292,8 +292,8 @@ export class ScreenFx {
     const look = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
     const scale = this.fogScale ?? this.deps.fogScale ?? 1;
     const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
-    // Inside a closed hall its own light replaces the sky's on the materials (ADR-0082 §4); the sky and the signs keep the night's.
-    materials.setRig(mixRig(rig, INDOOR_RIG, this.indoorFade.value));
+    // Inside a closed hall its own light replaces the sky's on the materials (ADR-0082 §4; Alchemia's, 22.11); the sky and the signs keep the night's.
+    materials.setRig(mixRig(rig, indoorRig(this.indoorFade.kind, this.daylight), this.indoorFade.value));
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
     materials.wet.setTint(p.wet);
     atmosphere.setDaylight(rig, this.daylight);

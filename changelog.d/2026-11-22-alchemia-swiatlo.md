@@ -1,0 +1,1 @@
+- W Alchemii jest teraz nastrojowe światło: w galerii i food hallu nie świeci już księżyc, tło jest ciemne i ciepłe, a światło dają witryny sklepów w kolorach branż, sodowe lampy galerii, błękitne pasy przy atrium, lampiony nad stołami i kuchnie.

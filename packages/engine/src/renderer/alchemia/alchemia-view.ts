@@ -5,6 +5,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import type { GeometrySink } from "../city-kit-data";
 import type { CityKit } from "../city-kit";
 import { alchemiaGeometry } from "./alchemia-geometry";
+import { AlchemiaInterior } from "./alchemia-interior";
 import { GalleryDetailView } from "./gallery-detail-view";
 import type { CityProps } from "../city-props";
 import type { RenderQuality } from "../../npr/quality";
@@ -112,12 +113,15 @@ export class AlchemiaView {
   readonly parking: ParkingView;
   /** Its car park's P-2 under P-1 (ADR-0074 stage 5a): a part of its own. */
   readonly p2: P2View;
+  /** Its interior mode with its own light (22.11): a part of its own. */
+  readonly rooms: AlchemiaInterior;
   /** Its shops' goods, Blender's models (ADR-0098): drawn with the inside, a part of its own. */
   readonly goods: GalleryDetailView;
 
   constructor(private readonly deps: AlchemiaDeps) {
     this.parking = new ParkingView(deps);
     this.p2 = new P2View(deps);
+    this.rooms = new AlchemiaInterior(deps.materials);
     this.goods = new GalleryDetailView({ scene: deps.scene, materials: deps.materials, props: deps.props ?? (() => null), quality: deps.quality ?? "high" });
   }
 
@@ -131,11 +135,12 @@ export class AlchemiaView {
   /** Call once per frame before rendering. */
   update(): void {
     const kit = this.deps.kit();
+    const e = this.deps.eye();
     if (!kit || !this.deps.city()) {
       this.show(false, false);
+      this.rooms.update(e, false);
       return;
     }
-    const e = this.deps.eye();
     const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
     const near = toHall(e);
     const out = !deepInP2(e) && far < ALCHEMIA_DRAW + (this.outside?.isEnabled(false) ? ALCHEMIA_HOLD : 0);
@@ -145,6 +150,7 @@ export class AlchemiaView {
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
     // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
+    this.rooms.update(e, inn && this.inside !== null);
   }
 
   private build(kit: CityKit): void {
