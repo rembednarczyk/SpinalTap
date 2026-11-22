@@ -1,0 +1,1 @@
+- W schronie pod T2 przybyło rzeczy: gaśnica przy włazie, skrzynka elektryczna muzeum, kałuża z wilgoci od gruntu, kartony Hebiego oraz jego butelki i kubek na skrzyni obok laptopa. Rozstawia je generator wnętrz (ADR-0099).

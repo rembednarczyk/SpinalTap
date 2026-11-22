@@ -37,7 +37,7 @@ export interface KitEntry {
 }
 
 /** The kinds of rooms with a kit. */
-export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech";
+export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech" | "shelter";
 
 /**
  * A metro platform (`docs/pomieszczenia/metro-*.md`, the street's faction, §16: dense): the litter of a wait by the
@@ -101,10 +101,24 @@ const SHOP_TECH: readonly KitEntry[] = [
   { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
 ];
 
+/**
+ * The air-raid shelter under T2 kept as a memorial (`docs/pomieszczenia/alchemia-shelter.md`; history's faction with the
+ * street's Hebi in it, §16): the museum's extinguisher by a way in and its fuse box, damp from the ground pooling by a
+ * wall (§15), and the Hebi's things round his laptop on the cover crate: a delivery's cartons, bottles and a cup.
+ */
+const SHELTER: readonly KitEntry[] = [
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door" },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-puddle", anchor: "floor-wall", role: "hero", along: 0.85, out: 0.6, count: [1, 1] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
+  { key: "rd-c-bottles", anchor: "surface-top", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-shelter-hebi"] },
+  { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-shelter-hebi"] },
+];
 export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   platform: PLATFORM,
   "service-corridor": SERVICE_CORRIDOR,
   office: OFFICE,
   shop: SHOP,
   "shop-tech": SHOP_TECH,
+  shelter: SHELTER,
 };

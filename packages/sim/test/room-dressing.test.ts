@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES, ROOM_KITS } from "@seki/core";
-import { ALL_SHOP_BUILDS, METRO_PLATFORMS, P2_TUNNEL_DRESSING, SHOP_DRESSING, shopDressingLayout as shopDressLayout, P2_TUNNEL_LAYOUT, TESSEN_OFFICE_DRESSING, TESSEN_OFFICE_LAYOUT, type GroundRect, dressRoom, platformLayout } from "../src";
+import { ALL_SHOP_BUILDS, METRO_PLATFORMS, P2_TUNNEL_DRESSING, SHOP_DRESSING, shopDressingLayout as shopDressLayout, P2_TUNNEL_LAYOUT, SHELTER_DRESSING, SHELTER_LAYOUT, TESSEN_OFFICE_DRESSING, TESSEN_OFFICE_LAYOUT, type GroundRect, dressRoom, platformLayout } from "../src";
 import { METRO_DETAIL } from "../src";
 
 const key = (variant: number) => ROOM_DETAIL_SHAPES[variant]!.key;
@@ -68,7 +68,7 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
     const layout = shopDressLayout(b);
     return layout ? [{ layout, dressed: dressRoom(layout) }] : [];
   });
-  const rooms = [{ layout: P2_TUNNEL_LAYOUT, dressed: P2_TUNNEL_DRESSING }, { layout: TESSEN_OFFICE_LAYOUT, dressed: TESSEN_OFFICE_DRESSING }, ...shops];
+  const rooms = [{ layout: P2_TUNNEL_LAYOUT, dressed: P2_TUNNEL_DRESSING }, { layout: TESSEN_OFFICE_LAYOUT, dressed: TESSEN_OFFICE_DRESSING }, { layout: SHELTER_LAYOUT, dressed: SHELTER_DRESSING }, ...shops];
 
   it("dresses every open shop of Alchemia's, the papers on its counter's top (its till and cup left free)", () => {
     expect(shops.length).toBeGreaterThanOrEqual(40);
@@ -81,6 +81,14 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
         expect(layout.surfaces.some((s) => inRect(p.x, p.z, s)), k).toBe(true);
         expect(layout.taken.filter((t) => t.onTop).some((t) => inRect(p.x, p.z, t)), k).toBe(false);
       }
+  });
+  it("gives the shelter its whole kit, the Hebi's bottles and cup on his crate by his laptop", () => {
+    for (const e of ROOM_KITS.shelter) expect(SHELTER_DRESSING.filter((p) => key(p.variant) === e.key).length, e.key).toBeGreaterThanOrEqual(e.count[0]);
+    const laptop = SHELTER_LAYOUT.taken.find((t) => t.key === "rd-shelter-hebi")!;
+    for (const p of SHELTER_DRESSING.filter((d) => d.y > SHELTER_LAYOUT.floor + 0.5)) {
+      expect(inRect(p.x, p.z, SHELTER_LAYOUT.surfaces[0]!), key(p.variant)).toBe(true);
+      expect(Math.hypot(p.x - (laptop.minX + laptop.maxX) / 2, p.z - (laptop.minZ + laptop.maxZ) / 2), key(p.variant)).toBeLessThanOrEqual(1.2);
+    }
   });
   const near = (x: number, z: number, r: GroundRect, d: number) => Math.hypot(x - Math.min(r.maxX, Math.max(r.minX, x)), z - Math.min(r.maxZ, Math.max(r.minZ, z))) <= d;
 
