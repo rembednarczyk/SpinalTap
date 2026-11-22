@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, ROOM_DETAIL_SCENERY, W3_HALL_DETAIL, W3_INSIDE_BLOCKS, W3_PALLETS, W3_PROPS } from "../src";
+import { INTERIORS, ROOM_DETAIL_SCENERY, W3_HALL_DETAIL, W3_INSIDE_BLOCKS, W3_PALLETS, W3_PROPS, W3_Y } from "../src";
 
 /**
  * W-3's assembly hall's detail built by Blender after its card (ADR-0098, `docs/pomieszczenia/w3-hall.md`): in the hall,
@@ -12,7 +12,7 @@ describe("W-3's hall's detail (ADR-0098)", () => {
   const inRoom = (x: number, y: number, z: number) => room.rooms.some((r) => x >= r.minX - 0.01 && x <= r.maxX + 0.01 && z >= r.minZ - 0.01 && z <= r.maxZ + 0.01 && y >= r.bottom - 0.01 && y <= r.top + 0.01);
 
   it("stands every model in the hall, by a shape of the hall's", () => {
-    expect(W3_HALL_DETAIL).toHaveLength(14);
+    expect(W3_HALL_DETAIL).toHaveLength(18);
     for (const p of W3_HALL_DETAIL) {
       expect(key(p.variant).startsWith("rd-w3h-"), key(p.variant)).toBe(true);
       expect(inRoom(p.x, p.y, p.z), `${key(p.variant)} ${p.x},${p.y},${p.z}`).toBe(true);
@@ -28,6 +28,17 @@ describe("W-3's hall's detail (ADR-0098)", () => {
       expect(models.some((m) => m.x === x && m.z === z), `${x},${z}`).toBe(true);
       expect(W3_PROPS.some((p) => p.solid && p.center.x === x && p.center.z === z), `solid ${x},${z}`).toBe(true);
       expect(W3_INSIDE_BLOCKS.some((b) => b.center.x === x && b.center.z === z)).toBe(false);
+    }
+  });
+
+  it("puts what the welder left on the top of each of the four stations by the belts (§14's clusters)", () => {
+    const kits = W3_HALL_DETAIL.filter((p) => key(p.variant) === "rd-w3h-station");
+    expect(kits).toHaveLength(4);
+    for (const k of kits) {
+      // On a station's solid top (1.1 m), within its 1.2 m width.
+      expect(k.y).toBeCloseTo(W3_Y + 1.1, 6);
+      const top = W3_PROPS.find((p) => p.solid && Math.abs(p.center.x - k.x) < 0.01 && Math.abs(p.center.z - k.z) < 0.3 && p.view.kind === "block");
+      expect(top, `${k.x},${k.z}`).toBeDefined();
     }
   });
 

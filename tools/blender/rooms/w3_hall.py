@@ -199,5 +199,24 @@ def warning():
     return m
 
 
+def station():
+    """What the welder left on a station's top by the belt (§14's clutter cluster): the welding mask face down with its
+    visor up, the leather gloves, a parts tray of screws, a can of energy drink, the checklist tablet in its rugged case
+    with its screen lit (0.6 x 0.3 x 0.18; foot on the station's top, along x, front to +z the aisle)."""
+    m = Model('rd-w3h-station')
+    m.lathe(-0.2, 0.0, [(0.0, 0.0), (0.09, 0.005), (0.12, 0.05), (0.115, 0.11), (0.0, 0.12)], 'dark', seg=14)
+    m.box(-0.25, -0.15, 0.1, 0.16, 0.06, 0.07, 'glass-dark')
+    for x, z in ((-0.06, 0.06), (0.0, 0.09)):
+        m.box(x - 0.045, x + 0.045, 0.0, 0.025, z - 0.07, z + 0.07, 'fabric-amber', bevel=0.012)
+    m.box(0.05, 0.19, 0.0, 0.03, -0.11, -0.03, 'metal', bevel=0.004)
+    for k in range(6):
+        x, z = 0.07 + (k % 3) * 0.04, -0.09 + (k // 3) * 0.04
+        m.cyl(x, z, 0.006, 0.03, 0.04, 'trim', seg=6)
+    m.lathe(0.23, 0.07, [(0.032, 0.0), (0.033, 0.11), (0.026, 0.125), (0.0, 0.125)], 'neon-green', seg=12)
+    m.box(-0.05, 0.13, 0.0, 0.018, -0.02, 0.1, 'dark', bevel=0.006)
+    m.box(-0.04, 0.12, 0.018, 0.02, -0.01, 0.09, 'neon-cyan')
+    return m
+
+
 MODELS = [lambda: pallet(0, 'rd-w3h-pallet-crates'), lambda: pallet(1, 'rd-w3h-pallet-sacks'), jack, barrels, leak, trays, break_kit,
-          exit_sign, warning]
+          exit_sign, warning, station]
