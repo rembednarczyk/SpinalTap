@@ -1,0 +1,1 @@
+- W food hallu Alchemii lampiony nad stołami i na girlandach są okrągłymi chochinami, na stołach stoją miski ramen i donburi na tacach z pałeczkami, kubki i przewrócony stołek przy barze, a w kuchniach lokali garnki z chochlami, stosy misek, czarki i butle gazowe, zbudowane w Blenderze według karty pomieszczenia (ADR-0098); wcześniej były to pudełka.

@@ -33,6 +33,7 @@ import {
   scheduledPose,
 } from "../src";
 import { FOODHALL_CROWD } from "../src/content/alchemia/crowd";
+import { KITCHEN_ROUND } from "../src/content/alchemia/foodhall-kitchens";
 import { FOODHALL_FLOOR } from "../src/content/alchemia/units";
 import { EYE_HEIGHT, lineOfSight } from "../src/world/hitscan";
 import { PRISMS, type R, cellCentre, overlap, raster, within } from "./alchemia-raster";
@@ -128,7 +129,9 @@ describe("the food hall on P3 (ADR-0093 O3)", () => {
     const pieces = kitchenPieces();
     for (const u of ALCHEMIA_UNITS.filter((x) => !x.shut)) {
       const mine = pieces.filter((p) => within(rect(u.rect), (p.box.x0 + p.box.x1) / 2, (p.box.z0 + p.box.z1) / 2));
-      const kinds = new Set(mine.map((p) => p.kind));
+      // The round things (cups, pots, bowls) are the rooms' detail's models now (ADR-0098), standing for the cups they were.
+      const round = KITCHEN_ROUND.filter((r) => within(rect(u.rect), (r.box.x0 + r.box.x1) / 2, (r.box.z0 + r.box.z1) / 2));
+      const kinds = new Set([...mine.map((p) => p.kind), ...(round.length > 0 ? ["cup" as const] : [])]);
       // Big things at a body's height (solid), small ones on them, and steam off a pot or a cup (§5).
       expect(mine.some((p) => p.solid), u.id).toBe(true);
       expect(["cup", "carton", "goods"].some((k) => kinds.has(k as never)), u.id).toBe(true);

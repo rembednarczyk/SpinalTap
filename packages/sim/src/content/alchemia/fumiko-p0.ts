@@ -35,23 +35,34 @@ export const FUMIKO_WINDOW_YAW = NORTH;
 export const beforeHatch = (out = 0.9, across = 0): Vec3 => ground(HATCH_X + across, HALL.maxZ + out);
 
 /** The kitchen line along its back partition: a worktop with the stove, the pots on it, the hood over it. */
+/**
+ * Fumiko's round things for the rooms' detail (`foodhall-detail.ts`, ADR-0098): the two pots on her stove, the stack of
+ * bowls by it, the cup on the counter in the hatch, each in the box it had as a piece.
+ */
+export const FUMIKO_P0_ROUND: readonly { readonly key: "rd-fh-pot" | "rd-fh-bowls" | "rd-fh-teacup"; readonly box: Piece["box"] }[] = (() => {
+  const z0 = FUMIKO_WINDOW.minZ + W;
+  return [
+    { key: "rd-fh-pot", box: box(401.35, 401.85, z0 + 0.12, z0 + 0.6, F + 0.95, F + 1.3) },
+    { key: "rd-fh-pot", box: box(401.95, 402.45, z0 + 0.12, z0 + 0.6, F + 0.95, F + 1.22) },
+    { key: "rd-fh-bowls", box: box(403.0, 403.3, z0 + 0.15, z0 + 0.45, F + 0.9, F + 1.08) },
+    { key: "rd-fh-teacup", box: box(hatch.x1 - 0.5, hatch.x1 - 0.42, HALL.maxZ - 0.5, HALL.maxZ - 0.42, F + 1.0, F + 1.11) },
+  ];
+})();
+
 const kitchen = (): Piece[] => {
   const z0 = FUMIKO_WINDOW.minZ + W;
   const z1 = z0 + 0.7;
   const [x0, x1] = [FUMIKO_WINDOW.minX + 0.2, 405.4];
   const out: Piece[] = [
     piece(box(x0, x1, z0, z1, F - 0.05, F + 0.9), "counter", true),
-    // The stove's two burners and the pots on them, their steam: the broth on since four in the afternoon.
+    // The stove's two burners and the steam off its pots (round, `FUMIKO_P0_ROUND`): the broth on since four in the afternoon.
     piece(box(401.2, 402.6, z0 + 0.05, z1 - 0.05, F + 0.9, F + 0.95), "machine", true, false),
-    piece(box(401.35, 401.85, z0 + 0.12, z0 + 0.6, F + 0.95, F + 1.3), "goods", true, false),
-    piece(box(401.95, 402.45, z0 + 0.12, z0 + 0.6, F + 0.95, F + 1.22), "goods", true, false),
     piece(box(401.55, 401.62, z0 + 0.32, z0 + 0.39, F + 1.32, F + 1.75), "steam", true, false),
     piece(box(402.15, 402.21, z0 + 0.34, z0 + 0.4, F + 1.25, F + 1.6), "steam", true, false),
     // The hood over the stove and its duct up to the ceiling along the partition.
     piece(box(400.9, 402.9, z0, z1 + 0.15, F + 2.05, F + 2.4), "duct", true, false),
     piece(box(401.7, 402.1, z0, z0 + 0.4, F + 2.4, C), "duct", true, false),
-    // Bowls stacked by the stove, a ladle, the cartons of noodles at the worktop's end.
-    piece(box(403.0, 403.3, z0 + 0.15, z0 + 0.45, F + 0.9, F + 1.08), "cup", true, false),
+    // The cartons of noodles at the worktop's end (bowls stacked by the stove: `FUMIKO_P0_ROUND`).
     piece(box(403.5, 404.4, z0 + 0.05, z0 + 0.6, F + 0.9, F + 1.25), "carton", true, false),
     piece(box(404.6, 405.2, z0 + 0.1, z0 + 0.6, F + 0.9, F + 1.05), "carton", true, false),
     // A lamp over the worktop, the cable down to it taped to the partition.
@@ -72,8 +83,7 @@ export const fumikoWindowPieces = (): Piece[] => {
     piece(box(q.maxX - W, q.maxX, q.minZ, HALL_INNER.maxZ, F - 0.05, C), "partition", true),
     piece(box(q.minX, q.maxX - W, q.minZ, q.minZ + W, F - 0.05, C), "partition", true),
     piece(COUNTER, "counter", true),
-    // A cup left on the counter in the hatch, steaming: she was here a moment ago (§5).
-    piece(box(hatch.x1 - 0.5, hatch.x1 - 0.42, HALL.maxZ - 0.5, HALL.maxZ - 0.42, F + 1.0, F + 1.11), "cup", true, false),
+    // The steam off the cup left on the counter in the hatch (the cup: `FUMIKO_P0_ROUND`): she was here a moment ago (§5).
     piece(box(hatch.x1 - 0.47, hatch.x1 - 0.45, HALL.maxZ - 0.48, HALL.maxZ - 0.45, F + 1.14, F + 1.4), "steam", true, false),
     ...kitchen(),
     // The fridge in the corner by the partition to the gallery: a tall box, humming.
