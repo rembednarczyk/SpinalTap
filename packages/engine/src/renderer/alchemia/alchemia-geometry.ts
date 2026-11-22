@@ -6,7 +6,7 @@ import { frontSignGeometry } from "./front-sign-geometry";
 import { deptakSignGeometry } from "./deptak-sign-geometry";
 import { pavilionGeometry } from "./pavilion-geometry";
 import { ledOfSlab } from "./rounded-slab";
-import { LAWN, LEAF, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
+import { LAWN, LEAF, mallSlab, paneFrame, prismOutline, railing, slabOutline } from "./storey-facade";
 import { ivyCurtain } from "./ivy-curtain";
 import { venueSigns } from "./venue-signs";
 import { escalatorGeometry, onEscalator } from "./escalator-geometry";
@@ -225,7 +225,7 @@ const outlinedPiece = (sink: GeometrySink, data: CityKitData, p: AlchemiaPiece):
   const pts = p.outline;
   if (!pts) return false;
   const b = p.box;
-  if (TIER_SET.has(p) && ofMall(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, darkEdges(pts));
+  if (TIER_SET.has(p) && ofMall(p)) mallSlab(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, darkEdges(pts));
   else if (p.kind === "pane") paneFrame(sink, data, pts, b.y0, b.y1);
   // The front's slabs (its storeys' rooms under them since ADR-0093 O5): the beam a ring, the ceiling the slab's underside.
   else if (isSlab(p)) slabOutline(sink, data, pts, b.y0, b.y1, "trim-light", SWATCH.led, undefined, true);

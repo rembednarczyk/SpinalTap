@@ -1,0 +1,1 @@
+- Napisy lokali w food hallu Alchemii są całe: wcześniej górę liter zasłaniały rura pod stropem i sufit narysowany 32 cm za nisko. Na wszystkich piętrach galerii sufit jest teraz tam, gdzie wiszą lampy, oprawy i rury, więc widać je spod spodu.
