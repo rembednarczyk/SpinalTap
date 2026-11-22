@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-960 Schody A i B w piwnicy W-3 niewidoczne
+- Status: zamknięte 22.11: nie błąd gry. Spec roboczy wołał `teleport(page, x, y, z)`, a pomocnik e2e bierze `(x, z, yaw, pitch, y)`: gracz stał w (2530; z −33), daleko od W-3, więc propsy chunku `nabrzeze-w3` (schody, drzwi, drabiny) się nie wczytały, a kamera z `view()` patrzyła na pustą piwnicę. Z poprawnym teleportem schody A i B są widoczne (33 propsy w wypieku W-3).
+- Ważność: S2 · Zasięg: schody A (x 2517..2525, z 402..403,8) i B (x 2539..2541, z 397,6..403,6) z `tessen-w3/basement.ts` istnieją w symulacji jako bryły z `slope` (gracz po nich chodzi), ale gra ich nie rysuje: w zrzucie z wnętrza piwnicy widać podłogę, szafki i otwory w stropie, a pod nowymi poręczami z Blendera nie ma stopni. `indoor()` zostawia schody jako widok bytu („Stairs, ladders and doors stay as they are”), a hala piwnicy jest wypiekana z `W3_INSIDE_BLOCKS` bez nich; przypuszczalnie widok bytu schodów pod ziemią (w sklepieniu `GroundVault`) nie powstaje albo jest zasłonięty
+- Pakiet właściciela: packages/engine (`tessen-w3/w3-inside-geometry.ts` albo widoki bloków z `slope`), ewentualnie packages/sim (`indoor()`)
+- Test przyjęcia: test renderera, że schody A i B mają siatkę w scenie po wejściu do piwnicy; zrzut z (2521; -31; 399,5) w stronę schodów A pokazuje stopnie pod poręczą
+- Dowód: zrzut `w3-piwnica-schody-niewidoczne.png` z sesji 22.11 (spec roboczy, widok z boku schodów A)
+- Trop (22.11): schody są propsami w pokojach W-3 (`inW3Interior`), więc idą do wypieku `W3PropBake` (`w3-prop-bake.ts`): ich własna siatka gaśnie, gdy wypiek je rysuje, a wypiek pokazuje się z halą (`setShown`). Do sprawdzenia w grze: czy wypiek grupy schodów powstaje (`MergeMeshes` zwraca null przy różnych atrybutach) i czy jest włączony, gdy oko jest w piwnicy.
+
 ### G-959 Ściany przy sąsiednim budynku pominięte, choć sąsiad zasłania je tylko w części: dziura w budynku
 - Ważność: S2 · Zasięg: 74 ściany Lublina, 76 m dziur (największe: 9 m na ścianie 72 m przy (2536; 406), 5,7 m przy (−155; −108), 4,5 m przy (416; −152) i (218; 60)); szczyty dachów dwuspadowych tak samo
 - Opis: Polecenie użytkownika 21.11 („budynki z przezroczystymi ścianami”). Ścianę, przy której stoi inny budynek, `hiddenWall` pomijała, gdy sąsiad był dość wysoki w trzech próbkach (15%, 50%, 85% długości, 0,6 m od ściany). Sąsiad krótszy niż ściana, kilku sąsiadów z przerwami albo sąsiad z wcięciem zostawiali odcinek ściany bez sąsiada i bez ściany: przez dziurę widać pusty środek budynku, a jego dalsze ściany są od tyłu, więc obcięte, i budynek wygląda na przezroczysty (zrzut (416; −152): oświetlona ulica za budynkiem). Kierunek ścian był dobry: `cleanRing` ustawia obrysy przeciwnie do wskazówek zegara, obrysów samoprzecinających się nie ma.

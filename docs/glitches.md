@@ -36,14 +36,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: naprawiacz G-018. Importer stawia schody na wierzchu (`ORDER` steps: 8), a renderer pod placem (stopnie +0,05, `square` +0,08). Do decyzji, która warstwa wygrywa. Osobno: 15 stromych biegów z płaskimi odcinkami ma pojedyncze podstopnie < 4,5 cm (np. stare-miasto-1-0 (680, −193)), których `steps-micro-riser` nie liczy.
 - Pakiet właściciela: packages/engine (renderer/mapcity) / tools/osm-import
 
-### G-960 Schody A i B w piwnicy W-3 niewidoczne
-- Status: zgłoszone (22.11, praca nad detalem piwnicy, ADR-0098)
-- Ważność: S2 · Zasięg: schody A (x 2517..2525, z 402..403,8) i B (x 2539..2541, z 397,6..403,6) z `tessen-w3/basement.ts` istnieją w symulacji jako bryły z `slope` (gracz po nich chodzi), ale gra ich nie rysuje: w zrzucie z wnętrza piwnicy widać podłogę, szafki i otwory w stropie, a pod nowymi poręczami z Blendera nie ma stopni. `indoor()` zostawia schody jako widok bytu („Stairs, ladders and doors stay as they are”), a hala piwnicy jest wypiekana z `W3_INSIDE_BLOCKS` bez nich; przypuszczalnie widok bytu schodów pod ziemią (w sklepieniu `GroundVault`) nie powstaje albo jest zasłonięty
-- Pakiet właściciela: packages/engine (`tessen-w3/w3-inside-geometry.ts` albo widoki bloków z `slope`), ewentualnie packages/sim (`indoor()`)
-- Test przyjęcia: test renderera, że schody A i B mają siatkę w scenie po wejściu do piwnicy; zrzut z (2521; -31; 399,5) w stronę schodów A pokazuje stopnie pod poręczą
-- Dowód: zrzut `w3-piwnica-schody-niewidoczne.png` z sesji 22.11 (spec roboczy, widok z boku schodów A)
-- Trop (22.11): schody są propsami w pokojach W-3 (`inW3Interior`), więc idą do wypieku `W3PropBake` (`w3-prop-bake.ts`): ich własna siatka gaśnie, gdy wypiek je rysuje, a wypiek pokazuje się z halą (`setShown`). Do sprawdzenia w grze: czy wypiek grupy schodów powstaje (`MergeMeshes` zwraca null przy różnych atrybutach) i czy jest włączony, gdy oko jest w piwnicy.
-
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
