@@ -319,6 +319,157 @@ def stock_lod():
     return m
 
 
+# What lies under a glass case's lid by trade, one piece of the case's row (about 0.2 x 0.1 x 0.25; its foot on the case's
+# lit top, its front to +z), and the phone's.
+
+
+def _pad(m, role='fabric-magenta'):
+    m.box(-0.09, 0.09, 0.0, 0.012, -0.11, 0.11, role)
+
+
+def case_implants():
+    """A chromed eye on a velvet pad, its iris lit, and a finger's joints beside it."""
+    m = Model('rd-gl-case-implants')
+    _pad(m)
+    m.lathe(-0.03, 0.0, [(0.0, 0.0), (0.03, 0.01), (0.035, 0.035), (0.03, 0.06), (0.0, 0.07)], 'metal', seg=10, y0=0.012)
+    m.tube((-0.03, 0.047, 0.02), (-0.03, 0.047, 0.036), 0.014, 'neon-cyan', seg=8)
+    for j in range(3):
+        m.tube((0.05, 0.022, -0.08 + 0.045 * j), (0.05, 0.022, -0.04 + 0.045 * j), 0.01, 'metal', seg=6)
+    return m
+
+
+def case_electronics():
+    """A phone face up showing its screen, a case of earbuds open."""
+    m = Model('rd-gl-case-electronics')
+    m.box(-0.08, -0.0, 0.0, 0.01, -0.08, 0.08, 'dark')
+    m.quad([(-0.075, 0.0105, 0.075), (-0.005, 0.0105, 0.075), (-0.005, 0.0105, -0.075), (-0.075, 0.0105, -0.075)], 'win-teal')
+    m.box(0.02, 0.08, 0.0, 0.025, -0.03, 0.03, 'trim-light')
+    for x in (0.035, 0.065):
+        m.lathe(x, 0.0, [(0.0, 0.0), (0.01, 0.005), (0.0, 0.015)], 'win-white', seg=6, y0=0.025)
+    return m
+
+
+def case_pharmacy():
+    """Bottles of scent and creams: a cut-glass flask, a jar, a tube."""
+    m = Model('rd-gl-case-pharmacy')
+    m.lathe(-0.04, 0.0, [(0.03, 0.0), (0.035, 0.07), (0.01, 0.09), (0.01, 0.1)], 'glass-blue', seg=8)
+    m.cyl(-0.04, 0.0, 0.012, 0.1, 0.12, 'neon-amber', seg=8)
+    m.lathe(0.04, -0.04, [(0.03, 0.0), (0.03, 0.04), (0.0, 0.045)], 'win-white', seg=10)
+    m.tube((0.0, 0.012, 0.07), (0.09, 0.012, 0.05), 0.012, 'neon-pink', seg=6)
+    return m
+
+
+def case_arms():
+    """A pistol lying on its side, a spare magazine by it."""
+    m = Model('rd-gl-case-arms')
+    _pad(m, 'dark')
+    m.box(-0.08, 0.06, 0.012, 0.04, -0.02, 0.06, 'metal')
+    m.tube((0.06, 0.026, 0.04), (0.1, 0.026, 0.04), 0.008, 'dark', seg=6)
+    m.obox((-0.06, 0.026, -0.03), (0.3, 0, 0.95), (0, 1, 0), (0.016, 0.014, 0.045), 'dark')
+    m.box(0.0, 0.025, 0.012, 0.03, -0.09, -0.03, 'dark')
+    return m
+
+
+def case_repair():
+    """A phone with its back off, its board showing, and a chip in an antistatic bag."""
+    m = Model('rd-gl-case-repair')
+    m.box(-0.08, 0.0, 0.0, 0.008, -0.08, 0.08, 'dark')
+    m.quad([(-0.072, 0.0085, 0.07), (-0.008, 0.0085, 0.07), (-0.008, 0.0085, -0.02), (-0.072, 0.0085, -0.02)], 'plant')
+    m.box(-0.05, -0.03, 0.0085, 0.012, 0.0, 0.03, 'metal')
+    m.box(0.02, 0.08, 0.0, 0.004, -0.05, 0.05, 'glass-dark')
+    return m
+
+
+def case_pawn():
+    """A watch on its strap, a ring, a gold chain coiled on the pad."""
+    m = Model('rd-gl-case-pawn')
+    _pad(m)
+    m.cyl(-0.04, 0.0, 0.025, 0.012, 0.024, 'neon-amber', seg=12)
+    m.cyl(-0.04, 0.0, 0.021, 0.024, 0.025, 'win-white', seg=12)
+    m.box(-0.052, -0.028, 0.012, 0.016, -0.08, 0.08, 'dark')
+    m.lathe(0.04, -0.05, [(0.012, 0.0), (0.016, 0.004), (0.012, 0.008)], 'neon-amber', seg=8, y0=0.012, cap=False)
+    pts = [(0.04 + 0.03 * math.cos(a), 0.016, 0.04 + 0.03 * math.sin(a)) for a in [k * 0.9 for k in range(8)]]
+    for a, b in zip(pts, pts[1:]):
+        m.tube(a, b, 0.003, 'neon-amber', seg=4)
+    return m
+
+
+def case_crypto():
+    """A hardware wallet with its little screen, a stack of chips of credit."""
+    m = Model('rd-gl-case-crypto')
+    m.box(-0.07, -0.01, 0.0, 0.012, -0.03, 0.03, 'dark')
+    m.quad([(-0.06, 0.0125, 0.02), (-0.02, 0.0125, 0.02), (-0.02, 0.0125, -0.0), (-0.06, 0.0125, -0.0)], 'neon-green')
+    for j in range(4):
+        m.cyl(0.04, 0.0, 0.025, j * 0.006, j * 0.006 + 0.005, 'neon-amber' if j % 2 == 0 else 'metal', seg=10)
+    return m
+
+
+def case_lod(key, role):
+    def make():
+        m = Model(key)
+        m.box(-0.08, 0.08, 0.0, 0.03, -0.08, 0.08, role)
+        return m
+    return make
+
+
+CASES = [case_implants, case_electronics, case_pharmacy, case_arms, case_repair, case_pawn, case_crypto]
+CASE_LODS = [case_lod('rd-gl-case-implants-lod', 'metal'), case_lod('rd-gl-case-electronics-lod', 'dark'),
+             case_lod('rd-gl-case-pharmacy-lod', 'glass-blue'), case_lod('rd-gl-case-arms-lod', 'dark'),
+             case_lod('rd-gl-case-repair-lod', 'dark'), case_lod('rd-gl-case-pawn-lod', 'fabric-magenta'),
+             case_lod('rd-gl-case-crypto-lod', 'neon-amber')]
+
+
+def garments():
+    """Half a metre of a clothes rail's garments on their hangers (hanging from the bar at y = 0): jackets, shirts and a
+    coat side by side, hooks over the bar, a price tag on a sleeve (0.5 x 0.9 x 0.5)."""
+    m = Model('rd-gl-garments')
+    roles = ('fabric-magenta', 'dark', 'fabric-teal', 'fabric-amber', 'dark', 'neon-pink')
+    for i in range(6):
+        x = -0.21 + 0.084 * i
+        g = hashf(i, 3.0)
+        length = 0.6 + 0.3 * g
+        m.tube((x, 0.0, 0.0), (x, -0.04, 0.0), 0.004, 'metal', seg=4)
+        m.tube((x, -0.04, -0.2), (x, -0.06, 0.2), 0.006, 'trim', seg=4)
+        m.obox((x, -0.06 - length / 2, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (0.21 - 0.02 * g, length / 2, 0.015), roles[i])
+        if i % 3 == 1:
+            m.box(x - 0.017, x + 0.017, -0.3, -0.24, 0.12, 0.16, 'win-white')
+    return m
+
+
+def garments_lod():
+    m = Model('rd-gl-garments-lod')
+    m.box(-0.25, 0.0, -0.8, -0.06, -0.2, 0.2, 'fabric-magenta')
+    m.box(0.0, 0.25, -0.75, -0.06, -0.2, 0.2, 'dark')
+    return m
+
+
+def mannequin():
+    """A shop window's mannequin on its stand: a plaster torso and head without a face, dressed in a cropped jacket with
+    its collar up and trousers, the stand's foot a disc (0.45 x 1.9 x 0.3; foot on the floor)."""
+    m = Model('rd-gl-mannequin')
+    m.cyl(0.0, 0.0, 0.18, 0.0, 0.02, 'metal', seg=14)
+    m.cyl(0.0, 0.0, 0.015, 0.02, 0.85, 'metal', seg=6)
+    for sx in (-1, 1):
+        m.tube((0.07 * sx, 0.85, 0.0), (0.09 * sx, 0.45, 0.01), 0.06, 'dark', seg=8)
+    m.lathe(0.0, 0.0, [(0.14, 0.0), (0.12, 0.15), (0.16, 0.42), (0.17, 0.55), (0.06, 0.62), (0.0, 0.63)], 'fabric-teal', seg=12, y0=0.85)
+    m.lathe(0.0, 0.0, [(0.09, 0.0), (0.075, 0.08)], 'fabric-teal', seg=12, y0=1.45, cap=False)
+    for sx in (-1, 1):
+        m.tube((0.17 * sx, 1.36, 0.0), (0.22 * sx, 1.0, 0.04), 0.045, 'fabric-teal', seg=8)
+        m.tube((0.22 * sx, 1.0, 0.04), (0.21 * sx, 0.9, 0.05), 0.03, 'trim-light', seg=6)
+    m.box(-0.002, 0.002, 1.0, 1.4, 0.135, 0.15, 'neon-pink')
+    m.cyl(0.0, 0.0, 0.04, 1.48, 1.56, 'trim-light', seg=8)
+    m.lathe(0.0, 0.0, [(0.0, 0.0), (0.08, 0.05), (0.09, 0.13), (0.06, 0.21), (0.0, 0.23)], 'trim-light', seg=12, y0=1.56)
+    return m
+
+
+def mannequin_lod():
+    m = Model('rd-gl-mannequin-lod')
+    m.box(-0.12, 0.12, 0.0, 0.85, -0.08, 0.08, 'dark')
+    m.box(-0.17, 0.17, 0.85, 1.48, -0.12, 0.12, 'fabric-teal')
+    m.box(-0.08, 0.08, 1.48, 1.79, -0.08, 0.08, 'trim-light')
+    return m
+
+
 TRADES = [pharmacy, electronics, food, pawn, repair, implants, arms, tattoo, vr, florist, stock]
 LODS = [pharmacy_lod, electronics_lod, food_lod, pawn_lod, repair_lod, implants_lod, arms_lod, tattoo_lod, vr_lod, florist_lod,
         stock_lod]
@@ -329,4 +480,4 @@ def _mirror(make):
 
 
 # Each trade's goods, its mirror (`-b`, the goods in the other order: no run of a shelf the same as the next) and the phone's.
-MODELS = TRADES + [_mirror(t) for t in TRADES] + LODS
+MODELS = TRADES + [_mirror(t) for t in TRADES] + LODS + CASES + CASE_LODS + [garments, garments_lod, mannequin, mannequin_lod]

@@ -15,8 +15,9 @@ describe("Alchemia's gallery's shelf goods (ADR-0098)", () => {
     expect(GALLERY_DETAIL.length).toBeGreaterThan(1000);
     for (const b of builds) {
       const r = b.shop.rect;
-      const board = (y: number) => ((y - (b.detail[0]?.y ?? y)) / 0.45) % 1;
-      for (const p of b.detail) {
+      const shelf = b.detail.filter((p) => !/^rd-gl-(case-|garments|mannequin)/.test(key(p.variant)));
+      const board = (y: number) => ((y - (shelf[0]?.y ?? y)) / 0.45) % 1;
+      for (const p of shelf) {
         const k = key(p.variant);
         expect(k.startsWith("rd-gl-"), k).toBe(true);
         expect(p.x >= Math.min(r.x0, r.x1) && p.x <= Math.max(r.x0, r.x1) && p.z >= Math.min(r.z0, r.z1) && p.z <= Math.max(r.z0, r.z1), `${b.shop.id} ${p.x},${p.z}`).toBe(true);
@@ -44,6 +45,37 @@ describe("Alchemia's gallery's shelf goods (ADR-0098)", () => {
     expect(stock.detail.every((d) => key(d.variant).startsWith("rd-gl-stock"))).toBe(true);
     // Both the model and its mirror, so no two runs of a shelf need be the same.
     expect(new Set(k.detail.map((d) => key(d.variant))).size).toBe(2);
+  });
+
+  it("lays the trade's goods in the glass cases, hangs garments on the rails and dresses the windows' mannequins", () => {
+    const floor = (b: (typeof builds)[number]) => b.detail.reduce((y, p) => Math.min(y, p.y), Infinity);
+    let cases = 0;
+    let rails = 0;
+    let mannequins = 0;
+    for (const b of builds) {
+      const y0 = b.pieces.find((p) => p.kind === "counter")?.box.y0;
+      for (const p of b.detail) {
+        const k = key(p.variant);
+        if (k.startsWith("rd-gl-case-") && y0 !== undefined) {
+          cases++;
+          expect(p.y - y0, b.shop.id).toBeCloseTo(0.58, 6);
+        }
+        if (k === "rd-gl-garments") {
+          rails++;
+          expect(b.shop.trade).toBe("clothing");
+        }
+        if (k === "rd-gl-mannequin") {
+          mannequins++;
+          expect(p.y).toBeCloseTo(floor(b), 6);
+        }
+      }
+      if (b.shop.trade === "crypto" && b.layout?.islands.length) expect(b.detail.some((p) => key(p.variant) === "rd-gl-case-crypto"), b.shop.id).toBe(true);
+    }
+    expect(cases).toBeGreaterThan(50);
+    expect(rails).toBeGreaterThan(10);
+    expect(mannequins).toBeGreaterThan(2);
+    // What is left of the goods as boxes: on the counters, the shallow shops' cabinets, the spills; never a garment, a case's or a shelf's.
+    expect(builds.flatMap((b) => b.pieces).filter((p) => p.kind === "goods").length).toBeLessThan(600);
   });
 
   it("gives every goods' model a phone's of its own, and is two of the rooms' detail's views", () => {

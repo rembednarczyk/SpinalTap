@@ -26,7 +26,7 @@ Drobiazg:
 - towar na półkach według branż (Blender, kilka kształtów na branżę);
 - kubki, kartony, paragony, kable, laptop z błędem (Blender).
 
-Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Zostają pudełka: towar w gablotach, ubrania na wieszakach i manekinach, szafki nad ladą płytkich sklepów, sprzęt przy ladzie.
+Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Dalej z Blendera: towar w gablotach według branży (wszczepy, elektronika, kosmetyki, broń, naprawy, lombard, kantor), ubrania na wieszakach (pół metra wieszaka na model) i ubrane manekiny w witrynach, wszystko z LOD na telefon. Zostają pudełka: szafki nad ladą płytkich sklepów, terminal, kubek i towar przy ladzie, rozsypany karton.
 
 ## Inwentarz gry
 
@@ -38,14 +38,23 @@ Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_galle
 - blender: rd-fh-teacup × 1
 - blender: rd-gl-arms × 61
 - blender: rd-gl-arms-b × 81
+- blender: rd-gl-case-arms × 51
+- blender: rd-gl-case-crypto × 7
+- blender: rd-gl-case-electronics × 14
+- blender: rd-gl-case-implants × 20
+- blender: rd-gl-case-pawn × 22
+- blender: rd-gl-case-pharmacy × 15
+- blender: rd-gl-case-repair × 20
 - blender: rd-gl-electronics × 58
 - blender: rd-gl-electronics-b × 52
 - blender: rd-gl-florist × 37
 - blender: rd-gl-florist-b × 54
 - blender: rd-gl-food × 49
 - blender: rd-gl-food-b × 73
+- blender: rd-gl-garments × 36
 - blender: rd-gl-implants × 32
 - blender: rd-gl-implants-b × 31
+- blender: rd-gl-mannequin × 7
 - blender: rd-gl-pawn × 41
 - blender: rd-gl-pawn-b × 35
 - blender: rd-gl-pharmacy × 41
@@ -83,7 +92,7 @@ Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_galle
 - piece: food × 6
 - piece: frame × 6
 - piece: glass × 10
-- piece: goods × 728
+- piece: goods × 365
 - piece: grille × 12
 - piece: lamp × 223
 - piece: lantern × 66
@@ -95,8 +104,8 @@ Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_galle
 - piece: parapet × 16
 - piece: partition × 253
 - piece: pipe × 103
-- piece: plaster × 12
-- piece: rack × 904
+- piece: plaster × 5
+- piece: rack × 897
 - piece: roof × 94
 - piece: shopfront × 146
 - piece: shutter × 8

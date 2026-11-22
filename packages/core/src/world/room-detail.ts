@@ -154,6 +154,16 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-gl-vr-b", lod: "rd-gl-vr-lod" },
   { key: "rd-gl-florist-b", lod: "rd-gl-florist-lod" },
   { key: "rd-gl-stock-b", lod: "rd-gl-stock-lod" },
+  // The gallery's glass cases by trade, its clothes rails, its windows' mannequins (each with the phone's).
+  { key: "rd-gl-case-implants", lod: "rd-gl-case-implants-lod" },
+  { key: "rd-gl-case-electronics", lod: "rd-gl-case-electronics-lod" },
+  { key: "rd-gl-case-pharmacy", lod: "rd-gl-case-pharmacy-lod" },
+  { key: "rd-gl-case-arms", lod: "rd-gl-case-arms-lod" },
+  { key: "rd-gl-case-repair", lod: "rd-gl-case-repair-lod" },
+  { key: "rd-gl-case-pawn", lod: "rd-gl-case-pawn-lod" },
+  { key: "rd-gl-case-crypto", lod: "rd-gl-case-crypto-lod" },
+  { key: "rd-gl-garments", lod: "rd-gl-garments-lod" },
+  { key: "rd-gl-mannequin", lod: "rd-gl-mannequin-lod" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
