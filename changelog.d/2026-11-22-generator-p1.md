@@ -1,0 +1,1 @@
+- Na parkingu P-1 Alchemii przybyło rzeczy: gaśnice przy drzwiach do hali, skrzynka elektryczna, kratki odpływu, kałuże i plamy oleju na pustych miejscach oraz kartony z butelkami w rogu. Rozstawia je generator wnętrz (ADR-0099).

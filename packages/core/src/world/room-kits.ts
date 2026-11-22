@@ -37,7 +37,7 @@ export interface KitEntry {
 }
 
 /** The kinds of rooms with a kit. */
-export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech" | "shelter";
+export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech" | "shelter" | "car-park";
 
 /**
  * A metro platform (`docs/pomieszczenia/metro-*.md`, the street's faction, §16: dense): the litter of a wait by the
@@ -114,6 +114,20 @@ const SHELTER: readonly KitEntry[] = [
   { key: "rd-c-bottles", anchor: "surface-top", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-shelter-hebi"] },
   { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-shelter-hebi"] },
 ];
+/**
+ * A car park's deck (Alchemia's P-1, `docs/pomieszczenia/alchemia-parking.md`; the street's faction, §16): the fire kit by
+ * its ways out, the fuse box, gullies along its walls, oil and water pooled in its empty bays (§15), and by the hand-over
+ * cabins what the waiting drivers leave: a delivery's cartons, bottles, a cup (§14).
+ */
+const CAR_PARK: readonly KitEntry[] = [
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 6 },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
+  { key: "rd-c-puddle", anchor: "floor-free", role: "hero", along: 0.85, out: 0.6, count: [2, 3], apart: 4 },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
+  { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 1], near: ["rd-c-cartons"] },
+  { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-cartons"] },
+];
 export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   platform: PLATFORM,
   "service-corridor": SERVICE_CORRIDOR,
@@ -121,4 +135,5 @@ export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   shop: SHOP,
   "shop-tech": SHOP_TECH,
   shelter: SHELTER,
+  "car-park": CAR_PARK,
 };

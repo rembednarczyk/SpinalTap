@@ -1,9 +1,11 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { P2, P2_CORRIDOR, P2_SHELTER_GATE } from "./alchemia/p2";
 import { P2_DETAIL } from "./alchemia/p2-detail";
+import { P1, P1_BAYS, P1_CABINS, P1_CARS, P1_HALL_DOOR, P1_METRO_OPENING, P1_PIECES, P1_RAMP, P1_STAIR_DOWN, P1_STAIR_LINK } from "./alchemia/parking";
+import { P1_DETAIL } from "./alchemia/p1-detail";
 import { SHELTER, SHELTER_HATCH, SHELTER_PASSAGE, SHELTER_PIECES } from "./alchemia/shelter";
 import { SHELTER_DETAIL } from "./alchemia/shelter-detail";
-import { type DressTaken, type GroundRect, type RoomLayout, dressRoom, rectWalls } from "./room-dressing";
+import { type DressTaken, type DressWall, type GroundRect, type RoomLayout, dressRoom, rectWalls } from "./room-dressing";
 import { W3_OFFICE } from "./tessen-w3/tower-pipes";
 import { W3_Y } from "./tessen-w3/site";
 
@@ -105,6 +107,73 @@ export const SHELTER_LAYOUT: RoomLayout = {
   ],
 };
 
+/**
+ * Alchemia's P-1 (`docs/pomieszczenia/alchemia-parking.md`): the deck of bays west of the ramp and the apron at its foot
+ * with the hand-over cabins, one room to the walls' faces; the ramp and the stair core's ways out of it kept clear.
+ */
+const P1W = P1.wall;
+const DECK: GroundRect = { minX: P1.minX + P1W, maxX: P1.maxX - P1W, minZ: P1.minZ + P1W, maxZ: P1.maxZ };
+const RAMP_WEST = P1_RAMP.minX - P1W;
+/** A parked car's footprint (the game's sedans, hatchbacks, vans and taxis, nose to the wall). */
+const CAR_HALF = { long: 2.45, wide: 1.05 };
+const cars: DressTaken[] = P1_CARS.map((c) => {
+  const [hx, hz] = Math.abs(Math.sin(c.yaw)) > 0.5 ? [CAR_HALF.long, CAR_HALF.wide] : [CAR_HALF.wide, CAR_HALF.long];
+  return { minX: c.x - hx, maxX: c.x + hx, minZ: c.z - hz, maxZ: c.z + hz };
+});
+/** The bays nobody parked in: their middles, short of the charger at a head, open floor for a puddle. */
+const EMPTY_BAYS: GroundRect[] = P1_BAYS.filter((b) => !P1_CARS.some((c) => Math.abs(c.z - b.at.z) < 1 && Math.abs(c.x - b.at.x) < 1.5)).map((b) => ({
+  minX: b.at.x - 1.6,
+  maxX: b.at.x + 1.6,
+  minZ: b.at.z - 0.8,
+  maxZ: b.at.z + 0.8,
+}));
+const wall = (ax: number, az: number, bx: number, bz: number, ix: number, iz: number): DressWall => ({ a: { x: ax, z: az }, b: { x: bx, z: bz }, inward: { x: ix, z: iz } });
+/** The fittings standing in P-1 (`fittingPieces`): the chargers, the columns, the pay machine and the console. */
+const P1_FITTINGS = new Set(["charger", "column", "machine"]);
+const APRON_Z = P1_RAMP.foot;
+
+export const P1_LAYOUT: RoomLayout = {
+  id: "alchemia-parking",
+  kind: "car-park",
+  floor: P1.floor,
+  bounds: DECK,
+  surfaces: [],
+  walls: [
+    wall(DECK.minX, DECK.minZ, DECK.minX, DECK.maxZ, 1, 0),
+    wall(DECK.minX, DECK.minZ, RAMP_WEST, DECK.minZ, 0, 1),
+    wall(RAMP_WEST, DECK.minZ, RAMP_WEST, APRON_Z, -1, 0),
+    // The in-cabin's south wall, facing the deck's north end (its shutter east, to the apron).
+    wall(P1_CABINS[0]!.minX, P1_CABINS[0]!.minZ, P1_CABINS[0]!.maxX - 0.3, P1_CABINS[0]!.minZ, 0, -1),
+    ...rectWalls(DECK, { n: [[P1_HALL_DOOR.x0, P1_HALL_DOOR.x1]] }).filter((w) => w.inward.z === -1),
+    wall(DECK.maxX, APRON_Z, DECK.maxX, P1_METRO_OPENING.minZ, -1, 0),
+    wall(DECK.maxX, P1_METRO_OPENING.maxZ, DECK.maxX, DECK.maxZ, -1, 0),
+  ],
+  doors: [
+    { minX: P1_HALL_DOOR.x0, maxX: P1_HALL_DOOR.x1, minZ: DECK.maxZ - 0.3, maxZ: DECK.maxZ },
+    { minX: DECK.maxX - 0.3, maxX: DECK.maxX, minZ: P1_METRO_OPENING.minZ, maxZ: P1_METRO_OPENING.maxZ },
+    { minX: P1_STAIR_LINK.minX, maxX: DECK.maxX, minZ: APRON_Z - 0.3, maxZ: APRON_Z },
+  ],
+  open: EMPTY_BAYS,
+  clear: [
+    // The ramp and what lies east of it short of the apron; the deck's aisle; the apron where the cars turn.
+    { minX: RAMP_WEST, maxX: DECK.maxX, minZ: DECK.minZ, maxZ: APRON_Z },
+    { minX: P1_BAYS[0]!.at.x + 2.5, maxX: P1_BAYS[13]!.at.x - 2.5, minZ: DECK.minZ, maxZ: P1_CABINS[0]!.minZ },
+    { minX: P1_CABINS[0]!.maxX, maxX: P1_STAIR_DOWN.maxX, minZ: APRON_Z, maxZ: P1_STAIR_DOWN.minZ },
+    // The ways to the hall's door, to metro B's passage and from the stair core's link.
+    { minX: P1_HALL_DOOR.x0 - 0.6, maxX: P1_HALL_DOOR.x1 + 0.6, minZ: DECK.maxZ - 1.8, maxZ: DECK.maxZ },
+    { minX: DECK.maxX - 2.5, maxX: DECK.maxX, minZ: P1_METRO_OPENING.minZ - 0.5, maxZ: P1_METRO_OPENING.maxZ + 0.5 },
+    { minX: P1_STAIR_LINK.minX, maxX: DECK.maxX, minZ: APRON_Z, maxZ: P1_METRO_OPENING.minZ },
+    P1_STAIR_DOWN,
+  ],
+  taken: [
+    ...cars,
+    ...P1_CABINS,
+    ...P1_PIECES.filter((p) => P1_FITTINGS.has(p.kind)).map((p) => ({ minX: p.box.x0, maxX: p.box.x1, minZ: p.box.z0, maxZ: p.box.z1 })),
+    ...handTaken(P1_DETAIL.filter((p) => p.y < P1.floor + 2), DECK),
+  ],
+};
+
 export const P2_TUNNEL_DRESSING: readonly StreetPropItem[] = dressRoom(P2_TUNNEL_LAYOUT);
 export const TESSEN_OFFICE_DRESSING: readonly StreetPropItem[] = dressRoom(TESSEN_OFFICE_LAYOUT);
 export const SHELTER_DRESSING: readonly StreetPropItem[] = dressRoom(SHELTER_LAYOUT);
+export const P1_DRESSING: readonly StreetPropItem[] = dressRoom(P1_LAYOUT);

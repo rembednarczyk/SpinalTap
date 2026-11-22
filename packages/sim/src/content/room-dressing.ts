@@ -51,6 +51,8 @@ export interface RoomLayout {
   readonly taken: readonly DressTaken[];
   /** The room's doors and openings: what a kit's `by` stands near (`weather`: the rain and the wind come in there). */
   readonly doors?: readonly (GroundRect & { readonly weather?: true })[];
+  /** Where a `floor-free` thing may stand, out of the ways: an empty bay, a corner. Without it, nowhere. */
+  readonly open?: readonly GroundRect[];
 }
 
 /** A cluster's reach (§14, `tools/rooms` `CLUSTER_LINK`). */
@@ -105,6 +107,22 @@ const topSpots = (s: DressSurface, e: KitEntry): Spot[] => {
   return out;
 };
 
+/** The spots on an open patch of floor, every half metre (§12), the shape square to the room. */
+const freeSpots = (r: GroundRect, e: KitEntry, floor: number): Spot[] => {
+  const [hx, hz] = [e.along / 2, e.out / 2];
+  const out: Spot[] = [];
+  for (let x = r.minX + hx; x <= r.maxX - hx + 1e-9; x += STEP)
+    for (let z = r.minZ + hz; z <= r.maxZ - hz + 1e-9; z += STEP) out.push({ x, z, y: floor, yaw: 0, hx, hz, onTop: false });
+  return out;
+};
+
+/** The spots of a kit entry's anchor in the room. */
+const spotsOf = (room: RoomLayout, e: KitEntry): Spot[] => {
+  if (e.anchor === "surface-top") return room.surfaces.flatMap((s) => topSpots(s, e));
+  if (e.anchor === "floor-free") return (room.open ?? []).flatMap((r) => freeSpots(r, e, room.floor));
+  return room.walls.flatMap((w) => wallSpots(w, e, room.floor));
+};
+
 /** How many of a shape the room gets: the kit's range, picked by the room's key. */
 const countOf = (room: string, e: KitEntry): number => e.count[0] + (fnv1a(`${room}#${e.key}`) % (e.count[1] - e.count[0] + 1));
 
@@ -140,7 +158,7 @@ export const rectWalls = (
 
 /** One kit entry's things, on the spots left, in its hashed order. */
 const place = (room: RoomLayout, e: KitEntry, taken: DressTaken[]): StreetPropItem[] => {
-  const spots = e.anchor === "surface-top" ? room.surfaces.flatMap((s) => topSpots(s, e)) : room.walls.flatMap((w) => wallSpots(w, e, room.floor));
+  const spots = spotsOf(room, e);
   const order = spots.map((s, i) => ({ s, h: fnv1a(`${room.id}#${e.key}#${i}`) })).sort((a, b) => a.h - b.h || 0);
   const out: StreetPropItem[] = [];
   const want = countOf(room.id, e);
