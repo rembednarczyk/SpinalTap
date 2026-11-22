@@ -27,10 +27,17 @@ export interface KitEntry {
   readonly count: readonly [number, number];
   /** A clutter shape stands within the cluster's reach (1.2 m, §14) of a hero of these keys, or of anything placed. */
   readonly near?: readonly string[];
+  /**
+   * Stands by a door of the room (within 2.5 m of it), an extinguisher by the way out; or by an opening the weather
+   * comes in at, a puddle where the rain does.
+   */
+  readonly by?: "door" | "weather";
+  /** Two of it stand at least this far apart (m): gullies along a corridor, not in a heap. */
+  readonly apart?: number;
 }
 
 /** The kinds of rooms with a kit. */
-export type RoomKitKind = "platform";
+export type RoomKitKind = "platform" | "service-corridor" | "office" | "shop" | "shop-tech";
 
 /**
  * A metro platform (`docs/pomieszczenia/metro-*.md`, the street's faction, §16: dense): the litter of a wait by the
@@ -45,4 +52,59 @@ const PLATFORM: readonly KitEntry[] = [
   { key: "rd-fh-cup", anchor: "surface-top", role: "clutter", along: 0.1, out: 0.1, count: [1, 2], near: ["rd-metro-litter"] },
 ];
 
-export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = { platform: PLATFORM };
+/**
+ * A service corridor (Alchemia's tunnel from P-2 to T2, `docs/pomieszczenia/alchemia-p2-tunnel.md`; technique's faction,
+ * §16): the fire kit by its ways out, the hose cabinet and the fuse box on its walls, gullies along them, a delivery's
+ * cartons left with the bottles and cups of whoever waits, a puddle where the rain comes in (§15).
+ */
+const SERVICE_CORRIDOR: readonly KitEntry[] = [
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 2], by: "door", apart: 10 },
+  { key: "rd-c-hydrant", anchor: "floor-wall", role: "hero", along: 0.7, out: 0.27, count: [1, 1] },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 1] },
+  { key: "rd-c-puddle", anchor: "floor-wall", role: "hero", along: 0.85, out: 0.6, count: [1, 1], by: "weather" },
+  { key: "rd-c-bottles", anchor: "floor-wall", role: "clutter", along: 0.34, out: 0.21, count: [1, 2], near: ["rd-c-cartons"] },
+  { key: "rd-c-cups", anchor: "floor-wall", role: "clutter", along: 0.3, out: 0.2, count: [1, 1], near: ["rd-c-cartons"] },
+  { key: "rd-c-cable", anchor: "floor-wall", role: "clutter", along: 0.42, out: 0.3, count: [1, 1], near: ["rd-c-fusebox"] },
+];
+
+/**
+ * A corporation's office (Tessen's pass office, `docs/pomieszczenia/tessen-office.md`; §16: sparse and clean): the
+ * extinguisher by the door, the fuse box, a box of files waiting to go; nothing loose (a cable alone would lie loose).
+ */
+const OFFICE: readonly KitEntry[] = [
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [1, 1], by: "door" },
+  { key: "rd-c-fusebox", anchor: "floor-wall", role: "hero", along: 0.45, out: 0.17, count: [1, 1] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
+];
+
+/**
+ * A shop of Alchemia's gallery and front (`docs/pomieszczenia/alchemia-shop-*.md`; the street's faction in a mall, §16):
+ * the day's receipts and flyers by the till on the counter with a cup by them, the cartons of a delivery in a back
+ * corner, the extinguisher by the door. Its goods, racks and the till itself are the shop's fit-out (`shop-trades.ts`).
+ */
+const SHOP: readonly KitEntry[] = [
+  { key: "rd-c-papers", anchor: "surface-top", role: "hero", along: 0.38, out: 0.27, count: [1, 1] },
+  { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+];
+
+/** A shop of the technical trades (electronics, repair, crypto, VR, implants): its counter's laptop open on an error and a cable by it. */
+const SHOP_TECH: readonly KitEntry[] = [
+  { key: "rd-c-papers", anchor: "surface-top", role: "hero", along: 0.38, out: 0.27, count: [1, 1] },
+  { key: "rd-c-laptop", anchor: "surface-top", role: "clutter", along: 0.35, out: 0.25, count: [1, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cable", anchor: "surface-top", role: "clutter", along: 0.42, out: 0.3, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cups", anchor: "surface-top", role: "clutter", along: 0.3, out: 0.2, count: [0, 1], near: ["rd-c-papers"] },
+  { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [0, 1] },
+  { key: "rd-c-extinguisher", anchor: "floor-wall", role: "hero", along: 0.3, out: 0.2, count: [0, 1], by: "door" },
+];
+
+export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
+  platform: PLATFORM,
+  "service-corridor": SERVICE_CORRIDOR,
+  office: OFFICE,
+  shop: SHOP,
+  "shop-tech": SHOP_TECH,
+};
