@@ -12,7 +12,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
   1. Alchemia: każdy sklep i lokal frontu (52, `alchemia-shop-*`, `within: alchemia-gallery`) i tunel P-2 do portalu (`alchemia-p2-tunnel`) jako osobne wnętrza z kartami; poziomy garażu P-1 i P-2 były już osobne. Sklepy food hallu zostają częścią food hallu (otwarte lady w jednej sali). Po scaleniu #909: tryb wnętrza Alchemii obejmuje id sklepów.
   2. Narzędzie 60-30-10: `pnpm shots:palette` (`tools/shots/src/palette.ts`), ujęcia pomieszczeń w `tools/shots/room-spots.json`, wynik w §13 każdej zmierzonej karty (22.11, noc: 1 z 21 ujęć zgodne). Do poprawy według pomiaru:
      - za płasko i za jasno (baza poniżej 50%): perony metra (cztery), Trasa Podziemna, apteka P0, sklep frontu L2 (`l2-n1`), kapsuła; w peronach dodatkowo za dużo akcentu (ściana z nazwą stacji);
-     - za ciemno (światło poniżej 18%): Neon Koi, biuro Tessen, hala W-3, klinika, galeria P1, studio tatuażu P1, P-2;
+     - za ciemno (światło poniżej 18%): hala W-3, galeria P1, studio tatuażu P1, P-2 (Neon Koi, biuro Tessen i klinika zgodne od trybu wnętrza z lampami przy oprawach, gałąź feat/swiatlo-wnetrz);
      - brak akcentów (poniżej 3%): tunel P-2, P-1, schron, piwnica W-3;
      - pomiar pozostałych sklepów (48) po dopisaniu ich ujęć.
   3. Światło znikąd (22.11): Alchemia ma test `lamp-fixtures.test.ts` (każda lampa trybu wnętrza do 3 m od oprawy na swojej kondygnacji), nowe oprawy pasów galerii P1 i P2, lampy atrium na krawędziach z LED, poświatę P-2 nad kogutem robotów. W-3, perony i parking mają oprawy w geometrii silnika (świetlówki i pasy w stropach), kapsuła 3 m od lampki. Zostaje: test dla W-3 i peronów, gdy ich oprawy staną się danymi.

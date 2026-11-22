@@ -37,6 +37,9 @@ export const CLINIC_DETAIL: readonly StreetPropItem[] = [
   // rail between the chair and the doorway in the partition, along old z (ADR-0099 batch 2).
   item("rd-k-washbasin", -16.4, 0, 1.3, Math.PI / 2),
   item("rd-k-curtain", -13.65, 0, 2.95, 0),
+  // The waiting room's ceiling fittings (the office's suspended pair, `rd-tessen-lights`) along old x, a hair under the
+  // ceiling: the source of its light in the interior mode (§13, no light from nowhere).
+  item("rd-tessen-lights", -9.6, 3.895, 4.5, 0),
 ];
 
 /** The chair's seat height the models keep (the wake-up spot lies on it). */
