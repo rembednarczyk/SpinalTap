@@ -39,6 +39,7 @@ import { ROOF_DRESS_PROPS, roofDressPieces } from "./roof-dress";
 import { plazaFloorPieces } from "./front-plaza";
 import { plazaCafePieces, plazaCafeSolids } from "./front-plaza-cafe";
 import { DEPTAK_PROPS, deptakStallPieces } from "./deptak-stalls";
+import { DEPTAK_NIGHT_PROPS, deptakNightPieces } from "./deptak-night";
 import { TERRACE_PEOPLE } from "./terrace-people";
 
 export { T0 as ALCHEMIA_T0, T1 as ALCHEMIA_T1, HALL as FOODHALL, HALL_INNER as FOODHALL_INNER, type Box as AlchemiaBox, type Piece as AlchemiaPiece, type PieceKind as AlchemiaPieceKind } from "./plan";
@@ -100,6 +101,7 @@ export { AIR_HANDLER, CHAIR, CRATES, MAST, PANELS, PANEL_ROWS, ROOF_DRESS_PROPS,
 export { ARCADE_BAYS, ARCADE_FRONT, ARCADE_PIER, ARCADE_WALK, arcadePiers } from "./arcade-front";
 export { FOUNTAIN_CENTRE, FOUNTAIN_RADIUS, FOUNTAIN_RIM, PASSAGE_STEPS, PLAZA_FLOOR, PLAZA_GOING, PLAZA_RISER, PLAZA_STEPS, PLAZA_TOP, PODIUM, SOUTH_STEPS, WEST_STEPS, plazaFloorPieces } from "./front-plaza";
 export { DEPTAK_CROWD, DEPTAK_KIOSKS, DEPTAK_PROPS, DEPTAK_STALLS, deptakStallPieces, stallSeller } from "./deptak-stalls";
+export { CART_CLEAR, DEPTAK_NIGHT_CABLES, DEPTAK_NIGHT_CROWD, DEPTAK_NIGHT_PROPS, DEPTAK_NIGHT_STRINGS, type LanternString, YATAI, deptakNightPieces, stringY } from "./deptak-night";
 export { TERRACE_PEOPLE } from "./terrace-people";
 export { CAFE_TABLES, FRONT_PLAZA_PROPS, PLAZA_CROWD, PLAZA_FOOTPRINTS, PLAZA_KIOSKS, kioskSpots, plazaCafePieces, plazaCafeSolids } from "./front-plaza-cafe";
 export { EAST_WING, FOUNTAIN, FRONT_FOOTPRINTS, FRONT_KIOSKS, FRONT_SIGN, GREEN_SLOPE, GREEN_STEPS, L1_TOP, L2_SLABS, L2_TOP, L3, L3_TOP, PASSAGE_COLUMNS, WEST_WING, frontPieces } from "./front";
@@ -157,11 +159,15 @@ const FRONT_SHOP_PIECES = FRONT_SHOP_BUILDS.flatMap((b) => b.pieces);
 const FRONT_SQUARE = [...plazaFloorPieces(), ...plazaCafePieces()];
 /** The deptak's stalls dressed (C7, 20.11): crates, buckets, tags, lamps, cables, cartons and the tea; drawn with the front. */
 const DEPTAK = deptakStallPieces();
+/** The deptak's south end at night (22.11): the lanterns over it, the yatai with its stools and sign, the cans; drawn with the front, after every piece above. */
+const NIGHT = deptakNightPieces();
+/** Of Alchemia's pieces those of the deptak's night (the engine draws them by their kind, `deptak-night-geometry.ts`). */
+export const DEPTAK_NIGHT_PIECES: readonly Piece[] = NIGHT;
 /**
  * The gallery's body (ADR-0093 O1; the green tiers of 15.11 until then) and the front's storeys over
  * P-1 (B1, 19.11), among `ALCHEMIA_PIECES`: the engine draws them as a building of their own.
  */
-export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT, ...FRONT_SQUARE, ...DEPTAK];
+export const ALCHEMIA_TIER_PIECES: readonly Piece[] = [...MALL_OUT, ...FRONT, ...FRONT_SQUARE, ...DEPTAK, ...NIGHT];
 
 /** Every drawn piece of Alchemia in the world's axes (the Arkady's, askew, are `ARKADY_PIECES`). */
 export const ALCHEMIA_PIECES: readonly Piece[] = [
@@ -185,6 +191,7 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...DEPTAK,
   ...FRONT_ROOM_DRAWN,
   ...FRONT_SHOP_PIECES,
+  ...NIGHT,
 ];
 
 /** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
@@ -252,10 +259,12 @@ export const FRONT_PLAZA_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([.
  * The game's models of C7 (20.11): the deptak's stalls' sellers and crates, the people on the front's
  * terraces (still figures, drawn only), one street-props view.
  */
-export const C7_PROPS: readonly StreetPropItem[] = [...DEPTAK_PROPS, ...TERRACE_PEOPLE];
+export const C7_PROPS: readonly StreetPropItem[] = [...DEPTAK_PROPS, ...TERRACE_PEOPLE, ...DEPTAK_NIGHT_PROPS];
 
 /** The deptak's stalls' solids (C7): the flower buckets, the cartons and the crates' boxes, a prop per 8 m tile, after the square's. */
 export const DEPTAK_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps([...DEPTAK, ...modelBoxes(DEPTAK_PROPS.filter((p) => p.prop !== "figure"))], 8);
+/** The deptak's night (22.11): the yatai's body, its stools, the sign and the crates, a prop per 8 m tile, last. */
+export const DEPTAK_NIGHT_SOLID_PROPS: readonly StaticProp[] = tiledSolidProps(NIGHT, 8);
 
 /**
  * The front's solids on the ground in its old slot (B1): the green steps and the house with arcades'
@@ -341,8 +350,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   // The deptak's stalls' goods (C7).
   ...DEPTAK_SOLID_PROPS,
   // The front's storeys as rooms (ADR-0093 O5): their slabs, glass, floors, balustrades and steps a prop per tile, their units a
-  // prop each, their fittings and the terraces' planters a prop per tile, last.
+  // prop each, their fittings and the terraces' planters a prop per tile.
   ...FRONT_O5_PROPS,
+  // The deptak's night by Bajkowskiego (22.11), last, so every id above stays.
+  ...DEPTAK_NIGHT_SOLID_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

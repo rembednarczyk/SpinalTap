@@ -1,0 +1,1 @@
+- Południowy koniec deptaka przy Bajkowskiego nocą: sznury czerwonych lampionów nad deptakiem, wózek z ramenem (yatai) z noren, stołkami, menu i parującym garnkiem, kucharz i goście (T-324).

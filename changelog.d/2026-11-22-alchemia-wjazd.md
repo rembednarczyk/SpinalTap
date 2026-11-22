@@ -1,0 +1,1 @@
+- Wjazd do garażu Alchemii z Bajkowskiego ma asfalt aż do jezdni i nie blokują go już słupki z łańcuchami (T-241).
