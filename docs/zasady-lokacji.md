@@ -92,3 +92,10 @@ Styl to mroczny cyberpunk: brudne niskie życie i wysoka technika, na prawdziwym
 - Budżet: trójkąty są wolne (decyzja z 19.11). Bramkami są wywołania rysowania, aktywne siatki i czas klatki na telefonie odniesienia. Detal dokładamy do istniejących siatek (instancje, scalanie), a nie w nowych wywołaniach.
 - Brak tekstury z alfą w zestawie miasta nie usprawiedliwia uproszczeń: liście, pędy i kępy budujemy z geometrii (karty liści jako małe wielokąty).
 
+## 11. Karta pomieszczenia i detal z Blendera (polecenie użytkownika 22.11, ADR-0098)
+- Każde pomieszczenie ma kartę `docs/pomieszczenia/<id>.md`: historię, klimat, przeznaczenie, inwentarz docelowy i inwentarz gry. Nowe miejsce zaczyna się od karty, a przeróbka od jej aktualizacji.
+- Historia mówi, kto miejsce zbudował, kto w nim był i co się stało przed chwilą (§5). Klimat opisuje światło, kolor, dźwięk i zapach (§4) oraz kontrast techniki i biedy (§3). Przeznaczenie mówi, po co gracz tu przychodzi i którędy wchodzi oraz ucieka (§9).
+- Inwentarz docelowy wymienia rzeczy w trzech warstwach (§2). Przy każdej jest źródło: model z Blendera (`tools/blender/`) albo model gry (§8). Inwentarz gry generuje `pnpm rooms:write`, a test `tools/rooms` sprawdza, że jest aktualny.
+- Detal z inwentarza budujemy w Blenderze bez okna, skryptem w repozytorium: model jako funkcja wymiarów i ziarna, w prawdziwym kształcie (§9), na palecie zestawu miasta. Rozstawienie w grze jest deterministyczne (§5).
+- Zasady §1–§10 obowiązują dalej. Karta jest ich zastosowaniem do konkretnego miejsca.
+
