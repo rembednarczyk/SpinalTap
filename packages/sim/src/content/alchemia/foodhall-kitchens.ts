@@ -125,24 +125,27 @@ const kiosk = (q: UnitDef): Piece[] => {
 
 /** Oyaji's shop: racks of guns on his back partition (solid), a glass case, his stock in crates in the back room, a lamp. */
 const arms = (q: UnitDef): Piece[] => {
-  const { w, put } = frame(q);
-  const back = OYAJI_BACK_ROOM.minX - UNIT_WALL - q.rect.minX;
-  // South of the back room's door (its north end, `u` 0.4-1.6).
-  const out: Piece[] = [put(1.8, w - 0.3, back - 0.45, back, -0.05, 2.2, "rack", true)];
+  const r = q.rect;
+  // The shop between its west wall and the back room's partition, its counter along the north (`counterBox`).
+  const [x0, x1] = [r.minX + UNIT_WALL, OYAJI_BACK_ROOM.minX - UNIT_WALL];
+  const z0 = r.minZ;
+  // Racks along the west wall, south of the flap's way in (its back to the wall, its shelves to the counter).
+  const out: Piece[] = [piece(box(x0, x0 + 0.45, z0 + 0.4, r.maxZ - 2.0, F - 0.05, F + 2.2), "rack", true, true)];
   for (let y = 0.6; y < 2.1; y += 0.5) {
-    out.push(put(1.85, w - 0.35, back - 0.4, back - 0.05, y, y + 0.03, "rack"));
-    for (let u = 1.95, i = 0; u < w - 0.75; u += 0.55, i++) if ((i + Math.round(y * 2)) % 4 !== 0) out.push(put(u, u + 0.42, back - 0.3, back - 0.12, y + 0.05, y + 0.4, "goods"));
+    out.push(piece(box(x0 + 0.05, x0 + 0.42, z0 + 0.45, r.maxZ - 2.05, F + y, F + y + 0.03), "rack", true, false));
+    for (let z = z0 + 0.55, i = 0; z < r.maxZ - 2.5; z += 0.55, i++) if ((i + Math.round(y * 2)) % 4 !== 0) out.push(piece(box(x0 + 0.12, x0 + 0.3, z, z + 0.42, F + y + 0.05, F + y + 0.4), "goods", true, false));
   }
-  const r = OYAJI_BACK_ROOM;
+  const back = OYAJI_BACK_ROOM;
   out.push(
-    // A glass case of sights and grips along the glass by the counter's south end, clear of his flap and his stool.
-    put(w - 0.65, w - 0.15, 2.2, 3.4, -0.05, 0.55, "counter", true),
-    put(w - 0.6, w - 0.2, 2.25, 3.35, 0.97, 1.0, "vitrine"),
-    put(1.0, 3.2, 1.9, 2.0, C - F - 0.06, C - F - 0.02, "lamp"),
+    // A glass case of sights and grips along the glass, east of his stool by it (his night, `OYAJI_NIGHT`).
+    piece(box(x0 + 2.0, x1 - 0.2, z0 + 0.15, z0 + 0.65, F - 0.05, F + 0.55), "counter", true, true),
+    piece(box(x0 + 2.05, x1 - 0.25, z0 + 0.2, z0 + 0.6, F + 0.97, F + 1.0), "vitrine", true, false),
+    // The light over the counter.
+    piece(box(x0 + 1.0, x1 - 0.4, r.maxZ - 1.0, r.maxZ - 0.9, C - 0.06, C - 0.02), "lamp", true, false),
     // The back room's crates, stacked, a lamp over them.
-    piece(box(r.minX + 0.2, r.minX + 1.4, r.minZ + 0.2, r.minZ + 1.2, F - 0.05, F + 1.2), "carton", true),
-    piece(box(r.minX + 1.6, r.maxX - 0.2, r.minZ + 0.2, r.minZ + 1.0, F - 0.05, F + 0.8), "carton", true),
-    piece(box(r.minX + 0.5, r.maxX - 0.5, (r.minZ + r.maxZ) / 2, (r.minZ + r.maxZ) / 2 + 0.1, C - 0.06, C - 0.02), "lamp", true, false),
+    piece(box(back.minX + 0.2, back.minX + 1.4, back.minZ + 0.2, back.minZ + 1.2, F - 0.05, F + 1.2), "carton", true),
+    piece(box(back.minX + 1.6, back.maxX - 0.2, back.minZ + 0.2, back.minZ + 1.0, F - 0.05, F + 0.8), "carton", true),
+    piece(box(back.minX + 0.5, back.maxX - 0.5, (back.minZ + back.maxZ) / 2, (back.minZ + back.maxZ) / 2 + 0.1, C - 0.06, C - 0.02), "lamp", true, false),
   );
   return out;
 };
@@ -154,7 +157,8 @@ export const kitchenPieces = (): Piece[] =>
 /** Sachiko's and Oyaji's cups on their counters (Sachiko's steaming), as `kiosk` and `arms` had them. */
 const keeperCup = (q: UnitDef): KitchenRound => {
   const { put } = frame(q);
-  const b = q.id === "sachiko" ? put(1.2, 1.28, 0.3, 0.38, 1.0, 1.11, "cup").box : put(1.6, 1.68, 0.4, 0.48, 1.1, 1.21, "cup").box;
+  // Oyaji's on his counter's east end, by the back room's door.
+  const b = q.id === "sachiko" ? put(1.2, 1.28, 0.3, 0.38, 1.0, 1.11, "cup").box : box(q.rect.minX + 2.95, q.rect.minX + 3.03, q.rect.maxZ - 0.5, q.rect.maxZ - 0.42, F + 1.1, F + 1.21);
   return { key: "rd-fh-teacup", box: b };
 };
 

@@ -112,9 +112,9 @@ const P3_NODES: readonly NavNode[] = [
   node("g3-w", 409.0, L.p3, 50.5),
   node("g3-wa", 405.2, L.p3, 48.4),
   node("g3-ea", 430.7, L.p3, 49.0),
-  // Before and behind the flap at the north end of Oyaji's counter: the Hebi's way in to him (his back door onto T1 on P0 until O3).
-  node("g3-oyaji-out", 427.2, L.p3, 36.0),
-  node("g3-oyaji-in", 429.6, L.p3, 36.0),
+  // Before and behind the flap at the west end of Oyaji's counter: the Hebi's way in to him (his back door onto T1 on P0 until O3).
+  node("g3-oyaji-out", 428.65, L.p3, 37.8),
+  node("g3-oyaji-in", 428.65, L.p3, 35.4),
 ];
 const P3_EDGES: readonly NavEdge[] = [edge("g3-sw", "g3-w"), edge("g3-w", "g3-wa"), edge("g3-e", "g3-ea"), edge("g3-se", "g3-oyaji-out"), edge("g3-oyaji-out", "g3-oyaji-in")];
 
