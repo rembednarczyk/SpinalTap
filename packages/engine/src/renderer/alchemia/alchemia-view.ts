@@ -150,7 +150,8 @@ export class AlchemiaView {
     if ((out || inn) && kit !== this.kitSeen) this.build(kit);
     // Under the hall in P-2's corridor its lamp would light the corridor through the floor (G-263): off.
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
-    this.rooms.update(e, inn && this.inside !== null);
+    // Down in P-2, its tunnel or the shelter the interior mode holds with the hall's inside off: their own lamps light them.
+    this.rooms.update(e, (inn && this.inside !== null) || eyeInP2(e));
   }
 
   private build(kit: CityKit): void {

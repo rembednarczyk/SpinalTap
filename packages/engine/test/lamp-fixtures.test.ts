@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { ALCHEMIA_PIECES, ATRIUM, P2, P2_STORE_PIECES, WORLD_SCENERY } from "@seki/sim";
+import { ALCHEMIA_PIECES, ATRIUM, P2, P2_STORE_PIECES, SHELTER_PIECES, WORLD_SCENERY } from "@seki/sim";
 import { ALCHEMIA_LAMPS } from "../src/renderer/alchemia/alchemia-lights";
 
 /*
@@ -15,7 +15,7 @@ const LIGHTY = /lamp|light|lantern|neon|led|lightbox|sign|display|screen|beacon/
 
 const fixtures = (): { x: number; y: number; z: number }[] => {
   const out: { x: number; y: number; z: number }[] = [];
-  for (const p of [...ALCHEMIA_PIECES, ...P2_STORE_PIECES]) if (LIGHTY.test(p.kind)) out.push({ x: (p.box.x0 + p.box.x1) / 2, y: p.box.y1, z: (p.box.z0 + p.box.z1) / 2 });
+  for (const p of [...ALCHEMIA_PIECES, ...P2_STORE_PIECES, ...SHELTER_PIECES]) if (LIGHTY.test(p.kind)) out.push({ x: (p.box.x0 + p.box.x1) / 2, y: p.box.y1, z: (p.box.z0 + p.box.z1) / 2 });
   for (const s of WORLD_SCENERY) {
     if (s.view.kind !== "street-props") continue;
     for (const item of s.view.items) {

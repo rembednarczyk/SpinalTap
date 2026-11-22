@@ -1,4 +1,5 @@
 import type { Vec3 } from "@seki/core";
+import { ALCHEMIA_LAMP_PREFIX } from "./alchemia-lights";
 import { P1, P1_CABINS, P1_RAMP_CUT, P1_STAIR, P1_STAIR_CUT, groundY } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -27,11 +28,13 @@ const PARKING_HOLD = 5;
 const LAMP = {
   color: "#bfe4ff",
   range: 24,
-  intensity: 0.9,
+  // The deck's light without the square's lamps (they no longer reach it in the interior mode), the pillars' bands its accent.
+  intensity: 1.4,
   position: { x: (P1.minX + P1.maxX) / 2, y: P1.ceiling + 0.05, z: (P1.minZ + P1.maxZ) / 2 },
   clip: { minX: P1.minX, maxX: P1.maxX, minZ: P1.minZ, maxZ: P1.maxZ },
 } as const;
-export const PARKING_LAMP_KEY = "alchemia-parking";
+/** Keyed as Alchemia's lamps: in its interior mode (`AlchemiaInterior`) only these take the shader's slots. */
+export const PARKING_LAMP_KEY = `${ALCHEMIA_LAMP_PREFIX}parking`;
 
 export interface ParkingDeps {
   readonly scene: Scene;
