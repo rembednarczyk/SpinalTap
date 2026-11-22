@@ -17,6 +17,12 @@ export interface LightClip {
   readonly maxX: number;
   readonly minZ: number;
   readonly maxZ: number;
+  /**
+   * The storey it reaches (world y), for a lamp of a building of stacked floors (Alchemia's gallery):
+   * without it a shop's lamp lights the floor and the shop over and under it through the slabs.
+   */
+  readonly minY?: number;
+  readonly maxY?: number;
 }
 
 export interface LightingRig {
@@ -74,6 +80,39 @@ export const INDOOR_RIG: LightingRig = {
   fillColor: "#9aa6bc",
 };
 
+/**
+ * Alchemia's gallery and food hall at night (the user's note of 22.11: a moodier light). Its glass
+ * shows the city, but under its slabs the moon does not reach: a warm, dim ambient (a plum dusk, the
+ * shops' and lanterns' light bounced off tile), a dim warm key in the moon's place, a warm brown haze, a violet shade side, so
+ * the light is the shops' glow, the gallery's sodium pools, the atrium's cyan strips and the food
+ * hall's lanterns. Pattern: the "lighting by practicals" of film and level design, every light in
+ * the scene coming from a visible source (Cyberpunk 2077's malls, Blade Runner's arcades).
+ */
+export const ALCHEMIA_NIGHT_RIG: LightingRig = {
+  sunDir: NIGHT_RIG.sunDir,
+  // The shops' and the city's light bounced in through the glass and down the atrium: a dim warm key, not the moon's cold one.
+  sunColor: "#3c2a26",
+  ambient: "#4b3a44",
+  fogColor: "#221813",
+  fogDensity: 0.012,
+  shadeTint: "#8f74a2",
+  fillColor: "#e6cdb4",
+};
+
+/** Alchemia by day: grey daylight through its glass and down its atrium, dimmer than the street's, still warm. */
+export const ALCHEMIA_DAY_RIG: LightingRig = {
+  sunDir: NIGHT_RIG.sunDir,
+  sunColor: "#5c5a5e",
+  ambient: "#625a5c",
+  fogColor: "#4a4440",
+  fogDensity: 0.009,
+  shadeTint: "#9488b0",
+  fillColor: "#ece0d2",
+};
+
+/** Which interior's own light replaces the sky's: W-3's (ADR-0082 §4) or Alchemia's. */
+export type IndoorKind = "w3" | "alchemia";
+
 const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
 
 /** Mixes two "#rrggbb" colours. */
@@ -116,3 +155,7 @@ export const mixRig = (a: LightingRig, b: LightingRig, t: number): LightingRig =
     fillColor: mixHex(a.fillColor, b.fillColor, k),
   };
 };
+
+/** The interior's own rig at a daylight level: W-3's the same by day and night, Alchemia's with the daylight through its glass. */
+export const indoorRig = (kind: IndoorKind, daylight: number): LightingRig =>
+  kind === "w3" ? INDOOR_RIG : mixRig(ALCHEMIA_NIGHT_RIG, ALCHEMIA_DAY_RIG, daylight);

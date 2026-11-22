@@ -19,6 +19,7 @@ const NO_CLIP = 1e9;
 export const pointLightAt = (l: PointLightDef, p: { x: number; y: number; z: number }): number => {
   const c = l.clip;
   if (c && (p.x < c.minX || p.x > c.maxX || p.z < c.minZ || p.z > c.maxZ)) return 0;
+  if (c && (p.y < (c.minY ?? -NO_CLIP) || p.y > (c.maxY ?? NO_CLIP))) return 0;
   const att = Math.max(0, Math.min(1, 1 - Math.hypot(p.x - l.position.x, p.y - l.position.y, p.z - l.position.z) / l.range));
   return att * att;
 };
@@ -98,6 +99,7 @@ export class ToonPointLights {
     const pos: number[] = [];
     const col: number[] = [];
     const clip: number[] = [];
+    const clipY: number[] = [];
     for (const l of this.active) {
       const c = hex(l.color);
       const r = l.clip;
@@ -105,16 +107,19 @@ export class ToonPointLights {
       col.push(c.r, c.g, c.b, l.intensity);
       if (r) clip.push(r.minX, r.minZ, r.maxX, r.maxZ);
       else clip.push(-NO_CLIP, -NO_CLIP, NO_CLIP, NO_CLIP);
+      clipY.push(r?.minY ?? -NO_CLIP, r?.maxY ?? NO_CLIP);
     }
     // Uniform arrays must be fully sized.
     while (pos.length < MAX_POINT_LIGHTS * 4) {
       pos.push(0, -1000, 0, 1);
       col.push(0, 0, 0, 0);
       clip.push(-NO_CLIP, -NO_CLIP, NO_CLIP, NO_CLIP);
+      clipY.push(-NO_CLIP, NO_CLIP);
     }
     m.setArray4("pointPos", pos);
     m.setArray4("pointColor", col);
     m.setArray4("pointClip", clip);
+    m.setArray2("pointClipY", clipY);
     m.setFloat("pointCount", this.active.length);
   }
 

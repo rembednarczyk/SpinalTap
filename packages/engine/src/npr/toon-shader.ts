@@ -127,6 +127,8 @@ uniform vec4 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec4 pointColor[${MAX_POINT_LIGHTS}];
 /** Ground rectangle each light reaches (min x, min z, max x, max z), as pointLightAt in toon-point-lights. */
 uniform vec4 pointClip[${MAX_POINT_LIGHTS}];
+/** The storey each light reaches (min y, max y). */
+uniform vec2 pointClipY[${MAX_POINT_LIGHTS}];
 uniform float pointCount;
 uniform sampler2D shadowSampler;
 /** The moving casters' depth while the statics are kept in shadowSampler (shadow-maps.ts). */
@@ -377,6 +379,7 @@ void main(void) {
     att *= att;
     vec4 clip = pointClip[i];
     att *= step(clip.x, vWorldPos.x) * step(vWorldPos.x, clip.z) * step(clip.y, vWorldPos.z) * step(vWorldPos.z, clip.w);
+    att *= step(pointClipY[i].x, vWorldPos.y) * step(vWorldPos.y, pointClipY[i].y);
     float ndl = max(dot(n, l), 0.0);
     lit += pointColor[i].rgb * pointColor[i].a * band(ndl * att * 1.8);
     // A face turned from the light gets no highlight of it: else a lamp over a ceiling glows

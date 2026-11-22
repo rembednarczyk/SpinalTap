@@ -196,7 +196,7 @@ describe("the capsule room's view (ADR-0063 stage 3)", () => {
     slots.add("street", { position: { x: 0, y: 5, z: 0 }, color: "#ffffff", range: 14, intensity: 0.85 });
     slots.add(CAPSULE_LAMP_KEY, lamp);
     const arrays = new Map<string, number[]>();
-    slots.apply({ setArray4: (k: string, v: number[]) => arrays.set(k, v), setFloat: () => undefined } as unknown as Parameters<ToonPointLights["apply"]>[0]);
+    slots.apply({ setArray4: (k: string, v: number[]) => arrays.set(k, v), setArray2: (k: string, v: number[]) => arrays.set(k, v), setFloat: () => undefined } as unknown as Parameters<ToonPointLights["apply"]>[0]);
     const clip = arrays.get("pointClip")!;
     expect(clip).toHaveLength(MAX_POINT_LIGHTS * 4);
     expect(clip[0]).toBeLessThan(-1e6);

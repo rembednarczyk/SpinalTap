@@ -29,6 +29,7 @@ const UNIFORMS = [
   "pointPos",
   "pointColor",
   "pointClip",
+  "pointClipY",
   "pointCount",
   "selfLit",
   "envStrength",
