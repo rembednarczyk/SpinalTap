@@ -35,7 +35,7 @@ Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 - §14 zgodne: 20 rzeczy drobiazgu, 18 w trzech skupiskach (maski, szkło z cegłą, sprzęt Hebi z butelkami i kubkiem), 10% luzem.
 - §15 częściowo: kałuża z wilgoci od gruntu przy wschodniej ścianie (generator). Dług: beton matowy wszędzie, zacieki na ścianach.
 - §16 zgodne z ulicą; kontrast z elektroniką Hebi to cel.
-- §17 do sprawdzenia: cisza z kapaniem jako dźwięk źródła.
+- §17 do sprawdzenia: cisza z kapaniem jako dźwięk źródła. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie skrzynki, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

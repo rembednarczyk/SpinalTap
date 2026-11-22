@@ -1,0 +1,1 @@
+- Pomieszczenia brzmią swoimi rzeczami: pompa akwarium w Neon Koi, świetlówki, buczenie skrzynek i ładowarek, wentylacja peronów, bulgotanie garnków w food hallu, kapanie przecieku w hali W-3; zza ściany ciszej i głucho.

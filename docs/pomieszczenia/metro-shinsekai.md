@@ -39,7 +39,7 @@ Frakcja: ulica (transport miejski).
 - §14 zgodne: 13 rzeczy drobiazgu, 8% luzem; ręcznie gazeta, plakat i kosz, a generator wnętrz (ADR-0099, zestaw `platform`) dokłada worki śmieci pod ścianą z przewróconymi kubkami obok i gazety z kubkami na ławkach.
 - §15 dług: połysk płytek, mokre ślady butów.
 - §16 zgodne.
-- §17 do sprawdzenia: gwar Shinsekai z góry schodów.
+- §17 do sprawdzenia: gwar Shinsekai z góry schodów. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): wentylacja, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

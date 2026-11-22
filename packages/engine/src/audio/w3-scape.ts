@@ -1,5 +1,6 @@
 import type { AudioListenerPose, Vec3 } from "@seki/core";
 import type { Graph } from "./audio-graph";
+import { type Group, type Kit, type Strip, kit } from "./loop-kit";
 import { DEFAULT_POSE } from "./spatial";
 import type { SynthVoices } from "./synth-voices";
 import { PRIORITY } from "./voice-pool";
@@ -13,16 +14,6 @@ const WALL_TC = 0.25;
 /** Each layer's loudness at full mix, on the ambience bus (the street's rain is about 0.26). */
 export const W3_LAYER_LEVEL: Readonly<Record<W3Layer, number>> = { line: 0.34, hum: 0.12, tubes: 0.035, river: 0.3, plant: 0.24, sign: 0.13 };
 
-interface Strip {
-  readonly gain: GainNode;
-  readonly pan: StereoPannerNode | null;
-}
-
-interface Group {
-  readonly gain: GainNode;
-  readonly filter: BiquadFilterNode;
-}
-
 /** The sector's running loops, built near it and torn down past `W3_SOUND_FAR`. */
 interface Nodes {
   readonly sources: AudioScheduledSourceNode[];
@@ -31,58 +22,6 @@ interface Nodes {
   readonly yard: Group;
   readonly layers: Readonly<Record<W3Layer, Strip>>;
 }
-
-/** Node factories over one context; every source is collected for the teardown. */
-const kit = (g: Graph, sources: AudioScheduledSourceNode[]) => {
-  const { ctx } = g;
-  const gain = (v: number) => {
-    const n = ctx.createGain();
-    n.gain.value = v;
-    return n;
-  };
-  const filter = (type: BiquadFilterType, freq: number, q = 0.7) => {
-    const f = ctx.createBiquadFilter();
-    f.type = type;
-    f.frequency.value = freq;
-    f.Q.value = q;
-    return f;
-  };
-  const noise = (rate: number) => {
-    const s = ctx.createBufferSource();
-    s.buffer = g.noise;
-    s.loop = true;
-    s.playbackRate.value = rate;
-    sources.push(s);
-    return s;
-  };
-  const osc = (type: OscillatorType, freq: number) => {
-    const o = ctx.createOscillator();
-    o.type = type;
-    o.frequency.value = freq;
-    sources.push(o);
-    return o;
-  };
-  const lfo = (freq: number, depth: number, target: AudioParam) => {
-    osc("sine", freq).connect(gain(depth)).connect(target);
-  };
-  /** A layer's level and pan into its group; `pan` false for a sound all round (the strip lights). */
-  const strip = (into: AudioNode, pan = true): Strip => {
-    const level = gain(0);
-    const p = pan && typeof ctx.createStereoPanner === "function" ? ctx.createStereoPanner() : null;
-    if (p) level.connect(p).connect(into);
-    else level.connect(into);
-    return { gain: level, pan: p };
-  };
-  const group = (out: AudioNode): Group => {
-    const level = gain(0);
-    const f = filter("lowpass", 12000);
-    level.connect(f).connect(out);
-    return { gain: level, filter: f };
-  };
-  return { gain, filter, noise, osc, lfo, strip, group };
-};
-
-type Kit = ReturnType<typeof kit>;
 
 /** The assembly line: the belts' low rumble and their rollers clattering in a steady beat. */
 const buildLine = (k: Kit, s: Strip): void => {

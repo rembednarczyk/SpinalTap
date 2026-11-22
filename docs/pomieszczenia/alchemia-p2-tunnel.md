@@ -27,7 +27,7 @@ Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §14 częściowo: 11 rzeczy drobiazgu w trzech skupiskach (u wylotu do magazynu, pod bramą schronu, przy portalu), nic luzem. Dług: duże obiekty (wózek serwisowy, szafka hydrantowa, skrzynka rozdzielcza) i instalacje pod stropem.
 - §15 częściowo: kałuża przy portalu, gdzie wpada deszcz z wykopu (`rd-c-puddle`, generator: `by: "weather"`). Dług: połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.
-- §17 dług: przeciąg i kapanie ze źródła (portal, dylatacja); ruch: migająca oprawa.
+- §17 dług: przeciąg i kapanie ze źródła (portal, dylatacja); ruch: migająca oprawa. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie skrzynki, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

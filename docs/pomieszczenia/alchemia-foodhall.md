@@ -43,7 +43,7 @@ Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §14 zgodne: 161 ze 165 rzeczy drobiazgu w 23 skupiskach, 4 luzem (2%, ulotki na podłodze). Na każdym stole przyprawnik (sos sojowy, shichimi, wykałaczki, pałeczki), przy posiłkach serwetki, paragon i szklanka; na ladzie każdej kuchni i u Sachiko i Oyajiego kasa (terminal, szpikulec z bonami, słoik napiwków, długopis) przy kubku, przy stosie misek pałeczki, chochla w dzbanku i butelki z sosami (Blender, `rd-fh-condiments`, `rd-fh-leftovers`, `rd-fh-till`, `rd-fh-prep`).
 - §15 dług: brak połysku i wilgoci poza wodą. Mokra posadzka przy zmywakach, lakier na ladach.
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.
-- §17 do sprawdzenia: dźwięk kuchni i klimatyzacji ze źródła; ruch jest (para, ludzie).
+- §17 do sprawdzenia: dźwięk kuchni i klimatyzacji ze źródła; ruch jest (para, ludzie). Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): bulgotanie garnków na straganach, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

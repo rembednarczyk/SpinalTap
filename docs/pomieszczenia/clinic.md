@@ -40,7 +40,7 @@ Frakcja: technika (ripperdoc); druga: ulica (kafle, wiadro).
 - §14 zgodne: 14 rzeczy drobiazgu w trzech skupiskach (wózek z narzędziami, szafka z lekami, lada recepcji), nic luzem.
 - §15 dług: kafle i stal z połyskiem, kałuża przy umywalce (umywalka jest od partii 2 ADR-0099: `rd-k-washbasin` na południowej ścianie gabinetu przy wezgłowiu fotela, z lustrem, mydłem, ręcznikami i koszem; kotara na szynie `rd-k-curtain` między fotelem a przejściem).
 - §16 zgodne: zimne światło techniki na brudnej ulicy.
-- §17 do sprawdzenia: buczenie autoklawu.
+- §17 do sprawdzenia: buczenie autoklawu. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): świetlówki poczekalni, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

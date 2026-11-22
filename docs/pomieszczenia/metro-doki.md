@@ -39,7 +39,7 @@ Frakcja: ulica (transport miejski).
 - §14 zgodne: 13 rzeczy drobiazgu, 8% luzem; ręcznie gazeta, plakat i kosz, a generator wnętrz (ADR-0099, zestaw `platform`) dokłada worki śmieci pod ścianą z przewróconymi kubkami obok i gazety z kubkami na ławkach.
 - §15 dług: mokry peron przy krawędzi, połysk płytek.
 - §16 zgodne: migający ekran, zimne świetlówki.
-- §17 do sprawdzenia: przeciąg z tunelu ze źródła.
+- §17 do sprawdzenia: przeciąg z tunelu ze źródła. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): wentylacja, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

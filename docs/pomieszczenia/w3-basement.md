@@ -34,7 +34,7 @@ Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 - §14 zgodne: 8 rzeczy drobiazgu (skrytka przemytników, śmieci w mule), 25% luzem; rury, poręcze i łaty cegieł to instalacje (§12), nie drobiazg.
 - §15 zgodne: woda w przepuście, mokre ściany.
 - §16 zgodne.
-- §17 do sprawdzenia: kapanie i pompa ze źródła.
+- §17 do sprawdzenia: kapanie i pompa ze źródła. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): pompa i buczenie skrzynki elektrycznej, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 
