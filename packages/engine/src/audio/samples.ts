@@ -32,6 +32,18 @@ export interface EngineLoopSpec {
   readonly gain?: number;
 }
 
+/**
+ * The car's recorded loops besides its engine (22.11): the tyres' roll and the wind, their squeal,
+ * the body's scrape along a wall and its sparks (`CarLoops`).
+ */
+export interface CarLoopsSpec {
+  readonly roll: EngineLoopSpec;
+  readonly wind: EngineLoopSpec;
+  readonly skid: EngineLoopSpec;
+  readonly scrape: EngineLoopSpec;
+  readonly sparks: EngineLoopSpec;
+}
+
 /** Sound manifest handed over by the application (ADR-0013, addendum). */
 export interface AudioSampleManifest {
   readonly cues?: Partial<Readonly<Record<AudioCue, SampleSet>>>;
@@ -39,6 +51,8 @@ export interface AudioSampleManifest {
   readonly rain?: RainLoop;
   /** The engine of the car she drives (ADR-0097): one loop pitched with the revs. */
   readonly engine?: EngineLoopSpec;
+  /** The car's other loops (22.11): roll, wind, squeal, scrape, sparks. */
+  readonly carLoops?: CarLoopsSpec;
 }
 
 /** Every URL a manifest references, without duplicates. */
@@ -48,6 +62,7 @@ export const manifestUrls = (m: AudioSampleManifest): string[] => {
   for (const u of m.footsteps?.urls ?? []) out.add(u);
   if (m.rain) out.add(m.rain.url);
   if (m.engine) out.add(m.engine.url);
+  for (const l of Object.values(m.carLoops ?? {})) out.add(l.url);
   return [...out];
 };
 

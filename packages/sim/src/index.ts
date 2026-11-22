@@ -81,6 +81,7 @@ export { GRAB_PROMPT, TAKEDOWN_PROMPT } from "./world/takedown";
 export { gearName as carGear, kmh as carKmh, revs as carRevs } from "./world/vehicle/step";
 export { assists as carAssists, skid as carSkid } from "./world/vehicle/tyre";
 export { EXIT_CAR_PROMPT, TAKE_CAR_PROMPT, drivenCar } from "./systems/vehicle-system";
+export { SENSOR_RANGE, rearGap } from "./world/vehicle/rear-gap";
 export { BREAK_IN_PROMPT } from "./world/vehicle/break-in";
 export { carTelemetry } from "./world/vehicle/telemetry";
 export type { CarState } from "./world/vehicle/state";

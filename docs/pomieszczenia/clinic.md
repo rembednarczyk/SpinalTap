@@ -36,7 +36,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: technika (ripperdoc); druga: ulica (kafle, wiadro).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje na wierzchu do dodania pod stropem.
-- §13 zgodne co do źródeł (lampa operacyjna, żarówka, dioda), 6 widocznych. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione.
+- §13 zgodne co do źródeł (lampa operacyjna, żarówka, dioda), 6 widocznych. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 87,8%, światło 10,8%, akcenty 1,4%, poza pasmem: baza 87,8% > 75%; światło 10,8% < 18%; akcenty 1,4% < 3%.
 - §14 zgodne: 14 rzeczy drobiazgu w trzech skupiskach (wózek z narzędziami, szafka z lekami, lada recepcji), nic luzem.
 - §15 dług: kafle i stal z połyskiem, kałuża przy umywalce.
 - §16 zgodne: zimne światło techniki na brudnej ulicy.
