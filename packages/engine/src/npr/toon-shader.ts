@@ -351,7 +351,7 @@ void main(void) {
   // Highlights of the street lights: tight on glass and standing water, broad on the wet street.
   float shine = 18.0;
 #ifdef CITYKIT
-  shine = mix(shine, 28.0, glossShine);
+  shine = mix(shine, 8.0, glossShine);
 #endif
 #ifdef WATER_MASK
   // Three zones (ADR-0084): the whole street wet in the rain, darker and with a broad sheen;
