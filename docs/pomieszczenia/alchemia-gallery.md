@@ -31,7 +31,7 @@ Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali,
 ## Frakcja i zasady
 Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy i lokale frontu są od 22.11 osobnymi wnętrzami (`alchemia-shop-*`, karty obok); ta karta to pasaże, atrium, trzony i pomieszczenia frontu bez lokali.
-- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909); od 22.11 oprawy pod stropem pasów P1 i P2 (panele co 4 m, `gallery-lights.ts`), lampy atrium na krawędziach z pasami LED, test `lamp-fixtures.test.ts` (żadna lampa dalej niż 3 m od oprawy). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji.
+- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909); od 22.11 oprawy pod stropem pasów P1 i P2 (panele co 4 m, `gallery-lights.ts`), lampy atrium na krawędziach z pasami LED, test `lamp-fixtures.test.ts` (żadna lampa dalej niż 3 m od oprawy). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 83,6%, światło 11,1%, akcenty 5,3%, poza pasmem: baza 83,6% > 75%; światło 11,1% < 18%.
 - §14 częściowo: na pasażach 268 z 302 rzeczy drobiazgu w skupiskach (11% luzem); towar liczą karty sklepów. Dług: pasaże bez śladów obecności poza ławkami i kawiarnią frontu.
 - §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
 - §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.

@@ -63,10 +63,13 @@ export const collideSolids = (ctx: SimContext, car: CarState): number => {
     }
   }
   const p = length(push);
+  car.scrape = 0;
   if (p < 1e-6) return 0;
   car.pos = v3(car.pos.x + push.x, car.pos.y, car.pos.z + push.z);
   const n = scale(push, 1 / p);
   const into = dot(car.vel, n);
+  // Along the wall: the body's slide on it, heard as a scrape (22.11).
+  car.scrape = length(sub(car.vel, scale(n, dot(car.vel, n))));
   if (into >= 0) return 0;
   car.vel = sub(car.vel, scale(n, into * (1 + BOUNCE)));
   return -into;

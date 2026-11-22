@@ -65,6 +65,11 @@ export interface CarState {
   damage: number;
   /** The driver's door, 0 shut .. 1 up (`car-act.ts`, the picture only). Not saved: a loaded car stands shut. */
   door: number;
+  /**
+   * How fast the body slides along a wall it touches this step (m/s, 0 off it; `collideSolids`): the
+   * scrape and the sparks heard (user's request of 22.11). Not saved: a loaded car touches nothing yet.
+   */
+  scrape: number;
 }
 
 const wheel = (): WheelState => ({ omega: 0, compression: 0, alpha: 0, load: 0, contact: null, normal: v3(0, 1, 0), slipRatio: 0, slipAngle: 0, fx: 0, fy: 0, eased: null, rolled: 0 });
@@ -92,6 +97,7 @@ export const newCar = (model: VehicleModel, x: number, groundY: number, z: numbe
     assist: "full",
     damage: 0,
     door: 0,
+    scrape: 0,
   };
 };
 
