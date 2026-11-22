@@ -1,0 +1,1 @@
+- Cztery perony metra mają kratę wentylacji, dwustronny ekran rozkładu na prętach ze stropu, kasownik, kamerę nad schodami, kosz, plakat koncertu z naklejkami dzielnicy i gazetę z kubkiem zostawione na ławce, zbudowane w Blenderze według kart pomieszczeń (ADR-0098).

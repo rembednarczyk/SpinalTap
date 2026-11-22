@@ -82,6 +82,14 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-w3h-break", fine: true },
   { key: "rd-w3h-exit", fine: true },
   { key: "rd-w3h-warning", fine: true },
+  // The metro's platforms (docs/pomieszczenia/metro-*.md).
+  { key: "rd-metro-vent" },
+  { key: "rd-metro-timetable" },
+  { key: "rd-metro-validator" },
+  { key: "rd-metro-litter" },
+  { key: "rd-metro-poster-a" },
+  { key: "rd-metro-poster-b" },
+  { key: "rd-metro-camera" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

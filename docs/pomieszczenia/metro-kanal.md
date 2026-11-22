@@ -12,21 +12,34 @@ Zimne świetlówki w osłonach z kratki, migający ekran z rozkładem, żółta 
 Szybka podróż między dzielnicami (ADR-0071): gracz schodzi na peron i wsiada do składu. Bez walki; jedno zejście z ulicy.
 
 ## Inwentarz docelowy
-Architektura:
-- płytki do wysokości ręki, beton z numerami szalunków wyżej, oprawy świetlówek w kratkach (Blender);
-- krawędź peronu z żółtą linią i ryflowaniem, tor z podkładami (Blender);
-- kanały wentylacyjne z kratami (Blender).
+Peron rysuje silnik z układu symulacji (`renderer/metro/platform-plan.ts`, `metro-platform.ts`):
+- drugi bieg schodów z poręczami;
+- granitowa posadzka z żółtą linią;
+- płytki w kolorze stacji, ciemny strop ze świetlówkami;
+- szklane drzwi peronowe, tor i skład dwóch wagonów;
+- ławki, biletomat, tablica odjazdów i tablice z nazwą stacji.
 
-Duże obiekty:
-- ławki stalowe z siedziskami z blachy perforowanej (Blender);
-- ekran rozkładu na wysięgniku, kasownik, kamera (Blender; kamera: model gry `cctv`);
-- automat z napojami (model gry: `vending-machine`), kosz (model gry: `waste-bin`).
+Z Blendera (`tools/blender/rooms/metro.py`, plik `room-detail-metro-props.glb`), ten sam zestaw na czterech stacjach, ustawiony z układu peronu (`packages/sim/src/content/metro-detail.ts`):
+- krata wentylacji z żaluzjami nad tablicą z nazwą, z zaciekami kurzu (`rd-metro-vent`);
+- ekran rozkładu na dwóch prętach ze stropu, dwustronny, jedna minuta miga na czerwono (`rd-metro-timetable`);
+- kasownik przy stopach schodów (`rd-metro-validator`);
+- gazeta otwarta na nieaktualnym rozkładzie, kubek i zgnieciony bilet na pierwszej ławce (`rd-metro-litter`);
+- plakat koncertu z oderwanym rogiem i naklejki dzielnicy wokół (`rd-metro-poster-a`, `rd-metro-poster-b`, na zmianę stacjami);
+- kamera na wysięgniku nad schodami (`rd-metro-camera`; model gry `cctv` stoi na 4,3 m słupie, a peron ma 4,2 m);
+- kosz z modeli gry (`waste-bin`).
 
-Drobiazg:
-- gazeta na ławce, kubek, naklejki dzielnicy nad stacją, plakat koncertu (Blender i płaskie).
+Odłożone:
+- automat z napojami bez bryły stałby na drodze, więc czeka na bryłę;
+- beton z numerami szalunków nad płytkami.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- (gra nie ma tu jeszcze nic poza bryłą pomieszczenia)
+- blender: rd-metro-camera × 1
+- blender: rd-metro-litter × 1
+- blender: rd-metro-poster-b × 1
+- blender: rd-metro-timetable × 1
+- blender: rd-metro-validator × 1
+- blender: rd-metro-vent × 1
+- model: waste-bin × 1
 <!-- inwentarz-gry:end -->
