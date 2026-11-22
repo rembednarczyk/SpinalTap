@@ -3,6 +3,7 @@
 Wykaz potrzeb zebrany z inwentarzy docelowych wszystkich kart (`docs/pomieszczenia/*.md`) i z kolejki zasad (`docs/backlog.md`, §12–§17), ułożony rodzinami modeli, a nie pokojami. Każda pozycja ma kotwicę (gdzie generator ją stawia), rolę (główna, wspierająca, drobiazg) i miejsca, w których jest potrzebna. Pozycje zrobione mają klucz kształtu; reszta to partie modeli z etapów 3 i 4 ADR-0099.
 
 ## Rodzina 1: drobiazg wspólny (partia 1)
+Zrobione w partii 1 (`tools/blender/rooms/common.py`, plik `room-detail-props.glb`): `rd-c-cups`, `rd-c-cartons`, `rd-c-papers`, `rd-c-cable`, `rd-c-bottles`, `rd-c-laptop`. Śmieci i niedopałki to `rd-capsule-trash`, `rd-p2t-butts`, `rd-p2t-litter`, `rd-metro-litter`.
 Drobiazg, kotwice `floor-free`, `floor-wall`, `table-top`, `counter-top`; zawsze w skupiskach (§14).
 - śmieci przy ścianie: zgnieciony kubek, opakowanie, puszka, worek (perony, korytarze, Trasa, tunel P-2, P-1, schron);
 - niedopałki i puszka przy drzwiach i w kątach (Trasa, perony, tunel P-2: `rd-p2t-butts`);
@@ -15,6 +16,7 @@ Drobiazg, kotwice `floor-free`, `floor-wall`, `table-top`, `counter-top`; zawsze
 - laptop z błędem na ekranie (galeria, biuro Tessen, sklepy elektroniki).
 
 ## Rodzina 2: oznakowanie i instalacje (partia 1)
+Zrobione w partii 1: `rd-c-extinguisher`, `rd-c-hydrant`, `rd-c-fusebox`, `rd-c-drain`; znak wyjścia to `rd-w3h-exit`, tablica `rd-w3h-warning`.
 Wspierające i architektura (§12, §13).
 - znak wyjścia ewakuacyjnego nad drzwiami (`wall` nad otworem; hala W-3: `rd-w3h-exit`, galeria: bryły `led-green`; do zrobienia: tunel P-2 nad portalem i bramą schronu, P-1, P-2, perony, klinika, Koi);
 - tablica ostrzegawcza (`wall`; `rd-w3h-warning`; do zrobienia: P-2, tunel P-2, piwnica W-3);
@@ -27,6 +29,7 @@ Wspierające i architektura (§12, §13).
 - odbojnice przy ścianach (`wall` nisko; tunel P-2, P-1).
 
 ## Rodzina 3: ślady i woda (partia 1, §15)
+Zrobione w partii 1: `rd-c-puddle`; plama oleju `rd-p2-oil`.
 Drobiazg płaski, kotwice `floor-free` przy źródle.
 - kałuża przy źródle wody (portal tunelu P-2, przecieki, kuchnie, perony przy wejściu z deszczu): połysk mokrej posadzki;
 - plama oleju (`rd-p2-oil`; do zrobienia: P-1 przy autach, hala W-3 przy maszynach);
@@ -47,3 +50,5 @@ Drobiazg płaski, kotwice `floor-free` przy źródle.
 
 ## Rzeczy fabularne (ręcznie, przed generatorem)
 Stawiane w `*-detail.ts`, nie przez generator: sprzęt Hebi w schronie, szafka 14 i terminal kolektora w W-3, lady postaci z zadań, torba w lochu Trasy, skrytka przemytników w piwnicy W-3, rzeczy technika w P-2, stanowiska spawaczy W-3 (#920).
+
+Podgląd partii bez GPU: `blender -b --factory-startup --python tools/blender/sheet.py -- packages/app/public/city/room-detail-props.glb rd-c- arkusz.png`.

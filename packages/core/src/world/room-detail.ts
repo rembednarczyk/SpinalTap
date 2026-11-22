@@ -173,6 +173,18 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-gl-case-crypto", lod: "rd-gl-case-crypto-lod" },
   { key: "rd-gl-garments", lod: "rd-gl-garments-lod" },
   { key: "rd-gl-mannequin", lod: "rd-gl-mannequin-lod" },
+  // ADR-0099 batch 1 (docs/pomieszczenia/katalog.md, families 1-3): the shared detail the dressing generator stands by its kits.
+  { key: "rd-c-cups", fine: true, clutter: 3 },
+  { key: "rd-c-cartons", clutter: 0 },
+  { key: "rd-c-papers", fine: true, clutter: 3 },
+  { key: "rd-c-cable", fine: true, clutter: 1 },
+  { key: "rd-c-bottles", fine: true, clutter: 3 },
+  { key: "rd-c-laptop", fine: true, clutter: 1 },
+  { key: "rd-c-extinguisher", clutter: 0 },
+  { key: "rd-c-hydrant", clutter: 0 },
+  { key: "rd-c-fusebox", services: true },
+  { key: "rd-c-drain", fine: true, services: true },
+  { key: "rd-c-puddle", fine: true, clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
