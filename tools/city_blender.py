@@ -1,4 +1,5 @@
-"""The room detail of ADR-0098 in packages/app/public/city/room-detail-props.glb, on the city kit's swatch
+"""The room detail of ADR-0098 in packages/app/public/city/room-detail*-props.glb (one file a district, each room's
+module names it, `FILE`), on the city kit's swatch
 palette like the other props files (the engine loads it after them and merges them, `mergeCityProps`).
 
 The models are built by Blender without a window from the scripts in tools/blender/ (`build.py`, one module a
@@ -45,18 +46,23 @@ def bake(path, key):
 def main():
     out_dir = sys.argv[1]
     blender = sys.argv[2] if len(sys.argv) > 2 else 'blender'
-    path, keys = build(blender)
-    out, extras = [], {}
-    for key in keys:
-        P, N, roles, size = bake(path, key)
-        m = weld(key, P, N, roles, swatch_uv, MAX_TRIS)
-        out.append(m)
-        extras[key] = {'size': size, 'styles': [key]}
-        print(f"{key:24s} verts {len(m['pos']):6d} tris {len(m['ind']) // 3:6d} size {size} roles {','.join(sorted(set(roles)))}")
+    path, pairs = build(blender)
+    files = {}
+    for pair in pairs:
+        key, name = pair.split('=')
+        files.setdefault(name, []).append(key)
     albedo, glow = palette_images()
-    dst = os.path.join(out_dir, 'room-detail-props.glb')
-    write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
-    print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))
+    for name, keys in files.items():
+        out, extras = [], {}
+        for key in keys:
+            P, N, roles, size = bake(path, key)
+            m = weld(key, P, N, roles, swatch_uv, MAX_TRIS)
+            out.append(m)
+            extras[key] = {'size': size, 'styles': [key]}
+            print(f"{key:24s} verts {len(m['pos']):6d} tris {len(m['ind']) // 3:6d} size {size} roles {','.join(sorted(set(roles)))}")
+        dst = os.path.join(out_dir, name)
+        write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)
+        print(dst, f'{os.path.getsize(dst) // 1024} KB', 'crc', format(zlib.crc32(open(dst, 'rb').read()), '08x'))
 
 
 if __name__ == '__main__':

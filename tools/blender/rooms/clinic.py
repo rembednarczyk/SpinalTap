@@ -171,4 +171,6 @@ def sharps_bin():
     return m
 
 
+# The props file the room's models go to (one a district, each under its budget, ADR-0098).
+FILE = 'room-detail-props.glb'
 MODELS = [bench, reception, chair, lamp, cart, cabinet, counter_things, sharps_bin]

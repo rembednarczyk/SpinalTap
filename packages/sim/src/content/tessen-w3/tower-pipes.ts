@@ -54,7 +54,10 @@ const office = (): StaticProp[] => [
   box(T.maxX - WALL, T.maxX, 0, OFFICE_TOP, 444, T.maxZ - WALL, "concrete"),
   { ...box(T.maxX - WALL, T.maxX, DOOR_TOP, OFFICE_TOP, 442, 444, "concrete"), interior: true },
   // The desk with the terminal by the west wall, a filing cabinet, a bench by the door.
-  ...placeProps({ x: 0, y: W3_Y, z: 0 }, [crate(2487.2, 441, 1.2, 0.85, 3), crate(2490, 445.1, 2, 1.8, 0.6), crate(2494.9, 438.2, 0.6, 0.45, 2.2)]),
+  // Since ADR-0098 the models of `office-detail.ts` draw them: their solids stay, unseen.
+  ...placeProps({ x: 0, y: W3_Y, z: 0 }, [crate(2487.2, 441, 1.2, 0.85, 3), crate(2490, 445.1, 2, 1.8, 0.6), crate(2494.9, 438.2, 0.6, 0.45, 2.2)]).map(
+    (p): StaticProp => ({ ...p, scenery: true }),
+  ),
 ];
 
 /** A pane of the cabin's glass, and its floor's slab. */

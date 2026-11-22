@@ -16,9 +16,10 @@ sys.path[:0] = [HERE, os.path.join(HERE, 'rooms')]
 
 import clinic  # noqa: E402
 import neon_koi  # noqa: E402
+import tessen_office  # noqa: E402
 
 # In the order the rooms came: their models' keys go into ROOM_DETAIL_SHAPES in the same order.
-ROOMS = [neon_koi, clinic]
+ROOMS = [neon_koi, clinic, tessen_office]
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
     for room in ROOMS:
         for make in room.MODELS:
             obj = make().to_object()
-            keys.append(obj.name)
+            keys.append(f'{obj.name}={room.FILE}')
     bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', use_selection=False, export_apply=True,
                               export_yup=True, export_normals=True, export_texcoords=False, export_materials='EXPORT')
     print('BUILT', len(keys), ' '.join(keys))

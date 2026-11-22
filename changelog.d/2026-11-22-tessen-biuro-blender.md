@@ -1,0 +1,1 @@
+- Biuro przepustek Tessen w wieży W-3 z wyposażeniem: biurko strażnika z trzema monitorami kamer, szafy na akta i szafka na karty z zamkiem, ławka z paprotką, tablica z grafikiem dyżurów, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).
