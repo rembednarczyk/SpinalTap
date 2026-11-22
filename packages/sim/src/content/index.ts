@@ -16,6 +16,7 @@ export * from "./tessen-w3/basement-detail";
 export * from "./tessen-w3/hall-detail";
 export * from "./metro-detail";
 export * from "./room-dressing";
+export * from "./room-dressing-rooms";
 export * from "./alchemia/shelter-detail";
 export * from "./alchemia/p2-detail";
 export * from "./alchemia/p1-detail";

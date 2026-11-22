@@ -49,10 +49,14 @@ export interface RoomLayout {
   /** Kept clear: nothing stands there (doors, a stairs' foot, ways, an edge). */
   readonly clear: readonly GroundRect[];
   readonly taken: readonly DressTaken[];
+  /** The room's doors and openings: what a kit's `by` stands near (`weather`: the rain and the wind come in there). */
+  readonly doors?: readonly (GroundRect & { readonly weather?: true })[];
 }
 
 /** A cluster's reach (§14, `tools/rooms` `CLUSTER_LINK`). */
 const REACH = 1.2;
+/** How near a door a `by: "door"` thing stands. */
+const BY_DOOR = 2.5;
 /** The grid a wall's spots step along (§12: half a metre). */
 const STEP = 0.5;
 /** A top's spots step finer: things on a bench. */
@@ -108,6 +112,32 @@ const countOf = (room: string, e: KitEntry): number => e.count[0] + (fnv1a(`${ro
 const nearHero = (s: Spot, e: KitEntry, placed: readonly DressTaken[]): boolean =>
   placed.some((p) => (!e.near || (p.key !== undefined && e.near.includes(p.key))) && Math.hypot(s.x - (p.minX + p.maxX) / 2, s.z - (p.minZ + p.maxZ) / 2) <= REACH);
 
+const clampTo = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
+const placedOf = (taken: readonly DressTaken[], key: string): DressTaken[] => taken.filter((t) => t.key === key);
+
+/** The walls of a rectangular room along x and z, broken by its openings (each a span `[a0, a1]` along its wall). */
+export const rectWalls = (
+  r: GroundRect,
+  openings: Readonly<Partial<Record<"n" | "s" | "e" | "w", readonly (readonly [number, number])[]>>> = {},
+): DressWall[] => {
+  const runs = (a0: number, a1: number, gaps: readonly (readonly [number, number])[] = []): [number, number][] => {
+    const out: [number, number][] = [];
+    let at = a0;
+    for (const [g0, g1] of [...gaps].sort((p, q) => p[0] - q[0])) {
+      if (g0 > at) out.push([at, Math.min(g0, a1)]);
+      at = Math.max(at, g1);
+    }
+    if (at < a1) out.push([at, a1]);
+    return out.filter(([p, q]) => q - p > 0.4);
+  };
+  return [
+    ...runs(r.minX, r.maxX, openings.s).map(([a, b]): DressWall => ({ a: { x: a, z: r.minZ }, b: { x: b, z: r.minZ }, inward: { x: 0, z: 1 } })),
+    ...runs(r.minX, r.maxX, openings.n).map(([a, b]): DressWall => ({ a: { x: a, z: r.maxZ }, b: { x: b, z: r.maxZ }, inward: { x: 0, z: -1 } })),
+    ...runs(r.minZ, r.maxZ, openings.w).map(([a, b]): DressWall => ({ a: { x: r.minX, z: a }, b: { x: r.minX, z: b }, inward: { x: 1, z: 0 } })),
+    ...runs(r.minZ, r.maxZ, openings.e).map(([a, b]): DressWall => ({ a: { x: r.maxX, z: a }, b: { x: r.maxX, z: b }, inward: { x: -1, z: 0 } })),
+  ];
+};
+
 /** One kit entry's things, on the spots left, in its hashed order. */
 const place = (room: RoomLayout, e: KitEntry, taken: DressTaken[]): StreetPropItem[] => {
   const spots = e.anchor === "surface-top" ? room.surfaces.flatMap((s) => topSpots(s, e)) : room.walls.flatMap((w) => wallSpots(w, e, room.floor));
@@ -120,6 +150,8 @@ const place = (room: RoomLayout, e: KitEntry, taken: DressTaken[]): StreetPropIt
     // A thing on a top minds only the other things on tops; on the floor, everything (the tops' solids among them).
     if (taken.some((t) => (s.onTop ? t.onTop === true : !t.onTop) && overlaps(s, t))) continue;
     if (e.role === "clutter" && !nearHero(s, e, taken)) continue;
+    if (e.by && !(room.doors ?? []).some((d) => (e.by === "door" || d.weather) && Math.hypot(s.x - clampTo(s.x, d.minX, d.maxX), s.z - clampTo(s.z, d.minZ, d.maxZ)) <= BY_DOOR)) continue;
+    if (e.apart && placedOf(taken, e.key).some((p) => Math.hypot(s.x - (p.minX + p.maxX) / 2, s.z - (p.minZ + p.maxZ) / 2) < e.apart!)) continue;
     taken.push(footprint(s, e.key));
     out.push({ prop: "room-detail", x: s.x, y: s.y, z: s.z, yaw: s.yaw, variant: roomDetailShape(e.key) });
   }

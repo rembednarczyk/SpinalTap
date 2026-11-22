@@ -24,21 +24,29 @@ Do zrobienia (kolejka zasad, §12–§17):
 Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §12 zgodne co do kontrastu: ciasny tunel między magazynem a otwartym wykopem T2. Dług: instalacje pod stropem; wymiary na siatce w pomiarach.
 - §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%.
-- §14 dług: brak wyposażenia i drobiazgu w bryłach i rysunku.
-- §15 dług: mokra posadzka przy portalu (deszcz z wykopu), połysk rur.
+- §14 częściowo: generator wnętrz (ADR-0099, zestaw `service-corridor`) stawia gaśnicę przy portalu, szafkę hydrantową i skrzynkę rozdzielczą z kablem na ścianie zachodniej, trzy kratki odpływu rozłożone wzdłuż ścian (co najmniej 8 m), karton z butelkami i kubkiem; 7 rzeczy drobiazgu, 1 luzem. Dług: wózek serwisowy, instalacje pod stropem.
+- §15 częściowo: kałuża przy portalu, gdzie wpada deszcz z wykopu (`rd-c-puddle`, generator: `by: "weather"`). Dług: połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.
 - §17 dług: przeciąg i kapanie ze źródła (portal, dylatacja); ruch: migająca oprawa.
 
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- (gra nie ma tu jeszcze nic poza bryłą pomieszczenia)
+- blender: rd-c-bottles × 1
+- blender: rd-c-cable × 1
+- blender: rd-c-cartons × 1
+- blender: rd-c-cups × 1
+- blender: rd-c-drain × 3
+- blender: rd-c-extinguisher × 1
+- blender: rd-c-fusebox × 1
+- blender: rd-c-hydrant × 1
+- blender: rd-c-puddle × 1
 
 Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 241 m², wysokość 2,3 m
 - siatka 0,5 m: 0 z 2 wymiarów
-- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 0, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 4
+- warstwy wyposażenia: makro 0, mezo 4, mikro 7
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 6 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->
