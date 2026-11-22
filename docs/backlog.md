@@ -15,7 +15,7 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
      - za ciemno (światło poniżej 18%): Neon Koi, biuro Tessen, hala W-3, klinika, galeria P1, studio tatuażu P1, P-2;
      - brak akcentów (poniżej 3%): tunel P-2, P-1, schron, piwnica W-3;
      - pomiar pozostałych sklepów (48) po dopisaniu ich ujęć.
-  3. Światło znikąd: lampy silnika (W-3, Alchemia, kapsuła, perony) powiązane z oprawami jako bryłami albo detalem, z testem odległości lampy od oprawy.
+  3. Światło znikąd (22.11): Alchemia ma test `lamp-fixtures.test.ts` (każda lampa trybu wnętrza do 3 m od oprawy na swojej kondygnacji), nowe oprawy pasów galerii P1 i P2, lampy atrium na krawędziach z LED, poświatę P-2 nad kogutem robotów. W-3, perony i parking mają oprawy w geometrii silnika (świetlówki i pasy w stropach), kapsuła 3 m od lampki. Zostaje: test dla W-3 i peronów, gdy ich oprawy staną się danymi.
   4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia).
   5. Drobiazg w skupiskach: pomieszczenia z mikro 0 albo luzem powyżej 25% według audytu kart. Najpierw pomiar (gałąź feat/skupiska-drobiazgu): model z Blendera, który sam jest skupiskiem, liczy się jako tyle rzeczy w jednym miejscu (`clutter`), instalacje do architektury (`services`), para i ekrany menu poza drobiazgiem. Po nim mikro 0 nie ma już żadna karta poza tunelem P-2; do zrobienia kolejno: food hall (27 z 59 luzem), hala W-3 (6 z 14), perony (po 4 rzeczy na peron), tunel P-2 (0), P-2 (2 z 7), biuro Tessen (3 z 11), sklepy z długiem w kartach.
   6. Połysk i wilgoć: każde pomieszczenie z co najmniej jedną powierzchnią z połyskiem albo mokrą, ze źródłem wody.
