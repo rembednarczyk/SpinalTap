@@ -1,0 +1,1 @@
+- Auto brzmi jak auto: zamiast cewki słychać toczenie opon, wiatr przy prędkości, pisk opon z prawdziwego nagrania, otarcie i iskry przy szorowaniu o ścianę, stuknięcia, uderzenia i zderzenia w czterech stopniach, zmianę biegu i czujnik parkowania przy cofaniu. Wszystko z nagrań.

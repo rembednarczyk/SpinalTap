@@ -3,6 +3,7 @@ import type { AudioListenerPose } from "@seki/core";
 import { DUCK_LEVEL } from "../src/audio/mixer";
 import { LAYER_MIX } from "../src/audio/music";
 import { CUES, SynthAudio } from "../src/audio/synth-audio";
+import { RECORDED_ONLY } from "../src/audio/cues";
 import { FakeAudioContext, type FakeNode, type FakeParam, ManualTimer } from "./fixtures/fake-audio-context";
 
 const setup = (opts: { maxVoices?: number; autoStart?: boolean } = {}) => {
@@ -39,8 +40,12 @@ const pose = (x: number, z: number, speed = 0): AudioListenerPose => ({ position
 afterEach(() => vi.unstubAllGlobals());
 
 describe("audio cues", () => {
-  it("defines a non-empty, audible recipe for every cue", () => {
-    for (const r of Object.values(CUES)) {
+  it("defines a non-empty, audible recipe for every cue but a car's, which are recordings only (22.11)", () => {
+    for (const [cue, r] of Object.entries(CUES) as [keyof typeof CUES, (typeof CUES)[keyof typeof CUES]][]) {
+      if (RECORDED_ONLY.has(cue)) {
+        expect(r.voices, cue).toEqual([]);
+        continue;
+      }
       expect(r.voices.length).toBeGreaterThan(0);
       for (const v of r.voices) {
         expect(v.dur).toBeGreaterThan(0);

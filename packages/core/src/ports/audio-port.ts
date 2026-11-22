@@ -33,12 +33,16 @@ export interface AudioListenerPose {
 /**
  * The engine of the car the player drives (ADR-0097), sent to the audio adapter's engine once per
  * rendered frame while she drives: `rpm` its revs as a share from idle (0) to the limiter (1), `throttle` the pedal 0..1,
- * `skid` how hard its tyres slide (0 gripping .. 1 a full slide, none at a walking pace) for their squeal.
+ * `skid` how hard its tyres slide (0 gripping .. 1 a full slide, none at a walking pace) for their squeal;
+ * `speed` its speed over the road (m/s) for the tyres' roll and the wind; `scrape` how fast its body slides
+ * along a wall it touches (m/s, 0 off it) for the scrape and the sparks (recorded loops, 22.11).
  */
 export interface EngineSound {
   readonly rpm: number;
   readonly throttle: number;
   readonly skid?: number;
+  readonly speed?: number;
+  readonly scrape?: number;
 }
 
 /**
