@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { INTERIORS, W3_Y, clinicPoint, koiPoint } from "@seki/sim";
+import { INTERIORS, METRO_PLATFORMS, W3_Y, clinicPoint, koiPoint } from "@seki/sim";
 import type { LightClip, PointLightDef } from "../../npr/lighting";
 
 /**
@@ -58,7 +58,17 @@ const office = (): RoomLamp[] => [
   lamp("tessen-office", "screens", { x: 2487.4, y: W3_Y + 1.4, z: 441 }, "#45e8ff", 6, 1.8),
 ];
 
-export const ROOM_LAMPS: readonly RoomLamp[] = [...koi(), ...clinic(), ...office()];
+/**
+ * The metro's platforms (`metro-platform.ts`): the fluorescent strips' two lamps under the platform's ceiling and the
+ * passage's one, cool white. In the interior mode the street's moon and violet ambient no longer flatten them, and the
+ * strips' pools (9 m, the street mode's were 13) leave the platform's middle and its ends in the dark base (§13).
+ */
+const metro = (): RoomLamp[] =>
+  METRO_PLATFORMS.flatMap((e) =>
+    e.platform.lamps.map((at, k, all) => (k === all.length - 1 ? lamp(`metro-${e.station}`, "passage", at, "#dceaff", 7, 0.9) : lamp(`metro-${e.station}`, `strip-${k}`, at, "#dceaff", 8.5, 1.15))),
+  );
+
+export const ROOM_LAMPS: readonly RoomLamp[] = [...koi(), ...clinic(), ...office(), ...metro()];
 
 /** The rooms lit so. */
 export const LIT_ROOMS: ReadonlySet<string> = new Set(ROOM_LAMPS.map((l) => l.room));
