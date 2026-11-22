@@ -101,7 +101,7 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-metro-vent" },
   { key: "rd-metro-timetable" },
   { key: "rd-metro-validator" },
-  { key: "rd-metro-litter", clutter: 3 },
+  { key: "rd-metro-litter", fine: true, clutter: 3 },
   { key: "rd-metro-poster-a", clutter: 1 },
   { key: "rd-metro-poster-b", clutter: 1 },
   { key: "rd-metro-camera" },
@@ -133,8 +133,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-fh-lantern-small" },
   { key: "rd-fh-ramen", clutter: 1 },
   { key: "rd-fh-donburi", clutter: 1 },
-  { key: "rd-fh-cup", clutter: 1 },
-  { key: "rd-fh-spilled", clutter: 1 },
+  { key: "rd-fh-cup", fine: true, clutter: 1 },
+  { key: "rd-fh-spilled", fine: true, clutter: 1 },
   { key: "rd-fh-stool" },
   { key: "rd-fh-pot" },
   { key: "rd-fh-bowls", clutter: 1 },
@@ -186,6 +186,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-c-fusebox", fine: true, services: true },
   { key: "rd-c-drain", fine: true, services: true },
   { key: "rd-c-puddle", fine: true, clutter: 0 },
+  // The food hall's clutter clusters (§14, 22.11): the tables' condiments and leftovers, the kitchens' tills and prep.
+  { key: "rd-fh-condiments", clutter: 4 },
+  { key: "rd-fh-leftovers", clutter: 3 },
+  { key: "rd-fh-till", clutter: 4 },
+  { key: "rd-fh-prep", clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

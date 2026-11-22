@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ALCHEMIA_T1, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_CORRIDOR, P2_CUTTING, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH, SHELTER_HATCH_HEAD, SHELTER_PASSAGE } from "@seki/sim";
+import { ALCHEMIA_T1, P1, P1_STAIR_DOWN, P2, P2_ANNEX, P2_STORE_PIECES, P2_CORRIDOR, P2_CUTTING, SHELTER, SHELTER_GATE_STAIR, SHELTER_HATCH, SHELTER_HATCH_HEAD, SHELTER_PASSAGE } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityKit } from "../city-kit";
@@ -28,11 +28,23 @@ export const P2_HOLE_DRAW = 14;
 export const P2_PORTAL_DRAW = 35;
 const HOLD = 3;
 
+/**
+ * The store's orange glow: the robots' beacons in the ceiling over their lane (`p2-store.ts`), so the lamp
+ * hangs over the lane by its third beacon, at the store's middle (§13 of the rules of 22.11: no light from
+ * nowhere); a reach to the store's far side from there.
+ */
+const BEACON = (() => {
+  const mid = (P2.minZ + P2.maxZ) / 2;
+  const up = P2_STORE_PIECES.filter((p) => p.kind === "beacon" && p.box.y1 >= P2.ceiling - 0.01);
+  const b = up.reduce((a, p) => (Math.abs((p.box.z0 + p.box.z1) / 2 - mid) < Math.abs((a.box.z0 + a.box.z1) / 2 - mid) ? p : a));
+  return { x: (b.box.x0 + b.box.x1) / 2, z: (b.box.z0 + b.box.z1) / 2 };
+})();
 const LAMP = {
   color: "#ff9a4a",
-  range: 18,
-  intensity: 0.45,
-  position: { x: (P2.minX + P2.maxX) / 2, y: P2.ceiling + 0.05, z: (P2.minZ + P2.maxZ) / 2 },
+  range: 22,
+  // Its floor as lit as from the store's middle with 18 m of reach before (22.11): the half-dark kept.
+  intensity: 0.42,
+  position: { x: BEACON.x, y: P2.ceiling + 0.05, z: BEACON.z },
   clip: { minX: P2.minX, maxX: P2.maxX, minZ: P2.minZ, maxZ: P2.maxZ },
 } as const;
 export const P2_LAMP_KEY = "alchemia-p2";
