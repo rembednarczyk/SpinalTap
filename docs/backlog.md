@@ -8,7 +8,11 @@ Otwarte zadania: zgłoszone, w toku albo odłożone. Kolejność to propozycja, 
 ## Następne
 - **[22.11, polecenie użytkownika: zasady pomieszczeń w całej grze]** Reguły w `docs/zasady-lokacji.md` §12–§17 (blockout na siatce, światło 60-30-10, warstwy makro, mezo, mikro w skupiskach, połysk i emisja, frakcja miejsca, dźwięk ze źródła), pomiary w kartach (`tools/rooms/src/measures.ts`), część „Frakcja i zasady” z audytem w każdej karcie. Kolejka, jedno pomieszczenie albo jedna zmiana systemowa na PR, ze zrzutami przed i po:
   1. Alchemia: każdy sklep i lokal frontu (52, `alchemia-shop-*`, `within: alchemia-gallery`) i tunel P-2 do portalu (`alchemia-p2-tunnel`) jako osobne wnętrza z kartami; poziomy garażu P-1 i P-2 były już osobne. Sklepy food hallu zostają częścią food hallu (otwarte lady w jednej sali). Po scaleniu #909: tryb wnętrza Alchemii obejmuje id sklepów.
-  2. Narzędzie 60-30-10: pomiar udziału pikseli bazy, światła głównego i akcentów na zrzucie (raport w `tools`, ujęcia z kart), potem pomiar wszystkich kart.
+  2. Narzędzie 60-30-10: `pnpm shots:palette` (`tools/shots/src/palette.ts`), ujęcia pomieszczeń w `tools/shots/room-spots.json`, wynik w §13 każdej zmierzonej karty (22.11, noc: 1 z 21 ujęć zgodne). Do poprawy według pomiaru:
+     - za płasko i za jasno (baza poniżej 50%): perony metra (cztery), Trasa Podziemna, apteka P0, sklep frontu L2 (`l2-n1`), kapsuła; w peronach dodatkowo za dużo akcentu (ściana z nazwą stacji);
+     - za ciemno (światło poniżej 18%): Neon Koi, biuro Tessen, hala W-3, klinika, galeria P1, studio tatuażu P1, P-2;
+     - brak akcentów (poniżej 3%): tunel P-2, P-1, schron, piwnica W-3;
+     - pomiar pozostałych sklepów (48) po dopisaniu ich ujęć.
   3. Światło znikąd: lampy silnika (W-3, Alchemia, kapsuła, perony) powiązane z oprawami jako bryłami albo detalem, z testem odległości lampy od oprawy.
   4. Kontrast funkcjonalny: drzwi, terminale, skrzynki z łupem i lady postaci z zadań wyróżnione światłem nawigacji (system, potem pomieszczenia).
   5. Drobiazg w skupiskach: pomieszczenia z mikro 0 albo luzem powyżej 25% (food hall, P-1, P-2, schron, kapsuła, klinika, perony, Koi, Trasa, piwnica i hala W-3) według audytu kart.

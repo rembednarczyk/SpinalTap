@@ -36,7 +36,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: ulica (bar).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje pod stropem do dodania.
-- §13 częściowo: 3 widoczne źródła (neony, lampiony, automat). Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem.
+- §13 częściowo: 3 widoczne źródła (neony, lampiony, automat). Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 97,4%, światło 2,2%, akcenty 0,4%, poza pasmem: baza 97,4% > 75%; światło 2,2% < 18%; akcenty 0,4% < 3%.
 - §14 dług: mikro 0. Skupiska na ladzie (butelki, czarki), na stołach boksów, przy zmywaku.
 - §15 częściowo: lakierowany blat w opisie, do sprawdzenia połysk w grze; lepkie stoły jako wilgoć.
 - §16 zgodne: neony, ciepły brudny żółty.

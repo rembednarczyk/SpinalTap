@@ -30,7 +30,7 @@ Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`
 ## Frakcja i zasady
 Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 - §12 zgodne: 5 z 6 wymiarów na siatce; niski przepust (1,5 m) przed piwnicą.
-- §13 dług: w pomiarach 0 źródeł w bryłach (lampy W-3 w silniku); powiązać żarówkę w kratce i światło awaryjne z oprawami.
+- §13 dług: w pomiarach 0 źródeł w bryłach (lampy W-3 w silniku); powiązać żarówkę w kratce i światło awaryjne z oprawami. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 73,9%, światło 26,1%, akcenty 0%, poza pasmem: akcenty 0% < 3%.
 - §14 dług: 12 rzeczy mikro, wszystkie luzem. Zebrać w skupiska przy pompie i przy kracie.
 - §15 zgodne: woda w przepuście, mokre ściany.
 - §16 zgodne.

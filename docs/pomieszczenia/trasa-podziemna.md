@@ -34,7 +34,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: ulica (gangi w starych piwnicach); druga: historia (muzeum).
 - §12 zgodne: ciasne przejścia i wyższa sala (7,6 m), 3 z 8 wymiarów na siatce (stare piwnice, §1).
-- §13 zgodne co do źródeł (7 widocznych: lampy muzealne, LED-y na kablach). Dług: drogi wyjścia w barwie nawigacji.
+- §13 zgodne co do źródeł (7 widocznych: lampy muzealne, LED-y na kablach). Dług: drogi wyjścia w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 27,4%, światło 69,8%, akcenty 2,9%, poza pasmem: baza 27,4% < 50%; światło 69,8% > 42%; akcenty 2,9% < 3%.
 - §14 dług: mikro 0. Skupiska przy obozowisku gangu i przy tablicach.
 - §15 częściowo: wilgotne ściany w opisie; do sprawdzenia połysk w grze.
 - §16 zgodne.
