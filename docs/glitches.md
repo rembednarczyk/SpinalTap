@@ -42,6 +42,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`tessen-w3/w3-inside-geometry.ts` albo widoki bloków z `slope`), ewentualnie packages/sim (`indoor()`)
 - Test przyjęcia: test renderera, że schody A i B mają siatkę w scenie po wejściu do piwnicy; zrzut z (2521; -31; 399,5) w stronę schodów A pokazuje stopnie pod poręczą
 - Dowód: zrzut `w3-piwnica-schody-niewidoczne.png` z sesji 22.11 (spec roboczy, widok z boku schodów A)
+- Trop (22.11): schody są propsami w pokojach W-3 (`inW3Interior`), więc idą do wypieku `W3PropBake` (`w3-prop-bake.ts`): ich własna siatka gaśnie, gdy wypiek je rysuje, a wypiek pokazuje się z halą (`setShown`). Do sprawdzenia w grze: czy wypiek grupy schodów powstaje (`MergeMeshes` zwraca null przy różnych atrybutach) i czy jest włączony, gdy oko jest w piwnicy.
 
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
