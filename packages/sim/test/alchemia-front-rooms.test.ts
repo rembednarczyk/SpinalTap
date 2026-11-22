@@ -29,7 +29,7 @@ import {
   galleryShopOpen as shopOpen,
   groundY,
   interiorAt,
-  ROOM_DETAIL_SCENERY,
+  ROOM_DETAILS,
 } from "../src";
 import { routeAcrossLevels } from "../src/world/nav";
 import { PRISMS, outside } from "./alchemia-raster";
@@ -318,7 +318,7 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
       if (b.shop.state !== "shut") expect(b.traces.length, b.shop.id).toBeGreaterThan(0);
     }
     // The models in the last view of the scenery.
-    expect(WORLD_SCENERY.at(-1 - ROOM_DETAIL_SCENERY.length)!.view).toEqual({ kind: "street-props", items: FRONT_ROOM_MODELS });
+    expect(WORLD_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: FRONT_ROOM_MODELS });
   });
 
   it("names the storeys the gallery in the HUD and puts their still crowd on their floors, in reach", () => {

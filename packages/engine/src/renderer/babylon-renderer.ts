@@ -24,6 +24,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { siteDroneLanes } from "./mapcity/construction/site-drones";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
+import { RoomDetailViews } from "./room-detail-views";
 import { AlchemiaView } from "./alchemia/alchemia-view";
 import { W3View, W3_KEEP } from "./tessen-w3/w3-view";
 import { builtRoofOver } from "./built-roofs";
@@ -140,6 +141,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
+  /** The rooms' detail built by Blender (ADR-0098), near each room only. */
+  private readonly rooms: RoomDetailViews;
   /** Tessen's W-3 hall from the inside: its baked rooms, the moving line, its lamps and the interior mode (ADR-0082 stage 2b). */
   private readonly w3: W3View;
   private readonly fx: ScreenFx;
@@ -266,6 +269,7 @@ export class BabylonRenderer implements RenderPort {
       eye: () => eye,
     });
     this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars(), props: () => this.cityKit.props, quality: stage.options.quality ?? "high" });
+    this.rooms = new RoomDetailViews({ scene, materials: this.materials, props: () => this.cityKit.props, eye: () => eye, quality: stage.options.quality ?? "high" });
     this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low", particles: stage.options.quality !== "low" });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
@@ -424,6 +428,7 @@ export class BabylonRenderer implements RenderPort {
     this.alchemia.update();
     this.alchemia.parking.update(dt, this.stage.options.reference);
     this.alchemia.p2.update();
+    this.rooms.update();
     this.w3.update(dt, this.stage.options.reference);
     // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
     this.fx.indoorFade.set(this.w3.interior);

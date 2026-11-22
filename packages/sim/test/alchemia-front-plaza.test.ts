@@ -29,7 +29,7 @@ import {
   plazaCafePieces,
   plazaCafeSolids,
   plazaFloorPieces,
-  ROOM_DETAIL_SCENERY,
+  ROOM_DETAILS,
   DEPTAK_NIGHT_SOLID_PROPS,
 } from "../src";
 import { DEPTAK_SOLID_PROPS, FRONT_O5_PROPS, FRONT_PLAZA_SOLID_PROPS } from "../src/content/alchemia";
@@ -248,7 +248,7 @@ describe("the square before Alchemia's front (ADR-0074 C5)", () => {
     expect(PIECES.some((p) => p.kind === "chair" && p.box.y1 - p.box.y0 < 0.05)).toBe(true);
     // Drawn with the street furniture, a view of the scenery before C7's (the deptak's stalls and the terraces' people, 20.11).
     // Before the deptak's (C7) and the front's rooms' (ADR-0093 O5).
-    expect(WORLD_SCENERY.at(-3 - ROOM_DETAIL_SCENERY.length)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
+    expect(WORLD_SCENERY.at(-3)!.view).toEqual({ kind: "street-props", items: FRONT_PLAZA_PROPS });
   });
 
   it("keeps everything off Bajkowskiego's footway and carriageway, the ramp's trench and the main entrance's way, on the square's paving", () => {

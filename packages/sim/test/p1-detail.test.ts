@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, P1_DETAIL, ROOM_DETAIL_SCENERY } from "../src";
+import { INTERIORS, P1_DETAIL, ROOM_DETAILS } from "../src";
 
 /**
  * P-1's detail after its card (ADR-0098, `docs/pomieszczenia/alchemia-parking.md`): every model in P-1's rooms, drawn only,
@@ -20,6 +20,6 @@ describe("P-1's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views", () => {
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: P1_DETAIL });
+    expect(ROOM_DETAILS).toContain(P1_DETAIL);
   });
 });

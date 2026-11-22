@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, ROOM_DETAIL_SCENERY, W3_BASEMENT_DETAIL, W3_PROPS, WORLD_SCENERY } from "../src";
+import { INTERIORS, ROOM_DETAILS, W3_BASEMENT_DETAIL, W3_PROPS, WORLD_SCENERY } from "../src";
 
 /**
  * W-3's basement's detail built by Blender after its card (ADR-0098, `docs/pomieszczenia/w3-basement.md`): drawn
@@ -35,7 +35,7 @@ describe("W-3's basement's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views, at the scenery's end", () => {
-    expect(WORLD_SCENERY.slice(-ROOM_DETAIL_SCENERY.length)).toEqual(ROOM_DETAIL_SCENERY);
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: W3_BASEMENT_DETAIL });
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && ROOM_DETAILS.includes(s.view.items))).toBe(false);
+    expect(ROOM_DETAILS).toContain(W3_BASEMENT_DETAIL);
   });
 });

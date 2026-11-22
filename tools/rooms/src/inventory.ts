@@ -1,7 +1,7 @@
 import { ROOM_DETAIL_SHAPES, type StreetPropItem } from "../../../packages/core/src";
 import { ALCHEMIA_PIECES, FRONT_SHOP_DETAIL, GALLERY_DETAIL } from "../../../packages/sim/src/content/alchemia";
 import { type InteriorDef, type InteriorRoom, INTERIORS } from "../../../packages/sim/src/content/interior-areas";
-import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
+import { ROOM_DETAILS, WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 
 /*
  * The inventory of a room as the game has it (the rule of room cards, `docs/zasady-lokacji.md` §11):
@@ -9,7 +9,8 @@ import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/w
  * ones the simulation hands the renderer:
  * - the chunks' static props (solids and views: a block by its material, a neon, a lamp, a door...);
  * - the furniture and the game's models (`street-props` items of the scenery and of the chunks), by kind, with the
- *   goods of Alchemia's shops that its inside draws (`GALLERY_DETAIL`, `FRONT_SHOP_DETAIL`);
+ *   rooms' detail the renderer draws near each room (`ROOM_DETAILS`) and the goods of Alchemia's shops that its
+ *   inside draws (`GALLERY_DETAIL`, `FRONT_SHOP_DETAIL`);
  * - Alchemia's drawn pieces (counters, shelves, screens, cups...), by kind.
  * Pure data; `cards.test.ts` checks it is current in each card, and with `ROOMS_CARDS=write` (`pnpm rooms:write`) puts it in.
  */
@@ -36,7 +37,7 @@ const streetItems = (): { readonly item: StreetPropItem; readonly x: number; rea
     if (s.view.kind !== "street-props") continue;
     for (const item of s.view.items) out.push({ item, x: s.at.x + item.x, y: s.at.y + item.y, z: s.at.z + item.z });
   }
-  for (const item of [...GALLERY_DETAIL, ...FRONT_SHOP_DETAIL]) out.push({ item, x: item.x, y: item.y, z: item.z });
+  for (const item of [...ROOM_DETAILS.flat(), ...GALLERY_DETAIL, ...FRONT_SHOP_DETAIL]) out.push({ item, x: item.x, y: item.y, z: item.z });
   return out;
 };
 

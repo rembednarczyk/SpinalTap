@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { CAPSULE_DETAIL, CAPSULE_DOOR, CAPSULE_FURNITURE, CAPSULE_INTERIOR_ROOM, ROOM_DETAIL_SCENERY, WORLD_SCENERY } from "../src";
+import { CAPSULE_DETAIL, CAPSULE_DOOR, CAPSULE_FURNITURE, CAPSULE_INTERIOR_ROOM, ROOM_DETAILS, WORLD_SCENERY } from "../src";
 
 /**
  * The capsule room's detail built by Blender after its card (ADR-0098, `docs/pomieszczenia/capsule.md`): drawn
@@ -53,7 +53,7 @@ describe("the capsule room's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views, at the scenery's end", () => {
-    expect(WORLD_SCENERY.slice(-ROOM_DETAIL_SCENERY.length)).toEqual(ROOM_DETAIL_SCENERY);
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: CAPSULE_DETAIL });
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && ROOM_DETAILS.includes(s.view.items))).toBe(false);
+    expect(ROOM_DETAILS).toContain(CAPSULE_DETAIL);
   });
 });

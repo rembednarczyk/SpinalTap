@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, METRO_DETAIL, METRO_PLATFORMS, ROOM_DETAIL_SCENERY } from "../src";
+import { INTERIORS, METRO_DETAIL, METRO_PLATFORMS, ROOM_DETAILS } from "../src";
 
 /**
  * The metro's platforms' detail after their cards (ADR-0098, `docs/pomieszczenia/metro-*.md`): one set on each
@@ -29,6 +29,6 @@ describe("the metro platforms' detail (ADR-0098)", () => {
   });
 
   it("is in the rooms' detail's views, one a platform", () => {
-    for (const set of METRO_DETAIL) expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: set });
+    for (const set of METRO_DETAIL) expect(ROOM_DETAILS).toContain(set);
   });
 });

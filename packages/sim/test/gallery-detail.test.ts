@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { FRONT_SHOP_BUILDS, FRONT_SHOP_DETAIL, GALLERY_DETAIL, ROOM_DETAIL_SCENERY, SHOP_BUILDS } from "../src";
+import { FRONT_SHOP_BUILDS, FRONT_SHOP_DETAIL, GALLERY_DETAIL, ROOM_DETAILS, SHOP_BUILDS } from "../src";
 import { newFit, shelves } from "../src/content/alchemia/shop-fittings";
 
 /**
@@ -80,8 +80,7 @@ describe("Alchemia's gallery's shelf goods (ADR-0098)", () => {
 
   it("gives every goods' model a phone's of its own, and is no view of the scenery's (Alchemia's inside draws it)", () => {
     for (const s of ROOM_DETAIL_SHAPES.filter((x) => x.key.startsWith("rd-gl-"))) expect(s.lod).toBe(`${s.key.replace(/-b$/, "")}-lod`);
-    const views = ROOM_DETAIL_SCENERY.map((s) => s.view);
-    expect(views).not.toContainEqual({ kind: "street-props", items: GALLERY_DETAIL });
-    expect(views).not.toContainEqual({ kind: "street-props", items: FRONT_SHOP_DETAIL });
+    expect(ROOM_DETAILS).not.toContain(GALLERY_DETAIL);
+    expect(ROOM_DETAILS).not.toContain(FRONT_SHOP_DETAIL);
   });
 });

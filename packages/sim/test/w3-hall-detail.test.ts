@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, ROOM_DETAIL_SCENERY, W3_HALL_DETAIL, W3_INSIDE_BLOCKS, W3_PALLETS, W3_PROPS } from "../src";
+import { INTERIORS, ROOM_DETAILS, W3_HALL_DETAIL, W3_INSIDE_BLOCKS, W3_PALLETS, W3_PROPS } from "../src";
 
 /**
  * W-3's assembly hall's detail built by Blender after its card (ADR-0098, `docs/pomieszczenia/w3-hall.md`): in the hall,
@@ -32,6 +32,6 @@ describe("W-3's hall's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views, at the scenery's end", () => {
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: W3_HALL_DETAIL });
+    expect(ROOM_DETAILS).toContain(W3_HALL_DETAIL);
   });
 });

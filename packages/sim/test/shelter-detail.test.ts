@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, ROOM_DETAIL_SCENERY, SHELTER, SHELTER_DETAIL } from "../src";
+import { INTERIORS, ROOM_DETAILS, SHELTER, SHELTER_DETAIL } from "../src";
 
 /**
  * The air-raid shelter's detail after its card (ADR-0098, `docs/pomieszczenia/alchemia-shelter.md`): every model in the
@@ -25,6 +25,6 @@ describe("the shelter's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views", () => {
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: SHELTER_DETAIL });
+    expect(ROOM_DETAILS).toContain(SHELTER_DETAIL);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { ALCHEMIA_UNITS, FOODHALL_DETAIL, INTERIORS, ROOM_DETAIL_SCENERY, fumikoWindowPieces, kitchenPieces, seatingPieces } from "../src";
+import { ALCHEMIA_UNITS, FOODHALL_DETAIL, INTERIORS, ROOM_DETAILS, fumikoWindowPieces, kitchenPieces, seatingPieces } from "../src";
 
 /**
  * The food hall's round things after its card (ADR-0098, comic realism): its lanterns, meals, cups and the knocked
@@ -37,6 +37,6 @@ describe("the food hall's detail (ADR-0098)", () => {
   });
 
   it("is one of the rooms' detail's views", () => {
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: FOODHALL_DETAIL });
+    expect(ROOM_DETAILS).toContain(FOODHALL_DETAIL);
   });
 });
