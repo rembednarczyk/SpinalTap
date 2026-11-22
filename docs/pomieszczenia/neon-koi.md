@@ -37,7 +37,7 @@ Drobiazg:
 Frakcja: ulica (bar).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje pod stropem do dodania.
 - §13 częściowo: 3 widoczne źródła (neony, lampiony, automat). Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 97,4%, światło 2,2%, akcenty 0,4%, poza pasmem: baza 97,4% > 75%; światło 2,2% < 18%; akcenty 0,4% < 3%.
-- §14 zgodne: 17 rzeczy drobiazgu, 13 w skupiskach (rzeczy na ladzie, butelki za barem), 24% luzem (piwo i popielniczka na stolikach). Dług: zmywak.
+- §14 zgodne: 17 rzeczy drobiazgu, 13 w skupiskach (rzeczy na ladzie, butelki za barem), 24% luzem (piwo i popielniczka na stolikach). Zmywak za północnym końcem lady (partia 2 ADR-0099, `rd-k-bar-sink`: stalowy zlew z dwiema komorami, bateria ze spryskiwaczem, szklanki na suszarce, gąbka, płyn, skrzynka pustych butelek).
 - §15 częściowo: lakierowany blat w opisie, do sprawdzenia połysk w grze; lepkie stoły jako wilgoć.
 - §16 zgodne: neony, ciepły brudny żółty.
 - §17 do sprawdzenia: radio Yoru FM ze źródła.
@@ -45,6 +45,7 @@ Frakcja: ulica (bar).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-k-bar-sink × 1
 - blender: rd-koi-aquarium × 1
 - blender: rd-koi-chair × 2
 - blender: rd-koi-counter × 1
@@ -63,7 +64,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 169 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 5
-- warstwy wyposażenia: makro 2, mezo 20, mikro 17
+- warstwy wyposażenia: makro 2, mezo 21, mikro 17
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 13 rzeczy w nich, 4 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 3
 <!-- inwentarz-gry:end -->

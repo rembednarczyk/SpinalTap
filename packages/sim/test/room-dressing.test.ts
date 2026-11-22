@@ -111,7 +111,7 @@ describe("the rooms' dressing generator (ADR-0099) in the other rooms", () => {
       (layout.doors ?? []).some((d) => near(x, z, d, 0.03));
     let checked = 0;
     for (const { layout, dressed } of rooms)
-      for (const p of dressed.filter((d) => ["rd-c-extinguisher", "rd-c-hydrant", "rd-c-fusebox", "rd-w3h-exit"].includes(key(d.variant)))) {
+      for (const p of dressed.filter((d) => ROOM_KITS[layout.kind].some((e) => e.back && e.key === key(d.variant)))) {
         expect(onWall(p.x, p.z, layout), `${layout.id} ${key(p.variant)} ${p.x.toFixed(2)},${p.z.toFixed(2)}`).toBe(true);
         checked++;
       }

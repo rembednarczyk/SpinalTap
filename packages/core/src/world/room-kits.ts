@@ -147,6 +147,9 @@ const ASSEMBLY_HALL: readonly KitEntry[] = [
   { key: "rd-c-drain", anchor: "floor-wall", role: "hero", along: 0.5, out: 0.5, count: [2, 3], apart: 8 },
   { key: "rd-c-puddle", anchor: "floor-free", role: "hero", along: 0.85, out: 0.6, count: [2, 3], apart: 6 },
   { key: "rd-c-cartons", anchor: "floor-wall", role: "hero", along: 0.72, out: 0.5, count: [1, 2], apart: 6 },
+  // Batch 2: the line's control cabinets by the walls, the shift's lockers (one open).
+  { key: "rd-k-control-cabinet", anchor: "floor-wall", role: "hero", along: 0.8, out: 0.46, count: [2, 3], apart: 8, back: true },
+  { key: "rd-k-lockers", anchor: "floor-wall", role: "hero", along: 1.2, out: 0.9, count: [1, 1], back: true },
 ];
 export const ROOM_KITS: Readonly<Record<RoomKitKind, readonly KitEntry[]>> = {
   platform: PLATFORM,

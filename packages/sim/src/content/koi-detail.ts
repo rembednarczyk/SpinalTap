@@ -31,4 +31,6 @@ export const KOI_DETAIL: readonly StreetPropItem[] = [
   // The jukebox on the stage's side faces old -z, the world's -x.
   item("rd-koi-jukebox", 16.0, 0, 10.3, -Math.PI / 2),
   item("rd-koi-counter-things", 13.8, 1.1, 1.0, 0),
+  // The washing-up behind the counter's north end, on the back wall between the shelf and the jukebox (ADR-0099 batch 2).
+  item("rd-k-bar-sink", 17, 0, 7.8, 0),
 ];

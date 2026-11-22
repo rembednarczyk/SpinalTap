@@ -197,6 +197,17 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-p2t-butts", fine: true, clutter: 4 },
   { key: "rd-p2t-gate", fine: true, clutter: 3 },
   { key: "rd-p2t-litter", fine: true, clutter: 4 },
+  // ADR-0099 batch 2 (docs/pomieszczenia/katalog.md, family 4): the kinds of rooms' own furniture, fine as batch 1 (a
+  // room's detail weighs on its whole 256 m block on the phones): the bar's washing-up, the clinic's basin and curtain,
+  // the factory's lockers and control cabinet, the office's chair, shredder and binders.
+  { key: "rd-k-bar-sink", fine: true, clutter: 0 },
+  { key: "rd-k-washbasin", fine: true, clutter: 0 },
+  { key: "rd-k-curtain", fine: true, clutter: 0 },
+  { key: "rd-k-lockers", fine: true, clutter: 0 },
+  { key: "rd-k-control-cabinet", fine: true, clutter: 0 },
+  { key: "rd-k-office-chair", fine: true, clutter: 0 },
+  { key: "rd-k-shredder", fine: true, clutter: 0 },
+  { key: "rd-k-binders", fine: true, clutter: 6 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
