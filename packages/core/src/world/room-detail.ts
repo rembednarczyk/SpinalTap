@@ -178,6 +178,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-fh-leftovers", clutter: 3 },
   { key: "rd-fh-till", clutter: 4 },
   { key: "rd-fh-prep", clutter: 4 },
+  // W-3's assembly hall (§14, 22.11): what the welder left on each station by the belts.
+  { key: "rd-w3h-station", fine: true, clutter: 5 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

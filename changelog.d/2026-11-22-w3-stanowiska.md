@@ -1,0 +1,1 @@
+- Hala W-3: na blatach stanowisk spawalniczych S1–S4 przy taśmach leżą maska spawalnicza, rękawice, kuweta śrub, puszka napoju i tablet z listą kontrolną (zasady lokacji §14, drobiazg w skupiskach).
