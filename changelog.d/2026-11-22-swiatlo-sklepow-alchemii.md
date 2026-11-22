@@ -1,0 +1,1 @@
+- Sklepy Alchemii: światło dopasowane do farby ścian (studio tatuażu w barwnym świetle, apteka bez prześwietlenia), jaśniejsze pasy galerii P1 i P2.

@@ -25,7 +25,7 @@ Lokal buduje generator galerii (`alchemia/shops.ts`, `shop-fittings.ts`, `shop-t
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 częściowo: rzut z planu galerii (5,8 × 8,7 m); jedno wejście od pasażu. Dług: instalacje pod stropem lokalu i próg (zmiana światła lub posadzki) w drzwiach.
-- §13 częściowo: lampa lokalu w trybie wnętrza Alchemii (ciepłe reflektory na manekinach). Dług: lada i drzwi zaplecza w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 29,5%, światło 69,3%, akcenty 1,2%, poza pasmem: baza 29,5% < 50%; światło 69,3% > 42%; akcenty 1,2% < 3%.
+- §13 częściowo: lampa lokalu w trybie wnętrza Alchemii (ciepłe reflektory na manekinach). Dług: lada i drzwi zaplecza w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 29,5%, światło 69,3%, akcenty 1,2%, poza pasmem: baza 29,5% < 50%; światło 69,3% > 42%; akcenty 1,2% < 3%; po strojeniu ekspozycji sklepów: baza 38,3%, światło 60,6%, akcenty 1,2%, poza pasmem: baza 38,3% < 50%; światło 60,6% > 42%; akcenty 1,2% < 3%. Dług: lokal frontu ma pierwsze pasmo lampy na wszystkich ścianach (mała sala, duży zasięg) i podświetlenia witryny; do strojenia osobno.
 - §14 zgodne: 7 rzeczy drobiazgu, 14% luzem (cel do 25%).
 - §15 dług: posadzka i lada matowe; połysk gablot i szkła witryny do sprawdzenia, mokre ślady butów przy drzwiach.
 - §16 zgodne co do barwy branży; geometria z generatora branż jest symetryczna, a ulica chce dobudówek i prowizorki (dług).
