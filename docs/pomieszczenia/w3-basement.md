@@ -27,6 +27,15 @@ Z Blendera (`tools/blender/rooms/w3_basement.py`), tylko rysunek, bez nowych bry
 
 Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`): żarówki, cegłę, kratę, skrytkę, wodę z mułem, rury i poręcze; zostają pompa i skrzynka (budżet trójkątów hali W-3 w `npr-perf`).
 
+## Frakcja i zasady
+Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
+- §12 zgodne: 5 z 6 wymiarów na siatce; niski przepust (1,5 m) przed piwnicą.
+- §13 dług: w pomiarach 0 źródeł w bryłach (lampy W-3 w silniku); powiązać żarówkę w kratce i światło awaryjne z oprawami.
+- §14 dług: 12 rzeczy mikro, wszystkie luzem. Zebrać w skupiska przy pompie i przy kracie.
+- §15 zgodne: woda w przepuście, mokre ściany.
+- §16 zgodne.
+- §17 do sprawdzenia: kapanie i pompa ze źródła.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -45,4 +54,12 @@ Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`
 - prop: blok (concrete, pochyły) × 3
 - prop: blok (metal) × 3
 - prop: blok (metal), rysunek osobno × 4
+
+Pomiary zasad (§12–§16):
+- rzut: 3 prostokąty, 490 m², wysokość 4,1 / 1,5 / 4,4 m
+- siatka 0,5 m: 5 z 6 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 12
+- warstwy wyposażenia: makro 3, mezo 2, mikro 12
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 12 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

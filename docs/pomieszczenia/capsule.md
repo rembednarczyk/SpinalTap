@@ -26,6 +26,15 @@ Z Blendera (`tools/blender/rooms/capsule.py`):
 
 Odłożone: roleta. Ściana frontowa wycięta w kamienicy ma tylko drzwi, a okna kamienicy są piętro wyżej, więc rolety nie ma na czym zawiesić. Okno w kapsule wymaga zmiany bryły pomieszczenia (`capsule-room.ts`) i jego rysunku w silniku.
 
+## Frakcja i zasady
+Frakcja: ulica (hotel kapsułowy); druga: technika (panel kapsuły).
+- §12 zgodne: ciasno, 1 z 2 wymiarów na siatce (obrys z kamienicy, §1).
+- §13 dług: w pomiarach 0 źródeł w bryłach (lampa rysowana przez silnik); powiązać pasek LED i lampki z oprawami w modelu; drzwi w barwie nawigacji.
+- §14 dług: mikro 0. Skupisko przy łóżku i szafce (rzeczy gracza, opakowania).
+- §15 dług: wszystko matowe; połysk plastiku kapsuły.
+- §16 zgodne.
+- §17 do sprawdzenia: szum ulicy zza okna jako źródło.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -37,4 +46,12 @@ Odłożone: roleta. Ściana frontowa wycięta w kamienicy ma tylko drzwi, a okna
 - blender: rd-capsule-sink × 1
 - blender: rd-capsule-towel × 1
 - blender: rd-capsule-trash × 1
+
+Pomiary zasad (§12–§16):
+- rzut: 1 prostokąt, 17 m², wysokość 2,8 m
+- siatka 0,5 m: 1 z 2 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
+- warstwy wyposażenia: makro 0, mezo 8, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

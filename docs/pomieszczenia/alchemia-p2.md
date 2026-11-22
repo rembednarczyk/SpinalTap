@@ -28,6 +28,15 @@ Z Blendera (`tools/blender/rooms/alchemia_p2.py`, plik `room-detail-alchemia-pro
 
 Odłożone: siatki zabezpieczające na regałach.
 
+## Frakcja i zasady
+Frakcja: technika (zautomatyzowany magazyn aut).
+- §12 dług: 0 z 8 wymiarów na siatce. Strop 2,3–2,5 m zgodny z §6. Korytarz do portalu to tunel: wydzielić jako osobne wnętrze (polecenie 22.11).
+- §13 częściowo: lampy z Blendera (3) i koguty robotów. Dług: drzwi do klatki i portal bez barwy nawigacji.
+- §14 dług: bryły symulacji puste (makro 0, mikro 0 w pomiarach); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dodać drobiazg w skupiskach przy szafie technika i przy stanowisku serwisowym.
+- §15 dług: plama oleju jest w detalu; połysk szyn i mokry beton pod wyciekiem.
+- §16 zgodne: zimna zieleń diod, sprzęt dominuje.
+- §17 do sprawdzenia: stukot robotów ze źródła (ruch jest).
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -36,4 +45,12 @@ Odłożone: siatki zabezpieczające na regałach.
 - blender: rd-p2-oil × 1
 - blender: rd-p2-pipes × 1
 - blender: rd-p2-tech × 1
+
+Pomiary zasad (§12–§16):
+- rzut: 4 prostokąty, 957 m², wysokość 2,3 / 2,5 m
+- siatka 0,5 m: 0 z 8 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
+- warstwy wyposażenia: makro 0, mezo 7, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 3
 <!-- inwentarz-gry:end -->

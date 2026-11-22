@@ -33,6 +33,15 @@ Drobiazg:
 - kufle do góry dnem pod blatem po stronie barmana (zrobione: `rd-koi-counter`);
 - naklejki na lustrze za barem, ulotki zespołów (do zrobienia).
 
+## Frakcja i zasady
+Frakcja: ulica (bar).
+- §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje pod stropem do dodania.
+- §13 częściowo: 3 widoczne źródła (neony, lampiony, automat). Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem.
+- §14 dług: mikro 0. Skupiska na ladzie (butelki, czarki), na stołach boksów, przy zmywaku.
+- §15 częściowo: lakierowany blat w opisie, do sprawdzenia połysk w grze; lepkie stoły jako wilgoć.
+- §16 zgodne: neony, ciepły brudny żółty.
+- §17 do sprawdzenia: radio Yoru FM ze źródła.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -49,4 +58,12 @@ Drobiazg:
 - prop: blok (metal), rysunek osobno × 12
 - prop: neon × 1
 - prop: neon, rysunek osobno × 2
+
+Pomiary zasad (§12–§16):
+- rzut: 1 prostokąt, 169 m², wysokość 3,9 m
+- siatka 0,5 m: 0 z 2 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 5
+- warstwy wyposażenia: makro 2, mezo 24, mikro 0
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 3
 <!-- inwentarz-gry:end -->

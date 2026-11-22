@@ -56,7 +56,8 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
   - rysunek i bryła o tym samym kształcie;
   - modele gry przed własnymi pudełkami;
   - komiksowy realizm: kształt, proporcje i detal jak w rzeczywistości, komiks tylko w tuszu, świetle i palecie; bez brył zastępczych (kula zamiast korony, pudło zamiast bluszczu), uproszczenie tylko jako LOD z daleka i na telefonie.
-- Każde pomieszczenie ma kartę w `docs/pomieszczenia/` (historia, klimat, przeznaczenie, inwentarz docelowy i inwentarz gry z `pnpm rooms:write`), a detal z inwentarza budujemy skryptami Blendera w `tools/blender/` (`docs/zasady-lokacji.md` §11, ADR-0098).
+- Zasady użytkownika z 22.11 (`docs/zasady-lokacji.md` §12–§17): blockout na siatce 0,5 m, kontrast ciasno i szeroko, próg między pomieszczeniami; światło 60-30-10, bez światła znikąd, lampy przycięte do swojego pomieszczenia, kontrast funkcjonalny drzwi, terminali i łupu; wyposażenie makro, mezo i mikro, drobiazg w skupiskach; połysk obok matu, emisja z umiarem; frakcja miejsca (ulica, technika, korporacja); dźwięk ze źródła. Każdy sklep, lokal, tunel i poziom garażu to osobne wnętrze z kartą.
+- Każde pomieszczenie ma kartę w `docs/pomieszczenia/` (historia, klimat, przeznaczenie, inwentarz docelowy, frakcja z audytem zasad i inwentarz gry z pomiarami z `pnpm rooms:write`), a detal z inwentarza budujemy skryptami Blendera w `tools/blender/` (`docs/zasady-lokacji.md` §11, ADR-0098).
 
 ## Testy (ADR-0046)
 - Logikę i UI sprawdzaj testami sesji bez renderera (`packages/app/test`, fałszywy `RenderPort`) i testami komponentów (`packages/ui/test`). Przeglądarka tylko do rozruchu, rysowania (migawka NPR, budżety, modele), układu HUD na telefonie i dotyku.

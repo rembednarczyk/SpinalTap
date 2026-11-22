@@ -28,6 +28,15 @@ Drobiazg:
 
 Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali, jak dawne pudełka, nie blok mebli miasta widoczny ze 170 m): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Dalej z Blendera: towar w gablotach według branży (wszczepy, elektronika, kosmetyki, broń, naprawy, lombard, kantor), ubrania na wieszakach (pół metra wieszaka na model) i ubrane manekiny w witrynach, wszystko z LOD na telefon. Zostają pudełka: szafki nad ladą płytkich sklepów, terminal, kubek i towar przy ladzie, rozsypany karton.
 
+## Frakcja i zasady
+Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
+- §12 dług: 5 z 38 wymiarów na siatce (plan z planszy). Sklepy, tunel i poziomy garażu wydzielić jako osobne wnętrza (polecenie 22.11, pierwsza pozycja kolejki).
+- §13 częściowo: tryb wnętrza i lampy praktyczne (PR #909). Dług: drzwi do klatek i wind w trzonach bez zielonego światła nawigacji; witryny zamkniętych lokali bez źródła są ciemne, dobrze.
+- §14 zgodne na towarze (629 z 755 rzeczy drobiazgu w skupiskach, 17% luzem), dług: zaplecza sklepów i pasaże bez śladów obecności poza lokalami.
+- §15 dług: posadzka pasaży matowa wszędzie; połysk tylko na szkle. Połysk posadzki przy wejściach, wilgoć pod atrium (deszcz pada do P0).
+- §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
+- §17 do sprawdzenia: szum schodów ruchomych i muzyka sklepów ze źródła.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
@@ -116,4 +125,12 @@ Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali,
 - piece: vitrine × 31
 - piece: wall × 32
 - piece: water × 1
+
+Pomiary zasad (§12–§16):
+- rzut: 19 prostokąty, 5217 m², wysokość 3,8 / 4,2 / 3,9 / 3,1 / 2,8 m
+- siatka 0,5 m: 5 z 38 wymiarów
+- architektura (ściany, płyty, stopnie, instalacje na wierzchu): 1242
+- warstwy wyposażenia: makro 1005, mezo 1493, mikro 755
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 101 skupisk, 629 rzeczy w nich, 126 luzem
+- widoczne źródła światła (lampy, neony, ekrany, szyldy): 673
 <!-- inwentarz-gry:end -->
