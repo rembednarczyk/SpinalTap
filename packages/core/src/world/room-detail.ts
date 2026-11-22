@@ -66,6 +66,16 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-w3b-grate" },
   { key: "rd-w3b-stash" },
   { key: "rd-w3b-water" },
+  // W-3's assembly hall (docs/pomieszczenia/w3-hall.md).
+  { key: "rd-w3h-pallet-crates" },
+  { key: "rd-w3h-pallet-sacks" },
+  { key: "rd-w3h-jack" },
+  { key: "rd-w3h-barrels" },
+  { key: "rd-w3h-leak" },
+  { key: "rd-w3h-trays" },
+  { key: "rd-w3h-break" },
+  { key: "rd-w3h-exit" },
+  { key: "rd-w3h-warning" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

@@ -1,0 +1,1 @@
+- Hala W-3 ma palety części ze skrzyniami i workami, wózek paletowy, beczki chemii na wannie wychwytowej, przeciek z wiadrem i taśmą, koryto kablowe, znaki wyjścia, tablice ostrzegawcze oraz termos, kanapkę i kask nocnej zmiany na pomoście suwnicy, zbudowane w Blenderze według karty pomieszczenia (ADR-0098).

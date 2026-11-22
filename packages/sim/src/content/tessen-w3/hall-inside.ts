@@ -102,6 +102,17 @@ export const W3_CHAMBER_DOORS: readonly DoorDef[] = [
   { key: "door:w3-chamber-w", at: w3(C.minX + 0.25, 0, (CHAMBER_GATE_W.minZ + CHAMBER_GATE_W.maxZ) / 2), along: "z", width: CHAMBER_GATE_W.maxZ - CHAMBER_GATE_W.minZ, height: CHAMBER_GATE_W.height, leaves: 2, thickness: 0.2 },
 ];
 
+/**
+ * Pallets of parts (1.4 m) by the long walls, clear of the doors and the ladder: solids whose look the rooms' detail
+ * draws (`hall-detail.ts`, ADR-0098), so the hall's inside mesh leaves them out (`W3_INSIDE_BLOCKS`).
+ */
+export const W3_PALLETS: readonly { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number }[] = [
+  { minX: 2527, maxX: 2529.4, minZ: 406.6, maxZ: 407.8 },
+  { minX: 2535, maxX: 2537.4, minZ: 406.6, maxZ: 407.8 },
+  { minX: 2530, maxX: 2532.4, minZ: 428.3, maxZ: 429.5 },
+  { minX: 2538, maxX: 2540.4, minZ: 428.3, maxZ: 429.5 },
+];
+
 /** The line: the belts (cover for one crouching), the arms' bases on the far side of each, the stations by the aisle, pallets. */
 const line = (): StaticProp[] => {
   const s = ARM_BASE.size;
@@ -117,11 +128,7 @@ const line = (): StaticProp[] => {
     station(STATIONS.S2.x, BELT_L1.maxZ, BELT_L1.maxZ + 0.5),
     station(STATIONS.S3.x, BELT_L2.minZ - 0.5, BELT_L2.minZ),
     station(STATIONS.S4.x, BELT_L2.minZ - 0.5, BELT_L2.minZ),
-    // Pallets of parts (1.4 m) by the long walls, clear of the doors and the ladder.
-    box(2527, 2529.4, 0, 1.4, 406.6, 407.8, "metal"),
-    box(2535, 2537.4, 0, 1.4, 406.6, 407.8, "metal"),
-    box(2530, 2532.4, 0, 1.4, 428.3, 429.5, "metal"),
-    box(2538, 2540.4, 0, 1.4, 428.3, 429.5, "metal"),
+    ...W3_PALLETS.map((p) => box(p.minX, p.maxX, 0, 1.4, p.minZ, p.maxZ, "metal")),
   ];
 };
 
