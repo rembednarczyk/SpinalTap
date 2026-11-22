@@ -110,8 +110,23 @@ export const ALCHEMIA_DAY_RIG: LightingRig = {
   fillColor: "#ece0d2",
 };
 
-/** Which interior's own light replaces the sky's: W-3's (ADR-0082 §4) or Alchemia's. */
-export type IndoorKind = "w3" | "alchemia";
+/**
+ * The old town's rooms and Tessen's office (Neon Koi, the clinic, the pass office; `room-lights.ts`): small rooms lit by
+ * their practicals, a street's neon through the windows at most. A dim plum ambient so the base stays dark (§13's 60%),
+ * no moon, a faint warm key for the street's light through the glass, a dark haze; the fill keeps people readable.
+ */
+export const ROOM_RIG: LightingRig = {
+  sunDir: NIGHT_RIG.sunDir,
+  sunColor: "#2a2128",
+  ambient: "#3a3242",
+  fogColor: "#120e12",
+  fogDensity: 0.014,
+  shadeTint: "#86789e",
+  fillColor: "#dcccc0",
+};
+
+/** Which interior's own light replaces the sky's: W-3's (ADR-0082 §4), Alchemia's, or a small room's. */
+export type IndoorKind = "w3" | "alchemia" | "room";
 
 const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
 
@@ -158,4 +173,4 @@ export const mixRig = (a: LightingRig, b: LightingRig, t: number): LightingRig =
 
 /** The interior's own rig at a daylight level: W-3's the same by day and night, Alchemia's with the daylight through its glass. */
 export const indoorRig = (kind: IndoorKind, daylight: number): LightingRig =>
-  kind === "w3" ? INDOOR_RIG : mixRig(ALCHEMIA_NIGHT_RIG, ALCHEMIA_DAY_RIG, daylight);
+  kind === "w3" ? INDOOR_RIG : kind === "room" ? ROOM_RIG : mixRig(ALCHEMIA_NIGHT_RIG, ALCHEMIA_DAY_RIG, daylight);

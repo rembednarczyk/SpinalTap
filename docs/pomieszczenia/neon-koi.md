@@ -36,7 +36,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: ulica (bar).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje pod stropem do dodania.
-- §13 częściowo: 3 widoczne źródła (neony, lampiony, automat). Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 97,4%, światło 2,2%, akcenty 0,4%, poza pasmem: baza 97,4% > 75%; światło 2,2% < 18%; akcenty 0,4% < 3%.
+- §13 zgodne: tryb wnętrza z lampami przy oprawach (`room-lights.ts`, od 22.11): różowy neon regału, turkus akwarium, bursztyn szafy grającej, róż sceny, każda przycięta do baru. Dług: Kaito przy ladzie jako cel pierwszego zadania wyróżniony światłem. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 74,9%, światło 20,4%, akcenty 4,7% (wcześniej 97,4 / 2,2 / 0,4).
 - §14 zgodne: 17 rzeczy drobiazgu, 13 w skupiskach (rzeczy na ladzie, butelki za barem), 24% luzem (piwo i popielniczka na stolikach). Zmywak za północnym końcem lady (partia 2 ADR-0099, `rd-k-bar-sink`: stalowy zlew z dwiema komorami, bateria ze spryskiwaczem, szklanki na suszarce, gąbka, płyn, skrzynka pustych butelek).
 - §15 częściowo: lakierowany blat w opisie, do sprawdzenia połysk w grze; lepkie stoły jako wilgoć.
 - §16 zgodne: neony, ciepły brudny żółty.

@@ -24,6 +24,7 @@ import { cityDroneWorld } from "./drones/drone-world";
 import { siteDroneLanes } from "./mapcity/construction/site-drones";
 import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
+import { RoomsInterior } from "./rooms/room-interior";
 import { AlchemiaView } from "./alchemia/alchemia-view";
 import { W3View, W3_KEEP } from "./tessen-w3/w3-view";
 import { builtRoofOver } from "./built-roofs";
@@ -140,6 +141,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly capsule: CapsuleRoomView;
   /** Alchemia on Plac Ofiar Getta, its outside and, near it, its inside (ADR-0074 stage 1). */
   private readonly alchemia: AlchemiaView;
+  /** The old town's rooms' and Tessen's office's interior mode, lit by their practicals (§13); the lamps reach the materials made in the constructor. */
+  private readonly smallRooms = new RoomsInterior({ addLight: (k, l) => this.materials.addLight(k, l), removeLight: (k) => this.materials.removeLight(k) });
   /** Tessen's W-3 hall from the inside: its baked rooms, the moving line, its lamps and the interior mode (ADR-0082 stage 2b). */
   private readonly w3: W3View;
   private readonly fx: ScreenFx;
@@ -426,7 +429,9 @@ export class BabylonRenderer implements RenderPort {
     this.alchemia.p2.update();
     this.w3.update(dt, this.stage.options.reference);
     // In the hall's rooms its own light replaces the sky's; the city outside its walls goes off in its update (ADR-0082 §3.8).
-    this.fx.indoorFade.set(this.w3.interior || this.alchemia.rooms.interior, this.w3.interior ? "w3" : "alchemia");
+    this.smallRooms.update(this.rig.camera.position);
+    const indoor = this.w3.interior ? "w3" : this.smallRooms.interior ? "room" : "alchemia";
+    this.fx.indoorFade.set(this.w3.interior || this.alchemia.rooms.interior || this.smallRooms.interior, indoor);
     if (this.map.current) (this.platforms ??= this.platformViews()).update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
@@ -438,7 +443,7 @@ export class BabylonRenderer implements RenderPort {
     // view) and shrinks to what it shows.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus, this.rig.camera);
-    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope ?? this.alchemia.rooms.lightScope);
+    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z, this.w3.lightScope ?? this.alchemia.rooms.lightScope ?? this.smallRooms.lightScope);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
     // The probe never re-renders in the metro.
