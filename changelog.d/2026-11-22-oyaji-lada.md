@@ -1,0 +1,1 @@
+- Lada Oyajiego (ARMS) w food hallu Alchemii stoi teraz przodem do food courtu, z napisem nad nią. Wcześniej wychodziła na ślepą wnękę za kioskiem Sachiko i z przejścia nie było go widać.

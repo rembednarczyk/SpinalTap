@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, type ReputationState } from "@seki/core";
 import { CIVILIAN_WALK_SPEED, FLEE_DEAD_ZONE, SCHEDULES, Simulation, YIELD_RADIUS } from "../src";
+import { beforeKeeper } from "../src/content/alchemia/units";
 import { byKey, collect, input, offFacingPlayer, passerbyOnDeptak, run, teleportPlayer, watchStandOff } from "./helpers";
 
 /** A fresh game (21:00, Oyaji's stall still open) whose standings are patched in, the way a load would. */
@@ -11,7 +12,8 @@ const simWith = (reputation: Partial<ReputationState>, seed = 5): Simulation => 
 
 const STALL = SCHEDULES.oyaji!.stops[0]!.path.at(-1)!;
 /** Where the player stands to shop at Oyaji's stall. */
-const AT_COUNTER = { x: STALL.x, y: STALL.y, z: STALL.z - 1.4 };
+// Where his customer stands before his counter (22.11: turned north onto the food hall's east strip).
+const AT_COUNTER = beforeKeeper("oyaji");
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 
 /** A wary street (ADR-0070): −49..−11. */
@@ -96,8 +98,12 @@ describe("residents with a shop or a talk keep to their spot (ADR-0070)", () => 
     sim.player()!.pitch = -0.6;
     sim.step(input({ fire: true }));
     expect(reacted).toContainEqual({ entityId: oyaji.id, state: "cowering" });
-    // Down for a few seconds, then he runs.
+    // The gun off him (aimed at, he stays down behind his counter): down for a few seconds, then he runs.
+    sim.player()!.yaw = 0;
     run(sim, 360);
-    expect(flat(byKey(sim, "oyaji")!.position, STALL)).toBeGreaterThan(2);
+    // Into the back of his shop, its counter between them (22.11: 2 m out through the nook while the counter faced it).
+    const at = byKey(sim, "oyaji")!.position;
+    expect(flat(at, STALL)).toBeGreaterThan(1);
+    expect(flat(at, AT_COUNTER)).toBeGreaterThan(flat(STALL, AT_COUNTER) + 1);
   });
 });

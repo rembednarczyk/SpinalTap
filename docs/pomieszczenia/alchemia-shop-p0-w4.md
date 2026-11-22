@@ -19,7 +19,7 @@ Lokal buduje generator galerii (`alchemia/shops.ts`, `shop-fittings.ts`, `shop-t
 Frakcja: technika; druga: ulica (towar z drugiej ręki).
 - §12 częściowo: rzut z planu galerii (7,6 × 4,6 m); jedno wejście od pasażu. Dług: instalacje pod stropem lokalu i próg (zmiana światła lub posadzki) w drzwiach.
 - §13 częściowo: jedyne źródło to szyld; zgodne z brakiem światła znikąd.
-- §14 dług: 1 rzeczy drobiazgu, 100% luzem (cel do 25%).
+- §14 dług: 1 rzecz drobiazgu, 100% luzem (cel do 25%).
 - §15 dług: posadzka i lada matowe; połysk gablot i szkła witryny do sprawdzenia, mokre ślady butów przy drzwiach.
 - §16 zgodne co do barwy branży; geometria z generatora branż jest symetryczna, a ulica chce dobudówek i prowizorki (dług).
 - §17 dług: dźwięk lokalu (muzyka, lodówka, maszynka) ze źródła w środku; ruch: sprzedawca stoi, bez pracy przy ladzie.

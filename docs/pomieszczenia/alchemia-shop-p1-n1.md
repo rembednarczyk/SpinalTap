@@ -26,7 +26,7 @@ Lokal buduje generator galerii (`alchemia/shops.ts`, `shop-fittings.ts`, `shop-t
 Frakcja: ulica.
 - §12 częściowo: rzut z planu galerii (5,7 × 4,8 m); jedno wejście od pasażu. Dług: instalacje pod stropem lokalu i próg (zmiana światła lub posadzki) w drzwiach.
 - §13 częściowo: lampa lokalu w trybie wnętrza Alchemii (zimne świetlówki i blask automatów). Dług: lada i drzwi zaplecza w barwie nawigacji; 60-30-10 do zmierzenia zrzutem.
-- §14 zgodne: 82 rzeczy drobiazgu, 2% luzem (cel do 25%).
+- §14 zgodne: 15 rzeczy drobiazgu, 20% luzem (cel do 25%).
 - §15 dług: posadzka i lada matowe; połysk gablot i szkła witryny do sprawdzenia, mokre ślady butów przy drzwiach.
 - §16 zgodne co do barwy branży; geometria z generatora branż jest symetryczna, a ulica chce dobudówek i prowizorki (dług).
 - §17 dług: dźwięk lokalu (muzyka, lodówka, maszynka) ze źródła w środku; ruch: sprzedawca stoi, bez pracy przy ladzie.
@@ -34,6 +34,10 @@ Frakcja: ulica.
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-gl-food × 4
+- blender: rd-gl-food-b × 3
+- blender: rd-gl-stock × 15
+- blender: rd-gl-stock-b × 16
 - model: figure × 1
 - model: vending-machine × 1
 - piece: cable × 3
@@ -42,7 +46,7 @@ Frakcja: ulica.
 - piece: cup × 1
 - piece: display × 1
 - piece: duct × 1
-- piece: goods × 90
+- piece: goods × 11
 - piece: lamp × 4
 - piece: machine × 1
 - piece: paper × 2
@@ -57,7 +61,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 27 m², wysokość 4,2 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 15
-- warstwy wyposażenia: makro 16, mezo 25, mikro 82
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 80 rzeczy w nich, 2 luzem
+- warstwy wyposażenia: makro 16, mezo 13, mikro 15
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 12 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 5
 <!-- inwentarz-gry:end -->

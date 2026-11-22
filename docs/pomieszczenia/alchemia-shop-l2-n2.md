@@ -29,11 +29,13 @@ Frakcja: ulica (pustostan).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-gl-stock × 13
+- blender: rd-gl-stock-b × 18
 - piece: cable × 3
 - piece: carton × 11
 - piece: cup × 1
 - piece: duct × 1
-- piece: goods × 63
+- piece: goods × 4
 - piece: lamp × 2
 - piece: led × 1
 - piece: paper × 9
@@ -49,7 +51,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 58 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 12
-- warstwy wyposażenia: makro 10, mezo 75, mikro 16
+- warstwy wyposażenia: makro 10, mezo 16, mikro 16
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 15 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 4
 <!-- inwentarz-gry:end -->

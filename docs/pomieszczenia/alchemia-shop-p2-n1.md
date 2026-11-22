@@ -28,7 +28,7 @@ Lokal buduje generator galerii (`alchemia/shops.ts`, `shop-fittings.ts`, `shop-t
 Frakcja: technika; druga: korporacja (wszczepy z licencją).
 - §12 częściowo: rzut z planu galerii (5,7 × 4,8 m); jedno wejście od pasażu. Dług: instalacje pod stropem lokalu i próg (zmiana światła lub posadzki) w drzwiach.
 - §13 częściowo: lampa lokalu w trybie wnętrza Alchemii (cyjan i czysta biel). Dług: lada i drzwi zaplecza w barwie nawigacji; 60-30-10 do zmierzenia zrzutem.
-- §14 zgodne: 80 rzeczy drobiazgu, 1% luzem (cel do 25%).
+- §14 zgodne: 9 rzeczy drobiazgu, 22% luzem (cel do 25%).
 - §15 dług: posadzka i lada matowe; połysk gablot i szkła witryny do sprawdzenia, mokre ślady butów przy drzwiach.
 - §16 zgodne co do barwy branży; geometria z generatora branż jest symetryczna, a ulica chce dobudówek i prowizorki (dług).
 - §17 dług: dźwięk lokalu (muzyka, lodówka, maszynka) ze źródła w środku; ruch: sprzedawca stoi, bez pracy przy ladzie.
@@ -36,6 +36,11 @@ Frakcja: technika; druga: korporacja (wszczepy z licencją).
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-gl-case-implants × 3
+- blender: rd-gl-implants × 5
+- blender: rd-gl-implants-b × 1
+- blender: rd-gl-stock × 21
+- blender: rd-gl-stock-b × 12
 - model: figure × 1
 - piece: cable × 3
 - piece: carton × 4
@@ -44,7 +49,7 @@ Frakcja: technika; druga: korporacja (wszczepy z licencją).
 - piece: display × 1
 - piece: duct × 1
 - piece: error × 1
-- piece: goods × 85
+- piece: goods × 5
 - piece: lamp × 5
 - piece: machine × 2
 - piece: paper × 2
@@ -60,7 +65,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 27 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 16
-- warstwy wyposażenia: makro 16, mezo 25, mikro 80
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 5 skupisk, 79 rzeczy w nich, 1 luzem
+- warstwy wyposażenia: makro 16, mezo 16, mikro 9
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 7 rzeczy w nich, 2 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 6
 <!-- inwentarz-gry:end -->

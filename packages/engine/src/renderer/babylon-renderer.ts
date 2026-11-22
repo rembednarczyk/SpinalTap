@@ -265,7 +265,7 @@ export class BabylonRenderer implements RenderPort {
       city: () => this.map.current !== null,
       eye: () => eye,
     });
-    this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars() });
+    this.alchemia = new AlchemiaView({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, cars: () => this.vehicles.cars(), props: () => this.cityKit.props, quality: stage.options.quality ?? "high" });
     this.w3 = new W3View({ scene, materials: this.materials, kit: () => this.cityKit.kit, city: () => this.map.current !== null, eye: () => eye, still: stage.options.quality === "low", particles: stage.options.quality !== "low" });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({

@@ -36,7 +36,8 @@ interface Group {
 export const TABLE_GROUPS: readonly Group[] = [
   { x0: 406.0, x1: 407.6, z0: 40.2, z1: 43.0, along: "z" },
   { x0: 406.0, x1: 407.6, z0: 44.6, z1: 47.4, along: "z" },
-  { x0: 428.3, x1: 429.9, z0: 38.0, z1: 40.8, along: "z" },
+  // A metre and more before Oyaji's counter for his customers (22.11, his counter turned onto this strip): 38.0-40.8 until then.
+  { x0: 428.3, x1: 429.9, z0: 39.2, z1: 41.4, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 42.4, z1: 45.2, along: "z" },
   { x0: 428.3, x1: 429.9, z0: 46.6, z1: 48.8, along: "z" },
   // West of the door into L3 (ADR-0093 O5; x 416.0-417.6 until then), and the second moved through it into L3's dining room.
@@ -130,9 +131,9 @@ const lanterns = (g: Group): Piece[] => lanternSpots(g).map(({ x, z, top }) => p
 const services = (): Piece[] => [
   piece(box(404.95, 405.05, 38.0, 52.8, C - 0.11, C - 0.01), "pipe", true, false),
   piece(box(408.2, 425.0, 52.35, 52.45, C - 0.11, C - 0.01), "pipe", true, false),
-  piece(box(430.95, 431.05, 37.4, 49.2, C - 0.11, C - 0.01), "pipe", true, false),
+  piece(box(430.95, 431.05, 37.6, 49.2, C - 0.11, C - 0.01), "pipe", true, false),
   piece(box(405.4, 405.7, 38.0, 52.8, C - 0.1, C - 0.05), "cable", true, false),
-  piece(box(430.5, 430.8, 37.4, 49.2, C - 0.1, C - 0.05), "cable", true, false),
+  piece(box(430.5, 430.8, 37.6, 49.2, C - 0.1, C - 0.05), "cable", true, false),
   piece(box(415.0, 421.2, 33.4, 34.0, C - 0.45, C - 0.08), "duct", true, false),
 ];
 
