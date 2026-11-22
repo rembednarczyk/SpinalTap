@@ -17,6 +17,7 @@ import { PLASTER, arcadeFrontGeometry } from "./arcade-front-geometry";
 import { p2Outside } from "./p2-geometry";
 import { parkingOutside } from "./parking-geometry";
 import { roofPaving, roofPiece } from "./roof-geometry";
+import { deptakNightPiece, deptakNightStrings } from "./deptak-night-geometry";
 import { PAVING, plazaPiece } from "./plaza-geometry";
 
 /**
@@ -250,6 +251,8 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
     if (TIER_SET.has(p) && ofGreenSlope(p)) continue;
     // The green roof (ADR-0093 O4): its beds, pergolas, services and the residents' garden.
     if (roofPiece(sink, data, p)) continue;
+    // The deptak's south end at night (22.11): the chōchin, the yatai's wheels, body and noren, the stools.
+    if (deptakNightPiece(sink, data, p)) continue;
     // The escalators' upright balustrades: drawn sloping (`escalator-geometry.ts`).
     if (p.kind === "escalator") continue;
     // The gallery's shops (ADR-0093 O2): by their trade, their shopfronts as frames.
@@ -316,6 +319,7 @@ export const alchemiaGeometry = (data: CityKitData, pieces: readonly AlchemiaPie
   roofPaving(outside, data);
   frontSignGeometry(tiers, data);
   deptakSignGeometry(tiers, data);
+  deptakNightStrings(tiers, data);
   greenSlope(tiers, data);
   arcadeFrontGeometry(tiers, data);
   foodhallGeometry(inside, data);

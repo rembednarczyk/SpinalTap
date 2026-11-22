@@ -47,6 +47,7 @@ import {
   interiorAt,
   shelterGateStairY,
   shelterHatchStairY,
+  DEPTAK_NIGHT_SOLID_PROPS,
 } from "../src";
 import { lineOfSight } from "../src/world/hitscan";
 import { routeAcrossLevels } from "../src/world/nav";
@@ -165,7 +166,7 @@ describe("the shelter under T2 (ADR-0074 stage 5d1)", () => {
   it("is the last of Alchemia's props but the car lift's (5e), the gate's leaf a door in P-2's corridor's wall", () => {
     // The gallery round the atrium (ADR-0093 O1) comes after the car lift, its shops (O2) after the gallery, the food hall's fittings (O3) last.
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
-    const after = CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length + DEPTAK_SOLID_PROPS.length + FRONT_O5_PROPS.length;
+    const after = CAR_LIFT_PROPS.length + MALL_PROPS.length + SHOP_SOLID_PROPS.length + FOODHALL_SOLID_PROPS.length + ROOF_SOLID_PROPS.length + FRONT_PLAZA_SOLID_PROPS.length + DEPTAK_SOLID_PROPS.length + (FRONT_O5_PROPS.length + DEPTAK_NIGHT_SOLID_PROPS.length);
     expect(ALCHEMIA_PROPS.slice(-SHELTER_PROPS.length - after, -after)).toEqual(SHELTER_PROPS);
     const leaf = SHELTER_PROPS.find((p) => p.mechanism?.kind === "door")!;
     expect(leaf.mechanism?.kind).toBe("door");
