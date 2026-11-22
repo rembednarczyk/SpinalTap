@@ -1,0 +1,1 @@
+- Trasa Podziemna i kapsuła: ciemne światło wnętrza zamiast nocnego nieba, kapsuła z mocniejszą lampą w stropie.

@@ -24,7 +24,7 @@ const CAPSULE_HOLD = 5;
 const LAMP = {
   color: "#ffd9a8",
   range: 6.2,
-  intensity: 1.1,
+  intensity: 1.25,
   position: { x: CAPSULE_ORIGIN.x, y: CAPSULE_ORIGIN.y + CAPSULE_CEILING + 0.05, z: CAPSULE_ORIGIN.z },
   clip: { minX: CAPSULE_INTERIOR_ROOM.minX - 0.05, maxX: CAPSULE_INTERIOR_ROOM.maxX + 0.05, minZ: CAPSULE_INTERIOR_ROOM.minZ - 0.05, maxZ: CAPSULE_INTERIOR_ROOM.maxZ + 0.05 },
 } as const;

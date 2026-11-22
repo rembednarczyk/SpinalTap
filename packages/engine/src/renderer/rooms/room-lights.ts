@@ -63,6 +63,13 @@ export const ROOM_LAMPS: readonly RoomLamp[] = [...koi(), ...clinic(), ...office
 /** The rooms lit so. */
 export const LIT_ROOMS: ReadonlySet<string> = new Set(ROOM_LAMPS.map((l) => l.room));
 
+/**
+ * Rooms under the room's dim rig with the lamps they already have, the props' and their own views' (the Trasa
+ * Podziemna's museum lamps and LEDs on cables, the capsule's ceiling fitting): the street's moon and violet ambient
+ * no longer flatten them (§13), and their lamps keep their slots as before.
+ */
+export const DIM_ROOMS: ReadonlySet<string> = new Set(["trasa-podziemna", "capsule"]);
+
 /** The lamps on for an eye in `room`: its own, the nearest first, at most `n`. */
 export const roomLampsFor = (room: string, eye: Vec3, n = ROOM_LAMPS_ON): readonly RoomLamp[] =>
   ROOM_LAMPS.filter((l) => l.room === room)
