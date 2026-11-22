@@ -47,6 +47,14 @@ export const weaponClass = (cue: keyof typeof WEAPON_MEASURED): keyof typeof WEA
 /** The gain that brings a weapon cue's files to its class's level. */
 const level = (cue: keyof typeof WEAPON_MEASURED): number => Math.round(10 ** ((WEAPON_LEVELS[weaponClass(cue)] - WEAPON_MEASURED[cue]) / 20) * 1000) / 1000;
 
+/**
+ * Her car's sounds as a whole (the user's note of 22.11: a little quieter), about 3 dB under their recordings' levels:
+ * its engine, its loops (tyres, wind, skid, scrape, sparks), its knocks and crashes, its doors, gearbox and glass. The
+ * horn is the street's too: its own level, under the cues'.
+ */
+const CAR = 0.7;
+const car = (gain: number): number => Math.round(gain * CAR * 1000) / 1000;
+
 const SOUNDS = {
   cues: {
     // One recorded set per weapon kind (Free Firearm Sound Library, 14.11): near for the player, mid for others.
@@ -110,37 +118,38 @@ const SOUNDS = {
     "charge-plant": { urls: ["charge-clamp-000.ogg"], gain: 0.5, pitch: 0.03, send: 0.35, layerSynth: true },
     alarm: { urls: ["alarm-klaxon-000.ogg"], gain: 0.35, pitch: 0, send: 0.6 },
     // Cars (ADR-0050, ADR-0097): a real horn for the street's and her own, her car's doors and its engine started and stopped.
-    // The horn recording peaks at 2.7 (clipped hot in the pack): at 0.3 it stays under full scale (21.11).
-    horn: { urls: ["car-horn-000.ogg"], gain: 0.3, pitch: 0.03, send: 0.45 },
-    "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
-    "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
-    "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
+    // The horn recording peaks at 2.7 (clipped hot in the pack): at 0.3 it stayed under full scale (21.11); quieter still
+    // at the user's note of 22.11, for hers and the street's alike.
+    horn: { urls: ["car-horn-000.ogg"], gain: 0.18, pitch: 0.03, send: 0.45 },
+    "car-door-open": { urls: ["car-door-open-000.ogg"], gain: car(0.6), pitch: 0.04, send: 0.1 },
+    "car-door-close": { urls: ["car-door-close-000.ogg"], gain: car(0.5), pitch: 0.04, send: 0.2 },
+    "engine-stop": { urls: ["engine-stop-000.ogg"], gain: car(0.5), pitch: 0.02, send: 0.15 },
     // Her car hitting something (ADR-0097 §3), recorded cars only since 22.11 (the user's request: no stand-ins), Freesound CC0:
     // a hand's knock on a bonnet for a tap at a crawl, a bonnet's hit, a hatch slammed and collisions' clanks for a bump,
     // two real crashes, and one with its glass going for a heavy one.
-    "car-tap": { urls: range("car-tap-", ["000", "001", "002", "003", "004", "005"]), gain: 0.7, pitch: 0.08, send: 0.1 },
-    "car-bump": { urls: range("car-bump-", ["000", "001", "002", "003"]), gain: 0.7, pitch: 0.06, send: 0.15 },
-    "car-crash": { urls: range("car-crash-", ["000", "001"]), gain: 1.0, pitch: 0.04, send: 0.3 },
-    "car-crash-heavy": { urls: ["car-crash-heavy-000.ogg"], gain: 1.1, pitch: 0.03, send: 0.35 },
+    "car-tap": { urls: range("car-tap-", ["000", "001", "002", "003", "004", "005"]), gain: car(0.7), pitch: 0.08, send: 0.1 },
+    "car-bump": { urls: range("car-bump-", ["000", "001", "002", "003"]), gain: car(0.7), pitch: 0.06, send: 0.15 },
+    "car-crash": { urls: range("car-crash-", ["000", "001"]), gain: car(1.0), pitch: 0.04, send: 0.3 },
+    "car-crash-heavy": { urls: ["car-crash-heavy-000.ogg"], gain: car(1.1), pitch: 0.03, send: 0.35 },
     // Its gearbox changing gear (an Elantra's shifter, a gear selected) and its parking sensor's beep as she backs up (22.11).
-    "car-shift": { urls: range("car-shift-", ["000", "001", "002", "003"]), gain: 0.5, pitch: 0.05, send: 0.05 },
+    "car-shift": { urls: range("car-shift-", ["000", "001", "002", "003"]), gain: car(0.5), pitch: 0.05, send: 0.05 },
     "car-sensor": { urls: ["car-sensor-beep.ogg"], gain: 0.35, pitch: 0, send: 0 },
     // The window she smashes breaking into a parked car (ADR-0097 §3): Kenney's heavy glass, at the bump's level.
-    "car-glass": { urls: range("car-glass-", ["000", "001"]), gain: 0.8, pitch: 0.05, send: 0.2 },
+    "car-glass": { urls: range("car-glass-", ["000", "001"]), gain: car(0.8), pitch: 0.05, send: 0.2 },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },
   // GGBotNet's petrol engine (21.11): its body in 150 Hz .. 1 kHz, which a phone's speaker plays.
-  engine: { url: "engine-loop-000.ogg", gain: 0.6 },
+  engine: { url: "engine-loop-000.ogg", gain: car(0.6) },
   // The car's other loops (22.11), Freesound CC0: its tyres rolling on asphalt, the wind at speed, a Chrysler's tyres
   // squealing, a metal rail scraped for its body along a wall and an angle grinder on metal for its sparks.
   carLoops: {
-    roll: { url: "car-roll-loop.ogg", gain: 0.35 },
-    wind: { url: "car-wind-loop.ogg", gain: 0.3 },
-    skid: { url: "car-skid-loop.ogg", gain: 0.6 },
-    scrape: { url: "car-scrape-loop.ogg", gain: 0.55 },
-    sparks: { url: "car-sparks-loop.ogg", gain: 0.3 },
+    roll: { url: "car-roll-loop.ogg", gain: car(0.35) },
+    wind: { url: "car-wind-loop.ogg", gain: car(0.3) },
+    skid: { url: "car-skid-loop.ogg", gain: car(0.6) },
+    scrape: { url: "car-scrape-loop.ogg", gain: car(0.55) },
+    sparks: { url: "car-sparks-loop.ogg", gain: car(0.3) },
   },
 } as const satisfies AudioSampleManifest;
 

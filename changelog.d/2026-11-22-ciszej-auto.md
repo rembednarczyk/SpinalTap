@@ -1,0 +1,1 @@
+- Auto ciszej: silnik, opony, wiatr, poślizg, stłuczki, drzwi i biegi o ok. 3 dB, klakson (gracza i ulicy) o ok. 4 dB.
