@@ -7,7 +7,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { ToonPointLights, pointLightAt, pointLightOn } from "../src/npr/toon-point-lights";
 import { MAX_POINT_LIGHTS, TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { AlchemiaInterior } from "../src/renderer/alchemia/alchemia-interior";
-import { ALCHEMIA_LAMPS, ALCHEMIA_LAMPS_ON, ALCHEMIA_LAMP_PREFIX, alchemiaLampsFor } from "../src/renderer/alchemia/alchemia-lights";
+import { ALCHEMIA_LAMPS, ALCHEMIA_LAMPS_ON, ALCHEMIA_LAMP_PREFIX, alchemiaLampsFor, shopLightStrength } from "../src/renderer/alchemia/alchemia-lights";
 
 const luma = (hex: string): number => [1, 3, 5].reduce((s, i) => s + parseInt(hex.slice(i, i + 2), 16), 0);
 
@@ -112,5 +112,13 @@ describe("Alchemia's interior light (22.11)", () => {
     expect(y[2]).toBeLessThan(-1e6);
     expect(TOON_FRAGMENT).toMatch(/uniform vec2 pointClipY\[/);
     expect(TOON_FRAGMENT).toMatch(/att \*= step\(pointClipY\[i\]\.x, vWorldPos\.y\)/);
+  });
+
+  it("sets a shop's lamp by its walls' paint: stronger on a tattoo parlour's violet than on a pharmacy's pale grey (§13, 60-30-10)", () => {
+    expect(shopLightStrength("tattoo")).toBeGreaterThan(1.5 * shopLightStrength("pharmacy"));
+    for (const t of ["implants", "electronics", "clothing", "pharmacy", "arms", "repair", "pawn", "tattoo", "synth-food", "vr", "crypto", "florist"] as const) {
+      expect(shopLightStrength(t)).toBeGreaterThanOrEqual(0.4);
+      expect(shopLightStrength(t)).toBeLessThanOrEqual(2);
+    }
   });
 });

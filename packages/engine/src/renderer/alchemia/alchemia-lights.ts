@@ -1,6 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import { ALCHEMIA_UNITS, ALL_GALLERY_SHOPS, EXIT_SIGNS, ATRIUM, FOODHALL_CEILING, FOODHALL_FLOOR, FRONT_ROOMS, GALLERY, MALL_LEVELS, galleryShopCeiling, galleryShopFloor } from "@seki/sim";
 import { type LightClip, type PointLightDef, mixHex } from "../../npr/lighting";
+import { shopWall } from "./shop-geometry";
 
 /**
  * Alchemia's lamps in its interior mode (the user's note of 22.11: a moodier light in it). Pattern:
@@ -21,6 +22,21 @@ export const ALCHEMIA_LAMP_PREFIX = "alchemia-lamp-";
 /** How many are on at once: the shader has 8 slots, the player's muzzle and the street's need none inside. */
 export const ALCHEMIA_LAMPS_ON = 7;
 
+/**
+ * A shop's lamp's strength by its walls' paint (`docs/zasady-lokacji.md` §13, the 60-30-10 rule of light): the darker
+ * the paint, the stronger the light, so a tattoo parlour's violet walls and a pharmacy's white ones read alike lit
+ * (the cinematographer's exposure to the set's key, a fixed ratio of light to the surfaces' albedo). `SHOP_KEY` is the
+ * mid-grey paint the old strength 0.95 suited, a little under; the strength stays within `SHOP_LIGHT`.
+ */
+const SHOP_KEY = 0.5;
+const SHOP_LIGHT = [0.4, 2.0] as const;
+const luma = (hex: string): number => {
+  const c = (i: number) => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16) / 255;
+  return 0.2126 * c(0) + 0.7152 * c(1) + 0.0722 * c(2);
+};
+export const shopLightStrength = (trade: Parameters<typeof shopWall>[0]): number =>
+  Math.min(SHOP_LIGHT[1], Math.max(SHOP_LIGHT[0], (0.95 * SHOP_KEY) / Math.max(luma(shopWall(trade)), 0.05)));
+
 /** The shops' light by trade (§4 of `docs/zasady-lokacji.md`: hard artificial light, each trade its colour). */
 const TRADE_LIGHT: Readonly<Record<string, string>> = {
   pharmacy: "#6dffa8",
@@ -36,8 +52,11 @@ const TRADE_LIGHT: Readonly<Record<string, string>> = {
   vr: "#8566ff",
   arms: "#ff4a3a",
 };
-/** A shop's fittings: warm white tinted by its trade's colour, so its goods keep their own colours. */
-const tradeLight = (trade: string): string => mixHex(TRADE_LIGHT[trade] ?? "#ffd8b0", "#ffe6cc", 0.5);
+/**
+ * A shop's fittings: warm white tinted by its trade's colour, so its goods keep their own colours; a dark-walled one's
+ * (a tattoo parlour, a VR booth, a crypto exchange) lit by its colour itself, the mood light of such places.
+ */
+const tradeLight = (trade: Parameters<typeof shopWall>[0]): string => mixHex(TRADE_LIGHT[trade] ?? "#ffd8b0", "#ffe6cc", luma(shopWall(trade)) < 0.4 ? 0.3 : 0.5);
 /** The gallery's fittings over its strips round the atrium: low sodium. */
 const SODIUM = "#ffa45c";
 /** The atrium's LED strips under the balustrades' edges. */
@@ -74,7 +93,7 @@ const shopLamps = (): AlchemiaLamp[] =>
       z1: q.z1 + (s.front === "n" ? SPILL : 0),
     };
     const reach = Math.max(q.x1 - q.x0, q.z1 - q.z0) / 2 + 3.5;
-    return lamp(`shop-${s.id}`, tradeLight(s.trade), (q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, galleryShopCeiling(s), galleryShopFloor(s), reach, 0.95, r);
+    return lamp(`shop-${s.id}`, tradeLight(s.trade), (q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2, galleryShopCeiling(s), galleryShopFloor(s), reach, shopLightStrength(s.trade), r);
   });
 
 /** The food hall's kitchens on P3 (ADR-0093 O3), the open ones, their light out over their counters. */
@@ -131,7 +150,9 @@ const STRIPS = [
 const galleryLamps = (): AlchemiaLamp[] =>
   STOREYS.flatMap((s) => {
     const food = s.name === "p3";
-    const strips = STRIPS.map((t) => lamp(`${s.name}-${t.name}`, food ? LANTERN : SODIUM, t.x, t.z, s.top, s.bottom, food ? 11 : 10, food ? 1.3 : 1.05, t.r));
+    // The shops' galleries (P1, P2) under the fittings of their low ceilings: the walkway's own light, brighter than the old hall's.
+    const shops = s.name === "p1" || s.name === "p2";
+    const strips = STRIPS.map((t) => lamp(`${s.name}-${t.name}`, food ? LANTERN : SODIUM, t.x, t.z, s.top, s.bottom, food ? 11 : shops ? 13 : 10, food ? 1.3 : shops ? 1.6 : 1.05, t.r));
     // The atrium's cyan strips run under its slabs' edges (`mallSlab`'s lit edges): a lamp at the middle of each long edge, not in the void.
     const a = ATRIUM;
     const band = { x0: a.x0 - 1.5, x1: a.x1 + 1.5, z0: a.z0 - 1.5, z1: a.z1 + 1.5 };
