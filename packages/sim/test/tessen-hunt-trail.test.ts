@@ -84,9 +84,13 @@ describe("Tessen's hunt walks her trail (G-922)", () => {
     expect(met!.seconds).toBeLessThan(40);
   });
 
-  it("where no way leads to her, no squad stands at its entry: it goes back at once and waits", () => {
-    // Spots no field reaches (the Trybunał's block; the foot of the castle hill under its terrace).
-    for (const at of [{ x: 608, z: -5 }, { x: 708, z: 128 }]) {
+  // Spots no field reaches (the Trybunał's block; the foot of the castle hill under its terrace), one a test
+  // (each a minute and a half of the hunt: together they stood at 80% of a test's time on CI, 22.11).
+  it.each([
+    { x: 608, z: -5 },
+    { x: 708, z: 128 },
+  ])("where no way leads to her ($x, $z), no squad stands at its entry: it goes back at once and waits", (at) => {
+    {
       const sim = hunted(7, at, TESSEN_HUNT.squadMin);
       let out = 0;
       let longest = 0;

@@ -7,7 +7,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
 - Status: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
 - Gdzie: wszystkie 52 lokale galerii i frontu (`alchemia-shop-*`)
-- Dowód: `packages/sim/test/tpp-shoulder.test.ts`, przypadek „from inside the rooms”: 1261 miejsc przy ścianach sklepów, w których linia celowania 0,55 m w bok zaczyna się za ścianą. Ściany boczne i działowe lokali mają 0,1–0,2 m. Zmierzone 22.11, gdy sklepy stały się osobnymi wnętrzami; wcześniej test liczył tylko obrys galerii.
+- Dowód: `packages/sim/test/tpp-shoulder.test.ts`, przypadek „from inside the rooms”: 1254 miejsca przy ścianach sklepów (1261 przy osobnej grze na każdy pokój), w których linia celowania 0,55 m w bok zaczyna się za ścianą. Ściany boczne i działowe lokali mają 0,1–0,2 m. Zmierzone 22.11, gdy sklepy stały się osobnymi wnętrzami; wcześniej test liczył tylko obrys galerii.
 - Poprawka: jak G-275 i G-939, czyli ściany lokali grubsze (0,25 m) albo linia celowania przycięta do pomieszczenia gracza. Baza w teście tylko spada.
 
 ### G-016 Auta zaparkowane do 10 m za zebrą na dwukierunkowej 3 Maja
