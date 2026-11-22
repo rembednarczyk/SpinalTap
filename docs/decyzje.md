@@ -58,6 +58,7 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
     7. elementy symulacji jako graniastosłupy, które silnik rysował wprost.
   - Teraz: model gry, który jest bryłą zastępczą, poprawiamy w modelu. Uproszczenie jest tylko LOD-em z daleka i na telefonie.
   - Bramki budżetu bez zmian: wywołania rysowania, aktywne siatki, czas klatki na telefonie.
+- **Detal pomieszczeń przez portale (22.11):** decyzja użytkownika: detal z Blendera rysujemy tylko w pomieszczeniu i przy jego wejściach (komórki i portale, Teller i Séquin 1991, Luebke i Georges 1995), nie z odległości do obrysu. Pomieszczenia pod ziemią są niewidoczne z powierzchni, a ich wejścia (zejścia, rampy, włazy, wylot przepustu) to portale. Robimy po scaleniu stosu detalu (#903 do #905), na gałęzi feat/rooms-near.
 - **Alchemia według planszy (19.11):** decyzja użytkownika: gruntowna przebudowa wnętrz i brył Alchemii według rzutu, schematu kondygnacji i aksonometrii z `docs/world/koncepty/alchemia/01-rozbudowa-front.jpg`.
   - Front zostaje, reszta może się zmienić w całości. Bryłę można powiększać.
   - To, co stoi na drodze, przesuwamy, a nie obudowujemy.
