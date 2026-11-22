@@ -23,7 +23,7 @@ Do zrobienia (kolejka zasad, §12–§17):
 ## Frakcja i zasady
 Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §12 zgodne co do kontrastu: ciasny tunel między magazynem a otwartym wykopem T2. Dług: instalacje pod stropem; wymiary na siatce w pomiarach.
-- §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania.
+- §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%.
 - §14 dług: brak wyposażenia i drobiazgu w bryłach i rysunku.
 - §15 dług: mokra posadzka przy portalu (deszcz z wykopu), połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.

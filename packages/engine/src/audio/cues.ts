@@ -59,6 +59,9 @@ const click2 = (freq: number, gap: number): Recipe => ({
   ],
 });
 
+/** A car's cues: recordings only, no synthesized stand-in (the user's request of 22.11); the app's manifest has each. */
+export const RECORDED_ONLY: ReadonlySet<AudioCue> = new Set<AudioCue>(["horn", "car-door-open", "car-door-close", "car-tap", "car-bump", "car-crash", "car-crash-heavy", "car-glass", "car-shift", "car-sensor", "engine-stop"]);
+
 export const CUES: Readonly<Record<AudioCue, Recipe>> = {
   shot: SHOT,
   "shot-revolver": SHOT,
@@ -290,60 +293,19 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sine", freq: 120, to: 60, dur: 0.1, gain: 0.16 },
     ],
   },
-  // A car's horn (ADR-0050): two detuned square tones a third apart, filtered like a speaker.
-  horn: {
-    send: 0.45,
-    voices: [
-      { type: "square", freq: 392, dur: 0.55, gain: 0.12, attack: 0.01, filter: 1800, filterType: "lowpass", pan: -0.1 },
-      { type: "square", freq: 494, dur: 0.55, gain: 0.1, attack: 0.01, filter: 1800, filterType: "lowpass", pan: 0.1 },
-      { type: "sawtooth", freq: 196, dur: 0.5, gain: 0.05, attack: 0.02, filter: 900, filterType: "lowpass" },
-    ],
-  },
-  // The car she drives (ADR-0097), synthesized only if its recording fails: the latch and the door's
-  // thud, the engine dying away.
-  "car-door-open": {
-    send: 0.1,
-    voices: [
-      { type: "triangle", freq: 900, to: 600, dur: 0.04, gain: 0.08, attack: 0.001 },
-      { type: "noise", freq: 0, start: 0.03, dur: 0.18, gain: 0.05, filter: 700, filterType: "lowpass", attack: 0.01 },
-    ],
-  },
-  "car-door-close": {
-    send: 0.2,
-    voices: [
-      { type: "sine", freq: 110, to: 55, dur: 0.16, gain: 0.3, attack: 0.002 },
-      { type: "noise", freq: 0, dur: 0.08, gain: 0.12, filter: 1200, filterTo: 300, filterType: "lowpass", attack: 0.001 },
-    ],
-  },
-  // Her car hitting something (ADR-0097 §3), under the recorded metal (or alone if it fails): a knock,
-  // and for a crash a low thud, a crunch of noise falling away and a short scrape of sheet metal.
-  "car-bump": {
-    send: 0.15,
-    voices: [
-      { type: "sine", freq: 140, to: 70, dur: 0.12, gain: 0.25, attack: 0.002 },
-      { type: "noise", freq: 0, dur: 0.06, gain: 0.1, filter: 1800, filterTo: 600, filterType: "lowpass", attack: 0.001 },
-    ],
-  },
-  "car-crash": {
-    send: 0.3,
-    voices: [
-      { type: "sine", freq: 90, to: 32, dur: 0.45, gain: 0.45, attack: 0.002 },
-      { type: "noise", freq: 0, dur: 0.35, gain: 0.3, filter: 3200, filterTo: 500, filterType: "lowpass", attack: 0.001 },
-      { type: "sawtooth", freq: 230, to: 170, start: 0.04, dur: 0.3, gain: 0.05, filter: 2400, filterType: "bandpass", attack: 0.01 },
-    ],
-  },
-  // A parked car's window smashed (ADR-0097 §3), under Kenney's glass: a knock and a bright shatter of noise.
-  "car-glass": {
-    send: 0.2,
-    voices: [
-      { type: "sine", freq: 180, to: 90, dur: 0.08, gain: 0.2, attack: 0.002 },
-      { type: "noise", freq: 0, dur: 0.3, gain: 0.18, filter: 6000, filterTo: 2500, filterType: "highpass", attack: 0.001 },
-    ],
-  },
-  "engine-stop": {
-    send: 0.15,
-    voices: [{ type: "sawtooth", freq: 40, to: 14, dur: 1.1, gain: 0.1, filter: 600, filterTo: 200, filterType: "lowpass", attack: 0.01 }],
-  },
+  // A car's sounds (ADR-0050, ADR-0097) are recordings only (the user's request of 22.11: no stand-ins):
+  // without its recording a car's cue stays silent, never synthesized.
+  horn: { send: 0.45, voices: [] },
+  "car-door-open": { send: 0.1, voices: [] },
+  "car-door-close": { send: 0.2, voices: [] },
+  "car-tap": { send: 0.1, voices: [] },
+  "car-bump": { send: 0.15, voices: [] },
+  "car-crash": { send: 0.3, voices: [] },
+  "car-crash-heavy": { send: 0.35, voices: [] },
+  "car-glass": { send: 0.2, voices: [] },
+  "car-shift": { send: 0.05, voices: [] },
+  "car-sensor": { send: 0, voices: [] },
+  "engine-stop": { send: 0.15, voices: [] },
   // W-3 (ADR-0082 stage 3c). The blast: a crack, a low boom falling away and a rumble in the hall's
   // tail (the recorded crunch of the app's manifest goes over it).
   explosion: {

@@ -29,8 +29,8 @@ Odłożone: roleta. Ściana frontowa wycięta w kamienicy ma tylko drzwi, a okna
 ## Frakcja i zasady
 Frakcja: ulica (hotel kapsułowy); druga: technika (panel kapsuły).
 - §12 zgodne: ciasno, 1 z 2 wymiarów na siatce (obrys z kamienicy, §1).
-- §13 dług: w pomiarach 0 źródeł w bryłach (lampa rysowana przez silnik); powiązać pasek LED i lampki z oprawami w modelu; drzwi w barwie nawigacji.
-- §14 dług: mikro 0. Skupisko przy łóżku i szafce (rzeczy gracza, opakowania).
+- §13 dług: w pomiarach 0 źródeł w bryłach (lampa rysowana przez silnik); powiązać pasek LED i lampki z oprawami w modelu; drzwi w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 47,5%, światło 44%, akcenty 8,5%, poza pasmem: baza 47,5% < 50%; światło 44% > 42%.
+- §14 zgodne: 20 rzeczy drobiazgu, 17 w skupiskach (jedzenie z automatu, zlew, śmieci, ładowarka), 15% luzem.
 - §15 dług: wszystko matowe; połysk plastiku kapsuły.
 - §16 zgodne.
 - §17 do sprawdzenia: szum ulicy zza okna jako źródło.
@@ -51,7 +51,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 17 m², wysokość 2,8 m
 - siatka 0,5 m: 1 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 0
-- warstwy wyposażenia: makro 0, mezo 8, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 0, mezo 1, mikro 20
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 17 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

@@ -1,0 +1,1 @@
+- Na telefonach (jakość niska) nie rysują się drobne rzeczy z peronów i food hallu: kubki, rozlane napoje i gazety z kubkiem, jak reszta drobnego detalu wnętrz.

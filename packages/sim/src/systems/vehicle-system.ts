@@ -43,6 +43,8 @@ export const canGetOut = (ctx: SimContext): boolean => {
 };
 /** Crash speed into a wall or a car that counts as a hit (m/s). */
 const HIT_SPEED = 2.5;
+/** From this speed into a wall or a car (m/s) a touch is heard, a tap at a crawl (22.11); the body takes a hit only past `HIT_SPEED`. */
+const TAP_SPEED = 0.8;
 /** How fast the free look's turn round the car comes back behind it (1/s). */
 const LOOK_BACK = 1.5;
 
@@ -303,12 +305,14 @@ export const createVehicleSystem = (): System => {
         const traffic = collideTraffic(ctx, e.car, e.id);
         collideBodies(ctx, e.car, e.id);
         const speed = Math.max(wall, traffic.speed);
-        if (speed > HIT_SPEED) {
-          wake(e.car);
+        if (speed > TAP_SPEED) {
           const energy = 0.5 * vehicleSpec(e.car.model).mass * speed * speed;
           ctx.bus.emit("VehicleHit", { vehicleId: e.id, other: traffic.speed >= wall ? traffic.other : null, energy, at: { ...e.position } });
+        }
+        if (speed > HIT_SPEED) {
+          wake(e.car);
           // The body takes the hit (ADR-0097 §5): past a wreck's worth the engine dies.
-          if (takeHit(e.car, energy)) ctx.bus.emit("VehicleWrecked", { vehicleId: e.id, at: { ...e.position } });
+          if (takeHit(e.car, 0.5 * vehicleSpec(e.car.model).mass * speed * speed)) ctx.bus.emit("VehicleWrecked", { vehicleId: e.id, at: { ...e.position } });
         }
         placeEntity(e, e.car);
         if (mine) {

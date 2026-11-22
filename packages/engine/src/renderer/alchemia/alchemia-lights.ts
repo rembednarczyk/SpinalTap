@@ -132,9 +132,11 @@ const galleryLamps = (): AlchemiaLamp[] =>
   STOREYS.flatMap((s) => {
     const food = s.name === "p3";
     const strips = STRIPS.map((t) => lamp(`${s.name}-${t.name}`, food ? LANTERN : SODIUM, t.x, t.z, s.top, s.bottom, food ? 11 : 10, food ? 1.3 : 1.05, t.r));
+    // The atrium's cyan strips run under its slabs' edges (`mallSlab`'s lit edges): a lamp at the middle of each long edge, not in the void.
     const a = ATRIUM;
-    const atrium = lamp(`${s.name}-atrium`, STRIP, (a.x0 + a.x1) / 2, (a.z0 + a.z1) / 2, s.top, s.bottom, 9, 0.9, { x0: a.x0 - 1.5, x1: a.x1 + 1.5, z0: a.z0 - 1.5, z1: a.z1 + 1.5 });
-    return [...strips, atrium];
+    const band = { x0: a.x0 - 1.5, x1: a.x1 + 1.5, z0: a.z0 - 1.5, z1: a.z1 + 1.5 };
+    const atrium = [a.z0, a.z1].map((z, k) => lamp(`${s.name}-atrium-${k === 0 ? "s" : "n"}`, STRIP, (a.x0 + a.x1) / 2, z, s.top, s.bottom, 8, 0.75, band));
+    return [...strips, ...atrium];
   });
 
 /** The front's storeys' rooms (ADR-0093 O5): their arcades, corridors, café and bar, a warm fitting over each. */

@@ -1,0 +1,1 @@
+- Perony metra: pod ścianą worki ze śmieciami z przewróconymi kubkami obok, na ławkach gazety i kubki, rozstawione nowym generatorem wyposażenia wnętrz (ADR-0099).

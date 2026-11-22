@@ -17,6 +17,7 @@ import { CAR_LIFT_PIECES, CAR_LIFT_RIDERS } from "./car-lift";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
+import { GALLERY_LIGHTS } from "./gallery-lights";
 import { EXIT_SIGNS } from "./exit-signs";
 import { unitPieces } from "./units";
 import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "./mall";
@@ -194,6 +195,8 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...FRONT_ROOM_DRAWN,
   ...FRONT_SHOP_PIECES,
   ...NIGHT,
+  // The gallery's ceiling fittings over its strips (22.11, §13: no light from nowhere), last: drawn only.
+  ...GALLERY_LIGHTS,
   // The green exit signs over the cores' doors (22.11, §13: the way out stands out), last: drawn only.
   ...EXIT_SIGNS,
 ];

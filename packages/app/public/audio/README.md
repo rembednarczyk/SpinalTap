@@ -4,7 +4,7 @@ Pliki ładuje `SynthAudio` leniwie po pierwszym geście (`unlock()`); mapowanie 
 
 Wszystkie pliki są na licencji **CC0 1.0** (domena publiczna, https://creativecommons.org/publicdomain/zero/1.0/): bez obowiązku atrybucji, użycie komercyjne dozwolone. Autorów i tak wymieniamy.
 
-Format: OGG Vorbis, 44,1 kHz. Dźwięki auta (21.11) są zgrane do mono, Vorbis q4, bez przycinania (gaszenie silnika ucięte na 1,82 s, przed ciszą); pętla silnika bez zmian poza kodekiem. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
+Format: OGG Vorbis, 44,1 kHz. Dźwięki auta (21.11, 22.11) są zgrane do mono, Vorbis q4 (22.11: z podglądów HQ Freesound, pętle z przenikaniem styku 0,4 s, jednorazowe z wyciszeniem ogona), bez przycinania (gaszenie silnika ucięte na 1,82 s, przed ciszą); pętla silnika bez zmian poza kodekiem. Dźwięki dobycia broni i chowania (21.11) są przycięte do jednego ruchu (0,28-0,45 s, krócej niż dobycie w grze), zgrane do mono, z wyciszeniem ostatnich 0,05 s i normalizacją do -18 LUFS (rewolwer bez normalizacji, -6 dB), Vorbis q4. Pliki z 18.11 (paczka RPG, alarm, syrena) są przycięte z ciszy na początku, zgrane do mono, z wyciszeniem ogona i szczytem −3 dB (alarm i syrena −4 dB), Vorbis q3. Pliki Kenney i deszcz są skopiowane bez zmian (już małe; pętla deszczu zostaje bezszwowa). Strzały i `cyber-overdrive.ogg` są przycięte i zgrane do mono (`ffmpeg`, Vorbis q3): pojedynczy strzał od początku transjentu, 1,1-1,4 s z wyciszeniem ogona, -5 dB (strzelby i karabiny 1,4 s, wyciszenie ostatnich 0,4 s).
 
 Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy manifest z poziomu zmierzonego w pliku (najgłośniejsze 50 ms RMS, `python3 -I tools/audio_levels.py`, tabela `WEAPON_MEASURED`) i celu klasy (`WEAPON_LEVELS`: strzał gracza −24 dB, strzał innych −29 dB, obsługa −32 dB). Nowy dźwięk broni: zmierz go i dopisz do tabeli.
 
@@ -22,6 +22,22 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | Weapons and Apparel SFX Library | Vehicle (Jan Schupke) | CC0 (readme.txt w paczce) | https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | `weapons-apparel.zip` (pobrane 21.11) |
 | Shotgun Reload Sound Effects | zer0_sol | CC0 (strona OGA: „Feel free to use these sounds without attribution”) | https://opengameart.org/content/shotgun-reload-sound-effects | `shotgunsounds.zip` (pobrane 21.11) |
 | Car Sound Effects Pack (Low Quality) | GGBotNet | CC0 (strona OGA) | https://opengameart.org/content/car-sound-effects-pack-low-quality | `car_sound_effects_pack.zip` (pobrane 21.11, nagrania telefonem, 64 kb/s) |
+| Chrysler LHS tire squeal 04 | audible-edge (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/audible-edge/sounds/71739/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Car Crash | squareal (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/squareal/sounds/237375/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Car accident. Real. Interior. | softwalls (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/softwalls/sounds/449062/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Car Crash (with Glass) | magnuswaker (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/magnuswaker/sounds/592388/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Hood Impact | LPA134 (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/LPA134/sounds/329516/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| CarBootClose | jmdh (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/jmdh/sounds/136535/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Collision | qubodup (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/qubodup/sounds/332058/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Clank Car Crash Collision | qubodup (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/qubodup/sounds/151624/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| touch of car bonnet/hood | cupido-1 (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/cupido-1/sounds/837695/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| S023_Metal_Rail_Scrape_Mono | Pól (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/Pól/sounds/385939/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Angle Grinder On Metal (2) | shelbyshark (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/shelbyshark/sounds/501172/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Car rolling on asphalt | orlandorizo (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/orlandorizo/sounds/591079/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| Car Driving (Wind) | Yin_Yang_Jake007 (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/Yin_Yang_Jake007/sounds/411882/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| MrM_ElantraGearShfit | mrmccormack (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/mrmccormack/sounds/116598/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| gear select | greatsoundstube (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/greatsoundstube/sounds/629324/ | podgląd HQ 128 kb/s (pobrane 22.11) |
+| parking-sensors | jeroenabel (Freesound) | CC0 (strona Freesound) | https://freesound.org/people/jeroenabel/sounds/178422/ | podgląd HQ 128 kb/s (pobrane 22.11) |
 | Rain (loopable) | Ylmir | CC0 (strona OGA) | https://opengameart.org/content/rain-loopable | `Rain OGG.zip` |
 | RPG Sound Pack (50 RPG sound effects) | Kenney | CC0 (license.txt w paczce) | https://opengameart.org/content/50-rpg-sound-effects | `RPGsounds_Kenney.zip` (pobrane 18.11) |
 | Alarm | ezduzziteh | CC0 (strona OGA) | https://opengameart.org/content/alarm-1 | `alarm_2.ogg` (pobrane 18.11) |
@@ -65,8 +81,17 @@ Poziomy broni (21.11): wzmocnienia strzałów i dźwięków obsługi broni liczy
 | `loot-pickup-000.ogg`, `loot-pickup-001.ogg` | Impact Sounds, `impactSoft_medium_000-001.ogg` | `loot-pickup` (podniesienie łupu z torby) |
 | `sell-tin-000.ogg`, `sell-tin-001.ogg` | Impact Sounds, `impactTin_medium_000-001.ogg` | `sell` (sprzedaż, z syntezą monet) |
 | `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
-| `car-bump-000.ogg`, `car-bump-001.ogg` | Impact Sounds, `impactMetal_medium_000-001.ogg` (bez zmian) | `car-bump` (auto gracza lekko w coś uderza) |
-| `car-crash-000.ogg`, `car-crash-001.ogg`, `car-crash-002.ogg` | Impact Sounds, `impactMetal_heavy_000.ogg`, `_001.ogg`, `_003.ogg` (bez zmian) | `car-crash` (zderzenie auta gracza, z syntezą huku i trzasku) |
+| `car-tap-000.ogg`, `car-tap-001.ogg`, `car-tap-002.ogg`, `car-tap-003.ogg`, `car-tap-004.ogg`, `car-tap-005.ogg` | cupido-1, „touch of car bonnet/hood” (stuknięcia od 4,61, 5,10, 6,60, 7,06, 12,50 i 13,66 s, po 0,31 s, −24 dB RMS) | `car-tap` (auto gracza lekko w coś stuka, do ok. 12 km/h) |
+| `car-bump-000.ogg`, `car-bump-001.ogg`, `car-bump-002.ogg`, `car-bump-003.ogg` | LPA134 „Hood Impact” (0,15–1,6 s), jmdh „CarBootClose” (0–0,9 s), qubodup „Collision” (0–0,9 s) i „Clank Car Crash Collision” (0–0,5 s) | `car-bump` (uderzenie do ok. 24 km/h) |
+| `car-crash-000.ogg`, `car-crash-001.ogg` | squareal „Car Crash” (0–3,6 s), softwalls „Car accident. Real. Interior.” (0,45–3,0 s) | `car-crash` (zderzenie do ok. 48 km/h) |
+| `car-crash-heavy-000.ogg` | magnuswaker „Car Crash (with Glass)” (0–2,5 s) | `car-crash-heavy` (ciężkie zderzenie z szybami) |
+| `car-shift-000.ogg`, `car-shift-001.ogg`, `car-shift-002.ogg`, `car-shift-003.ogg` | mrmccormack „MrM_ElantraGearShfit” (0,60–1,00, 2,22–2,62, 4,36–4,95 s), greatsoundstube „gear select” (0,27–1,05 s) | `car-shift` (zmiana biegu) |
+| `car-sensor-beep.ogg` | jeroenabel „parking-sensors” (9,90–10,25 s, filtr górnoprzepustowy 1,5 kHz) | `car-sensor` (czujnik parkowania przy cofaniu) |
+| `car-skid-loop.ogg` | audible-edge „Chrysler LHS tire squeal 04” (6–12 s, pętla z przenikaniem 0,4 s, −18 dB RMS) | pętla pisku opon (`CarLoops`) |
+| `car-roll-loop.ogg` | orlandorizo „Car rolling on asphalt” (0,2–4,8 s, pętla) | toczenie opon po asfalcie |
+| `car-wind-loop.ogg` | Yin_Yang_Jake007 „Car Driving (Wind)” (1–9 s, pętla) | wiatr przy dużej prędkości |
+| `car-scrape-loop.ogg` | Pól „S023_Metal_Rail_Scrape_Mono” (0,1–3,7 s, pętla) | otarcie karoserii o ścianę |
+| `car-sparks-loop.ogg` | shelbyshark „Angle Grinder On Metal (2)” (6–12 s, pętla) | iskry i zgrzyt blachy przy szybkim otarciu |
 | `car-glass-000.ogg`, `car-glass-001.ogg` | Impact Sounds, `impactGlass_heavy_001.ogg`, `_004.ogg` (bez zmian) | `car-glass` (wybita szyba przy włamaniu do zaparkowanego auta) |
 | `blast-crunch-003.ogg`, `blast-crunch-004.ogg` | Sci-fi Sounds, `explosionCrunch_003.ogg`, `explosionCrunch_004.ogg` (bez zmian; paczka pobrana 17.11 z mirroru OGA https://opengameart.org/content/sci-fi-sounds, `sci-fi_sounds.zip`, License.txt: CC0) | `explosion` (wybuch ładunków W-3, z syntezą niskiego huku) |
 | `shotgun-rack-000.ogg` | Shotgun Reload Sound Effects, `Rack.mp3` (od 0,60 s do 1,06 s, mono, normalizacja do -14 LUFS, wyciszenie ostatnich 0,06 s): czółenko w tył i w przód | `shotgun-pump` (przeładowanie po ostatnim naboju) |

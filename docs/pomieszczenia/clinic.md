@@ -36,8 +36,8 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: technika (ripperdoc); druga: ulica (kafle, wiadro).
 - §12 dług: 0 z 2 wymiarów na siatce (obrys z kamienicy, §1). Instalacje na wierzchu do dodania pod stropem.
-- §13 zgodne co do źródeł (lampa operacyjna, żarówka, dioda), 6 widocznych. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione.
-- §14 dług: mikro 0. Skupiska: narzędzia przy fotelu, papiery i popielniczka na biurku.
+- §13 zgodne co do źródeł (lampa operacyjna, żarówka, dioda), 6 widocznych. Dług: fotel i terminal Moriego jako cel rozmowy mocniej wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 87,8%, światło 10,8%, akcenty 1,4%, poza pasmem: baza 87,8% > 75%; światło 10,8% < 18%; akcenty 1,4% < 3%.
+- §14 zgodne: 14 rzeczy drobiazgu w trzech skupiskach (wózek z narzędziami, szafka z lekami, lada recepcji), nic luzem.
 - §15 dług: kafle i stal z połyskiem, kałuża przy umywalce.
 - §16 zgodne: zimne światło techniki na brudnej ulicy.
 - §17 do sprawdzenia: buczenie autoklawu.
@@ -65,7 +65,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 62 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 3
-- warstwy wyposażenia: makro 6, mezo 17, mikro 0
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 0 skupisk, 0 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 6, mezo 14, mikro 14
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 14 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 6
 <!-- inwentarz-gry:end -->
