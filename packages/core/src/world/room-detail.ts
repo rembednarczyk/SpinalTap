@@ -45,6 +45,15 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-trasa-rope" },
   { key: "rd-trasa-bedding" },
   { key: "rd-trasa-lamp" },
+  // The capsule room on Jezuicka (docs/pomieszczenia/capsule.md).
+  { key: "rd-capsule-door" },
+  { key: "rd-capsule-hooks" },
+  { key: "rd-capsule-trash" },
+  { key: "rd-capsule-sink" },
+  { key: "rd-capsule-food" },
+  { key: "rd-capsule-towel" },
+  { key: "rd-capsule-charger" },
+  { key: "rd-capsule-rules" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

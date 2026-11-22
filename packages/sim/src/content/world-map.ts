@@ -1,6 +1,7 @@
 import { CLINIC_DETAIL } from "./clinic-detail";
 import { KOI_DETAIL } from "./koi-detail";
 import { TRASA_DETAIL } from "./trasa-detail";
+import { CAPSULE_DETAIL } from "./capsule-detail";
 import { TESSEN_OFFICE_DETAIL } from "./tessen-w3/office-detail";
 import type { TerrainGrid, StreetPropItem} from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
@@ -181,7 +182,7 @@ const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: 
  * The rooms' detail built by Blender after their cards (ADR-0098), one view a room in the order the rooms
  * came: the scenery's last views, so every id before them stays (a new room goes last).
  */
-export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL)];
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL)];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and
