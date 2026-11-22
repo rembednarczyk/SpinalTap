@@ -1,5 +1,5 @@
 import { type AudioCue, type EngineSound, type EntityId, vehicleSpec } from "@seki/core";
-import { type Simulation, carKmh, carSkid, drivenCar } from "@seki/sim";
+import { SENSOR_RANGE, type Simulation, carKmh, carSkid, drivenCar, rearGap } from "@seki/sim";
 
 /** Where she is with the car she drives (ADR-0097). */
 type Seat = "out" | "entering" | "in" | "exiting";
@@ -46,6 +46,10 @@ export class CarAudio {
   private car: EntityId | null = null;
   /** Seconds since she sat down at the wheel, while the blip of the revs runs; null after it. */
   private blip: number | null = null;
+  /** The gear last frame, for its change's clunk; null out of the car. */
+  private gear: number | null = null;
+  /** Seconds to the parking sensor's next beep while she backs towards something; null with nothing behind. */
+  private beep: number | null = null;
 
   constructor(private readonly audio: CarAudioPorts) {}
 
@@ -63,15 +67,54 @@ export class CarAudio {
     this.car = s.driving;
     const engine = seat === "in" ? engineOf(sim) : null;
     this.audio.engine?.set(engine && this.blip !== null ? blipped(engine, this.blip) : engine);
+    this.gearbox(seat === "in" ? drivenCar(sim) : null);
+    this.sensor(sim, seat === "in" ? drivenCar(sim) : null, dt);
+  }
+
+  /** The gearbox's clunk as the gear changes (automatic or hers), none as she sits down. */
+  private gearbox(car: { readonly gear: number } | null): void {
+    const gear = car?.gear ?? null;
+    if (gear !== null && this.gear !== null && gear !== this.gear) this.audio.play("car-shift");
+    this.gear = gear;
+  }
+
+  /** The parking sensor in reverse: beeps faster the nearer what is behind, one tone touching it. */
+  private sensor(sim: Pick<Simulation, "session" | "world">, car: Parameters<typeof rearGap>[1] | null, dt: number): void {
+    const gap = car && car.gear < 0 ? rearGap(sim.world as Parameters<typeof rearGap>[0], car) : null;
+    const every = gap === null ? null : beepInterval(gap);
+    if (every === null) {
+      this.beep = null;
+      return;
+    }
+    this.beep = this.beep === null ? 0 : Math.min(this.beep, every) - Math.max(0, dt);
+    if (this.beep <= 0) {
+      this.audio.play("car-sensor");
+      this.beep = every;
+    }
   }
 }
 
+/** The parking sensor's beat (s between beeps) for the gap behind (m): from `SENSOR_RANGE` slow, faster nearer, one tone under `SENSOR_SOLID`. */
+export const SENSOR_SOLID = 0.3;
+export const beepInterval = (gap: number): number | null => {
+  if (gap > SENSOR_RANGE) return null;
+  if (gap <= SENSOR_SOLID) return 0.08;
+  return 0.12 + ((gap - SENSOR_SOLID) / (SENSOR_RANGE - SENSOR_SOLID)) * (0.6 - 0.12);
+};
+
 /** The engine of the car she drives: its revs from idle to the limiter, its throttle; null with no car. */
-/** The energy (J) from which a hit is a crash: some 24 km/h into a wall for the sedan's 1350 kg; under it a bump. */
+/**
+ * The energies (J) of her car's hits for the sedan's 1350 kg (the user's request of 22.11: taps, impacts,
+ * crashes): under `BUMP_ENERGY` a tap (to about 12 km/h into a wall), a bump to `CRASH_ENERGY` (some
+ * 24 km/h), a crash to `HEAVY_ENERGY` (some 48 km/h), past it a heavy crash with its glass going.
+ */
+export const BUMP_ENERGY = 8_000;
 export const CRASH_ENERGY = 30_000;
+export const HEAVY_ENERGY = 120_000;
 
 /** The sound of her car hitting something, by the kinetic energy taken out of it. */
-export const hitCue = (energy: number): AudioCue => (energy >= CRASH_ENERGY ? "car-crash" : "car-bump");
+export const hitCue = (energy: number): AudioCue =>
+  energy >= HEAVY_ENERGY ? "car-crash-heavy" : energy >= CRASH_ENERGY ? "car-crash" : energy >= BUMP_ENERGY ? "car-bump" : "car-tap";
 
 /** The speed (km/h) from which the tyres' slide is heard in full. */
 export const SQUEAL_PACE = 20;
@@ -83,7 +126,8 @@ export const engineOf = (sim: Pick<Simulation, "session" | "world">): EngineSoun
   const { idle, limiter } = vehicleSpec(car.model).engine;
   // The tyres' slide for their squeal, none at a walking pace (a slip angle at a crawl is no slide).
   const pace = Math.min(1, Math.abs(carKmh(car)) / SQUEAL_PACE);
-  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle, skid: carSkid(car) * pace };
+  // Its speed over the road for the tyres' roll and the wind; its slide along a wall it touches for the scrape and sparks.
+  return { rpm: Math.min(1, Math.max(0, (car.rpm - idle) / (limiter - idle))), throttle: car.controls.throttle, skid: carSkid(car) * pace, speed: Math.abs(carKmh(car)) / 3.6, scrape: car.scrape ?? 0 };
 };
 
 /** The blip as she sits down: the revs up to `peak` of the range in `rise` seconds, back down with time constant `fall`, over in `length`. */

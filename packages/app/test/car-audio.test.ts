@@ -1,13 +1,14 @@
 import { type AudioCue, type EngineSound, vehicleSpec } from "@seki/core";
 import type { Simulation } from "@seki/sim";
 import { describe, expect, it } from "vitest";
-import { BLIP, CRASH_ENERGY, CarAudio, SQUEAL_PACE, engineOf, hitCue } from "../src/presenters/car-audio";
+import { SENSOR_RANGE } from "@seki/sim";
+import { BLIP, BUMP_ENERGY, CRASH_ENERGY, CarAudio, HEAVY_ENERGY, SENSOR_SOLID, SQUEAL_PACE, beepInterval, engineOf, hitCue } from "../src/presenters/car-audio";
 
 /** A simulation as the car's sounds read it: the car she drives and her act at it. */
 const fakeSim = () => {
   const spec = vehicleSpec("sedan");
   const wheel = () => ({ load: 3000, slipRatio: 0, slipAngle: 0 });
-  const car = { model: "sedan" as const, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false }, q: { w: 1, x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, wheels: [wheel(), wheel(), wheel(), wheel()] };
+  const car = { model: "sedan" as const, gear: 1, scrape: 0, rpm: spec.engine.idle, controls: { throttle: 0, brake: 0, steer: 0, handbrake: false }, q: { w: 1, x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: 0 }, wheels: [wheel(), wheel(), wheel(), wheel()] };
   const session: { driving: number | null; carAct: { kind: "enter" | "exit"; t: number } | null } = { driving: null, carAct: null };
   const world = { with: () => ({ entities: session.driving === null ? [] : [{ id: session.driving, car }] }) };
   return { sim: { session, world } as unknown as Pick<Simulation, "session" | "world">, session, car, spec };
@@ -64,11 +65,13 @@ describe("the car she drives as heard (ADR-0097)", () => {
     const { sim, session, car, spec } = fakeSim();
     expect(engineOf(sim)).toBeNull();
     session.driving = 900;
-    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0, skid: 0 });
+    expect(engineOf(sim)).toEqual({ rpm: 0, throttle: 0, skid: 0, speed: 0, scrape: 0 });
     car.rpm = spec.engine.limiter;
     car.controls.throttle = 0.7;
     car.vel = { x: 0, y: 0, z: -12 };
-    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7, skid: 0 });
+    car.scrape = 3;
+    // Its speed over the road (m/s) for the roll and the wind, its slide along a wall for the scrape (22.11).
+    expect(engineOf(sim)).toEqual({ rpm: 1, throttle: 0.7, skid: 0, speed: expect.closeTo(12, 6) as number, scrape: 3 });
   });
 
   it("sends the tyres' slide for their squeal, none at a walking pace", () => {
@@ -83,10 +86,38 @@ describe("the car she drives as heard (ADR-0097)", () => {
     expect(engineOf(sim)?.skid).toBeCloseTo(1, 6);
   });
 
-  it("sounds a bump for a knock and a crash for a hard hit", () => {
-    expect(hitCue(5_000)).toBe("car-bump");
+  it("sounds a tap at a crawl, a bump, a crash and a heavy crash by the hit's energy (22.11)", () => {
+    expect(hitCue(4_000)).toBe("car-tap");
+    expect(hitCue(BUMP_ENERGY)).toBe("car-bump");
     expect(hitCue(CRASH_ENERGY - 1)).toBe("car-bump");
     expect(hitCue(CRASH_ENERGY)).toBe("car-crash");
+    expect(hitCue(HEAVY_ENERGY - 1)).toBe("car-crash");
+    expect(hitCue(HEAVY_ENERGY)).toBe("car-crash-heavy");
+  });
+
+  it("clunks the gearbox as the gear changes, not as she sits down (22.11)", () => {
+    const { sim, session, car } = fakeSim();
+    const ears = listen();
+    const audio = new CarAudio(ears.ports);
+    session.driving = 900;
+    car.gear = 2;
+    audio.frame(sim, 1 / 60);
+    audio.frame(sim, 1 / 60);
+    expect(ears.played).not.toContain("car-shift");
+    car.gear = 3;
+    audio.frame(sim, 1 / 60);
+    expect(ears.played.filter((c) => c === "car-shift")).toHaveLength(1);
+    audio.frame(sim, 1 / 60);
+    expect(ears.played.filter((c) => c === "car-shift")).toHaveLength(1);
+  });
+
+  it("beeps the parking sensor faster the nearer what is behind, one tone touching it, silent past its range (22.11)", () => {
+    expect(beepInterval(SENSOR_RANGE + 0.1)).toBeNull();
+    const far = beepInterval(1.5)!;
+    const near = beepInterval(0.6)!;
+    expect(near).toBeLessThan(far);
+    expect(beepInterval(SENSOR_SOLID)).toBeLessThan(near);
+    expect(far).toBeLessThanOrEqual(0.6);
   });
 
   it("blips the revs as she sits down, up and back to idle within the blip's length, and then follows the engine", () => {

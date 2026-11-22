@@ -28,3 +28,14 @@ Na wyjściu jedna linia na punkt. Kod 1, gdy ref się nie zbudował albo nie zro
 - `meanLuma`: średnia luma Rec. 709 całego kadru; `changedLowLuma`: luma zmienionych pikseli dolnej połowy przed i po.
 
 `src/checkout.ts` (worktree refu, sprzątanie, load) dzieli z `tools/bench-ab`.
+
+## 60-30-10 światła (`src/palette.ts`, `docs/zasady-lokacji.md` §13)
+```
+pnpm shots:palette <zrzut.png>...
+```
+Dzieli piksele zrzutu na trzy grupy według jasności (V) i nasycenia (S) w HSV:
+- baza neutralna: V < 0,3 (cienie, przygaszone tło);
+- światło motywowane: V ≥ 0,3, poza akcentem;
+- akcent neonowy: S ≥ 0,55 i V ≥ 0,5.
+
+Zasada mieści się w pasmach (`PALETTE_BANDS`): baza 50–75%, światło 18–42%, akcenty 3–15%. Jedna linia na zrzut z grupami poza pasmem; kod 1, gdy któryś zrzut łamie zasadę. Zrzuty bierzemy z `e2e/glitch-shots.spec.ts` (sam obraz z canvasu, bez HUD), np. ujęcia pomieszczeń z kart.

@@ -84,6 +84,7 @@ export const EXCEPTIONS: readonly (readonly [path: string, why: string])[] = [
   ["packages/engine/src/renderer/mapcity/skyline.ts", "Names of the Lublin districts the far towers stand in (Czechów, al. Kraśnicka)."],
   ["packages/engine/src/renderer/mapcity/canyon-signs.ts", "In-world ads and neon signs; ADR-0056 keeps the city's own signs Polish."],
   ["packages/engine/src/renderer/tessen-w3/w3-lettering.ts", "Tessen's stencilled words on W-3's walls (ADR-0082 stage 4), painted geometry; ADR-0056 keeps the city's own signs Polish."],
+  ["packages/ui/src/credits/credits.ts", "The credits' authors and works as their authors name them (ADR-0058: a Freesound user Pól); the credits' screen text is in the catalogs."],
   ["packages/engine/src/renderer/alchemia/deptak-signs.ts", "The neons of the deptak on Lubartowska (ADR-0074 C7: SPOŻYWCZY, PARKING CAŁODOBOWY); ADR-0056 keeps the city's own signs Polish."],
 ];
 

@@ -39,7 +39,7 @@ Do zrobienia w kolejnych krokach: kubki Sachiko i Oyaji, frytownice i okapy, dzi
 ## Frakcja i zasady
 Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §12 zgodne z wyjątkiem: obrys szkła z planszy (1 z 4 wymiarów na siatce, odstępstwo z §1). Instalacje pod stropem są. Wejście schodami ruchomymi z atrium otwiera się na halę.
-- §13 częściowo: lampiony i kuchnie jako źródła (PR #909). Dług: lady ludzi z zadań (Oyaji, Fumiko, Kenta) nie są wyróżnione światłem ani barwą; 60-30-10 do zmierzenia zrzutem.
+- §13 częściowo: lampiony i kuchnie jako źródła (PR #909). Dług: lady ludzi z zadań (Oyaji, Fumiko, Kenta) nie są wyróżnione światłem ani barwą. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 76,2%, światło 18,2%, akcenty 5,5%, poza pasmem: baza 76,2% > 75%.
 - §14 zgodne: 161 ze 165 rzeczy drobiazgu w 23 skupiskach, 4 luzem (2%, ulotki na podłodze). Na każdym stole przyprawnik (sos sojowy, shichimi, wykałaczki, pałeczki), przy posiłkach serwetki, paragon i szklanka; na ladzie każdej kuchni i u Sachiko i Oyajiego kasa (terminal, szpikulec z bonami, słoik napiwków, długopis) przy kubku, przy stosie misek pałeczki, chochla w dzbanku i butelki z sosami (Blender, `rd-fh-condiments`, `rd-fh-leftovers`, `rd-fh-till`, `rd-fh-prep`).
 - §15 dług: brak połysku i wilgoci poza wodą. Mokra posadzka przy zmywakach, lakier na ladach.
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.

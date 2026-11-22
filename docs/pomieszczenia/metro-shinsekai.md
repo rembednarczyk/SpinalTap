@@ -35,7 +35,7 @@ Odłożone:
 ## Frakcja i zasady
 Frakcja: ulica (transport miejski).
 - §12 zgodne co do kontrastu: zejście drugim biegiem na peron. 1 z 4 wymiarów na siatce.
-- §13 dług: 0 źródeł w bryłach (rysuje silnik); wejście do wagonu wyróżnione.
+- §13 dług: 0 źródeł w bryłach (rysuje silnik); wejście do wagonu wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 30,6%, światło 40,7%, akcenty 28,7%, poza pasmem: baza 30,6% < 50%; akcenty 28,7% > 15%.
 - §14 dług: 4 rzeczy drobiazgu, skupisko na ławce (gazeta, kubek, bilet), plakat luzem (25%). Za mało drobiazgu jak na peron; dalej skupiska przy ławce i automacie.
 - §15 dług: połysk płytek, mokre ślady butów.
 - §16 zgodne.

@@ -29,7 +29,7 @@ Odłożone: prycze z desek; bez bryły stałyby na drodze.
 ## Frakcja i zasady
 Frakcja: ulica (Hebi); druga: historia (zabytkowe gabloty).
 - §12 dług: 0 z 8 wymiarów na siatce (stary schron). Właz i biegi schodów (ciasno) przed salą: zgodne.
-- §13 częściowo: żółte gabloty, zielona lampka wyjścia. Dług: sprzęt Hebi bez zimnego źródła.
+- §13 częściowo: żółte gabloty, zielona lampka wyjścia. Dług: sprzęt Hebi bez zimnego źródła. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 73,3%, światło 26,5%, akcenty 0,1%, poza pasmem: akcenty 0,1% < 3%.
 - §14 zgodne: 14 rzeczy drobiazgu, 12 w trzech skupiskach (maski, szkło z cegłą, sprzęt Hebi), 14% luzem.
 - §15 dług: beton matowy wszędzie; wilgoć na ścianach od gruntu.
 - §16 zgodne z ulicą; kontrast z elektroniką Hebi to cel.

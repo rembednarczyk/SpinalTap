@@ -66,9 +66,16 @@ describe("weapon, loot and trade cues (E12)", () => {
     expect(cues).toEqual(["horn"]);
     const m = audioSampleManifest("https://game.test/audio/");
     for (const cue of ["horn", "car-door-open", "car-door-close", "engine-stop"] as const) expect(m.cues?.[cue]?.urls.length, cue).toBe(1);
-    expect(m.cues?.["car-bump"]?.urls.length).toBe(2);
-    expect(m.cues?.["car-crash"]?.urls.length).toBe(3);
+    // Every hit's tier, the gearbox and the parking sensor recorded (22.11): a car's cue has no synthesized stand-in.
+    expect(m.cues?.["car-tap"]?.urls.length).toBe(6);
+    expect(m.cues?.["car-bump"]?.urls.length).toBe(4);
+    expect(m.cues?.["car-crash"]?.urls.length).toBe(2);
+    expect(m.cues?.["car-crash-heavy"]?.urls.length).toBe(1);
+    expect(m.cues?.["car-shift"]?.urls.length).toBe(4);
+    expect(m.cues?.["car-sensor"]?.urls.length).toBe(1);
+    for (const cue of ["horn", "car-door-open", "car-door-close", "engine-stop", "car-tap", "car-bump", "car-crash", "car-crash-heavy", "car-glass", "car-shift", "car-sensor"] as const) expect(m.cues?.[cue]?.layerSynth, cue).toBeUndefined();
     expect(m.engine?.url).toBe("https://game.test/audio/engine-loop-000.ogg");
+    expect(Object.values(m.carLoops ?? {}).map((l) => l.url.replace("https://game.test/audio/", ""))).toEqual(["car-roll-loop.ogg", "car-wind-loop.ogg", "car-skid-loop.ogg", "car-scrape-loop.ogg", "car-sparks-loop.ogg"]);
   });
 
   it("breaking into a parked car smashes its window; taking a street car or her own does not (ADR-0097 §3)", () => {

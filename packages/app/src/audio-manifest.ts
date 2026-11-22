@@ -115,18 +115,33 @@ const SOUNDS = {
     "car-door-open": { urls: ["car-door-open-000.ogg"], gain: 0.6, pitch: 0.04, send: 0.1 },
     "car-door-close": { urls: ["car-door-close-000.ogg"], gain: 0.5, pitch: 0.04, send: 0.2 },
     "engine-stop": { urls: ["engine-stop-000.ogg"], gain: 0.5, pitch: 0.02, send: 0.15 },
-    // Her car hitting something (ADR-0097 §3): Kenney's metal at -12 dB, a bump to about the doors' level,
-    // a crash some 6 dB over it with the synth's thud and crunch under it.
-    "car-bump": { urls: range("car-bump-", ["000", "001"]), gain: 0.8, pitch: 0.06, send: 0.15 },
-    "car-crash": { urls: range("car-crash-", ["000", "001", "002"]), gain: 1.6, pitch: 0.05, send: 0.3, layerSynth: true },
+    // Her car hitting something (ADR-0097 §3), recorded cars only since 22.11 (the user's request: no stand-ins), Freesound CC0:
+    // a hand's knock on a bonnet for a tap at a crawl, a bonnet's hit, a hatch slammed and collisions' clanks for a bump,
+    // two real crashes, and one with its glass going for a heavy one.
+    "car-tap": { urls: range("car-tap-", ["000", "001", "002", "003", "004", "005"]), gain: 0.7, pitch: 0.08, send: 0.1 },
+    "car-bump": { urls: range("car-bump-", ["000", "001", "002", "003"]), gain: 0.7, pitch: 0.06, send: 0.15 },
+    "car-crash": { urls: range("car-crash-", ["000", "001"]), gain: 1.0, pitch: 0.04, send: 0.3 },
+    "car-crash-heavy": { urls: ["car-crash-heavy-000.ogg"], gain: 1.1, pitch: 0.03, send: 0.35 },
+    // Its gearbox changing gear (an Elantra's shifter, a gear selected) and its parking sensor's beep as she backs up (22.11).
+    "car-shift": { urls: range("car-shift-", ["000", "001", "002", "003"]), gain: 0.5, pitch: 0.05, send: 0.05 },
+    "car-sensor": { urls: ["car-sensor-beep.ogg"], gain: 0.35, pitch: 0, send: 0 },
     // The window she smashes breaking into a parked car (ADR-0097 §3): Kenney's heavy glass, at the bump's level.
     "car-glass": { urls: range("car-glass-", ["000", "001"]), gain: 0.8, pitch: 0.05, send: 0.2 },
     "alarm-siren": { urls: ["alarm-siren-000.ogg"], gain: 0.3, pitch: 0, send: 0.7 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },
-  // GGBotNet's petrol engine (21.11): its body in 150 Hz .. 1 kHz, which a phone's speaker plays; the coil stays under it.
+  // GGBotNet's petrol engine (21.11): its body in 150 Hz .. 1 kHz, which a phone's speaker plays.
   engine: { url: "engine-loop-000.ogg", gain: 0.6 },
+  // The car's other loops (22.11), Freesound CC0: its tyres rolling on asphalt, the wind at speed, a Chrysler's tyres
+  // squealing, a metal rail scraped for its body along a wall and an angle grinder on metal for its sparks.
+  carLoops: {
+    roll: { url: "car-roll-loop.ogg", gain: 0.35 },
+    wind: { url: "car-wind-loop.ogg", gain: 0.3 },
+    skid: { url: "car-skid-loop.ogg", gain: 0.6 },
+    scrape: { url: "car-scrape-loop.ogg", gain: 0.55 },
+    sparks: { url: "car-sparks-loop.ogg", gain: 0.3 },
+  },
 } as const satisfies AudioSampleManifest;
 
 const resolveSet = (set: SampleSet, base: string): SampleSet => ({ ...set, urls: set.urls.map((u) => new URL(u, base).href) });
@@ -140,6 +155,13 @@ export const audioSampleManifest = (base: string): AudioSampleManifest => {
     footsteps: resolveSet(SOUNDS.footsteps, base),
     rain: { ...SOUNDS.rain, url: new URL(SOUNDS.rain.url, base).href },
     engine: { ...SOUNDS.engine, url: new URL(SOUNDS.engine.url, base).href },
+    carLoops: {
+      roll: { ...SOUNDS.carLoops.roll, url: new URL(SOUNDS.carLoops.roll.url, base).href },
+      wind: { ...SOUNDS.carLoops.wind, url: new URL(SOUNDS.carLoops.wind.url, base).href },
+      skid: { ...SOUNDS.carLoops.skid, url: new URL(SOUNDS.carLoops.skid.url, base).href },
+      scrape: { ...SOUNDS.carLoops.scrape, url: new URL(SOUNDS.carLoops.scrape.url, base).href },
+      sparks: { ...SOUNDS.carLoops.sparks, url: new URL(SOUNDS.carLoops.sparks.url, base).href },
+    },
   };
 };
 
@@ -149,4 +171,5 @@ export const audioFiles = (): string[] => [
   ...SOUNDS.footsteps.urls,
   SOUNDS.rain.url,
   SOUNDS.engine.url,
+  ...Object.values(SOUNDS.carLoops).map((l) => l.url),
 ];

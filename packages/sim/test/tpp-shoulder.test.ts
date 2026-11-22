@@ -92,9 +92,10 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     let galleryLeaks = 0;
     let shopLeaks = 0;
     let places = 0;
+    // One game for every room (a new one a room cost a second each on CI once each of Alchemia's shops was a room, 22.11).
+    const sim = Simulation.create({ seed: 11 });
     for (const def of INTERIORS) {
       for (const r of def.rooms) {
-        const sim = Simulation.create({ seed: 11 });
         teleportPlayer(sim, { x: (r.minX + r.maxX) / 2, y: r.bottom, z: (r.minZ + r.maxZ) / 2 }, 0, 0);
         run(sim, 20);
         const w = sim.world;
@@ -139,8 +140,8 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     expect(galleryLeaks).toBe(0);
     // Alchemia's shops, each a room of its own since 22.11, measured apart: their side walls and partitions
     // are 0.1..0.2 m, so the aim line 0.55 m out starts in the next shop or on the gallery (G-961). Measured
-    // when they became rooms, not raised by it: a baseline that only falls.
-    expect(shopLeaks).toBeLessThanOrEqual(1261);
+    // when they became rooms, not raised by it: a baseline that only falls (1261, 1254 in one game for every room).
+    expect(shopLeaks).toBeLessThanOrEqual(1254);
   });
 
   it("by Alchemia's lifts, in the shaft or out by it at any level, crouched and aimed, never start past the shaft's walls or gates (G-939)", () => {
