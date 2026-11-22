@@ -23,6 +23,8 @@ Z Blendera (`tools/blender/rooms/w3_hall.py`, plik `room-detail-w3-props.glb`):
 - na pomoście toru N: termos z kubkiem, kanapka w folii, kask z rękawicami (`rd-w3h-break`);
 - znaki wyjścia ewakuacyjnego nad drzwiami (`rd-w3h-exit`), tablice ostrzegawcze na trzech ścianach (`rd-w3h-warning`).
 
+Na telefonie (niska jakość) gra rysuje z tej listy tylko palety, bo stoją za bryły, które siatka hali pomija; resztę pomija jako drobiazg (`fine`, budżet trójkątów hali W-3 w `npr-perf`).
+
 Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownicze w rzędach, zbiorniki w rzędach (dziś bloki).
 
 ## Inwentarz gry

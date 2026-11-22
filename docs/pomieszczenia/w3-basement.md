@@ -25,6 +25,8 @@ Z Blendera (`tools/blender/rooms/w3_basement.py`), tylko rysunek, bez nowych bry
 - skrytka szmuglerów w kanale: skrzynka z odsuniętym wiekiem, latarka, zapasowy akumulator, znak kredą na ścianie (`rd-w3b-stash`);
 - woda po kostki w kanale, ławice mułu przy ścianach, puszki, butelka i worek w mule (`rd-w3b-water`).
 
+Na telefonie (niska jakość) gra pomija drobiazg (`fine` w `ROOM_DETAIL_SHAPES`): żarówki, cegłę, kratę, skrytkę, wodę z mułem, rury i poręcze; zostają pompa i skrzynka (budżet trójkątów hali W-3 w `npr-perf`).
+
 Uwaga: schody A i B są w symulacji, ale gra ich nie rysuje (G-960), więc poręcze wiszą dziś nad pustym miejscem.
 
 ## Inwentarz gry

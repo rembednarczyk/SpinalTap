@@ -8,6 +8,12 @@
 export interface RoomDetailShape {
   /** The model's key in `room-detail-props.glb`. */
   readonly key: string;
+  /**
+   * Small detail (§11's third layer, as the odds and ends of ADR-0096): the phones go without it, as without the fine
+   * decals and most clutter (`docs/zasady-lokacji.md` §9: simplified only on the phone and from afar). The furniture a
+   * walker meets is never fine.
+   */
+  readonly fine?: true;
 }
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
@@ -55,27 +61,27 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-capsule-charger" },
   { key: "rd-capsule-rules" },
   // The basement under W-3's hall and its culvert (docs/pomieszczenia/w3-basement.md).
-  { key: "rd-w3b-pipes" },
+  { key: "rd-w3b-pipes", fine: true },
   { key: "rd-w3b-pump" },
   { key: "rd-w3b-panel" },
-  { key: "rd-w3b-bulb" },
-  { key: "rd-w3b-handrail-a" },
-  { key: "rd-w3b-handrail-b" },
-  { key: "rd-w3b-brick-wide" },
-  { key: "rd-w3b-brick-tall" },
-  { key: "rd-w3b-grate" },
-  { key: "rd-w3b-stash" },
-  { key: "rd-w3b-water" },
+  { key: "rd-w3b-bulb", fine: true },
+  { key: "rd-w3b-handrail-a", fine: true },
+  { key: "rd-w3b-handrail-b", fine: true },
+  { key: "rd-w3b-brick-wide", fine: true },
+  { key: "rd-w3b-brick-tall", fine: true },
+  { key: "rd-w3b-grate", fine: true },
+  { key: "rd-w3b-stash", fine: true },
+  { key: "rd-w3b-water", fine: true },
   // W-3's assembly hall (docs/pomieszczenia/w3-hall.md).
   { key: "rd-w3h-pallet-crates" },
   { key: "rd-w3h-pallet-sacks" },
-  { key: "rd-w3h-jack" },
-  { key: "rd-w3h-barrels" },
-  { key: "rd-w3h-leak" },
-  { key: "rd-w3h-trays" },
-  { key: "rd-w3h-break" },
-  { key: "rd-w3h-exit" },
-  { key: "rd-w3h-warning" },
+  { key: "rd-w3h-jack", fine: true },
+  { key: "rd-w3h-barrels", fine: true },
+  { key: "rd-w3h-leak", fine: true },
+  { key: "rd-w3h-trays", fine: true },
+  { key: "rd-w3h-break", fine: true },
+  { key: "rd-w3h-exit", fine: true },
+  { key: "rd-w3h-warning", fine: true },
   // The metro's platforms (docs/pomieszczenia/metro-*.md).
   { key: "rd-metro-vent" },
   { key: "rd-metro-timetable" },
