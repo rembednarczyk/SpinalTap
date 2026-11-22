@@ -23,5 +23,12 @@ Drobiazg (Blender):
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
-- (gra nie ma tu jeszcze nic poza bryłą pomieszczenia)
+- blender: rd-capsule-charger × 1
+- blender: rd-capsule-door × 1
+- blender: rd-capsule-food × 1
+- blender: rd-capsule-hooks × 1
+- blender: rd-capsule-rules × 1
+- blender: rd-capsule-sink × 1
+- blender: rd-capsule-towel × 1
+- blender: rd-capsule-trash × 1
 <!-- inwentarz-gry:end -->

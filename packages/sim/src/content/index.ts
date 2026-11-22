@@ -13,6 +13,7 @@ export * from "./koi-detail";
 export * from "./clinic-detail";
 export * from "./tessen-w3/office-detail";
 export * from "./trasa-detail";
+export * from "./capsule-detail";
 export * from "./interior-areas";
 export * from "./capsule-room";
 export * from "./alchemia";
