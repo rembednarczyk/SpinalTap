@@ -38,23 +38,24 @@ const lamp = (room: string, name: string, at: Vec3, color: string, range: number
 
 /** Neon Koi (`koi()` of `interiors.ts`, old coordinates): the shelf's pink neon and the aquarium over it, the jukebox, the stage's sign. */
 const koi = (): RoomLamp[] => [
-  lamp("neon-koi", "shelf", koiPoint(16.0, 2.2, -0.5), "#ff5aa8", 7.5, 1.3),
-  lamp("neon-koi", "aquarium", koiPoint(16.2, 2.6, 3.0), "#4fd6ff", 5.5, 1.0),
-  lamp("neon-koi", "jukebox", koiPoint(15.6, 1.2, 10.0), "#ffb040", 4.5, 1.0),
-  lamp("neon-koi", "stage", koiPoint(11.75, 2.4, 10.2), "#ff2e88", 5, 0.9),
+  lamp("neon-koi", "shelf", koiPoint(16.0, 2.2, -0.5), "#ff5aa8", 9.5, 2.3),
+  lamp("neon-koi", "aquarium", koiPoint(16.2, 2.6, 3.0), "#4fd6ff", 6.5, 1.4),
+  lamp("neon-koi", "jukebox", koiPoint(15.6, 1.2, 10.0), "#ffb040", 5, 1.3),
+  lamp("neon-koi", "stage", koiPoint(11.75, 2.4, 10.2), "#ff2e88", 6.5, 1.6),
 ];
 
-/** The clinic (`clinic()`, old coordinates): the surgical lamp's two heads over the chair, the queue sign in the waiting room. */
+/** The clinic (`clinic()`, old coordinates): the waiting room's ceiling fittings, the surgical lamp's two heads over the chair, its signs. */
 const clinic = (): RoomLamp[] => [
+  lamp("clinic", "waiting", clinicPoint(-9.6, 3.6, 4.5), "#e8f4ff", 5.5, 0.42),
   lamp("clinic", "surgery", clinicPoint(-14.6, 2.75, 2.85), "#eafcff", 6, 1.5),
-  lamp("clinic", "queue", clinicPoint(-11.6, 2.1, 3.0), "#39ffd0", 5, 0.9),
+  lamp("clinic", "queue", clinicPoint(-11.6, 2.1, 3.0), "#39ffd0", 3.2, 1.8),
   lamp("clinic", "pulse", clinicPoint(-16.6, 1.9, 4.0), "#39ffd0", 3.5, 0.6),
 ];
 
 /** Tessen's pass office in W-3's tower: the ceiling's fitting over its middle, the terminal's screens on the desk. */
 const office = (): RoomLamp[] => [
-  lamp("tessen-office", "ceiling", { x: 2491, y: W3_Y + 3.9, z: 441 }, "#dfe9ff", 8, 1.3),
-  lamp("tessen-office", "screens", { x: 2487.4, y: W3_Y + 1.4, z: 441 }, "#45e8ff", 3.5, 0.8),
+  lamp("tessen-office", "ceiling", { x: 2491, y: W3_Y + 3.9, z: 441 }, "#dfe9ff", 11, 1.9),
+  lamp("tessen-office", "screens", { x: 2487.4, y: W3_Y + 1.4, z: 441 }, "#45e8ff", 6, 1.8),
 ];
 
 export const ROOM_LAMPS: readonly RoomLamp[] = [...koi(), ...clinic(), ...office()];

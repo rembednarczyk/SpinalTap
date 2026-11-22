@@ -33,6 +33,9 @@ export const CLINIC_DETAIL: readonly StreetPropItem[] = [
   item("rd-clinic-cabinet", -16.7, 0, 6.95, Math.PI),
   // The bin for medical waste by the chair's foot.
   item("rd-clinic-sharps", -15.6, 0, 4.4, 0),
+  // The waiting room's ceiling fittings (the office's suspended pair, `rd-tessen-lights`) along old x, a hair under the
+  // ceiling: the source of its light in the interior mode (§13, no light from nowhere).
+  item("rd-tessen-lights", -9.6, 3.895, 4.5, 0),
 ];
 
 /** The chair's seat height the models keep (the wake-up spot lies on it). */

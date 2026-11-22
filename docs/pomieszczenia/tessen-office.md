@@ -33,7 +33,7 @@ Drobiazg:
 ## Frakcja i zasady
 Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 - §12 dług: 0 z 2 wymiarów na siatce. Korporacja: symetria biurek i lady przepustek do sprawdzenia.
-- §13 częściowo: 1 widoczne źródło w bryłach; świetlówki i monitory powiązać z oprawami. Drzwi do hali wyróżnione czerwoną lampką: zgodne. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 97,9%, światło 2%, akcenty 0,1%, poza pasmem: baza 97,9% > 75%; światło 2% < 18%; akcenty 0,1% < 3%.
+- §13 zgodne: tryb wnętrza z lampami przy oprawach (`room-lights.ts`, od 22.11): chłodna biel podwieszanych świetlówek, turkus ekranów terminalu przy biurku. Drzwi do hali wyróżnione czerwoną lampką. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 58,7%, światło 37,6%, akcenty 3,7% (wcześniej 97,9 / 2 / 0,1).
 - §14 zgodne co do sterylności (korporacja, §16): 11 rzeczy drobiazgu, skupiska na biurku i na tablicy, 27% luzem (karton akt, kubki w koszu). Generator wnętrz (ADR-0099, zestaw `office`) dokłada tylko gaśnicę przy drzwiach i skrzynkę rozdzielczą, bez drobiazgu.
 - §15 dług: czarne szkło i szczotkowana stal lady.
 - §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
