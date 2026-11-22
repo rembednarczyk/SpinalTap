@@ -11,10 +11,11 @@ describe("Neon Koi's detail (ADR-0098)", () => {
   const inKoi = (x: number, y: number, z: number) => koi.rooms.some((r) => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ && y >= r.bottom - 0.3 && y <= r.top);
 
   it("stands every model of the bar in the bar, by a shape of the rooms' detail", () => {
-    expect(KOI_DETAIL.length).toBe(14);
+    // The bar's own models and the washing-up of the rooms' kits (ADR-0099 batch 2).
+    expect(KOI_DETAIL.length).toBe(15);
     for (const p of KOI_DETAIL) {
       expect(inKoi(p.x, p.y, p.z), `${p.x},${p.z}`).toBe(true);
-      expect(ROOM_DETAIL_SHAPES[p.variant]!.key.startsWith("rd-koi-")).toBe(true);
+      expect(ROOM_DETAIL_SHAPES[p.variant]!.key).toMatch(/^rd-(koi|k)-/);
     }
   });
 

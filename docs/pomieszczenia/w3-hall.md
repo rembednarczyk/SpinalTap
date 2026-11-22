@@ -28,7 +28,9 @@ Na telefonie (niska jakość) gra rysuje z tej listy tylko palety, bo stoją za 
 
 Z generatora wnętrz (ADR-0099, zestaw `assembly-hall` w `room-kits.ts`, układ `W3_HALL_LAYOUT` w `room-dressing-rooms.ts`): gaśnice przy bramie komory testów i przy śluzie S, skrzynki rozdzielcze, kratki odpływu przy ścianach, plamy oleju przy podstawach ramion taśmy, kartony z dostawą części. Wolne zostają alejka między taśmami, przejścia do śluz, drzwi północne, brama komory i drabina na tor suwnicy. Na telefonie nic z tego (drobny detal, budżet hali).
 
-Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, szafy sterownicze w rzędach, zbiorniki w rzędach (dziś bloki).
+Z partii 2 (ADR-0099, zestaw `assembly-hall`): szafy sterownicze linii przy ścianach (ekran z błędem, przyciski, wyłącznik awaryjny) i rząd szafek zmiany z jedną otwartą (kask, rękawice, termos).
+
+Do zrobienia w kolejnych krokach: koryta pod stropem nad linią, zbiorniki w rzędach (dziś bloki).
 
 ## Frakcja i zasady
 Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
@@ -47,6 +49,8 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 - blender: rd-c-extinguisher × 2
 - blender: rd-c-fusebox × 2
 - blender: rd-c-puddle × 3
+- blender: rd-k-control-cabinet × 3
+- blender: rd-k-lockers × 1
 - blender: rd-w3h-barrels × 1
 - blender: rd-w3h-break × 1
 - blender: rd-w3h-exit × 2
@@ -67,7 +71,7 @@ Pomiary zasad (§12–§16):
 - rzut: 37 prostokąty, 3409 m², wysokość 16,0 / 13,4 / 10,0 / 5,0 / 4,5 / 2,6 / 7,5 / 6,0 m
 - siatka 0,5 m: 3 z 74 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 58
-- warstwy wyposażenia: makro 32, mezo 25, mikro 31
+- warstwy wyposażenia: makro 32, mezo 29, mikro 31
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 6 skupisk, 28 rzeczy w nich, 3 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->

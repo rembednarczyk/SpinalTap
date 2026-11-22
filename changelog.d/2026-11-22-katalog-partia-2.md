@@ -1,0 +1,1 @@
+- Wnętrza dostały nowe sprzęty: zmywak za barem w Neon Koi, umywalkę z lustrem i kotarę przy fotelu w klinice, szafy sterownicze i szafki zmiany w hali W-3, fotel, niszczarkę i segregatory w biurze Tessenu.
