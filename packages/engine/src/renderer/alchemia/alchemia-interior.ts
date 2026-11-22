@@ -5,6 +5,8 @@ import { ALCHEMIA_LAMP_PREFIX, type AlchemiaLamp, alchemiaLampsFor } from "./alc
 
 /** Alchemia's interiors with its own light (`interior-areas.ts`): the gallery's floors with the front's storeys, and the food hall. */
 const LIT = new Set(["alchemia-gallery", "alchemia-foodhall"]);
+/** Its shops and the front's units, each an interior of its own inside the gallery since 22.11: lit as the gallery. */
+const lit = (id: string): boolean => LIT.has(id) || id.startsWith("alchemia-shop-");
 /** The interior the eye is in holds this far past its walls, so a step in its doorway does not flicker the light. */
 const HOLD = 0.5;
 
@@ -35,7 +37,7 @@ export class AlchemiaInterior {
   /** Call once per frame with the eye and whether the inside is drawn. */
   update(eye: Vec3, drawn: boolean): void {
     const at = drawn ? interiorAt(eye, this.held, HOLD) : null;
-    this.held = at && LIT.has(at.id) ? at.id : null;
+    this.held = at && lit(at.id) ? at.id : null;
     this.interior = this.held !== null;
     this.light(this.interior ? alchemiaLampsFor(eye) : []);
   }

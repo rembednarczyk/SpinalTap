@@ -70,6 +70,10 @@ describe("Alchemia's interior light (22.11)", () => {
     for (const l of rooms.on) expect(materials.light(l.key)).toBe(l.light);
     rooms.update({ x: 418, y: MALL_LEVELS.p3 + 1.6, z: 38.5 }, true);
     expect(rooms.interior).toBe(true);
+    // In a shop off the gallery (a room of its own since 22.11): the gallery's light still.
+    rooms.update({ x: 404, y: MALL_LEVELS.p1 + 1.6, z: 42 }, true);
+    expect(rooms.interior).toBe(true);
+    expect(rooms.on.some((l) => l.key === `${ALCHEMIA_LAMP_PREFIX}shop-p1-w1`)).toBe(true);
     // Not drawn: no interior mode, its lamps off.
     rooms.update({ x: 418, y: MALL_LEVELS.p3 + 1.6, z: 38.5 }, false);
     expect(rooms.interior).toBe(false);
