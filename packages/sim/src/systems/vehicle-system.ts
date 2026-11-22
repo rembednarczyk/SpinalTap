@@ -196,7 +196,24 @@ const stepOut = (ctx: SimContext, player: Entity, car: Car, at: V3): void => {
   ctx.session.carAct = null;
   delete player.seated;
   delete player.carPose;
+  footCamera(ctx, player);
   ctx.bus.emit("VehicleExited", { vehicleId: car.id });
+};
+
+/** Her camera on foot kept as she gets into a car (`SessionState.onFoot`). */
+const boarded = (ctx: SimContext, player: Entity): void => {
+  ctx.session.onFoot = { mode: ctx.state.domain.preferences.cameraMode, pitch: player.pitch };
+};
+
+/** Out of the car: the camera she had on foot again, its mode and her look up or down (the car's heading kept). */
+const footCamera = (ctx: SimContext, player: Entity): void => {
+  const foot = ctx.session.onFoot;
+  ctx.session.onFoot = null;
+  if (!foot) return;
+  player.pitch = foot.pitch;
+  if (ctx.state.domain.preferences.cameraMode === foot.mode) return;
+  ctx.state.domain = { ...ctx.state.domain, preferences: { ...ctx.state.domain.preferences, cameraMode: foot.mode } };
+  ctx.bus.emit("CameraModeChanged", { mode: foot.mode });
 };
 
 /**
@@ -256,10 +273,12 @@ export const createVehicleSystem = (): System => {
           const own = ownCarToEnter(ctx, player);
           const v = own ? null : carToTake(ctx, player);
           if (own) {
+            boarded(ctx, player);
             getIn(ctx, player, own);
             look = 0;
           } else if (v) {
             retireOldest(ctx);
+            boarded(ctx, player);
             takeCar(ctx, player, v);
             look = 0;
           }
@@ -267,6 +286,7 @@ export const createVehicleSystem = (): System => {
           const parked = parkedCarToBreak(ctx, player);
           if (parked) {
             retireOldest(ctx);
+            boarded(ctx, player);
             breakIn(ctx, player, parked);
             look = 0;
           }

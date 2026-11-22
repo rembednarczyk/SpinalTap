@@ -113,6 +113,34 @@ export const slabOutline = (sink: GeometrySink, data: CityKitData, pts: readonly
 /** The beam's ring's breadth in from a slab's edge: its overhang past the glass and a hand. */
 const BEAM_RING = 0.35;
 
+/**
+ * A slab of the gallery (ADR-0093 O1): its prism a slab thick, the room's ceiling its own underside (where the
+ * simulation has it: lamps, pipes, signs and ceiling lights hang under it, user's note of 22.11), the beam a downstand
+ * `BEAM_RING` deep only along the `dark`-less edges (round the atrium and along the facade, where the slab reads thick
+ * from outside), with its strip of light; along the joints with the next piece of the ring no beam. Until 22.11 the whole
+ * slab went down to the beam's foot and the rooms' ceilings lay 0.32 m low, hiding all that hung in between.
+ */
+export const mallSlab = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string, led: string, dark: (i: number) => boolean): void => {
+  const uv = swatchUv(data, swatch);
+  band(sink, pts, y0, y1, uv);
+  lid(sink, pts, y1, 1, uv);
+  lid(sink, pts, y0, -1, uv);
+  const foot = y0 - BEAM;
+  band(sink, pts, foot, y0, uv, dark);
+  pts.forEach((p, i) => {
+    if (dark(i)) return;
+    const q = pts[(i + 1) % pts.length]!;
+    const len = Math.hypot(q.x - p.x, q.z - p.z);
+    if (len < 1e-6) return;
+    // Inwards is left of the edge of a counter-clockwise outline.
+    const n = { x: -(q.z - p.z) / len, y: 0, z: (q.x - p.x) / len };
+    const [a, b] = [{ x: p.x + n.x * BEAM_RING, z: p.z + n.z * BEAM_RING }, { x: q.x + n.x * BEAM_RING, z: q.z + n.z * BEAM_RING }];
+    sink.quad(at(a, foot), at(b, foot), at(b, y0), at(a, y0), n, uv);
+    sink.quad(at(p, foot), at(q, foot), at(b, foot), at(a, foot), { x: 0, y: -1, z: 0 }, uv);
+  });
+  band(sink, insetConvex(pts, -LED_OUT), foot + 0.05, foot + 0.05 + LED_HIGH, swatchUv(data, led), dark);
+};
+
 /** A plain prism of an outline (a soffit). */
 export const prismOutline = (sink: GeometrySink, data: CityKitData, pts: readonly P2[], y0: number, y1: number, swatch: string): void => {
   const uv = swatchUv(data, swatch);

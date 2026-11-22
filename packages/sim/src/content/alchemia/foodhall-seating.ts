@@ -124,11 +124,13 @@ const lanterns = (g: Group): Piece[] => lanternSpots(g).map(({ x, z, top }) => p
 /**
  * The services under the slab over the ring (the architecture's layer): a pipe run and a cable tray
  * along the west, north and east strips, a duct along the south one, drawn only, high over the head.
+ * The pipes run over the units' signs' top (0.12 m under the slab) and 0.55 m out of their fronts, so
+ * no name is cut by them seen from the floor (user's note of 22.11: they hung before every sign's top).
  */
 const services = (): Piece[] => [
-  piece(box(404.6, 404.8, 38.0, 52.8, C - 0.32, C - 0.14), "pipe", true, false),
-  piece(box(408.2, 425.0, 52.6, 52.8, C - 0.32, C - 0.14), "pipe", true, false),
-  piece(box(431.2, 431.4, 37.4, 49.2, C - 0.32, C - 0.14), "pipe", true, false),
+  piece(box(404.95, 405.05, 38.0, 52.8, C - 0.11, C - 0.01), "pipe", true, false),
+  piece(box(408.2, 425.0, 52.35, 52.45, C - 0.11, C - 0.01), "pipe", true, false),
+  piece(box(430.95, 431.05, 37.4, 49.2, C - 0.11, C - 0.01), "pipe", true, false),
   piece(box(405.4, 405.7, 38.0, 52.8, C - 0.1, C - 0.05), "cable", true, false),
   piece(box(430.5, 430.8, 37.4, 49.2, C - 0.1, C - 0.05), "cable", true, false),
   piece(box(415.0, 421.2, 33.4, 34.0, C - 0.45, C - 0.08), "duct", true, false),

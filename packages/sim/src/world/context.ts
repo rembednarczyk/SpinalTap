@@ -1,6 +1,6 @@
 import type { TrafficDensity } from "../content/traffic";
 import type { BoardCrime } from "./street-crime-types";
-import type { CrimeKind, DifficultyProfile, DisturbanceKind, DrivingAssist, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
+import type { CameraMode, CrimeKind, DifficultyProfile, DisturbanceKind, DrivingAssist, DomainEvents, DomainState, EntityId, EventBus, InputFrame, MicroEventKind, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { CarActState } from "./vehicle/car-act";
 import type { SeededRandom } from "../rng/seeded-random";
@@ -68,6 +68,11 @@ export interface SessionState {
   carAct: CarActState | null;
   /** The player's driving assists (ADR-0097 §4), from her settings through `set-driving-assist`. Not saved. */
   drivingAssist: DrivingAssist;
+  /**
+   * Her camera on foot when she got into the car (its mode and her look up or down), given back when she gets out
+   * (user's notes of 21.11 and 22.11: out of the car the camera is the one she had). Null on foot. Transient, not saved.
+   */
+  onFoot: { readonly mode: CameraMode; readonly pitch: number } | null;
 }
 
 /**
@@ -198,6 +203,7 @@ export const freshSession = (): SessionState => ({
   driving: null,
   carAct: null,
   drivingAssist: "full",
+  onFoot: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
