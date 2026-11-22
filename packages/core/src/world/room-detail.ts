@@ -61,17 +61,27 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-capsule-charger" },
   { key: "rd-capsule-rules" },
   // The basement under W-3's hall and its culvert (docs/pomieszczenia/w3-basement.md).
-  { key: "rd-w3b-pipes" },
+  { key: "rd-w3b-pipes", fine: true },
   { key: "rd-w3b-pump" },
   { key: "rd-w3b-panel" },
   { key: "rd-w3b-bulb", fine: true },
-  { key: "rd-w3b-handrail-a" },
-  { key: "rd-w3b-handrail-b" },
+  { key: "rd-w3b-handrail-a", fine: true },
+  { key: "rd-w3b-handrail-b", fine: true },
   { key: "rd-w3b-brick-wide", fine: true },
   { key: "rd-w3b-brick-tall", fine: true },
   { key: "rd-w3b-grate", fine: true },
   { key: "rd-w3b-stash", fine: true },
   { key: "rd-w3b-water", fine: true },
+  // W-3's assembly hall (docs/pomieszczenia/w3-hall.md).
+  { key: "rd-w3h-pallet-crates" },
+  { key: "rd-w3h-pallet-sacks" },
+  { key: "rd-w3h-jack", fine: true },
+  { key: "rd-w3h-barrels", fine: true },
+  { key: "rd-w3h-leak", fine: true },
+  { key: "rd-w3h-trays", fine: true },
+  { key: "rd-w3h-break", fine: true },
+  { key: "rd-w3h-exit", fine: true },
+  { key: "rd-w3h-warning", fine: true },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

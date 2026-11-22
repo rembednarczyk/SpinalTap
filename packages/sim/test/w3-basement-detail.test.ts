@@ -34,8 +34,8 @@ describe("W-3's basement's detail (ADR-0098)", () => {
     }
   });
 
-  it("is the last of the rooms' detail's views, the scenery's last", () => {
+  it("is one of the rooms' detail's views, at the scenery's end", () => {
     expect(WORLD_SCENERY.slice(-ROOM_DETAIL_SCENERY.length)).toEqual(ROOM_DETAIL_SCENERY);
-    expect(ROOM_DETAIL_SCENERY.at(-1)!.view).toEqual({ kind: "street-props", items: W3_BASEMENT_DETAIL });
+    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: W3_BASEMENT_DETAIL });
   });
 });
