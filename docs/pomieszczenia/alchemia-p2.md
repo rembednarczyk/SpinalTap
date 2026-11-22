@@ -31,7 +31,7 @@ Odłożone: siatki zabezpieczające na regałach.
 ## Frakcja i zasady
 Frakcja: technika (zautomatyzowany magazyn aut).
 - §12 dług: wymiary poza siatką (pomiary). Strop 2,3–2,5 m zgodny z §6. Tunel do portalu wydzielony jako osobne wnętrze (22.11).
-- §13 częściowo: lampy z Blendera (3) i koguty robotów. Dług: drzwi do klatki i portal bez barwy nawigacji.
+- §13 częściowo: pomarańczowa poświata wisi nad kogutem robotów nad pasem (od 22.11, wcześniej na środku magazynu bez oprawy), lampy z Blendera nad przejściem. Dług: drzwi do klatki i portal bez barwy nawigacji.
 - §14 dług: bryły symulacji puste (makro 0, mikro 0 w pomiarach); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dodać drobiazg w skupiskach przy szafie technika i przy stanowisku serwisowym.
 - §15 dług: plama oleju jest w detalu; połysk szyn i mokry beton pod wyciekiem.
 - §16 zgodne: zimna zieleń diod, sprzęt dominuje.

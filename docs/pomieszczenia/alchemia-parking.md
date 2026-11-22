@@ -30,7 +30,7 @@ Z Blendera (`tools/blender/rooms/alchemia_p1.py`, plik `room-detail-alchemia-pro
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 dług: 2 z 8 wymiarów na siatce. Niski strop zgodny. Rampa wjazdowa (ciasno) otwiera się na halę parkingu: zgodne.
-- §13 dług: w pomiarach 1 widoczne źródło; świetlówki co 4 m są w detalu, ale lampy silnika trzeba powiązać z oprawami. Wyjścia (klatka, drzwi metra) w zieleni nawigacji.
+- §13 częściowo: lampa silnika wisi 2 m od zielonej diody nad wjazdem, a świetlówki pod stropem rysuje geometria parkingu i detal (`rd-p1-ceiling`), więc światło ma oprawy (sprawdzone 22.11). Dług: wyjścia (klatka, drzwi metra) w zieleni nawigacji.
 - §14 dług: mikro 0 w bryłach symulacji, drobiazg tylko w detalu (bilety, kubek). Skupiska przy kasie, przy kabinach i przy autach.
 - §15 częściowo: kałuże pod autami w opisie, do sprawdzenia w grze; połysk lakieru aut jest.
 - §16 zgodne: beton, pasy ostrzegawcze; dodać migającą świetlówkę.

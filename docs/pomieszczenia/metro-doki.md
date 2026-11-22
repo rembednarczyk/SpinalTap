@@ -35,7 +35,7 @@ Odłożone:
 ## Frakcja i zasady
 Frakcja: ulica (transport miejski).
 - §12 zgodne co do kontrastu: zejście drugim biegiem (ciasno) na peron. 1 z 4 wymiarów na siatce.
-- §13 dług: w pomiarach 0 źródeł w bryłach; świetlówki i ekran rozkładu rysuje silnik. Wejście do wagonu wyróżnione.
+- §13 częściowo: lampy peronu mają oprawy w geometrii silnika (pasy świetlne w stropie, `platform-plan.ts`, sprawdzone 22.11). Dług: wejście do wagonu wyróżnione.
 - §14 dług: mikro 0. Skupiska przy ławce i koszu.
 - §15 dług: mokry peron przy krawędzi, połysk płytek.
 - §16 zgodne: migający ekran, zimne świetlówki.
