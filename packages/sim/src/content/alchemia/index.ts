@@ -17,6 +17,7 @@ import { CAR_LIFT_PIECES, CAR_LIFT_RIDERS } from "./car-lift";
 import type { GroundVault } from "../../world/vault";
 import { plazaPieces } from "./plaza";
 import { squarePieces } from "./square";
+import { GALLERY_LIGHTS } from "./gallery-lights";
 import { unitPieces } from "./units";
 import { MALL_CUTS, mallInsidePieces, mallOutsidePieces, mallSolidProps } from "./mall";
 import { frontPieces } from "./front";
@@ -192,6 +193,8 @@ export const ALCHEMIA_PIECES: readonly Piece[] = [
   ...FRONT_ROOM_DRAWN,
   ...FRONT_SHOP_PIECES,
   ...NIGHT,
+  // The gallery's ceiling fittings over its strips (22.11, §13: no light from nowhere), last: drawn only.
+  ...GALLERY_LIGHTS,
 ];
 
 /** The game's models on the green roof (ADR-0093 O4): trees, shrubs, benches, park lamps, planters, the services' cabinet. */
