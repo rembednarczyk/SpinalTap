@@ -32,13 +32,14 @@ export const P2_TUNNEL_LAYOUT: RoomLayout = {
   id: "alchemia-p2-tunnel",
   kind: "service-corridor",
   floor: P2.floor,
+  ceiling: P2.ceiling - P2.floor,
   bounds: TUNNEL,
   // Open to the store at its south end and to the portal at its north one; the shelter's gate in its east wall.
   surfaces: [],
   walls: rectWalls(TUNNEL, { s: [[TUNNEL.minX, TUNNEL.maxX]], n: [[TUNNEL.minX, TUNNEL.maxX]], e: [[GATE.z0 - 0.3, GATE.z1 + 0.3]] }),
   doors: [
     { minX: TUNNEL.minX, maxX: TUNNEL.maxX, minZ: TUNNEL.maxZ - 0.3, maxZ: TUNNEL.maxZ, weather: true },
-    { minX: TUNNEL.maxX - 0.3, maxX: TUNNEL.maxX, minZ: GATE.z0, maxZ: GATE.z1 },
+    { minX: TUNNEL.maxX - 0.3, maxX: TUNNEL.maxX, minZ: GATE.z0, maxZ: GATE.z1, top: GATE.top },
     { minX: TUNNEL.minX, maxX: TUNNEL.maxX, minZ: TUNNEL.minZ, maxZ: TUNNEL.minZ + 0.3 },
   ],
   clear: [
@@ -86,6 +87,7 @@ export const SHELTER_LAYOUT: RoomLayout = {
   id: "alchemia-shelter",
   kind: "shelter",
   floor: SHELTER.floor,
+  ceiling: SHELTER.ceiling - SHELTER.floor,
   bounds: ROOM,
   surfaces: [{ ...COVER, top: SHELTER.floor + COVER_TOP, yaw: Math.PI / 2 }],
   walls: rectWalls(ROOM, { s: [PASSAGE_X], e: [HATCH_Z] }),
@@ -140,6 +142,7 @@ export const P1_LAYOUT: RoomLayout = {
   id: "alchemia-parking",
   kind: "car-park",
   floor: P1.floor,
+  ceiling: P1.ceiling - P1.floor,
   bounds: DECK,
   surfaces: [],
   walls: [
@@ -153,9 +156,9 @@ export const P1_LAYOUT: RoomLayout = {
     wall(DECK.maxX, P1_METRO_OPENING.maxZ, DECK.maxX, DECK.maxZ, -1, 0),
   ],
   doors: [
-    { minX: P1_HALL_DOOR.x0, maxX: P1_HALL_DOOR.x1, minZ: DECK.maxZ - 0.3, maxZ: DECK.maxZ },
+    { minX: P1_HALL_DOOR.x0, maxX: P1_HALL_DOOR.x1, minZ: DECK.maxZ - 0.3, maxZ: DECK.maxZ, top: P1_HALL_DOOR.top },
     { minX: DECK.maxX - 0.3, maxX: DECK.maxX, minZ: P1_METRO_OPENING.minZ, maxZ: P1_METRO_OPENING.maxZ },
-    { minX: P1_STAIR_LINK.minX, maxX: DECK.maxX, minZ: APRON_Z - 0.3, maxZ: APRON_Z },
+    { minX: P1_STAIR_LINK.minX, maxX: DECK.maxX, minZ: APRON_Z - 0.3, maxZ: APRON_Z, inward: { x: 0, z: 1 } },
   ],
   open: EMPTY_BAYS,
   clear: [

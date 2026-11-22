@@ -55,13 +55,14 @@ Frakcja: ulica.
 - blender: rd-p1-column × 6
 - blender: rd-p1-floor × 1
 - blender: rd-p1-guard × 1
+- blender: rd-w3h-exit × 3
 - prop: vehicle, rysunek osobno × 10
 
 Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 573 m², wysokość 2,7 / 4,2 m
 - siatka 0,5 m: 2 z 8 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 4
-- warstwy wyposażenia: makro 0, mezo 27, mikro 13
+- warstwy wyposażenia: makro 0, mezo 30, mikro 13
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 13 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 1
 <!-- inwentarz-gry:end -->

@@ -1,0 +1,1 @@
+- Nad wyjściami w tunelu P-2, w schronie pod T2 i na parkingu P-1 wiszą zielone znaki wyjścia ewakuacyjnego. Rozstawia je generator wnętrz (ADR-0099).
