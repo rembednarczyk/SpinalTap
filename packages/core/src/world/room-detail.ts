@@ -8,6 +8,12 @@
 export interface RoomDetailShape {
   /** The model's key in `room-detail-props.glb`. */
   readonly key: string;
+  /**
+   * Small detail (§11's third layer, as the odds and ends of ADR-0096): the phones go without it, as without the fine
+   * decals and most clutter (`docs/zasady-lokacji.md` §9: simplified only on the phone and from afar). The furniture a
+   * walker meets is never fine.
+   */
+  readonly fine?: true;
 }
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
@@ -58,14 +64,14 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-w3b-pipes" },
   { key: "rd-w3b-pump" },
   { key: "rd-w3b-panel" },
-  { key: "rd-w3b-bulb" },
+  { key: "rd-w3b-bulb", fine: true },
   { key: "rd-w3b-handrail-a" },
   { key: "rd-w3b-handrail-b" },
-  { key: "rd-w3b-brick-wide" },
-  { key: "rd-w3b-brick-tall" },
-  { key: "rd-w3b-grate" },
-  { key: "rd-w3b-stash" },
-  { key: "rd-w3b-water" },
+  { key: "rd-w3b-brick-wide", fine: true },
+  { key: "rd-w3b-brick-tall", fine: true },
+  { key: "rd-w3b-grate", fine: true },
+  { key: "rd-w3b-stash", fine: true },
+  { key: "rd-w3b-water", fine: true },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
