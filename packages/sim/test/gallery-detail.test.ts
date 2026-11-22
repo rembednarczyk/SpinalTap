@@ -78,9 +78,10 @@ describe("Alchemia's gallery's shelf goods (ADR-0098)", () => {
     expect(builds.flatMap((b) => b.pieces).filter((p) => p.kind === "goods").length).toBeLessThan(600);
   });
 
-  it("gives every goods' model a phone's of its own, and is two of the rooms' detail's views", () => {
+  it("gives every goods' model a phone's of its own, and is no view of the scenery's (Alchemia's inside draws it)", () => {
     for (const s of ROOM_DETAIL_SHAPES.filter((x) => x.key.startsWith("rd-gl-"))) expect(s.lod).toBe(`${s.key.replace(/-b$/, "")}-lod`);
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: GALLERY_DETAIL });
-    expect(ROOM_DETAIL_SCENERY.map((s) => s.view)).toContainEqual({ kind: "street-props", items: FRONT_SHOP_DETAIL });
+    const views = ROOM_DETAIL_SCENERY.map((s) => s.view);
+    expect(views).not.toContainEqual({ kind: "street-props", items: GALLERY_DETAIL });
+    expect(views).not.toContainEqual({ kind: "street-props", items: FRONT_SHOP_DETAIL });
   });
 });

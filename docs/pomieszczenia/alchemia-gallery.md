@@ -26,7 +26,7 @@ Drobiazg:
 - towar na półkach według branż (Blender, kilka kształtów na branżę);
 - kubki, kartony, paragony, kable, laptop z błędem (Blender).
 
-Stan (22.11): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Dalej z Blendera: towar w gablotach według branży (wszczepy, elektronika, kosmetyki, broń, naprawy, lombard, kantor), ubrania na wieszakach (pół metra wieszaka na model) i ubrane manekiny w witrynach, wszystko z LOD na telefon. Zostają pudełka: szafki nad ladą płytkich sklepów, terminal, kubek i towar przy ladzie, rozsypany karton.
+Stan (22.11, rysuje go osobna siatka `GalleryDetailView` razem z wnętrzem hali, jak dawne pudełka, nie blok mebli miasta widoczny ze 170 m): towar na półkach z Blendera (`tools/blender/rooms/alchemia_gallery.py`, plik `room-detail-galeria-props.glb`): pół metra półki na model, 11 rodzajów (apteka, elektronika, żywność, lombard, naprawy, wszczepy, broń, tatuaż, VR, kwiaty, zapas na zapleczu), każdy z odbiciem lustrzanym, żeby sąsiednie odcinki się różniły, i z modelem LOD z trzech brył na telefon. Dalej z Blendera: towar w gablotach według branży (wszczepy, elektronika, kosmetyki, broń, naprawy, lombard, kantor), ubrania na wieszakach (pół metra wieszaka na model) i ubrane manekiny w witrynach, wszystko z LOD na telefon. Zostają pudełka: szafki nad ladą płytkich sklepów, terminal, kubek i towar przy ladzie, rozsypany karton.
 
 ## Inwentarz gry
 
