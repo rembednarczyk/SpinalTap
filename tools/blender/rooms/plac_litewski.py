@@ -140,7 +140,7 @@ def _role(role, c, tri):
     underside's grime on what faces down."""
     n = _cross([tri[1][i] - tri[0][i] for i in range(3)], [tri[2][i] - tri[0][i] for i in range(3)])
     ln = math.sqrt(sum(v * v for v in n)) or 1.0
-    if role in ('paint', 'metal', 'trim') and c[1] < 0.45 and n[1] / ln < -0.7:
+    if role in ('paint', 'metal', 'trim') and c[1] < 0.6 and n[1] / ln < -0.5:
         return 'rust' if hashf(c[0], c[2]) < 0.5 else 'dark'
     if role == 'glass-dark' and c[0] < -0.3:
         return None
