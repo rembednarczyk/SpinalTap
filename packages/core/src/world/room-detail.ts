@@ -303,6 +303,12 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-gr-chips", clutter: 9 },
   { key: "rd-gr-litter", fine: true, clutter: 8 },
   { key: "rd-gr-downpipe", services: true, sound: "drip" },
+  // The deptak of Krakowskie in M0 (docs/lokacje/deptak-krakowskie.md, ADR-0102): Neon Koi's stand-up counter with its
+  // stools, the crate and board by its door, RAMEN's door, the gate Babcia Ume sleeps in.
+  { key: "rd-dp-bar", clutter: 6 },
+  { key: "rd-dp-koi-door", clutter: 9 },
+  { key: "rd-dp-ramen", clutter: 3 },
+  { key: "rd-dp-ume", clutter: 5 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
