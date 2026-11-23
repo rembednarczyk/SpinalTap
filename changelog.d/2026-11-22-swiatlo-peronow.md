@@ -1,0 +1,1 @@
+- Perony metra: własne światło wnętrza zamiast księżyca, plamy świetlówek nad peronem, ciemniejsze ściany i granitowa posadzka, mocniejsze kolory linii.

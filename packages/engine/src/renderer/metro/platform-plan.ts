@@ -22,14 +22,15 @@ export type PlatformEntrance = (typeof METRO_PLATFORMS)[number];
 export const STATION_TILE: Readonly<Record<PlatformEntrance["station"], string>> = {
   shinsekai: "#3f78b5",
   kanal: "#b8902a",
-  targ: "#a8473f",
-  doki: "#3c9488",
+  targ: "#c8443a",
+  doki: "#2fb3a3",
 };
 
 const C = {
   ...PAVILION_COLORS,
   ceiling: hexColor("#23262d"),
-  wall: hexColor("#c9ccd0"),
+  // A mid tone (§13, 60-30-10): the wall the strips miss stays in the dark base, the line's band under them lit.
+  wall: hexColor("#8c9096"),
   bed: hexColor("#1d1f23"),
   rail: hexColor("#9aa1aa"),
   tunnel: hexColor("#050608"),
@@ -90,7 +91,7 @@ const planHall = (sink: MeshSink, f: PavilionFrame, p: PlatformDef, tile: Rgba):
   const roof = floor + PLATFORM.ceiling;
   const bed = floor - PLATFORM.trackDrop;
   const half = FLIGHT.width / 2 + 0.3;
-  frameBox(sink, f, [u.back, u.edge], [w0, w1], [bed, floor], C.stone);
+  frameBox(sink, f, [u.back, u.edge], [w0, w1], [bed, floor], C.granite);
   flatStrip(sink, f, [u.edge - 0.55, u.edge - 0.4], [w0, w1], floor + 0.006, C.nosing);
   // The back wall either side of the stairs' foot and over it: a band of tiles at eye height.
   for (const [a, b] of [
