@@ -87,13 +87,8 @@ Gracz schodzi z Rynku Grodzką na północny wschód, w dół. Po ok. 120 m ulic
 - Rozdzielenie grupy terytorium i załogi zlecenia albo świadoma decyzja, że to jedna walka.
 
 ## Dług sceny
-- Sprzeczność ink i gry: Hideo chodzi „górą, przez kładkę” (`m4-ulica.ink`, flaga `hideo_bridge`), hak dostawy `hook_delivery_1` mówi, że kładka jest szybsza niż ulica, `hook_delivery_2` że Hebi „na górę nie chodzą”; w grze kładka jest tylko rysunkiem bez bryły (ADR-0048), a Hideo idzie środkiem ulicy pod nią. Propozycja: pomost i schody wejścia w kamienicach (bryły, `packages/sim/src/content/district-kanal.ts`, trasa Hideo w `GRODZKA_WALK`) albo zmiana zdań w `packages/narrative/ink/{pl,en}/m4-ulica.ink` i `hooks.ink`.
-- Hak dostawy prowadzi przez Grodzką, a dostawa Kaito idzie do Hany w Alchemii (od Placu Łokietka na północ), więc mail o kładce jest nieaktualny: `packages/narrative/ink/{pl,en}/hooks.ink`.
+Zrobione 23.11 (`packages/sim/src/content/grodzka-detail.ts`, `tools/blender/rooms/grodzka.py`, test `packages/sim/test/grodzka-scene.test.ts`): stół handlarzy ze skrzynek z chipami pod kładką (z bryłą, poza trasą Hideo), śmieci w kręgu grupy, rynna kładki z kapaniem (`drip`), dwie latarnie na ościeżach Bramy Grodzkiej, Latarnia Pamięci przed bramą, znak przystanku Tessen poza drogą z bramy. Teksty o kładce i haki dostawy poprawione w #955. Decyzja pod nieobecność: grupa terytorium `grodzka-bridge` i załoga zlecenia `kanal_bridge` to ta sama ekipa handlarzy, jedna walka (przeniesienie grupy zmieniłoby sens miejsca: „pod kładką stoją Hebi”). Zostaje:
+- Pogłos pod kładką (dziś tylko kapanie z rynny).
 - Wpis w `docs/topografia.md` dla kładki (celowe odstępstwo albo zgłoszenie) po przeglądzie `topography-curator`.
-- Grupa terytorium (650; 70) stoi 6–10 m od załogi zlecenia: przesunąć grupę na czas zlecenia albo rdzeń terytorium dalej w górę Grodzkiej: `packages/sim/src/content/territory-groups.ts` (warunek `when`) albo `packages/sim/src/content/contract-plans.ts`.
-- Stół ze skrzynek z chipami i skupisko drobiazgu pod kładką: nowy `tools/blender/rooms/grodzka.py`, nowy `packages/sim/src/content/grodzka-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`.
-- Emiter pogłosu i kapania z rynny kładki: `packages/engine/src/audio/spatial.ts`.
-- Oświetlenie sklepienia bramy i brak deszczu w przejściu (ADR-0048 „Do dopracowania”): `packages/engine/src/renderer/mapcity/passage-plan.ts`.
-- Latarnia Pamięci (754,5; 146,1) i Sztukmistrz (G-166): `packages/engine` (model) i plan mebli `tools/osm-import`.
-- Wiata przystanku Tessen (730; 155), na który czeka Hideo: plan mebli albo `packages/sim/src/content/district-kanal.ts`.
-- Bark `hook_eliminate_1` („za myjnię”) gra też tutaj: `packages/narrative/ink/{pl,en}/hooks.ink` albo bark na miejsce w `packages/sim/src/content/contract-hooks.ts`.
+- Brak deszczu w przejściu (ADR-0048 „Do dopracowania”): `packages/engine/src/renderer/mapcity/passage-plan.ts`.
+- Sztukmistrz (G-166): `packages/engine` (model) i plan mebli `tools/osm-import`.

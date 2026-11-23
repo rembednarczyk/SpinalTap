@@ -64,7 +64,7 @@ MORI: Moduł reaguje na nowy chrom. Jak coś ci wszczepię, może puści więcej
 Nowy implant łapie prąd i coś w głowie przeskakuje jak bezpiecznik.
 Noc, mokre Krakowskie Przedmieście, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samochód. Na fotelu obok leży przecięta opaska z kodem Kagami.
 Nad maską wisi dron i świeci ci reflektorem w oczy.
-REN: Słyszysz mnie? Jedź prosto do wiaduktu. Pod nim zgubi sygnał. Nie skręcaj.
+REN: Słyszysz mnie? Jedź prosto na Bramę Krakowską. Pod sklepieniem zgubi sygnał. Nie skręcaj.
 Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
 * [Szarpiesz kierownicę w bok. #tone:main]
     ~ choice_crash = "wheel"
@@ -74,7 +74,7 @@ Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
 * [Jedziesz prosto, tak jak mówi. #tone:main]
     ~ choice_crash = "ren"
     ~ story_choice("crash", "ren")
-    Wiadukt jest coraz bliżej. Dron schodzi niżej i strzela w opony.
+    Brama jest coraz bliżej. Dron schodzi niżej i strzela w opony.
     Ostatnie, co słyszysz przed uderzeniem, to głos Rena: zapis zakończony.
 - Stoisz przed kliniką Mori i trzymasz się framugi. Kark masz mokry od potu.
 To była ta noc. Wrak na Krakowskim, przy Placu Litewskim. Teraz wiesz, jak trafiłaś na ten deptak.
