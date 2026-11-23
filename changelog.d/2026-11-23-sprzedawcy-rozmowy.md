@@ -1,0 +1,1 @@
+- W każdym otwartym sklepie Alchemii i przy ladach KAWA, THAI, GYROS i WOK w food hallu stoi sprzedawca, z którym można zagadać: powitanie według pory dnia, inne dla stałego klienta, rozmowa o towarze, plotki z okolicy i o nim samym, a każdy sklep ma własny głos (ADR-0101).
