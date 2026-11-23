@@ -62,7 +62,7 @@ describe("the trail to Ren", () => {
       const { runtime, commands } = setup();
       const view = runtime.start("ume", lustro(0, ending, {}, ["ume_memory"]));
       expect(view.choices.map((c) => c.text)).toEqual(["Gdzie znajdę Rena Odagiri?", "Nieważne."]);
-      expect(text(runtime.choose(0))).toContain("Śpi na dachu Alchemii");
+      expect(text(runtime.choose(0))).toContain("Śpi na dachu szklanego pawilonu na rogu Alchemii");
       expect(flagsSet(commands)).toEqual(["ren_trail"]);
     }
   });
@@ -232,5 +232,28 @@ describe("act II flashbacks", () => {
     const { runtime } = setup();
     runtime.start("recall_mirror", after("hebi"));
     expect(runtime.saveState()).toContain('"act2_ending":"^hebi"');
+  });
+});
+
+describe("the module's vial after seki", () => {
+  /** After the act-I "seki" ending and the given act-II ending; act III over when `act3`. */
+  const sold = (act2Ending: ActTwoEndingId, act3 = false): DomainState => {
+    const d = lustro(0, "seki", { archive: act2Ending, rooftop: "alone" });
+    return { ...d, quests: { ...d.quests, m3_lustro: { status: "completed" } }, story: { ...d.story, act2Ending, act3Ending: act3 ? "erase" : null } };
+  };
+
+  it("Mori no longer has it: he sold it to Ren at the start of act II", () => {
+    const said = text(setup().runtime.start("mori", sold("street")));
+    expect(said).toContain("Fiolki już u mnie nie ma");
+    expect(said).not.toContain("półce");
+  });
+
+  it("the epilogue leaves it with Seki after Ren's finale, and with Kagami after the deal", () => {
+    for (const [act2, where] of [["street", "stoi u ciebie na półce"], ["hebi", "stoi u ciebie na półce"], ["kagami", "wrócił do Kagami razem z Renem"]] as const) {
+      const said = text(setup().runtime.start("act3_epilogue", sold(act2, true)));
+      expect(said).toContain(where);
+      expect(said).not.toContain("u Mori");
+      expect(said).not.toContain("pustą fiolkę");
+    }
   });
 });

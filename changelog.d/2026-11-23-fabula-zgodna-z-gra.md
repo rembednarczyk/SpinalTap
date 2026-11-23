@@ -1,0 +1,1 @@
+- Rozmowy, haki, radio i cele zadań mówią o miejscach, które są w grze: drabina na dach pawilonu do Rena, pasaż pod frontem Alchemii z Kurosawą, schron Hebi zamiast ruiny, strzelec na dachu hali W-3, otwarta furtka u Tomo, godziny Goro z food hallu, fiolka z modułem po zakończeniu „seki” i spotkania na Podzamczu w swoich miejscach (en i pl).

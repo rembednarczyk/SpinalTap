@@ -63,6 +63,8 @@ export const SPEAKERS: Readonly<Record<string, Named | Keyed>> = {
   KASS: { name: "DJ Kass" },
   YUKI: { key: "speaker.yuki" },
   LEKTORKA: { name: "Tessen Info" },
+  // Alchemia's sellers behind their counters (ADR-0101).
+  LADA: { key: "speaker.lada" },
 };
 
 /** The player's line when no alias is set yet. */

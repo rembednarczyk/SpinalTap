@@ -35,6 +35,40 @@ Frakcja: ulica (hotel kapsułowy); druga: technika (panel kapsuły).
 - §16 zgodne.
 - §17 do sprawdzenia: szum ulicy zza okna jako źródło.
 
+## Scenariusz
+
+### Pierwszy kadr
+Seki skręca z Jezuickiej w drzwi 1,2 × 2,3 m w ścianie kamienicy (593,8; −134,3), naprzeciw Wieży Trynitarskiej, i wchodzi twarzą na północ. Pokój ma 3,7 × 4,5 m: po lewej aneks kuchenny wzdłuż zachodniej ściany, w głębi wnęka z łóżkiem pod szafkami i niebieski pasek LED nad nim, po prawej skrzynia, a na niej telefon z zapalonym ekranem. Przy drzwiach czytnik kart z zielonym światłem i listwa z wieszakami. Wejście zapisuje grę (ADR-0061). Wzrok ma iść na łóżko pod niebieskim paskiem.
+
+### Postacie i miejsca
+- W pokoju nie ma nikogo i gra nikogo tu nie stawia. Poprzedni lokator wyszedł rano (historia karty): śmieci przy drzwiach, talerz w zlewie, zupka na blacie, ręcznik na łóżku.
+- Najbliżsi ludzie gry to patrole Hebi na Rynku wokół Trybunału, około 45 m na północ, na południowym odcinku pętli przy z −87 (`RYNEK_LOOP`, terytorium `rynek`).
+
+### Przebieg
+1. Wejście: zdarzenie `InteriorEntered` z `capsule` i autozapis, z limitem 60 s między zapisami (ADR-0061).
+2. Rozejrzenie się: ślady lokatora w skupiskach (jedzenie z automatu, zlew, śmieci, ładowarka, karta wynajmu z hasłem do wifi). Nic nie daje nagrody ani nie zmienia flag.
+3. Wyjście tymi samymi drzwiami na Jezuicką.
+Pokój nie ma zadania, rozmowy ani skrytki. ADR-0063 (etap 3) postanowił, że to „pokój do wynajęcia bez wpływu na fabułę”, a kryjówka Seki (łóżko jako zapis, skrytka) czeka na decyzję użytkownika.
+
+### Drogi
+- Jedno wejście z ulicy, bez okna (ściana frontowa wycięta w parterze ma tylko drzwi, okna kamienicy są piętro wyżej).
+- Walki tu nie ma. Pokój jest ślepym zaułkiem: kto wbiegnie w pościgu, zostaje zamknięty w 17 m².
+
+### Pora i stan świata
+- Bez okien, więc o każdej porze wygląda tak samo. Za drzwiami, w dzień, jeden patrol Hebi obchodzi Rynek, a od 21:00 do 5:00 obchodzą go dwa (`kanal-patrols.ts`).
+- Stan pokoju się nie zmienia: przed wejściem i po nim jest taki sam, a autozapis nie zostawia śladu w świecie.
+
+### Wymagania wobec sceny
+- Łóżko jako cel wzroku od drzwi: niebieski pasek LED w oprawie modelu, dziś lampa silnika bez bryły (dług §13 w audycie).
+- Drzwi w barwie nawigacji od środka (czytnik z zielonym światłem jest, `rd-capsule-door`).
+- Gdy użytkownik zdecyduje o kryjówce: łóżko jako miejsce zapisu i skrytka w skrzyni.
+
+## Dług sceny
+- Sprzeczność ADR: ADR-0102 i `STORY_INTERIORS` w `tools/rooms/src/locations.ts` liczą kapsułę do wnętrz fabularnych, a ADR-0063 (etap 3) mówi, że to pokój bez fabuły, a kryjówka Seki czeka na decyzję. Propozycja: pytanie do użytkownika w `docs/backlog.md` (kryjówka Seki z łóżkiem do zapisu i skrytką w skrzyni albo kapsuła poza `STORY_INTERIORS`); do tej pory scenariusz opisuje tylko wejście z autozapisem.
+- Kryjówka, jeśli zapadnie decyzja: interakcja łóżka i skrytka w skrzyni w `packages/sim/src/content/capsule-room.ts` (bryła skrzyni już jest w `CAPSULE_FURNITURE`), tekst podpowiedzi w katalogach `i18n/{en,pl}`.
+- Pasek LED i lampki szafek przypięte do opraw modelu (§13): `packages/engine/src/renderer/rooms/room-lights.ts`.
+- Szum Jezuickiej i kroki patrolu za drzwiami jako dźwięk ze źródła (§17): `packages/engine/src/audio/room-sound-map.ts`.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->

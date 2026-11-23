@@ -114,7 +114,7 @@ export const MET_REN_FLAG = "met_ren";
 export const KAGAMI_JOB_FLAG = "kagami_job";
 /** Raised by Kurosawa's talk when Seki turns his offer down: the cleaners come out. */
 export const KAGAMI_AMBUSH_FLAG = "kagami_ambush";
-/** Kagami's cleaners on the overpass (keyed actors of the market, ADR-0023). */
+/** Kagami's cleaners in the passage under Alchemia's front (keyed actors of the market, ADR-0023; the step keeps its id `overpass`). */
 export const KAGAMI_CLEANER_KEYS = ["kagami-cleaner-1", "kagami-cleaner-2", "kagami-cleaner-3"] as const;
 
 /** Every cleaner is dead (the sim's `dead:<key>` flags). */
@@ -168,7 +168,7 @@ export const QUEST_MIRROR: QuestDefinition = {
       id: "overpass",
       xp: 1500,
       objective: "quest.m3_lustro.overpass",
-      // During the ambush Kurosawa is gone: his spot on the deck still marks where the cleaners are.
+      // During the ambush Kurosawa is gone: his spot in the passage still marks where the cleaners are.
       target: { actor: "kurosawa" },
       variants: [
         { when: CLEANERS_DOWN, objective: "quest.m3_lustro.overpass.cleared", target: { actor: "ren" } },

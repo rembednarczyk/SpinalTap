@@ -36,6 +36,46 @@ Frakcja: korporacja (Tessen, zaniedbana); druga: ulica (przepust).
 - §16 zgodne.
 - §17 do sprawdzenia: kapanie i pompa ze źródła. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): pompa i buczenie skrzynki elektrycznej, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
+## Scenariusz
+
+### Pierwszy kadr
+Droga Q1 sabotażu: Seki schodzi z pasa publicznego na ławę Bystrzycy, wchodzi w wylot kolektora pod nabrzeżem (x 2462–2472, z 406,2–408,2) i interakcją `prompt.culvert` wczołguje się pod ścianę czołową. Przed nią 37 m ciemnego kanału 1,5 m wysokiego, woda po kostki, puszki w mule, a w kanale otwarta skrzynka szmuglerów ze znakiem kredą. Na końcu kanał schodzi biegiem w dół i otwiera się w piwnicę 31 × 12,4 m pod stropem 4,1 m: dwie żarówki w koszyczkach, czerwony klosz nad skrzynką elektryczną, pompa w narożniku, cztery szafki szatni pod północną ścianą. To kontrast ciasno i szeroko z §12. Wzrok ma iść na szafki (kombinezon) i na schody A w górę.
+
+### Postacie i miejsca
+- W piwnicy i kolektorze nie stoi nikt: posterunki sabotażu są w hali, na antresoli, w śluzie wagonowej i w zbrojowni S (`W3_CONTRACT_POSTS.w3_hall`). Patrol P1 tu nie schodzi.
+- Szafka 14, wschodnia z czterech (x 2525,3–2528, przy ścianie z 408,4), z kombinezonem technika `tessen_overalls` na czas sabotażu (`W3_LOCKER_14`, (2526,6; 407,4)). Każda szafka mieści ciało (ADR-0065).
+- Technik z haka szafki 14 stoi poza strefą, przy furtce serwisowej (2552,3; 390,4) od 19:00 do 23:00.
+
+### Przebieg
+1. Brief Genzō: „Wylot kolektora pod nabrzeżem: przeczołgasz się nim do piwnicy magazynów, technicy trzymają tam w szatni kombinezony”.
+2. Hak przy furtce (`hook_sabotage_2`): „Weź szafkę czternaście w piwnicy, jest niczyja. Zamek nie działa od wiosny”.
+3. Kolektor: 37 m w kucaniu, bez wrogów. Napięcie robi ciasnota i ciemność, a nagrodą jest skrytka szmuglerów (rysunek `rd-w3b-stash`).
+4. Szatnia: kombinezon z szafki 14. Od teraz technicy na linii nie zwracają uwagi, dopóki broń jest schowana i Seki nie biega. Egzekutorem przebrań jest kierownik zmiany na antresoli.
+5. Wyjście w górę: schody A na linię podzespołów (2517–2525; 402–403,8), schody B do warsztatu W2 (2539–2541; 397,6–403,6) albo drabina w szybie windy towarowej (2530; 401,4).
+6. Po wgraniu wirusa ta sama droga prowadzi z powrotem do wylotu kolektora, bez posterunków po drodze.
+
+### Drogi
+- Cicha: cała piwnica. Wchodzi się tylko kolektorem od rzeki albo z hali trzema wyjściami w górę.
+- Głośna: w piwnicy nie ma walki, chyba że fala z alarmu zejdzie po graczu schodami A albo B. Osłony: dwa słupy (x 2522 i 2536, z 401), szafki, zespół pompowy.
+- Ucieczka: kolektorem do wylotu na ławie rzeki albo drabiną w szybie windy (pościg nie chodzi po drabinach, ADR-0021).
+- Pułapka: w kolektorze nie da się wstać ani biec, więc odwrót po alarmie jest wolny, a schody A i B to jedyne wejścia fali.
+
+### Pora i stan świata
+- Pod ziemią bez okien, więc zawsze tak samo. Kolektor działa o każdej porze, ale kombinezon w szafce 14 leży tylko w czasie sabotażu.
+- Przed sabotażem piwnica jest pusta i nikt jej nie strzeże. Po nim nic się nie zmienia, nawet po wybuchu w hali (wraki stanowisk w ADR-0082 są odłożone). Bez autozapisu (`autosave: false`).
+
+### Wymagania wobec sceny
+- Szafka 14 różna od trzech innych: numer, uchylone drzwiczki z zepsutym zamkiem, kombinezon na wieszaku (ink: „Zamek nie działa od wiosny”). Dziś cztery takie same bryły z `lockers()`.
+- Numery szafek 11–14 albo inne, które zgadzają się z „czternaście” z haka.
+- Zielone albo jaśniejsze światło u stopy schodów A, B i drabiny w szybie (§13, drogi w górę).
+- Wylot kolektora czytelny z ławy: krata odchylona, światło z wnętrza albo ślady w mule (krata jest, `rd-w3b-grate`).
+
+## Dług sceny
+- Szafka 14 z numerem, uchylonymi drzwiczkami i kombinezonem na czas sabotażu: rysunek w `tools/blender/rooms/w3_basement.py`, rozstawienie w `packages/sim/src/content/tessen-w3/basement-detail.ts` (bryły `lockers()` w `basement.ts` bez zmian).
+- Nazwa w kartach i w grze: ta karta i jej historia mówią „przepust”, a ADR-0082, ink Genzō i podpowiedź `prompt.culvert` mówią „kolektor”. Propozycja: „kolektor” w części „Historia” i „Przeznaczenie” tej karty.
+- Ink Genzō mówi o „piwnicy magazynów”, a historia tej karty o pompowni po garbarni. Do uzgodnienia w karcie: piwnica magazynów części z dawną pompownią garbarni w narożniku.
+- Światło dróg w górę u stóp schodów A i B i w szybie windy: `packages/engine/src/renderer/tessen-w3/w3-lights.ts` (oprawy w `w3_basement.py`).
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->

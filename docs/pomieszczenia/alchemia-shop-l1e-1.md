@@ -39,7 +39,6 @@ Frakcja: ulica.
 - blender: rd-gl-food-b × 29
 - blender: rd-gl-stock × 16
 - blender: rd-gl-stock-b × 17
-- model: figure × 1
 - model: vending-machine × 2
 - piece: cable × 3
 - piece: carton × 6
@@ -63,7 +62,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 44 m², wysokość 2,8 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 14
-- warstwy wyposażenia: makro 35, mezo 25, mikro 13
+- warstwy wyposażenia: makro 35, mezo 24, mikro 13
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 13 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 14
 <!-- inwentarz-gry:end -->

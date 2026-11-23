@@ -22,9 +22,9 @@ describe("act II on the overpass in the game", () => {
         flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
       }),
     );
-    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting on the square behind Alchemia");
+    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting in the passage under Alchemia's front");
 
-    // On the square behind Alchemia, next to him (ADR-0063); a step streams the market in.
+    // In the passage under Alchemia's front, next to him (ADR-0074 B1); a step streams the market in.
     run(() => {
       const p = { ...KUROSAWA_SPOT, x: KUROSAWA_SPOT.x + 1.5 };
       g.seki.teleport(p.x, p.z, Math.PI / 2, 0, p.y);
