@@ -42,7 +42,8 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   // The abutment ramps at the ends of the decks' pieces with the bridge's sidewalk on its carriageway (G-737): the same cuts.
   // Its points on the seam x = 720 on podzamcze-0-0's 5 m grid (G-748): the same cuts, up to 0.1 m lower or higher there.
   // The path w202269259 by Zamkowa's tunnel laid at an even grade (G-755): the same cuts, its points lower or higher there.
-  "podzamcze-1-0": "12 1745e1c0",
+  // The NMT fetched again on 23.11 with Podzamcze's row north of z 580 (a newer edition, 0.16 m on average): the same cuts, other heights.
+  "podzamcze-1-0": "12 7f520b06",
   // W-3 on the docks' ground (ADR-0082): the chunk's grid refined to 2.5 m and the public strip back
   // on the NMT round the metro's pavilion: its 2.5 m cells cut, 16 for 6. The pickup yard level to
   // the fence by the basin's ends (review round 2): the same cuts, other heights.

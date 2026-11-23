@@ -11,13 +11,14 @@
  *   extracts drop unnamed nodes, into `data/osm/points/furniture.json`, and the rows of bollards
  *   mapped as lines into `data/osm/points/bollard-lines.json` (G-818); both written only when every
  *   district's tiles were read, so `--only` keeps the files as they were.
- * Flags: `--refresh` refetches cached tiles, `--only=<slug>` limits to one district,
+ * Flags: `--refresh` refetches cached tiles, `--only=<slug>` limits to one district, `--keep-terrain` keeps a
+ *   grown district's mosaic where it had cells (`keepTerrain`),
  * `--skip-osm`, `--skip-dtm`, `--eudem`, `--points-only` (the furniture file alone: no extract, no terrain).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS, type DistrictSpec, ELEVATION_MARGIN, ELEVATION_STEP, FETCH_MARGIN, MAX_TILE_DEG, USER_AGENT } from "./config.ts";
-import { DTM_OFFSET, DTM_SCALE, type DtmHeader, dtmToBytes, encodeHeight } from "./dtm.ts";
+import { DTM_OFFSET, DTM_SCALE, type DtmHeader, dtmFromBytes, dtmToBytes, encodeHeight } from "./dtm.ts";
 import { parseAsciiGrid } from "../../gugik/src/nmpt.ts";
 import { BOLLARD_LINES_FILE, type BollardLineRow, type FurnitureRow, FURNITURE_FILE, bollardLineRows, furnitureRows, serializeBollardLines, serializeFurniture } from "./furniture.ts";
 import { type OsmData, filterOsm, mergeOsm, parseOsmXml, serializeOsm } from "./osm.ts";
@@ -118,6 +119,53 @@ const readTile = (file: string): { width: number; height: number; e0: number; n0
   return { width: g.cols, height: g.rows, e0: g.xll, n0: g.yll + g.rows * g.cell, step: g.cell, values: g.values };
 };
 const DTM_TILE = 500;
+/** Metres over which a grown district's new cells fade from the kept mosaic's level to the fetched one. */
+const KEEP_BAND = 30;
+/**
+ * Metres of the kept mosaic's rim not kept: its edge rows lie in the old fetch's margin (`ELEVATION_MARGIN`
+ * past the old rectangle) and are off by metres there, so the kept part ends 10 m past the old map's edge.
+ */
+const KEEP_TRIM = 40;
+
+/**
+ * `--keep-terrain`: a district grown past its mosaic keeps the cells it had (the curator's review of
+ * 23.11: the WCS's newer edition lies 1–1.5 m under the NMPT's bare ground by VIVO, the kept one
+ * within 0.1 m). New cells take the fetched height, shifted by the kept one's difference at the old
+ * mosaic's nearest cell, fading out over `KEEP_BAND` m, so the seam has no step.
+ */
+const keepTerrain = (slug: string, box: { e0: number; n1: number }, cols: number, rows: number, cells: Uint16Array): void => {
+  const head = join(TERRAIN_DIR, `${slug}.json`);
+  if (!existsSync(head)) return;
+  const old = JSON.parse(readFileSync(head, "utf8")) as DtmHeader;
+  const kept = dtmFromBytes(new Uint8Array(readFileSync(join(TERRAIN_DIR, `${slug}.bin`))));
+  // The kept box: the old mosaic less its rim.
+  const k = { e0: old.e0 + KEEP_TRIM, e1: old.e0 + old.cols - 1 - KEEP_TRIM, n0: old.n0 - KEEP_TRIM, n1: old.n0 - old.rows + 1 + KEEP_TRIM };
+  const oldAt = (e: number, n: number): number => {
+    if (e < k.e0 || e > k.e1 || n > k.n0 || n < k.n1) return 0;
+    return kept[(old.n0 - n) * old.cols + (e - old.e0)]!;
+  };
+  const fetched = cells.slice();
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const e = box.e0 + c;
+      const n = box.n1 - r;
+      const here = oldAt(e, n);
+      const i = r * cols + c;
+      if (here !== 0) {
+        cells[i] = here;
+        continue;
+      }
+      // The old mosaic's nearest cell and the fetched one's there.
+      const ce = Math.min(Math.max(e, k.e0), k.e1);
+      const cn = Math.max(Math.min(n, k.n0), k.n1);
+      const d = Math.hypot(e - ce, n - cn);
+      const near = oldAt(ce, cn);
+      const fetchedNear = fetched[(box.n1 - cn) * cols + (ce - box.e0)] ?? 0;
+      if (near === 0 || fetchedNear === 0 || fetched[i] === 0 || d >= KEEP_BAND) continue;
+      cells[i] = Math.max(1, Math.round(fetched[i]! + (near - fetchedNear) * (1 - d / KEEP_BAND)));
+    }
+  }
+};
 
 const fetchDtm = async (d: DistrictSpec) => {
   const box = puwgBox(d, ELEVATION_MARGIN);
@@ -147,6 +195,7 @@ const fetchDtm = async (d: DistrictSpec) => {
       }
     }
   }
+  if (args.has("--keep-terrain")) keepTerrain(d.slug, box, cols, rows, cells);
   const missing = cells.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
   const header: DtmHeader = {
     source: "GUGiK NMT 1 m (geoportal.gov.pl, WCS DTM_PL-KRON86-NH)",
