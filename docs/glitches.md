@@ -46,7 +46,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
-- Status: częściowo naprawione: fundamenty fary jako bariery 0,5 m od #418 (r18507552, r18507551, odcinki w1348806xxx; T-251); zostają ruiny `building=ruins` (w232362881, w1330433247, w813194693), które pomija `SKIP_BUILDING`. W1330433247 ma 3,3 m w LoD1 (NMPT wierzch y 3,75). Test przyjęcia zawęzić do ruin: 3 obrysy jako niskie mury z wysokością z LoD1 albo NMPT.
+- Status: ruiny `building=ruins` naprawione na gałęzi `fix/g053-ruiny` (23.11): cztery obrysy (w232362881, w1330433247, w813194693, w67498742) to mury barier wzdłuż obwodu, wysokie jak blok LoD1 nad nimi (w1330433247 3,3 m, w232362881 przycięta do 4 m), bez LoD1 1,5 m; test `tools/osm-import/test/ruins.test.ts`. Fundamenty fary jako bariery 0,5 m od #418 (T-251). Do archiwum po scaleniu.
 - Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
 - Gdzie: w173519315 (672.8, 43.2) i 3 budynki `building=ruins` (T-015); ile w mieście: 4 w dwóch dzielnicach
 - Dowód: `SKIP_BUILDING` w generate.ts; `props-kinds.ts` „ruins: structures (later)”
