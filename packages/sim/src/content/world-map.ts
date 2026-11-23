@@ -24,6 +24,7 @@ import { DWORZEC_DETAIL } from "./dworzec-detail";
 import { FARA_BENCHES, PO_FARZE_DETAIL } from "./po-farze-detail";
 import { LUBARTOWSKA_DETAIL, LUBARTOWSKA_FURNITURE } from "./lubartowska-detail";
 import { KATEDRALNY_DETAIL } from "./katedralny-detail";
+import { TARG_MARKET_DETAIL } from "./district-targ";
 import { SHOP_DRESSING } from "./room-dressing-shops";
 import { P1_DETAIL } from "./alchemia/p1-detail";
 import { FOODHALL_DETAIL } from "./alchemia/foodhall-detail";
@@ -242,7 +243,7 @@ const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: 
  * came: the scenery's last views, so every id before them stays (a new room goes last). The scenes of the
  * locations' cards (ADR-0102) go the same way: Plac Litewski's wreck and its night.
  */
-export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(T1_DETAIL), roomDetail(T2_DETAIL), roomDetail(RYNEK_DETAIL), roomDetail(GRODZKA_DETAIL), roomDetail(DEPTAK_DETAIL), roomDetail(W3_OUTSIDE_DETAIL), roomDetail(PLAC_ZAMKOWY_DETAIL), roomDetail(DWORZEC_DETAIL), roomDetail(PO_FARZE_DETAIL), roomDetail(LUBARTOWSKA_DETAIL), ...(KATEDRALNY_DETAIL.length > 0 ? [roomDetail(KATEDRALNY_DETAIL)] : [])];
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(T1_DETAIL), roomDetail(T2_DETAIL), roomDetail(RYNEK_DETAIL), roomDetail(GRODZKA_DETAIL), roomDetail(DEPTAK_DETAIL), roomDetail(W3_OUTSIDE_DETAIL), roomDetail(PLAC_ZAMKOWY_DETAIL), roomDetail(DWORZEC_DETAIL), roomDetail(PO_FARZE_DETAIL), roomDetail(LUBARTOWSKA_DETAIL), ...(KATEDRALNY_DETAIL.length > 0 ? [roomDetail(KATEDRALNY_DETAIL)] : []), ...(TARG_MARKET_DETAIL.length > 0 ? [roomDetail(TARG_MARKET_DETAIL)] : [])];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, SCENE_LAMP_GROUPS, groundY } from "../src";
+import { BAZAR_LAMPS, BAZAR_STALLS, METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, RUSKA_LAMPS, RUSKA_STALLS, SCENE_LAMP_GROUPS, TARG_MARKET_DETAIL, WORLD_SCENERY, groundY } from "../src";
+import { roomDetailShape } from "@seki/core";
 import { turnLocal } from "../src/content/lublin/furniture";
 
 /*
@@ -48,3 +49,32 @@ describe("Plac Zamkowy's lights in their fittings (§13)", () => {
     }
   });
 });
+
+describe("the Bazaar's and Targ na Ruskiej's festoons and their lights (§13)", () => {
+  it("hangs a festoon over every stall of the two markets and a warm light in each, under its roof between its front posts", () => {
+    expect(BAZAR_STALLS.length).toBeGreaterThanOrEqual(40);
+    expect(RUSKA_STALLS.length).toBeGreaterThanOrEqual(150);
+    const stalls = [...BAZAR_STALLS, ...RUSKA_STALLS];
+    expect(TARG_MARKET_DETAIL).toHaveLength(stalls.length);
+    expect(TARG_MARKET_DETAIL.every((d) => d.prop === "room-detail" && d.variant === roomDetailShape("rd-targ-festoon"))).toBe(true);
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === TARG_MARKET_DETAIL)).toBe(true);
+    for (const [group, list] of [[BAZAR_LAMPS, BAZAR_STALLS], [RUSKA_LAMPS, RUSKA_STALLS]] as const) {
+      expect(group.lamps).toHaveLength(list.length);
+      group.lamps.forEach((l, i) => {
+        const s = list[i]!;
+        const local = turnLocal(-s.yaw, l.at.x - s.x, l.at.z - s.z);
+        expect(Math.abs(local.x), l.key).toBeLessThan(1);
+        expect(local.z, l.key).toBeCloseTo(0.72, 6);
+        expect(l.at.y - s.y, l.key).toBeGreaterThan(1.8);
+        expect(l.at.y - s.y, l.key).toBeLessThan(2.3);
+        expect(Math.hypot(l.at.x - group.centre.x, l.at.z - group.centre.z), l.key).toBeLessThan(group.near);
+      });
+    }
+  });
+
+  it("leaves the flea market's stalls to Plac Zamkowy's own festoons", () => {
+    const flea = new Set(PLAC_ZAMKOWY_STALLS);
+    expect([...BAZAR_STALLS, ...RUSKA_STALLS].some((s) => flea.has(s))).toBe(false);
+  });
+});
+
