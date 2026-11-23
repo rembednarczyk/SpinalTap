@@ -1,0 +1,1 @@
+- Plac Katedralny ma scenę według karty lokacji: pod pomnikiem Wyszyńskiego stoją znicze LED, kwiaty i karteczki z intencjami, a przy Głazie Katowskim stoi terminal legendy AR.
