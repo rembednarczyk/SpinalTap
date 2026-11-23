@@ -311,12 +311,12 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-dp-ume", clutter: 5 },
   // W-3's outside (docs/lokacje/w3-pas-publiczny.md, w3-wieza.md, w3-rurociag-basen.md, ADR-0102): Genzō's brazier and
   // things by KAIUN, the smokers' corner by the pass office, the fitters' things on the pipe landing, the ladder's board.
-  { key: "rd-w3-barrel", clutter: 0 },
-  { key: "rd-w3-genzo", clutter: 6 },
+  { key: "rd-w3-barrel", lod: "rd-w3-barrel-lod", clutter: 0 },
+  { key: "rd-w3-genzo", fine: true, clutter: 6 },
   { key: "rd-w3-tower-door", fine: true, clutter: 9 },
   { key: "rd-w3-landing", fine: true, clutter: 7 },
-  { key: "rd-w3-ladder-board", clutter: 0 },
-  { key: "rd-w3-locker14", clutter: 3 },
+  { key: "rd-w3-ladder-board", fine: true, clutter: 0 },
+  { key: "rd-w3-locker14", fine: true, clutter: 3 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

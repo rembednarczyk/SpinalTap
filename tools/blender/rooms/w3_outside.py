@@ -32,18 +32,29 @@ def barrel():
     for x in (-0.15, 0.15):
         m.box(x - 0.11, x + 0.11, 0.0, 0.065, -0.2, 0.2, 'brick', bevel=0.005)
     prof = [(0.0, 0.0), (0.29, 0.0), (0.29, 0.8), (0.275, 0.8), (0.275, 0.06), (0.0, 0.06)]
-    m.lathe(0.0, 0.0, prof, 'rust', seg=18, y0=0.065)
+    m.lathe(0.0, 0.0, prof, 'rust', seg=12, y0=0.065)
     for y in (0.3, 0.58):
-        m.lathe(0.0, 0.0, [(0.0, 0.0), (0.3, 0.0), (0.3, 0.03), (0.0, 0.03)], 'dark', seg=18, y0=0.065 + y)
+        m.lathe(0.0, 0.0, [(0.0, 0.0), (0.3, 0.0), (0.3, 0.03), (0.0, 0.03)], 'dark', seg=12, y0=0.065 + y)
     for k in range(8):
         a = 2 * math.pi * k / 8 + 0.2
         m.box(-0.03, 0.03, 0.15, 0.21, -0.01, 0.01, 'neon-amber')
         m.obox((0.292 * math.cos(a), 0.18, 0.292 * math.sin(a)), (-math.sin(a), 0, math.cos(a)), (0, 1, 0), (0.035, 0.03, 0.004), 'neon-amber')
-    m.lathe(0.0, 0.0, [(0.0, 0.0), (0.27, 0.0), (0.2, 0.08), (0.0, 0.12)], 'neon-red', seg=14, y0=0.72)
+    m.lathe(0.0, 0.0, [(0.0, 0.0), (0.27, 0.0), (0.2, 0.08), (0.0, 0.12)], 'neon-red', seg=10, y0=0.72)
     for k in range(7):
         x = -0.24 + k * 0.08
         m.tube((x, 0.88, -0.27), (x, 0.88, 0.27), 0.006, 'metal', seg=5)
     m.tube((-0.28, 0.88, 0.0), (0.28, 0.88, 0.0), 0.008, 'metal', seg=5)
+    return m
+
+
+def barrel_lod():
+    """The brazier on the phone (`docs/zasady-lokacji.md` §9, simplified only there): the drum, its glowing embers and
+    the grill as a plate, in few faces (0.6 x 0.9 x 0.6)."""
+    m = Model('rd-w3-barrel-lod')
+    m.box(-0.26, 0.26, 0.0, 0.065, -0.2, 0.2, 'brick')
+    m.cyl(0.0, 0.0, 0.29, 0.065, 0.865, 'rust', seg=8)
+    m.cyl(0.0, 0.0, 0.25, 0.865, 0.87, 'neon-red', seg=8)
+    m.box(-0.28, 0.28, 0.875, 0.885, -0.27, 0.27, 'metal')
     return m
 
 
@@ -160,4 +171,4 @@ def locker14():
     return m
 
 
-MODELS = [barrel, genzo, tower_door, landing, ladder_board, locker14]
+MODELS = [barrel, barrel_lod, genzo, tower_door, landing, ladder_board, locker14]
