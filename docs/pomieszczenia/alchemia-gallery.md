@@ -37,6 +37,53 @@ Frakcja: ulica (handel); druga: korporacja (inwestor, wejścia i atrium).
 - §16 częściowo: pasaże czyste jak u korporacji, zaplecza mają być brudne jak ulica.
 - §17 do sprawdzenia: szum schodów ruchomych i muzyka sklepów ze źródła.
 
+## Scenariusz
+
+### Pierwszy kadr
+Najczęstsza droga to biegiem od wózka Hany na T1 (428; −6,4; 66) do Oyajiego na P3, gdy Hebi idą na jego sklep. Seki wchodzi wejściem od T1 na P0 i widzi atrium otwarte do nieba (x 411–425, z 40–50): na środku fontanna z hologramem koi, za nią przy południowej krawędzi schody ruchome nożycowo, trzy biegi jeden nad drugim. Dookoła witryny sklepów P0, każda w innym kolorze, nad nimi balustrady galerii P1–P3, a pod stropem P3 neon FOOD HALL nad galerią północną. Zielone znaki wyjścia nad drzwiami obu trzonów. Wzrok ma iść na stopę pierwszych schodów ruchomych przy wschodnim końcu atrium (x 424,4) i w górę, na neon FOOD HALL.
+
+### Postacie i miejsca
+- Hebi napadu `protect` (ADR-0093 O3, `alchemia/market.ts`, `contract-plans.ts`), 2–4 ludzi, pojawiają się na P2 przy drzwiach trzonów, gdy już się wspięli:
+  - `raid_north`, od Świętoduskiej schodami trzonu SW: po 6,5 s przy drzwiach trzonu SW (401,2–406,3; 2,3; 38,9), w przejściu do galerii zachodniej;
+  - `raid_east`, od Lubartowskiej schodami trzonu NE: po 9,5 s przy drzwiach trzonu NE (426,4; 2,3; 56,2) i dwóch dalej we wschodnim końcu galerii północnej (425,6; 52,2), (427,2; 51,6).
+  Wszyscy patrzą na Oyajiego na P3 i idą ostatnimi schodami ruchomymi P2→P3 (stopa x 424,5 przy południowo-wschodnim rogu atrium).
+- Czujki wariantu blokady stoją na ulicy: `raid_north` na T2 (431,5; 123), `raid_east` na T1 (445; 74).
+- Tłum galerii (ADR-0060): klient przed co drugim otwartym lokalem i cztery osoby przy balustradzie atrium na P1 i P2. Na P0 śpiący na ławkach (historia karty).
+- Fumiko w nocy, od 0:00 do 4:00, wydaje ramen przez okienko swojego lokalu na P0 na T1 (`fumiko-p0.ts`), potem siedzi na stołku przed nim.
+- Hana przy wózku na T1, przed wejściem, twarzą do hali.
+
+### Przebieg
+1. Zlecenie u Hany (8:00–22:00): „Oyaji nie zapłacił Hebi w tym miesiącu i właśnie po niego idą. Pilnuj go, aż padnie ostatni z nich”. Opis miejsca mówi, którymi schodami idą.
+2. Haki: mail na terminalu Hany przy wózku (`hook_protect_2`): „Hebi wejdą przez galerię: drzwiami trzonów na drugim piętrze, potem ostatnimi schodami ruchomymi do food hallu. Z ogrodu na dachu widać całe atrium, a oni nigdy nie patrzą w górę”. Bark `hook_protect_1` z załogi.
+3. Wyścig w górę: gracz biegnie od wózka trzy kondygnacje schodami ruchomymi P0→P1→P2→P3 albo trzonem NE, i ma być na P3 przed Hebi (pierwsza rana Oyajiego po około 18 s).
+4. Decyzja: zatrzymać ich na P2 przy drzwiach trzonów i u stopy ostatnich schodów albo bronić lady Oyajiego na P3 (karta `alchemia-foodhall`). Z dachu (ogród, otwór nad atrium) widać ich z góry.
+5. Nagroda u Hany: „Oyaji żyje. Już narzeka, że nikt mu nie pomoże zbierać towaru z ziemi”.
+Poza zleceniem galeria to handel (sklepy P0–P2), spacer i droga do food hallu, dachu, parkingu P−1 i metra.
+
+### Drogi
+- Cicha: galeria nie ma tu drogi cichej, napad to obrona. Ukrycie daje ogród na dachu nad otworem atrium (hak) i balustrady.
+- Głośna: P2 przy drzwiach trzonów i stopa schodów P2→P3 to wąskie gardła. Osłony: bryłowe balustrady atrium 1,1 m, filary, lady sklepów, kosze i automaty.
+- Ucieczka i skróty: trzony SW i NE z windami i klatkami (zielone znaki wyjścia nad drzwiami na każdym piętrze), schody ruchome w obie strony, wyjścia na T1, T0 (Bajkowskiego) i do parkingu P−1.
+- Pułapka: schody ruchome są widoczne z całego atrium, a dwa kierunki napadu wchodzą z dwóch końców P2.
+
+### Pora i stan świata
+- Atrium jest otwarte do nieba, więc dzień i noc różnią się: za dnia światło z góry i deszcz do P0, w nocy witryny, pasy LED i lampy praktyczne (§13). W nocy na P0 okienko Fumiko i śpiący na ławkach.
+- Napady tylko od 8:00 do 22:00, gdy Oyaji ma otwarte. Po śmierci Oyajiego (`dead:oyaji`) Hana nie daje już ochrony.
+- Terytorium Hebi `alchemia-arcades` leży na zewnątrz, pod Arkadami na T2, a gang wchodzi do galerii tylko w napadzie.
+
+### Wymagania wobec sceny
+- Drzwi trzonów na P2 i stopa ostatnich schodów ruchomych widoczne ze schodów P1→P2, żeby gracz zdążył zobaczyć Hebi, zanim wejdą na górę.
+- Otwór atrium widoczny z ogrodu na dachu na całą wysokość, jak mówi hak.
+- Drzwi klatek i wind w trzonach w barwie nawigacji (dług §13 w audycie).
+- Ślady obecności na pasażach poza ławkami i kawiarnią (dług §14 w audycie), zwłaszcza na trasie napadu (P2 przy trzonach).
+
+## Dług sceny
+- Hak `hook_protect_1` w `packages/narrative/ink/{pl,en}/hooks.ink`: „Do starego idziemy przez plac, jak zawsze”. Od O3 Hebi idą trzonami i galerią. Propozycja: „Do starego idziemy schodami od Świętoduskiej, jak zawsze. Po co zmieniać coś, co działa”.
+- Czujki wariantu blokady stoją na ulicy, z dala od trasy napadu i od Oyajiego (ADR-0093 O3, otwarte). Propozycja: czujka przy drzwiach trzonu na P1 albo przy stopie schodów P1→P2 w `packages/sim/src/content/contract-plans.ts` (`raid_north`, `raid_east`).
+- Id `raid_north` oznacza napad od południowego zachodu (trzon SW, Świętoduska), a `raid_east` od północnego wschodu. Nazwy zostają (zapis je zna), a opisy miejsc w `packages/ui/src/i18n/{pl,en}/domain.ts` mówią prawdę.
+- Ślady obecności na P2 przy drzwiach trzonów: skupiska drobiazgu w `packages/sim/src/content/room-dressing-rooms.ts` (generator) albo `tools/blender/rooms/alchemia_gallery.py`.
+- Światło nawigacji przy drzwiach klatek i wind w trzonach: `packages/sim/src/content/alchemia/exit-signs.ts`, `gallery-lights.ts`.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
