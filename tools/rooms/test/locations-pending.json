@@ -26,16 +26,5 @@
     "budowa-wzgorza",
     "budowa-plac-koziolka"
   ],
-  "interiors": [
-    "clinic",
-    "neon-koi",
-    "capsule",
-    "tessen-office",
-    "w3-hall",
-    "w3-basement",
-    "trasa-podziemna",
-    "alchemia-shelter",
-    "alchemia-gallery",
-    "alchemia-foodhall"
-  ]
+  "interiors": []
 }
