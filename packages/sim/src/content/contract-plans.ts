@@ -1,5 +1,6 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
+import { COURIER_SPOT, YARD_GAP } from "./car-wash-detail";
 import { w3 } from "./tessen-w3/site";
 import { inShelter } from "./alchemia/market";
 import { P2 } from "./alchemia/p2";
@@ -27,10 +28,14 @@ export interface SitePlan {
 
 const { east_lot: lot, koi_back: back, car_wash: wash, south_gate: gate } = KRAKOWSKIE_SITE_POINTS;
 
+/** Just past the car wash yard's way in from Lubartowska on the car park's side, level with its middle. */
+const gapAt = (): Vec3 => wash(YARD_GAP.x + 1.8, (YARD_GAP.from + YARD_GAP.to) / 2);
+
 export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   east_lot: { guards: [lot(9, -16.2), lot(11.8, -16.3)], twin: lot(17.5, -10), lookout: lot(6, -12), ambush: [lot(5, -13), lot(4, -6), lot(5, -20)] },
   koi_back: { guards: [back(4.2, 11.2), back(2, 13.2)], twin: back(-4, 11), lookout: back(0, 20), ambush: [back(0, 22), back(-5, 5), back(4, -2)] },
-  car_wash: { guards: [wash(0, 44.2), wash(2.2, 42.4)], twin: wash(-1.5, 46.5), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-1.5, 29.5), wash(4, 31)] },
+  // On the yard's level ground beside the courier (G-754's pad): the guards and the twin stood on the slope and the footway past it before.
+  car_wash: { guards: [wash(-0.4, 37.4), wash(2.4, 39)], twin: wash(7.4, 36.2), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-1.5, 29.5), wash(4, 31)] },
   south_gate: { guards: [gate(-5, -34.2), gate(-3, -34.6)], twin: gate(8.5, -34.5), lookout: gate(-3, -29), ambush: [gate(0, -24), gate(-5, -26), gate(5, -25)] },
   kanal_bridge: { guards: [spotNear(660.5, 75.5), spotNear(658, 73.5)], twin: spotNear(664, 79.5), lookout: spotNear(650, 63), ambush: [spotNear(646, 58), spotNear(668, 84), spotNear(652, 66)] },
   // In the shelter under T2 (ADR-0074 stage 5d2): the guards by the stash's cover, the lockdown's lookout on T2 by the
@@ -58,8 +63,9 @@ export const BAR_SPOT: Vec3 = koiPoint(5.6, 0, 3);
 const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...Vec3[]]>>> = {
   east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), BAR_SPOT],
   koi_back: [back(3, 12), ground(296, -112), ground(283, -108), ground(282, -88), ground(300, -89), BAR_SPOT],
-  // Out of the yard by Lubartowska, down to Plac Łokietka and west along the deptak.
-  car_wash: [wash(1, 43), ground(420, -30), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
+  // Out of the yard by Lubartowska through the gap between its container and its barrier (`car-wash-detail.ts`) and the
+  // car park's fence by the bench, as before the container stood, down to Plac Łokietka and west along the deptak.
+  car_wash: [wash(COURIER_SPOT.x, COURIER_SPOT.z), wash(2.2, 40.2), gapAt(), ground(422.6, -30.6), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
   south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), BAR_SPOT],
 };
 
