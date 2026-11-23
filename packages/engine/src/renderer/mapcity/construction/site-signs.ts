@@ -11,7 +11,8 @@ import { glyphCell } from "../venue-plan";
 /**
  * The building sites' lights and letters in the map city's signs' mesh (ADR-0087 stage 2), so no
  * draw call more: the crane's beacon on its tower head, blinking at its phase (steady on the
- * phones: `low` has no animation), and the board's three lines in the glyph atlas's letters. The
+ * phones: `low` has no animation), and the board's hologram (its pane of light over the projector
+ * and its beam, since 22.11) with its three lines in the glyph atlas's letters. The
  * engine knows no catalogs (ADR-0056): the texts come in from the app as they read in the
  * player's language (`setSiteTexts` of the renderer), by the keys the sites' table holds; a key
  * with no text yet draws nothing.
@@ -89,10 +90,40 @@ const beacon = (sink: MeshSink, p: StreetPropItem, foot: number, lite: boolean):
   }
 };
 
+/**
+ * The board's hologram (22.11, the user's note: every site's board a hologram): a pane of light from its projector's
+ * lens up to the board's top, both ways (the signs cull their backs), and the projector's beam fanning up to it.
+ */
+const boardPane = (sink: MeshSink, p: StreetPropItem, foot: number, tint: string): void => {
+  const hw = SITE_BOARD.width / 2;
+  const [b, t] = [SITE_BOARD.bottom, SITE_BOARD.top];
+  const color = signTint(tint, 1);
+  const n: Vec = { x: Math.sin(p.yaw), y: 0, z: Math.cos(p.yaw) };
+  const back: Vec = { x: -n.x, y: 0, z: -n.z };
+  const corners = (z: number): [Vec, Vec, Vec, Vec] => [at(p, -hw, b, z, foot), at(p, hw, b, z, foot), at(p, hw, t, z, foot), at(p, -hw, t, z, foot)];
+  const seed = (p.variant * 0.137) % 1;
+  quadUv(sink, corners(FACE - 0.01), n, color, UV, [seed, MAP_SIGN_KIND.holoPanel]);
+  const [a0, a1, a2, a3] = corners(FACE - 0.012);
+  quadUv(sink, [a1, a0, a3, a2], back, color, UV, [seed, MAP_SIGN_KIND.holoPanel]);
+  // The beam: from the lens (narrow, bright: uv.y 1) up to the pane's foot (as wide, faint).
+  const lens = b - 0.05;
+  const beam: [Vec, Vec, Vec, Vec] = [at(p, -hw * 0.72, lens, 0.06, foot), at(p, hw * 0.72, lens, 0.06, foot), at(p, hw, b, FACE - 0.01, foot), at(p, -hw, b, FACE - 0.01, foot)];
+  quadUv(sink, beam, n, signTint(tint, 0.6), BEAM_UV, [seed, MAP_SIGN_KIND.beam]);
+};
+
+/** The beam quad's uv: bright (y 1) at the lens, faint at the pane. */
+const BEAM_UV = [
+  [0, 1],
+  [1, 1],
+  [1, 0],
+  [0, 0],
+] as const;
+
 /** The board's lines on its face (local +z), each squeezed to the board's width. */
 const boardLines = (sink: MeshSink, p: StreetPropItem, foot: number, keys: readonly string[], texts: SiteTextMap): void => {
   const n: Vec = { x: Math.sin(p.yaw), y: 0, z: Math.cos(p.yaw) };
   const tint = BOARD_TINTS[p.variant % BOARD_TINTS.length]!;
+  boardPane(sink, p, foot, tint);
   keys.forEach((key, k) => {
     const text = boardText(texts[key] ?? "");
     const line = BOARD_LINES[k]!;

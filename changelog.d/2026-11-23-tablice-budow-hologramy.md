@@ -1,0 +1,1 @@
+- Tablice informacyjne placów budowy to hologramy: świetlny panel z liniami skanowania nad projektorem przy ogrodzeniu.
