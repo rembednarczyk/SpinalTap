@@ -223,7 +223,7 @@ export const enDomain = {
   "contract.site.south_gate": "the wreck on Krakowskie, by Plac Litewski",
   "contract.site.kanal_bridge": "under the footbridge on Grodzka",
   "contract.site.hana_stall": "Hana's cart at the market in Alchemia",
-  "contract.site.hebi_stash": "the Hebi stash by the ruin behind Alchemia's stalls",
+  "contract.site.hebi_stash": "the Hebi stash in the shelter under Alchemia",
   "contract.site.raid_north": "Oyaji's stall in Alchemia, the Hebi coming up the south-west stairs from Świętoduska",
   "contract.site.raid_east": "Oyaji's stall in Alchemia, the Hebi coming up the north-east stairs from Lubartowska",
   "contract.site.docks_escort": "from Genzō's container down the riverside path to the river",

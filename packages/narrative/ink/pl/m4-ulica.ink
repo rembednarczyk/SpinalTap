@@ -1,6 +1,6 @@
 // Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
@@ -105,7 +105,7 @@
     MEI: Dobranoc to się mówi rano. Ale niech będzie.
     -> END
 
-// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
+// Sachiko keeps the kiosk in Alchemia's food hall (P3, ADR-0093 O3). She sees everyone who comes in.
 === sachiko ===
 {
 - civilians_tier == "hostile":
@@ -125,7 +125,7 @@
 + [Co słychać na targu? #tone:optional]
     SEKI: Co słychać na targu?
     { hebi_stance == "hostile":
-        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj przy ruinie za straganami.
+        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj na dolnym placu, pod Arkadami.
     - else:
         SACHIKO: Hana ma nowy towar, Oyaji stare ceny, a Hebi te same twarze. Nic się tu nie zmienia.
     }
@@ -133,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego? #tone:optional]
     SEKI: Widziałaś tu coś dziwnego?
     ~ set_flag("sachiko_car")
-    SACHIKO: Za ruiną na końcu placu leży torba. Ktoś ją zostawił w noc blokady i już po nią nie wrócił.
+    SACHIKO: Przed Arkadami, na dolnym placu, leży torba. Ktoś ją zostawił w noc blokady i już po nią nie wrócił.
     SACHIKO: Do środka nikt nie zaglądał. Przynajmniej nikt, kto by się przyznał.
     -> talk
 + [Dzięki za wszystko. #tone:leave]

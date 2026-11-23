@@ -220,7 +220,7 @@ export const plDomain = {
   "contract.site.south_gate": "wrak na Krakowskim, przy Placu Litewskim",
   "contract.site.kanal_bridge": "pod kładką na Grodzkiej",
   "contract.site.hana_stall": "wózek Hany na targu w Alchemii",
-  "contract.site.hebi_stash": "skrytka Hebi przy ruinie za straganami Alchemii",
+  "contract.site.hebi_stash": "skrytka Hebi w schronie pod Alchemią",
   "contract.site.raid_north": "stragan Oyaji w Alchemii, Hebi idą schodami południowo-zachodnimi od Świętoduskiej",
   "contract.site.raid_east": "stragan Oyaji w Alchemii, Hebi idą schodami północno-wschodnimi od Lubartowskiej",
   "contract.site.docks_escort": "od kontenera Genzō ścieżką nad rzekę",

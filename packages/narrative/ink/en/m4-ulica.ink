@@ -1,6 +1,6 @@
 // Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
@@ -105,7 +105,7 @@
     MEI: You say good night in the morning. But fine.
     -> END
 
-// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
+// Sachiko keeps the kiosk in Alchemia's food hall (P3, ADR-0093 O3). She sees everyone who comes in.
 === sachiko ===
 {
 - civilians_tier == "hostile":
@@ -125,7 +125,7 @@
 + [What's new at the market? #tone:optional]
     SEKI: What's new at the market?
     { hebi_stance == "hostile":
-        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself by the ruin behind the stalls.
+        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself on the lower square, by the arcades.
     - else:
         SACHIKO: Hana's got new stock, Oyaji old prices, and the Hebi the same faces. Nothing ever changes here.
     }
@@ -133,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Seen anything odd here? #tone:optional]
     SEKI: Have you seen anything strange around here?
     ~ set_flag("sachiko_car")
-    SACHIKO: There's a bag behind the ruin at the back of the square. Someone left it the night of the blockade and never came back for it.
+    SACHIKO: There's a bag in front of the arcades, on the lower square. Someone left it the night of the blockade and never came back for it.
     SACHIKO: Nobody's looked inside. At least nobody who'd admit it.
     -> talk
 + [Thanks for everything. #tone:leave]
