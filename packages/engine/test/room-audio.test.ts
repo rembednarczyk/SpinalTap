@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AudioListenerPose, ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, T1_CART, T1_EXTRACT, interiorAt } from "@seki/sim";
+import { BRIDGE_DOWNPIPE, INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, T1_CART, T1_EXTRACT, TETSU_TABLE, interiorAt } from "@seki/sim";
 import { ROOM_SOUNDS, ROOM_SOUND_NEAR, THROUGH_WALL, roomEmitters, roomMix } from "../src/audio/room-sound-map";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -46,7 +46,11 @@ describe("the rooms' sound map", () => {
       const brama = near(e, 470, -90, 12) || near(e, 456, -76, 4);
       // On Alchemia's T1: Hana's cool box, the extract of Fumiko's kitchen.
       const t1 = near(e, T1_CART.x, T1_CART.z, 1) || near(e, T1_EXTRACT.x, T1_EXTRACT.z, 1);
-      expect(wash || koi || wreck || roof || brama || t1 || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
+      // Tetsu's power strip under his table on the Rynek (docs/lokacje/rynek.md).
+      const tetsu = e.sound === "hum" && near(e, TETSU_TABLE.x, TETSU_TABLE.z, 1);
+      // The footbridge's downpipe on Grodzka (docs/lokacje/grodzka-kladka.md).
+      const bridge = e.sound === "drip" && near(e, BRIDGE_DOWNPIPE.at.x, BRIDGE_DOWNPIPE.at.z, 1);
+      expect(wash || koi || wreck || roof || brama || t1 || tetsu || bridge || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
     }
   });
 

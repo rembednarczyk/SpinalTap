@@ -32,6 +32,8 @@ Bryła kamienicy dzieli się prostokątem pokoju: poza nim pełne pryzmaty, nad 
 > Nota (23.11.2026): lista wyżej to stan z dnia tej decyzji. Część miejsc przeniosły późniejsze ADR-y, a teksty gry idą za stanem dzisiejszym:
 > - wrak, z którego wyciągnięto Seki, stoi na deptaku Krakowskiego przy wylocie Kapucyńskiej (152,6; −51,0), a furgonetka Tetsuo na Placu Litewskim (112; −42) (T-077); podwórko za myjnią leży przy Lubartowskiej, ok. (389…417; −44…−20) (`CAR_WASH_AREA`);
 > - targ jest w Alchemii (ADR-0063 etap 6, ADR-0074, ADR-0093 O3): Hana przy wózku na placu T1 (428; 66), straganiarze w food hallu na P3, Ren na dachu pawilonu na rogu (430; −3,4), Kurosawa w pasażu T0 pod frontem galerii przy windzie (418; 29,4), skrytka Hebi w schronie pod T2, czujka Hebi przy włazie (443,4; 98,6), torba z nocy blokady przed łukami Arkad; pokładu nad aleją Tysiąclecia nie ma (T-021);
+> - Stare Miasto: SAKE stoi na Rynku 17 (559,6; −83,5) (G-943), skrytka Hebi za kontenerem pod Bramą Krakowską (464,7; −98,3) (scena Bramy, #961);
+> - metro: węzeł Brama Krakowska (442; −40) z wejściem A przy Placu Łokietka (433; −107) i B w pasażu Alchemii (428; 28), Plac Litewski (74; 16,9), węzeł Plac Zamkowy (740; 335) z wejściem A na placu (722; 286) i B przy dworcu (754; 379) (`packages/sim/src/content/metro.ts`);
 > - nabrzeże to sektor W-3 Tessen (ADR-0082): Genzō (2491; 386), terminal włamania na nabrzeżu przy pomoście (2484; 430), biuro przepustek w wieży kontrolnej (x 2486–2496, z 436–446); magazynu i dźwigu nie ma.
 
 ### Postacie i ruch
