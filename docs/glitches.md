@@ -4,12 +4,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-962 Zawrotki na ślepych końcach Szkolnej i Słowikowskiego wychodzą wierzchołkiem za koniec jezdni
-- Status: w naprawie (23.11, gałąź fix/g962-zawrotki @ edfc483: pasy cofnięte o promień i 0,5 m zapasu, punkty G-962 i `Ciasna:b` znikają z `KNOWN_OFF_ROAD`, skan bez `car-lane-off-road podzamcze-2-2` i `turn-off-road podzamcze-2-2 997,591`; test pętli przy deptaku padał przez G-966, z jego poprawką przechodzi; scalić po G-966); wcześniej: zgłoszone (S4: auto na zawrotce muska plac przez ok. 0,1 m)
-- Gdzie: nowy rząd Podzamcza (23.11): Szkolna (843,5, 552,5), gdzie jezdnia przechodzi w deptak, i Słowikowskiego (997,2, 591,0)
-- Dowód: `packages/sim/test/ground-readers.test.ts`, „keeps the car lanes on the carriageway”: wierzchołek półokręgu `uTurn` leży na płaskim końcu jezdni, a `surfacesAt` daje tam plac. Ten sam rodzaj co znany `Ciasna:b 583.1,575.5`; obie zawrotki w `KNOWN_OFF_ROAD` z odnośnikiem do tego wpisu.
-- Poprawka: `turnRound` cofa zawrotkę na ślepym końcu o promień i zapas, tak by wierzchołek został na jezdni (zmiana pasów w całym mieście, osobny PR). Test przyjęcia: punkty znikają z `KNOWN_OFF_ROAD`.
-
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: zgłoszone (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
