@@ -10,8 +10,9 @@ describe("Plac Katedralny's scene (ADR-0102 point 5)", () => {
     expect(KATEDRALNY_MONUMENT).toBeDefined();
     expect(GLAZ_KATOWSKI).toBeDefined();
     const [candles, terminal] = KATEDRALNY_DETAIL;
-    expect(Math.hypot(candles!.x - KATEDRALNY_MONUMENT.x, candles!.z - KATEDRALNY_MONUMENT.z)).toBeCloseTo(1, 6);
-    expect(Math.hypot(terminal!.x - GLAZ_KATOWSKI.x, terminal!.z - GLAZ_KATOWSKI.z)).toBeCloseTo(1.5, 6);
+    expect(KATEDRALNY_DETAIL).toHaveLength(2);
+    expect(Math.hypot(candles!.x - KATEDRALNY_MONUMENT!.x, candles!.z - KATEDRALNY_MONUMENT!.z)).toBeCloseTo(1, 6);
+    expect(Math.hypot(terminal!.x - GLAZ_KATOWSKI!.x, terminal!.z - GLAZ_KATOWSKI!.z)).toBeCloseTo(1.5, 6);
     for (const i of KATEDRALNY_DETAIL) expect(inBuilding(i.x, i.z)).toBe(false);
     expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === KATEDRALNY_DETAIL)).toBe(true);
   });
