@@ -98,7 +98,7 @@ describe("Brama Krakowska's scene (ADR-0102 point 5)", () => {
       expect(Math.abs(i.y - groundY(i.x, i.z)), `${i.prop} ${i.variant} at ${i.x},${i.z}`).toBeLessThan(0.005);
       expect(inBuilding(i.x, i.z), `${i.prop} ${i.variant} at ${i.x},${i.z}`).toBe(i.prop === "room-detail" && keyOf(i.variant) === "rd-bk-scanner");
     }
-    expect(STEAM_VENTS[2]).toEqual(BOOTH_STEAM);
+    expect(STEAM_VENTS).toContainEqual(BOOTH_STEAM);
     expect(ROOM_DETAIL_SHAPES.find((s) => s.key === "rd-bk-booth")?.sound).toBe("simmer");
     expect(ROOM_DETAIL_SHAPES.find((s) => s.key === "rd-bk-neon-box")?.sound).toBe("hum");
     expect(flat(KANAL_SPOTS.hideoHome, HIDEO_DOORWAY)).toBeLessThan(0.7);

@@ -3,6 +3,7 @@ import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia/market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
+import { KOI_BACK_PROPS, KOI_KITCHEN_VENT } from "./koi-back";
 import { BAY_DRAIN, COURIER_SPOT } from "./car-wash-detail";
 import { BOOTH_STEAM } from "./brama-detail";
 import { W3_CONTRACT_SITE_SPAWNS } from "./tessen-w3";
@@ -20,7 +21,7 @@ import {
   skin,
   v,
 } from "./builders";
-import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
+import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_BACK_ROOM_PROPS, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
 import { CAR_WASH_PLACE } from "./lublin/sites";
 import { ground, groundY, onPaving } from "./lublin/terrain";
 
@@ -86,15 +87,18 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,
+  // Neon Koi's back room to the yard, then the yard's own things (`docs/lokacje/koi-podworko.md`), last so the ids above stay.
+  ...KOI_BACK_ROOM_PROPS,
+  ...KOI_BACK_PROPS,
 ];
 
 /**
  * Where steam rises (the renderer's particles and the ambience's hiss): a manhole on the deptak
- * in front of the clinic and the car wash bay's drain, where the hot wash water steams under the
+ * in front of the clinic, the kitchen's extract behind Neon Koi and the car wash bay's drain, where the hot wash water steams under the
  * neon (`car-wash-detail.ts`; it hung 2 m over the slope north of the yard before, with nothing
  * there to come from, `docs/zasady-lokacji.md` §4).
  */
-export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), on(CAR_WASH_PLACE, BAY_DRAIN.x, BAY_DRAIN.z), BOOTH_STEAM];
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), on(CAR_WASH_PLACE, BAY_DRAIN.x, BAY_DRAIN.z), KOI_KITCHEN_VENT, BOOTH_STEAM];
 
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };

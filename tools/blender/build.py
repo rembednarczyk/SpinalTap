@@ -30,10 +30,11 @@ import alchemia_gallery  # noqa: E402
 import common  # noqa: E402
 import kits2  # noqa: E402
 import car_wash  # noqa: E402
+import koi_back  # noqa: E402
 import brama_krakowska  # noqa: E402
 
 # In the order the rooms came: their models' keys go into ROOM_DETAIL_SHAPES in the same order.
-ROOMS = [neon_koi, clinic, tessen_office, trasa, capsule, w3_basement, w3_hall, metro, alchemia_shelter, alchemia_p2, alchemia_p1, alchemia_foodhall, alchemia_gallery, common, kits2, car_wash, brama_krakowska]
+ROOMS = [neon_koi, clinic, tessen_office, trasa, capsule, w3_basement, w3_hall, metro, alchemia_shelter, alchemia_p2, alchemia_p1, alchemia_foodhall, alchemia_gallery, common, kits2, car_wash, koi_back, brama_krakowska]
 
 
 def main():

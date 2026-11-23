@@ -83,12 +83,13 @@ export interface ScreenFxDeps {
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
 /**
  * The vents' looks in the order of `STEAM_VENTS`: the manhole on the deptak, cold; the car wash's, pinkish under its
- * neon; the zapiekanki booth's hot plate by Brama Krakowska, warm under its bulb and small. A vent past them steams in
- * `STEAM_LOOK`, warm grey and thin.
+ * neon; the kitchen's extract behind Neon Koi, frying's vapour, warm grey; the zapiekanki booth's hot plate by Brama
+ * Krakowska, warm under its bulb and small. A vent past them steams in `STEAM_LOOK`, warm grey and thin.
  */
 const STEAM_LOOKS: readonly { readonly tint: Color4; readonly rate: number }[] = [
   { tint: new Color4(0.6, 0.74, 0.85, 0.3), rate: 22 },
   { tint: new Color4(0.8, 0.58, 0.64, 0.26), rate: 14 },
+  { tint: new Color4(0.78, 0.72, 0.66, 0.22), rate: 10 },
   { tint: new Color4(0.86, 0.76, 0.6, 0.2), rate: 8 },
 ];
 const STEAM_LOOK = { tint: new Color4(0.78, 0.72, 0.66, 0.22), rate: 10 } as const;
