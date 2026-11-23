@@ -38,7 +38,7 @@ A message from Kaito blinks on your optics. Short, like always when it's somethi
 KAITO: Mori sold the vial with your module. It didn't sit on the shelf long.
 KAITO: A boy with a Hebi snake on his neck bought it. Paid cash and asked if you're still alive.
 { choice_crash == "ren":
-    A Hebi snake on his neck. Ren had a tattoo like that. Ren, whose voice led you under the viaduct.
+    A Hebi snake on his neck. Ren had a tattoo like that. Ren, whose voice led you under Brama Krakowska.
 }
 You told them to sell the module to someone who likes other people's lives. Someone bought it within a day.
 ~ set_flag("seen:act2_opening")
@@ -72,7 +72,7 @@ Under a tarp strung between the antennas sits a skinny boy. A Hebi snake is tatt
     -> talk
 * { choice_crash == "wheel" } [I remember the crash. I turned. #tone:lifepath]
     SEKI: I remember the crash. I turned the wheel myself.
-    REN: And that's why you're alive. The drone was meant to steer you under the viaduct. Their crew was waiting there.
+    REN: And that's why you're alive. The drone was meant to steer you under the gate. Their crew was waiting there.
     -> talk
 * { choice_case == "opened" } [I saw a chip with my name. #tone:lifepath]
     SEKI: I saw a chip with my name on it. In that case.

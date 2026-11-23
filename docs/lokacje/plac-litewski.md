@@ -97,7 +97,6 @@ Zrobione 23.11 (gałąź `feat/scena-plac-litewski`, zrzuty przed i po nocą i w
 Zostaje:
 - Światło silnika z latarni zgiętego pastorału na auto (§13): dziś świeci tylko emisja szyb latarni. Potrzebny punkt światła bez modelu lampy gry (`PointLightDef` przy modelu `room-detail` albo nowy rodzaj lampy), czyli zmiana kontraktu widoku (`packages/core/src/ports`) albo światło sceny w `packages/engine/src/renderer` (ADR).
 - Próg między placem a jego wschodnim skrajem (§12, §16): ciemniejsza i brudniejsza nawierzchnia przy furgonetce i wraku (nakładka ADR-0077 albo plamy z generatora ADR-0096 w `tools/osm-import`).
-- Sprzeczność ink i gry: `recall_crash_night` mówi „mokra obwodnica… Jedź prosto do wiaduktu”, a wrak leży na deptaku. Ślady opon z Kapucyńskiej są już w scenie; zdanie w ink przenosi na „mokre Krakowskie Przedmieście” PR #955 (narracja).
 - Furgonetka: zaklejone szyby i uchylone tylne drzwi (skórka `van` jest blokiem z kitu, model z Blendera albo `vehicle-props`).
 - Pomniki (G-128) i fontanna (G-129): `packages/engine` i `tools/osm-import` według zgłoszeń.
 - 60-30-10 pierwszego kadru poza pasmem (baza 81,5%, światło 15,1%): deptak przed wrakiem potrzebuje światła ze źródła (witryny parteru, latarnie), osobno od sceny.

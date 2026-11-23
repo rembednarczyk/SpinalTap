@@ -286,6 +286,18 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t1-extract", services: true, sound: "vent" },
   { key: "rd-t1-stools", clutter: 8 },
   { key: "rd-t1-butts", fine: true, clutter: 6 },
+  // Alchemia's T2 under the Arkady (docs/lokacje/alchemia-t2-arkady.md, ADR-0102): the square's name cut in the memorial
+  // stone with its pebbles, candles and ribbon, the settlement's outline in the paving, the lookout's and the group's
+  // leavings.
+  { key: "rd-t2-tribute", clutter: 4 },
+  { key: "rd-t2-settlement", clutter: 0 },
+  { key: "rd-t2-lookout", fine: true, clutter: 6 },
+  { key: "rd-t2-hebi", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
   // Mori's clinic (docs/pomieszczenia/clinic.md, ADR-0102): Kaito's stool by the chair with his mug and his butts.
   { key: "rd-clinic-stool", clutter: 4 },
 ];
