@@ -36,7 +36,7 @@ Różnice:
 - Nowy rodzaj etykiety `MapLabelKind` „venue” w `buildCityMap`, wspólny dla zakładki mapy i minimapy:
   - lokale z importu z nazwą 2077 i rodzajem (`venue.kind.*`);
   - nazwane wnętrza (`interior.*`, klucz tłumaczony w UI) bez sklepów `within`, w środku ich największego pokoju.
-- Minimapa rysuje je jako małe ikony z nazwą tylko w swoim zasięgu (32 m). Zakładka mapy pokazuje je według przybliżenia jak zabytki, ale dopiero od widoku 600 m, bo jest ich kilkaset.
+- Minimapa rysuje je jako małe ikony z nazwą tylko w swoim zasięgu (32 m). Zakładka mapy pokazuje je według przybliżenia jak zabytki, ale dopiero od widoku 300 m (jedno przybliżenie od domyślnych 420 m), bo jest ich ponad 330.
 
 ## Zmiana względem ADR-0035
 Zdanie „Sklepy zniknęły” zastępuje reguła b). Reszta punktu „Minimapa” obowiązuje: fixerzy i cele przyjętych zleceń, cel jako obszar, zoom i wyprzedzenie.

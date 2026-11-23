@@ -34,9 +34,9 @@ const rect = (r: MapRectVm, className: string, key?: number) => (
   <rect key={key} className={className} x={r.x - r.w / 2} y={-(r.z + r.d / 2)} width={r.w} height={r.d} />
 );
 
-/** The minimap's names: the streets only, three metres high. */
-const STREET_NAMES: ReadonlySet<MapLabelKind> = new Set(["street"]);
-const NAME_SIZE = () => 3;
+/** The minimap's names: the streets, three metres high, and the venues near the player, two (ADR-0100). */
+const STREET_NAMES: ReadonlySet<MapLabelKind> = new Set(["street", "venue"]);
+const NAME_SIZE = (kind: MapLabelKind) => (kind === "venue" ? 2 : 3);
 /** Half the side of the window of the city drawn round the player, and its grid (ADR-0045). */
 const CITY_WINDOW = 100;
 const CITY_CELL = 32;

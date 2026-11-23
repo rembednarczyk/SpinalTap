@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, GameUi, type MapFloorVm, type MapVm, type UiIntents, type UiState, type UiStore, createUiStore, patchUi } from "../src";
 
-/** The minimap indoors (ADR-0100): the storey's rooms, its name and level, the street dimmed. */
+/** ADR-0100 on the minimap and the map tab: the storey indoors (its rooms, name and level, the street dimmed), the venues, the traders. */
 
 const intents = (): UiIntents => new Proxy({}, { get: () => vi.fn() }) as UiIntents;
 
@@ -59,6 +59,37 @@ describe("the minimap indoors (ADR-0100)", () => {
     expect(screen.getByTestId("minimap").classList.contains("minimap--indoor")).toBe(false);
     expect(screen.getByTestId("minimap").querySelectorAll(".minimap__room")).toHaveLength(0);
     expect(screen.getByTestId("minimap-level").textContent).toContain("6 m");
+  });
+});
+
+describe("the venues on the map (ADR-0100)", () => {
+  const venues: MapVm = {
+    ...map,
+    labels: [
+      { kind: "street", text: "Grodzka", x: 0, z: 0, angle: 0 },
+      { kind: "venue", text: "APTEKA GEMMA", x: 6, z: 4, angle: 0, venue: "pharmacy", color: "#ff2e88" },
+      { kind: "venue", text: "interior.clinic", key: true, x: -8, z: 2, angle: 0, venue: "interior" },
+      { kind: "venue", text: "LODOWY SALONIK", x: 400, z: 0, angle: 0, venue: "ice-cream", color: "#ff2e88" },
+    ],
+  };
+
+  it("draws the venues near the player on the minimap, an icon in its neon and the name, an interior's name translated", () => {
+    const store = mount({ screen: "playing", map: venues, mapPlayer: { x: 0, z: 0, yaw: 0 } });
+    const shown = screen.getAllByTestId("minimap-venue");
+    expect(shown.map((v) => v.querySelector("text")?.textContent)).toEqual(["APTEKA GEMMA", "Doctor Mori's clinic"]);
+    expect(shown[0]!.querySelector("circle")?.getAttribute("fill")).toBe("#ff2e88");
+    expect(shown[0]!.querySelector("title")?.textContent).toBe("Pharmacy");
+    polish(store);
+    expect(screen.getAllByTestId("minimap-venue")[1]!.textContent).toBe("Klinika doktora Mori");
+  });
+
+  it("shows them on the map tab only one step in from the default view", () => {
+    const store = mount({ screen: "playing", map: venues, mapPlayer: { x: 0, z: 0, yaw: 0 } });
+    act(() => patchUi(store, { characterTab: "map" }));
+    const tab = screen.getByTestId("city-map");
+    expect(tab.querySelectorAll("[data-testid=citymap-venue]")).toHaveLength(0);
+    fireEvent.click(within(tab).getByLabelText("Zoom in"));
+    expect(tab.querySelectorAll("[data-testid=citymap-venue]")).toHaveLength(3);
   });
 });
 

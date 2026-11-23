@@ -10,9 +10,14 @@ import { liftDistricts } from "../metro/metro-labels";
 import { type CityMapView, useMapView } from "./use-map-view";
 import { CityCrimes, CrimeCard } from "./crime-layer";
 
-/** Names on the map tab by zoom: streets and landmarks only close enough to read them; the metro layer names its own stations. */
+/**
+ * Names on the map tab by zoom: streets and landmarks only close enough to read them, the venues
+ * (ADR-0100, some 330 of them) only from one step in from the default view; the metro layer names its own stations.
+ */
+const VENUE_SPAN = 300;
 const kindsAt = (span: number, metro: boolean): ReadonlySet<MapLabelKind> => {
   const kinds: MapLabelKind[] = span <= 900 ? ["street", "district", "landmark", "station"] : span <= 1500 ? ["district", "landmark", "station"] : ["district", "station"];
+  if (span <= VENUE_SPAN) kinds.push("venue");
   return new Set(metro ? kinds.filter((k) => k !== "station") : kinds);
 };
 
@@ -21,6 +26,7 @@ const sizeAt =
   (span: number) =>
   (kind: MapLabelKind): number => {
     const base = span / 75;
+    if (kind === "venue") return Math.max(2, base * 0.8);
     return kind === "district" ? base * 2.4 : kind === "street" ? Math.max(2.5, base) : base * 1.15;
   };
 
