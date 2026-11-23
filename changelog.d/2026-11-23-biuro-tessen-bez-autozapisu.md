@@ -1,0 +1,1 @@
+- Wejście do biura przepustek w wieży W-3 nie zapisuje już gry, tak jak wejście do hali i piwnicy: za płotem W-3 zapis czeka na metro albo bramę.

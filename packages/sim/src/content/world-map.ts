@@ -33,7 +33,7 @@ import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS }
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
-import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, C7_PROPS, FRONT_GREEN_PROPS, FRONT_ROOM_MODELS, FRONT_PLAZA_PROPS, P1_CARS, P2_CARS, type P1Car, p1CarView, p2CarView } from "./alchemia";
+import { ALCHEMIA_CENTRE, ALCHEMIA_CUTS, ALCHEMIA_PROPS, ALCHEMIA_VAULTS, ALCHEMIA_HALL_PROPS, ALCHEMIA_ROOF_PROPS, C7_PROPS, FRONT_GREEN_PROPS, FRONT_ROOM_MODELS, FRONT_PLAZA_PROPS, P1_CARS, P2_CARS, T1_DETAIL, T1_FURNITURE, type P1Car, p1CarView, p2CarView } from "./alchemia";
 import { ALCHEMIA_NAV } from "./alchemia/nav";
 import { METRO_DOOR_LINK } from "./alchemia/metro-door";
 import type { GroundCut } from "../world/ground";
@@ -197,6 +197,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...barrierProps(WORLD_BARRIERS[c.id] ?? []),
         // The car wash scene's solids (ADR-0102 point 5) after them, so every street id before them stays.
         ...CAR_WASH_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
+        // T1's café garden and bin (its scene, ADR-0102), last, so the ids before them stay.
+        ...(c.id === ALCHEMIA_CHUNK ? furnitureProps(T1_FURNITURE) : []),
         // Lubartowska's 24-hour kiosk by the Hebi group (its scene, ADR-0102), last, so the ids before it stay.
         ...furnitureProps(LUBARTOWSKA_FURNITURE.filter((p) => mapChunkOf(p.x, p.z) === c.id)),
       ],
@@ -221,7 +223,7 @@ const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: 
  * came: the scenery's last views, so every id before them stays (a new room goes last). The scenes of the
  * locations' cards (ADR-0102) go the same way: Plac Litewski's wreck and its night.
  */
-export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(LUBARTOWSKA_DETAIL)];
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(T1_DETAIL), roomDetail(LUBARTOWSKA_DETAIL)];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and

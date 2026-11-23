@@ -84,11 +84,9 @@ Najczęściej Seki przychodzi z dostawą od Kaito: rampą wschodnią z T0 albo c
 - Teksty Hany mają mówić o miejscach, które są: o placu przed galerią i schronie pod T2.
 
 ## Dług sceny
-- Wózek Hany jako ręczny wózek z kołami, dyszlem, plandeką i skrzynką chłodzącą zamiast skrzyni 0,9 × 1,0 × 1,8 m: rysunek z nowego modelu (`tools/blender/` albo `food-cart`), bryła zostaje w `ALCHEMIA_MARKET_PROPS` (`packages/sim/src/content/alchemia/market.ts`), nowe bryły na końcu listy.
-- Skupiska drobiazgu przy wózku, przy okienku Fumiko i pod frontem: nowy plik treści w `packages/sim/src/content/alchemia/` (wzór `roof-dress.ts`), rysunek w `packages/engine/src/renderer/alchemia/`.
-- Modele stołków przed okienkiem Fumiko i ogródek przy zachodnim końcu frontu (`cafe-garden`): meble w treści placu (`packages/sim/src/content/alchemia/`), poza miejscami aktywności z `activity-spots.ts`.
+Zrobione 23.11 (`packages/sim/src/content/alchemia/t1-dress.ts`, `tools/blender/rooms/alchemia_t1.py`, test `packages/sim/test/alchemia-t1-scene.test.ts`): wózek Hany jako ręczny wózek z kołami, dyszlem, plandeką na pałąkach i otwartą skrzynką chłodzącą (bryła zostaje, rysuje ją model), akumulator lampy; daszek, noren, lampion i menu nad okienkiem Fumiko, wyciąg kuchni z szumem (`vent`) na otwartym powietrzu, trzy stołki z naczyniami na ladzie; skupiska niedopałków i puszek przy miejscach palaczy; ogródek (`cafe-garden`) przy zachodnim końcu frontu i kosz przy drzwiach Fumiko; brzęczenie skrzynki chłodzącej (`hum`). Teksty Hany o placu i schronie poprawione w #955. Zostaje:
 - Kałuże i mokra kostka po deszczu (§15): nawierzchnia placu w `packages/engine/src/renderer/alchemia/plaza-geometry.ts`.
-- Dźwięk okapu Fumiko i radia Hany: emitery w `packages/engine/src/audio/`.
-- Tekst Hany: „Będę przy wózku, na placu za straganami” i „w zagłębieniu przy ruinie za straganami”, „przy ruinie za straganami” w `packages/narrative/ink/{pl,en}/m4-targ.ink` (`offer`, `running`). Stragany są w galerii od ADR-0093 O3, a kryjówka w schronie pod T2 od etapu 5d2. Propozycja: „przy wózku, na placu przed galerią” i „w schronie pod placem przy Arkadach”.
-- Komentarz `CONTRACT_SITES` w `packages/core/src/contracts/contracts.ts`: „Podzamcze: the market under the viaduct over aleja Tysiąclecia” opisuje stan sprzed ADR-0063 etap 6; miejsce leży w Alchemii na Krakowskim, w paśmie targu.
+- Radio przy wózku: nowy rodzaj dźwięku w `RoomSound` i `room-scape.ts`.
+- Para z suchego lodu nad skrzynką: wylot pary (`STEAM_VENTS`) dopiero po scaleniu kolejki scen, bo kolejność wylotów wyznacza ich wygląd.
+- Ogródek bez miejsc do siedzenia: miejsca dają tylko meble z importu (`seats.ts`), a ogródek sceny ich nie dostaje; przenieść do importu albo dopisać miejsca w `activity-spots.ts`.
 - Pomiar §13: ujęcie `alchemia-tpp` nocą (T1 przed wejściem) w `tools/shots/room-spots.json` i `pnpm shots:palette`.
