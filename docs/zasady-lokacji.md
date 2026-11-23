@@ -150,3 +150,9 @@ Każda karta ma frakcję, która rządzi miejscem, a reguły §12–§15 dobiera
 - **Skala człowieka.** W każdym pomieszczeniu są przedmioty, po których gracz odczyta skalę: drzwi 2,1 m, blat 0,9 m, krzesło 0,45 m, poręcz 1,1 m. Bez nich wnętrze w NPR wygląda jak makieta.
 - **Ruch i życie.** Co najmniej jedna rzecz się rusza albo zmienia: wentylator, migająca świetlówka, para, ekran, człowiek przy pracy (§5).
 - **Karta z audytem.** Każda karta ma część `## Frakcja i zasady`: wiersz `Frakcja:` i listę §12–§17 z oceną (zgodne, dług) oraz tym, co trzeba zrobić. Test kart wymaga tej części. Dług trafia do kolejki w `docs/backlog.md` („Zasady pomieszczeń w całej grze”), jedno pomieszczenie na jedną gałąź i jeden PR.
+
+## 18. Karty lokacji i scenariusze (polecenie użytkownika 23.11, ADR-0102)
+- Każda lokacja gry poza wnętrzami, czyli dzielnica, plac, ulica, podwórko sceny, zabytek, wejście metra i plac budowy, ma kartę w `docs/lokacje/` z historią, klimatem, przeznaczeniem, topografią, inwentarzem docelowym, audytem §12–§17 i długiem sceny. Rejestr to `LOCATIONS` w `tools/rooms/src/locations.ts`.
+- Lokacja fabularna (scena aktu, miejsce postaci fabularnej, punkt zlecenia) i wnętrze fabularne mają dodatkowo scenariusz: pierwszy kadr, postacie i miejsca, przebieg, drogi, porę i stan świata oraz wymagania wobec sceny.
+- Detal i konfigurację sceny budujemy według karty i scenariusza. Dług sceny trafia do kolejki w `docs/backlog.md`.
+
