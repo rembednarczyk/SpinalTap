@@ -51,11 +51,16 @@ describe("the pavilion on Alchemia's corner (ADR-0074 stage 3)", () => {
     const ren = [...session.sim.world].find((e) => e.key === "ren")!;
     expect(ren.position.y).toBeCloseTo(ALCHEMIA_PAVILION.roof, 1);
     expect(Math.hypot(ren.position.x - REN_SPOT.x, ren.position.z - REN_SPOT.z)).toBeLessThan(0.3);
+    // Awake under his tarp (`docs/lokacje/alchemia-pawilon-dach.md`): sitting on his box or up for a cigarette, never asleep.
+    expect(["sit", "smoke"]).toContain(ren.activity);
     const want = Math.atan2(ren.position.x - me.position.x, ren.position.z - me.position.z);
     steps(session, 2, { ...EMPTY_INPUT, lookYaw: Math.atan2(Math.sin(want - me.yaw), Math.cos(want - me.yaw)) });
     expect(ui.getState().prompt ?? "").toContain("Ren");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue).not.toBeNull();
+    // He stands up to talk.
+    steps(session, 1);
+    expect(ren.activity).toBe("talk");
     const bag = session.sim.domain.loot.containers.find((c) => c.key === TARG_ROOF_STASH.key);
     expect(bag?.position).toEqual(TARG_ROOF_STASH.at);
   });
