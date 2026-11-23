@@ -11,7 +11,8 @@ import math
 
 from shapes import Model, hashf
 
-FILE = 'room-detail-props.glb'
+# A file of its own: Krakowskie's `room-detail-props.glb` (Neon Koi, the clinic, the shared detail) is near its 768 KiB.
+FILE = 'room-detail-myjnia-props.glb'
 
 # The gantry's legs stand this far either side of its middle, across the bay (the solids' centres).
 LEG_Z = 2.9
