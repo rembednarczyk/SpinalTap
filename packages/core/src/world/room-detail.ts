@@ -216,6 +216,19 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-k-office-chair", fine: true, clutter: 0 },
   { key: "rd-k-shredder", fine: true, clutter: 0 },
   { key: "rd-k-binders", fine: true, clutter: 6 },
+  // The roof of Alchemia's triangular pavilion, Ren's camp in act II (docs/lokacje/alchemia-pawilon-dach.md, ADR-0102): the bed
+  // on its pallets, the crate with what he keeps on it, the mast and the pole of the tarp, the bucket the tarp drips into, the
+  // kitchen's exhaust fan, the neon's transformer, the green lamp over the ladder, the Hebi snake by it and Ren's carabiner.
+  { key: "rd-ren-bed", clutter: 3 },
+  { key: "rd-ren-table", clutter: 7 },
+  { key: "rd-ren-mast" },
+  { key: "rd-ren-pole" },
+  { key: "rd-ren-bucket", clutter: 0, sound: "drip" },
+  { key: "rd-pav-extractor", sound: "vent" },
+  { key: "rd-pav-neon-box", clutter: 1, sound: "tubes" },
+  { key: "rd-pav-bulkhead" },
+  { key: "rd-pav-hebi", fine: true, clutter: 1 },
+  { key: "rd-pav-carabiner", fine: true, clutter: 1 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
