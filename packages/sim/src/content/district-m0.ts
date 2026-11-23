@@ -3,6 +3,7 @@ import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia/market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
+import { KOI_BACK_PROPS, KOI_KITCHEN_VENT } from "./koi-back";
 import { W3_CONTRACT_SITE_SPAWNS } from "./tessen-w3";
 import {
   type ActorDef,
@@ -83,13 +84,14 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   ...S7_INTERIORS,
   // Neon Koi's back room to the yard, then the yard's own things (`docs/lokacje/koi-podworko.md`), last so the ids above stay.
   ...KOI_BACK_ROOM_PROPS,
+  ...KOI_BACK_PROPS,
 ];
 
 /**
  * Where steam rises (the renderer's particles and the ambience's hiss): a manhole on the deptak
- * in front of the clinic and the vent behind the car wash.
+ * in front of the clinic, the vent behind the car wash and the kitchen's extract behind Neon Koi.
  */
-export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44))];
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44)), KOI_KITCHEN_VENT];
 
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };
