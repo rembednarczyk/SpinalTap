@@ -207,5 +207,5 @@ MORI: The vial's gone. I figure Kaito told you.
 -> END
 
 = after_seki
-MORI: The vial's still on the shelf. Nobody wants it. You don't either, do you?
+MORI: The vial's not with me anymore, and I don't miss it. You don't either, do you?
 -> END

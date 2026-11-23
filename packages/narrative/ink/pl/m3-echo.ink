@@ -207,5 +207,5 @@ MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
 -> END
 
 = after_seki
-MORI: Fiolka dalej stoi na półce. Nikt jej nie chce. Ty też nie, prawda?
+MORI: Fiolki już u mnie nie ma i wcale za nią nie tęsknię. Ty też nie, prawda?
 -> END

@@ -386,7 +386,7 @@ describe("act I: Echo (M3)", () => {
     const { runtime } = setup();
     const done = (ending: "aya" | "seki") => ({ ...createDomainState(), story: { choices: {}, ending, act2Ending: null, act3Ending: null } });
     expect(text(runtime.start("mori", done("aya")))).toContain("Aya. Jak głowa?");
-    expect(text(runtime.start("mori", done("seki")))).toContain("Fiolka");
+    expect(text(runtime.start("mori", done("seki")))).toContain("Fiolki już u mnie nie ma");
   });
 
   it("Kaito notices the first glitch while paying for the act I contract", () => {
