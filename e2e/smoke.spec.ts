@@ -54,8 +54,17 @@ test.describe("M0 smoke", () => {
     expect((await gameState(page)).alias).toBe("Seki Senshi");
 
     // Quicksave, move away, quickload: position and quest state come back.
+    // The toast lives 4.5 s of the wall clock (`TOAST_MS`): on a busy machine a frame can outlast it
+    // between two polls, so the page itself notes it, as with the loading screen above.
+    await page.evaluate(() => {
+      const w = window as unknown as { __savedSeen: boolean };
+      w.__savedSeen = false;
+      new MutationObserver(() => {
+        if ([...document.querySelectorAll(".toast__title")].some((t) => t.textContent?.includes("Game saved"))) w.__savedSeen = true;
+      }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
     await page.keyboard.press("F5");
-    await expect(page.getByText("Game saved")).toBeVisible();
+    await page.waitForFunction(() => (window as unknown as { __savedSeen: boolean }).__savedSeen, undefined, { timeout: 20_000 });
     const saved = await gameState(page);
     await step(page, 120, { moveZ: -1 });
     expect((await gameState(page)).player).not.toEqual(saved.player);
