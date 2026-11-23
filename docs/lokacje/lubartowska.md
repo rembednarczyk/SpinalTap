@@ -49,6 +49,11 @@ Frakcja: ulica, korporacja (skrzyżowanie alei miasta).
 - §16 częściowo: ulica na skraju korporacyjnej alei, ale miejsce nie ma żadnego znaku, że jest Hebi.
 - §17 częściowo: ruch aut i trolejbusów słychać ze źródła; nic poza tym. Ruch: auta, 2 Hebi; skala: latarnie, sygnalizatory, drzwi.
 
+## Scenariusz tła
+- Kto tu bywa: kierowcy i piesi na jednym z najruchliwszych węzłów miasta; dwóch Hebi z terytorium `lubartowska`, którzy obserwują skręcających na Podzamcze; ludzie z zakupami ze Społem w drodze przez aleję.
+- Co się dzieje: o każdej porze światła zmieniają się nad sześcioma pasami, a dwaj Hebi stoją przy słupie sygnalizacji i dają znać grupom przy halach i Dworcu, kto wjeżdża na Podzamcze; nocą ruch słabnie, ale skrzyżowanie nie zasypia („tylko Lubartowska nie śpi”).
+- Ślad obecności: torba z zakupami ze Społem przy słupie sygnalizacji, niedopałki przy szafce sterownika świateł, kartka z numerami rejestracyjnymi wetknięta za osłonę automatu.
+
 ## Dług sceny
 Zrobione 23.11 (`packages/sim/src/content/lubartowska-detail.ts`, test `packages/sim/test/lubartowska-scene.test.ts`): kiosk całodobowy (model gry `kiosk`, bryła w puli ulicy) przy kamienicy obok grupy Hebi, drobiazg z modeli ADR-0096 wokół grupy. Zostaje:
 - Rozwiązane 23.11 (gałąź `fix/terytoria-pamiec`): rdzeń w (528; 346), 54 m od kościoła; cały wylot na wschód od x 532 leży bliżej niż 50 m od kościoła albo miejsca pamięci. Test terytoriów pilnuje odstępu 50 m od kościołów i miejsc pamięci, a scena (kiosk, śmieci) idzie za rdzeniem z `TERRITORY_GROUPS`.
