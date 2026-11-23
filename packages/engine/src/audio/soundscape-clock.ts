@@ -4,6 +4,7 @@ import type { Graph } from "./audio-graph";
 import { FootstepClock } from "./footsteps";
 import type { LayeredMusic } from "./layered-music";
 import type { RadioPlayer } from "./radio";
+import type { RoomScape } from "./room-scape";
 import { DEFAULT_POSE } from "./spatial";
 import type { SynthVoices } from "./synth-voices";
 import type { W3Scape } from "./w3-scape";
@@ -16,6 +17,8 @@ export interface SoundscapeParts {
   readonly music: LayeredMusic;
   readonly radio: RadioPlayer;
   readonly w3: W3Scape;
+  /** The rooms' steady sounds from their things (§17). */
+  readonly rooms: RoomScape;
 }
 
 /**
@@ -41,6 +44,7 @@ export class SoundscapeClock {
     const now = g.ctx.currentTime;
     this.parts.ambient.updatePositional(pose, now, false);
     this.parts.w3.update(pose, now);
+    this.parts.rooms.update(pose, now);
     // Under W-3's roof the street's rain and traffic come through dull.
     this.parts.ambient.setStreetLevel(W3_STREET_LEVEL[this.parts.w3.place], now);
   }
@@ -55,6 +59,7 @@ export class SoundscapeClock {
     music.refresh(g, now);
     ambient.updatePositional(this.pose, now, true);
     this.parts.w3.update(this.pose, now, true);
+    this.parts.rooms.update(this.pose, now);
     ambient.setStreetLevel(W3_STREET_LEVEL[this.parts.w3.place], now);
   }
 
@@ -72,7 +77,10 @@ export class SoundscapeClock {
     // Like the score, the radio plays once the soundscape runs (autoStart or startAmbience).
     if (music.running) radio.schedule(g, now, mood);
     ambient.tick(g, now);
-    if (music.running) this.parts.w3.tick(g, now);
+    if (music.running) {
+      this.parts.w3.tick(g, now);
+      this.parts.rooms.tick(g, now);
+    }
     const n = this.steps.take(this.pose.speed, dt, now);
     for (let i = 0; i < n; i++) voices.footstep(g, now + 0.01 + i * 0.05, this.pose.speed, this.steps);
   }

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { CLINIC_DETAIL, KOI_DETAIL, METRO_PLATFORMS, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
+import { CLINIC_DETAIL, INTERIORS, KOI_DETAIL, METRO_PLATFORMS, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
 import { INDOOR_RIG, ROOM_RIG, indoorRig } from "../src/npr/lighting";
-import { LIT_ROOMS, ROOM_LAMPS, ROOM_LAMPS_ON, roomLampsFor } from "../src/renderer/rooms/room-lights";
+import { RoomsInterior } from "../src/renderer/rooms/room-interior";
+import { DIM_ROOMS, LIT_ROOMS, ROOM_LAMPS, ROOM_LAMPS_ON, roomLampsFor } from "../src/renderer/rooms/room-lights";
 
 /*
  * The old town's rooms and Tessen's office in their interior mode (`docs/zasady-lokacji.md` §13): every lamp hangs in
@@ -54,5 +55,17 @@ describe("the small rooms' practicals (§13)", () => {
     expect(indoorRig("room", 0)).toBe(ROOM_RIG);
     expect(indoorRig("room", 1)).toBe(ROOM_RIG);
     expect(indoorRig("w3", 0.5)).toBe(INDOOR_RIG);
+  });
+
+  it("dims the Trasa Podziemna and the capsule under the room's rig and leaves their own lamps their slots", () => {
+    const added: string[] = [];
+    const rooms = new RoomsInterior({ addLight: (k) => void added.push(k), removeLight: () => undefined });
+    for (const id of DIM_ROOMS) {
+      const r = INTERIORS.find((i) => i.id === id)!.rooms[0]!;
+      rooms.update({ x: (r.minX + r.maxX) / 2, y: r.bottom + 1, z: (r.minZ + r.maxZ) / 2 });
+      expect(rooms.interior, id).toBe(true);
+      expect(rooms.lightScope, id).toBeNull();
+    }
+    expect(added).toEqual([]);
   });
 });

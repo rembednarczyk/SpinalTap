@@ -38,7 +38,7 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 - §15 dług: czarne szkło i szczotkowana stal lady.
 - Partia 2 ADR-0099: fotel na kółkach odsunięty od biurka (`rd-k-office-chair`), niszczarka przy biurku (`rd-k-shredder`), segregatory na szafce (`rd-k-binders`). Na telefonie bez nich (drobny detal, budżet bloku W-3).
 - §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
-- §17 do sprawdzenia: szum pomp zza ściany.
+- §17 do sprawdzenia: szum pomp zza ściany. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): świetlówki i buczenie szafy sterowniczej, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

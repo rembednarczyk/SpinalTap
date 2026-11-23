@@ -306,12 +306,17 @@ uniform vec3 silhouette;
 uniform vec3 fogColor;
 uniform float fogDensity;
 uniform float lit;
+// Night 0 .. day 1: by day the towers take the aerial perspective (their colours paled towards the haze's grey-blue),
+// their windows dark glass with the sky in it instead of warm lit dots.
+uniform float day;
 #define BODY_GLOW ${BODY_GLOW.toFixed(1)}
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void main(void) {
   vec3 n = normalize(vNormal);
   float seed = fract(vSeed);
-  vec3 col = silhouette * vColor.rgb * (abs(n.x) > 0.5 ? 1.5 : 1.15);
+  float grey = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 body = mix(vColor.rgb, vec3(grey) * vec3(0.92, 0.97, 1.06), 0.8 * day);
+  vec3 col = silhouette * body * (abs(n.x) > 0.5 ? 1.5 : 1.15);
   if (n.y > 0.5) col *= 0.7;
   vec3 glow = vec3(0.0);
   if (vSeed > BODY_GLOW - 0.5) {
@@ -332,7 +337,9 @@ void main(void) {
     float detail = 1.0 - smoothstep(900.0, 1800.0, vDist);
     // Far off: the floors' average glow in one warm colour (single windows would alias into blotches).
     vec3 avg = vec3(1.0, 0.7, 0.45) * 0.09 * band * (0.6 + 0.4 * step(0.5, fract(vLocal.y / 25.0)));
-    glow = lit * mix(avg, wc * inWin * on, detail);
+    glow = lit * (1.0 - day) * mix(avg, wc * inWin * on, detail);
+    // By day the panes are dark glass with the haze in them, in whole floors as the lit ones at night.
+    col = mix(col, fogColor * 0.7, inWin * band * detail * day * 0.55);
   }
   float fog = clamp(1.0 - exp(-pow(vDist * fogDensity * 0.045, 2.0)), 0.0, 0.82);
   col = mix(col, fogColor * 1.15, fog) + glow * (1.0 - 0.6 * fog);
@@ -386,7 +393,7 @@ export class MapSkyline {
     const plan = withLandmarks(planSkyline(MEGA_SITES, [], layout), layout);
     const towers = new ShaderMaterial("map-skyline", scene, { vertexSource: TOWER_VERTEX, fragmentSource: TOWER_FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
-      uniforms: ["viewProjection", "eye", "shell", "silhouette", "fogColor", "fogDensity", "lit"],
+      uniforms: ["viewProjection", "eye", "shell", "silhouette", "fogColor", "fogDensity", "lit", "day"],
     });
     this.add(scene, "map-skyline", plan.towers, towers);
     this.lights = withLights
@@ -444,6 +451,7 @@ export class MapSkyline {
       m.setColor3("fogColor", Color3.FromHexString(rig.fogColor));
       m.setColor3("silhouette", Color3.FromHexString(mixHex(NIGHT_SILHOUETTE, DAY_SILHOUETTE, t)));
       m.setFloat("lit", 1 - 0.7 * t);
+      m.setFloat("day", t);
       m.setFloat("intensity", 1 - 0.55 * t);
     }
   }

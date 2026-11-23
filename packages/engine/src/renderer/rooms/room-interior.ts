@@ -1,7 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import { interiorAt } from "@seki/sim";
 import type { ToonMaterials } from "../../npr/toon-material";
-import { LIT_ROOMS, ROOM_LAMP_PREFIX, type RoomLamp, roomLampsFor } from "./room-lights";
+import { DIM_ROOMS, LIT_ROOMS, ROOM_LAMP_PREFIX, type RoomLamp, roomLampsFor } from "./room-lights";
 
 /** Where the rooms' lamps go: the toon materials' point lights, or a stand-in that reaches them later. */
 export type RoomLights = Pick<ToonMaterials, "addLight" | "removeLight">;
@@ -24,7 +24,7 @@ export class RoomsInterior {
 
   /** Only the room's own lamps light it from inside (`ToonMaterials.setLightFocus`). */
   get lightScope(): string | null {
-    return this.interior ? ROOM_LAMP_PREFIX : null;
+    return this.interior && this.held !== null && LIT_ROOMS.has(this.held) ? ROOM_LAMP_PREFIX : null;
   }
 
   /** The lamps on now (tests, debug). */
@@ -35,9 +35,9 @@ export class RoomsInterior {
   /** Call once per frame with the eye. */
   update(eye: Vec3): void {
     const at = interiorAt(eye, this.held, HOLD);
-    this.held = at && LIT_ROOMS.has(at.id) ? at.id : null;
+    this.held = at && (LIT_ROOMS.has(at.id) || DIM_ROOMS.has(at.id)) ? at.id : null;
     this.interior = this.held !== null;
-    this.light(this.held ? roomLampsFor(this.held, eye) : []);
+    this.light(this.held && LIT_ROOMS.has(this.held) ? roomLampsFor(this.held, eye) : []);
   }
 
   private light(next: readonly RoomLamp[]): void {

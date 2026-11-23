@@ -73,7 +73,7 @@ Nowe kształty wchodzą rodzinami (jedna partia na rodzinę), a nie pokojami, wi
 3. Partia modeli 1: wspólny drobiazg i oznakowanie (śmieci, kable, kartony, kubki, papiery, znaki wyjścia, tablice, gaśnice, kratki, plamy i kałuże). Jedna partia, jeden wypiek.
 4. Partia modeli 2: zestawy rodzajów (sklepy według branż, kuchnie, perony, biura, przemysł).
 5. Rozstawienie we wszystkich wnętrzach i przegląd zrzutami każdej karty, przed i po.
-6. Połysk i wilgoć (§15) oraz dźwięk ze źródła (§17) z tych samych kotwic.
+6. Połysk i wilgoć (§15) oraz dźwięk ze źródła (§17) z tych samych kotwic. Stan 22.11: dźwięk ze źródła zrobiony z rejestru kształtów (`sound` w `ROOM_DETAIL_SHAPES`, każde postawienie to emiter; `room-sound-map.ts` i `RoomScape`, wzorzec pokoi z middleware dźwięku przestrzennego: w pełni w swoim pomieszczeniu, ciszej i przez filtr zza ściany). Połysk: próba znacznika w palecie zestawu miejskiego (gałąź feat/polysk-wilgoc) dała efekt prawie niewidoczny, bo odblask toon jest tylko blisko lampy; do zaprojektowania mokre miejsca pod lampami pomieszczeń.
 
 ## Konsekwencje
 - Mniej PR-ów i bez stosów. Jedna reguła dla wszystkich pokoi, więc łatwiej utrzymać zasady.

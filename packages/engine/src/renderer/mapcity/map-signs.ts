@@ -79,7 +79,17 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 12.5) {
+  if (kind > 13.5) {
+    // A hologram board over its projector (a building site's, ADR-0087, 22.11): a pane of light, brightest at its
+    // frame and at its foot by the lens, scanlines running up it, a flicker now and then; its letters on top of it.
+    float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+    float frame = 1.0 - smoothstep(0.01, 0.028, edge);
+    float scan = 0.6 + 0.4 * sin(uv.y * 150.0 - time * 5.0 * (1.0 - reduce));
+    float flick = 1.0 - 0.45 * step(0.975, hash(vec2(floor(time * 8.0), seed * 29.0))) * (1.0 - reduce);
+    float fres = 1.0 - vFacing;
+    a = ((0.09 + 0.1 * (1.0 - uv.y)) * scan + frame * (0.6 + 0.5 * fres)) * flick * hum;
+    col = mix(col, vec3(1.0), frame * 0.25);
+  } else if (kind > 12.5) {
     // A big screen's picture (ADR-0074 C4): lit as a whole, its picture its colour.
     col = screenPicture(uv, seed, col, time, reduce);
     a = 1.0;
