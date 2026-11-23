@@ -39,8 +39,8 @@ describe("street furniture of ADR-0058 stage 2", () => {
     // OSM's eleven cash machines less one indoors and one whose wall gives onto the carriageway of
     // Kozia; two more stand where the game's own set pieces are.
     expect(ofKind("atm").length).toBeGreaterThanOrEqual(7);
-    // The seven pillar hydrants of OSM in the chunks (data/osm/points/hydrants.json; the seventh in Podzamcze's row north of z 580).
-    expect(ofKind("hydrant").length).toBe(7);
+    // The nine pillar hydrants of OSM in the chunks (data/osm/points/hydrants.json; three in Podzamcze's row north of z 580).
+    expect(ofKind("hydrant").length).toBe(9);
     expect(ofKind("food-cart").length).toBeGreaterThanOrEqual(5);
     expect(ofKind("container").length).toBe(6);
     // Three food carts by the market on Ruska; the containers on the Giełda na Kresowej (its part in the chunks).

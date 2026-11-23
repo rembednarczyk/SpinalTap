@@ -54,7 +54,7 @@ describe("street furniture of ADR-0058 stage 2 (generator)", () => {
     const hydrants = JSON.parse(readFileSync(join(REPO, "data/osm/points/hydrants.json"), "utf8")) as { hydrants: [number, number, number, string, string][] };
     const pillars = hydrants.hydrants.filter((h) => h[3] === "pillar");
     expect(group.osm).toEqual(pillars.map((h) => `n${h[0]}`));
-    expect(of("hydrant").length).toBe(7);
+    expect(of("hydrant").length).toBe(9);
     for (const h of of("hydrant")) {
       expect(Math.min(...group.points!.map(([x, z]) => Math.hypot(x - h.x, z - h.z)))).toBeLessThanOrEqual(3);
       expect(["road", "building"]).not.toContain(site.surfaceAt(h));
