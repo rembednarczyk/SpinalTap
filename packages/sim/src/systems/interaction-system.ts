@@ -222,6 +222,7 @@ export const interactionSystem: System = {
         return;
       }
       session.dialogueActive = true;
+      session.talkingTo = best.id;
       session.focusId = null;
       session.focusPrompt = null;
       ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
