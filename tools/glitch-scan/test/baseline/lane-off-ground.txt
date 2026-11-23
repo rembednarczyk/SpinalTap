@@ -1,2 +1,0 @@
-# lane-off-ground: grid 10 m (x,z = the square's corner at its least x and z)
-podzamcze-2-2 990,590

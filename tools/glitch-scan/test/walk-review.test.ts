@@ -79,8 +79,7 @@ describe("walk-blocked after the curator's review (ADR-0080 PR 4)", () => {
   });
 
   it("C: counts the way along a way, not the bank across the strip beside its axis", () => {
-    // 840,550 left the list on 23.11: the NMT fetched for the new row of Podzamcze (DTM_PL-KRON86-NH) has no bank there.
-    const across = ["970,470", "940,480", "1070,190", "1080,210", "550,130", "740,-180", "620,120", "750,-150", "760,180", "770,190", "720,150"];
+    const across = ["840,550", "970,470", "940,480", "1070,190", "1080,210", "550,130", "740,-180", "620,120", "750,-150", "760,180", "770,190", "720,150"];
     for (const sq of across) {
       expect(pairsIn(sq), sq).toEqual([]);
       expect(pairsIn(sq, ACROSS).length, sq).toBeGreaterThan(0);

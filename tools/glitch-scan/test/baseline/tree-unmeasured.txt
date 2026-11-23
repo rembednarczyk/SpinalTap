@@ -1,3 +1,0 @@
-# tree-unmeasured: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-podzamcze-2-2 1107,614
-podzamcze-2-2 1107,617
