@@ -1,0 +1,1 @@
+- Wspomnienie nocy wypadku prowadzi pod Bramę Krakowską zamiast pod wiadukt, którego na Krakowskim Przedmieściu nie ma; tak samo mówi o tym Ren w akcie II.
