@@ -71,7 +71,7 @@ const standing = (g: Placement, props: readonly StaticProp[]): StaticProp[] =>
  * paving (G-130), drawn by its model of the scene (`plac-litewski-detail.ts`, `rd-lit-wreck`), its front to the north.
  */
 const WRECK_HEIGHT = 1.25;
-export const WRECK_BODY: StaticProp = onPaving(placeProps(WRECK, [{ ...crate(2.6, -31, 1.9, WRECK_HEIGHT, 4.5, skin("wreck", "z+")), scenery: true }]))[0]!;
+export const WRECK_BODY: StaticProp = onPaving(placeProps(WRECK, [{ ...crate(2.6, -30.9, 1.9, WRECK_HEIGHT, 4.5, skin("wreck", "z+")), scenery: true }]))[0]!;
 /** Where the wreck's model stands: the middle of its solid's foot. */
 export const WRECK_FOOT: Vec3 = v(WRECK_BODY.center.x, WRECK_BODY.center.y - WRECK_HEIGHT / 2, WRECK_BODY.center.z);
 
@@ -81,7 +81,7 @@ export const WRECK_FOOT: Vec3 = v(WRECK_BODY.center.x, WRECK_BODY.center.y - WRE
  * which gives way to it. The camera's rays pass them, as street furniture.
  */
 const WRECK_NIGHT: readonly StaticProp[] = standing(WRECK, [
-  { ...crate(4.0, -30.5, 1.1, 0.95, 0.56), scenery: true, seeThrough: true },
+  { ...crate(4.0, -30.4, 1.1, 0.95, 0.56), scenery: true, seeThrough: true },
   { ...crate(5.0, -30.83, 0.8, 1.8, 0.65), scenery: true, seeThrough: true },
 ]);
 
