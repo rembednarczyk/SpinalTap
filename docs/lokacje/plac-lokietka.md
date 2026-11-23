@@ -48,6 +48,11 @@ Frakcja: korporacja, ulica (urząd miasta nad deptakiem).
 - §16 częściowo: porządek urzędu (korporacja) jest, brud ulicy tylko na pierzei południowej; brak stróża albo kamery Ratusza, która mówiłaby, czyj to plac.
 - §17 dług: sieć trolejbusowa i budki bez dźwięku źródła, brak emiterów (emitery są tylko z `DISTRICT_M0_PROPS`). Ruch: tłum i trolejbusy; skala: ławki, słupki, drzwi Ratusza.
 
+## Scenariusz tła
+- Kto tu bywa: urzędnicy Nowego Ratusza w drodze na przerwę; turyści przy makiecie Lublina i koziołkach Onufrym i Janie; ludzie z deptaka idący przez Bramę Krakowską na Stare Miasto albo w dół Lubartowskiej do Alchemii; pasażerowie wejścia A metra; za dnia Hina szukająca kota (`enc_s7_neko`).
+- Co się dzieje: rano urzędnicy przechodzą placem do Ratusza, w dzień budki z jedzeniem obsługują kolejki, a przewodnicy zbierają grupy przy makiecie; wieczorem plac pustoszeje szybciej niż deptak, bo za Bramą Krakowską zaczyna się Stare Miasto Hebi.
+- Ślad obecności: kubek bubble tea z GanBei przy makiecie, niedopałki przy pawilonie metra, ulotki z budek przy ławkach.
+
 ## Dług sceny
 - Kamera i holo-tablica na fasadzie Ratusza (urząd pilnuje placu): urządzenie w `packages/sim/src/content/devices.ts`, tablica w przepisie Ratusza w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`.
 - Zielone światło nad otworem pawilonu metra A (433; −107) jako światło drogi: `packages/sim/src/content/metro-pavilion.ts` (lampa na końcu listy rekwizytów pawilonu).
