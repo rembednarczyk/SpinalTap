@@ -10,11 +10,11 @@ W 2077 roku targ spod wiaduktu na alei Tysiąclecia od kilku lat stoi w Alchemii
 Przed chwilą (cel sceny, §5): Ren rozpiął nową plandekę, bo w nocy przeciekała. Puszka energetyka jeszcze się poci, czytnik chipów miga na zielono, a do wiadra pod rogiem plandeki kapie woda.
 
 ## Klimat
-- **Światło:** od południa cyjanowy neon ALCHEMIA na tablicy nad dachem (akcent; od strony dachu litery czyta się wspak), od dołu ciepła poświata szkła restauracji (`shop-warm`, w nocy pawilon świeci jak latarnia, ADR-0074 §6). Nad wschodnią attyką wiszą trzy girlandy lampionów deptaka, rozpięte z attyki pawilonu do kamienicy w66286394 (`deptak-night.ts`, z −7,2, −4,2 i −1,2, na wysokości 4,4). Na zachodzie żółte światło osi wejścia głównego i pasy LED pod L2. Obóz Rena nie ma dziś własnego światła (dług).
-- **Dźwięk:** z dołu deptak bez aut (T-324): stragany, okienko z cebularzami, przechodnie przy przystanku. Bliżej brzęczy neon. Kiedy pada, deszcz bębni o membranę dachu i plandekę. W grze dach nie ma własnych źródeł dźwięku (dług).
-- **Zapach:** smażone ciasto z deptaka, mokra papa, para z wyciągu kuchni (docelowo).
-- **Kontrast (§3):** chip z zapisem całego życia w foliowym woreczku leży obok koca na paletach. Pod spodem jest szklana restauracja z planu inwestora.
-- **Ruch i życie:** przechodnie i stoiska w dole, girlandy na wietrze (docelowo), Ren obracający fiolkę.
+- **Światło:** od południa cyjanowy neon ALCHEMIA na tablicy nad dachem (akcent; od strony dachu litery czyta się wspak), od dołu ciepła poświata szkła restauracji (`shop-warm`, w nocy pawilon świeci jak latarnia, ADR-0074 §6). Nad wschodnią attyką wiszą trzy girlandy lampionów deptaka, rozpięte z attyki pawilonu do kamienicy w66286394 (`deptak-night.ts`, z −7,2, −4,2 i −1,2, na wysokości 4,4). Na zachodzie żółte światło osi wejścia głównego i pasy LED pod L2. Obóz Rena świeci ciepło lampką kempingową na skrzynce po amunicji, a stopa drabiny zieloną lampą w kloszu z kratką na narożniku zaplecza.
+- **Dźwięk:** z dołu deptak bez aut (T-324): stragany, okienko z cebularzami, przechodnie przy przystanku. Na dachu brzęczy transformator neonu przy słupku tablicy, szumi wentylator wyciągu kuchni nad zapleczem i kapie woda z plandeki do wiadra (emitery `room-detail`, ADR-0099 etap 6). Kiedy pada, deszcz bębni o membranę dachu i plandekę.
+- **Zapach:** smażone ciasto z deptaka, mokra papa, para z wyciągu kuchni.
+- **Kontrast (§3):** chip z zapisem całego życia w foliowym woreczku leży w czytniku na skrzynce po amunicji, obok puszki z niedopałkami, a materac leży na paletach. Pod spodem jest szklana restauracja z planu inwestora.
+- **Ruch i życie:** przechodnie i stoiska w dole, Ren siedzi pod plandeką i co jakiś czas wstaje zapalić przy attyce, kapie woda, z wyciągu idzie para (rysowana na stałe), girlandy na wietrze (docelowo).
 
 ## Przeznaczenie
 - Krok `meet_ren` zadania `m3_lustro`: rozmowa `ren_odagiri.first_meeting`, chip od Rena i wspomnienie `rooftop`. Potem powroty: `waiting`, `under_fire` w czasie zasadzki, `finale` po pokonaniu czyścicieli, a w akcie III po zakończeniu „hebi” trop do Zamku (`zrodlo_ren`).
@@ -30,30 +30,30 @@ Przed chwilą (cel sceny, §5): Ren rozpiął nową plandekę, bo w nocy przecie
 - Odstępstwa celowe: T-230 (bryła z planu inwestora, mniejsza niż „ok. 18 × 15 m”, bo boki wyznaczają chodniki; po O2b 12,9 × 14,7 m) i T-231 (zaplecze z drabiną, tablica neonu do 6,2 m nad posadzką, 1,2 m ponad limit 5 m z §1). Deptak Lubartowskiej bez aut to T-324.
 
 ## Inwentarz docelowy
-- **Architektura:** membrana dachu ze spadkiem do wpustu i kałużą przy nim; obróbka blacharska attyki; koryto kablowe od tablicy neonu do skrzynki zasilania; kotwy girland deptaka na wschodniej attyce (są, `deptak-night.ts`); wyrzutnia wyciągu kuchni restauracji nad zapleczem. Źródło: bryły w `pavilion.ts`, rysunek w `renderer/alchemia/pavilion-geometry.ts`.
-- **Duże obiekty:** tablica neonu ALCHEMIA na dwóch słupkach (jest, silnik); agregat wyciągu z wentylatorem i parą (Blender, nowy skrypt w `tools/blender/`); maszt z anteną satelitarną (ADR-0096, antena Duane's Mind); obóz Rena: plandeka rozpięta między słupkiem tablicy a masztem, materac na dwóch paletach, skrzynka po amunicji jako stolik (Blender; palety i kartony z Street Asset Pack, ADR-0096); torba Hebi jako model torby, a nie ogólny pojemnik.
+- **Architektura:** membrana dachu ze spadkiem do wpustu i kałużą przy nim (wpust i kałuża są, `rd-c-drain`, `rd-c-puddle`; spadek nie); obróbka blacharska attyki (dług); zasilanie neonu z dachu: skrzynka transformatora za zachodnim słupkiem z rurką po słupku do tablicy (jest, `rd-pav-neon-box`, zamiast koryta, bo skrzynka stoi pod tablicą); kotwy girland deptaka na wschodniej attyce (są, `deptak-night.ts`); wyrzutnia wyciągu kuchni restauracji nad zapleczem (jest, `rd-pav-extractor`). Źródło: bryły w `pavilion.ts` i `pavilion-roof-dress.ts`, rysunek w `renderer/alchemia/pavilion-geometry.ts` i `pavilion-tarp.ts`, modele w `tools/blender/rooms/alchemia_pavilion.py`.
+- **Duże obiekty:** tablica neonu ALCHEMIA na dwóch słupkach (jest, silnik); wentylator dachowy wyciągu z parą (jest, Blender); maszt z małą anteną talerzową na uchwytach do attyki (jest, Blender `rd-ren-mast`; duża antena Duane's Mind z ADR-0096 stoi na podeście 2,3 × 2,6 m, który nie mieści się na dachu szerokim na 5 m); obóz Rena: plandeka rozpięta między tablicą, masztem i drągiem przy wschodniej attyce (jest, silnik), materac na dwóch europaletach (jest, Blender `rd-ren-bed`; Street Asset Pack nie ma palet), skrzynka po amunicji jako stolik (jest, `rd-ren-table`), karton i worek ze Street Asset Pack (`ex-box-b`, `ex-bag-b`, ADR-0096); torba Hebi jako torba podróżna (jest, torba łupu w `renderer/props.ts`).
 - **Drobiazg w skupiskach (§14):**
-  - obóz: śpiwór, termos, dwie puszki energetyka, puszka z niedopałkami, czytnik chipów z kablem do powerbanku, lampka kempingowa, wiadro pod rogiem plandeki;
-  - głowica drabiny: karabińczyk na szczeblu, rozdeptana ulotka targu, wąż Hebi wymalowany sprayem na zapleczu (`graffiti` z modeli gry);
-  - przy tablicy: taśma na złączu neonu, plombowana skrzynka zasilania.
+  - obóz: śpiwór, termos, dwie puszki energetyka, puszka z niedopałkami, czytnik chipów z kablem do powerbanku, lampka kempingowa, wiadro pod rogiem plandeki (są, w `rd-ren-bed`, `rd-ren-table`, `rd-ren-bucket`);
+  - głowica drabiny: karabińczyk na poręczy drabiny, rozdeptana ulotka targu (`rd-c-papers`), wąż Hebi wymalowany sprayem na zapleczu obok drabiny (są; wąż jako `rd-pav-hebi` z Blendera, bo `graffiti` z gry nie ma węża);
+  - przy tablicy: taśma na złączu neonu, plombowana skrzynka zasilania (są, `rd-pav-neon-box`).
 
 ## Frakcja i zasady
 Frakcja: ulica, technika (obóz kuriera Hebi z czytnikiem chipów na szklanym dachu restauracji z planu inwestora).
-- §12 częściowo: drabina i przerwa 1,3 m w attyce to ciasny próg, po którym dach otwiera się na panoramę Starego Miasta (zgodne). Próg zmienia światło z żółtego placu T0 na cyjan neonu i niebo (zgodne). Obrys idzie po chodnikach z danych, więc wymiary są poza siatką 0,5 m z powodu §1; zaplecze 4 × 4,5 m leży na siatce.
-- §13 dług: brak pomiaru 60-30-10. Na dachu jest tylko akcent (neon) i poświata z dołu, a światła motywowanego z obozu nie ma: Ren stoi w ciemności. Stopa drabiny nie ma światła nawigacji.
-- §14 dług: dach jest pusty, makro to tylko tablica neonu, mezo i mikro po zero. Torba to ogólny pojemnik łupu.
-- §15 dług: membrana i attyka są matowe, bez kałuży i bez mokrej plandeki, choć deszcz ma tu skąd przyjść.
-- §16 częściowo: kontrast ulicy i szklanej bryły wynika z miejsca, ale po stronie ulicy na dachu nie ma żadnego przedmiotu.
-- §17 dług: brak źródeł dźwięku na dachu (brzęczenie neonu, wentylator wyciągu, kapanie). Skalę daje attyka 1,0 m i drabina. Ruchu na dachu nie ma: Ren stoi bez czynności, para i girlandy nie istnieją.
+- §12 częściowo: drabina i przerwa 1,3 m w attyce to ciasny próg, po którym dach otwiera się na panoramę Starego Miasta (zgodne). Próg zmienia światło z zielonej lampy nad stopą drabiny i żółtego placu T0 na cyjan neonu, ciepłą lampkę obozu i niebo (zgodne). Obrys idzie po chodnikach z danych, więc wymiary są poza siatką 0,5 m z powodu §1; zaplecze 4 × 4,5 m leży na siatce. Dług: przesmyk między dachem zaplecza a dachem trójkąta ma między narożnikami obrysu 0,97 m, a attyka (0,25 m z obu stron, ze skosami w narożnikach wklęsłych) zamyka go całkiem; gracz (promień 0,38 m) staje w (427,9; −2,7), 2,2 m od Rena (rozmowa sięga 2,4 m), a do torby (zasięg 1,6 m) nie dojdzie (glitch do zgłoszenia, poprawka w obrysie zaplecza).
+- §13 częściowo: akcent to neon ALCHEMIA, światło motywowane to lampka kempingowa na skrzynce (ciepła, przycięta nad dachem), a stopa drabiny i drzwi zaplecza mają zieloną oprawę w barwie drogi (`pavilion-lamps.ts`). Pomiar 60-30-10 nocą z głowicy drabiny (`alchemia-pawilon-dach` w `tools/shots/room-spots.json`): PALETA.
+- §14 zgodne: makro to tablica, wyciąg, maszt, drąg i łóżko na paletach (bryły), mezo to skrzynka-stolik, karton, worek, wiadro, skrzynka transformatora i oprawa, mikro leży w trzech skupiskach (na skrzynce: lampka, termos, dwie puszki, niedopałki, czytnik z chipem i powerbank; na łóżku: śpiwór, kurtka, kabel; przy głowicy drabiny: karabińczyk, ulotka, wąż Hebi). Torba Hebi to torba podróżna z uchwytami i paskiem.
+- §15 częściowo: obok matowej membrany i attyki jest kałuża przy wpuście, woda w wiadrze i mokra plandeka ciemniejąca ku niskiemu narożnikowi, skąd kapie. Kanału `wet` sondy w siatce Alchemii nie ma (kolory zestawu miasta), więc połysk jest tylko w barwie (dług).
+- §16 zgodne: ulica i technika na szklanym dachu restauracji z planu inwestora: niebieska plandeka, palety, skrzynka po amunicji i puszka z niedopałkami obok czytnika chipów z „zapisem zero”.
+- §17 częściowo: brzęczenie transformatora neonu, szum wentylatora wyciągu i kapanie do wiadra płyną ze swoich modeli (emitery `room-detail`; otwarte powietrze jest w mapie dźwięków osobnym „pokojem”, więc na dachu słychać je w całości). Skalę dają attyka 1,0 m, drabina, skrzynka 0,42 m i materac. Ruch: Ren siedzi i co jakiś czas wstaje zapalić, wstaje do rozmowy; para z wyciągu jest rysowana na stałe, wentylator się nie kręci, a girland na wietrze nie ma (dług).
 
 ## Scenariusz
 
 ### Pierwszy kadr
-Seki wychodzi z drabiny na dach zaplecza w (425,2; 3,85; −1,25), twarzą na wschód. Przed nią, 4,8 m dalej, stoi Ren w (430; −3,4), plecami do niej, i patrzy nad deptakiem na Trybunał. Po prawej, od południa, świeci od tyłu cyjanowa tablica ALCHEMIA i rysuje jego sylwetkę. Za wschodnią attyką wiszą girlandy lampionów, a dalej leżą dachy Starego Miasta. Z dołu słychać deptak. Wzrok przyciąga neon (akcent), a docelowo ciepła lampka kempingowa pod plandeką przy jego nogach, gdzie leży torba Hebi (431,3; −2,7).
+Seki wychodzi z drabiny na dach zaplecza w (425,2; 3,85; −1,25), twarzą na wschód. Przed nią, 4,8 m dalej, siedzi pod niebieską plandeką Ren w (430; −3,4), plecami do niej, i patrzy nad deptakiem na Trybunał (albo stoi z papierosem). Po prawej, od południa, świeci od tyłu cyjanowa tablica ALCHEMIA i rysuje jego sylwetkę, a pod nią leży materac na paletach. Za wschodnią attyką wiszą girlandy lampionów, a dalej leżą dachy Starego Miasta. Z dołu słychać deptak, obok szumi wyciąg kuchni. Wzrok przyciąga neon (akcent) i ciepła lampka kempingowa na skrzynce przy jego nogach, obok torba Hebi (431,3; −2,7).
 
 ### Postacie i miejsca
-- **Ren Odagiri** (`ren`, preset `civilian`, frakcja `hebi`): (430; 3,85; −3,4), twarzą na Trybunał (582,4; −61,2), rozmowa w promieniu 2,4 m. Jest od flagi `ren_trail` do zakończenia „kagami” (`market.ts`), bez planu dnia, więc o każdej porze. Ink mówi, że siedzi pod plandeką, a w grze stoi.
-- **Torba Hebi** `stash:targ-roof` w (431,3; 3,85; −2,7), stawiana w promieniu 40 m.
+- **Ren Odagiri** (`ren`, preset `civilian`, frakcja `hebi`): (430; 3,85; −3,4), twarzą na Trybunał (582,4; −61,2), rozmowa w promieniu 2,4 m. Jest od flagi `ren_trail` do zakończenia „kagami” (`market.ts`), bez planu dnia, więc o każdej porze. Pod plandeką siedzi na skrzynce, co trzecie 20 minut wstaje zapalić, a do rozmowy wstaje (`actor-activities.ts`, cykl `sit`, `sit`, `smoke`; rozmowa daje `talk`).
+- **Torba Hebi** `stash:targ-roof` w (431,3; 3,85; −2,7), stawiana w promieniu 40 m, pod północnym skrajem plandeki.
 - Nikt inny tu nie wchodzi: AI nie chodzi po drabinie (ADR-0021). W dole przechodnie deptaka i osi wejścia. Kurosawy z dachu nie widać, bo stoi w pasażu pod L2, 35 m na północ (`alchemia-parking-kiosk`).
 
 ### Przebieg
@@ -86,11 +86,19 @@ Seki wychodzi z drabiny na dach zaplecza w (425,2; 3,85; −1,25), twarzą na ws
 - Pomiar: ujęcie nocne z głowicy drabiny do `tools/shots/room-spots.json`, wynik `pnpm shots:palette` w karcie.
 
 ## Dług sceny
-- Obóz Rena: plandeka między słupkiem tablicy a masztem anteny, materac na paletach, skrzynka jako stolik, lampka kempingowa. Bryły na końcu listy w `packages/sim/src/content/alchemia/pavilion.ts` (§7, nowe id na końcu), drobiazg w nowym `packages/sim/src/content/alchemia/pavilion-roof-dress.ts` (wzór `roof-dress.ts`), rysunek w `packages/engine/src/renderer/alchemia/pavilion-geometry.ts`, modele z nowego skryptu w `tools/blender/` oraz antena i palety z ADR-0096.
-- Ren siedzi pod plandeką: plan dnia z jednym przystankiem i czynnością `sit` w `packages/sim/src/content/schedules.ts` (jak `sachiko`).
-- Torba Hebi jako model torby zamiast ogólnego pojemnika łupu: widok skrytek w `packages/engine/src/renderer/` (rysunek kontenerów łupu) albo pole widoku w `RoofStash` (`market.ts`, zmiana kontraktu widoku do uzgodnienia z architektem).
-- Lampa nad drzwiami zaplecza i stopą drabiny: oprawa w `pavilion-geometry.ts`, światło jak `lampAt` przy wózku Hany w `market.ts`.
-- Agregat wyciągu kuchni z wentylatorem i parą: bryła w `pavilion.ts`, para w częściach Alchemii w `packages/engine/src/renderer/alchemia/`, dźwięk wentylatora i neonu jako emitery w `packages/engine/src/audio/` (dziś `room-sound-map.ts` zna tylko wnętrza, potrzebna mapa źródeł na zewnątrz).
-- Kałuża przy wpuście i mokra plandeka (§15): rysunek w `pavilion-geometry.ts` (kanał `wet`).
-- Tekst: Ume (`packages/narrative/ink/{pl,en}/m0.ink`, `ume.ren_trail`: „Wjeżdża się windą za halą”) i Mori (`m3-echo.ink`, `mori.ren_trail`: „Wjeżdża windą za halą”) mówią o windzie na dach hali, której od etapu 1 nie ma. Propozycja: „Śpi na dachu szklanego pawilonu na rogu. Wchodzi się drabiną od zaplecza”. Komentarz knota `ren_odagiri` w `m3-lustro.ink` mówi jeszcze o „roof terrace”.
-- Pomiar §13: ujęcie nocne z głowicy drabiny w `tools/shots/room-spots.json`.
+Zrobione (23.11, gałąź `feat/scena-dach-rena`):
+- Obóz Rena: plandeka wiązana do tylnej krawędzi tablicy, do masztu z anteną na attyce północno-zachodniej i do drąga przy attyce wschodniej (`PAVILION_TARP`, rysunek `renderer/alchemia/pavilion-tarp.ts`), materac na dwóch europaletach pod tablicą, skrzynka po amunicji jako stolik z lampką, termosem, puszkami, niedopałkami i czytnikiem chipów, karton i worek (ADR-0096), wiadro pod niskim narożnikiem. Rozstawienie w `packages/sim/src/content/alchemia/pavilion-roof-dress.ts`, modele z `tools/blender/rooms/alchemia_pavilion.py` (10 nowych kształtów na końcu `ROOM_DETAIL_SHAPES`), bryły jako ostatni rekwizyt Alchemii (`PAVILION_ROOF_PROPS`).
+- Ren siedzi pod plandeką (cykl `sit`, `sit`, `smoke` w `actor-activities.ts`; plan dnia w `schedules.ts` niepotrzebny, bo czynność bez planu daje tabela czynności) i wstaje do rozmowy (poprawka systemu czynności: rozmówca to `talkingTo`, nie wyzerowany fokus).
+- Torba Hebi jako torba podróżna: torba łupu w `renderer/props.ts` (walec z płótna, lamówki, zamek, uchwyty, pasek), bez zmiany kontraktu widoku.
+- Lampa nad stopą drabiny i drzwiami zaplecza: zielona oprawa `rd-pav-bulkhead` i światło w `renderer/alchemia/pavilion-lamps.ts`; lampka obozu tamże.
+- Wyciąg kuchni z wentylatorem dachowym i parą (`rd-pav-extractor`), skrzynka transformatora neonu z rurką do tablicy, taśmą i plombą (`rd-pav-neon-box`), wpust z kałużą (`rd-c-drain`, `rd-c-puddle`), mokra plandeka w barwie.
+- Dźwięk ze źródła: emitery `vent`, `tubes` i `drip` na dachu; `room-sound-map.ts` słyszy źródła na otwartym powietrzu w całości.
+- Głowica i stopa drabiny: karabińczyk na poręczy, ulotka targu, wąż Hebi na zapleczu obok drabiny.
+- Pomiar §13: ujęcie `alchemia-pawilon-dach` w `tools/shots/room-spots.json`.
+
+Zostaje:
+- Przesmyk między dachem zaplecza a dachem trójkąta (§12, glitch): attyka zamyka go całkiem, więc gracz nie dojdzie do obozu ani do torby (staje w (427,9; −2,7)). Propozycja: zaplecze szersze o 0,5 m na wschód (x do 429,0; przesmyk między narożnikami 1,73 m zamiast 0,97 m, na siatce 0,5 m), z wpisem T-231 i przeglądem kuratora topografii; obóz zostawia po stronie trójkąta wolną drogę (test `alchemia-pavilion-roof`).
+- Kanał `wet` (odbicie sondy) dla kałuży i plandeki: siatka Alchemii rysuje kolorami zestawu miasta bez flag połysku.
+- Ruch: wentylator wyciągu kręcący się i para jako cząstki (dziś rysowana na stałe), girlandy deptaka na wietrze.
+- Obróbka blacharska attyki i spadek membrany do wpustu.
+- Tekst: Ume (`packages/narrative/ink/{pl,en}/m0.ink`, `ume.ren_trail`: „Wjeżdża się windą za halą”) i Mori (`m3-echo.ink`, `mori.ren_trail`: „Wjeżdża windą za halą”) mówią o windzie na dach hali, której od etapu 1 nie ma (poprawia inny PR). Komentarz knota `ren_odagiri` w `m3-lustro.ink` mówi jeszcze o „roof terrace”.

@@ -58,6 +58,7 @@ export const travelMetro = (ctx: SimContext, cmd: Extract<GameCommand, { type: "
   ctx.state.domain = { ...domain, wallet: paid.wallet, metro: { ride: { from: from.id, to: cmd.to, arriveTick } } };
   ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: -fare });
   ctx.session.dialogueActive = false;
+  ctx.session.talkingTo = null;
   park(ctx, player, metroStation(cmd.to));
   ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
   ctx.bus.emit("MetroDeparted", { from: from.id, to: cmd.to, seconds });
