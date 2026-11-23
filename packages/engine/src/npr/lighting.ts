@@ -10,6 +10,11 @@ export interface PointLightDef {
    * Without it the light reaches its whole range.
    */
   readonly clip?: LightClip;
+  /**
+   * Takes a shader slot before the others near the eye (higher first): a light that falls on the characters the player
+   * looks at (a patrol drone's searchlight over her), which the street's lamps registered earlier would crowd out.
+   */
+  readonly priority?: number;
 }
 
 export interface LightClip {
