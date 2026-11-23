@@ -447,6 +447,19 @@ describe("time of day (ADR-0017)", () => {
     expect(runtime.start("oyaji_closed", at(4)).lines[0]?.text).toMatch(/O tej godzinie/);
   });
 
+  it("Oyaji closes a gun shop, not a kitchen", () => {
+    const said = setup().runtime.start("oyaji_closed", at(22, 10)).lines[0]?.text;
+    expect(said).toMatch(/naboje pod kluczem/);
+    expect(said).not.toMatch(/Gary/);
+  });
+
+  it("Goro's unit keeps the food hall's hours, 10:00 to midnight (FOODHALL_HOURS)", () => {
+    const { runtime } = setup();
+    const goro = (hour: number) => runtime.start("goro", at(hour)).lines[0]?.text ?? "";
+    for (const hour of [10, 15, 22, 23]) expect(goro(hour)).toMatch(/Parasole/);
+    for (const hour of [0, 3, 8, 9]) expect(goro(hour)).toMatch(/Stragan zamknięty/);
+  });
+
   it("a feared Seki gets nothing but a closed shutter; a distrusted one a cold word first", () => {
     const { runtime } = setup();
     const domain = (civilians: number) => ({ ...at(23), reputation: { ...createDomainState().reputation, civilians } });

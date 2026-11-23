@@ -141,7 +141,7 @@
     SACHIKO: Nie dziękuj. Następnym razem coś kup.
     -> END
 
-// Goro sells umbrellas at the east end of the north row.
+// Goro sells umbrellas from his unit in the food hall, open 10:00 to midnight like the hall (FOODHALL_HOURS, schedules.ts).
 === goro ===
 {
 - civilians_tier == "hostile":
@@ -150,7 +150,7 @@
 - civilians_tier == "wary":
     GORO: Parasole sprzedaję każdemu. Przyjaźń już nie.
 }
-{ game_hour >= 8 && game_hour < 22:
+{ game_hour >= 10:
     GORO: Parasole, kurtki przeciwdeszczowe, folia na implanty. Tu pada nawet wtedy, kiedy nie pada.
 - else:
     GORO: Stragan zamknięty, ale ja nie śpię. Pilnuję, żeby nikt nie pożyczył sobie markizy.
