@@ -29,7 +29,7 @@ Odłożone: roleta. Ściana frontowa wycięta w kamienicy ma tylko drzwi, a okna
 ## Frakcja i zasady
 Frakcja: ulica (hotel kapsułowy); druga: technika (panel kapsuły).
 - §12 zgodne: ciasno, 1 z 2 wymiarów na siatce (obrys z kamienicy, §1).
-- §13 dług: w pomiarach 0 źródeł w bryłach (lampa rysowana przez silnik); powiązać pasek LED i lampki z oprawami w modelu; drzwi w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 47,5%, światło 44%, akcenty 8,5%, poza pasmem: baza 47,5% < 50%; światło 44% > 42%.
+- §13 dług: w pomiarach 0 źródeł w bryłach (lampa rysowana przez silnik); powiązać pasek LED i lampki z oprawami w modelu; drzwi w barwie nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 47,5%, światło 44%, akcenty 8,5%, poza pasmem: baza 47,5% < 50%; światło 44% > 42%; po trybie wnętrza (ciemne otoczenie zamiast księżyca, lampa w oprawie stropu 1,25): baza 55,5%, światło 34,5%, akcenty 10%, zgodne.
 - §14 zgodne: 20 rzeczy drobiazgu, 17 w skupiskach (jedzenie z automatu, zlew, śmieci, ładowarka), 15% luzem.
 - §15 dług: wszystko matowe; połysk plastiku kapsuły.
 - §16 zgodne.
