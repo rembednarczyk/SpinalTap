@@ -72,7 +72,8 @@ def chair():
 
 def lamp():
     """The surgical lamp from the ceiling (3.9 m over the floor, its model's top): a post, an arm across, two round heads
-    each with a ring of six lenses lit cold white under them; its foot is the heads' underside."""
+    each with a ring of four lenses round a middle one, lit cold white under them; its foot is the heads' underside. Four,
+    not six: Seki tells Kagami's lamp from Mori's by its six lenses (`m3-echo.ink`, `recall_operating_table`)."""
     m = Model('rd-clinic-lamp')
     top, head = 3.9 - 2.83, 0.12
     m.cyl(0, 0, 0.09, top - 0.03, top, 'metal', seg=12)
@@ -82,9 +83,9 @@ def lamp():
         m.tube((0, 0.45, z), (0, head + 0.06, z), 0.02, 'ac', seg=8)
         m.lathe(0, z, [(0.0, head + 0.02), (0.26, head + 0.02), (0.3, 0.06), (0.3, 0.0)], 'trim-light', seg=18)
         m.lathe(0, z, [(0.26, 0.0), (0.0, 0.0)], 'trim', seg=18, cap=False)
-        for k in range(6):
-            a = 2 * math.pi * k / 6
-            m.cyl(0.16 * math.cos(a), z + 0.16 * math.sin(a), 0.05, -0.006, 0.0, 'win-white', seg=10)
+        for k in range(4):
+            a = 2 * math.pi * k / 4 + math.pi / 4
+            m.cyl(0.16 * math.cos(a), z + 0.16 * math.sin(a), 0.06, -0.006, 0.0, 'win-white', seg=10)
         m.cyl(0, z, 0.05, -0.006, 0.0, 'win-white', seg=10)
     return m
 

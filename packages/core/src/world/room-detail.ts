@@ -269,6 +269,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-pav-bulkhead" },
   { key: "rd-pav-hebi", fine: true, clutter: 1 },
   { key: "rd-pav-carabiner", fine: true, clutter: 1 },
+  // Mori's clinic (docs/pomieszczenia/clinic.md, ADR-0102): Kaito's stool by the chair with his mug and his butts.
+  { key: "rd-clinic-stool", clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
