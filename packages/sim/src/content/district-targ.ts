@@ -3,6 +3,7 @@ import { turnLocal } from "./lublin/furniture";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { onRoad } from "./lublin/roads";
 import { groundY } from "./lublin/terrain";
+import { METRO_STATIONS } from "./metro";
 import { PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_METRO, PLAC_ZAMKOWY_STALLS } from "./plac-zamkowy-detail";
 import { WORLD_STREET_PROPS } from "./street-props";
 import { TERRITORY_GROUPS } from "./territory-groups";
@@ -51,11 +52,13 @@ const festoonOf = (s: StreetPropItem, key: string): SceneLamp => {
   return { key, at: { x: s.x + d.x, y: s.y + FESTOON.y, z: s.z + d.z }, ...FESTOON_LIGHT };
 };
 
-const metroLamp = (): SceneLamp => {
-  const d = turnLocal(PLAC_ZAMKOWY_METRO.yaw, 0, LENS.z);
-  const { x, z } = PLAC_ZAMKOWY_METRO.at;
-  return { key: "targ-pz-metro", at: { x: x + d.x, y: groundY(x, z) + LENS.y, z: z + d.z }, ...METRO_LIGHT };
+/** The green light before the lens of a pavilion's bulkhead lamp standing at `at`, facing `yaw`. */
+const metroLight = (key: string, at: { readonly x: number; readonly z: number }, yaw: number): SceneLamp => {
+  const d = turnLocal(yaw, 0, LENS.z);
+  return { key, at: { x: at.x + d.x, y: groundY(at.x, at.z) + LENS.y, z: at.z + d.z }, ...METRO_LIGHT };
 };
+
+const metroLamp = (): SceneLamp => metroLight("targ-pz-metro", PLAC_ZAMKOWY_METRO.at, PLAC_ZAMKOWY_METRO.yaw);
 
 /** Plac Zamkowy: one light in each stall's festoon and the pavilion's green lamp, on within 60 m of the square's middle. */
 export const PLAC_ZAMKOWY_LAMPS: SceneLampGroup = {
@@ -160,5 +163,19 @@ export const HEBI_LAMPS: readonly SceneLampGroup[] = HEBI_BULBS.map((b) => {
   return { id: `targ-hebi-${b.territory}`, centre: b.at, near: 40, lamps: [{ key: `targ-hebi-${b.territory}`, at, ...BULB_LIGHT }] };
 });
 
+/** The metro pavilion B by the Dworzec Autobusowy (entrance B of Targ, ADR-0071): its outline; it opens to the south (-z). */
+const PAVILION_B = METRO_STATIONS.flatMap((s) => s.entrances).find((e) => e.name === "Dworzec Autobusowy")?.outline;
+/** Over the pavilion B's opening, on its front, facing out of it: the green lamp as at Plac Zamkowy's (`rd-pz-metro-lamp`). */
+export const DWORZEC_METRO = PAVILION_B ? ({ at: { x: (PAVILION_B.minX + PAVILION_B.maxX) / 2, z: PAVILION_B.minZ - 0.02 }, yaw: Math.PI } as const) : null;
+
+export const DWORZEC_METRO_DETAIL: readonly StreetPropItem[] = DWORZEC_METRO
+  ? [{ prop: "room-detail", x: DWORZEC_METRO.at.x, y: groundY(DWORZEC_METRO.at.x, DWORZEC_METRO.at.z), z: DWORZEC_METRO.at.z, yaw: DWORZEC_METRO.yaw, variant: roomDetailShape("rd-pz-metro-lamp") }]
+  : [];
+
+/** The way down at the pavilion B marked green, on within 40 m of it. */
+export const DWORZEC_METRO_LAMPS: readonly SceneLampGroup[] = DWORZEC_METRO
+  ? [{ id: "targ-dworzec-metro", centre: DWORZEC_METRO.at, near: 40, lamps: [metroLight("targ-dworzec-metro", DWORZEC_METRO.at, DWORZEC_METRO.yaw)] }]
+  : [];
+
 /** Every scene's lights the renderer turns on near their place. */
-export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS];
+export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS];
