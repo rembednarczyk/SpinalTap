@@ -6,15 +6,15 @@ import { WORLD_STREET_PROPS } from "./street-props";
  * Plac Katedralny after its card (`docs/lokacje/plac-katedralny.md`, ADR-0102 point 5). Pattern: environmental
  * storytelling (Smith and Worch, GDC 2010). The second faction of the square is the parish (no Hebi here): the LED grave
  * candles, flowers and intention cards at the Wyszyński monument's foot, before it as it faces; the AR legend terminal
- * by the Executioner's Stone, the artwork beside the figure of the Virgin (Blender, `tools/blender/rooms/plac_katedralny.py`).
+ * by the Executioner's Stone under the tower (Blender, `tools/blender/rooms/plac_katedralny.py`).
  * Drawn only.
  */
 
 const pieces = Object.values(WORLD_STREET_PROPS).flat();
 /** The Wyszyński monument on the square (the import's `monument`). */
 export const KATEDRALNY_MONUMENT = pieces.find((i) => i.prop === "monument" && Math.abs(i.x - 656.5) < 1 && Math.abs(i.z + 227.2) < 1)!;
-/** The Executioner's Stone: the artwork 3.5 m from the figure of the Virgin (599.5, -197.9). */
-export const GLAZ_KATOWSKI = pieces.find((i) => i.prop === "artwork" && Math.abs(i.x - 601.4) < 1 && Math.abs(i.z + 200.9) < 1)!;
+/** The Executioner's Stone under the Trinitarian Tower (OSM `Głaz Katowski-Kamień Nieszczęścia`, the import's `granite-block`). */
+export const GLAZ_KATOWSKI = pieces.find((i) => i.prop === "granite-block" && Math.abs(i.x - 582.7) < 1 && Math.abs(i.z + 135) < 1)!;
 
 const before = (p: StreetPropItem, d: number) => ({ x: p.x + Math.sin(p.yaw) * d, z: p.z + Math.cos(p.yaw) * d });
 const beside = (p: StreetPropItem, d: number) => ({ x: p.x + Math.cos(p.yaw) * d, z: p.z - Math.sin(p.yaw) * d });
