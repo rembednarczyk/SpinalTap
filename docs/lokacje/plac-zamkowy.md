@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 zgodne: ulica w socrealistycznej oprawie, ciepły żółty kandelabrów, prowizoryczne stragany.
 - §17 dług: targ i parking bez dźwięku źródła; brak emiterów na Podzamczu. Ruch: tłum na wschodzie placu, auta; skala: stragany, auta, ławki, stopnie.
 
+## Scenariusz tła
+- Kto tu bywa: sprzedawcy pchlego targu z kocami elektroniki i wszczepów z odzysku; kierowcy szukający miejsca na zawsze pełnym parkingu; pasażerowie metra Plac Zamkowy i turyści na schodach na Zamek; rano Daigo goniący kurę z licencją (`enc_targ_chicken`).
+- Co się dzieje: rano rozkładają się koce pod kandelabrami, a Daigo biega za kurą przy pawilonie metra; w dzień targ i parking żyją razem, turyści wchodzą schodami na wzgórze; wieczorem stoiska się zwijają i zostaje parking, łuk podcieni i droga na dziedziniec Zamku.
+- Ślad obecności: pudełko po bateriach na bruku przy schodach, porzucone kable i obudowy przy kocach, znicze pod tablicą Widzącego z Lublina.
+
 ## Dług sceny
 Zrobione 23.11 (`packages/sim/src/content/plac-zamkowy-detail.ts`, `tools/blender/rooms/plac_zamkowy.py`, test `packages/sim/test/plac-zamkowy-scene.test.ts`): przed każdym straganem placu koc z elektroniką i wszczepami, girlanda ciepłych żarówek między przednimi słupkami (rysunek), skupiska; zielona oprawa nad otworem pawilonu metra (rysunek). Zostaje:
 - Zrobione 23.11: światło w girlandzie każdego z 6 straganów placu (ciepłe, zasięg 5 m) i zielone przy lampie pawilonu metra A (6 m), w oprawach z modeli `rd-pz-stall` i `rd-pz-metro-lamp` (`PLAC_ZAMKOWY_LAMPS` w `packages/sim/src/content/district-targ.ts`, `SceneLamps` w `packages/engine/src/renderer/mapcity/scene-lamps.ts`; włączone do 60 m od środka placu).

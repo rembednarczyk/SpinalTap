@@ -14,6 +14,14 @@ Nagłówki dokładnie jak niżej. Test `tools/rooms/test/locations.test.ts` spra
 - `## Dług sceny`: lista konkretnych zmian w grze (geometria, rozstawienie, światło, dźwięk, postacie), każda z plikiem, w którym ją zrobić. Pusta lista to `- brak`.
 - Karta dzielnicy dodatkowo: `## Spotkania` z każdym spotkaniem ulicznym z `ENCOUNTERS` dzielnicy (id w odwrotnych apostrofach, miejsce, pora, mikroscenka w dwóch zdaniach).
 
+## Scenariusz tła
+Lokacja bez `story: true` ma krótki `## Scenariusz tła` (decyzja użytkownika z 23.11) w trzech wierszach, przed `## Dług sceny`:
+- `- Kto tu bywa:` stali bywalcy i przechodnie, grupy z terytoriów, postacie spotkań ulicznych;
+- `- Co się dzieje:` zwykły przebieg dnia i nocy, bez nowej fabuły;
+- `- Ślad obecności:` co po nich zostaje (§5), rzeczy, które scena ma albo dostaje w długu.
+
+Karty bez tej sekcji są na liście `locations-pending.json`, która tylko maleje.
+
 ## Scenariusz lokacji fabularnej
 Lokacja z `story: true` i wnętrze z `STORY_INTERIORS` mają dodatkowo `## Scenariusz` z sześcioma częściami (jedna strona, jak jednostronicowy projekt poziomu):
 - `### Pierwszy kadr`: co gracz widzi i słyszy, gdy wchodzi z najczęstszej strony, i co przyciąga wzrok (światło nawigacji, §13);

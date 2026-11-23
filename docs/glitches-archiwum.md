@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-962 Zawrotki na ślepych końcach Szkolnej i Słowikowskiego wychodzą wierzchołkiem za koniec jezdni
+- Status: naprawione (23.11, gałąź fix/g962-zawrotki, PR po G-966, który jest w main: #992); wcześniej: zgłoszone (S4: auto na zawrotce muska plac przez ok. 0,1 m)
+- Gdzie: nowy rząd Podzamcza (23.11): Szkolna (843,5, 552,5), gdzie jezdnia przechodzi w deptak, i Słowikowskiego (997,2, 591,0)
+- Dowód: `packages/sim/test/ground-readers.test.ts`, „keeps the car lanes on the carriageway”: wierzchołek półokręgu `uTurn` leży na płaskim końcu jezdni, a `surfacesAt` daje tam plac. Ten sam rodzaj co znany `Ciasna:b 583.1,575.5`; obie zawrotki w `KNOWN_OFF_ROAD` z odnośnikiem do tego wpisu.
+- Poprawka: `turnRound` cofa zawrotkę na ślepym końcu o promień i zapas, tak by wierzchołek został na jezdni (zmiana pasów w całym mieście, osobny PR). Test przyjęcia: punkty znikają z `KNOWN_OFF_ROAD`.
+- Naprawa (23.11): `turnRound` (`packages/sim/src/content/traffic.ts`) cofa oba pasy o promień półokręgu i 0,5 m zapasu (`TURN_CLEAR`), więc wierzchołek zawrotki zostaje 0,5 m przed końcem pasów, na jezdni. Z `KNOWN_OFF_ROAD` znikają oba punkty G-962 i znany wcześniej `Ciasna:b 583.1,575.5` tego samego rodzaju. Zmienia wszystkie zawrotki w mieście o 0,5 m.
+- Zależność (23.11): zawrotki krótsze o 0,5 m przestawiły rozkład aut i test pętli przy deptaku odsłonił G-966 (auta z Bajkowskiego stojące na szwie pętli). Ten PR idzie po naprawie G-966; z nią test pętli przechodzi.
+
 ### G-966 Auta z Bajkowskiego stoją na szwie pętli przy deptaku i blokują pętlę, gdy gracz patrzy
 - Status: naprawione (23.11, gałąź fix/g966-kieszen-petla, PR w drodze); wcześniej: zgłoszone (S4: auto stoi na pasie pętli, auta pętli czekają za nim, po kilku sekundach przeskakują na rozkład)
 - Gdzie: kieszeń na południe od deptaka (T-324), szew pętli `Lubartowska#13:b>Królewska#18:b+Królewska#18:f>Lubartowska#13:f+ring` przy (457,5; −153,9), początek zawrotki na Królewskiej

@@ -48,6 +48,11 @@ Frakcja: korporacja, ulica (kościół jako właściciel placu; ulica na jego sk
 - §16 częściowo: porządek właściciela jest (pusto, czysto), ale nic nie mówi, kto go pilnuje: brak ochrony, kamery i bramek muzeum.
 - §17 dług: dzwonów, organów i trolejbusu nie słychać ze źródeł. Ruch: tłum i trolejbusy; skala: ławki, drzwi katedry, figura.
 
+## Scenariusz tła
+- Kto tu bywa: wierni i wycieczki do Archikatedry; księża i pracownicy kurii; ochrona parafii, która pilnuje portyku; przechodnie między Starym Miastem a Królewską. Hebi tu nie stoją.
+- Co się dzieje: w dzień przewodnicy prowadzą grupy pod Wieżę Trynitarską i do zakrystii („za dnia nic, tylko wycieczki do Archikatedry”); po mszy wierni rozchodzą się Królewską; nocą ochrona przegania śpiących spod portyku, a na szczycie wieży mruga czerwone światło masztu.
+- Ślad obecności: znicz LED pod pomnikiem Wyszyńskiego, bilety do muzeum archidiecezji przy wejściu do wieży, ślady wosku na stopniach portyku.
+
 ## Dług sceny
 Zrobione 23.11 (znicze LED z kwiatami i intencjami pod pomnikiem, terminal legendy AR przy Głazie Katowskim). Zostaje:
 - Antena i czerwone światło na hełmie wieży oraz zielony hełm (T-143): przepis w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`, światło jako lampa gry w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).
