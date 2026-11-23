@@ -13,6 +13,12 @@ import { teleportPlayer } from "./helpers";
  * driving into it and shoving it along.
  */
 type Car = Entity & { vehicle: NonNullable<Entity["vehicle"]> };
+/**
+ * How far along its lane the car she takes is at most (m). The first moving car of the city used to
+ * do; with the Podzamcze row north of z 580 (23.11.2026) it was on Lubartowska 307 m along a 432 m
+ * lane, and no car came up from the lane's start in the 40 s.
+ */
+const NEAR_START = 150;
 const press = (over: Partial<InputFrame>): InputFrame => ({ ...EMPTY_INPUT, ...over });
 
 describe("the traffic and the player's car", () => {
@@ -27,7 +33,8 @@ describe("the traffic and the player's car", () => {
     let along = 0;
     for (let i = 0; i < 200 && !taken; i++) {
       sim.step();
-      const car = [...sim.world].filter((e): e is Car => e.vehicle !== undefined && e.vehicle.v > 4 && e.view?.kind === "vehicle" && e.view.model !== "trolleybus").sort((a, b) => a.id - b.id)[0];
+      // A car under `NEAR_START` along its lane: the lane's next cars, from its start, come up behind the one left there within the wait below.
+      const car = [...sim.world].filter((e): e is Car => e.vehicle !== undefined && e.vehicle.v > 4 && e.vehicle.s < NEAR_START && e.view?.kind === "vehicle" && e.view.model !== "trolleybus").sort((a, b) => a.id - b.id)[0];
       if (!car) continue;
       [route, along] = [car.vehicle.route, car.vehicle.s];
       const pose = lanePose(TRAFFIC_ROUTES[route]!, along + car.vehicle.half.l + 6);

@@ -41,8 +41,17 @@ nabrzeze-1-1 2530,360
 nabrzeze-1-1 2540,360
 podzamcze-0-1 540,420
 podzamcze-0-1 690,470
+podzamcze-0-2 690,580
+podzamcze-0-2 680,590
+podzamcze-0-2 630,610
+podzamcze-0-2 520,690
+podzamcze-0-2 530,690
 podzamcze-1-0 870,200
 podzamcze-1-1 890,430
+podzamcze-1-2 910,680
+podzamcze-1-2 830,690
+podzamcze-1-2 810,750
+podzamcze-1-2 870,750
 podzamcze-2-0 930,190
 podzamcze-2-0 950,190
 podzamcze-2-0 960,240

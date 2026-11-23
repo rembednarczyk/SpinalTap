@@ -74,6 +74,8 @@ describe("a wall on the map's edge (G-556)", () => {
     // garage past the mall, over the street (G-662), cut at x 1120; the whole garage w173070505,
     // under the mall too, was one until it stopped being a solid (G-600).
     expect(edgeWalls("T-261/garaz-vivo").map(([a, c]) => [a!.x, c!.x])).toEqual([[1120, 1120]]);
-    expect(LUBLIN_CHUNKS.flatMap((c) => c.buildings).filter((b) => edgeWalls(b.id).length > 0)).toHaveLength(38);
+    // Five more since Podzamcze's row north of z 580 (23.11): the houses cut on its north edge, z 790.
+    for (const id of ["w181329779", "w181329804", "w181329806", "w227665924", "w227665919"]) expect(edgeWalls(id).map(([a, c]) => [a!.z, c!.z])).toEqual([[790, 790]]);
+    expect(LUBLIN_CHUNKS.flatMap((c) => c.buildings).filter((b) => edgeWalls(b.id).length > 0)).toHaveLength(43);
   });
 });

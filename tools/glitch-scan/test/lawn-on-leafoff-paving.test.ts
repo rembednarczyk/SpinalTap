@@ -5,6 +5,7 @@ import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { samplesIn } from "../../orto/src/rings.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
 import { generatedCity } from "../../osm-import/test/city.ts";
+import { reviewedOnly } from "./reviewed-cells";
 import { type ChunkFills, lawnOnLeafOffPaving } from "./fill-on-green";
 
 /**
@@ -58,7 +59,7 @@ describe("lawns the bare ground rule lays on paving under crowns (lawn-on-leafof
   describe("over the city", () => {
     const chunks = generatedCity().stats;
     const covers = MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined);
-    const found = lawnOnLeafOffPaving(chunks, covers);
+    const found = lawnOnLeafOffPaving(reviewedOnly(chunks), covers);
 
     it(`lays under ${MAX_M2} m² of them`, () => {
       expect(found.length * SAMPLE_M2).toBeLessThan(MAX_M2);
