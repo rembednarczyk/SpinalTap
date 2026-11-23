@@ -1,6 +1,7 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { groundY } from "../lublin/terrain";
 import { W3_PLATFORM, W3_TOWER, W3_Y } from "./site";
+import { W3_LOCKER_14 } from "./basement";
 import { W3_OFFICE_DOOR, W3_PIPE_LADDER } from "./tower-pipes";
 
 /*
@@ -13,6 +14,8 @@ import { W3_OFFICE_DOOR, W3_PIPE_LADDER } from "./tower-pipes";
  * - The tower: the smokers' corner by the pass office's door, the shift's water and a hard hat.
  * - The pipe walk: the fitters' bag, thermos and rope on the landing over the bank; the warning board and the chained
  *   foot of the ladder up to it.
+ * - The basement (`docs/pomieszczenia/w3-basement.md`): locker 14 with its number, its door ajar, the technician's
+ *   overalls half out of it where the sabotage's item lies (`W3_LOCKER_14`), drawn over the locker's solid.
  */
 
 /** The crate by KAIUN the brazier is drawn over (`W3_PUBLIC_PROPS`), its foot sunk 0.15 m in the slope as the crate's. */
@@ -28,6 +31,9 @@ export const LADDER_BOARD = { x: W3_PIPE_LADDER.x + 1.2, z: W3_PIPE_LADDER.z - 0
 
 const model = (key: string, x: number, y: number, z: number, yaw: number): StreetPropItem => ({ prop: "room-detail", x, y, z, yaw, variant: roomDetailShape(key) });
 
+/** Locker 14's front: the east one of the four lockers along the locker room's north wall (2.75 m each, 0.6 deep). */
+export const LOCKER_14_FRONT = { x: 2517 + 3.5 * 2.75, z: W3_LOCKER_14.z + 1 - 0.6 } as const;
+
 /** W-3's outside models, in the order of the cards. */
 export const W3_OUTSIDE_DETAIL: readonly StreetPropItem[] = [
   model("rd-w3-barrel", GENZO_BRAZIER.x, groundY(GENZO_BRAZIER.x, GENZO_BRAZIER.z) - GENZO_BRAZIER.sink, GENZO_BRAZIER.z, 0),
@@ -35,4 +41,5 @@ export const W3_OUTSIDE_DETAIL: readonly StreetPropItem[] = [
   model("rd-w3-tower-door", TOWER_SMOKERS.x, W3_Y, TOWER_SMOKERS.z, Math.PI / 2),
   model("rd-w3-landing", PIPE_LANDING.x, W3_Y + W3_PLATFORM, PIPE_LANDING.z, 0),
   model("rd-w3-ladder-board", LADDER_BOARD.x, groundY(LADDER_BOARD.x, LADDER_BOARD.z), LADDER_BOARD.z, Math.PI),
+  model("rd-w3-locker14", LOCKER_14_FRONT.x, W3_LOCKER_14.y, LOCKER_14_FRONT.z, Math.PI),
 ];

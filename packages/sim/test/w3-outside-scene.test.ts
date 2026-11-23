@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
 import { W3_PUBLIC_PROPS } from "../src/content/tessen-w3/public";
-import { GENZO_BRAZIER, GENZO_SPOT, KAIUN_WALL, LADDER_BOARD, PIPE_LANDING, TOWER_SMOKERS, W3_OFFICE_DOOR, W3_OUTSIDE_DETAIL, W3_PIPE_LADDER, W3_PLATFORM, W3_TOWER, W3_Y, WORLD_SCENERY } from "../src";
+import { GENZO_BRAZIER, GENZO_SPOT, KAIUN_WALL, LADDER_BOARD, LOCKER_14_FRONT, W3_LOCKER_14, interiorAt, PIPE_LANDING, TOWER_SMOKERS, W3_OFFICE_DOOR, W3_OUTSIDE_DETAIL, W3_PIPE_LADDER, W3_PLATFORM, W3_TOWER, W3_Y, WORLD_SCENERY } from "../src";
 
 /*
  * W-3's outside after its scenes' cards (ADR-0102 point 5): drawings only, each where its card puts it, the brazier
@@ -36,5 +36,14 @@ describe("W-3's outside scene (ADR-0102 point 5)", () => {
     expect(flat(board, W3_PIPE_LADDER)).toBeLessThan(1.5);
     expect(flat(board, W3_PIPE_LADDER)).toBeGreaterThan(0.8);
     expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === W3_OUTSIDE_DETAIL)).toBe(true);
+  });
+
+  it("marks locker 14 in the basement, its overalls where the sabotage's item lies", () => {
+    const locker = at("rd-w3-locker14");
+    expect(flat(locker, LOCKER_14_FRONT)).toBeLessThan(1e-9);
+    expect(locker.y).toBe(W3_LOCKER_14.y);
+    expect(interiorAt({ x: locker.x, y: locker.y + 1, z: locker.z - 0.5 })?.id).toBe("w3-basement");
+    expect(Math.abs(locker.x - W3_LOCKER_14.x)).toBeLessThan(0.1);
+    expect(LOCKER_14_FRONT.z - W3_LOCKER_14.z).toBeCloseTo(0.4, 9);
   });
 });

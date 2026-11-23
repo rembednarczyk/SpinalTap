@@ -127,4 +127,37 @@ def ladder_board():
     return m
 
 
-MODELS = [barrel, genzo, tower_door, landing, ladder_board]
+def locker14():
+    """Locker 14 in the basement's locker room (its front at z 0, its middle at x 0, 2.75 x 2 m, ADR-0082 §1 Q1): the
+    number stencilled on its left door, its right door ajar on its hinges with the hasp hanging, a technician's overalls
+    half out of it and the hard hat on the floor before it (2.8 x 2.0 x 0.9)."""
+    m = Model('rd-w3-locker14')
+    digits = {'1': ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'], '4': ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.']}
+    cell = 0.035
+    for i, ch in enumerate('14'):
+        for r, row in enumerate(digits[ch]):
+            for c, on in enumerate(row):
+                if on == '#':
+                    x = -0.95 + (i * 6 + c) * cell
+                    y = 1.75 - r * cell
+                    m.box(x, x + cell, y - cell, y, 0.0, 0.004, 'trim-light')
+    for k in range(4):
+        m.box(-1.2, -0.3, 0.4 + k * 0.08, 0.43 + k * 0.08, 0.0, 0.004, 'dark')
+    # The right door swung out 25 degrees on its hinge at x 1.375.
+    a = math.radians(25)
+    hx = 1.375
+    w = 1.3
+    cx, cz = hx - math.cos(a) * w / 2, math.sin(a) * w / 2
+    m.obox((cx, 1.0, cz + 0.01), (-math.cos(a), 0, math.sin(a)), (0, 1, 0), (w / 2, 0.98, 0.012), 'metal')
+    m.obox((cx - math.cos(a) * 0.4, 1.75, cz + math.sin(a) * 0.4 + 0.02), (-math.cos(a), 0, math.sin(a)), (0, 1, 0), (0.12, 0.05, 0.003), 'trim-light')
+    m.tube((0.1, 1.0, 0.02), (0.08, 0.85, 0.05), 0.006, 'metal', seg=5)
+    m.box(0.02, 0.2, 0.0, 0.004, 0.0, 0.004, 'dark')
+    # The overalls: a sleeve and a leg out of the gap, the rest folded on the floor; the hard hat by them.
+    m.tube((0.35, 1.3, 0.02), (0.45, 0.6, 0.18), 0.06, 'fabric-amber', seg=8)
+    m.box(-0.2, 0.5, 0.0, 0.12, 0.25, 0.75, 'fabric-amber', bevel=0.04)
+    m.box(-0.18, 0.48, 0.12, 0.13, 0.4, 0.43, 'trim-light')
+    m.lathe(0.85, 0.6, [(0.0, 0.0), (0.16, 0.0), (0.15, 0.05), (0.11, 0.13), (0.0, 0.15)], 'fabric-amber', seg=14, y0=0.0)
+    return m
+
+
+MODELS = [barrel, genzo, tower_door, landing, ladder_board, locker14]
