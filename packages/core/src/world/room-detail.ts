@@ -29,7 +29,15 @@ export interface RoomDetailShape {
   readonly clutter?: number;
   /** The room's services on show (pipes, cable trays, handrails, patched brick): §12's architecture, not its dressing. */
   readonly services?: true;
+  /**
+   * The steady sound it makes (`docs/zasady-lokacji.md` §17, sound from its source; ADR-0099 stage 6): every placing of it
+   * is an emitter of the rooms' soundscape, heard whole in its room and dull through the walls.
+   */
+  readonly sound?: RoomSound;
 }
+
+/** The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz. */
+export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes";
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
 export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
@@ -40,7 +48,7 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-koi-table", clutter: 2 },
   { key: "rd-koi-chair" },
   { key: "rd-koi-jukebox" },
-  { key: "rd-koi-aquarium" },
+  { key: "rd-koi-aquarium", sound: "pump" },
   { key: "rd-koi-counter-things", clutter: 5 },
   // Doktor Mori's clinic (docs/pomieszczenia/clinic.md).
   { key: "rd-clinic-bench" },
@@ -56,7 +64,7 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-tessen-cabinet", clutter: 1 },
   { key: "rd-tessen-bench", clutter: 2 },
   { key: "rd-tessen-board", clutter: 3 },
-  { key: "rd-tessen-lights" },
+  { key: "rd-tessen-lights", sound: "tubes" },
   // Trasa Podziemna under the Rynek (docs/pomieszczenia/trasa-podziemna.md).
   { key: "rd-trasa-arch-24" },
   { key: "rd-trasa-arch-21" },
@@ -77,8 +85,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-capsule-rules", clutter: 1 },
   // The basement under W-3's hall and its culvert (docs/pomieszczenia/w3-basement.md).
   { key: "rd-w3b-pipes", fine: true, services: true },
-  { key: "rd-w3b-pump" },
-  { key: "rd-w3b-panel" },
+  { key: "rd-w3b-pump", sound: "pump" },
+  { key: "rd-w3b-panel", sound: "hum" },
   { key: "rd-w3b-bulb", fine: true, clutter: 0 },
   { key: "rd-w3b-handrail-a", fine: true, services: true },
   { key: "rd-w3b-handrail-b", fine: true, services: true },
@@ -92,13 +100,13 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-w3h-pallet-sacks" },
   { key: "rd-w3h-jack", fine: true, clutter: 0 },
   { key: "rd-w3h-barrels", fine: true, clutter: 0 },
-  { key: "rd-w3h-leak", fine: true, clutter: 3 },
+  { key: "rd-w3h-leak", fine: true, clutter: 3, sound: "drip" },
   { key: "rd-w3h-trays", fine: true, services: true },
   { key: "rd-w3h-break", fine: true, clutter: 5 },
   { key: "rd-w3h-exit", fine: true, clutter: 0 },
   { key: "rd-w3h-warning", fine: true, clutter: 1 },
   // The metro's platforms (docs/pomieszczenia/metro-*.md).
-  { key: "rd-metro-vent" },
+  { key: "rd-metro-vent", sound: "vent" },
   { key: "rd-metro-timetable" },
   { key: "rd-metro-validator" },
   { key: "rd-metro-litter", fine: true, clutter: 3 },
@@ -115,14 +123,14 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-shelter-prints", clutter: 1 },
   { key: "rd-shelter-hebi", clutter: 4 },
   // Alchemia's car store P-2 (docs/pomieszczenia/alchemia-p2.md).
-  { key: "rd-p2-tech", clutter: 5 },
+  { key: "rd-p2-tech", clutter: 5, sound: "hum" },
   { key: "rd-p2-cabinet" },
   { key: "rd-p2-pipes", services: true },
   { key: "rd-p2-lamp" },
   { key: "rd-p2-oil", clutter: 2 },
   // Alchemia's car park P-1 (docs/pomieszczenia/alchemia-parking.md).
   { key: "rd-p1-column" },
-  { key: "rd-p1-charger" },
+  { key: "rd-p1-charger", sound: "hum" },
   { key: "rd-p1-ceiling", services: true },
   { key: "rd-p1-barrier" },
   { key: "rd-p1-cabin-screen" },
@@ -131,12 +139,12 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   // Alchemia's food hall on P3 (docs/pomieszczenia/alchemia-foodhall.md).
   { key: "rd-fh-lantern" },
   { key: "rd-fh-lantern-small" },
-  { key: "rd-fh-ramen", clutter: 1 },
+  { key: "rd-fh-ramen", clutter: 1, sound: "simmer" },
   { key: "rd-fh-donburi", clutter: 1 },
   { key: "rd-fh-cup", fine: true, clutter: 1 },
   { key: "rd-fh-spilled", fine: true, clutter: 1 },
   { key: "rd-fh-stool" },
-  { key: "rd-fh-pot" },
+  { key: "rd-fh-pot", sound: "simmer" },
   { key: "rd-fh-bowls", clutter: 1 },
   { key: "rd-fh-teacup", clutter: 1 },
   { key: "rd-fh-gas" },
@@ -183,7 +191,7 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-c-laptop", fine: true, clutter: 1 },
   { key: "rd-c-extinguisher", fine: true, clutter: 0 },
   { key: "rd-c-hydrant", fine: true, clutter: 0 },
-  { key: "rd-c-fusebox", fine: true, services: true },
+  { key: "rd-c-fusebox", fine: true, services: true, sound: "hum" },
   { key: "rd-c-drain", fine: true, services: true },
   { key: "rd-c-puddle", fine: true, clutter: 0 },
   // The food hall's clutter clusters (§14, 22.11): the tables' condiments and leftovers, the kitchens' tills and prep.
@@ -204,7 +212,7 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-k-washbasin", fine: true, clutter: 0 },
   { key: "rd-k-curtain", fine: true, clutter: 0 },
   { key: "rd-k-lockers", fine: true, clutter: 0 },
-  { key: "rd-k-control-cabinet", fine: true, clutter: 0 },
+  { key: "rd-k-control-cabinet", fine: true, clutter: 0, sound: "hum" },
   { key: "rd-k-office-chair", fine: true, clutter: 0 },
   { key: "rd-k-shredder", fine: true, clutter: 0 },
   { key: "rd-k-binders", fine: true, clutter: 6 },

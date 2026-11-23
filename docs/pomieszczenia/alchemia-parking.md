@@ -36,7 +36,7 @@ Frakcja: ulica.
 - §14 zgodne: 13 rzeczy drobiazgu w trzech skupiskach (konsola strażnika, bilety i pachołek przy kasie, kartony z butelkami i kubkiem w rogu pokładu), nic luzem. Dalej: skupisko przy kabinach.
 - §15 częściowo: kałuże i plamy na pustych miejscach (generator), połysk lakieru aut. Dług: kałuże pod samymi autami.
 - §16 zgodne: beton, pasy ostrzegawcze; dodać migającą świetlówkę.
-- §17 do sprawdzenia: szum wentylacji i silników.
+- §17 do sprawdzenia: szum wentylacji i silników. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie ładowarek, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

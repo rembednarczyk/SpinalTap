@@ -13,7 +13,9 @@ import { type AudioSampleManifest, type FetchBytes, SampleBank, manifestUrls } f
 import { SoundscapeClock } from "./soundscape-clock";
 import { SynthVoices } from "./synth-voices";
 import { TickTimer } from "./tick-timer";
+import { RoomScape } from "./room-scape";
 import { W3Scape } from "./w3-scape";
+import type { RoomMix } from "./room-sound-map";
 import type { W3Mix } from "./w3-sound-map";
 
 export { CUES, type Recipe, type Voice } from "./cues";
@@ -72,6 +74,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly music: LayeredMusic;
   private readonly radio: RadioPlayer;
   private readonly w3: W3Scape;
+  private readonly rooms: RoomScape;
   private readonly clock: SoundscapeClock;
   private readonly lines: DialogueLines;
   /** The engine of the car she drives (ADR-0097): `set` every frame, null with no car. */
@@ -92,7 +95,9 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.radio = new RadioPlayer(this.voices);
     // W-3 draws from its own stream: the street's drops and cars stay the same wherever she is.
     this.w3 = new W3Scape(this.voices, mulberry32(0x0003_7e55));
-    this.clock = new SoundscapeClock({ voices: this.voices, ambient: this.ambient, music: this.music, radio: this.radio, w3: this.w3 });
+    // The rooms' things (§17) their own stream too: a leak's drops do not shift the street's.
+    this.rooms = new RoomScape(this.voices, mulberry32(0x0005_0d00));
+    this.clock = new SoundscapeClock({ voices: this.voices, ambient: this.ambient, music: this.music, radio: this.radio, w3: this.w3, rooms: this.rooms });
     // Voice files are many and large: their own bank, filled line by line, not with the samples.
     this.lines = new DialogueLines(new SampleBank(opts.fetchBytes), opts.voiceUrl, this.mix);
     this.speech = this.lines;
@@ -114,11 +119,16 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   }
 
   /**
-   * Last positional mix of the neon hum and steam, and W-3's soundscape (ADR-0082 stage 4): built
-   * or not, what the listener hears of it and how loud the street is under its roof (debug, tests).
+   * Last positional mix of the neon hum and steam, W-3's soundscape (ADR-0082 stage 4): built or not, what the listener
+   * hears of it and how loud the street is under its roof; and the rooms' things (§17) (debug, tests).
    */
-  get positional(): { readonly hum: EmitterMix; readonly steam: EmitterMix; readonly sector: { readonly active: boolean; readonly mix: W3Mix; readonly street: number } } {
-    return { ...this.ambient.positional, sector: { active: this.w3.active, mix: this.w3.mix, street: this.ambient.streetLevel } };
+  get positional(): {
+    readonly hum: EmitterMix;
+    readonly steam: EmitterMix;
+    readonly sector: { readonly active: boolean; readonly mix: W3Mix; readonly street: number };
+    readonly rooms: { readonly active: boolean; readonly mix: RoomMix };
+  } {
+    return { ...this.ambient.positional, sector: { active: this.w3.active, mix: this.w3.mix, street: this.ambient.streetLevel }, rooms: { active: this.rooms.active, mix: this.rooms.mix } };
   }
 
   get currentMood(): MusicMood {
@@ -183,6 +193,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.voices.stopAll(now);
     this.ambient.stop(now);
     this.w3.stop(now);
+    this.rooms.stop(now);
     this.music.stop(g, now);
     this.radio.stop(now);
     this.engine.stop(now);

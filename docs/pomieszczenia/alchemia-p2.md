@@ -35,7 +35,7 @@ Frakcja: technika (zautomatyzowany magazyn aut).
 - §14 częściowo: drobiazg z Blendera, 7 rzeczy, skupisko przy rzeczach technika, plama oleju ze szmatą luzem (29%); szyny, roboty i regały rysuje silnik (`p2-store.ts`). Dług: skupisko przy stanowisku serwisowym.
 - §15 dług: plama oleju jest w detalu; połysk szyn i mokry beton pod wyciekiem.
 - §16 zgodne: zimna zieleń diod, sprzęt dominuje.
-- §17 do sprawdzenia: stukot robotów ze źródła (ruch jest).
+- §17 do sprawdzenia: stukot robotów ze źródła (ruch jest). Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie techniki, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

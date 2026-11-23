@@ -40,7 +40,7 @@ Frakcja: ulica (bar).
 - §14 zgodne: 17 rzeczy drobiazgu, 13 w skupiskach (rzeczy na ladzie, butelki za barem), 24% luzem (piwo i popielniczka na stolikach). Zmywak za północnym końcem lady (partia 2 ADR-0099, `rd-k-bar-sink`: stalowy zlew z dwiema komorami, bateria ze spryskiwaczem, szklanki na suszarce, gąbka, płyn, skrzynka pustych butelek).
 - §15 częściowo: lakierowany blat w opisie, do sprawdzenia połysk w grze; lepkie stoły jako wilgoć.
 - §16 zgodne: neony, ciepły brudny żółty.
-- §17 do sprawdzenia: radio Yoru FM ze źródła.
+- §17 do sprawdzenia: radio Yoru FM ze źródła. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): pompa akwarium, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 

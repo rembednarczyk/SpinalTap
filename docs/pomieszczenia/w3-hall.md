@@ -39,7 +39,7 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 - §14 zgodne: 31 rzeczy drobiazgu, 28 w sześciu skupiskach (przeciek, rzeczy nocnej zmiany, cztery stanowiska S1–S4 przy taśmach: maska spawalnicza, rękawice, kuweta śrub, puszka, tablet z listą kontrolną, `rd-w3h-station`), 3 luzem (10%, tablice ostrzegawcze na ścianach). Dalej: szafki w rzędach.
 - §15 częściowo: kapanie w opisie; plamy oleju przy podstawach ramion i kratki odpływu (generator). Dług: połysk plam i posadzki.
 - §16 zgodne: korporacja, która „nie sprząta, tylko liczy”.
-- §17 częściowo: iskry i taśmy jako ruch; szum napędów ze źródła do sprawdzenia.
+- §17 częściowo: iskry i taśmy jako ruch; szum napędów ze źródła do sprawdzenia. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie skrzynek i kapanie przecieku (obok pejzażu W-3), w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
 ## Inwentarz gry
 
