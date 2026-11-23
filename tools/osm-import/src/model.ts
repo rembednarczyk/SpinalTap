@@ -52,6 +52,33 @@ export interface BuildingOut {
   readonly venues?: readonly VenueOut[];
 }
 
+/**
+ * A roof on posts (`building=roof`, G-063): a bus platform's shelter, the market's stall roofs, a
+ * well's roof. Drawn as a slab lifted to `soffit` over `y` (a building's outline and look) on
+ * steel posts, and walked under: the ground, the furniture and the crowd under it stay.
+ */
+export interface CanopyOut {
+  readonly id: string;
+  readonly x: number;
+  readonly z: number;
+  /** World y of its foot: the lowest NMT point under the outline. */
+  readonly y: number;
+  /** Counter-clockwise outline relative to (x, z). */
+  readonly outline: readonly number[];
+  /** Convex counter-clockwise parts of the outline, relative to (x, z). */
+  readonly parts: readonly (readonly number[])[];
+  /** The underside of the roof over `y`: the clearance over the highest ground under it. */
+  readonly soffit: number;
+  /** The roof's top over `y`. */
+  readonly height: number;
+  /** Ground difference under the outline. */
+  readonly plinth: number;
+  readonly look: number;
+  readonly name?: string;
+  /** The posts' centres relative to (x, z), each `CANOPY.post` square, from the ground to the soffit. */
+  readonly posts: readonly number[];
+}
+
 export interface GroundOut {
   readonly surface: GroundSurface;
   /** World points, counter-clockwise, clipped to the chunk. */
@@ -184,6 +211,8 @@ export interface ChunkOut {
   readonly multiLaneWays?: readonly MultiLaneWayOut[];
   /** Walls, fences, hedges and their gates (ADR-0077), clipped to it, when it has any. */
   readonly barriers?: readonly BarrierOut[];
+  /** Roofs on posts (G-063), when it has any. */
+  readonly canopies?: readonly CanopyOut[];
   /**
    * The squares and the footways' bands as laid before the ground became a partition (ADR-0078
    * step 3), the big ones the crowd's loops are drawn round (`walkAreas`), when it has any.
