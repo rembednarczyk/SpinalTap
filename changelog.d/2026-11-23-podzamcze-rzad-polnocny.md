@@ -1,0 +1,2 @@
+- Podzamcze sięga dalej na północ, do Ruskiej i Szkolnej: dochodzi cała reszta Targu na Ruskiej, która dotąd urywała się na skraju mapy, z ulicami, domami i terenem z map Lublina.
+- Sklep „Wszystko za grosz” na Ruskiej nazywa się teraz „Wszystko za drobne”, bo w nowym rzędzie stoi sieć, z którą stara nazwa się kojarzyła.

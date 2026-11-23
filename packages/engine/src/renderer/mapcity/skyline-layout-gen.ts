@@ -28,7 +28,7 @@ interface Box {
 }
 
 /** The game's main block of chunks and the Nabrzeże (bounds of `LUBLIN_CHUNKS`). */
-export const MAIN_BLOCK: Box = { minX: -200, maxX: 1120, minZ: -270, maxZ: 580 };
+export const MAIN_BLOCK: Box = { minX: -200, maxX: 1120, minZ: -270, maxZ: 790 };
 export const DOCKS_BLOCK: Box = { minX: 2300, maxX: 2700, minZ: 60, maxZ: 480 };
 
 /** Metres between a tower's foot and any chunk, beyond the reach of its body. */

@@ -43,7 +43,7 @@ describe("generator", () => {
         expect(c.rect.maxZ - c.rect.minZ).toBeLessThanOrEqual(250);
       }
     }
-    expect(ALL_CHUNKS).toHaveLength(20);
+    expect(ALL_CHUNKS).toHaveLength(23);
   });
 
   it("builds a chunk from a small map", () => {
