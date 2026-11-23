@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AudioListenerPose, ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, interiorAt } from "@seki/sim";
+import { INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, T1_CART, T1_EXTRACT, interiorAt } from "@seki/sim";
 import { ROOM_SOUNDS, ROOM_SOUND_NEAR, THROUGH_WALL, roomEmitters, roomMix } from "../src/audio/room-sound-map";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -35,14 +35,18 @@ describe("the rooms' sound map", () => {
     // (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard; on Neon Koi's back wall the kitchen's
     // extract, the downpipe and the meters' box; the wreck's leak on Plac Litewski and the dry fountains' jets
     // (docs/lokacje/plac-litewski.md, §17); on the roof of Alchemia's pavilion the neon's transformer, the kitchen's
-    // exhaust fan and the bucket's drip.
+    // exhaust fan and the bucket's drip; by Brama Krakowska its scanner, its neon's transformer and the booth's plate.
     const near = (e: { position: { x: number; z: number } }, x: number, z: number, r: number) => Math.hypot(e.position.x - x, e.position.z - z) < r;
     for (const e of EMITTERS.filter((x) => x.room === null)) {
       const wash = (e.sound === "pump" || e.sound === "vent") && near(e, 410, -36, 8);
       const koi = near(e, 313, -110, 3);
       const wreck = e.sound === "drip" && near(e, 152.6, -49, 3);
       const roof = near(e, PAVILION_CENTRE.x, PAVILION_CENTRE.z, 8);
-      expect(wash || koi || wreck || roof || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
+      // By Brama Krakowska: the scanner in the passage, the neon's transformer, the zapiekanki booth's hot plate.
+      const brama = near(e, 470, -90, 12) || near(e, 456, -76, 4);
+      // On Alchemia's T1: Hana's cool box, the extract of Fumiko's kitchen.
+      const t1 = near(e, T1_CART.x, T1_CART.z, 1) || near(e, T1_EXTRACT.x, T1_EXTRACT.z, 1);
+      expect(wash || koi || wreck || roof || brama || t1 || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
     }
   });
 

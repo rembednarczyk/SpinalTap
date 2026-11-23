@@ -81,8 +81,8 @@ const HATCH_POST = ground(443.4, 98.6);
 
 /** Hana's cart, the Hebi stash's crates and lights: the market's own things outside the hall. */
 export const ALCHEMIA_MARKET_PROPS: readonly StaticProp[] = [
-  // Hana's handcart, just east of where she stands.
-  onGround(crate(HANA_SPOT.x + 1.3, HANA_SPOT.z, 0.9, 1.0, 1.8)),
+  // Hana's handcart, just east of where she stands, drawn by its model (`rd-t1-cart`, `t1-dress.ts`).
+  { ...onGround(crate(HANA_SPOT.x + 1.3, HANA_SPOT.z, 0.9, 1.0, 1.8)), scenery: true },
   lampAt(ground(HANA_SPOT.x + 1.3, HANA_SPOT.z + 1.6), "#9ad7ff"),
   // The Hebi stash in the shelter: cover in front of it, and the big crate in the room takes a body (ADR-0065).
   onShelterFloor(crate(COVER.x, COVER.z, 1.0, 1.1, 2.4)),
@@ -179,7 +179,7 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
 /** The Hebi lookout by the shelter's hatch on T2 (stage 5d2, ADR-0074 §3): watches it and the stairs from T1 by day, walks P-2 at night. */
 export const HEBI_LOOKOUT_POST: Vec3 = HATCH_POST;
 /** He looks south-west, over the hatch to the stairs from T1. */
-const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
+export const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
 
 export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
   // By day the shop; from 22:00 the schedule swaps in `oyaji_closed`.
