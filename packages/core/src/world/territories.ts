@@ -17,7 +17,7 @@ export const CITY_DISTRICT_IDS: readonly CityDistrictId[] = ["shinsekai-7", "kan
 export const TERRITORIES = {
   /** Behind the car wash, where M0 played: the gang comes back after the prologue. */
   "car-wash-yard": { faction: "hebi", district: "shinsekai-7" },
-  /** Under Alchemia's arcades, by today's lookout. */
+  /** Before the west face of Alchemia's Arkady on T2 (the lookout by the shelter's hatch since ADR-0074 stage 5d2). */
   "alchemia-arcades": { faction: "hebi", district: "shinsekai-7" },
   /** An alley off Kapucyńska or Karmelicka. */
   "kapucynska-alley": { faction: "hebi", district: "shinsekai-7" },

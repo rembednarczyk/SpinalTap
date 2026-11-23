@@ -31,7 +31,7 @@ export interface Tone {
 }
 
 export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = {
-  // Shinsekai 7: pink-violet. The neon of the bars bleeds into a violet haze.
+  // Krakowskie Przedmieście (id from before Lublin, ADR-0042): pink-violet. The neon of the deptak's bars bleeds into a violet haze.
   "shinsekai-7": {
     fog: "#1a1627",
     ambient: "#433658",
@@ -42,7 +42,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     highlights: { hue: 325, density: 18, saturation: 16 },
     wet: "#ece2f4",
   },
-  // Ulica Kanałowa: the old teal of the canal, wet concrete, cold cyan rims.
+  // Stare Miasto: the old teal of the Czechówka in its pipes under the town, wet stone, cold cyan rims.
   kanal: {
     fog: "#122029",
     ambient: "#34405a",
@@ -53,7 +53,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     highlights: { hue: 38, density: 12, saturation: 10 },
     wet: "#dcecef",
   },
-  // The market: amber and red, lantern light and grill smoke.
+  // Podzamcze: amber and red, the lanterns and grill smoke of the flea market and the Bazar.
   targ: {
     fog: "#25170f",
     ambient: "#4f3634",
@@ -64,7 +64,7 @@ export const DISTRICT_PALETTES: Readonly<Record<DistrictId, DistrictPalette>> = 
     highlights: { hue: 38, density: 34, saturation: 28 },
     wet: "#f4e6da",
   },
-  // The docks: cold blue haze over the water, sodium-orange floodlights.
+  // Nabrzeże Bystrzycy: cold blue haze over the river, sodium-orange floodlights of Tessen's W-3.
   doki: {
     fog: "#0e1a2b",
     ambient: "#2f3b57",
