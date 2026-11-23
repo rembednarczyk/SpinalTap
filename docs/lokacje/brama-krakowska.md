@@ -85,11 +85,9 @@ Gracz idzie deptakiem na wschód i wychodzi na Plac Łokietka. Przed nim, ok. 70
 - Para i zapach z budki z zapiekankami jako źródło ruchu.
 
 ## Dług sceny
-- Kontener na śmieci przy (462; −100) z kryjówką (`hide: "dumpster"`), skrytka za nim: `packages/sim/src/content/district-kanal.ts` (`KANAL_PROPS` na końcu, `KANAL_ALLEY_STASH`), przegląd `topography-curator`.
-- Sprzeczność ink i gry: `m4-ulica.ink` (Tetsu) i komentarz `KANAL_ALLEY_STASH` mówią o kontenerze, którego w grze nie ma (najbliżej skrytki stoi reflektor (461; −97)); poprawka jak wyżej.
-- Oprawa i światło w sklepieniu, sucho pod łukiem: `packages/engine/src/renderer/mapcity/passage-plan.ts`, deszcz w `packages/engine/src/effects`.
-- Skaner Hebi jako urządzenie (model, dźwięk, błysk przy przejściu) i reakcja posterunku: model w `tools/blender/rooms/brama_krakowska.py`, emiter w `packages/engine/src/audio/spatial.ts`, posterunek bliżej wylotu w `packages/sim/src/content/kanal-patrols.ts` (`POSTS.bramowa`, zmiana tras ze sprawdzeniem testem patroli).
-- Kratka ściekowa przy (510; −68) dla `enc_kanal_fisherman`; sprzeczność ink i gry: ink mówi „Przy krawężniku na Grodzkiej”, a spotkanie stoi na Bramowej (`packages/sim/src/content/encounters.ts`). Propozycja: zmiana zdania na „na Bramowej” w `packages/narrative/ink/{pl,en}/enc-kanal.ink` albo przeniesienie spotkania na Grodzką.
-- Drobiazg w skupiskach za kontenerem, przy budce i w bramie Hideo: nowy `tools/blender/rooms/brama_krakowska.py`, nowy `packages/sim/src/content/brama-detail.ts`.
-- Sprzeczność ADR i gry: ADR-0045 („Gdzie co stoi”) podaje metro Brama Krakowska przy (492; −80), a gra ma węzeł (442; −40) i wejście A (433; −107) po ADR-0071; dopisek w `docs/adr/0045-gra-w-lublinie.md`.
+Zrobione 23.11 (scena według karty, `packages/sim/src/content/brama-detail.ts`, `tools/blender/rooms/brama_krakowska.py`, test `packages/sim/test/brama-scene.test.ts`): kontener pod przybudówką z kryjówką (bryła w puli pomieszczeń chunku, `BRAMA_SOLIDS`), skrytka Tetsu za nim (`KANAL_ALLEY_STASH` zgodna z ink), skaner Hebi w sklepieniu z dźwiękiem (`hum`), dwie latarnie na ościeżach, posterunek z Bramowej 6,5 m od wschodniego wylotu przodem do niego, budka z zapiekankami z parą i dźwiękiem, transformator neonu, posłanie Hideo w bramie przy Bramowej, kratka Sabu (ink mówi już o Bramowej). Zostaje:
+- Sucho pod łukiem: deszcz w `packages/engine/src/effects` nie zna przejazdów.
+- Błysk skanera przy przejściu gracza i reakcja posterunku (zdarzenie w `sim`, efekt w `engine`); osobny dźwięk skanowania zamiast `hum` (nowy rodzaj w `RoomSound` i `room-scape.ts`).
+- Sprzeczność ADR i gry: ADR-0045 („Gdzie co stoi”) podaje metro Brama Krakowska i skrytkę przy starych punktach (492; −80) i (459,5; −99), a gra ma węzeł (442; −40), wejście A (433; −107) i skrytkę (464,7; −98,3); dopisek w `docs/adr/0045-gra-w-lublinie.md`.
 - Zmierzyć 60-30-10 nocą z Placu Łokietka i wpisać w §13 tej karty.
+- Przegląd `topography-curator` (sesja jednowątkowa, bez agentów): rozstawienie sprawdzone testem sceny względem ścian z mapy.
