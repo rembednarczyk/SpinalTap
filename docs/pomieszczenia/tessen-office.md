@@ -40,6 +40,52 @@ Frakcja: korporacja (Tessen); druga: technika (monitory kamer).
 - §16 częściowo: zimne świetlówki zamiast ukrytego ciepłego światła korporacji; to biuro na zapleczu fabryki, więc tanie światło jest celowe. Zapisać jako odstępstwo.
 - §17 do sprawdzenia: szum pomp zza ściany. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): świetlówki i buczenie szafy sterowniczej, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
+## Scenariusz
+
+### Pierwszy kadr
+Seki podchodzi przerwą między wschodnią ścianą wieży a rzędem N hali (x 2496–2500), od strony placu odbioru albo od nabrzeża. Drzwi dwuskrzydłowe biura (2496; 443) są zamknięte, panel z kodem przy nich (2496,2; 1,3; 444,6), obok automat z napojami (`dev:doki-vending`, (2496,5; 440)). Po otwarciu widać pokój 9,4 × 9,4 m pod zimnymi świetlówkami: na wprost przy zachodniej ścianie biurko z trzema monitorami podglądu i terminalem, po prawej szafy na akta, po lewej ławka dla kierowców. Wzrok ma iść na biurko (dane), a łapie go turkus ekranów i czerwona lampka przy drzwiach.
+
+### Postacie i miejsca
+Zlecenie `infiltrate` Genzō (ADR-0024, ADR-0082 §1), 3–5 strażników Tessen (`W3_CONTRACT_POSTS.tessen_office`), w kolejności:
+- strażnik biura (2488,6; 438,4) twarzą na południe, ku południowej ścianie 2 m przed nim, plecami do biurka (2487,2; 441);
+- strażnik drzwi (2497,8; 445,4) w przerwie przy hali, twarzą na południe, wzdłuż przerwy;
+- strażnik 4 m na południe od schodów wieży (2492; 428), twarzą na południe;
+- strażnik nabrzeża (2482; 428,5) twarzą na zachód, ku pomostowi;
+- strażnik placu odbioru (2506; 446) twarzą na wschód.
+- Kamera biura (`dev:doki-office-cam`) w północno-zachodnim narożniku pod stropem (2486,6; 3; 445,4), patrzy w pokój ku drzwiom; strefa zakazana to całe biuro na czas infiltracji.
+- Warianty (ADR-0034): dwóch ochroniarzy w środku (2490; 439), (2493; 438,2), czujka u stopy schodów wieży (2492; 432).
+- Terminal z mailem haka `hook_infiltrate_1` stoi na zewnątrz w przerwie (2498,8; 438).
+
+### Przebieg
+1. Zlecenie u Genzō przy kontenerze KAIUN na pasie publicznym: „Manifesty ładunków, z terminala na biurku. Biuro przepustek na parterze ich wieży kontrolnej, drzwi od strony hali. Nikt nie może cię zobaczyć”.
+2. Haki: mail na terminalu w przerwie daje kod 4177 („Kod jest zapisany na karteczce”), a bark strażnika przy schodach (`hook_infiltrate_2`) mówi, że strażnik drzwi co pół godziny wychodzi zapalić. W grze to przerwa w minutach 20–25 każdego półgodzinnego okresu.
+3. Wejście: kod otwiera drzwi bez alarmu, a kamera bierze wtedy Seki za personel (ADR-0038). Bez kodu panel daje „Wyłam zamek”, co otwiera drzwi do końca zlecenia i podnosi alarm.
+4. Zgranie danych z biurka (`W3_ITEM_SPOTS`, (2487,2; 0,9; 441)). Napięcie: stożek strażnika biura i kamera. Pełne podejrzenie któregokolwiek strażnika przed zgraniem to porażka `detected` (fixerzy −3, Tessen −5, telefon `phone_genzo_failed`: „Przez parę dni nie pokazuj się przy biurze”).
+5. Powrót do Genzō: „Czyste dane i nikt nic nie widział”. Fixerzy +3, Tessen −1. Ta sama infiltracja jest treningiem drogi cichej sabotażu (ADR-0082).
+
+### Drogi
+- Cicha: od placu odbioru wzdłuż ściany rzędu N do przerwy, w minutach 20–25 albo za plecami strażnika drzwi, kod z haka, potem wzdłuż północnej ściany pod kamerą do biurka. Ze stożkiem z ADR-0024 (60° w każdą stronę, rozglądanie ±0,7 rad) strażnik biura nie widzi drogi od drzwi do biurka, więc pilnuje jej tylko kamera i jego zasięg 2,2 m.
+- Głośna nie istnieje: każdy alarm przed zgraniem kończy zlecenie. Wyłamanie zamka to alarm.
+- Ucieczka po wykryciu: drzwiami w przerwę i na plac odbioru albo schodami wieży na podest +10 i rurociągiem nad Bystrzycą (ADR-0021). Drugiego wyjścia z biura nie ma.
+- Pułapka: czujka wariantu stoi u stopy schodów wieży, na drodze ucieczki na podest.
+
+### Pora i stan świata
+- Bez zlecenia biuro jest zamknięte, a drzwi otwierają się tylko personelowi Tessen (zamek `code`, `staff: "tessen"`). Wnętrze bez okien, więc w dzień i w nocy wygląda tak samo; na zewnątrz w nocy reflektory i mgła znad rzeki.
+- Zlecenie jest dostępne o każdej porze. Po sabotażu głośnym Tessen jest wrogi (najwyżej −60) i Genzō ostrzega przed strzelcami na dachach. Brak terytoriów gangów w paśmie doków.
+
+### Wymagania wobec sceny
+- Biurko z danymi czytelne od drzwi: terminal w barwie technicznej, jaśniejszy niż monitory podglądu (§13).
+- Martwy kąt kamery i strażnika biura, którędy prowadzi cicha droga, czytelny bez napisu (cień, regał, ślad butów).
+- Druga droga z pokoju zadania (§9) albo świadomy wyjątek: infiltracja kończy się porażką przy wykryciu, więc ucieczka jest potrzebna tylko po porażce.
+- Ślad „przed chwilą”: kubek po kawie i kanapka na biurku (są w `rd-tessen-desk`), krzesło odsunięte od biurka (jest w partii 2).
+
+## Dług sceny
+- Sprzeczność ADR i gry: ADR-0082 §3 mówi, że wewnątrz strefy W-3 nie ma autozapisu, a `tessen-office` w `INTERIORS` nie ma `autosave: false` (hala i piwnica mają). Propozycja: `autosave: false` w `packages/sim/src/content/interior-areas.ts` z testem sesji.
+- Hak `hook_infiltrate_1` w `packages/narrative/ink/{pl,en}/hooks.ink` mówi o „bocznych drzwiach od strony dźwigu”, a `hook_infiltrate_2` o paleniu „za magazyn”. Dźwigu i magazynu nie ma od ADR-0082 etap 1. Propozycja: „Kod do drzwi biura od strony hali” i „wychodzi zapalić za narożnik śluz”.
+- Strażnik biura (2488,6; 438,4) z yaw π patrzy w ścianę 2 m przed sobą. Do sprawdzenia, czy to zamierzone. Propozycja: okno w południowej ścianie na nabrzeże i schody wieży (karta: „Małe biuro z oknem na bramę”) albo posterunek twarzą ku drzwiom w `packages/sim/src/content/tessen-w3/posts.ts` (zmiana testów skradania).
+- Część „Przeznaczenie” tej karty mówi o schodach na platformę w biurze, a schody wieży biegną na zewnątrz, po południowej ścianie (`W3_TOWER_STAIR`). Poprawka karty.
+- Terminal na biurku jako cel: światło ekranu w `packages/engine/src/renderer/rooms/room-lights.ts`, oprawa w `tools/blender/rooms/tessen_office.py`.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->

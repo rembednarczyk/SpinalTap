@@ -40,7 +40,6 @@ Frakcja: ulica.
 - blender: rd-gl-mannequin × 1
 - blender: rd-gl-stock × 15
 - blender: rd-gl-stock-b × 12
-- model: figure × 1
 - piece: cable × 3
 - piece: carton × 5
 - piece: ceiling-light × 6
@@ -64,7 +63,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 32 m², wysokość 3,1 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 16
-- warstwy wyposażenia: makro 17, mezo 27, mikro 10
+- warstwy wyposażenia: makro 17, mezo 26, mikro 10
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 10 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 14
 <!-- inwentarz-gry:end -->

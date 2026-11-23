@@ -216,6 +216,16 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-k-office-chair", fine: true, clutter: 0 },
   { key: "rd-k-shredder", fine: true, clutter: 0 },
   { key: "rd-k-binders", fine: true, clutter: 6 },
+  // MYJNIA 24H and the yard behind it (docs/lokacje/myjnia-podworko.md, ADR-0102 point 5): the gantry and its dryer's hiss,
+  // the machine room's wall with its pump, the chemistry by the bay, the bay's wet floor, the payment post, the canopy's
+  // tubes and what the courier left round his feet.
+  { key: "rd-cw-gantry", clutter: 0, sound: "vent" },
+  { key: "rd-cw-machine", services: true, sound: "pump" },
+  { key: "rd-cw-chem", clutter: 4 },
+  { key: "rd-cw-bay", fine: true, clutter: 0 },
+  { key: "rd-cw-pay", clutter: 0 },
+  { key: "rd-cw-tubes", clutter: 0 },
+  { key: "rd-cw-courier", fine: true, clutter: 6 },
   // The roof of Alchemia's triangular pavilion, Ren's camp in act II (docs/lokacje/alchemia-pawilon-dach.md, ADR-0102): the bed
   // on its pallets, the crate with what he keeps on it, the mast and the pole of the tarp, the bucket the tarp drips into, the
   // kitchen's exhaust fan, the neon's transformer, the green lamp over the ladder, the Hebi snake by it and Ren's carabiner.

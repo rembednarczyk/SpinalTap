@@ -91,11 +91,11 @@ describe("contract toasts, the HUD objective and the journal", () => {
     const domain = { ...createDomainState(), quests: { m0_first_contract: { status: "completed" as const } }, contracts: { active: job, completed: 1 } };
     expect(describeObjective(domain, "en")).toEqual({
       title: "Contract 2 · Hana",
-      objective: "Take Hana's crate from the Hebi stash (guards: 2): the Hebi stash by the ruin behind Alchemia's stalls",
+      objective: "Take Hana's crate from the Hebi stash (guards: 2): the Hebi stash in the shelter under Alchemia",
     });
     expect(describeObjective(domain, "pl")).toEqual({
       title: "Kontrakt 2 · Hana",
-      objective: "Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: 2): skrytka Hebi przy ruinie za straganami Alchemii",
+      objective: "Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: 2): skrytka Hebi w schronie pod Alchemią",
     });
     const entry = (locale: Locale) => buildJournal(domain, locale).quests.find((q) => q.id === "contract-c2");
     expect(entry("en")?.steps[0]?.objective).toMatch(/^Take Hana's crate/);

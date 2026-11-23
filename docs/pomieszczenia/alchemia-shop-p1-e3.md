@@ -43,7 +43,6 @@ Frakcja: technika; druga: korporacja (wszczepy z licencją).
 - blender: rd-gl-implants-b × 16
 - blender: rd-gl-stock × 10
 - blender: rd-gl-stock-b × 17
-- model: figure × 1
 - model: street-cabinet × 1
 - piece: cable × 3
 - piece: carton × 5
@@ -68,7 +67,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 36 m², wysokość 4,2 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 19
-- warstwy wyposażenia: makro 24, mezo 24, mikro 9
+- warstwy wyposażenia: makro 24, mezo 23, mikro 9
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 9 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 6
 <!-- inwentarz-gry:end -->

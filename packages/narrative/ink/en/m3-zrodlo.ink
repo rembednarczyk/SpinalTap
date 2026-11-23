@@ -208,7 +208,7 @@ Nobody recorded it and nobody corrected it. It's yours, whatever they say about 
     { choice_rooftop == "together":
         Ren calls from the Vistula. He says it isn't the sea, but it'll do for now.
     - else:
-        Ren disappears from Alchemia's roof. He leaves the tarp and the empty vial of the module.
+        Ren disappears from Alchemia's roof. All he leaves behind is the tarp.
     }
 }
 { act2_ending == "street":
@@ -221,10 +221,14 @@ Nobody recorded it and nobody corrected it. It's yours, whatever they say about 
 - else:
     Kaito buys you sake and asks nothing. For the first time.
 }
-{ story_ending == "aya":
+// After "seki" Mori sold the module to Ren (act II): Ren hands it back in the finale, Kagami takes it with him after "kagami".
+{
+- story_ending == "aya":
     The module behind your ear is silent. The name Aya still sounds strange, but you turn when you hear it now.
+- act2_ending == "kagami":
+    Your module went back to Kagami along with Ren. You stay Seki, the woman from the wreck.
 - else:
-    The vial with the module sits on Mori's shelf. You stay Seki, the woman from the wreck.
+    The vial with the module sits on your shelf. You stay Seki, the woman from the wreck.
 }
 This is the end of the main thread. The city goes on, and Kaito has jobs waiting.
 ~ set_flag("seen:act3_epilogue")

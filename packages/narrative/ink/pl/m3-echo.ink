@@ -62,7 +62,7 @@ MORI: Moduł reaguje na nowy chrom. Jak coś ci wszczepię, może puści więcej
 
 === recall_crash_night ===
 Nowy implant łapie prąd i coś w głowie przeskakuje jak bezpiecznik.
-Noc, mokra obwodnica, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samochód. Na fotelu obok leży przecięta opaska z kodem Kagami.
+Noc, mokre Krakowskie Przedmieście, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samochód. Na fotelu obok leży przecięta opaska z kodem Kagami.
 Nad maską wisi dron i świeci ci reflektorem w oczy.
 REN: Słyszysz mnie? Jedź prosto do wiaduktu. Pod nim zgubi sygnał. Nie skręcaj.
 Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
@@ -202,10 +202,10 @@ MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
     SEKI: Mogłeś mi powiedzieć.
     MORI: Mogłem. Ale moduł był już tylko towarem, a ty nie chciałaś go znać.
     MORI: Kupił go Ren Odagiri. Płacił gotówką, której nikt na tej ulicy nie ma.
-- MORI: Nocuje na dachu Alchemii, nad targiem. Wjeżdża windą za halą.
+- MORI: Nocuje na dachu szklanego pawilonu na rogu Alchemii. Wchodzi drabiną od zaplecza.
 ~ set_flag("ren_trail")
 -> END
 
 = after_seki
-MORI: Fiolka dalej stoi na półce. Nikt jej nie chce. Ty też nie, prawda?
+MORI: Fiolki już u mnie nie ma i wcale za nią nie tęsknię. Ty też nie, prawda?
 -> END

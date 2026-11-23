@@ -32,13 +32,13 @@ export const ENCOUNTERS: readonly EncounterDef[] = [
 
   // Podzamcze: Plac Zamkowy and the paved squares with the street stalls by the bus station and
   // the Bazar halls on Aleja Tysiąclecia (the game's market moved to Alchemia, ADR-0063).
-  // Kiku the fortune teller between the stalls by the bus station, at night.
+  // Kiku the fortune teller by the metro pavilion B before the bus station, at night.
   { id: "targ_fortune", district: "targ", knot: "enc_targ_fortune", fromHour: 18, toHour: 2, at: { x: 745, z: 376 }, radius: 4, npcKey: "enc-kiku", once: true },
-  // Daigo's synthetic chicken runs loose across Plac Zamkowy, under the Zamkowa viaduct's steps, in the morning.
+  // Daigo's synthetic chicken runs loose across Plac Zamkowy by the metro pavilion A, off to the Castle steps, in the morning.
   { id: "targ_chicken", district: "targ", knot: "enc_targ_chicken", fromHour: 6, toHour: 13, at: { x: 735, z: 296 }, radius: 6, npcKey: "enc-daigo", once: true },
-  // Akane and a Hebi collector in front of the Bazar halls, in the afternoon.
+  // Akane and a Hebi collector on the avenue's north pavement by the bus station, in the afternoon.
   { id: "targ_debt", district: "targ", knot: "enc_targ_debt", fromHour: 12, toHour: 20, at: { x: 770, z: 366 }, radius: 4, npcKey: "enc-akane", once: true },
-  // Riko sings on the square further east along the avenue in the evening.
+  // Riko sings by the bus stop further east along the avenue in the evening.
   { id: "targ_idol", district: "targ", knot: "enc_targ_idol", fromHour: 19, toHour: 23, at: { x: 790, z: 362 }, radius: 5, npcKey: "enc-riko", once: true },
 
   // Nabrzeże Bystrzycy: the public strip by W-3's fence and its quay (ADR-0082).

@@ -1,10 +1,10 @@
-import { type ActivityId, type StreetPropItem, type Vec3, figureVariant } from "@seki/core";
+import type { ActivityId, StreetPropItem, Vec3 } from "@seki/core";
 import type { CrowdSpot } from "../crowd-spot";
 import { furniturePrisms } from "../lublin/furniture";
 import { type Piece, box, piece } from "./plan";
 import { MALL_LEVELS } from "./mall-plan";
 import { FOUNTAIN_P0 } from "./landmark";
-import { type Fit, type Layout, type Slot, cartons, ceiling, cup, draw, litter, model, newFit, shelves, shopHash, shopLayout } from "./shop-fittings";
+import { type Fit, type Layout, type Slot, cartons, ceiling, cup, draw, litter, newFit, shelves, shopHash, shopLayout, yawOf } from "./shop-fittings";
 import { fitTrade } from "./shop-trades";
 import { FRONT_SHOPS } from "./front-shops";
 import { SHOPS, type ShopDef, isOpen, shopDoorTop, shopHead } from "./shops-plan";
@@ -13,7 +13,8 @@ import { SHOPS, type ShopDef, isOpen, shopDoorTop, shopHead } from "./shops-plan
  * The gallery's shops built (ADR-0093 O2, `docs/zasady-lokacji.md`): each unit's shell (its shopfront
  * of glass on the gallery with its door, its partitions, its back room behind a wall with a staff
  * door, the fascia its sign hangs on), its sales floor's fittings by its trade (`shop-trades.ts`),
- * the services under its ceiling, and its seller. A shut unit's shutter is down, a barred one's
+ * the services under its ceiling, and its seller's place (the seller a character since ADR-0101,
+ * `sellers.ts`). A shut unit's shutter is down, a barred one's
  * grille over its glass, a vacant one's glass papered over and its floor strewn with what the last
  * tenant left. Deterministic: a hash of the shop and the place.
  */
@@ -37,6 +38,8 @@ export interface ShopBuild {
   readonly sales: { readonly w: number; readonly s: number };
   /** Where its seller stands and where a customer does, in the world; null when it is not open. */
   readonly seller: Vec3 | null;
+  /** Which way its seller faces: out over the counter (ADR-0101: a character of `sellers.ts`, a still figure until then). */
+  readonly sellerYaw: number;
   readonly customer: Vec3 | null;
   readonly traces: readonly string[];
 }
@@ -182,11 +185,6 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
   }
   const at = (p: { u: number; v: number }): Vec3 => ({ ...k.f.point(p.u, p.v), y: k.y });
   const seller = open ? at(L.seller) : null;
-  if (seller) {
-    const g = shopHash(shop.id, 99);
-    const look = Math.floor(shopHash(shop.id, 98) * 32);
-    model(k, "figure", L.seller.u, L.seller.v, L.side ? "-u" : "out", figureVariant({ pose: g < 0.6 ? "stand" : "hips", body: g * 7 % 1 < 0.5 ? "a" : "b", seat: 0, look }));
-  }
   return {
     shop,
     pieces: k.pieces,
@@ -196,6 +194,7 @@ export const buildShop = (shop: ShopDef): ShopBuild => {
     layout: shop.state === "shut" ? null : L,
     sales,
     seller,
+    sellerYaw: yawOf(k, L.side ? "-u" : "out"),
     customer: open ? at(L.customer) : null,
     traces: k.traces,
   };
@@ -217,7 +216,7 @@ export const SHOP_SOLIDS: readonly Piece[] = SHOP_BUILDS.flatMap((b) => [...b.pi
 export const GALLERY_DETAIL: readonly StreetPropItem[] = SHOP_BUILDS.flatMap((b) => b.detail);
 /** The front's units' (O5). */
 export const FRONT_SHOP_DETAIL: readonly StreetPropItem[] = FRONT_SHOP_BUILDS.flatMap((b) => b.detail);
-/** The game's models in them: drinks machines, cash machines, cabinets, ticket machines, shrubs as plastic flowers, the sellers. */
+/** The game's models in them: drinks machines, cash machines, cabinets, ticket machines, shrubs as plastic flowers (the sellers characters since ADR-0101). */
 export const SHOP_PROPS: readonly StreetPropItem[] = SHOP_BUILDS.flatMap((b) => b.props);
 
 const CHUNK = "krakowskie-2-1";

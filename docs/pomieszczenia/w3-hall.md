@@ -41,6 +41,59 @@ Frakcja: korporacja (Tessen, przemysł); druga: technika (linia produkcyjna).
 - §16 zgodne: korporacja, która „nie sprząta, tylko liczy”.
 - §17 częściowo: iskry i taśmy jako ruch; szum napędów ze źródła do sprawdzenia. Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): buczenie skrzynek i kapanie przecieku (obok pejzażu W-3), w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
+## Scenariusz
+
+### Pierwszy kadr
+Droga cicha z piwnicy (Q1): Seki wychodzi schodami A na linię podzespołów w rzędzie S, drzwiami w korytarz S i drzwiami hali (2512; 406) do nawy, twarzą na północ. Strop 16 m nad nią, przed nią taśma L1 z ramionami i stanowiska S1 i S2 z ekranami (turkusowe światło przy S1), za nimi aleja produkcyjna (z 413–423), dalej taśma L2. Na zachód szeroko otwarta śluza wagonowa ze strażnikiem, na wschód brama komory testów pod czerwonymi światłami. Wysoko po północnej stronie okna galerii antresoli, a w nich czasem kierownik zmiany. Wzrok ma iść wzdłuż alei na wschód, ku korytarzowi N i serwerowni. Droga Q2 zaczyna się inaczej: włazem z dachu rzędu N prosto do serwerowni N, ciasnej, pod szafami serwerów.
+
+### Postacie i miejsca
+Sabotaż `sabotage` (kontrakt `w3_hall`, ADR-0082 §1–§2, `tessen-w3/mission.ts`, `posts.ts`, `mission-loud.ts`):
+- P1, patrol hali: pętla (2512; 418) → (2546; 418) → (2546; 431) → (2512; 431), co drugie okrążenie dalej korytarzem N do drzwi serwerowni N (2566; 431). Nie rozpoznaje przebrań.
+- P2, patrol antresoli: galeria +5,5 od (2503,5; 433,5) do (2557; 433,5) i z powrotem.
+- Kierownik zmiany (egzekutor przebrań): biuro na antresoli (x 2524–2536), przy biurku twarzą do drzwi (2530), raz na okrążenie zatrzymuje się w oknie nad linią (2540; 430,95) i patrzy w dół, potem cofa się o krok.
+- Strażnik śluzy wagonowej (2505; 418), twarzą na wschód wzdłuż alei. Strażnik zbrojowni S (2552; 402,6) przy drzwiach wewnętrznych, twarzą w pokój.
+- Technicy linii: przy S2 (2537; 414,2) nad taśmą L1 i przy S3 (2519; 421,8) nad L2.
+- Kamera serwerowni N w północno-zachodnim narożniku (2561,8; 3,6; 438,8), patrzy na drzwi i front terminalu rdzenia (2566; 437,1). Martwy kąt przy terminalu od strony wschodniej szafy (2568,6; 438,4).
+- Na dachu rzędu N dwie kamery na attyce (2530; +11,5; 440) na zachód i (2556; +11,5; 440) na wschód, w kabinie wieży obserwator (`tessen_sniper`, 40 m wzroku, przed alarmem nie strzela).
+- Fale alarmu: trzech ze śluz od razu (2506; 409,5), (2506; 426), (2507; 416), trzech z placu odbioru po 60 s (2520, 2530, 2540; 446).
+- Poza halą: technik na papierosie przy furtce serwisowej (2552,3; 390,4), 19:00–23:00.
+
+### Przebieg
+1. Zlecenie u Genzō, raz w grze: „Dwanaście dronów bojowych z hali W-3. Wojsko odbiera je o szóstej rano”. Seki dostaje pendrive `w3_virus` i dwa haki: kolektor do piwnicy z kombinezonami w szatni i rurociąg na dach rzędu N z włazem. Termin to najbliższa 6:00 odległa o co najmniej 6 godzin.
+2. Rozpoznanie: technik przy furtce wieczorem (`hook_sabotage_2`, szafka 14), strażnik śluzy (`hook_sabotage_1`: patrol schodzi do serwerowni co drugie okrążenie).
+3. Droga cicha: piwnica, kombinezon `tessen_overalls`, linia podzespołów, przejście przez aleję w rytmie postoju kierownika w oknie, korytarz N między okrążeniami P1, serwerownia N. Albo dach: dwie kamery (`reboot_optics` oślepia je na 30 s), właz (2564; 439,3), drabina w dół.
+4. Wgranie: 40 s (25 s po złamaniu ICEpickiem) w promieniu 3 m od terminalu, z martwego kąta kamery. Potem „Wyjdź ze strefy W-3 niezauważona”, przez płot albo do metra. Wypłata telefonem (2000 przy poziomie 1, 1420, gdy ktoś widział wyjście).
+5. Przejście na głośną: alarm przed końcem wgrywania zamyka serwerownie (zamek `alarm`): „Serwerownia odcięta. Zostaje zbrojownia”.
+6. Droga głośna: zbrojownia S, „Weź ładunki” ze skrzynki (2555; 0,9; 400,8) zawsze podnosi alarm, skrzynia z łupem obok (2552; 0,8; 397). Trzy ładunki na trzech z czterech stanowisk S1–S4, po 2,5 s każdy, potem 60 s lontu i ucieczka z hali przez bramę albo do metra. Telefon `phone_genzo_paid_loud`, Tessen najwyżej −60, pościg 3 dni.
+7. Porażka: o 6:00 bez wirusa i bez wybuchu partia wyjeżdża (`batch-shipped`, `phone_genzo_failed_shipped`).
+
+### Drogi
+- Cicha Q1: kolektor, piwnica, schody A na linię podzespołów albo schody B do warsztatu W2, korytarz S, drzwi hali 2512 albo 2546, aleja, korytarz N, drzwi serwerowni (2566; 432). Osłony: taśmy 1,2 m (kucanie), podstawy ramion 1,8 m, palety 1,4 m.
+- Cicha Q2: drabina rurociągu na zachodnim brzegu, chodnik +10, podest wieży, kładka na dach N, około 64 m po dachu między agregatami chłodzenia, właz. Pułapka: obserwator w kabinie wieży widzi dach i plac odbioru.
+- Głośna: zbrojownia S od korytarza S (drzwi zewnętrzne (2552; 396) są na razie zamkniętym skrzydłem). Fale wchodzą ze śluz od zachodu i z placu odbioru od północy.
+- Ucieczka: śluzy na zachodni plac i do furtki, metro A Nabrzeże (wejście na pasie publicznym, peron pod magazynem S). Tor suwnicy N +12 (drabina (2520; 429,3)) to punkt widokowy nad linią.
+- Kryjówki ciał: szafki w szatni piwnicy i w śluzach, skrzynie części w magazynach, kontener na placu odbioru.
+
+### Pora i stan świata
+- W hali świeci tylko jej własne światło (tryb wnętrza), więc w środku jest tak samo o każdej porze. Zapis startowy wycinka zaczyna o 21:00 przy Genzō, a technik pali przy furtce 19–23, więc dobre okno to wieczór i noc. Na placu odbioru nocą stuka ktoś w kontenerze (`enc_doki_container`, 22–4).
+- Bez zlecenia w hali nie ma ludzi sabotażu: posterunki, patrole i techników stawia szablon kontraktu. Po cichej drodze Tessen bez zmian, po głośnej wrogi w mieście przez 3 dni pościgu. Sabotaż jest jednorazowy, potem Genzō wraca do infiltracji i włamania.
+- Wewnątrz strefy bez autozapisu (`autosave: false`).
+
+### Wymagania wobec sceny
+- Aleja i oba korytarze czytelne jako droga patrolu: żółte lampy nad przejściami są, drzwi do piwnicy i do biura w barwie nawigacji są długiem w audycie.
+- Okno kierownika nad linią widoczne z alei, żeby gracz zobaczył jego postój, zanim przejdzie (§9).
+- Terminal rdzenia jaśniejszy niż szafy i martwy kąt kamery czytelny z progu serwerowni.
+- Stanowiska S1–S4 jako cele ładunków czytelne z daleka. Turkusowe światło ekranów pada dziś tylko przy S1 i S3.
+- Odbiór partii: plac odbioru z ciężarówką wojska i rampą, bo termin 6:00 to cała stawka misji.
+
+## Dług sceny
+- Ink przeczy grze: Genzō w `packages/narrative/ink/{pl,en}/m4-doki.ink` (`offer`, sabotaż) mówi „Są dwa wejścia, których nikt nie pilnuje”, a od G-908 na dachu N są dwie kamery i obserwator w kabinie wieży. ADR-0082 („Po playteście 17.11”) zapisał tę poprawkę. Propozycja: „Rurociąg na dach rzędu N. Na dachu są dwie kamery, a z kabiny wieży patrzy obserwator”.
+- Telefon `phone_genzo_failed_shipped` w `packages/narrative/ink/{pl,en}/phone.ink`: „Partia odpłynęła z nabrzeża”, a ADR i Genzō mówią o odbiorze przez wojsko (łodzi w v1 nie ma). Propozycja: „Partia odjechała z placu odbioru o szóstej”.
+- Drzwi zewnętrzne zbrojowni S (2552; 396) z kodem (ADR-0082 §1 droga głośna): dziś zamknięte skrzydło w `packages/sim/src/content/tessen-w3/rows-s.ts`, odłożone w etapie 3b.
+- Stanowiska S2 i S4 bez turkusowej plamy światła, którą mają S1 i S3: `packages/engine/src/renderer/tessen-w3/w3-lights.ts` (w budżecie świateł shadera albo samoświeceniem blatu).
+- Plac odbioru z ciężarówką wojska i rampą jako cel terminu 6:00: rekwizyty w `packages/sim/src/content/tessen-w3/public.ts` albo nowym pliku placu, rysunek z `vehicle-props`.
+- Światło nad drzwiami serwerowni N i nad terminalem rdzenia (§13): `w3-lights.ts`, oprawa w `tools/blender/rooms/w3_hall.py`.
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->

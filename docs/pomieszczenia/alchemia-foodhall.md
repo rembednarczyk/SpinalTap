@@ -45,6 +45,50 @@ Frakcja: ulica (handel i jedzenie); druga: korporacja (galeria inwestora).
 - §16 zgodne: ciepły żółty, neony nad ladami, asymetria budek.
 - §17 do sprawdzenia: dźwięk kuchni i klimatyzacji ze źródła; ruch jest (para, ludzie). Dźwięk ze źródła w grze od 22.11 (`room-sound-map.ts`, emitery w przedmiotach): bulgotanie garnków na straganach, w pełni w pomieszczeniu, cicho i głucho zza ściany.
 
+## Scenariusz
+
+### Pierwszy kadr
+Seki wjeżdża ostatnimi schodami ruchomymi z P2 i staje na podeście P3 przy południowej krawędzi atrium (około 416,6; 6,5; 40,7), twarzą na zachód. Przed nią zachodni rząd lokali (THAI, zamknięty SEOUL, w narożniku RAMEN FUMIKO), po prawej nad galerią północną neon FOOD HALL i lady OKONOMIYAKI, KASA TEA i KAWA, nad stołami lampiony, para nad garnkami. Za plecami, we wschodnim końcu galerii południowej, KIOSK Sachiko i w narożniku pancerna lada ARMS z kratą: sklep Oyajiego. Lady ludzi z zadań świecą jaśniej i bielej niż kuchnie (§13). W napadzie wzrok ma iść na ARMS, a dziś po wjeździe stoi do niego plecami.
+
+### Postacie i miejsca
+- Oyaji (`oyaji`, 120 HP, sklep `oyaji`) za ladą pancerną 1,1 m z kratą do 2,6 m (429,8; 6,5; 35,7), twarzą na północ. Klapa w ladzie przy zachodniej ścianie sklepu (x 428–428,9) to droga Hebi do niego; drzwi zaplecza przy z 35,4–36,6, za wschodnim końcem lady.
+- Sachiko (`sachiko`) w kiosku (423,3; 35,7), twarzą na północ, o każdej porze.
+- Kenta (410,8; 54,3) i Goro (416,5; 54,3) za ladami północnymi, twarzami na południe; Fumiko (403,1; 53,4) za barem w narożniku, twarzą na wschód.
+- Klienci przed ladami (`beforeKeeper`), tłum przy stołach i półkach przy balustradzie (`crowd.ts`).
+- W napadzie (karta `alchemia-gallery`) 2–4 Hebi wjeżdżają tymi samymi schodami P2→P3 i idą galerią południową na wschód, do klapy Oyajiego.
+
+### Przebieg
+1. Zlecenie Hany (8:00–22:00, ochrona Oyajiego): „Pilnuj go, aż padnie ostatni z nich”. Kwestia Hany w trakcie: „Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!”.
+2. Napięcie: Hebi pojawiają się na P2 po 6,5 albo 9,5 s od przyjęcia (wspinaczka w trzonach), a pierwszą ranę Oyaji dostaje po około 18 s. Gracz od wózka Hany zdąży, jeśli biegnie.
+3. Obrona: Hebi idą do klapy w ladzie, bo krata zamyka resztę. Kto stanie w galerii południowej między schodami a ARMS, zatrzymuje ich na około 10 m otwartej podłogi.
+4. Nagroda u Hany. Przy przyjaznej postawie cywilów Oyaji mówi: „Dla ciebie zawsze coś odłożę”. Śmierć Oyajiego (`dead:oyaji`) zamyka ochronę na dobre.
+5. Poza zleceniem: jedzenie u Fumiko (leczenie, 16:00–24:00 na P3), handel u Oyajiego, rozmowy z Kentą, Goro, Sachiko. Kenta mówi o dachu: „Winda za halą jeszcze jeździ, jak się mocno naciśnie”.
+
+### Drogi
+- Cicha: brak w napadzie. Poza nim food hall to droga na dach (trzony SW i NE, winda) i z dachu w dół.
+- Głośna: osłony to lada pancerna Oyajiego (z gracza strony klientów), kiosk Sachiko z daszkiem, ławy i stoły (do sprawdzenia, które są bryłami), kuchnie lokali. Strzał z galerii nad atrium na podest schodów jest otwarty.
+- Ucieczka: schody ruchome w dół, trzon SW (galeria zachodnia), trzon NE (galeria północna).
+- Pułapka: podest schodów P3 jest jedynym wejściem napadu i jedynym szybkim wejściem gracza, więc spóźniony gracz wjeżdża Hebi za plecy albo prosto pod ich lufy.
+
+### Pora i stan świata
+- Szkło fasady i otwarte atrium: w dzień jasno z góry, w nocy lampiony i neony (§13, zrzut dzień i noc).
+- Godziny: food hall 10:00–24:00 (Kenta i Goro przy ladach, od 0:00 do 10:00 siedzą w głębi lokali), Fumiko 16:00–24:00 na P3, potem na P0, Oyaji 8:00–22:00, potem za kratą (`oyaji_closed`), Sachiko zawsze.
+- Przed ochroną Oyaji płaci Hebi co miesiąc („Jak nie zapłacę, przychodzą za dnia, przy ludziach”). Przy przyjaznej postawie cywilów Hana i Oyaji mówią, że przy Seki Hebi omijają targ.
+
+### Wymagania wobec sceny
+- Lada ARMS czytelna z podestu schodów P3 bez odwracania się, albo znak nad schodami w jej stronę (§9, linia wzroku do celu).
+- Klapa w ladzie Oyajiego widoczna jako słabe miejsce (inna barwa, ślady, uchylona).
+- Osłony w galerii południowej między schodami a ARMS (stół, automat, kosz), bez zamykania przejścia napadu.
+- Ślad „przed chwilą” przy Oyajim: kubek (karta: do zrobienia), towar z ziemi po napadzie (Hana: „zbierać towaru z ziemi”).
+
+## Dług sceny
+- Ink przeczy grze: Goro w `packages/narrative/ink/{pl,en}/m4-ulica.ink` ma stragan otwarty 8–22 („Stragan zamknięty, ale ja nie śpię”), a plan dnia w `schedules.ts` trzyma go przy ladzie 10:00–24:00 (`FOODHALL_HOURS`). Propozycja: warunek w ink według `FOODHALL_HOURS`.
+- Oyaji w `packages/narrative/ink/{pl,en}/day-cycle.ink` (`oyaji_closed`): „Gary już wystygły”, a Oyaji handluje bronią i łata kurtki (lokal ARMS). Propozycja: „Krata w dół, naboje pod kluczem”.
+- Sachiko w `m4-ulica.ink`: „Uważaj przy ruinie za straganami” i „Za ruiną na końcu placu leży torba”, a od ADR-0074 etap 2 ruiny nie ma, a torba z blokady (`stash:targ-overpass`) leży przed łukiem Arkad na T2. Propozycja: „pod Arkadami na dolnym placu”.
+- Hana w `packages/narrative/ink/{pl,en}/m4-targ.ink`: „Będę przy wózku, na placu za straganami”, a stragany są na P3, a wózek na T1 przed halą. Propozycja: „na placu przed halą”.
+- Podest schodów P3 obrócony plecami do ARMS: znak albo światło nad galerią południową ku ladzie Oyajiego w `packages/sim/src/content/alchemia/foodhall-detail.ts` (rysunek w `tools/blender/rooms/alchemia_foodhall.py`).
+- Kubek Oyajiego i towar przy ladzie: `tools/blender/rooms/alchemia_foodhall.py`, `foodhall-detail.ts` (karta: „kubki Sachiko i Oyaji do zrobienia”).
+
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->

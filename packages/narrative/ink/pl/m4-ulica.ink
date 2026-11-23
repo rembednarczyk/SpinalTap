@@ -1,9 +1,9 @@
 // Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
-// Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
+// Hideo, a clerk from the Tessen office on the Bystrzyca. Down Grodzka, under the footbridge, to the Tessen bus; back to SAKE at night.
 === hideo ===
 {
 - civilians_tier == "hostile":
@@ -27,10 +27,10 @@
     SEKI: Co robisz w Tessen?
     HIDEO: Liczę kontenery, których nie ma. Wpisuję je do systemu, a potem wypisuję. Płacą za to, żebym nie pamiętał.
     -> talk
-+ { not has_flag("hideo_bridge") } [Czemu chodzisz górą, przez kładkę? #tone:optional]
-    SEKI: Czemu chodzisz górą, przez kładkę?
++ { not has_flag("hideo_bridge") } [Czemu chodzisz Grodzką, pod kładką? #tone:optional]
+    SEKI: Czemu chodzisz Grodzką, pod kładką?
     ~ set_flag("hideo_bridge")
-    HIDEO: Bo pod kładką, na Grodzkiej, stoją Hebi i liczą ludziom portfele. Z góry przynajmniej widać ich z daleka.
+    HIDEO: Bo tak najkrócej do autobusu. Pod kładką stoją Hebi i liczą ludziom portfele, więc idę środkiem i patrzę w bruk.
     HIDEO: Kaito podobno płaci za takich, co tam handlują. Ja tylko mówię, co widzę.
     -> talk
 + [Trzymaj się. #tone:leave]
@@ -93,7 +93,7 @@
 = talk
 + [Śpiewasz tu co noc? #tone:optional]
     SEKI: Śpiewasz tu co noc?
-    MEI: Od trzech lat. Zanim zamknęli piwnice pod Rynkiem, śpiewałam w lochach Trasy Podziemnej za drobne. Akustyka była lepsza.
+    MEI: Od trzech lat. Wcześniej śpiewałam za drobne w lochach Trasy Podziemnej. Akustyka lepsza, tylko turyści gorsi.
     -> talk
 + { not has_flag("mei_song") } [Zaśpiewasz coś dla mnie? #tone:optional]
     SEKI: Zaśpiewasz coś dla mnie?
@@ -105,7 +105,7 @@
     MEI: Dobranoc to się mówi rano. Ale niech będzie.
     -> END
 
-// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
+// Sachiko keeps the kiosk in Alchemia's food hall (P3, ADR-0093 O3). She sees everyone who comes in.
 === sachiko ===
 {
 - civilians_tier == "hostile":
@@ -125,7 +125,7 @@
 + [Co słychać na targu? #tone:optional]
     SEKI: Co słychać na targu?
     { hebi_stance == "hostile":
-        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj przy ruinie za straganami.
+        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj na dolnym placu, pod Arkadami.
     - else:
         SACHIKO: Hana ma nowy towar, Oyaji stare ceny, a Hebi te same twarze. Nic się tu nie zmienia.
     }
@@ -133,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego? #tone:optional]
     SEKI: Widziałaś tu coś dziwnego?
     ~ set_flag("sachiko_car")
-    SACHIKO: Za ruiną na końcu placu leży torba. Ktoś ją zostawił w noc blokady i już po nią nie wrócił.
+    SACHIKO: Przed Arkadami, na dolnym placu, leży torba. Ktoś ją zostawił w noc blokady i już po nią nie wrócił.
     SACHIKO: Do środka nikt nie zaglądał. Przynajmniej nikt, kto by się przyznał.
     -> talk
 + [Dzięki za wszystko. #tone:leave]
@@ -141,7 +141,7 @@
     SACHIKO: Nie dziękuj. Następnym razem coś kup.
     -> END
 
-// Goro sells umbrellas at the east end of the north row.
+// Goro sells umbrellas from his unit in the food hall, open 10:00 to midnight like the hall (FOODHALL_HOURS, schedules.ts).
 === goro ===
 {
 - civilians_tier == "hostile":
@@ -150,7 +150,7 @@
 - civilians_tier == "wary":
     GORO: Parasole sprzedaję każdemu. Przyjaźń już nie.
 }
-{ game_hour >= 8 && game_hour < 22:
+{ game_hour >= 10:
     GORO: Parasole, kurtki przeciwdeszczowe, folia na implanty. Tu pada nawet wtedy, kiedy nie pada.
 - else:
     GORO: Stragan zamknięty, ale ja nie śpię. Pilnuję, żeby nikt nie pożyczył sobie markizy.

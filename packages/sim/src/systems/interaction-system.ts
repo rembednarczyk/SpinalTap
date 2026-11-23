@@ -116,6 +116,9 @@ const INTERACT_REACH_Y = 1.6;
 
 type Interactable = Entity & { interactable: NonNullable<Entity["interactable"]> };
 
+/** She stands inside the rectangle an interactable is reached from (ADR-0101). */
+const standsIn = (r: NonNullable<Interactable["interactable"]["from"]>, p: Entity["position"]): boolean => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ;
+
 /**
  * The interactable chosen in reach and the distance a takedown or a body must beat. When the
  * nearest of all but the bags is the job's goal, it is chosen and the bags step aside (G-910); a
@@ -132,6 +135,7 @@ const nearest = (ctx: SimContext, player: Entity): { best: Interactable | null; 
     const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
     // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
     if (Math.abs(e.position.y - player.position.y) > (e.interactable.reachY ?? INTERACT_REACH_Y) || d > e.interactable.radius) continue;
+    if (e.interactable.from && !standsIn(e.interactable.from, player.position)) continue;
     if (d < bestDist) {
       best = e;
       bestDist = d;
