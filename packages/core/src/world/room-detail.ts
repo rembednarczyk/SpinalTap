@@ -269,6 +269,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-pav-bulkhead" },
   { key: "rd-pav-hebi", fine: true, clutter: 1 },
   { key: "rd-pav-carabiner", fine: true, clutter: 1 },
+  // The bus station (docs/lokacje/dworzec-autobusowy.md, ADR-0102): Kiku the fortune teller's table and stools.
+  { key: "rd-dw-kiku", clutter: 9 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
