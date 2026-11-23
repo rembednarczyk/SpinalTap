@@ -121,7 +121,7 @@
         "maxX": 460,
         "maxZ": 160
       },
-      "bytes": 84868,
+      "bytes": 84815,
       "cells": [
         "krakowskie-0-0",
         "krakowskie-1-0",
@@ -135,7 +135,7 @@
           "cell": "krakowskie-0-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2025-04-12",
@@ -147,7 +147,7 @@
           "cell": "krakowskie-0-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2024-06-21",
@@ -159,7 +159,7 @@
           "cell": "krakowskie-0-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2023-09-11",
@@ -171,7 +171,7 @@
           "cell": "krakowskie-1-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2025-04-12",
@@ -183,7 +183,7 @@
           "cell": "krakowskie-1-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2024-06-21",
@@ -195,7 +195,7 @@
           "cell": "krakowskie-1-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2023-09-11",
@@ -207,7 +207,7 @@
           "cell": "krakowskie-2-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -219,7 +219,7 @@
           "cell": "krakowskie-2-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2024-06-21",
@@ -231,7 +231,7 @@
           "cell": "krakowskie-2-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2023-09-11",
@@ -243,7 +243,7 @@
           "cell": "krakowskie-0-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2025-04-12",
@@ -255,7 +255,7 @@
           "cell": "krakowskie-0-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2024-06-21",
@@ -264,22 +264,10 @@
           }
         },
         {
-          "cell": "krakowskie-0-1",
-          "flight": "2023-09",
-          "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
-          "sheet": {
-            "sheet": "M-34-34-A-c-1-2",
-            "date": "2023-09-11",
-            "pixel": 0.05,
-            "colour": "RGB"
-          }
-        },
-        {
           "cell": "krakowskie-1-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2025-04-12",
@@ -291,7 +279,7 @@
           "cell": "krakowskie-1-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2024-06-21",
@@ -303,7 +291,7 @@
           "cell": "krakowskie-1-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-1-2",
             "date": "2023-09-11",
@@ -315,7 +303,7 @@
           "cell": "krakowskie-2-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -327,7 +315,7 @@
           "cell": "krakowskie-2-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2024-06-21",
@@ -339,7 +327,7 @@
           "cell": "krakowskie-2-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2023-09-11",
@@ -350,13 +338,13 @@
       ],
       "samples": {
         "none": 0,
-        "green": 121674,
-        "paving": 628833,
-        "asphalt": 276662,
-        "shadow": 2314,
-        "unknown": 12115,
-        "canopy": 72041,
-        "canopyHard": 21561
+        "green": 121152,
+        "paving": 632469,
+        "asphalt": 279061,
+        "shadow": 2979,
+        "unknown": 12112,
+        "canopy": 68026,
+        "canopyHard": 19401
       }
     },
     {
@@ -367,7 +355,7 @@
         "maxX": 2700,
         "maxZ": 480
       },
-      "bytes": 44478,
+      "bytes": 45140,
       "cells": [
         "nabrzeze-0-0",
         "nabrzeze-1-0",
@@ -379,7 +367,7 @@
           "cell": "nabrzeze-0-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-2",
             "date": "2025-04-12",
@@ -391,7 +379,7 @@
           "cell": "nabrzeze-0-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-2",
             "date": "2024-06-21",
@@ -403,7 +391,7 @@
           "cell": "nabrzeze-0-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-2",
             "date": "2023-09-11",
@@ -415,7 +403,7 @@
           "cell": "nabrzeze-1-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-2",
             "date": "2025-04-12",
@@ -425,21 +413,9 @@
         },
         {
           "cell": "nabrzeze-1-0",
-          "flight": "2024-06",
-          "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
-          "sheet": {
-            "sheet": "M-34-34-A-c-2-2",
-            "date": "2024-06-21",
-            "pixel": 0.25,
-            "colour": "RGB"
-          }
-        },
-        {
-          "cell": "nabrzeze-1-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-2",
             "date": "2023-09-11",
@@ -451,7 +427,7 @@
           "cell": "nabrzeze-0-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-4",
             "date": "2025-04-12",
@@ -463,23 +439,11 @@
           "cell": "nabrzeze-0-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-4",
             "date": "2024-06-21",
             "pixel": 0.25,
-            "colour": "RGB"
-          }
-        },
-        {
-          "cell": "nabrzeze-0-1",
-          "flight": "2023-09",
-          "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
-          "sheet": {
-            "sheet": "M-34-34-A-a-4-4",
-            "date": "2023-09-11",
-            "pixel": 0.05,
             "colour": "RGB"
           }
         },
@@ -487,7 +451,7 @@
           "cell": "nabrzeze-1-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-4",
             "date": "2025-04-12",
@@ -499,7 +463,7 @@
           "cell": "nabrzeze-1-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-4",
             "date": "2024-06-21",
@@ -511,7 +475,7 @@
           "cell": "nabrzeze-1-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-4",
             "date": "2023-09-11",
@@ -522,13 +486,13 @@
       ],
       "samples": {
         "none": 0,
-        "green": 361444,
-        "paving": 184051,
-        "asphalt": 42236,
-        "shadow": 1222,
-        "unknown": 75,
-        "canopy": 77890,
-        "canopyHard": 5082
+        "green": 364440,
+        "paving": 182423,
+        "asphalt": 47098,
+        "shadow": 1406,
+        "unknown": 78,
+        "canopy": 71099,
+        "canopyHard": 5456
       }
     },
     {
@@ -553,7 +517,7 @@
           "cell": "podzamcze-0-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -565,7 +529,7 @@
           "cell": "podzamcze-0-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -577,7 +541,7 @@
           "cell": "podzamcze-0-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -589,7 +553,7 @@
           "cell": "podzamcze-1-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -601,7 +565,7 @@
           "cell": "podzamcze-1-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -613,7 +577,7 @@
           "cell": "podzamcze-1-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -625,7 +589,7 @@
           "cell": "podzamcze-2-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -637,7 +601,7 @@
           "cell": "podzamcze-2-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -649,7 +613,7 @@
           "cell": "podzamcze-2-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -661,7 +625,7 @@
           "cell": "podzamcze-0-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -673,7 +637,7 @@
           "cell": "podzamcze-0-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -685,7 +649,7 @@
           "cell": "podzamcze-0-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -697,7 +661,7 @@
           "cell": "podzamcze-1-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -709,7 +673,7 @@
           "cell": "podzamcze-1-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -721,7 +685,7 @@
           "cell": "podzamcze-1-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -733,7 +697,7 @@
           "cell": "podzamcze-2-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2025-04-12",
@@ -745,7 +709,7 @@
           "cell": "podzamcze-2-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2024-06-21",
@@ -757,7 +721,7 @@
           "cell": "podzamcze-2-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-a-4-3",
             "date": "2023-09-11",
@@ -785,7 +749,7 @@
         "maxX": 760,
         "maxZ": 160
       },
-      "bytes": 42482,
+      "bytes": 41542,
       "cells": [
         "stare-miasto-0-0",
         "stare-miasto-1-0",
@@ -797,7 +761,7 @@
           "cell": "stare-miasto-0-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -809,7 +773,7 @@
           "cell": "stare-miasto-0-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2024-06-21",
@@ -818,10 +782,22 @@
           }
         },
         {
+          "cell": "stare-miasto-0-0",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-14",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
           "cell": "stare-miasto-1-0",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -833,7 +809,7 @@
           "cell": "stare-miasto-1-0",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2024-06-21",
@@ -845,7 +821,7 @@
           "cell": "stare-miasto-1-0",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2023-09-11",
@@ -857,7 +833,7 @@
           "cell": "stare-miasto-0-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -867,9 +843,21 @@
         },
         {
           "cell": "stare-miasto-0-1",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-14",
+          "sheet": {
+            "sheet": "M-34-34-A-c-2-1",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "stare-miasto-0-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2023-09-11",
@@ -881,7 +869,7 @@
           "cell": "stare-miasto-1-1",
           "flight": "2025-04",
           "service": "HighResolution",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2025-04-12",
@@ -893,7 +881,7 @@
           "cell": "stare-miasto-1-1",
           "flight": "2024-06",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2024-06-21",
@@ -905,7 +893,7 @@
           "cell": "stare-miasto-1-1",
           "flight": "2023-09",
           "service": "StandardResolutionTime",
-          "fetched": "2026-11-11",
+          "fetched": "2026-11-14",
           "sheet": {
             "sheet": "M-34-34-A-c-2-1",
             "date": "2023-09-11",
@@ -916,13 +904,13 @@
       ],
       "samples": {
         "none": 0,
-        "green": 61374,
-        "paving": 202462,
-        "asphalt": 166918,
-        "shadow": 1627,
-        "unknown": 7781,
-        "canopy": 31185,
-        "canopyHard": 8653
+        "green": 61181,
+        "paving": 204063,
+        "asphalt": 164995,
+        "shadow": 1231,
+        "unknown": 7791,
+        "canopy": 33328,
+        "canopyHard": 7411
       }
     }
   ]

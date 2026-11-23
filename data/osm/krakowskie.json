@@ -10000,7 +10000,8 @@
 [14252476312,51.249464,22.566364],
 [14252476313,51.24951,22.566392],
 [14292748747,51.2470136,22.5573846,{"artist_name":"Przemysław Blejzyk (Sainer)","artwork_type":"mosaic","name":"harmonoise23112025","start_date":"2026-10","tourism":"artwork"}],
-[14317427704,51.248794,22.5649339,{"amenity":"restaurant","cuisine":"mexican","name":"Lola"}]
+[14317427704,51.248794,22.5649339,{"amenity":"restaurant","cuisine":"mexican","name":"Lola"}],
+[14386499582,51.249333,22.562318,{"amenity":"cafe","instagram":"hazecafelublin","name":"Haze Cafe","takeaway":"no"}]
 ],
 "ways":[
 [40049337,[833275953,2434032092,4653553503,2434032098,2434032100,4653553505,1674535031,4653553507,13415212066,1852665336,3506835815,1852665327,2434032121,2762584331,2399650658,5329800126,481930900],{"highway":"residential","lane_markings":"no","lit":"yes","maxspeed":"50","name":"Peowiaków","name:etymology:wikidata":"Q24948840","oneway":"yes","sidewalk":"separate","surface":"paving_stones"}],
