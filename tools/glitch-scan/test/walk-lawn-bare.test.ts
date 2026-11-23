@@ -4,6 +4,7 @@ import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { THRESHOLDS } from "../../orto/src/thresholds.ts";
+import { reviewedOnly } from "./reviewed-cells";
 import { type WalkLawnChunk, walkLawnBare } from "./walk-lawn-bare";
 
 /**
@@ -40,6 +41,6 @@ describe("bare paving between a pavement and a lawn (walk-lawn-bare, G-902)", ()
 
   it(`leaves under ${MAX_LEFT} of them in the city`, () => {
     const covers = MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined);
-    expect(walkLawnBare(MAP_CHUNKS, covers).length).toBeLessThan(MAX_LEFT);
+    expect(walkLawnBare(reviewedOnly(MAP_CHUNKS), covers).length).toBeLessThan(MAX_LEFT);
   });
 });

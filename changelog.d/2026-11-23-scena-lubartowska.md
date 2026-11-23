@@ -1,0 +1,1 @@
+- Na Lubartowskiej przy skrzyżowaniu z aleją Tysiąclecia stoi kiosk całodobowy przy kamienicy obok grupy Hebi, a wokół miejsca, gdzie stoją, leżą butelki, kubki i worek puszek.

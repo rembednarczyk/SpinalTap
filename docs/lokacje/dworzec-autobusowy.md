@@ -50,10 +50,12 @@ Frakcja: ulica.
 - §17 dług: silników, zapowiedzi i gwaru nie ma. Ruch: 3 Hebi, auta alei; skala: drzwi dworca, pawilon metra.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/dworzec-detail.ts`, `tools/blender/rooms/dworzec.py`, test `packages/sim/test/dworzec-scene.test.ts`): stolik wróżki Kiku przy pawilonie metra B w miejscu jej spotkania; reklama Fumiko w `radio.ink` poprawiona w #955. Zostaje:
 - Zadaszenie peronu ze świetlówkami (zimne, migające) i wysepki stanowisk (G-063, T-170): `tools/osm-import` (zadaszenia `building=roof`) i `packages/engine/src/renderer/mapcity`, lampy gry pod zadaszeniem w nowym `packages/sim/src/content/district-targ.ts`.
 - Autobusy nocne na 3–4 stanowiskach, stojące i odjeżdżające w nocy: nowy model pojazdu (zmiana `VehicleModel` w `packages/core/src/ports/types.ts`, ADR architekta) i rozkład w `packages/sim/src/content/traffic.ts`.
-- Holo-tablica odjazdów, ławki i wiaty na wysepkach, stolik Kiku, skupiska drobiazgu: nowy `tools/blender/rooms/dworzec.py`, nowy `packages/sim/src/content/dworzec-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`.
+- Holo-tablica odjazdów, ławki i wiaty na wysepkach, skupiska drobiazgu: nowy `tools/blender/rooms/dworzec.py` (jest już stolik Kiku), `packages/sim/src/content/dworzec-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`; potrzebne położenie stanowisk z OSM (G-063).
 - Tłum czekających na peronie i w poczekalni (chunk `podzamcze-1-1` bez tłumu): `packages/sim/src/content/crowd.ts` (miejsca na końcu `CROWD_SPOTS`).
 - Emitery silników, zapowiedzi i automatu z kawą: `packages/engine/src/audio/spatial.ts`.
 - Sprzeczność ADR i gry: ADR-0091 i `TERRITORIES` (`packages/core/src/world/territories.ts`: „The stalls by the bus station”) stawiają grupę przy straganach dworca, a najbliższy stragan jest 91 m od rdzenia (801,4; 386,4). Propozycja: 4–6 straganów dworcowych przy pawilonach alei (x 810..860, z 375..380) w planie mebli `tools/osm-import` albo w `district-targ.ts`, przegląd `topography-curator`.
+- Sprzeczność ink i gry: `enc_targ_fortune` („Między straganami siedzi kobieta”) stoi 37 m od najbliższego straganu Bazaru; przy straganach dworcowych z punktu wyżej zdanie się zgadza bez zmiany ink.
 - Zmierzyć 60-30-10 nocą z alei na dworzec i wpisać w §13 tej karty.

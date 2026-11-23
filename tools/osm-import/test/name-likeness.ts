@@ -104,6 +104,8 @@ export const MOTIFS: readonly (readonly [stems: readonly string[], mark: string]
   [["siren"], "Starbucks: the siren"],
   [["zubr"], "Pekao, and a beer: the bison"],
   [["skarbon"], "PKO BP: the money box"],
+  [["strak"], "Groszek: the pea pod"],
+  [["groch"], "Groszek: the pea pod"],
   [["zaba"], "Żabka: the frog"],
   [["zabk"], "Żabka: the frog"],
   [["zabi"], "Żabka: the frog"],

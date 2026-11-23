@@ -87,6 +87,7 @@ Dwie drogi ADR-0082 zaczynają się tutaj.
 - Teksty Genzō mają opisywać grę: kto pilnuje rurociągu, czy furtka ma kod, czy jest łódź.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/tessen-w3/outside-dress.ts`, `tools/blender/rooms/w3_outside.py`): beczka-koksownik w miejscu skrzyni (bryła zostaje, bez ognia i światła), rzeczy Genzō pod ścianą KAIUN. Zostaje:
 - Kontener KAIUN jako kontener biurowy (blacha falista, drzwi, okno z kratą, klimatyzator, kabel do latarni): rysunek z modelu `container` albo z `tools/blender/`, bryła w `W3_PUBLIC_PROPS` (`packages/sim/src/content/tessen-w3/public.ts`) bez zmiany kolejności, nowe bryły na końcu.
 - Beczka z ogniem w miejscu skrzyni (2492,6; 383,2): model beczki (ADR-0096, Street Asset Pack), ogień i dym jako efekt w `packages/engine/src/renderer/tessen-w3/w3-fx.ts`, ciepłe światło punktowe tamże, trzask jako emiter w `packages/engine/src/audio/w3-sound-map.ts`.
 - Skupiska przy Genzō, furtce i wylocie metra: nowy plik `packages/sim/src/content/tessen-w3/public-dress.ts` (wzór `hall-detail.ts`), rysunek w `packages/engine/src/renderer/tessen-w3/w3-dress.ts`.

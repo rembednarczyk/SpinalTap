@@ -298,6 +298,39 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-ry-denki", clutter: 6 },
   { key: "rd-ry-sake", clutter: 8 },
   { key: "rd-ry-karaoke", fine: true, clutter: 9 },
+  // Grodzka under the footbridge (docs/lokacje/grodzka-kladka.md, ADR-0102): the Hebi traders' table of chips, what they
+  // leave where they stand, the bridge's downpipe dripping.
+  { key: "rd-gr-chips", clutter: 9 },
+  { key: "rd-gr-litter", fine: true, clutter: 8 },
+  { key: "rd-gr-downpipe", services: true, sound: "drip" },
+  // The deptak of Krakowskie in M0 (docs/lokacje/deptak-krakowskie.md, ADR-0102): Neon Koi's stand-up counter with its
+  // stools, the crate and board by its door, RAMEN's door, the gate Babcia Ume sleeps in.
+  { key: "rd-dp-bar", clutter: 6 },
+  { key: "rd-dp-koi-door", clutter: 9 },
+  { key: "rd-dp-ramen", clutter: 3 },
+  { key: "rd-dp-ume", clutter: 5 },
+  // W-3's outside (docs/lokacje/w3-pas-publiczny.md, w3-wieza.md, w3-rurociag-basen.md, ADR-0102): Genzō's brazier and
+  // things by KAIUN, the smokers' corner by the pass office, the fitters' things on the pipe landing, the ladder's board.
+  { key: "rd-w3-barrel", lod: "rd-w3-barrel-lod", clutter: 0 },
+  { key: "rd-w3-genzo", fine: true, clutter: 6 },
+  { key: "rd-w3-tower-door", fine: true, clutter: 9 },
+  { key: "rd-w3-landing", fine: true, clutter: 7 },
+  { key: "rd-w3-ladder-board", fine: true, clutter: 0 },
+  { key: "rd-w3-locker14", fine: true, clutter: 3 },
+  // Trasa Podziemna's loch (docs/pomieszczenia/trasa-podziemna.md, ADR-0102): Mei's old poster with its song list and
+  // the rose and candle under it, the south corridor's leak with its puddle and bucket.
+  { key: "rd-trasa-poster", fine: true, clutter: 4 },
+  { key: "rd-trasa-drip", clutter: 1, sound: "drip" },
+  // Mori's clinic (docs/pomieszczenia/clinic.md, ADR-0102): Kaito's stool by the chair with his mug and his butts.
+  { key: "rd-clinic-stool", clutter: 4 },
+  // Plac Zamkowy's flea market (docs/lokacje/plac-zamkowy.md, ADR-0102): a stall's blanket of goods and its festoon,
+  // the metro pavilion's green lamp.
+  { key: "rd-pz-stall", clutter: 9 },
+  { key: "rd-pz-metro-lamp", clutter: 0 },
+  // The bus station (docs/lokacje/dworzec-autobusowy.md, ADR-0102): Kiku the fortune teller's table and stools.
+  { key: "rd-dw-kiku", clutter: 9 },
+  // Plac po Farze (docs/lokacje/plac-po-farze.md, ADR-0102): the coin-op viewing telescope with its AR screen.
+  { key: "rd-fara-telescope", clutter: 1 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

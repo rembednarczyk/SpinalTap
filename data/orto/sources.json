@@ -537,16 +537,19 @@
         "minX": 520,
         "minZ": 160,
         "maxX": 1120,
-        "maxZ": 580
+        "maxZ": 790
       },
-      "bytes": 69959,
+      "bytes": 114621,
       "cells": [
         "podzamcze-0-0",
         "podzamcze-1-0",
         "podzamcze-2-0",
         "podzamcze-0-1",
         "podzamcze-1-1",
-        "podzamcze-2-1"
+        "podzamcze-2-1",
+        "podzamcze-0-2",
+        "podzamcze-1-2",
+        "podzamcze-2-2"
       ],
       "tiles": [
         {
@@ -764,17 +767,101 @@
             "pixel": 0.05,
             "colour": "RGB"
           }
+        },
+        {
+          "cell": "podzamcze-0-2",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-2",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-0-2",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-2",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-2",
+          "flight": "2024-06",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2024-06-21",
+            "pixel": 0.25,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-1-2",
+          "flight": "2023-09",
+          "service": "StandardResolutionTime",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2023-09-11",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
+        },
+        {
+          "cell": "podzamcze-2-2",
+          "flight": "2025-04",
+          "service": "HighResolution",
+          "fetched": "2026-11-23",
+          "sheet": {
+            "sheet": "M-34-34-A-a-4-3",
+            "date": "2025-04-12",
+            "pixel": 0.05,
+            "colour": "RGB"
+          }
         }
       ],
       "samples": {
         "none": 0,
-        "green": 229881,
-        "paving": 513534,
-        "asphalt": 158966,
-        "shadow": 1073,
-        "unknown": 9095,
-        "canopy": 80974,
-        "canopyHard": 14477
+        "green": 388907,
+        "paving": 668324,
+        "asphalt": 285095,
+        "shadow": 3197,
+        "unknown": 16200,
+        "canopy": 127943,
+        "canopyHard": 22334
       }
     },
     {

@@ -4,6 +4,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-962 Zawrotki na ślepych końcach Szkolnej i Słowikowskiego wychodzą wierzchołkiem za koniec jezdni
+- Status: zgłoszone (S4: auto na zawrotce muska plac przez ok. 0,1 m)
+- Gdzie: nowy rząd Podzamcza (23.11): Szkolna (843,5, 552,5), gdzie jezdnia przechodzi w deptak, i Słowikowskiego (997,2, 591,0)
+- Dowód: `packages/sim/test/ground-readers.test.ts`, „keeps the car lanes on the carriageway”: wierzchołek półokręgu `uTurn` leży na płaskim końcu jezdni, a `surfacesAt` daje tam plac. Ten sam rodzaj co znany `Ciasna:b 583.1,575.5`; obie zawrotki w `KNOWN_OFF_ROAD` z odnośnikiem do tego wpisu.
+- Poprawka: `turnRound` cofa zawrotkę na ślepym końcu o promień i zapas, tak by wierzchołek został na jezdni (zmiana pasów w całym mieście, osobny PR). Test przyjęcia: punkty znikają z `KNOWN_OFF_ROAD`.
+
+### G-963 Schody przy Szkolnej wchodzą końcem na jezdnię
+- Status: zgłoszone (S3: schody leżą na pasie ruchu, auta jadą po stopniach)
+- Gdzie: Szkolna przy (864,5, 601,8), schody (862,7–882,7, 593,8–604,7) w podzamcze-1-2
+- Dowód: ten sam test: punkt pasa `Szkolna#109` na kawałku `steps`; zachodni koniec schodów zachodzi ok. 1,5 m na jezdnię. Punkt w `KNOWN_OFF_ROAD` z odnośnikiem.
+- Poprawka: import przycina schody do krawędzi jezdni, jak chodniki przy skrzyżowaniach. Test przyjęcia: punkt znika z listy, a skan nie ma schodów na jezdni.
+
+### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
+- Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)
+- Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
+- Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
+- Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.
+
 ### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
 - Status: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
 - Gdzie: wszystkie 52 lokale galerii i frontu (`alchemia-shop-*`)
@@ -46,7 +64,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
-- Status: częściowo naprawione: fundamenty fary jako bariery 0,5 m od #418 (r18507552, r18507551, odcinki w1348806xxx; T-251); zostają ruiny `building=ruins` (w232362881, w1330433247, w813194693), które pomija `SKIP_BUILDING`. W1330433247 ma 3,3 m w LoD1 (NMPT wierzch y 3,75). Test przyjęcia zawęzić do ruin: 3 obrysy jako niskie mury z wysokością z LoD1 albo NMPT.
+- Status: ruiny `building=ruins` naprawione na gałęzi `fix/g053-ruiny` (23.11): cztery obrysy (w232362881, w1330433247, w813194693, w67498742) to mury barier wzdłuż obwodu, wysokie jak blok LoD1 nad nimi (w1330433247 3,3 m, w232362881 przycięta do 4 m), bez LoD1 1,5 m; test `tools/osm-import/test/ruins.test.ts`. Fundamenty fary jako bariery 0,5 m od #418 (T-251). Do archiwum po scaleniu.
 - Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
 - Gdzie: w173519315 (672.8, 43.2) i 3 budynki `building=ruins` (T-015); ile w mieście: 4 w dwóch dzielnicach
 - Dowód: `SKIP_BUILDING` w generate.ts; `props-kinds.ts` „ruins: structures (later)”
