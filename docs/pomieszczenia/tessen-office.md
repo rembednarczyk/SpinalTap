@@ -80,8 +80,7 @@ Zlecenie `infiltrate` Genzō (ADR-0024, ADR-0082 §1), 3–5 strażników Tessen
 - Ślad „przed chwilą”: kubek po kawie i kanapka na biurku (są w `rd-tessen-desk`), krzesło odsunięte od biurka (jest w partii 2).
 
 ## Dług sceny
-- Sprzeczność ADR i gry: ADR-0082 §3 mówi, że wewnątrz strefy W-3 nie ma autozapisu, a `tessen-office` w `INTERIORS` nie ma `autosave: false` (hala i piwnica mają). Propozycja: `autosave: false` w `packages/sim/src/content/interior-areas.ts` z testem sesji.
-- Hak `hook_infiltrate_1` w `packages/narrative/ink/{pl,en}/hooks.ink` mówi o „bocznych drzwiach od strony dźwigu”, a `hook_infiltrate_2` o paleniu „za magazyn”. Dźwigu i magazynu nie ma od ADR-0082 etap 1. Propozycja: „Kod do drzwi biura od strony hali” i „wychodzi zapalić za narożnik śluz”.
+Zrobione 23.11: brak autozapisu w biurze jak w hali i piwnicy (`autosave: false`, test `packages/sim/test/w3-no-autosave.test.ts`); haki `hook_infiltrate_1` i `_2` poprawione w #955. Zostaje:
 - Strażnik biura (2488,6; 438,4) z yaw π patrzy w ścianę 2 m przed sobą. Do sprawdzenia, czy to zamierzone. Propozycja: okno w południowej ścianie na nabrzeże i schody wieży (karta: „Małe biuro z oknem na bramę”) albo posterunek twarzą ku drzwiom w `packages/sim/src/content/tessen-w3/posts.ts` (zmiana testów skradania).
 - Część „Przeznaczenie” tej karty mówi o schodach na platformę w biurze, a schody wieży biegną na zewnątrz, po południowej ścianie (`W3_TOWER_STAIR`). Poprawka karty.
 - Terminal na biurku jako cel: światło ekranu w `packages/engine/src/renderer/rooms/room-lights.ts`, oprawa w `tools/blender/rooms/tessen_office.py`.

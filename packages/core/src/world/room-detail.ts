@@ -269,6 +269,23 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-pav-bulkhead" },
   { key: "rd-pav-hebi", fine: true, clutter: 1 },
   { key: "rd-pav-carabiner", fine: true, clutter: 1 },
+  // Brama Krakowska and its forecourt (docs/lokacje/brama-krakowska.md, ADR-0102): the Hebi scanner in the vault, the
+  // dumpster under the annex, what lies behind it round Tetsu's stash, the zapiekanki booth's side, Hideo's doorway on
+  // Bramowa, the grate old Sabu fishes through and the transformer of the gate's neon.
+  { key: "rd-bk-scanner", services: true, sound: "hum" },
+  { key: "rd-bk-dumpster", clutter: 1 },
+  { key: "rd-bk-behind", fine: true, clutter: 5 },
+  { key: "rd-bk-booth", clutter: 4, sound: "simmer" },
+  { key: "rd-bk-doorway", clutter: 3 },
+  { key: "rd-bk-grate", fine: true, clutter: 0 },
+  { key: "rd-bk-neon-box", services: true, sound: "hum" },
+  // Alchemia's T1 (docs/lokacje/alchemia-t1.md, ADR-0102): Hana's handcart with the cool box open on it, the awning and
+  // the kitchen's extract over Fumiko's hatch, her stools with the bowls and cups on its counter, the smokers' leavings.
+  { key: "rd-t1-cart", clutter: 6, sound: "hum" },
+  { key: "rd-t1-hatch", clutter: 0 },
+  { key: "rd-t1-extract", services: true, sound: "vent" },
+  { key: "rd-t1-stools", clutter: 8 },
+  { key: "rd-t1-butts", fine: true, clutter: 6 },
   // Plac po Farze (docs/lokacje/plac-po-farze.md, ADR-0102): the coin-op viewing telescope with its AR screen.
   { key: "rd-fara-telescope", clutter: 1 },
 ];
