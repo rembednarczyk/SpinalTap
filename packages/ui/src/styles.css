@@ -353,13 +353,14 @@ kbd {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 64%;
+  max-width: 72%;
   font-family: var(--font-mono);
   line-height: 1.15;
   text-align: center;
   text-shadow: 0 0 4px rgba(4, 7, 12, 0.95);
 }
-.minimap__floor-name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 9px; color: var(--ink); }
+/* Two lines at most: an interior's name ("Alchemia car park, level -2") is read whole, not cut after one line. */
+.minimap__floor-name { max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; font-size: 9px; color: var(--ink); }
 .minimap__floor-level { font-size: 11px; color: var(--amber); }
 .minimap__link path { fill: none; stroke: var(--amber); stroke-width: 0.55; stroke-linecap: square; }
 .minimap__link--lift path { fill: rgba(255, 176, 0, 0.25); }
