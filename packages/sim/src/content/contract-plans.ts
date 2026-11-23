@@ -29,7 +29,7 @@ export interface SitePlan {
 const { east_lot: lot, koi_back: back, car_wash: wash, south_gate: gate } = KRAKOWSKIE_SITE_POINTS;
 
 /** Just past the car wash yard's way in from Lubartowska on the car park's side, level with its middle. */
-const gapAt = (): Vec3 => wash(YARD_GAP.x + 1.8, (YARD_GAP.from + YARD_GAP.to) / 2);
+const gapAt = (): Vec3 => wash(YARD_GAP.x + 1.6, (YARD_GAP.from + YARD_GAP.to) / 2);
 
 export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   east_lot: { guards: [lot(9, -16.2), lot(11.8, -16.3)], twin: lot(17.5, -10), lookout: lot(6, -12), ambush: [lot(5, -13), lot(4, -6), lot(5, -20)] },
@@ -64,8 +64,8 @@ const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...V
   east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), BAR_SPOT],
   koi_back: [back(3, 12), ground(296, -112), ground(283, -108), ground(282, -88), ground(300, -89), BAR_SPOT],
   // Out of the yard by Lubartowska through the gap between its container and its barrier (`car-wash-detail.ts`) and the
-  // car park's fence by the bench, as before the container stood, down to Plac Łokietka and west along the deptak.
-  car_wash: [wash(COURIER_SPOT.x, COURIER_SPOT.z), wash(2.2, 40.2), gapAt(), ground(422.6, -30.6), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
+  // car park's fence south of the bench, as before the container stood, down to Plac Łokietka and west along the deptak.
+  car_wash: [wash(COURIER_SPOT.x, COURIER_SPOT.z), wash(2.2, 40.2), gapAt(), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
   south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), BAR_SPOT],
 };
 

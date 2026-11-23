@@ -12,7 +12,7 @@ import { groundY } from "./lublin/terrain";
  *   water steams from, the chemistry and the hose by the machine room, its pump and service door on the yard's side, the
  *   payment post at the way in, the tubes under the canopy.
  * - The yard shut off from the car park by things that may stand on a car park (the card's §Topografia: the car park is
- *   real, no wall): a 20 ft container along its east side from the machine room's corner and a crowd barrier, the one
+ *   real, no wall): a 20 ft container along its east side by the machine room's corner and two crowd barriers, the one
  *   tight way in from Lubartowska between them (§12, compression and release), lit by a park lamp (§13: the way is the
  *   lit one); the way from the Ratusz along the machine room lit dimmer, by a cold lantern on its wall (two ways, §9).
  * - The clutter in clusters (§14): round the courier's feet (his parcel in the bag), by the dumpsters (bags, cartons,
@@ -37,8 +37,12 @@ const model = (key: string, x: number, z: number, yaw: number, up?: number): Str
 /** The odds and ends of ADR-0096 by shape (`CLUTTER_SHAPES`). */
 const odd = (shape: number, x: number, z: number, yaw: number): StreetPropItem => piece("clutter", x, z, yaw, shape);
 
-/** The yard's east side (old frame): the container's middle, the crowd barrier's, the gap between them. */
-export const YARD_EAST = { x: 24.4, container: 36.63, barrier: 42.54 } as const;
+/**
+ * The yard's east side (old frame): the container's middle, the two crowd barriers' (the long one by the gap, the short
+ * one to the footway), the gap between the container and the long one. The gap lies south of the bench beyond the car
+ * park's fence, so the way out crosses the fence where it did before the container stood, 2 m and more off the bench.
+ */
+export const YARD_EAST = { x: 24.4, container: 35.43, barrier: 41.34, end: 43.76 } as const;
 /** The tight way in from Lubartowska, between the container's north end and the barrier's south end (old z). */
 export const YARD_GAP = { x: YARD_EAST.x, from: YARD_EAST.container + 3.03, to: YARD_EAST.barrier - 1.42 } as const;
 
@@ -63,7 +67,7 @@ export const CAR_WASH_DETAIL: readonly StreetPropItem[] = [
   piece("container", YARD_EAST.x, YARD_EAST.container, Math.PI / 2, 0),
   odd(CLUTTER.railings[1][0], YARD_EAST.x, YARD_EAST.barrier, Math.PI / 2),
   // The way's light by the gap; the dimmer, cold one on the machine room's east wall, over the way from the Ratusz.
-  piece("lamp-park", 22.4, 41.8, Math.PI / 2, 0),
+  piece("lamp-park", 22.4, 40.8, Math.PI / 2, 0),
   piece("lamp-wall-lantern", 21, 27, Math.PI / 2, 1),
   // By the big dumpster's west side and the small one's south end: bags, cartons, a bottle, a cup.
   odd(CLUTTER.bags[0], 9.2, 38.1, 0.4),
@@ -74,4 +78,6 @@ export const CAR_WASH_DETAIL: readonly StreetPropItem[] = [
   odd(CLUTTER.bags[1], 3.7, 36.85, 0.9),
   odd(CLUTTER.boxes[1], 4.45, 36.7, -0.3),
   odd(CLUTTER.litter[0], 4.9, 37.1, 2.6),
+  // The short barrier from the long one's north end to the footway along Bajkowskiego (last, so the pieces above keep their place).
+  odd(CLUTTER.railings[0][0], YARD_EAST.x, YARD_EAST.end, Math.PI / 2),
 ];
