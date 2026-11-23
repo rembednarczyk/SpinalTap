@@ -1,6 +1,6 @@
 import { CLINIC_DETAIL } from "./clinic-detail";
 import { KOI_DETAIL } from "./koi-detail";
-import { KOI_BACK_DETAIL } from "./koi-back";
+import { KOI_BACK_DETAIL, KOI_BACK_PROPS } from "./koi-back";
 import { TRASA_DETAIL } from "./trasa-detail";
 import { CAPSULE_DETAIL } from "./capsule-detail";
 import { TESSEN_OFFICE_DETAIL } from "./tessen-w3/office-detail";
@@ -22,7 +22,7 @@ import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { METRO_NAV } from "./metro-nav";
-import { CLINIC_DOOR, KOI_BACK_CUT, KOI_DOOR, S7_NAV } from "./interiors";
+import { CLINIC_DOOR, KOI_BACK_CUT, KOI_BACK_ROOM_PROPS, KOI_DOOR, S7_NAV } from "./interiors";
 import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS } from "./tessen-w3";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
@@ -140,8 +140,21 @@ export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
 /** A car in a bay of P-1 as a solid of the street, on P-1's floor (a parked car's, without the terrain under it). */
 const p1CarProp = (c: P1Car): StaticProp => parkedProp({ ...c, chunk: ALCHEMIA_CHUNK }, c.y);
 
-/** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
-const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
+/**
+ * Neon Koi's back room and its yard (`docs/lokacje/koi-podworko.md`, ADR-0102 point 5): in the district's props for
+ * whoever reads its shapes (the crowd, the street's pieces), but streamed with the rooms cut into the map's buildings,
+ * whose ids come from `ROOM_ID_BASE` and not the allocator (`stream-catalog.ts`). Among the content's props they moved
+ * every later id, W-3's people's too, and with them fights far off (as the car wash's solids did, #956).
+ */
+const KOI_BACK_OWN: readonly StaticProp[] = [...KOI_BACK_ROOM_PROPS, ...KOI_BACK_PROPS];
+const KOI_BACK_SET: ReadonlySet<StaticProp> = new Set(KOI_BACK_OWN);
+
+/** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`); Neon Koi's back last, so the ids before it stay. */
+const roomsOf = (id: string): readonly StaticProp[] => [
+  ...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []),
+  ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : []),
+  ...KOI_BACK_OWN.filter((p) => mapChunkOf(p.center.x, p.center.z) === id),
+];
 
 /** W-3's props stream in its own chunk (ADR-0082), not by the map's chunk under each. */
 const W3_OWN: ReadonlySet<StaticProp> = new Set(W3_PROPS);
@@ -160,7 +173,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       id: c.id,
       district: c.district,
       bounds: c.bounds,
-      props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => !W3_OWN.has(p) && mapChunkOf(p.center.x, p.center.z) === c.id)],
+      props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => !W3_OWN.has(p) && !KOI_BACK_SET.has(p) && mapChunkOf(p.center.x, p.center.z) === c.id)],
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
       ...((GROUND_DECKS.get(c.id) ?? []).length > 0 ? { decks: GROUND_DECKS.get(c.id) } : {}),

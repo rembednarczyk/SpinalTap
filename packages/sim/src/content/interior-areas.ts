@@ -74,8 +74,8 @@ const oldRoom = (point: (x: number, y: number, z: number) => Vec3, x0: number, x
   return { minX: Math.min(a.x, b.x), maxX: Math.max(a.x, b.x), minZ: Math.min(a.z, b.z), maxZ: Math.max(a.z, b.z), bottom: floor, top: floor + ROOM_CEILING };
 };
 
-/** Neon Koi's back room (`KOI_BACK_ROOM`): the corridor from the bar's back wall to the end wall, under its own ceiling. */
-const koiBackRoom = (): InteriorRoom => ({ ...oldRoom(koiPoint, 17, KOI_BACK_ROOM.x1, KOI_BACK_ROOM.z0, KOI_BACK_ROOM.z1, KOI_SITE.floor), top: KOI_SITE.floor + KOI_BACK_ROOM.ceiling });
+/** Neon Koi's back room (`KOI_BACK_ROOM`): the corridor from the bar's back wall's face (17.3, past its 0.3 m) to the end wall, under its own ceiling. */
+const koiBackRoom = (): InteriorRoom => ({ ...oldRoom(koiPoint, 17.3, KOI_BACK_ROOM.x1, KOI_BACK_ROOM.z0, KOI_BACK_ROOM.z1, KOI_SITE.floor), top: KOI_SITE.floor + KOI_BACK_ROOM.ceiling });
 
 /** Tessen's pass office on the ground floor of W-3's tower (ADR-0082), inside its walls, up to its ceiling. */
 /** A storey of Alchemia's gallery (its rectangles' `x0..z1`) as a room. */
