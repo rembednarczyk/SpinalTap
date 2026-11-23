@@ -1,10 +1,10 @@
 {
   "district": "podzamcze",
   "x0": 520,
-  "z1": 580,
+  "z1": 790,
   "step": 0.5,
   "width": 1200,
-  "height": 840,
+  "height": 1260,
   "classes": [
     "none",
     "green",
@@ -124,6 +124,48 @@
       "flight": "2023-09",
       "service": "StandardResolutionTime",
       "fetched": "2026-11-11"
+    },
+    {
+      "cell": "podzamcze-0-2",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-0-2",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-0-2",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-1-2",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-1-2",
+      "flight": "2024-06",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-1-2",
+      "flight": "2023-09",
+      "service": "StandardResolutionTime",
+      "fetched": "2026-11-23"
+    },
+    {
+      "cell": "podzamcze-2-2",
+      "flight": "2025-04",
+      "service": "HighResolution",
+      "fetched": "2026-11-23"
     }
   ],
   "thresholds": {

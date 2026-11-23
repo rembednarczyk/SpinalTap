@@ -82,6 +82,7 @@ Seki przechodzi przez most Lutosławskiego na zachodni brzeg i schodzi na ście�
 - Tekst Genzō zgodny z zagrożeniami dachu N.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/tessen-w3/outside-dress.ts`): rzeczy monterów na podeście, tablica ostrzegawcza i łańcuch u stopy drabiny. Zostaje:
 - Zawory, kołnierze i manometry na wiązce rur zamiast bloku: rysunek z nowego modelu w `tools/blender/` w siatce zewnętrza W-3 (`packages/engine/src/renderer/tessen-w3/w3-dress.ts`), bryła wiązki bez zmian w `packages/sim/src/content/tessen-w3/tower-pipes.ts`.
 - Skupiska na podeście przy drabinie i u jej stopy, tablica ostrzegawcza: nowy plik `packages/sim/src/content/tessen-w3/pipes-dress.ts`, rysunek w `w3-dress.ts`.
 - Lampa nawigacji przy drabinie i na podeście, światła przeszkodowe na kozłach: `w3-dress.ts` (oprawy), migające z zegara renderera.

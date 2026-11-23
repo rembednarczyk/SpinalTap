@@ -1,0 +1,1 @@
+- Trasa Podziemna ma scenę według karty pomieszczenia: u stóp schodów wisi zielony znak wyjścia skierowany w górę schodów, na ścianie lochu wisi stary plakat Mei z wieczorów, kiedy tu śpiewała, z przyklejoną listą piosenek, a pod nim na murku leży zasuszona róża i ogarek świecy; w korytarzu przecieka sklepienie, woda kapie do kałuży, a obok stoi odsunięte wiadro.
