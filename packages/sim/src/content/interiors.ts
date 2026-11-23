@@ -1,5 +1,5 @@
 import type { BlockFront, Vec3 } from "@seki/core";
-import { type ActorSpawn, type BlockMaterial, type DoorDef, type NavGraph, type StaticProp, deck, neon, slab, stairs, v } from "./builders";
+import { type ActorSpawn, type BlockMaterial, type DoorDef, type NavGraph, type StaticProp, deck, neon, slab, v } from "./builders";
 import { doorParts } from "./doors";
 import { CLINIC_SITE, KOI_SITE, ROOM_STOREY, type RoomSite } from "./lublin/sites";
 
@@ -192,19 +192,23 @@ const koi = (): StaticProp[] => [
 /**
  * Neon Koi's back room (`docs/lokacje/koi-podworko.md`, the bar card's second way out): a staff doorway in the bar's
  * back wall at the west end of the bottle shelf, a corridor 1.3 m wide under a ceiling at 2.8 m through the tenement's
- * ground floor behind the bar, two steps up to the yard's level and a steel door in the building's back wall. Old
+ * ground floor behind the bar, a ramp up to the yard's level and a steel door in the building's back wall. Old
  * coordinates: `z0..z1` the corridor's clear width, `x1` the end wall's inner face.
  */
 export const KOI_BACK_ROOM = { z0: -4.75, z1: -3.45, x1: 22.5, ceiling: 2.8 } as const;
 /** The back door's middle along the wall (old z) and its width. */
 const KOI_BACK_MID = -4.1;
 const KOI_BACK_WIDTH = 1;
-/** The yard at the back door, over the bar's floor: the corridor's two steps of 0.18 m rise to it. */
+/**
+ * The yard at the back door, over the bar's floor: the corridor's floor rises to it as a ramp of 6% from 4 cm over the
+ * bar's at the doorway (`KOI_BACK_FLOOR`), over the terrain under the tenement, which climbs the same way to the yard.
+ */
 export const KOI_BACK_SILL = 0.36;
+const KOI_BACK_FLOOR = 0.04;
+/** The end wall beside the door stands on the yard's ground there, not down at the bar's floor 0.35 m under it. */
+const KOI_BACK_JAMB_FOOT = 0.3;
 /** The back door's leaf from the top step, under the corridor's ceiling. */
 const KOI_BACK_DOOR_HEIGHT = 2.3;
-/** The two steps, 0.28 m deep, before the end wall (old x). */
-const KOI_BACK_STEPS_FROM = KOI_BACK_ROOM.x1 - 0.56;
 
 /** The steel back door to the yard in the building's back wall; it slides east, into the end wall and the corridor's. */
 export const KOI_BACK_DOOR: DoorDef = turnDoor(KOI, {
@@ -226,19 +230,23 @@ export const KOI_BACK_CUT = {
   door: { x: KOI_BACK_DOOR.at.x, z: KOI.oz - KOI_BACK_ROOM.x1 - 0.3, width: KOI_BACK_WIDTH, height: KOI_BACK_DOOR_HEIGHT, floor: KOI_BACK_DOOR.at.y },
 } as const;
 
-/** The two steps up to the door, in the world (`stairs` slopes along the world's axes): rising south. */
-const koiBackSteps = (): StaticProp => {
-  const a = at(KOI, KOI_BACK_STEPS_FROM, 0, KOI_BACK_ROOM.z0);
-  const b = at(KOI, KOI_BACK_ROOM.x1, KOI_BACK_SILL, KOI_BACK_ROOM.z1);
-  return stairs(a.x, b.x, b.z, a.z, a.y, b.y, "z", -1);
-};
-
-/** The steps' footprint, for the walk up them (`NavEdge.via`). */
-const KOI_BACK_STEPS_RECT = (() => {
-  const a = at(KOI, KOI_BACK_STEPS_FROM, 0, KOI_BACK_ROOM.z0);
+/** The corridor's footprint in the world, from the bar's back wall to the end wall: its ramp, and the walk up it (`NavEdge.via`). */
+const KOI_BACK_RAMP_RECT = (() => {
+  const a = at(KOI, 17.3, 0, KOI_BACK_ROOM.z0);
   const b = at(KOI, KOI_BACK_ROOM.x1, 0, KOI_BACK_ROOM.z1);
   return { minX: a.x, maxX: b.x, minZ: b.z, maxZ: a.z };
 })();
+
+/** The corridor's floor, a concrete ramp rising south to the door (built in the world: a slope runs along the world's axes). */
+const koiBackRamp = (): StaticProp => {
+  const r = KOI_BACK_RAMP_RECT;
+  const h = KOI_BACK_SILL;
+  return {
+    center: v((r.minX + r.maxX) / 2, KOI.floor + h / 2, (r.minZ + r.maxZ) / 2),
+    view: { kind: "block", size: v(r.maxX - r.minX, h, r.maxZ - r.minZ), material: "concrete", slope: { axis: "z", dir: -1, low: KOI_BACK_FLOOR, steps: 0 } },
+    solid: true,
+  };
+};
 
 /** The back room's shell: the back wall's rest beside the doorway, the corridor's walls and ceiling, the end wall round the door. */
 const koiBack = (): StaticProp[] => {
@@ -251,18 +259,17 @@ const koiBack = (): StaticProp[] => {
     box(17.3, x1 + 0.3, 0, ROOM_STOREY, z0 - 0.2, z0),
     box(17.3, x1 + 0.3, 0, ROOM_STOREY, z1, z1 + 0.2),
     box(17.3, x1, ceiling, ROOM_STOREY, z0, z1),
-    box(x1, x1 + 0.3, 0, ROOM_STOREY, z0, d0),
-    box(x1, x1 + 0.3, 0, ROOM_STOREY, d1, z1),
+    box(x1, x1 + 0.3, KOI_BACK_JAMB_FOOT, ROOM_STOREY, z0, d0),
+    box(x1, x1 + 0.3, KOI_BACK_JAMB_FOOT, ROOM_STOREY, d1, z1),
     box(x1, x1 + 0.3, KOI_BACK_SILL + KOI_BACK_DOOR_HEIGHT, ROOM_STOREY, d0, d1),
-    slab((17.3 + KOI_BACK_STEPS_FROM) / 2, 0.02, (z0 + z1) / 2, v(KOI_BACK_STEPS_FROM - 17.3, 0.04, z1 - z0), "concrete"),
   ];
 };
 
 /**
- * The back room, its steps and its door, after every other prop of the district (`DISTRICT_M0_PROPS`), so their ids
+ * The back room, its ramp and its door, after every other prop of the district (`DISTRICT_M0_PROPS`), so their ids
  * stay (`docs/zasady-lokacji.md` §7).
  */
-export const KOI_BACK_ROOM_PROPS: readonly StaticProp[] = [...indoor([...koiBack().map((p) => turnProp(KOI, p)), koiBackSteps()]), ...doorParts(KOI_BACK_DOOR)];
+export const KOI_BACK_ROOM_PROPS: readonly StaticProp[] = [...indoor([...koiBack().map((p) => turnProp(KOI, p)), koiBackRamp()]), ...doorParts(KOI_BACK_DOOR)];
 
 /** Signs on the street: over the clinic's door and over the bar's, facing the deptak. */
 const signs = (): StaticProp[] => [
@@ -325,7 +332,7 @@ export const S7_NAV: NavGraph = {
     { a: "s7-koi-in", b: "s7-koi-west" },
     { a: "s7-koi-west", b: "s7-koi-staff" },
     { a: "s7-koi-staff", b: "s7-koi-back-in" },
-    { a: "s7-koi-back-in", b: "s7-koi-back-out", via: KOI_BACK_STEPS_RECT },
+    { a: "s7-koi-back-in", b: "s7-koi-back-out", via: KOI_BACK_RAMP_RECT },
   ],
 };
 

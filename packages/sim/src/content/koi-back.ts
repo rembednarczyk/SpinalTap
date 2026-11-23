@@ -1,6 +1,5 @@
 import { CLUTTER, type StreetPropItem, type Vec3, roomDetailShape } from "@seki/core";
 import { type StaticProp, crate, skin, v } from "./builders";
-import { furnitureProps } from "./lublin/furniture";
 import { KOI_BACK_DOOR, koiPoint } from "./interiors";
 import { groundY, surfaceY } from "./lublin/terrain";
 
@@ -63,10 +62,10 @@ const drawnBlock = (x: number, z: number, w: number, h: number, d: number): Stat
 /** A round thing's solid: an upright octagon of radius `r` and height `h`, drawn by its model. */
 const drawnRound = (x: number, z: number, r: number, h: number): StaticProp => {
   const points = Array.from({ length: 8 }, (_, k) => ({ x: r * Math.cos((k * Math.PI) / 4), z: r * Math.sin((k * Math.PI) / 4) }));
-  return { center: v(x, groundY(x, z), z), view: { kind: "block", size: v(2 * r, h, 2 * r), material: "metal" }, solid: true, prisms: [{ points, bottom: 0, top: h }], scenery: true };
+  return { center: v(x, groundY(x, z) + h / 2, z), view: { kind: "block", size: v(2 * r, h, 2 * r), material: "metal" }, solid: true, prisms: [{ points, bottom: -h / 2, top: h / 2 }], scenery: true };
 };
 
-/** Where things stand: the door's bulkhead, the extract, the smoke, the meters, the empties, the downpipe, the drums. */
+/** Where things stand: the door's bulkhead, the extract, the smoke, the meters, the empties, the downpipe. */
 const DOOR = onWall(KOI_WALL, KOI_BACK_DOOR.at.x);
 const EXTRACT = onWall(KOI_WALL, 311.6);
 const SMOKE = onWall(KOI_WALL, 311.3, 0.55);
@@ -77,11 +76,10 @@ const CAMERA = onWall(JOG_WALL, 305.6);
 const TAG = onWall(WEST_WALL, 299.6);
 const LANTERN = onWall(GAP_WALL, -97, 0, true);
 const BATTEN = onWall(ANNEX_WALL, -121, 0, true);
-/** The second bin against the west tenement's back wall, the bottle bank by the way in, the scooter in the middle. */
+/** The second bin against the west tenement's back wall, the bottle bank by the shed on the west, the scooter in the middle. */
 const BIN = { x: 295.5, z: -108.55 };
-const BANK = { x: 292.6, z: -108.15, yaw: 0.35 };
+const BANK = { x: 291.9, z: -113.25, yaw: 0.35 };
 const SCOOTER = { x: 300.9, z: -114.6, yaw: Math.PI / 2 };
-
 
 /** A point of a thing's own frame (x across, z out of its front) in the world, `up` over the ground under the thing. */
 const local = (at: { x: number; z: number; yaw: number }, x: number, z: number, up = 0): Vec3 => {
@@ -101,8 +99,8 @@ const KEG = local(CRATES, 0.85, 0.05);
 
 /**
  * The yard's models (`tools/blender/rooms/koi_back.py`) and the odds and ends of ADR-0096 in clusters (§14) where
- * somebody does something: the cook's smoke by the door, the bags and cartons by the bin, the bottles by the bank, the
- * kitchen's used oil in two drums east of the empties; the bulb of the back room's corridor.
+ * somebody does something: the cook's smoke by the door, the bags and cartons by the bin, the bottles by the bank; the
+ * bulb of the back room's corridor and the exit sign over its door.
  */
 export const KOI_BACK_DETAIL: readonly StreetPropItem[] = [
   detail("rd-kb-canopy", DOOR, 0, KOI_BACK_DOOR.at.y),
@@ -118,22 +116,22 @@ export const KOI_BACK_DETAIL: readonly StreetPropItem[] = [
   detail("rd-kb-lantern", LANTERN),
   detail("rd-kb-batten", BATTEN),
   detail("rd-kb-glass-bin", BANK),
-  detail("rd-c-bottles", { x: BANK.x + 1, z: BANK.z - 0.6, yaw: 2.1 }),
+  detail("rd-c-bottles", { x: BANK.x + 1, z: BANK.z + 0.45, yaw: 2.1 }),
   detail("rd-kb-scooter", SCOOTER),
   // By the bar's bin (its lid to the west): two bags and a box at its south end, the cartons the delivery came in.
   clutter(CLUTTER.bags[0], 305.35, -114.45, 0.4),
   clutter(CLUTTER.bags[1], 306.25, -114.7, -0.7),
   clutter(CLUTTER.boxes[1], 307.0, -114.45, 0.2),
   detail("rd-c-cartons", { x: 305.1, z: -115.15, yaw: 1.2 }),
-  clutter(CLUTTER.barrel, 315.9, -110.75, 0.3),
-  clutter(CLUTTER.barrel, 316.85, -110.85, 1.1),
-  // The back room's bare bulb under its ceiling, halfway down the corridor.
+  // The back room's bare bulb under its ceiling, halfway down the corridor; the green exit sign hung from the ceiling
+  // before the back door, facing the bar (§4: green for the ways out).
   { prop: "room-detail", ...koiPoint(19.6, 2.8, -4.1), yaw: 0, variant: roomDetailShape("rd-w3b-bulb") },
+  { prop: "room-detail", ...koiPoint(22.2, 2.45, -4.1), yaw: 0, variant: roomDetailShape("rd-w3h-exit") },
 ];
 
 /**
  * The yard's solids and lights, after every other prop of the district (`DISTRICT_M0_PROPS`): the bin for paper with
- * room for a body (ADR-0065), the empties and the keg, the bottle bank, the scooter, the oil drums; then the lights in
+ * room for a body (ADR-0065), the empties and the keg, the bottle bank, the scooter; then the lights in
  * their fittings: the bulkhead over the back door (warm: the way in from the bar, the stash by the bin), the lantern in
  * the gap from the deptak (warm: the way in), the annex's batten (cold: the way out south-east).
  */
@@ -143,7 +141,6 @@ export const KOI_BACK_PROPS: readonly StaticProp[] = [
   drawnRound(KEG.x, KEG.z, 0.21, 0.66),
   drawnRound(BANK.x, BANK.z, 0.75, 1.6),
   drawnBlock(SCOOTER.x, SCOOTER.z, 1.85, 1.25, 0.72),
-  ...furnitureProps(KOI_BACK_DETAIL),
   light({ ...local(DOOR, 0, 0.075), y: KOI_BACK_DOOR.at.y + 2.55 }, v(0.18, 0.12, 0.02), "#ffc35a", "z-"),
   light(local(LANTERN, 0, 0.495, 2.95), v(0.02, 0.3, 0.16), "#ffb45e", "x-"),
   light(local(BATTEN, 0, 0.085, 2.6), v(0.02, 0.09, 1.2), "#cfe4ff", "x-"),

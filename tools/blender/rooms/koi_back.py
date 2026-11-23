@@ -65,7 +65,7 @@ def lantern():
 
 
 def batten():
-    """A fluorescent batten over the annex's door at 2.6 m: a steel back, its opal diffuser (the neon's), end caps, a
+    """A fluorescent batten on the annex's wall at 2.6 m: a steel back, its opal diffuser (the neon's), end caps, a
     conduit from its side up the wall, a sticker of a cleaning firm on it (1.3 x 2.1 x 0.12)."""
     m = Model('rd-kb-batten')
     y = 2.6

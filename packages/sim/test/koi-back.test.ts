@@ -47,7 +47,7 @@ describe("the yard behind Neon Koi", () => {
   });
 
   it("stands its drawn things on the yard's ground", () => {
-    for (const i of KOI_BACK_DETAIL.filter((d) => !/bulb|canopy/.test(keyOf(d)))) expect(Math.abs(i.y - surfaceY(i.x, i.z)), keyOf(i)).toBeLessThan(0.01);
+    for (const i of KOI_BACK_DETAIL.filter((d) => !/bulb|exit|canopy/.test(keyOf(d)))) expect(Math.abs(i.y - surfaceY(i.x, i.z)), keyOf(i)).toBeLessThan(0.01);
   });
 
   it("keeps every post of the contract, its variants' and the drinker's walk at least 0.7 m clear of the new solids", () => {
