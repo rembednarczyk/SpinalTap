@@ -1,0 +1,1 @@
+- Podzamcze sięga dalej na północ, do Ruskiej i Szkolnej: dochodzi cała reszta Targu na Ruskiej, która dotąd urywała się na skraju mapy, z ulicami, domami i terenem z map Lublina.

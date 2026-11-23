@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DISTRICTS, type DistrictSpec, ELEVATION_MARGIN, ELEVATION_STEP, FETCH_MARGIN, MAX_TILE_DEG, USER_AGENT } from "./config.ts";
 import { DTM_OFFSET, DTM_SCALE, type DtmHeader, dtmToBytes, encodeHeight } from "./dtm.ts";
-import { readGeoTiff } from "./geotiff.ts";
+import { parseAsciiGrid } from "../../gugik/src/nmpt.ts";
 import { BOLLARD_LINES_FILE, type BollardLineRow, type FurnitureRow, FURNITURE_FILE, bollardLineRows, furnitureRows, serializeBollardLines, serializeFurniture } from "./furniture.ts";
 import { type OsmData, filterOsm, mergeOsm, parseOsmXml, serializeOsm } from "./osm.ts";
 import { worldToGeo, worldToPuwg } from "./project.ts";
@@ -104,8 +104,19 @@ const puwgBox = (d: DistrictSpec, margin: number) => {
   };
 };
 
+/**
+ * The NMT's WCS in ESRI ASCII grid: the same model in PL-KRON86-NH as the GeoTIFF one
+ * (`DigitalTerrainModelFormatTIFF`), which stopped answering GetCoverage on 23.11.2026 while its
+ * capabilities still came; this one answers (the multipart reply `parseAsciiGrid` reads).
+ */
 const WCS =
-  "https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/GRID1/WCS/DigitalTerrainModelFormatTIFF?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=DTM_PL-KRON86-NH_TIFF&FORMAT=image/tiff";
+  "https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/GRID1/WCS/DigitalTerrainModel?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=DTM_PL-KRON86-NH&FORMAT=image/x-aaigrid";
+
+/** A WCS tile as the GeoTIFF reader gave it: its top-left corner, step and rows from the top. */
+const readTile = (file: string): { width: number; height: number; e0: number; n0: number; step: number; values: Float32Array } => {
+  const g = parseAsciiGrid(readFileSync(file, "latin1"));
+  return { width: g.cols, height: g.rows, e0: g.xll, n0: g.yll + g.rows * g.cell, step: g.cell, values: g.values };
+};
 const DTM_TILE = 500;
 
 const fetchDtm = async (d: DistrictSpec) => {
@@ -117,27 +128,28 @@ const fetchDtm = async (d: DistrictSpec) => {
     for (let e = box.e0; e < box.e1; e += DTM_TILE) {
       const e1 = Math.min(e + DTM_TILE, box.e1);
       const n1 = Math.min(n + DTM_TILE, box.n1);
-      const file = join(CACHE, `nmt-${e}-${n}-${e1}-${n1}.tif`);
+      const file = join(CACHE, `nmt-${e}-${n}-${e1}-${n1}.asc`);
       if (refresh || !existsSync(file)) {
         console.log(`nmt ${d.slug}: E ${e}..${e1}, N ${n}..${n1}`);
         // The service takes x as easting and y as northing, whatever EPSG:2180's axis order says.
         writeFileSync(file, await get(`${WCS}&SUBSET=x(${e},${e1})&SUBSET=y(${n},${n1})`));
         await pause(2000);
       }
-      const r = readGeoTiff(new Uint8Array(readFileSync(file)));
+      const r = readTile(file);
       for (let row = 0; row < r.height; row++) {
         for (let col = 0; col < r.width; col++) {
           const gc = Math.round(r.e0 + (col + 0.5) * r.step - box.e0 - 0.5);
           const gr = Math.round(box.n1 - (r.n0 - (row + 0.5) * r.step) - 0.5);
           if (gc < 0 || gr < 0 || gc >= cols || gr >= rows) continue;
-          cells[gr * cols + gc] = encodeHeight(r.values[row * r.width + col]!);
+          const h = r.values[row * r.width + col]!;
+          if (!Number.isNaN(h)) cells[gr * cols + gc] = encodeHeight(h);
         }
       }
     }
   }
   const missing = cells.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
   const header: DtmHeader = {
-    source: "GUGiK NMT 1 m (geoportal.gov.pl, WCS DTM_PL-KRON86-NH_TIFF)",
+    source: "GUGiK NMT 1 m (geoportal.gov.pl, WCS DTM_PL-KRON86-NH)",
     crs: "EPSG:2180",
     vertical: "PL-KRON86-NH",
     e0: box.e0,
