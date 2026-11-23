@@ -50,20 +50,20 @@ Mail on the Tessen security terminal. Subject: night roster. "East alley of the 
 
 // infiltrate: the manifests on the desk in the Tessen office.
 === hook_infiltrate_1 ===
-Mail on a terminal. From: Nabrzeże administration. Subject: office door. "Code for the side door on the crane side changed to 4177. Please do not write it on sticky notes." The code is written on a sticky note.
+Mail on a terminal. From: Nabrzeże administration. Subject: office door. "Code for the side door on the hall side changed to 4177. Please do not write it on sticky notes." The code is written on a sticky note.
 -> END
 
 === hook_infiltrate_2 ===
-STRAZNIK: The guy on the office door goes for a smoke behind the warehouse every half hour. Thinks the camera doesn't reach there. He's right.
+STRAZNIK: The guy on the office door goes for a smoke in the gap between the tower and the hall every half hour. Thinks the camera doesn't reach there. He's right.
 -> END
 
-// hack: holding the Tessen terminal under the riverside crane against the wave and the sniper.
+// hack: holding the Tessen terminal on the quay by the pier against the wave and the sniper on row N's roof.
 === hook_hack_1 ===
-Shard, rifle service report: "The shooter on the warehouse roof swaps the cell after the third shot. Four seconds without the laser."
+Shard, rifle service report: "The shooter on the hall roof swaps the cell after the third shot. Four seconds without the laser."
 -> END
 
 === hook_hack_2 ===
-STRAZNIK: From the warehouse roof you can't see a thing under the crane's boom. If someone hides there, the sniper can only look.
+STRAZNIK: From the hall roof you can't see a thing under the tower's stair. If someone hides there, the sniper can only look.
 -> END
 
 === hook_sabotage_1 ===

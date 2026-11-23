@@ -50,20 +50,20 @@ Mail na terminalu ochrony Tessen. Temat: grafik nocny. „Wschodnia alejka placu
 
 // infiltrate: the manifests on the desk in the Tessen office.
 === hook_infiltrate_1 ===
-Mail na terminalu. Od: administracja Nabrzeża. Temat: drzwi biura. „Kod do bocznych drzwi od strony dźwigu zmieniony na 4177. Proszę nie zapisywać go na karteczkach”. Kod jest zapisany na karteczce.
+Mail na terminalu. Od: administracja Nabrzeża. Temat: drzwi biura. „Kod do bocznych drzwi od strony hali zmieniony na 4177. Proszę nie zapisywać go na karteczkach”. Kod jest zapisany na karteczce.
 -> END
 
 === hook_infiltrate_2 ===
-STRAZNIK: Ten od drzwi biura co pół godziny wychodzi zapalić za magazyn. Myśli, że kamera tam nie sięga. Ma rację.
+STRAZNIK: Ten od drzwi biura co pół godziny wychodzi zapalić w przejście między wieżą a halą. Myśli, że kamera tam nie sięga. Ma rację.
 -> END
 
-// hack: holding the Tessen terminal under the riverside crane against the wave and the sniper.
+// hack: holding the Tessen terminal on the quay by the pier against the wave and the sniper on row N's roof.
 === hook_hack_1 ===
-Shard, raport serwisowy karabinu: „Strzelec na dachu magazynu po trzecim strzale wymienia ogniwo. Cztery sekundy bez lasera”.
+Shard, raport serwisowy karabinu: „Strzelec na dachu hali po trzecim strzale wymienia ogniwo. Cztery sekundy bez lasera”.
 -> END
 
 === hook_hack_2 ===
-STRAZNIK: Z dachu magazynu nic nie widać pod wysięgnikiem dźwigu. Jak ktoś się tam schowa, snajper może sobie najwyżej popatrzeć.
+STRAZNIK: Z dachu hali nic nie widać pod schodami wieży. Jak ktoś się tam schowa, snajper może sobie najwyżej popatrzeć.
 -> END
 
 === hook_sabotage_1 ===
