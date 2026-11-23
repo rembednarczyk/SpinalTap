@@ -4,8 +4,9 @@
 // a habit of the target. Mails and shards are narration, so they carry no speaker prefix.
 
 // eliminate: Kaito's sites on Krakowskie Przedmieście and under the Grodzka footbridge in Stare Miasto.
+// The bark plays at every one of the five sites (`carrier: { post: 1 }`), so it names none of them.
 === hook_eliminate_1 ===
-HEBI: Every hour the boss goes behind the car wash alone. Says he's calling his mother, comes back smelling of sake.
+HEBI: Every hour the boss steps round the corner alone. Says he's calling his mother, comes back smelling of sake.
 -> END
 
 === hook_eliminate_2 ===
@@ -14,11 +15,11 @@ Shard, voice memo: "Guard change at two. Whoever's on the street side goes for r
 
 // delivery: Kaito's cold modules for Hana.
 === hook_delivery_1 ===
-Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package holds its temperature in the shade. The footbridge over Grodzka is covered and faster than the street below, where the Hebi stand."
+Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package holds its temperature in the shade. The shortest way to Alchemia is through Plac Łokietka and down Lubartowska. Stare Miasto is a detour, and the Hebi stand under the footbridge on Grodzka."
 -> END
 
 === hook_delivery_2 ===
-HEBI: We grab couriers under the footbridge. We don't go up top, because Kenji's scared of heights and nobody wants to go first.
+HEBI: We grab couriers under the footbridge on Grodzka, not here. By Hana's cart we only watch, because Kenji doesn't like witnesses.
 -> END
 
 // retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.
@@ -30,9 +31,10 @@ HEBI: Two of us watch the crate, but after midnight Daisuke goes to Fumiko's for
 HEBI: Two, two, zero, seven. Two-two-oh-seven. Forget the shelter gate code one more time and Daisuke locks me in with the robots.
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
+// protect: Hebi coming for Oyaji's shop in the food hall on P3. Both raids climb a core of the gallery (ADR-0093 O3,
+// market.ts): _1 fits either, _2 tells the cores' doors on P2 and the last escalator.
 === hook_protect_1 ===
-HEBI: We hit the old man from across the square, same as always. Why change what works.
+HEBI: We hit the old man up the core stairs, same as always. Why change what works.
 -> END
 
 === hook_protect_2 ===
@@ -50,20 +52,20 @@ Mail on the Tessen security terminal. Subject: night roster. "East alley of the 
 
 // infiltrate: the manifests on the desk in the Tessen office.
 === hook_infiltrate_1 ===
-Mail on a terminal. From: Nabrzeże administration. Subject: office door. "Code for the side door on the crane side changed to 4177. Please do not write it on sticky notes." The code is written on a sticky note.
+Mail on a terminal. From: Nabrzeże administration. Subject: office door. "Code for the side door on the hall side changed to 4177. Please do not write it on sticky notes." The code is written on a sticky note.
 -> END
 
 === hook_infiltrate_2 ===
-STRAZNIK: The guy on the office door goes for a smoke behind the warehouse every half hour. Thinks the camera doesn't reach there. He's right.
+STRAZNIK: The guy on the office door goes for a smoke in the gap between the tower and the hall every half hour. Thinks the camera doesn't reach there. He's right.
 -> END
 
-// hack: holding the Tessen terminal under the riverside crane against the wave and the sniper.
+// hack: holding the Tessen terminal on the quay by the pier against the wave and the sniper on row N's roof.
 === hook_hack_1 ===
-Shard, rifle service report: "The shooter on the warehouse roof swaps the cell after the third shot. Four seconds without the laser."
+Shard, rifle service report: "The shooter on the hall roof swaps the cell after the third shot. Four seconds without the laser."
 -> END
 
 === hook_hack_2 ===
-STRAZNIK: From the warehouse roof you can't see a thing under the crane's boom. If someone hides there, the sniper can only look.
+STRAZNIK: From the hall roof you can't see a thing under the tower's stair. If someone hides there, the sniper can only look.
 -> END
 
 === hook_sabotage_1 ===

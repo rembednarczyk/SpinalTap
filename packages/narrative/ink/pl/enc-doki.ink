@@ -14,7 +14,7 @@ TOMO: Ale bramka dalej mnie wpuszcza. Nikt jej nie powiedział. Więc przychodz�
     -> ask
 * [Skoro bramka cię wpuszcza, wpuści i mnie? #tone:persuade]
     SEKI: Skoro bramka cię wpuszcza, wpuści i mnie?
-    TOMO: Ha. Moja karta otwiera furtkę w płocie do końca miesiąca. Bierz kopię. Niech Tessen zapłaci za ten błąd.
+    TOMO: Ha. Ta furtka wpuszcza każdego, bo nikt jej nie zamyka. Tessen ufa kamerze nad nią, a nie zamkom. Niech zapłacą za ten błąd.
     ~ set_flag("enc_doki_laidoff_badge")
     ~ change_rep("tessen", -1)
     -> END

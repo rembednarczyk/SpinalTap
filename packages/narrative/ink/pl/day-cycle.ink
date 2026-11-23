@@ -14,7 +14,7 @@ VAR time_of_day = "night"
     OYAJI: A, to ty. Zamknięte i specjalnie dla ciebie nie otworzę.
 }
 { game_hour >= 22 || game_hour < 1:
-    OYAJI: Zamknięte, zamknięte. Gary już wystygły, roleta w dół.
+    OYAJI: Zamknięte, zamknięte. Krata w dół, naboje pod kluczem.
 - else:
     OYAJI: O tej godzinie? Śpi cały targ, tylko Lubartowska nie śpi.
 }

@@ -25,7 +25,7 @@ import { SHELTER } from "./shelter";
  * the stallholders keep their units in the food hall, each behind his or her own counter (`units.ts`;
  * on the gallery's P3 since ADR-0093 O3); Hana sells from her cart on the square in front of it (T1); Ren sleeps on the roof of the
  * triangular pavilion on the corner (stage 3), the Hebi bag by him; Kurosawa of Kagami
- * waits by the lift's kiosk on the car park. The Hebi keep their stash in the air-raid shelter under
+ * waits in the T0 passage under the gallery's front, by the lift's doors (B1). The Hebi keep their stash in the air-raid shelter under
  * T2 (stage 5d2; before it on T2 before the Arkady's south arches), their lookout by its hatch.
  *
  * World metres, every point on the ground, on a floor of the gallery or on the pavilion's roof.
@@ -100,7 +100,7 @@ export interface RoofStash {
 
 /**
  * Ren Odagiri sleeps on the roof of the triangular pavilion on the corner (stage 3; on the hall's
- * green roof in stage 1), behind its attic and its neon, up the service ladder from the car park,
+ * green roof in stage 1), behind its attic and its neon, up the service ladder from T0,
  * looking east over Lubartowska to the Old Town (act II, ADR-0023). He turns up once someone told
  * Seki where he is and is gone after the "kagami" ending. Nobody follows him up the ladder (ADR-0021).
  */
@@ -132,7 +132,7 @@ export const TARG_OVERPASS_STASH: RoofStash = {
   ],
 };
 
-/** Kurosawa of Kagami waits on the car park by the lift's kiosk; his cleaners come from across it. */
+/** Kurosawa of Kagami waits in the T0 passage under the front (B1), by the lift's doors on T0; his cleaners turn up round him. */
 const LIFT_DOOR: GroundPoint = ALCHEMIA_LIFT.doors[2]!;
 export const KUROSAWA_SPOT: Vec3 = ground(LIFT_DOOR.x + 4.5, LIFT_DOOR.z - 2);
 const CLEANER_SPOTS: readonly Vec3[] = [ground(408, 26.5), ground(420.5, 24), ground(413, 22.5)];

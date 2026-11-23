@@ -208,7 +208,7 @@ Nikt tego nie nagrał i nikt nie poprawił. To jest twoje, cokolwiek o tobie mó
     { choice_rooftop == "together":
         Ren dzwoni znad Wisły. Mówi, że to nie morze, ale na razie wystarczy.
     - else:
-        Ren znika z dachu Alchemii. Zostawia plandekę i pustą fiolkę po module.
+        Ren znika z dachu Alchemii. Zostaje po nim tylko plandeka.
     }
 }
 { act2_ending == "street":
@@ -221,10 +221,14 @@ Nikt tego nie nagrał i nikt nie poprawił. To jest twoje, cokolwiek o tobie mó
 - else:
     Kaito stawia ci sake i o nic nie pyta. Pierwszy raz.
 }
-{ story_ending == "aya":
+// After "seki" Mori sold the module to Ren (act II): Ren hands it back in the finale, Kagami takes it with him after "kagami".
+{
+- story_ending == "aya":
     Moduł za uchem milczy. Imię Aya dalej brzmi obco, ale już się na nie odwracasz.
+- act2_ending == "kagami":
+    Twój moduł wrócił do Kagami razem z Renem. Zostajesz Seki, kobietą z wraku.
 - else:
-    Fiolka z modułem leży na półce u Mori. Zostajesz Seki, kobietą z wraku.
+    Fiolka z modułem stoi u ciebie na półce. Zostajesz Seki, kobietą z wraku.
 }
 To koniec wątku głównego. Miasto żyje dalej, a u Kaito czekają zlecenia.
 ~ set_flag("seen:act3_epilogue")

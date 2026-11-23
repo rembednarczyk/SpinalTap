@@ -4,8 +4,9 @@
 // a habit of the target. Mails and shards are narration, so they carry no speaker prefix.
 
 // eliminate: Kaito's sites on Krakowskie Przedmieście and under the Grodzka footbridge in Stare Miasto.
+// The bark plays at every one of the five sites (`carrier: { post: 1 }`), so it names none of them.
 === hook_eliminate_1 ===
-HEBI: Szef co godzinę chodzi sam za myjnię. Mówi, że dzwoni do matki, a wraca pachnący sake.
+HEBI: Szef co godzinę odchodzi sam za róg. Mówi, że dzwoni do matki, a wraca pachnący sake.
 -> END
 
 === hook_eliminate_2 ===
@@ -14,11 +15,11 @@ Shard, nagranie głosowe: „Zmiana warty o drugiej. Kto stoi od ulicy, idzie wt
 
 // delivery: Kaito's cold modules for Hana.
 === hook_delivery_1 ===
-Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Kładka nad Grodzką jest kryta i szybsza niż ulica pod nią, gdzie stoją Hebi”.
+Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Do Alchemii najkrócej przez Plac Łokietka i w dół Lubartowskiej. Przez Stare Miasto nadłożysz drogi, a pod kładką na Grodzkiej stoją Hebi”.
 -> END
 
 === hook_delivery_2 ===
-HEBI: Pod kładką łapiemy kurierów. Na górę nie chodzimy, bo Kenji ma lęk wysokości i nikt nie chce pierwszy.
+HEBI: Kurierów łapiemy pod kładką na Grodzkiej, nie tutaj. Przy wózku Hany tylko patrzymy, bo Kenji nie lubi świadków.
 -> END
 
 // retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.
@@ -30,9 +31,10 @@ HEBI: Skrzynki pilnujemy we dwóch, ale po północy Daisuke idzie do Fumiko na 
 HEBI: Dwa, dwa, zero, siedem. Dwa dwa zero siedem. Jak jeszcze raz zapomnę kodu do bramy schronu, Daisuke zamknie mnie z robotami.
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
+// protect: Hebi coming for Oyaji's shop in the food hall on P3. Both raids climb a core of the gallery (ADR-0093 O3,
+// market.ts): _1 fits either, _2 tells the cores' doors on P2 and the last escalator.
 === hook_protect_1 ===
-HEBI: Do starego idziemy przez plac, jak zawsze. Po co zmieniać coś, co działa.
+HEBI: Do starego idziemy schodami trzonu, jak zawsze. Po co zmieniać coś, co działa.
 -> END
 
 === hook_protect_2 ===
@@ -50,20 +52,20 @@ Mail na terminalu ochrony Tessen. Temat: grafik nocny. „Wschodnia alejka placu
 
 // infiltrate: the manifests on the desk in the Tessen office.
 === hook_infiltrate_1 ===
-Mail na terminalu. Od: administracja Nabrzeża. Temat: drzwi biura. „Kod do bocznych drzwi od strony dźwigu zmieniony na 4177. Proszę nie zapisywać go na karteczkach”. Kod jest zapisany na karteczce.
+Mail na terminalu. Od: administracja Nabrzeża. Temat: drzwi biura. „Kod do bocznych drzwi od strony hali zmieniony na 4177. Proszę nie zapisywać go na karteczkach”. Kod jest zapisany na karteczce.
 -> END
 
 === hook_infiltrate_2 ===
-STRAZNIK: Ten od drzwi biura co pół godziny wychodzi zapalić za magazyn. Myśli, że kamera tam nie sięga. Ma rację.
+STRAZNIK: Ten od drzwi biura co pół godziny wychodzi zapalić w przejście między wieżą a halą. Myśli, że kamera tam nie sięga. Ma rację.
 -> END
 
-// hack: holding the Tessen terminal under the riverside crane against the wave and the sniper.
+// hack: holding the Tessen terminal on the quay by the pier against the wave and the sniper on row N's roof.
 === hook_hack_1 ===
-Shard, raport serwisowy karabinu: „Strzelec na dachu magazynu po trzecim strzale wymienia ogniwo. Cztery sekundy bez lasera”.
+Shard, raport serwisowy karabinu: „Strzelec na dachu hali po trzecim strzale wymienia ogniwo. Cztery sekundy bez lasera”.
 -> END
 
 === hook_hack_2 ===
-STRAZNIK: Z dachu magazynu nic nie widać pod wysięgnikiem dźwigu. Jak ktoś się tam schowa, snajper może sobie najwyżej popatrzeć.
+STRAZNIK: Z dachu hali nic nie widać pod schodami wieży. Jak ktoś się tam schowa, snajper może sobie najwyżej popatrzeć.
 -> END
 
 === hook_sabotage_1 ===

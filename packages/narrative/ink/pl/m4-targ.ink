@@ -51,7 +51,7 @@ EXTERNAL deliver_contract()
 + [Co trzeba odzyskać? #tone:main]
     SEKI: Co trzeba odzyskać?
     ~ offer_contract("retrieve")
-    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją w zagłębieniu przy ruinie za straganami i pilnuje jej kilku chłopaków.
+    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją w starym schronie pod Alchemią i pilnuje jej kilku chłopaków.
     HANA: Wróć ze skrzynką. Co zrobisz ze strażnikami, to już twoja sprawa.
     -> END
 + { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Ktoś potrzebuje ochrony? #tone:main]
@@ -60,7 +60,7 @@ EXTERNAL deliver_contract()
     HANA: Oyaji nie zapłacił Hebi w tym miesiącu i właśnie po niego idą. Pilnuj go, aż padnie ostatni z nich.
     -> END
 + [Nie teraz. #tone:leave]
-    HANA: Będę przy wózku, na placu za straganami.
+    HANA: Będę przy wózku, na placu przed galerią.
     -> END
 
 = delivery
@@ -80,7 +80,7 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
 
 = running
 { contract_kind == "retrieve":
-    HANA: Skrzynka dalej jest u Hebi, przy ruinie za straganami.
+    HANA: Skrzynka dalej jest u Hebi, w schronie pod Alchemią.
 - else:
     HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
 }

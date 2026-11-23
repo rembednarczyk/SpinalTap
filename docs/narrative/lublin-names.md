@@ -11,7 +11,7 @@ Identyfikatory w kodzie zostają: dystrykty (`shinsekai-7`, `kanal`, `targ`, `do
 | Shinsekai 7, Shinsekai, „Siódma” | Krakowskie Przedmieście, „Krakowskie”, deptak | `shinsekai-7` | od Placu Litewskiego do Bramy Krakowskiej |
 | Ulica Kanałowa, Kanałowa | Stare Miasto | `kanal` | Rynek, Trybunał, Grodzka, Brama Grodzka, Archikatedra, Wieża Trynitarska; teren Hebi |
 | Targ pod estakadą, targ | Podzamcze, targ na Podzamczu, Nowy Plac Targowy | `targ` | Plac Zamkowy, Zamek, ul. Ruska, hala targowa, dworzec autobusowy |
-| Doki Tessen, Doki, port | Nabrzeże Bystrzycy, nabrzeże | `doki` | magazyny i dźwig Tessen nad rzeką, dojazd metrem |
+| Doki Tessen, Doki, port | Nabrzeże Bystrzycy, nabrzeże | `doki` | sektor W-3 Tessen nad rzeką (hale dronów, wieża kontrolna, ADR-0082), dojazd metrem |
 
 ## Miejsca w dystryktach
 
@@ -28,16 +28,16 @@ Identyfikatory w kodzie zostają: dystrykty (`shinsekai-7`, `kanal`, `targ`, `do
 | zabetonowany kanał (pod kratką) | Czechówka w rurach pod Starym Miastem | `enc-kanal.ink` `enc_kanal_fisherman` |
 | „pod mostem” (Mei) | lochy Trasy Podziemnej pod Rynkiem | `m4-ulica.ink` `mei` |
 | KARAOKE, DENKI | KARAOKE przy Rynku, DENKI na rogu Rynku | `enc-kanal.ink` |
-| estakada, estakada nad targiem, pokład estakady | wiadukt nad aleją Tysiąclecia („wiadukt na Tysiąclecia”, „wiadukt”) | `m0.ink`, `m3-lustro.ink` (Kurosawa, finał aktu II), `m4-ulica.ink`, `hooks.ink`, `radio.ink`, `day-cycle.ink` |
-| auto na estakadzie z nocy blokady | auto na wiadukcie nad Tysiąclecia z nocy blokady | `m4-ulica.ink` `sachiko`, `radio.ink` |
-| dach nad targiem pod estakadą (Ren) | dach nad targiem na Podzamczu, przy wiadukcie | `m0.ink` `ume.ren_trail`, `m3-echo.ink` `mori.sold` |
-| wschodnia ściana targu | wschodnia ściana hali targowej, od Ruskiej | `enc-targ.ink`, `m4-targ.ink` |
-| widok z estakady „na miasto” | widok z wiaduktu na Zamek i Stare Miasto | `m4-ulica.ink` `kenta` |
-| ramen u Fumiko na targu pod estakadą | ramen u Fumiko na Podzamczu, przy dworcu autobusowym | `radio.ink` |
+| estakada, estakada nad targiem, pokład estakady | wiadukt nad aleją Tysiąclecia tylko jako wspomnienie targu (Goro: „pod wiaduktem, a teraz tu, w Alchemii”); pokładu nie ma od T-021, a Kurosawa czeka w pasażu T0 pod frontem Alchemii, przy windzie (ADR-0074 B1) | `m4-ulica.ink` `goro`; Kurosawa: `m0.ink` `fixer`, `m3-lustro.ink` `ren_odagiri.waiting`, cele `quest.m3_lustro.overpass` i `.ambush` w `ui` |
+| auto na estakadzie z nocy blokady | torba z nocy blokady przed łukami Arkad, na dolnym placu Alchemii (ADR-0074 etap 2) | `m4-ulica.ink` `sachiko`, `radio.ink` `radio_drift_5` |
+| dach nad targiem pod estakadą (Ren) | dach szklanego pawilonu na rogu Alchemii, drabina od zaplecza (ADR-0074 etap 3) | `m0.ink` `ume.ren_trail`, `m3-echo.ink` `mori.ren_trail` |
+| wschodnia ściana targu | chodnik alei przy dworcu (`enc_targ_debt`); skrytka Hebi w schronie pod Alchemią (`m4-targ.ink`, ADR-0074 etap 5d2) | `enc-targ.ink`, `m4-targ.ink` |
+| widok z estakady „na miasto” | taras na dachu galerii Alchemii, z widokiem na Ratusz i Stare Miasto | `m4-ulica.ink` `kenta` |
+| ramen u Fumiko na targu pod estakadą | ramen u Fumiko w Alchemii | `radio.ink` |
 | rampa za magazynem w porcie | rampa za magazynem nad Bystrzycą | `m3-echo.ink` |
 | kuchnia z oknem na port | kuchnia z oknem na Bystrzycę | `m3-lustro.ink` `recall_mirror` |
 | walizka z portu | walizka z nabrzeża | `m3-lustro.ink` `recall_rooftop` |
-| terminal portowy pod dźwigiem | terminal Tessen pod dźwigiem nad rzeką | `m4-doki.ink` |
+| terminal portowy pod dźwigiem | terminal Tessen na nabrzeżu przy pomoście, strzelec na dachu hali (ADR-0082) | `m4-doki.ink`, `hooks.ink` |
 | administracja Doków | administracja Nabrzeża | `hooks.ink` |
 | „po drugiej stronie zatoki”, „nad zatoką mgła” | po drugiej stronie Zalewu Zemborzyckiego, mgła nad Zalewem Zemborzyckim | `m4-doki.ink`, `radio.ink` |
 | „W porcie słucha się Kaito”, „Port jest ich, woda jest moja” | „Na nabrzeżu słucha się Kaito”, „Nabrzeże jest ich, Bystrzyca jest moja” | `m4-doki.ink` |
@@ -65,7 +65,7 @@ Zapowiedzi zostają dwujęzyczne: japońskie „Tsugi wa … desu” z polską n
 
 - „morze”, które obiecuje Ren (`recall_rooftop`, finał aktu II): to marzenie o ucieczce z miasta, nie miejsce w Lublinie; test `m3-lustro.test.ts` go sprawdza.
 - „siedzę na kanale” (Ren): kanał radiowy, nie wodny.
-- wiadukt z nocy wypadku (`recall_crash_night`, „Jedź prosto do wiaduktu”) leży na obwodnicy i nie jest wiaduktem nad Tysiąclecia.
+- wiadukt z nocy wypadku (`recall_crash_night`, „Jedź prosto do wiaduktu”): cel pułapki przed Seki na Krakowskim Przedmieściu, do którego nie dojechała; nie jest wiaduktem nad Tysiąclecia.
 - „ulica”, „ta ulica” w znaczeniu ludzi z okolicy i półświatka.
 - nazwy lokali i szyldów (Neon Koi, PACHINKO, KARAOKE, DENKI, SAKE, OKONOMI), imiona postaci i frakcje.
 
@@ -73,6 +73,6 @@ Zapowiedzi zostają dwujęzyczne: japońskie „Tsugi wa … desu” z polską n
 
 Teksty spoza ink, które dalej używają starych nazw (stan przy tej zmianie):
 - nazwy dystryktów, toasty i stacje metra w `packages/sim/src/content/` i `packages/app/src/metro.ts` (testy `m2-streaming`, `wave2`, `wave2-hud`, `hud-ui` w `packages/app/test`, `docks`);
-- cele zadań w `core` („Kurosawa z Kagami czeka na estakadzie nad targiem”, „Czyściciele Kagami atakują na estakadzie”, „Hana z targu”): zgodnie z tą listą „estakada” to „wiadukt nad aleją Tysiąclecia”;
+- cele zadań aktu II są w katalogach `ui` (ADR-0056) i mówią o pasażu pod frontem Alchemii (`quest.m3_lustro.overpass`, `.ambush`); identyfikatory `overpass`, `kenta_overpass` i `stash:targ-overpass` zostają dla zapisów;
 - frakcja „Mieszkańcy Shinsekai” w skanerze (`app`, `ui`), menu tytułowe i panel sklepu w `ui`;
 - etykiety miejsc zleceń (`contract_site`, np. „parking przy furgonetce”) przychodzą z domeny, nie z ink.

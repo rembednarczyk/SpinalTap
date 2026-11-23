@@ -52,7 +52,7 @@ const GATE_WALK: readonly Pt[] = [
   { x: 457, z: -95.6 },
 ];
 
-/** From Brama Grodzka down Zamkowa, across Plac Zamkowy's car park, under the viaduct to the market (ADR-0045). */
+/** From Brama Grodzka down Zamkowa, across Plac Zamkowy's car park to aleja Tysiąclecia, where the market stood until ADR-0063 moved it to Alchemia (ADR-0045). */
 const CASTLE_WALK: readonly Pt[] = [
   { x: 730, z: 155 },
   { x: 739, z: 174 },

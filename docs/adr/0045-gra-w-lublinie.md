@@ -29,6 +29,11 @@ Bryła kamienicy dzieli się prostokątem pokoju: poza nim pełne pryzmaty, nad 
 - Podzamcze: targ pod wiaduktem (Hana, Oyaji, Fumiko, Kenta, Goro, kiosk Sachiko, czujka Hebi, Kurosawa na pokładzie wiaduktu), metro Plac Zamkowy (717,5; 296).
 - Nabrzeże Bystrzycy: plac kontenerowy, dźwig i biuro Tessen, Genzō (2580,6; 397,6), terminal pod dźwigiem, metro Nabrzeże Bystrzycy.
 
+> Nota (23.11.2026): lista wyżej to stan z dnia tej decyzji. Część miejsc przeniosły późniejsze ADR-y, a teksty gry idą za stanem dzisiejszym:
+> - wrak, z którego wyciągnięto Seki, stoi na deptaku Krakowskiego przy wylocie Kapucyńskiej (152,6; −51,0), a furgonetka Tetsuo na Placu Litewskim (112; −42) (T-077); podwórko za myjnią leży przy Lubartowskiej, ok. (389…417; −44…−20) (`CAR_WASH_AREA`);
+> - targ jest w Alchemii (ADR-0063 etap 6, ADR-0074, ADR-0093 O3): Hana przy wózku na placu T1 (428; 66), straganiarze w food hallu na P3, Ren na dachu pawilonu na rogu (430; −3,4), Kurosawa w pasażu T0 pod frontem galerii przy windzie (418; 29,4), skrytka Hebi w schronie pod T2, czujka Hebi przy włazie (443,4; 98,6), torba z nocy blokady przed łukami Arkad; pokładu nad aleją Tysiąclecia nie ma (T-021);
+> - nabrzeże to sektor W-3 Tessen (ADR-0082): Genzō (2491; 386), terminal włamania na nabrzeżu przy pomoście (2484; 430), biuro przepustek w wieży kontrolnej (x 2486–2496, z 436–446); magazynu i dźwigu nie ma.
+
 ### Postacie i ruch
 - Harmonogramy liczą drogę po ulicach Lublina. Minuta gry to godzina dnia (ADR-0017), więc 300 m dojścia to cztery godziny: Hideo czeka na autobus Tessen na Zamkowej, a do SAKE wychodzi o 17:00.
 - Postać z harmonogramem zasypia z chunkiem dopiero wtedy, gdy ani jej chunk, ani chunk, w którym stoi, nie zostaje wczytany (`WorldStreamer.unload`). Bez tego Hideo znikał w połowie Grodzkiej, gdy gracz szedł za nim.
