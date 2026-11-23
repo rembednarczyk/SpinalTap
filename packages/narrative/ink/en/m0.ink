@@ -286,7 +286,7 @@ UME: I saw them pull you out of that car. I thought you were gone.
 + [Where do I find Ren Odagiri? #tone:main]
     SEKI: Where do I find Ren Odagiri?
     UME: He came back a week ago. Thin, unshaven, nothing like the boy from two years back.
-    UME: He sleeps on the roof of Alchemia, over the market. You ride up in the lift behind the hall.
+    UME: He sleeps on the roof of the glass pavilion on Alchemia's corner. You climb the ladder at the back.
     { has_flag("ume_ren"):
         UME: I told you he looked for you for half a year. Now he's the one hiding.
     }

@@ -286,7 +286,7 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 + [Gdzie znajdę Rena Odagiri? #tone:main]
     SEKI: Gdzie znajdę Rena Odagiri?
     UME: Wrócił tydzień temu. Chudy, zarośnięty, nie przypomina tego chłopaka sprzed dwóch lat.
-    UME: Śpi na dachu Alchemii, nad targiem. Wjeżdża się windą za halą.
+    UME: Śpi na dachu szklanego pawilonu na rogu Alchemii. Wchodzi się drabiną od zaplecza.
     { has_flag("ume_ren"):
         UME: Mówiłam ci, że szukał cię pół roku. Teraz to on się ukrywa.
     }

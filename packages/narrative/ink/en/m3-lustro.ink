@@ -44,7 +44,7 @@ You told them to sell the module to someone who likes other people's lives. Some
 ~ set_flag("seen:act2_opening")
 -> END
 
-// Ren Odagiri on the roof terrace of Alchemia, over the market (present from ren_trail until the "kagami" ending; ADR-0063).
+// Ren Odagiri on the roof of the glass pavilion on Alchemia's corner, up the service ladder (present from ren_trail until the "kagami" ending; ADR-0063).
 === ren_odagiri ===
 {
 // Act III (ADR-0095, m3-zrodlo.ink): after the "hebi" ending the trail to the Castle starts with him.
