@@ -51,7 +51,10 @@ podzamcze-0-2 680,600
 podzamcze-0-2 680,610
 podzamcze-0-2 690,630
 podzamcze-0-2 680,640
+podzamcze-0-2 590,650
 podzamcze-0-2 540,670
+podzamcze-0-2 600,670
+podzamcze-0-2 610,710
 podzamcze-1-0 730,190
 podzamcze-1-0 840,280
 podzamcze-1-1 860,490

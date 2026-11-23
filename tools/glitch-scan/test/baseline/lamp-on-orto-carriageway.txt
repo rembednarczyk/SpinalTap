@@ -60,7 +60,8 @@ podzamcze-1-1 806,382
 podzamcze-1-1 839,439
 podzamcze-1-1 744,540
 podzamcze-2-0 936,220
-podzamcze-2-2 1074,675
+podzamcze-2-2 1075,675
+podzamcze-2-2 1075,710
 stare-miasto-0-0 512,-225
 stare-miasto-0-0 599,-220
 stare-miasto-0-0 598,-214

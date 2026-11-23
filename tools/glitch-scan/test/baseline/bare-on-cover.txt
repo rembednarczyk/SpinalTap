@@ -345,6 +345,7 @@ podzamcze-2-2 1010,720
 podzamcze-2-2 1020,720
 podzamcze-2-2 1070,770
 podzamcze-2-2 1070,780
+podzamcze-2-2 1080,780
 poza 460,-270
 poza 2700,60
 poza 760,100
