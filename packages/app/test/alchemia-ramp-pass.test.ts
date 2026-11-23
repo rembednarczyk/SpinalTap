@@ -76,14 +76,16 @@ const inSolid = (c: Car): string[] => {
 describe("a car of Alchemia's ramp held up by Seki on its lane", () => {
   // Her heading: at z 8 facing the ramp's foot she sees all its way up from the north cabin, so no car comes into being
   // there and drives up to her (none in 50 s since C7); one comes behind her back instead, as she faces up the ramp.
+  // The route's index stays out of the test's name: it moves whenever the city gets lanes (the Podzamcze
+  // row of 23.11 moved it), and the time gate would take the test for a new one each time.
   it.each([
-    ["up", OUT, UP + 0.4, 4.5, 0],
-    ["up", OUT, UP - 0.6, 8, Math.PI],
-    ["up", OUT, UP + 1.2, 6, 0],
-    ["down", IN, DOWN, 6, 0],
-    ["down", IN, DOWN + 0.8, 8, 0],
-    ["down", IN, DOWN - 1, 4, 0],
-  ] as const)("on the %s lane, its route %i, at x %f, z %f: round her within the walls or waits, then on", (_lane, route, x, z, yaw) => {
+    ["up", UP + 0.4, 4.5, 0, OUT],
+    ["up", UP - 0.6, 8, Math.PI, OUT],
+    ["up", UP + 1.2, 6, 0, OUT],
+    ["down", DOWN, 6, 0, IN],
+    ["down", DOWN + 0.8, 8, 0, IN],
+    ["down", DOWN - 1, 4, 0, IN],
+  ] as const)("on the %s lane, at x %f, z %f: round her within the walls or waits, then on", (_lane, x, z, yaw, route) => {
     const session = start();
     teleport(session, x, z, yaw, 0, p1RampY(z));
     const r = TRAFFIC_ROUTES[route]!;
