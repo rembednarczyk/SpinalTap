@@ -43,6 +43,11 @@ Frakcja: ulica (handel z kiosków i straganów, nocny yatai).
 - §16 zgodne: prowizorka ulicy (kable na taśmie, skrzynki jako podstawa) przy szkle galerii i neonach.
 - §17 częściowo: skalę dają lady (1,05), stołki (0,5), słupki i drzwi kamienic. Ruch: klienci, para nad garnkiem i herbatą. Dźwięku ze źródła brak. Yatai, kucharz i jego goście stoją także w dzień, choć to scena nocna.
 
+## Scenariusz tła
+- Kto tu bywa: klienci kiosków (prasa, papierosy, naprawa telefonów i tanich implantów), straganiarze z warzywami, sprzedawczyni kwiatów; pasażerowie z wylotu metra `kanal` B w drodze na plac i na T1; po zmroku nocni goście yatai pod lampionami chōchin.
+- Co się dzieje: w dzień deptak jest osią handlu Alchemii, a ludzie z metra przechodzą między kioskami na plac przed frontem; wieczorem zapalają się SPOŻYWCZY, PARKING CAŁODOBOWY i cyjanowy ALCHEMIA, a kucharz z yatai karmi gości przy słupkach od Bajkowskiego.
+- Ślad obecności: parująca miska na desce lady yatai, herbata na końcu lady kwiaciarki, kabel lamp straganów przyklejony taśmą do słupa trakcji.
+
 ## Dług sceny
 - Pora yatai: wózek, lampiony nad nim i kucharz stoją przez całą dobę (`DEPTAK_NIGHT_PIECES`, `DEPTAK_NIGHT_PROPS`, `DEPTAK_NIGHT_CROWD` bez godzin). Propozycja: w dzień wózek złożony (plandeka zamiast noren, bez kucharza i klientów), wieczorem rozstawiony; plan dnia kucharza w `packages/sim/src/content/schedules.ts`, rysunek pory w `packages/engine/src/renderer/alchemia/deptak-night-geometry.ts`.
 - Nawierzchnia pasa pod yatai i stołkami (x 448,8–451,9, z −8…−4), dziś goły grunt (klasa G-726): obszar kostki w korektach importu (`tools/osm-import/src/corrections-alchemia.ts`), z wierszem T i przeglądem `topography-curator`.

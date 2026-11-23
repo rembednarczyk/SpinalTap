@@ -43,6 +43,11 @@ Frakcja: ulica (kościół deptaku i jego ławki; bez korporacji na ścianie).
 - §16 zgodne: ulica bez reklamy na zabytku; kontrast z neonowym deptakiem jest treścią miejsca.
 - §17 dług: skalę dają tylko ławki (drzwi brak), dźwięku dzwonu i organów brak, ruch tylko na ławkach.
 
+## Scenariusz tła
+- Kto tu bywa: wierni i turyści przy wylocie deptaku na Plac Łokietka; ludzie z deptaku na ławkach przedpola; śpiący w bramach Bramowej i Krakowskiego, którzy przychodzą po zupę do kancelarii od Świętoduskiej.
+- Co się dzieje: w dzień przechodnie mijają kościół w drodze do Bramy Krakowskiej i Alchemii, a ściana bez reklamy odcina się od szyldów pachinko i ramenu; wieczorem ławki przedpola się zapełniają, a parafia wydaje zupę.
+- Ślad obecności: znicz w czerwonym szkle i papierowy kubek po zupie na stopniu bocznego wejścia, kwiaty pod tablicą „Pamięci Żydów z Lublina”.
+
 ## Dług sceny
 - Sprzeczność ADR i gry: ADR-0062 daje każdemu zabytkowi warstwę 2077 i przepis ogólny według rodzaju (etap 7), a kościół rysuje się ogólnym stylem kamienicy-kościoła bez warstwy. Propozycja: przepis w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts` (gotycka bryła w tynku, przypory, okna ostrołukowe, portal z drzwiami od deptaku, cokół) ze stonowaną warstwą 2077 (reflektory od dołu, jedna kamera, cienka linia światła na gzymsie wieży, bez ekranu), z przeglądem `topography-curator` i migawką NPR, jeśli wejdzie w kadr.
 - Drzwi: portal główny od deptaku i boczne wejście od Świętoduskiej. Dziś `door-slots.ts` (`packages/engine/src/renderer/mapcity/`) odrzuca każdą ścianę kościoła; przepis zabytku albo wejście z korekty importu (`tools/osm-import/src/corrections.ts`).

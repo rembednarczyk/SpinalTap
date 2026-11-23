@@ -43,6 +43,11 @@ Frakcja: korporacja, ulica (pasaż galerii inwestora i ludzie z deptaku na jego 
 - §16 zgodne: zimne, czyste światło galerii i portal z planszy, a obok ulica na grządkach.
 - §17 częściowo: skalę dają drzwi P1, stopnie, parapety (1 m) i auta. Ruch: auta rampy i przechodnie. Dźwięku ze źródła brak.
 
+## Scenariusz tła
+- Kto tu bywa: ludzie z Bajkowskiego i spod arkad w drodze do drzwi P1, do windy i metra; kierowcy zjeżdżający rampą na P−1 tuż obok pieszych; ochrona galerii, która raz w tygodniu podlewa grządki; ludzie z deptaku, którzy siadają na parapetach.
+- Co się dzieje: przez cały dzień pasaż przepuszcza pieszych wzdłuż zielonego portalu i pasów LED, a obok auta zjeżdżają za parapetami na parking; wieczorem parapety z grządkami służą za ławki i popielniczki.
+- Ślad obecności: niedojedzony karton z jedzeniem z kiosku placu na grządce przy zachodnim parapecie, tlący się niedopałek obok, ślady opon na mokrym zjeździe rampy.
+
 ## Dług sceny
 - Linia instalacji pod płytą L2 (korytka, rury odwodnienia, kratki wentylacji P−1): rysunek w `packages/engine/src/renderer/alchemia/` (siatka kondygnacji, bez nowego wywołania), dane w `packages/sim/src/content/alchemia/front-dress.ts`.
 - Ławki, kosze, szafka i szlaban wjazdu, tablica kierunkowa, kamera: modele gry w treści frontu (`front-dress.ts` albo nowy `t0-dress.ts`), bryły na końcu `ALCHEMIA_PROPS`, z dala od grafu (`parking-nav.ts`, `nav.ts`) i osi O2b (`alchemia-entrance.test.ts`).

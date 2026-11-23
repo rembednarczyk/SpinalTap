@@ -43,6 +43,11 @@ Frakcja: korporacja (Lubelska Arkologia S.A. na dziedzińcu zabytku).
 - §16 częściowo: korporacja przez szyld i hologram, ale bez jej materiałów (czarne szkło, stal) i bez ochrony.
 - §17 dług: skalę daje tylko brama; brak dźwięku i ludzi.
 
+## Scenariusz tła
+- Kto tu bywa: stróż budowy Lubelskiej Arkologii; robotnicy, gdy konserwator akurat nie wstrzymał robót; przechodnie ze Staszica i Zielonej, którzy zaglądają przez uchyloną bramę; klienci Halki przy Staszica 1.
+- Co się dzieje: częściej stoi niż pracuje: dźwig czeka nad dziedzińcem pałacu, a stróż obchodzi płot i chodzi po kawę; nocą nad dachem pałacu mruga czerwone światło dźwigu, a tablica obiecuje „etap II”.
+- Ślad obecności: stygnący termos stróża na skrzynce przy bramie, uchylona brama, wizualizacja wieżowca na siatce dźwigu.
+
 ## Dług sceny
 - Płot: trzy panele (7,5 m z 156,5 m obwodu) zostawiają dziedziniec otwarty od reszty wolnych boków. Sprawdzić w generatorze, które boki odpadły jako ściana, chodnik albo jezdnia, i domknąć wolne odcinki: `tools/osm-import/src/construction-site.ts`, tablica w `packages/sim/src/content/lublin/construction.generated.ts` (`pnpm osm:props`), z przeglądem `topography-curator`.
 - Kontener stróża przy bramie, drobiazg przy bramie i maszcie, robotnik albo stróż (postać z gry w dzień): generator w `tools/osm-import/src/construction-site.ts`, miejsca tłumu w `packages/sim/src/content/crowd.ts`.

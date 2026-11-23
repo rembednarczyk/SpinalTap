@@ -44,6 +44,11 @@ Frakcja: korporacja, ulica (plac galerii inwestora, na którym siedzi i je depta
 - §16 zgodne: czysty kamień i franczyzowe kioski inwestora z ulicznym tłumem i prowizorycznym kablem; kontrast jest treścią placu.
 - §17 częściowo: skalę dają stopnie, krzesła (0,45), lady kiosków (1,0) i obręcz (0,42). Ruch: tłum, para, auta rampy. Dźwięku ze źródła brak.
 
+## Scenariusz tła
+- Kto tu bywa: ludzie z Shinsekai-7, którzy traktują plac jak salon deptaku: siedzą na obręczy fontanny, jedzą przy stolikach kiosków, umawiają się „pod hologramem”; sprzedawcy kiosków franczyzy; klienci w drodze pod arkadami do sklepów L1 i do drzwi P1.
+- Co się dzieje: w dzień kioski wydają kubki z parą, a przy stolikach zmieniają się goście z deptaku; wieczorem pęknięty hologram nad fontanną zaczyna świecić mocniej niż szyldy, a ludzie zostają dłużej na obręczy; nocą zostaje kiosk przy schodach na kablu z szafki ulicznej.
+- Ślad obecności: przewrócone krzesło i parujący kubek przy stoliku na wschód od fontanny, ulotki pod ladami kiosków, kabel przyklejony taśmą do ściany przy schodach.
+
 ## Dług sceny
 - Bryły donic przy filarach arkad (397,22; −2,55) i (402,92; −2,55), dziś rysowane bez bryły, a ta przy x 397,22 stoi na filarze (G-957): `planterSolids` w `packages/sim/src/content/alchemia/front-plaza-cafe.ts`, z przesunięciem donicy z filara i sprawdzeniem wyjścia z NIGHT SILK (`alchemia-front-rooms.test.ts`).
 - Źródła dźwięku: woda fontanny, płyty kiosków, deszcz na markizach. Dziś `packages/engine/src/audio/room-sound-map.ts` zna tylko wnętrza, potrzebna mapa źródeł na zewnątrz (wzór `w3-sound-map.ts`) w `packages/engine/src/audio/`.

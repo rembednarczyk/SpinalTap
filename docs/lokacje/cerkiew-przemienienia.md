@@ -43,6 +43,11 @@ Frakcja: ulica (parafia Podzamcza w dzielnicy targu, bez korporacji).
 - §16 zgodne: miejsce ulicy bez reklamy; kontrast z dworcem i targiem w dole jest treścią.
 - §17 dług: skalę dają tylko drzewa i domy obok (drzwi cerkwi brak), dźwięku brak, ruchu brak.
 
+## Scenariusz tła
+- Kto tu bywa: parafianie z całego Podzamcza i w niedziele przyjezdni z autobusów ze wschodu; przechodnie w drodze z dworca na Ruską; ludzie z targu, którzy siadają w cieniu drzew przy murku.
+- Co się dzieje: w tygodniu cerkiew stoi cicho nad doliną w pierścieniu drzew, a teren przykościelny parafia zamyka na noc; w niedzielę rano schodami od Ruskiej wchodzą wierni, a parking przy furtce zapełnia się autami i busami.
+- Ślad obecności: świeca w lampionie przy furtce od Ruskiej, reklamówka z chlebem do poświęcenia na murku, kwiaty pod tablicą Ostrogskiego.
+
 ## Dług sceny
 - Sprzeczność ADR i gry: ADR-0062 przewiduje przepis ogólny dla cerkwi i warstwę 2077 na każdym zabytku, a cerkiew rysuje się ogólnym stylem kościoła. Propozycja: przepis w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts` (tynk, gzymsy, okna z łukiem, portal pod dzwonnicą, krzyż na kopułce) ze stonowaną warstwą (ciepłe podświetlenie kopułki od dołu, lampion przy furtce, bez ekranów), przegląd `topography-curator`.
 - Drzwi pod dzwonnicą od zachodu: dziś `packages/engine/src/renderer/mapcity/door-slots.ts` odrzuca ściany kościoła; przepis zabytku albo wejście z korekty importu (`tools/osm-import/src/corrections.ts`).
