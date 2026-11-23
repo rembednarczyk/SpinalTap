@@ -93,7 +93,7 @@
 = talk
 + [You sing here every night? #tone:optional]
     SEKI: You sing here every night?
-    MEI: Three years now. Before they shut the cellars under the Rynek, I sang in the Trasa Podziemna vaults for spare change. Better acoustics.
+    MEI: Three years now. Before that I sang for spare change in the Trasa Podziemna vaults. Better acoustics, worse tourists.
     -> talk
 + { not has_flag("mei_song") } [Sing something for me? #tone:optional]
     SEKI: Will you sing something for me?

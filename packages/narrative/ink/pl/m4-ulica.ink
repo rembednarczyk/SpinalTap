@@ -93,7 +93,7 @@
 = talk
 + [Śpiewasz tu co noc? #tone:optional]
     SEKI: Śpiewasz tu co noc?
-    MEI: Od trzech lat. Zanim zamknęli piwnice pod Rynkiem, śpiewałam w lochach Trasy Podziemnej za drobne. Akustyka była lepsza.
+    MEI: Od trzech lat. Wcześniej śpiewałam za drobne w lochach Trasy Podziemnej. Akustyka lepsza, tylko turyści gorsi.
     -> talk
 + { not has_flag("mei_song") } [Zaśpiewasz coś dla mnie? #tone:optional]
     SEKI: Zaśpiewasz coś dla mnie?
