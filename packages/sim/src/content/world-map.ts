@@ -1,4 +1,5 @@
 import { CAR_WASH_DETAIL } from "./car-wash-detail";
+import { CAR_WASH_SOLIDS } from "./district-car-wash";
 import { CLINIC_DETAIL } from "./clinic-detail";
 import { KOI_DETAIL } from "./koi-detail";
 import { TRASA_DETAIL } from "./trasa-detail";
@@ -171,6 +172,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...(c.id === ALCHEMIA_CHUNK ? P1_CARS.map(p1CarProp) : []),
         // The map's walls, fences and hedges (ADR-0077) last, so the ids before them stay.
         ...barrierProps(WORLD_BARRIERS[c.id] ?? []),
+        // The car wash scene's solids (ADR-0102 point 5) after them, so every street id before them stays.
+        ...CAR_WASH_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
       ],
       ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
       ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
