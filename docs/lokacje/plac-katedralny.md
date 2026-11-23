@@ -49,10 +49,11 @@ Frakcja: korporacja, ulica (kościół jako właściciel placu; ulica na jego sk
 - §17 dług: dzwonów, organów i trolejbusu nie słychać ze źródeł. Ruch: tłum i trolejbusy; skala: ławki, drzwi katedry, figura.
 
 ## Dług sceny
+Zrobione 23.11 (znicze LED z kwiatami i intencjami pod pomnikiem, terminal legendy AR przy Głazie Katowskim). Zostaje:
 - Antena i czerwone światło na hełmie wieży oraz zielony hełm (T-143): przepis w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`, światło jako lampa gry w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).
 - Przejście pod wieżą w osi (G-683, T-264): `packages/sim/src/content/lublin/gate-passages.ts` albo korekta obrysu w `tools/osm-import`, przegląd `topography-curator`.
 - Przepis zabytku Archikatedry z portykiem, schodami i drzwiami oraz Wieży Trynitarskiej: `packages/sim/src/content/lublin/porticoes.ts` (wpis portyku na końcu) i `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`; do tego wpis T w `docs/topografia.md` po przeglądzie `topography-curator`.
 - Budka ochrony parafii z ochroniarzem (plan dnia: obchód placu po 22:00) i kamera nad portykiem: rekwizyt i postać w `packages/sim/src/content/district-kanal.ts`, plan w `packages/sim/src/content/schedules.ts`, kamera w `packages/sim/src/content/devices.ts`.
-- Terminal legendy przy Głazie Katowskim, holo-kasa w bramie wieży, znicze pod pomnikiem: modele w nowym `tools/blender/rooms/plac_katedralny.py`, rekwizyty w nowym `packages/sim/src/content/katedralny-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`.
+- Holo-kasa w bramie wieży: model w `tools/blender/rooms/plac_katedralny.py`, rekwizyt w `packages/sim/src/content/katedralny-detail.ts`, klucz na końcu `ROOM_DETAIL_SHAPES`.
 - Emitery dzwonów (o pełnych godzinach) i organów przy drzwiach katedry: `packages/engine/src/audio/spatial.ts` i `packages/engine/src/audio/soundscape-clock.ts`.
 - Zmierzyć 60-30-10 nocą z bramy wieży na fasadę katedry i wpisać w §13 tej karty.
