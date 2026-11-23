@@ -35,7 +35,7 @@ Odłożone:
 ## Frakcja i zasady
 Frakcja: ulica (transport miejski).
 - §12 zgodne co do kontrastu: zejście drugim biegiem na peron. 1 z 4 wymiarów na siatce.
-- §13 częściowo: lampy peronu mają oprawy w geometrii silnika (pasy świetlne w stropie, sprawdzone 22.11); dług: wejście do wagonu wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 33,6%, światło 65,5%, akcenty 0,9%, poza pasmem: baza 33,6% < 50%; światło 65,5% > 42%; akcenty 0,9% < 3%.
+- §13 częściowo: lampy peronu mają oprawy w geometrii silnika (pasy świetlne w stropie, sprawdzone 22.11); dług: wejście do wagonu wyróżnione. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 33,6%, światło 65,5%, akcenty 0,9%, poza pasmem: baza 33,6% < 50%; światło 65,5% > 42%; akcenty 0,9% < 3%; po trybie wnętrza peronu (ciemne otoczenie zamiast księżyca, lampy świetlówek z plamami 8,5 m, ściany w średnim tonie, posadzka z ciemnego granitu, jaśniejszy pas linii): baza 53,1%, światło 41,7%, akcenty 5,2%, zgodne.
 - §14 zgodne: 19 rzeczy drobiazgu, 11% luzem; ręcznie gazeta, plakat i kosz, a generator wnętrz (ADR-0099, zestaw `platform`) dokłada worki śmieci pod ścianą z przewróconymi kubkami obok i gazety z kubkami na ławkach.
 - §15 dług: połysk płytek, mokre od skrzyń z rybą.
 - §16 zgodne.

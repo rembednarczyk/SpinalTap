@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { CLINIC_DETAIL, INTERIORS, KOI_DETAIL, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
+import { CLINIC_DETAIL, INTERIORS, KOI_DETAIL, METRO_PLATFORMS, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
 import { INDOOR_RIG, ROOM_RIG, indoorRig } from "../src/npr/lighting";
 import { RoomsInterior } from "../src/renderer/rooms/room-interior";
 import { DIM_ROOMS, LIT_ROOMS, ROOM_LAMPS, ROOM_LAMPS_ON, roomLampsFor } from "../src/renderer/rooms/room-lights";
@@ -22,8 +22,8 @@ const fixtures = (): { x: number; y: number; z: number }[] => [
 ];
 
 describe("the small rooms' practicals (§13)", () => {
-  it("lights Neon Koi, the clinic and the pass office, each lamp inside its own room and clipped to it", () => {
-    expect([...LIT_ROOMS].sort()).toEqual(["clinic", "neon-koi", "tessen-office"]);
+  it("lights Neon Koi, the clinic, the pass office and the metro's platforms, each lamp inside its own room and clipped to it", () => {
+    expect([...LIT_ROOMS].sort()).toEqual(["clinic", ...METRO_PLATFORMS.map((e) => `metro-${e.station}`).sort(), "neon-koi", "tessen-office"].sort());
     for (const { key, room, light } of ROOM_LAMPS) {
       const c = light.clip;
       const p = light.position;
@@ -34,7 +34,8 @@ describe("the small rooms' practicals (§13)", () => {
 
   it("hangs every lamp within reach of a fitting, a sign or a screen of its room", () => {
     const all = fixtures();
-    for (const { key, light } of ROOM_LAMPS) {
+    // The platforms' lamps are the sim's own points under their strips (`metro-platform.ts`, drawn by `platform-plan.ts`).
+    for (const { key, light } of ROOM_LAMPS.filter((l) => !l.room.startsWith("metro-"))) {
       const d = Math.min(...all.map((f) => Math.hypot(f.x - light.position.x, f.z - light.position.z)));
       expect(d, key).toBeLessThanOrEqual(REACH);
     }

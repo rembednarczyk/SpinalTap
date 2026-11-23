@@ -32,7 +32,7 @@ Z generatora wnętrz (ADR-0099, zestaw `car-park` w `room-kits.ts`, układ `P1_L
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 dług: 2 z 8 wymiarów na siatce. Niski strop zgodny. Rampa wjazdowa (ciasno) otwiera się na halę parkingu: zgodne.
-- §13 dług: w pomiarach 1 widoczne źródło; świetlówki co 4 m są w detalu, ale lampy silnika trzeba powiązać z oprawami. Wyjścia (klatka, drzwi metra) w zieleni nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 58,7%, światło 39,3%, akcenty 2%, poza pasmem: akcenty 2% < 3%.
+- §13 dług: w pomiarach 1 widoczne źródło; świetlówki co 4 m są w detalu, ale lampy silnika trzeba powiązać z oprawami. Wyjścia (klatka, drzwi metra) w zieleni nawigacji. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 58,7%, światło 39,3%, akcenty 2%, poza pasmem: akcenty 2% < 3%; po trybie wnętrza Alchemii (latarnie placu nie zajmują już miejsc lamp przez strop, lampa pokładu 1,4): baza 63,9%, światło 34,1%, akcenty 2%, poza pasmem: akcenty 2% < 3%. Dług: akcent (pasy słupów w świetle, zielone znaki wyjścia).
 - §14 zgodne: 13 rzeczy drobiazgu w trzech skupiskach (konsola strażnika, bilety i pachołek przy kasie, kartony z butelkami i kubkiem w rogu pokładu), nic luzem. Dalej: skupisko przy kabinach.
 - §15 częściowo: kałuże i plamy na pustych miejscach (generator), połysk lakieru aut. Dług: kałuże pod samymi autami.
 - §16 zgodne: beton, pasy ostrzegawcze; dodać migającą świetlówkę.

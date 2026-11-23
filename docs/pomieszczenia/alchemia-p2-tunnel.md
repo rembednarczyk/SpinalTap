@@ -23,7 +23,7 @@ Do zrobienia (kolejka zasad, §12–§17):
 ## Frakcja i zasady
 Frakcja: technika (infrastruktura parkingu); druga: ulica (skrót Hebi).
 - §12 zgodne co do kontrastu: ciasny tunel między magazynem a otwartym wykopem T2. Dług: instalacje pod stropem; wymiary na siatce w pomiarach.
-- §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%.
+- §13 dług: tunel nie ma własnych lamp silnika poza światłem P-2; oprawy i zielone znaki wyjścia do dodania. 60-30-10 na zrzucie z 22.11 (noc, ujęcie z `tools/shots/room-spots.json`): przed zmianą baza 79,9%, światło 19,7%, akcenty 0,4%, poza pasmem: baza 79,9% > 75%; akcenty 0,4% < 3%; po trybie wnętrza Alchemii (lampy przy oprawach w stropie korytarza co 9 m, zimna biel; wcześniej tylko latarnie placu przez strop): baza 64,4%, światło 34,9%, akcenty 0,7%, poza pasmem: akcenty 0,7% < 3%. Dług: akcent (znaki wyjścia, kogut przy portalu).
 - §14 częściowo: 11 rzeczy drobiazgu w trzech skupiskach (u wylotu do magazynu, pod bramą schronu, przy portalu), nic luzem. Dług: duże obiekty (wózek serwisowy, szafka hydrantowa, skrzynka rozdzielcza) i instalacje pod stropem.
 - §15 częściowo: kałuża przy portalu, gdzie wpada deszcz z wykopu (`rd-c-puddle`, generator: `by: "weather"`). Dług: połysk rur.
 - §16 zgodne: beton i stal techniki, prowizorka ulicy przy bramie schronu.
