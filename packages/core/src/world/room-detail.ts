@@ -336,6 +336,9 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-kat-terminal", clutter: 0 },
   // Podzamcze's food markets (docs/lokacje/dzielnica-targ.md, ADR-0102): the festoon of warm bulbs over each stall of the Bazaar and Ruska.
   { key: "rd-targ-festoon", clutter: 0 },
+  // The bare bulb by each Hebi group on Podzamcze (docs/lokacje/dzielnica-targ.md): on a wall's bracket, or on a pole in a bucket of concrete.
+  { key: "rd-targ-bulb-wall", clutter: 0 },
+  { key: "rd-targ-bulb-pole", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

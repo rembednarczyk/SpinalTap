@@ -50,7 +50,7 @@ Frakcja: ulica, korporacja (handel Bazaru przy alei miasta).
 - §17 częściowo: auta i trolejbusy słychać ze źródła; hal i grupy Hebi nie słychać. Ruch: ruch uliczny, 3 Hebi przy halach; skala: wiaty, latarnie, stragany.
 
 ## Dług sceny
-- Zrobione 23.11: girlanda ciepłych żarówek nad każdym z 48 straganów Bazaru (model `rd-targ-festoon`) i światło gry w każdej (`BAZAR_LAMPS` w `packages/sim/src/content/district-targ.ts`, do 70 m od środka). Zostało: goła żarówka przy grupie Hebi (660; 380), w oprawie na ścianie hali albo na straganie obok rdzenia.
+- Zrobione 23.11: girlanda ciepłych żarówek nad każdym z 48 straganów Bazaru (model `rd-targ-festoon`) i światło gry w każdej (`BAZAR_LAMPS` w `packages/sim/src/content/district-targ.ts`, do 70 m od środka). Goła żarówka przy grupie Hebi (660; 380) zrobiona 23.11: na słupku w wiadrze z betonem 3,5 m od rdzenia, bo ściana hali jest 23 m dalej.
 - Daszki nad przejściami hal i brama od alei (G-063): `tools/osm-import` (zadaszenia `building=roof`) i generator straganów w `packages/engine/src/renderer/mapcity`.
 - Tłum w halach i na zachodniej części alei (chunki `podzamcze-0-1` i `podzamcze-0-0` bez tłumu): `packages/sim/src/content/crowd.ts` (miejsca przy straganach, profil `market`).
 - Skupiska przy halach (grupa Hebi), przy przystanku 02 i przy straganach: nowy `tools/blender/rooms/aleja_tysiaclecia.py`, nowy `packages/sim/src/content/aleja-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`.

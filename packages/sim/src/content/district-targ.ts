@@ -1,8 +1,11 @@
 import { type StreetPropItem, type Vec3, roomDetailShape } from "@seki/core";
 import { turnLocal } from "./lublin/furniture";
+import { inBuilding, nearestWall } from "./lublin/places";
+import { onRoad } from "./lublin/roads";
 import { groundY } from "./lublin/terrain";
 import { PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_METRO, PLAC_ZAMKOWY_STALLS } from "./plac-zamkowy-detail";
 import { WORLD_STREET_PROPS } from "./street-props";
+import { TERRITORY_GROUPS } from "./territory-groups";
 
 /*
  * Podzamcze's first lights of the game (`docs/lokacje/dzielnica-targ.md`, „Dług sceny” point 1; `docs/zasady-lokacji.md`
@@ -104,5 +107,58 @@ export const BAZAR_LAMPS: SceneLampGroup = marketLamps("targ-bazar", BAZAR_AREA,
 /** Targ na Ruskiej: a light in each stall's festoon, on within 90 m of its middle (its square is 145 m long). */
 export const RUSKA_LAMPS: SceneLampGroup = marketLamps("targ-ruska", RUSKA_AREA, RUSKA_STALLS, 90);
 
+/** The Hebi groups' territories on Podzamcze (ADR-0091), each with its bare bulb. */
+const PODZAMCZE_GROUPS = ["bus-station", "bazaar-halls", "ruska-market", "lubartowska"] as const;
+/** A wall nearer the group's ring than this takes its bulb on a bracket; farther, the bulb stands on a pole (m). */
+const WALL_REACH = 4;
+/** How far from the ring's middle the pole stands, towards the nearest wall (m): past the group standing round it. */
+const POLE_OUT = 3.5;
+/** The bulb in its fitting's frame: off the wall on the bracket's end above a ground floor's signs, or on the pole's arm (`dzielnica_targ.py`). */
+const BULB = { wall: { y: 3.32, z: 0.36 }, pole: { y: 2.52, z: 0.5 } } as const;
+/** A bare bulb's light: warm white, harsher than the festoons' (§13: the group's corner stands out). */
+const BULB_LIGHT = { color: "#ffe2b8", range: 6, intensity: 0.6 } as const;
+
+/** Where a group's bulb hangs: its fitting's foot and yaw (its front, +z, away from the wall or the arm's way). */
+export interface HebiBulb {
+  readonly territory: string;
+  readonly kind: "wall" | "pole";
+  readonly at: { readonly x: number; readonly z: number };
+  readonly yaw: number;
+}
+
+/**
+ * The bare bulb by each Hebi group on Podzamcze (`docs/lokacje/dzielnica-targ.md`): on a bracket on the wall nearest its
+ * ring where one is within `WALL_REACH`, its arm out of the wall; else on a pole `POLE_OUT` from the ring's middle,
+ * towards the nearest wall or the first eighth round from it off the carriageway and out of the houses, its arm back
+ * over the ring.
+ */
+export const HEBI_BULBS: readonly HebiBulb[] = TERRITORY_GROUPS.filter((g) => (PODZAMCZE_GROUPS as readonly string[]).includes(g.territory)).map((g) => {
+  const w = nearestWall(g.core.x, g.core.z);
+  if (w.d < WALL_REACH) return { territory: g.territory, kind: "wall", at: w.p, yaw: Math.atan2(w.nx, w.nz) };
+  // Towards the wall first, then round by eighths: the first spot off the carriageway and out of the houses.
+  const toward = Math.atan2(w.p.x - g.core.x, w.p.z - g.core.z);
+  const turns = [0, 1, -1, 2, -2, 3, -3, 4].map((k) => toward + (k * Math.PI) / 4);
+  const free = turns.map((a) => ({ a, x: g.core.x + Math.sin(a) * POLE_OUT, z: g.core.z + Math.cos(a) * POLE_OUT })).find((p) => !inBuilding(p.x, p.z) && !onRoad(p.x, p.z));
+  const p = free ?? { a: toward, x: g.core.x + Math.sin(toward) * POLE_OUT, z: g.core.z + Math.cos(toward) * POLE_OUT };
+  // Its arm back over the ring.
+  return { territory: g.territory, kind: "pole", at: { x: p.x, z: p.z }, yaw: p.a + Math.PI };
+});
+
+export const HEBI_BULB_DETAIL: readonly StreetPropItem[] = HEBI_BULBS.map((b) => ({
+  prop: "room-detail",
+  x: b.at.x,
+  y: groundY(b.at.x, b.at.z),
+  z: b.at.z,
+  yaw: b.yaw,
+  variant: roomDetailShape(b.kind === "wall" ? "rd-targ-bulb-wall" : "rd-targ-bulb-pole"),
+}));
+
+/** Each bulb's light in its fitting, on within 40 m of it. */
+export const HEBI_LAMPS: readonly SceneLampGroup[] = HEBI_BULBS.map((b) => {
+  const d = turnLocal(b.yaw, 0, BULB[b.kind].z);
+  const at = { x: b.at.x + d.x, y: groundY(b.at.x, b.at.z) + BULB[b.kind].y, z: b.at.z + d.z };
+  return { id: `targ-hebi-${b.territory}`, centre: b.at, near: 40, lamps: [{ key: `targ-hebi-${b.territory}`, at, ...BULB_LIGHT }] };
+});
+
 /** Every scene's lights the renderer turns on near their place. */
-export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS];
+export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS];
