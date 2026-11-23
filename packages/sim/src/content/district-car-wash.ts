@@ -32,7 +32,8 @@ const carWash = (): StaticProp[] => [
   crate(4, 38.5, 1.2, 1.2, 2.4, skin("dumpster", "x-")),
   // The big one takes a body (ADR-0065).
   { ...crate(11, 37.5, 2.4, 1.4, 1.4, skin("dumpster", "z-")), hide: "dumpster" },
-  crate(19.5, 37.5, 4.2, 1.5, 2, skin("car", "x+")),
+  // Nosed in towards the yard, its back to the container (its lamps lit the yard, not the container's wall).
+  crate(19.5, 37.5, 4.2, 1.5, 2, skin("car", "x-")),
   lamp(-1, 39, "#ff6a6a"),
   // The solids of the scene's models (ADR-0102 point 5), last so the ids above stay: the machine room's pump unit on its
   // plinth, the chemistry's tray and buckets by its west wall in the bay, the payment post at the way in.
