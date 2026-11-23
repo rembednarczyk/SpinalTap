@@ -1,0 +1,1 @@
+- Przy pawilonie metra B przed dworcem autobusowym stoi rozkładany stolik wróżki Kiku: fioletowy obrus z frędzlami, rozłożone karty tarota, talia, świeca w czerwonym szkle, pęknięta kryształowa kula, puszka na monety, czytnik chipów i dwa składane stołki, jej i klienta.

@@ -71,7 +71,7 @@ Droga Q1 sabotażu: Seki schodzi z pasa publicznego na ławę Bystrzycy, wchodzi
 - Wylot kolektora czytelny z ławy: krata odchylona, światło z wnętrza albo ślady w mule (krata jest, `rd-w3b-grate`).
 
 ## Dług sceny
-- Szafka 14 z numerem, uchylonymi drzwiczkami i kombinezonem na czas sabotażu: rysunek w `tools/blender/rooms/w3_basement.py`, rozstawienie w `packages/sim/src/content/tessen-w3/basement-detail.ts` (bryły `lockers()` w `basement.ts` bez zmian).
+Zrobione 23.11: szafka 14 z numerem, uchylonymi drzwiami, kombinezonem i kaskiem (`rd-w3-locker14`, `packages/sim/src/content/tessen-w3/outside-dress.ts`, bryły szafek bez zmian). Zostaje:
 - Nazwa w kartach i w grze: ta karta i jej historia mówią „przepust”, a ADR-0082, ink Genzō i podpowiedź `prompt.culvert` mówią „kolektor”. Propozycja: „kolektor” w części „Historia” i „Przeznaczenie” tej karty.
 - Ink Genzō mówi o „piwnicy magazynów”, a historia tej karty o pompowni po garbarni. Do uzgodnienia w karcie: piwnica magazynów części z dawną pompownią garbarni w narożniku.
 - Światło dróg w górę u stóp schodów A i B i w szybie windy: `packages/engine/src/renderer/tessen-w3/w3-lights.ts` (oprawy w `w3_basement.py`).
@@ -79,6 +79,7 @@ Droga Q1 sabotażu: Seki schodzi z pasa publicznego na ławę Bystrzycy, wchodzi
 ## Inwentarz gry
 
 <!-- inwentarz-gry:start (generuje `pnpm rooms:write`, nie edytować ręcznie) -->
+- blender: rd-w3-locker14 × 1
 - blender: rd-w3b-brick-tall × 1
 - blender: rd-w3b-brick-wide × 1
 - blender: rd-w3b-bulb × 2
@@ -99,7 +100,7 @@ Pomiary zasad (§12–§16):
 - rzut: 3 prostokąty, 490 m², wysokość 4,1 / 1,5 / 4,4 m
 - siatka 0,5 m: 5 z 6 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 17
-- warstwy wyposażenia: makro 3, mezo 5, mikro 6
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 6 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 3, mezo 5, mikro 9
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 9 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 0
 <!-- inwentarz-gry:end -->
