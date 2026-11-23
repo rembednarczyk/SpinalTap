@@ -39,6 +39,7 @@ export const applyAlias = (ctx: SimContext, cmd: Command<"set-alias">): void => 
 
 export const endDialogue = (ctx: SimContext): void => {
   ctx.session.dialogueActive = false;
+  ctx.session.talkingTo = null;
   // A street encounter's scene is over (ADR-0034).
   endEncounter(ctx);
 };
