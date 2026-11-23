@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 zgodne: ulica w średniowiecznej oprawie, ciepły bursztyn neonu.
 - §17 dług: ogródek bez gwaru ze źródła. Ruch: tłum, 2 Hebi; skala: schody, poręcze, ławy.
 
+## Scenariusz tła
+- Kto tu bywa: ludzie schodzący z Grodzkiej na Podwale i Plac Zamkowy, żeby ominąć bramę i kładkę; dwóch Hebi z terytorium `panasa-lane` w ogródku pod murami; goście ogródka z kuflami; uciekający spod kładki na Grodzkiej.
+- Co się dzieje: w dzień schody są skrótem z Placu po Farze w dół, a Hebi siedzą przy ławach i patrzą na całe zejście; wieczorem ogródek się zapełnia, a kto schodzi sam, przyspiesza pod latarnią; nocą zostają tylko Hebi i dzwoniący na murku telefon.
+- Ślad obecności: kufel z pianą i telefon z pękniętym ekranem na murku pod latarnią, niedopałki na stopniach górnego biegu, ławy ogródka przesunięte pod mur.
+
 ## Dług sceny
 - Taras ogródka z ławami, beczkami i parasolem, skupiska na stole i spocznikach: modele w nowym `tools/blender/rooms/zaulek_panasa.py`, rekwizyty w nowym `packages/sim/src/content/panasa-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES` w `packages/core/src/world/room-detail.ts`.
 - Lampa nad dolnym biegiem schodów przy Podwalu (światło drogi) i ciepła lampa nad stołem Hebi: lampy gry w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).

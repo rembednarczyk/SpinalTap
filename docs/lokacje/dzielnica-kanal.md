@@ -56,6 +56,11 @@ Frakcja: ulica.
 - `kanal_vending`: przy DENKI na rogu Rynku (590; −10), 10:00–22:00, automat bez postaci (`enc_kanal_vending`). Automat z napojami mruga diodą i prosi o ewakuację, bo rano przyjeżdża ciężarówka z kasacji, a on ma „czterdzieści dwa smaki i jedną świadomość”. Seki może zmienić w jego panelu „złom” na „serwis” i dostać prawie wszystko za darmo albo przyjąć ostatnią zieloną herbatę.
 - `kanal_recruit`: pod kładką nad Grodzką (652; 64), 16:00–23:00, Koji (`enc_kanal_recruit`). Chłopak w za dużej kurtce Hebi zastępuje drogę i łamiącym się głosem żąda portfela, „proszę”. Seki może go nauczyć grozić („Ciebie nie ruszymy”) albo odesłać do mamy, która robi lepszy ramen niż Fumiko.
 
+## Scenariusz tła
+- Kto tu bywa: wycieczki do Archikatedry i Trybunału za dnia; po zmroku goście SAKE, KARAOKE i DENKI z ludźmi aktu M4 (Hideo, Mei, Tetsu); czterej Hebi z Rynku, trzej spod kładki na Grodzkiej i dwóch z Zaułka Panasa; postacie spotkań: Takumi z bukietem pod KARAOKE, Sabu z wędką w kratce na Bramowej, Koji pod kładką i automat przy DENKI.
+- Co się dzieje: za dnia jeden Hebi okrąża Trybunał, a przewodnicy prowadzą grupy („za dnia nic, tylko wycieczki”); o świcie Sabu łowi w Czechówce pod kratką; po zmroku Mei zapala KARAOKE, Takumi stoi pod wejściem, a od 21:00 do 5:00 chodzą wszyscy czterej Hebi.
+- Ślad obecności: plastikowe kwiaty pod KARAOKE, skrzynka Sabu przy kratce ściekowej, mrugający automat przy DENKI, kufle na murkach Placu po Farze.
+
 ## Dług sceny
 - Graffiti i tagi Hebi na Starym Mieście (dziś 0, T-123): kilka tagów tylko w bramach i pod kładką, poza fasadami zabytków (§16 ulicy przy ochronie zabytku): decale ADR-0058 w `tools/osm-import` albo `packages/sim/src/content/district-kanal.ts`, przegląd `topography-curator`.
 - Światło drogi przy wyjściach z Rynku i zejściach ze skarpy (Grodzka, Zaułek Panasa, schody Podwala): lampy gry na końcu `KANAL_PROPS` w `packages/sim/src/content/district-kanal.ts`.

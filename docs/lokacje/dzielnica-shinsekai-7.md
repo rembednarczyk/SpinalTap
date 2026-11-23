@@ -56,6 +56,11 @@ Frakcja: ulica, korporacja (deptak półświatka w zabytkowym śródmieściu kor
 - `s7_neko`: Plac Łokietka (428; −99), 9:00–18:00, Hina (`enc_s7_neko`). Dziewczynka w żółtej pelerynie zagląda pod ławki i szuka srebrnego kota na baterię, który „mruczy jak lodówka”. Kot śpi pod szczotkami myjni za Placem Łokietka; oddany Hinie przynosi Seki błyszczący drobiazg spod wraku, rozebrany na baterię zostawia dziewczynkę z pytaniem, dlaczego się nie rusza.
 - `s7_poet`: Plac Litewski pod latarnią (97; −23), 18:00–23:00, Shiro (`enc_s7_poet`). Chudy mężczyzna czyta na głos wiersz o żonie, której wspomnienia sprzedał Kagami „z dopłatą za ślub”. Wysłuchany do końca dziękuje, że ktoś usłyszał go dwa razy, a zapytany o Kagami wskazuje punkt skupu bez szyldu za kliniką.
 
+## Scenariusz tła
+- Kto tu bywa: tłum deptaka od Placu Litewskiego do Bramy Krakowskiej; goście Neon Koi, PACHINKO i kliniki Mori; klienci skupu wspomnień Kagami; Hebi z myjni, Arkad Alchemii i Kapucyńskiej; postacie spotkań: Nobu przed PACHINKO, sarariman śpiący pod Koi, Hina z kotem na Placu Łokietka, poeta Shiro pod latarnią na Placu Litewskim.
+- Co się dzieje: w dzień deptak handluje, a Hina szuka kota pod ławkami; wieczorem zapalają się neony, Shiro czyta wiersze na Placu Litewskim, a przed PACHINKO Nobu gra o rękę z odzysku; po pierwszej w nocy pod Koi śpi sarariman, a Hebi pilnują swoich trzech miejsc.
+- Ślad obecności: wrak auta Seki przy wylocie Kapucyńskiej, kupony i żetony przed PACHINKO, teczka pod głową śpiącego sararimana, ogrodzenia trzech placów budowy z hologramami.
+
 ## Dług sceny
 - Światło gry poza odcinkiem kliniki i Koi: przynajmniej jedno źródło z barwą znaczenia (§4) przy każdym terytorium Hebi i przy każdym miejscu przestępstwa w toku (`MICRO_SPOTS` `shinsekai-7`): lampy w `packages/sim/src/content/district-m0.ts` (na końcu `DISTRICT_M0_PROPS`), przegląd `topography-curator`.
 - Emitery poza deptakiem (tłum Placu Litewskiego, fontanna, place budowy z dźwigami ADR-0087): `packages/engine/src/audio/spatial.ts`.
