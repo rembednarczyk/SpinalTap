@@ -64,7 +64,7 @@ MORI: The module reacts to new chrome. If I put something in you, it might let m
 The new implant catches a current and something in your head trips like a fuse.
 Night, wet Krakowskie Przedmieście, a hundred sixty on the clock. You're driving someone else's car. On the seat beside you lies a cut wristband with a Kagami code.
 A drone hangs over the hood, its spotlight in your eyes.
-REN: Can you hear me? Drive straight for the viaduct. Under it, it'll lose the signal. Don't turn.
+REN: Can you hear me? Drive straight for Brama Krakowska. Under the vault, it'll lose the signal. Don't turn.
 The voice in the earpiece sounds like Ren. A little too calm.
 * [You yank the wheel aside. #tone:main]
     ~ choice_crash = "wheel"
@@ -74,7 +74,7 @@ The voice in the earpiece sounds like Ren. A little too calm.
 * [You drive straight, like he says. #tone:main]
     ~ choice_crash = "ren"
     ~ story_choice("crash", "ren")
-    The viaduct comes closer and closer. The drone drops lower and shoots out the tires.
+    The gate comes closer and closer. The drone drops lower and shoots out the tires.
     The last thing you hear before the impact is Ren's voice: recording complete.
 - You're standing outside Mori's clinic, holding on to the door frame. The back of your neck is wet with sweat.
 That was the night. The wreck on Krakowskie, by Plac Litewski. Now you know how you ended up on this promenade.
