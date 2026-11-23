@@ -42,6 +42,8 @@ const koi = (): RoomLamp[] => [
   lamp("neon-koi", "aquarium", koiPoint(16.2, 2.6, 3.0), "#4fd6ff", 6.5, 1.4),
   lamp("neon-koi", "jukebox", koiPoint(15.6, 1.2, 10.0), "#ffb040", 5, 1.3),
   lamp("neon-koi", "stage", koiPoint(11.75, 2.4, 10.2), "#ff2e88", 6.5, 1.6),
+  // The back room's bare bulb halfway down its corridor (`koi-back.ts`), warm and dim, under its own ceiling.
+  lamp("neon-koi", "back", koiPoint(19.6, 2.4, -4.1), "#ffcf8a", 4.5, 1.1),
 ];
 
 /** The clinic (`clinic()`, old coordinates): the waiting room's ceiling fittings, the surgical lamp's two heads over the chair, its signs. */

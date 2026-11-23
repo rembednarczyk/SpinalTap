@@ -24,6 +24,12 @@ import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./ty
 export interface RoomCut {
   readonly site: RoomSite;
   readonly doors: readonly { readonly x: number; readonly width: number; readonly height: number }[];
+  /**
+   * A back room from the room through the rest of the ground floor to a door in another wall (Neon Koi's way out to
+   * its yard): `rect` comes out of the solid up to the room's storey as the room does, `door` is an opening in the
+   * facade at (x, z) on that wall, from `floor` (world y) up `height`.
+   */
+  readonly back?: { readonly rect: GroundRect; readonly door: { readonly x: number; readonly z: number; readonly width: number; readonly height: number; readonly floor: number } };
 }
 
 /** One view the renderer draws for good, outside the simulation's entities. */
@@ -166,7 +172,16 @@ export const buildingProp = (b: LublinBuildingData, cut?: RoomCut, district?: Di
   for (const part of b.parts) {
     const pts = straighten(absolute(part, b), site.front, site.rect);
     const { outside, inside } = splitBy(pts, rectRegion(site.rect));
-    for (const o of outside) prisms.push({ points: relative(o, b), bottom: 0, top });
+    for (const o of outside) {
+      if (!cut.back) {
+        prisms.push({ points: relative(o, b), bottom: 0, top });
+        continue;
+      }
+      // The back room's piece of the ground floor goes the same way: the storeys above it stay.
+      const back = splitBy(o, rectRegion(cut.back.rect));
+      for (const q of back.outside) prisms.push({ points: relative(q, b), bottom: 0, top });
+      if (back.inside.length > 0) prisms.push({ points: relative(back.inside, b), bottom: roomBottom, top });
+    }
     if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: roomBottom, top });
   }
   const doorways: Doorway[] = cut.doors.map((d) => ({
@@ -175,6 +190,10 @@ export const buildingProp = (b: LublinBuildingData, cut?: RoomCut, district?: Di
     bottom: site.floor - b.y,
     top: site.floor + d.height - b.y,
   }));
+  if (cut.back) {
+    const d = cut.back.door;
+    doorways.push({ at: { x: d.x - b.x, z: d.z - b.z }, width: d.width, bottom: d.floor - b.y, top: d.floor + d.height - b.y });
+  }
   const outline = relative(straighten(absolute(b.outline, b), site.front, site.rect), b);
   return {
     center: { x: b.x, y: b.y, z: b.z },

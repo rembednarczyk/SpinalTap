@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { CLINIC_DETAIL, INTERIORS, KOI_DETAIL, METRO_PLATFORMS, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
+import { CLINIC_DETAIL, INTERIORS, KOI_BACK_DETAIL, KOI_DETAIL, METRO_PLATFORMS, S7_INTERIORS, TESSEN_OFFICE_DETAIL, interiorAt } from "@seki/sim";
 import { INDOOR_RIG, ROOM_RIG, indoorRig } from "../src/npr/lighting";
 import { RoomsInterior } from "../src/renderer/rooms/room-interior";
 import { DIM_ROOMS, LIT_ROOMS, ROOM_LAMPS, ROOM_LAMPS_ON, roomLampsFor } from "../src/renderer/rooms/room-lights";
@@ -12,11 +12,12 @@ import { DIM_ROOMS, LIT_ROOMS, ROOM_LAMPS, ROOM_LAMPS_ON, roomLampsFor } from ".
  */
 
 const REACH = 3;
-const LIGHTY = /lamp|light|neon|aquarium|jukebox|desk|shelf/i;
+const LIGHTY = /lamp|light|neon|aquarium|jukebox|desk|shelf|bulb/i;
 
 const fixtures = (): { x: number; y: number; z: number }[] => [
   ...S7_INTERIORS.filter((p) => p.view.kind === "neon").map((p) => p.center),
-  ...[...KOI_DETAIL, ...CLINIC_DETAIL, ...TESSEN_OFFICE_DETAIL]
+  // Neon Koi's back room's bulb with the yard's things (`koi-back.ts`).
+  ...[...KOI_DETAIL, ...KOI_BACK_DETAIL, ...CLINIC_DETAIL, ...TESSEN_OFFICE_DETAIL]
     .filter((p) => LIGHTY.test(ROOM_DETAIL_SHAPES[p.variant]?.key ?? ""))
     .map((p) => ({ x: p.x, y: p.y, z: p.z })),
 ];
