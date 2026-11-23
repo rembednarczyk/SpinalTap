@@ -12,7 +12,7 @@ import { MeshSink } from "../src/renderer/mesh-sink";
  * `ROOM_DETAIL_SHAPES` a model of the file, light enough for a room's furniture and its file small.
  */
 /** The files, one a district (`FILE` of each room's module in `tools/blender/rooms/`). */
-const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb", "room-detail-stare-props.glb", "room-detail-w3-props.glb", "room-detail-metro-props.glb", "room-detail-alchemia-props.glb", "room-detail-galeria-props.glb", "room-detail-kits-props.glb", "room-detail-myjnia-props.glb", "room-detail-sceny-props.glb", "room-detail-krakowskie-props.glb"] as const;
+const FILES = ["room-detail-props.glb", "room-detail-doki-props.glb", "room-detail-stare-props.glb", "room-detail-w3-props.glb", "room-detail-metro-props.glb", "room-detail-alchemia-props.glb", "room-detail-galeria-props.glb", "room-detail-kits-props.glb", "room-detail-myjnia-props.glb", "room-detail-sceny-props.glb", "room-detail-krakowskie-props.glb", "room-detail-grodzka-props.glb"] as const;
 const read = (name: string): ArrayBuffer =>
   ((b: Uint8Array) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer)(
     (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url)),

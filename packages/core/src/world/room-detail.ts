@@ -256,6 +256,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-lit-van-camp", fine: true, clutter: 9 },
   { key: "rd-lit-tarp", clutter: 1 },
   { key: "rd-lit-poems", fine: true, clutter: 6 },
+  // Grodzka under the footbridge (docs/lokacje/grodzka-kladka.md, ADR-0102): the Hebi traders' table of chips, what they
+  // leave where they stand, the bridge's downpipe dripping.
+  { key: "rd-gr-chips", clutter: 9 },
+  { key: "rd-gr-litter", fine: true, clutter: 8 },
+  { key: "rd-gr-downpipe", services: true, sound: "drip" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

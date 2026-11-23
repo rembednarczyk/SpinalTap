@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AudioListenerPose, ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, interiorAt } from "@seki/sim";
+import { BRIDGE_DOWNPIPE, INTERIORS, interiorAt } from "@seki/sim";
 import { ROOM_SOUNDS, ROOM_SOUND_NEAR, THROUGH_WALL, roomEmitters, roomMix } from "../src/audio/room-sound-map";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -40,7 +40,9 @@ describe("the rooms' sound map", () => {
       const wash = (e.sound === "pump" || e.sound === "vent") && near(e, 410, -36, 8);
       const koi = near(e, 313, -110, 3);
       const wreck = e.sound === "drip" && near(e, 152.6, -49, 3);
-      expect(wash || koi || wreck || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
+      // The footbridge's downpipe on Grodzka (docs/lokacje/grodzka-kladka.md).
+      const bridge = e.sound === "drip" && near(e, BRIDGE_DOWNPIPE.at.x, BRIDGE_DOWNPIPE.at.z, 1);
+      expect(wash || koi || wreck || bridge || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
     }
   });
 
