@@ -93,11 +93,8 @@ Seki wychodzi z kliniki drzwiami (321,4; −73,6) na południe. Wprost przed ni�
 - Bruk do fasad (G-081).
 
 ## Dług sceny
-- Ciepła lampa nad drzwiami Neon Koi i jaśniejszy próg jako światło drogi prologu: `packages/sim/src/content/interiors.ts` (`signs()`, nowa `lamp` na końcu listy).
-- Barwa neonu PACHINKO poza zielenią wejść (np. żółto-pomarańczowa) albo świadome odstępstwo od §4 w karcie: `packages/sim/src/content/district-m0.ts` (`deptak()`).
-- Ławka przed PACHINKO przy (306; −77) dla `enc_s7_pachinko` (ink: „Na ławce przed PACHINKO”): `packages/sim/src/content/district-m0.ts` albo plan mebli `tools/osm-import` (gałąź `kp-deptak.bench`).
-- Lada uliczna z dwoma stołkami przy `BAR_SPOT` (316,5; −92,6), przy której pije nocny pijak zlecenia (komentarz mówi o ladzie, której nie ma): model w `tools/blender/rooms/deptak.py`, rekwizyt `room-detail` w nowym `packages/sim/src/content/deptak-detail.ts`.
-- Drobiazg w skupiskach przy drzwiach Koi, przy RAMEN i w bramie Ume (miotła, wiadro, niedopałki, kubek): `tools/blender/rooms/deptak.py` i `packages/sim/src/content/deptak-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES` w `packages/core/src/world/room-detail.ts`.
+Zrobione 23.11 (`packages/sim/src/content/deptak-detail.ts`, `tools/blender/rooms/deptak.py`, test `packages/sim/test/deptak-scene.test.ts`): ciepła latarnia nad drzwiami Neon Koi (mebel gry, bez nowej lampy w treści, więc identyfikatory zostają), lada na stojąco z dwoma hokerami przy `BAR_SPOT` (z bryłą), ławka Nobu przed PACHINKO, skupiska przy drzwiach Koi, przy RAMEN i w bramie Ume. Zostaje:
+- Barwa neonu PACHINKO: decyzja pod nieobecność 23.11, świadome odstępstwo od §4 (zieleń automatów do gry jak w prawdziwych salonach pachinko), bez zmiany, bo neon wchodzi do migawki NPR.
 - Punkt skupu Kagami za kliniką: drzwi bez szyldu w podwórzu kamienicy w67499277 i 4–6 miejsc tłumu w kolejce od 4:00 do 6:00: `packages/sim/src/content/district-m0.ts`, `packages/sim/src/content/crowd.ts`.
 - Bruk do fasad na odcinku 266..327 (G-081): `tools/osm-import`.
 - Wiersz `row: "T-280"` przy padach pokoi (G-432): `packages/sim/src/content/lublin/sites.ts`.

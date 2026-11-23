@@ -2,6 +2,12 @@ import { type StreetPropItem, roomDetailShape } from "@seki/core";
 import { RIBS_X, RIBS_Z } from "./kanal-underground";
 import { TRASA_PODZIEMNA } from "./lublin/sites";
 
+/** The stair hall's east wall at the stairs' foot, where the exit sign hangs facing back up the stairs (west). */
+export const TRASA_EXIT_SIGN = { x: 584.9, z: (TRASA_PODZIEMNA.stairs.minZ + TRASA_PODZIEMNA.stairs.maxZ) / 2 } as const;
+/** Mei's poster on the loch's south wall, facing into it; the leak in the south corridor. */
+export const MEI_POSTER = { x: 580.8, z: -62.05 } as const;
+export const TRASA_LEAK = { x: 583.6, z: -62.0 } as const;
+
 /*
  * Trasa Podziemna's detail after its card (`docs/pomieszczenia/trasa-podziemna.md`, ADR-0098): the models
  * Blender builds (`tools/blender/rooms/trasa.py`): brick arches where the corridors' ribs are, Mei's stage
@@ -32,4 +38,9 @@ export const TRASA_DETAIL: readonly StreetPropItem[] = [
   item("rd-trasa-bedding", 581.75, F, -61.2, Math.PI / 2),
   // The old lamp on the south corridor's east wall, over the warm strip.
   item("rd-trasa-lamp", 584.97, F + 1.6, -61, -Math.PI / 2),
+  // The scene's card (ADR-0102 point 5): the way out marked at the stairs' foot (ISO 7010 E001, as Alchemia's and
+  // W-3's), Mei's poster in the loch, the leak in the south corridor heard from its source (§17).
+  item("rd-w3h-exit", TRASA_EXIT_SIGN.x, F + 2.25, TRASA_EXIT_SIGN.z, -Math.PI / 2),
+  item("rd-trasa-poster", MEI_POSTER.x, F, MEI_POSTER.z, 0),
+  item("rd-trasa-drip", TRASA_LEAK.x, F, TRASA_LEAK.z, 0),
 ];
