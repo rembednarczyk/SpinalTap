@@ -249,8 +249,7 @@ export class BabylonRenderer implements RenderPort {
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
     this.drones = new DroneViews({
       scene,
-      kit: () => this.cityKit.kit,
-      props: () => this.cityKit.props,
+      kit: () => this.cityKit.kit, props: () => this.cityKit.props,
       // Lublin's lanes once the map city draws (no drones over the old test streets).
       world: () => (this.map.current ? cityDroneWorld() : null),
       // And the low patrols' over the pedestrian streets (ADR-0058 stage 7b).
@@ -259,6 +258,8 @@ export class BabylonRenderer implements RenderPort {
       siteLanes: siteDroneLanes,
       eye: () => eye,
       quality: stage.options.quality ?? "high",
+      // The nearest patrol's searchlight among the materials' point lights.
+      light: (key, l) => (l ? this.materials.addLight(key, l) : this.materials.removeLight(key)),
     });
     this.capsule = new CapsuleRoomView({
       scene,

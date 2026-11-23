@@ -1,4 +1,5 @@
 import { type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../babylon";
+import type { PointLightDef } from "../../npr/lighting";
 import type { RenderQuality } from "../../npr/quality";
 import type { CityKit } from "../city-kit";
 import type { CityProps } from "../city-props";
@@ -39,6 +40,11 @@ export interface DroneViewsDeps {
    */
   readonly world: () => DroneWorld | null;
   readonly eye: () => { readonly x: number; readonly y: number; readonly z: number };
+  /**
+   * The nearest patrol's searchlight as a light of the scene (null puts it out): the toon materials' point light over its
+   * pool, so a character standing in the pool is lit by it, not only the paving drawn bright under her.
+   */
+  readonly light?: (key: string, light: PointLightDef | null) => void;
   readonly quality: RenderQuality;
   /** Plans the lanes (default `planDroneLanes`; tests hand fixed ones). */
   readonly plan?: (world: DroneWorld) => readonly DroneLane[];
@@ -63,6 +69,12 @@ interface Slot {
   /** Where a patrol's pool was laid on the paving last (its place and radius), null for nowhere. */
   pool: { readonly x: number; readonly z: number; readonly r: number } | null;
 }
+
+/** A patrol's bar flashes this many times a second, red and blue in turn. */
+const FLASH_HZ = 1.6;
+
+/** The searchlight's key among the toon materials' point lights. */
+export const SEARCHLIGHT_KEY = "drone-searchlight";
 
 /** Room round a drone for the mesh's bounds (m). */
 const PAD = 4;
@@ -96,6 +108,8 @@ export class DroneViews {
   private drawnNear = 0;
   private drawnFar = 0;
   private poolScratch = new Float32Array(0);
+  /** Where the searchlight's light was set last, null when out. */
+  private lamp: { readonly x: number; readonly z: number; readonly r: number } | null = null;
   private readonly min = new Vector3();
   private readonly max = new Vector3();
 
@@ -274,6 +288,7 @@ export class DroneViews {
       if (!used.has(slot) && slot.shown) this.fold(slot);
       slot.shown = used.has(slot);
     }
+    this.searchlight(used);
     const any = used.size > 0;
     if (mesh.isEnabled(false) !== any) mesh.setEnabled(any);
     if (!any) return;
@@ -305,6 +320,7 @@ export class DroneViews {
       this.normals[o + 1] = nsrc[i + 1] as number;
       this.normals[o + 2] = -nx * s + nz * c;
     }
+    this.flash(slot);
     if ("beam" in slot.template && "ground" in p) this.placePool(slot, slot.template, p, dist);
   }
 
@@ -340,6 +356,43 @@ export class DroneViews {
       this.positions[o + 1] = this.poolScratch[k + 1] as number;
       this.positions[o + 2] = this.poolScratch[k + 2] as number;
     }
+  }
+
+  /** A patrol's light bar: red and blue in turn, `FLASH_HZ` times a second; an unlit lens folds into its first vertex. */
+  private flash(slot: Slot): void {
+    const flashes = "flashes" in slot.template ? slot.template.flashes : undefined;
+    if (!flashes) return;
+    for (const f of flashes) {
+      if ((this.time * FLASH_HZ + f.phase) % 1 < 0.5) continue;
+      const o0 = (slot.offset + f.from) * 3;
+      for (let o = o0 + 3; o < (slot.offset + f.to) * 3; o += 3) {
+        this.positions[o] = this.positions[o0]!;
+        this.positions[o + 1] = this.positions[o0 + 1]!;
+        this.positions[o + 2] = this.positions[o0 + 2]!;
+      }
+    }
+  }
+
+  /**
+   * The nearest patrol's searchlight lights the scene (`light` dep): a cold white point light 3 m over the middle of its
+   * pool, reaching a little past its rim, ahead of the street's lamps for a shader slot (`priority`). Moved only when
+   * the pool moves by `POOL_RELAY` or more; out when no pool is laid.
+   */
+  private searchlight(used: ReadonlySet<Slot>): void {
+    const set = this.deps.light;
+    if (!set) return;
+    const lit = this.slots.find((s) => used.has(s) && s.kind === "watch" && s.pool !== null && s.pool.r > 0);
+    const pool = lit?.pool ?? null;
+    const last = this.lamp;
+    if (!pool) {
+      if (last) set(SEARCHLIGHT_KEY, null);
+      this.lamp = null;
+      return;
+    }
+    if (last && Math.hypot(pool.x - last.x, pool.z - last.z) < POOL_RELAY && Math.abs(pool.r - last.r) < POOL_RELAY) return;
+    const ground = this.patrolsPlanned?.surfaceAt(pool.x, pool.z) ?? 0;
+    this.lamp = pool;
+    set(SEARCHLIGHT_KEY, { position: { x: pool.x, y: ground + 3, z: pool.z }, color: "#e2ecff", range: Math.max(4, pool.r * 1.3 + 3), intensity: 1.6, priority: 1 });
   }
 
   /** Folds a slot's vertices into one point, so its triangles draw nothing. */

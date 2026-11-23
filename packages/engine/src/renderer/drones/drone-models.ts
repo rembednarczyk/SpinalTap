@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { type CityProps, kitUvs, swatchAt } from "../city-props";
 import { DRONE_SIZE, type DroneKind } from "./drone-flight";
+import { withLenses } from "./drone-lenses";
 
 /**
  * The drones' geometry on the city kit's texture (ADR-0022), in the drone's own frame: front +z,
@@ -92,11 +93,11 @@ export const propsDrone = (data: CityKitData, props: CityProps, kind: DroneKind)
   return toTemplate(sink);
 };
 
-/** The near and far geometry of each kind: the props' model near when there is one. */
+/** The near and far geometry of each kind: the props' model near when there is one, its lights as lenses (`drone-lenses.ts`). */
 export const droneTemplates = (data: CityKitData, props: CityProps | null): Readonly<Record<DroneKind, { readonly near: DroneTemplate; readonly far: DroneTemplate }>> => {
   const pair = (kind: DroneKind) => {
     const far = boxDrone(data, kind);
-    return { near: (props && propsDrone(data, props, kind)) ?? far, far };
+    return { near: withLenses(data, (props && propsDrone(data, props, kind)) ?? far), far };
   };
   return { patrol: pair("patrol"), delivery: pair("delivery"), ad: pair("ad") };
 };
