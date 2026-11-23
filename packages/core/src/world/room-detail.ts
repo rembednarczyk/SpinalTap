@@ -317,6 +317,10 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-w3-landing", fine: true, clutter: 7 },
   { key: "rd-w3-ladder-board", fine: true, clutter: 0 },
   { key: "rd-w3-locker14", fine: true, clutter: 3 },
+  // Trasa Podziemna's loch (docs/pomieszczenia/trasa-podziemna.md, ADR-0102): Mei's old poster with its song list and
+  // the rose and candle under it, the south corridor's leak with its puddle and bucket.
+  { key: "rd-trasa-poster", fine: true, clutter: 4 },
+  { key: "rd-trasa-drip", clutter: 1, sound: "drip" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
