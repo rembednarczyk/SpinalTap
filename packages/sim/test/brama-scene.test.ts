@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
-import { GATE_PASSAGES, KANAL_ALLEY_STASH, KANAL_PATROL_ACTORS, KANAL_PROPS, KANAL_SPOTS, LOOT_REACH, STEAM_VENTS, inBuilding, nearestWall } from "../src";
-import { BOOTH_STEAM, BRAMA_DETAIL, GATE_DUMPSTER, GATE_STASH, HIDEO_DOORWAY, LANTERN_DROP, SABU_GRATE, SCANNER_AT, inPassage } from "../src/content/brama-detail";
+import { GATE_PASSAGES, KANAL_ALLEY_STASH, KANAL_PATROL_ACTORS, KANAL_SPOTS, STEAM_VENTS, inBuilding, nearestWall } from "../src";
+import { BOOTH_STEAM, BRAMA_DETAIL, BRAMA_SOLIDS, GATE_DUMPSTER, GATE_STASH, HIDEO_DOORWAY, LANTERN_DROP, SABU_GRATE, SCANNER_AT, inPassage } from "../src/content/brama-detail";
 import { ENCOUNTERS } from "../src/content/encounters";
+import { LOOT_REACH } from "../src/systems/loot-system";
 import { groundY } from "../src/content/lublin/terrain";
 
 /*
@@ -20,8 +21,8 @@ const box = { minX: GATE_DUMPSTER.x - GATE_DUMPSTER.w / 2, maxX: GATE_DUMPSTER.x
 const inBox = (p: { x: number; z: number }, pad = 0) => p.x > box.minX - pad && p.x < box.maxX + pad && p.z > box.minZ - pad && p.z < box.maxZ + pad;
 
 describe("Brama Krakowska's scene (ADR-0102 point 5)", () => {
-  it("has the dumpster under the annex on the deptak's side, a hiding place drawn by its model, last of the district's props", () => {
-    const last = KANAL_PROPS.at(-1)!;
+  it("has the dumpster under the annex on the deptak's side, a hiding place drawn by its model, in the rooms' pool of its chunk", () => {
+    const last = BRAMA_SOLIDS[0]!;
     expect(last.hide).toBe("dumpster");
     expect(last.scenery).toBe(true);
     expect(last.solid).toBe(true);
@@ -75,7 +76,7 @@ describe("Brama Krakowska's scene (ADR-0102 point 5)", () => {
     expect(scanner.y).toBeCloseTo(groundY(scanner.x, scanner.z), 5);
     // The camera's plate at 4.33 m stays under the crown.
     expect(scanner.y + 4.33).toBeLessThan(crown);
-    expect(ROOM_DETAIL_SHAPES.find((s) => s.key === "rd-bk-scanner")?.sound).toBe("scan");
+    expect(ROOM_DETAIL_SHAPES.find((s) => s.key === "rd-bk-scanner")?.sound).toBe("hum");
   });
 
   it("brings the Bramowa post near the passage's east mouth, facing it", () => {

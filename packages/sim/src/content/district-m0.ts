@@ -4,6 +4,7 @@ import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia/market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
 import { BAY_DRAIN, COURIER_SPOT } from "./car-wash-detail";
+import { BOOTH_STEAM } from "./brama-detail";
 import { W3_CONTRACT_SITE_SPAWNS } from "./tessen-w3";
 import {
   type ActorDef,
@@ -93,7 +94,7 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
  * neon (`car-wash-detail.ts`; it hung 2 m over the slope north of the yard before, with nothing
  * there to come from, `docs/zasady-lokacji.md` §4).
  */
-export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), on(CAR_WASH_PLACE, BAY_DRAIN.x, BAY_DRAIN.z)];
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), on(CAR_WASH_PLACE, BAY_DRAIN.x, BAY_DRAIN.z), BOOTH_STEAM];
 
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };

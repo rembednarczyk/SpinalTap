@@ -31,11 +31,13 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the car wash's in
-    // the open air of its yard (its pump on the machine room's wall, its gantry's dryer: ADR-0102 point 5).
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but those in the open
+    // air (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard; by Brama Krakowska the scanner in
+    // the passage, the neon's transformer and the zapiekanki booth's hot plate.
+    const near = (e: { position: { x: number; z: number } }, x: number, z: number, r: number) => Math.hypot(e.position.x - x, e.position.z - z) < r;
     const outside = EMITTERS.filter((e) => e.room === null);
-    expect(outside.map((e) => e.sound).sort()).toEqual(["pump", "vent"]);
-    for (const e of outside) expect(Math.hypot(e.position.x - 410, e.position.z + 36)).toBeLessThan(8);
+    expect(outside.map((e) => e.sound).sort()).toEqual(["hum", "hum", "pump", "simmer", "vent"]);
+    for (const e of outside) expect(near(e, 410, -36, 8) || near(e, 470, -90, 12) || near(e, 456, -76, 4), `${e.sound}`).toBe(true);
   });
 
   it("hears the car wash's pump whole in its yard, the open air being one more room", () => {

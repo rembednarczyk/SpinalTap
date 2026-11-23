@@ -226,6 +226,16 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-cw-pay", clutter: 0 },
   { key: "rd-cw-tubes", clutter: 0 },
   { key: "rd-cw-courier", fine: true, clutter: 6 },
+  // Brama Krakowska and its forecourt (docs/lokacje/brama-krakowska.md, ADR-0102): the Hebi scanner in the vault, the
+  // dumpster under the annex, what lies behind it round Tetsu's stash, the zapiekanki booth's side, Hideo's doorway on
+  // Bramowa, the grate old Sabu fishes through and the transformer of the gate's neon.
+  { key: "rd-bk-scanner", services: true, sound: "hum" },
+  { key: "rd-bk-dumpster", clutter: 1 },
+  { key: "rd-bk-behind", fine: true, clutter: 5 },
+  { key: "rd-bk-booth", clutter: 4, sound: "simmer" },
+  { key: "rd-bk-doorway", clutter: 3 },
+  { key: "rd-bk-grate", fine: true, clutter: 0 },
+  { key: "rd-bk-neon-box", services: true, sound: "hum" },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

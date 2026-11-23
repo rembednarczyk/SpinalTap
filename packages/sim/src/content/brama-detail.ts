@@ -1,4 +1,5 @@
 import { CLUTTER, type StreetPropItem, type Vec3, roomDetailShape } from "@seki/core";
+import type { StaticProp } from "./builders";
 import { GATE_PASSAGES } from "./lublin/gate-passages";
 import { groundY } from "./lublin/terrain";
 
@@ -45,6 +46,27 @@ export const GATE_DUMPSTER = { x: 463.65, z: -97.55, w: 1.2, h: 1.3, d: 2.2 } as
 /** Tetsu's stash in the wedge between the dumpster's back, the annex's front and its buttress. */
 export const GATE_STASH = { x: 464.7, z: -98.3 } as const;
 
+/**
+ * The dumpster's solid, a body fits in (ADR-0065), drawn by its model (`rd-bk-dumpster`, `scenery`). In the rooms' pool of
+ * ids of its chunk (`ChunkDef.rooms`), so no id of the city's content moves for it.
+ */
+export const BRAMA_SOLIDS: readonly StaticProp[] = [
+  {
+    center: { x: GATE_DUMPSTER.x, y: groundY(GATE_DUMPSTER.x, GATE_DUMPSTER.z) + GATE_DUMPSTER.h / 2, z: GATE_DUMPSTER.z },
+    view: { kind: "block", size: { x: GATE_DUMPSTER.w, y: GATE_DUMPSTER.h, z: GATE_DUMPSTER.d }, material: "metal" },
+    solid: true,
+    scenery: true,
+    hide: "dumpster",
+  },
+];
+
+/** The Hebi post on Bramowa by day: 6.5 m out of the passage's east mouth, by the south house's wall, watching the mouth. */
+export const BRAMOWA_POST: { readonly at: { readonly x: number; readonly z: number }; readonly yaw: number } = (() => {
+  const at = inPassage(33.05, -0.5);
+  const mouth = inPassage(26.55);
+  return { at, yaw: Math.atan2(mouth.x - at.x, mouth.z - at.z) };
+})();
+
 /** The zapiekanki booth on the forecourt (the street furniture's `food-stall`) and its frame. */
 const BOOTH = { x: 455.8, z: -76.1, yaw: -1.78 } as const;
 /** A point of the booth's frame (x across its front, +z out of it) in the world. */
@@ -58,8 +80,8 @@ export const BOOTH_STEAM: Vec3 = (() => {
   return { x: p.x, y: groundY(p.x, p.z) + 1.25, z: p.z };
 })();
 
-/** Hideo's doorway on Bramowa: the wall's foot (w232362886) and its normal into the street. */
-export const HIDEO_DOORWAY = { x: 489.53, z: -76.05, nx: 0.5294, nz: -0.8484 } as const;
+/** Hideo's doorway on Bramowa: a hand off the wall's foot (w232362886, at (489.53, -76.05)) and its normal into the street. */
+export const HIDEO_DOORWAY = { x: 489.58, z: -76.13, nx: 0.5294, nz: -0.8484 } as const;
 /** The gully grate old Sabu fishes through (`enc_kanal_fisherman` stands at (510, -68)), in Bramowa's gutter. */
 export const SABU_GRATE = { x: 509.75, z: -67.6 } as const;
 
@@ -81,7 +103,7 @@ const lantern = (t: number, side: 1 | -1): StreetPropItem => {
 const scanner = inPassage(SCANNER_AT);
 const booth = atBooth(1.6, -0.2);
 /** The neon's transformer on the annex's west front north of the passage (the wall from (460.5, -90.2) to (461.6, -92.5)). */
-const NEON_BOX = { x: 461.05, z: -91.35, yaw: Math.atan2(-0.902, -0.431) } as const;
+const NEON_BOX = { x: 460.96, z: -91.39, yaw: Math.atan2(-0.902, -0.431) } as const;
 
 export const BRAMA_DETAIL: readonly StreetPropItem[] = [
   // The vault: the scanner in its middle, the lanterns either side of it.
