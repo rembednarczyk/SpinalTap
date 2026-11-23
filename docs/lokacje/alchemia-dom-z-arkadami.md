@@ -43,6 +43,11 @@ Frakcja: korporacja, ulica (wizytówka galerii, pod którą przechodzi deptak).
 - §16 częściowo: tynk i łuki to „historyczna” fasada inwestora, a nie materiały korporacji z matrycy (szkło, stal); celowe, bo dom ma udawać stary.
 - §17 częściowo: skalę dają drzwi (1,5 m szerokości), stopnie i filary. Ruch: przechodnie, postacie na dachu. Dźwięku ze źródła brak, lampiony nie kołyszą się.
 
+## Scenariusz tła
+- Kto tu bywa: klienci butiku NIGHT SILK i pasażu L1 zachód; przechodnie z Bajkowskiego, dla których ciepły napis i łuki są punktem orientacyjnym; goście kawiarni L3, którzy palą na dachu przy balustradzie nad fontanną.
+- Co się dzieje: w dzień podcień prowadzi z placu do sklepów L1, a witryny NIGHT SILK świecą pod łukami; wieczorem zapalają się papierowe lampiony w przęsłach i napis ALCHEMIA, a na dachu zbierają się palacze z kawiarni.
+- Ślad obecności: papierowy kubek i torba z zakupami na parapecie witryny NIGHT SILK pod środkowym łukiem, lampion kołyszący się od przeciągu w drugim przęśle, niedopałki przy balustradzie dachu.
+
 ## Dług sceny
 - Bryły donic przy filarach i donica stojąca na filarze 2 (G-957): `planterSolids` w `packages/sim/src/content/alchemia/front-plaza-cafe.ts`.
 - Drobiazg pod podcieniem i na tarasie dachu: części na końcu listy w `packages/sim/src/content/alchemia/arcade-front.ts` (rysunek w `packages/engine/src/renderer/alchemia/arcade-front-geometry.ts`).

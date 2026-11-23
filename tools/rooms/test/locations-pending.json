@@ -1,15 +1,4 @@
 {
-  "locations": [
-    "alchemia-plac-frontu",
-    "alchemia-deptak",
-    "alchemia-t0",
-    "alchemia-zielony-dach",
-    "alchemia-dom-z-arkadami",
-    "kosciol-sw-ducha",
-    "cerkiew-przemienienia",
-    "budowa-arkologia",
-    "budowa-wzgorza",
-    "budowa-plac-koziolka"
-  ],
+  "locations": [],
   "interiors": []
 }

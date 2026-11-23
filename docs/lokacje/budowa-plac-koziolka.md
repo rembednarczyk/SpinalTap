@@ -43,6 +43,11 @@ Frakcja: korporacja, ulica (deweloper za płotem, Bractwo i Zielona przed nim).
 - §16 zgodne: czysta reklama dewelopera i prowizorka ulicy po dwóch stronach płotu.
 - §17 częściowo: skalę dają drzwi kontenerów (2,1 m) i brama. Ruch: dron i światło dźwigu. Dźwięku i ludzi brak.
 
+## Scenariusz tła
+- Kto tu bywa: robotnicy i kierownik budowy Sakura-Wisła w kontenerach biurowych; kolejka po zupę pod bramą Bractwa wieczorem; mieszkańcy kamienicy obok, którzy liczą przeloty drona; dron dostawczy między bramą a wykopem.
+- Co się dzieje: w dzień dźwig pracuje nad wykopem, w którym znaleziono stare piwnice, a holoreklamy obiecują ogród na dachu; wieczorem po jednej stronie płotu ustawia się kolejka po zupę, a dron krąży nad wykopem także nocą.
+- Ślad obecności: worki i kartony przy płocie od Zielonej, zapalone światło w oknie górnego kontenera biurowego, kubki po zupie pod bramą Bractwa.
+
 ## Dług sceny
 - Drukarka 3D do betonu i robot-koparka (ADR-0087 etap 3, niezrobiony): generator `tools/osm-import/src/construction-site.ts`, kit `packages/engine/src/renderer/mapcity/construction/`, wersja `low`; pomiar sceny `zielona-budowa-tpp` przed i po (budżet 172/80, dziś 157/72).
 - Robotnicy w dzień i stróż w nocy (postacie z gry przy kontenerach, przy bramie): generator albo miejsca tłumu w `packages/sim/src/content/crowd.ts`.

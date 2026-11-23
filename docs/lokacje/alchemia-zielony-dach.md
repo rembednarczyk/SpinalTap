@@ -43,6 +43,11 @@ Frakcja: korporacja, ulica (ogród galerii i dziki ogródek mieszkańców przy j
 - §16 zgodne: uporządkowany ogród inwestora z prowizorką mieszkańców; kontrast jest treścią dachu.
 - §17 częściowo: skalę dają ławki, stół, drzwi trzonów, balustrada 1,1 m. Ruch: tłum, pranie, wentylatory, papieros. Dźwięku ze źródła brak, choć na dachu stoi radio z zapaloną diodą.
 
+## Scenariusz tła
+- Kto tu bywa: goście galerii na ławkach pod pergolami z lampionami; mieszkańcy kamienic przy Lubartowskiej, którzy bez pytania założyli ogródek w skrzynkach, i ich ogrodniczka; technik od agregatu i paneli; ochrona, która udaje, że ogródka nie widzi.
+- Co się dzieje: w dzień ogrodniczka podlewa sałatę i pomidory na tyczkach, a goście jedzą przy stołach piknikowych; wieczorem zapalają się lampiony pergoli i czerwona lampka masztu, a z krzesła przy skrzynkach gra radio.
+- Ślad obecności: papieros w popielniczce i parujący kubek przy krześle, otwarte pudełko z jedzeniem i telefon z zapalonym ekranem pod pergolą zachodnią, przewrócona konewka w kałuży, sznur z praniem.
+
 ## Dług sceny
 - Dźwięk ze źródeł: radio przy krześle jako głośnik stacji (dziś `packages/engine/src/audio/radio-speakers.ts` zna tylko szyldy lokali), wentylatory agregatu, gwar food hallu z atrium: mapa źródeł na zewnątrz w `packages/engine/src/audio/`.
 - Plac zabaw z planu inwestora (S13), którego nie ma w żadnej części Alchemii: mały placyk (piaskownica w grządce niskiej, huśtawka) na trawniku `w-lawn` albo `e-meadow` w `packages/sim/src/content/alchemia/roof-plan.ts`, z dala od pierścienia i dróg NPC (`alchemia-roof.test.ts`), z przeglądem `topography-curator` (wysokość brył do 13,5).

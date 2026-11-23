@@ -43,6 +43,11 @@ Frakcja: korporacja (deweloper na zabytku); druga: ulica (Plac Litewski przed p�
 - §16 częściowo: korporacja tylko przez tablicę i holoreklamy.
 - §17 dług: brak dźwięku i ludzi na budowie; skalę daje płot i brama.
 
+## Scenariusz tła
+- Kto tu bywa: robotnicy i ochrona Lubelskiej Arkologii; ludzie z Placu Litewskiego na ławkach przed fasadą pałacu; przeciwnicy apartamentów, którzy zostawiają kartki na płocie.
+- Co się dzieje: w dzień przy wykopie na północnym podwórzu pracują koparki i kontenery, a hologram dewelopera przy bramie obiecuje „Wzgórza Miedzianych Dachów”; wieczorem plac budowy cichnie, a przechodnie mijają płot w drodze na Radziwiłłowską i Niecałą.
+- Ślad obecności: odręczna kartka „Muzeum, nie apartamenty” na płocie przy bramie, ślady błota z wykopu na chodniku przy bramie, termin „2080 (opóźnione)” na tablicy.
+
 ## Dług sceny
 - Sprzeczność danych i gry: tablica „Wzgórza Miedzianych Dachów” (osiedle) na budowie, którą OSM nazywa adaptacją na Muzeum Ziem Wschodnich. Propozycja: plac z nazwą w OSM dostaje tablicę z puli pasującej do niej, np. nowy klucz „Muzeum Ziem Wschodnich 2077” z inwestorem miejskim, w `tools/osm-import/src/construction-site.ts` (wybór klucza tablicy) i w `packages/ui/src/i18n/{en,pl}/site.ts`; albo zostawić osiedle jako satyrę świata z dopiskiem w T-321. Decyzja użytkownika; nazwa w rejestrze `tools/rooms/src/locations.ts` idzie za tablicą.
 - Kontenery i wykop na podwórzu północnym, jak na ortofoto 2025-04: generator `tools/osm-import/src/construction-site.ts` i `construction-dig.ts` (dziś `dig: null`, kontenerów brak), z przeglądem `topography-curator`.
