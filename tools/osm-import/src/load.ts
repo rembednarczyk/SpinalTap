@@ -35,11 +35,14 @@ export const loadInputs = (root = REPO): Inputs => {
   let terrain: Inputs["terrain"] = "nmt";
   for (const d of DISTRICTS) {
     const head = join(root, "data/terrain", `${d.slug}.json`);
+    const eu = join(root, "data/terrain", `${d.slug}.eudem.json`);
     if (existsSync(head)) {
       dtms.push({ header: JSON.parse(readFileSync(head, "utf8")) as DtmHeader, cells: dtmFromBytes(new Uint8Array(readFileSync(join(root, "data/terrain", `${d.slug}.bin`)))) });
+      // A district grown past its NMT mosaic while the WCS was down: the EU-DEM lattice answers
+      // only where no NMT cell does (`heightSource`), until the mosaic is fetched again.
+      if (existsSync(eu)) fallback ??= JSON.parse(readFileSync(eu, "utf8")) as Lattice;
       continue;
     }
-    const eu = join(root, "data/terrain", `${d.slug}.eudem.json`);
     if (!existsSync(eu)) throw new Error(`no terrain for ${d.slug}: run pnpm osm:fetch`);
     // The fallback lattices of several districts never overlap; the first one answers.
     fallback ??= JSON.parse(readFileSync(eu, "utf8")) as Lattice;
