@@ -298,6 +298,17 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-ry-denki", clutter: 6 },
   { key: "rd-ry-sake", clutter: 8 },
   { key: "rd-ry-karaoke", fine: true, clutter: 9 },
+  // Grodzka under the footbridge (docs/lokacje/grodzka-kladka.md, ADR-0102): the Hebi traders' table of chips, what they
+  // leave where they stand, the bridge's downpipe dripping.
+  { key: "rd-gr-chips", clutter: 9 },
+  { key: "rd-gr-litter", fine: true, clutter: 8 },
+  { key: "rd-gr-downpipe", services: true, sound: "drip" },
+  // The deptak of Krakowskie in M0 (docs/lokacje/deptak-krakowskie.md, ADR-0102): Neon Koi's stand-up counter with its
+  // stools, the crate and board by its door, RAMEN's door, the gate Babcia Ume sleeps in.
+  { key: "rd-dp-bar", clutter: 6 },
+  { key: "rd-dp-koi-door", clutter: 9 },
+  { key: "rd-dp-ramen", clutter: 3 },
+  { key: "rd-dp-ume", clutter: 5 },
   // W-3's outside (docs/lokacje/w3-pas-publiczny.md, w3-wieza.md, w3-rurociag-basen.md, ADR-0102): Genzō's brazier and
   // things by KAIUN, the smokers' corner by the pass office, the fitters' things on the pipe landing, the ladder's board.
   { key: "rd-w3-barrel", clutter: 0 },
