@@ -16,7 +16,7 @@ W 2077 dzielnica nazywała się Targ pod estakadą, od targowiska na pokładzie 
 
 ## Przeznaczenie
 - Dzielnica tła aktów II i III: przejście z metra Plac Zamkowy na Zamek, terytoria Hebi, targi. Żadne zlecenie Kaito ani Genzō nie leży na Podzamczu: zlecenia pasma `targ` (`hana_stall`, `hebi_stash`, `raid_north`, `raid_east`) są w Alchemii (`CONTRACT_SITE_BANDS`, `BAND_AREAS`).
-- Terytoria Hebi: `bus-station` (801,4; 386,4, 3), `bazaar-halls` (660; 380, 3), `ruska-market` (690; 460, 3), `lubartowska` (569,9; 347,1, 2).
+- Terytoria Hebi: `bus-station` (801,4; 386,4, 3), `bazaar-halls` (660; 380, 3), `ruska-market` (830; 521, 3), `lubartowska` (528; 346, 2).
 - Metro: stacja Plac Zamkowy (`targ`): wejście A na Placu Zamkowym (722; 286), wejście B przy Dworcu (754; 379).
 - Pasmo trudności (`district-bands.ts`): 10–20; gracz wychodzi z pasma targu na ok. 23. poziomie (w praktyce z Alchemii).
 - Przestępstwa w toku: 7 miejsc (`MICRO_SPOTS` `targ`): Plac Zamkowy (740; 306), (702; 234), aleja (760; 330), (845; 360), Furmańska (624; 192), Nadstawna (786; 438), Ruska (792; 540).
