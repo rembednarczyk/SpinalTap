@@ -302,6 +302,10 @@ znikały), normalne płaskie, bez tekstur. Autobus Quaterniusa (4,1 m) jest wyd�
 trolejbusu: biały lakier, czerwony dach (`wall`), zielony pas na dole (`wall-dark`). Dach z urządzeniami,
 odbieraki do sieci, pas neonu i tablicę kierunkową rysuje renderer jak dotąd.
 
+Wrak na Placu Litewskim (`rd-lit-wreck` w `room-detail-krakowskie-props.glb`, ADR-0102) to `veh-dirty` z tego pliku
+(Dirty car, 3D Error 404, CC-BY 4.0, kredyt w napisach): skrypt Blendera `tools/blender/rooms/plac_litewski.py`
+czyta jego trójkąty, zgniata dach, otwiera drzwi kierowcy, zdejmuje szyby z jednej strony i obraca auto na dach.
+
 Odtworzenie pliku:
 
 ```

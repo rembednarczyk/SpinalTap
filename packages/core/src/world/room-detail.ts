@@ -36,8 +36,11 @@ export interface RoomDetailShape {
   readonly sound?: RoomSound;
 }
 
-/** The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz. */
-export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes";
+/**
+ * The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz, and a
+ * square's fountain splashing (its jets are the map's `fountain-jets`, not a room-detail model).
+ */
+export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes" | "fountain";
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
 export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
@@ -240,6 +243,32 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-kb-glass-bin", clutter: 1 },
   { key: "rd-kb-camera", fine: true, clutter: 0 },
   { key: "rd-kb-tag", fine: true, clutter: 3 },
+  // Plac Litewski's scene (docs/lokacje/plac-litewski.md, ADR-0102): the wreck on its roof, the bent pastoral and the
+  // drone that hit it, what the night left on the paving, the van crew's litter and tarp, Shiro's poems.
+  { key: "rd-lit-wreck" },
+  { key: "rd-lit-bent-lamp" },
+  { key: "rd-lit-drone", clutter: 3 },
+  { key: "rd-lit-glass", fine: true, clutter: 5 },
+  { key: "rd-lit-spill", fine: true, clutter: 0, sound: "drip" },
+  { key: "rd-lit-skid", fine: true, clutter: 0 },
+  { key: "rd-lit-tape", clutter: 1 },
+  { key: "rd-lit-candles", fine: true, clutter: 8 },
+  { key: "rd-lit-van-camp", fine: true, clutter: 9 },
+  { key: "rd-lit-tarp", clutter: 1 },
+  { key: "rd-lit-poems", fine: true, clutter: 6 },
+  // The roof of Alchemia's triangular pavilion, Ren's camp in act II (docs/lokacje/alchemia-pawilon-dach.md, ADR-0102): the bed
+  // on its pallets, the crate with what he keeps on it, the mast and the pole of the tarp, the bucket the tarp drips into, the
+  // kitchen's exhaust fan, the neon's transformer, the green lamp over the ladder, the Hebi snake by it and Ren's carabiner.
+  { key: "rd-ren-bed", clutter: 3 },
+  { key: "rd-ren-table", clutter: 7 },
+  { key: "rd-ren-mast" },
+  { key: "rd-ren-pole" },
+  { key: "rd-ren-bucket", clutter: 0, sound: "drip" },
+  { key: "rd-pav-extractor", sound: "vent" },
+  { key: "rd-pav-neon-box", clutter: 1, sound: "tubes" },
+  { key: "rd-pav-bulkhead" },
+  { key: "rd-pav-hebi", fine: true, clutter: 1 },
+  { key: "rd-pav-carabiner", fine: true, clutter: 1 },
   // Brama Krakowska and its forecourt (docs/lokacje/brama-krakowska.md, ADR-0102): the Hebi scanner in the vault, the
   // dumpster under the annex, what lies behind it round Tetsu's stash, the zapiekanki booth's side, Hideo's doorway on
   // Bramowa, the grate old Sabu fishes through and the transformer of the gate's neon.

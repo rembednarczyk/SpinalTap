@@ -11,6 +11,7 @@ import type { CityProps } from "../city-props";
 import type { RenderQuality } from "../../npr/quality";
 import { P2View, eyeInP2, eyeInShelter } from "./p2-view";
 import { ParkingView } from "./parking-view";
+import { PavilionLamps } from "./pavilion-lamps";
 import type { CarAt } from "./parking-traffic";
 
 /**
@@ -117,12 +118,15 @@ export class AlchemiaView {
   readonly rooms: AlchemiaInterior;
   /** Its shops' goods, Blender's models (ADR-0098): drawn with the inside, a part of its own. */
   readonly goods: GalleryDetailView;
+  /** The pavilion roof's camp lantern and the ladder's green lamp (23.11), near it only: a part of its own. */
+  readonly roofLamps: PavilionLamps;
 
   constructor(private readonly deps: AlchemiaDeps) {
     this.parking = new ParkingView(deps);
     this.p2 = new P2View(deps);
     this.rooms = new AlchemiaInterior(deps.materials);
     this.goods = new GalleryDetailView({ scene: deps.scene, materials: deps.materials, props: deps.props ?? (() => null), quality: deps.quality ?? "high" });
+    this.roofLamps = new PavilionLamps(deps.materials);
   }
 
   /** The meshes drawn last frame and their triangles (debug, tests). */
@@ -139,6 +143,7 @@ export class AlchemiaView {
     if (!kit || !this.deps.city()) {
       this.show(false, false);
       this.rooms.update(e, false);
+      this.roofLamps.update(e, false);
       return;
     }
     const far = Math.min(Math.hypot(e.x - ALCHEMIA_CENTRE.x, e.z - ALCHEMIA_CENTRE.z), Math.hypot(e.x - ARKADY_CENTRE.x, e.z - ARKADY_CENTRE.z));
@@ -152,6 +157,7 @@ export class AlchemiaView {
     this.show(out, inn, eyeInP2(e) ? 0 : Math.max(0, Math.min(1, (INSIDE_DRAW - near) / LAMP_FADE)));
     // Down in P-2, its tunnel or the shelter the interior mode holds with the hall's inside off: their own lamps light them.
     this.rooms.update(e, (inn && this.inside !== null) || eyeInP2(e));
+    this.roofLamps.update(e, !eyeInP2(e));
   }
 
   private build(kit: CityKit): void {
