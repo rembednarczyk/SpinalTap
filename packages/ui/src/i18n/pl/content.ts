@@ -133,7 +133,7 @@ export const plContent = {
   "hook.retrieve_1": "Po północy drugi strażnik skrytki idzie na kwadrans po ramen",
   "hook.retrieve_2": "Brama schronu od P−2 otwiera się kodem 2207 (kamera bierze cię za swojego)",
   "hook.protect_1": "Hebi idą na Oyaji zawsze tą samą drogą",
-  "hook.protect_2": "Z tarasu na dachu widać całą ścieżkę wzdłuż straganów",
+  "hook.protect_2": "Z ogrodu na dachu widać całe atrium, a Hebi nie patrzą w górę",
   "hook.escort_1": "Zasadzka czeka przy biurze, nie na molo",
   "hook.escort_2": "Wschodnia alejka placu bez obsady od 1:00 do 3:00",
   "hook.infiltrate_1": "Kod do drzwi biura przepustek: 4177 (kamera bierze cię za personel)",

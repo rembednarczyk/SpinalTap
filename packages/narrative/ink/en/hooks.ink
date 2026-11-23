@@ -31,9 +31,10 @@ HEBI: Two of us watch the crate, but after midnight Daisuke goes to Fumiko's for
 HEBI: Two, two, zero, seven. Two-two-oh-seven. Forget the shelter gate code one more time and Daisuke locks me in with the robots.
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
+// protect: Hebi coming for Oyaji's shop in the food hall on P3. Both raids climb a core of the gallery (ADR-0093 O3,
+// market.ts): _1 fits either, _2 tells the cores' doors on P2 and the last escalator.
 === hook_protect_1 ===
-HEBI: We hit the old man from across the square, same as always. Why change what works.
+HEBI: We hit the old man up the core stairs, same as always. Why change what works.
 -> END
 
 === hook_protect_2 ===

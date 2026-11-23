@@ -31,9 +31,10 @@ HEBI: Skrzynki pilnujemy we dwóch, ale po północy Daisuke idzie do Fumiko na 
 HEBI: Dwa, dwa, zero, siedem. Dwa dwa zero siedem. Jak jeszcze raz zapomnę kodu do bramy schronu, Daisuke zamknie mnie z robotami.
 -> END
 
-// protect: Hebi coming for Oyaji's stall. _1 fits the raid across the square, _2 the one down the path from Świętoduska.
+// protect: Hebi coming for Oyaji's shop in the food hall on P3. Both raids climb a core of the gallery (ADR-0093 O3,
+// market.ts): _1 fits either, _2 tells the cores' doors on P2 and the last escalator.
 === hook_protect_1 ===
-HEBI: Do starego idziemy przez plac, jak zawsze. Po co zmieniać coś, co działa.
+HEBI: Do starego idziemy schodami trzonu, jak zawsze. Po co zmieniać coś, co działa.
 -> END
 
 === hook_protect_2 ===

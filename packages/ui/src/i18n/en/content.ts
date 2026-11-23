@@ -136,7 +136,7 @@ export const enContent = {
   "hook.retrieve_1": "After midnight the stash's second guard goes out for ramen for a quarter of an hour",
   "hook.retrieve_2": "The shelter's gate from P-2 opens with 2207 (the camera takes you for one of them)",
   "hook.protect_1": "The Hebi always come for Oyaji the same way",
-  "hook.protect_2": "From the roof terrace you can see the whole path along the stalls",
+  "hook.protect_2": "From the roof garden you can see the whole atrium, and the Hebi never look up",
   "hook.escort_1": "The ambush waits by the office, not on the pier",
   "hook.escort_2": "The square's east alley is unmanned from 1:00 to 3:00",
   "hook.infiltrate_1": "Code for the pass office door: 4177 (the camera takes you for staff)",
