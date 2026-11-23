@@ -327,6 +327,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   // the metro pavilion's green lamp.
   { key: "rd-pz-stall", clutter: 9 },
   { key: "rd-pz-metro-lamp", clutter: 0 },
+  // The bus station (docs/lokacje/dworzec-autobusowy.md, ADR-0102): Kiku the fortune teller's table and stools.
+  { key: "rd-dw-kiku", clutter: 9 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
