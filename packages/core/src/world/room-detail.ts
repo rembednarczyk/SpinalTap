@@ -293,6 +293,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t2-settlement", clutter: 0 },
   { key: "rd-t2-lookout", fine: true, clutter: 6 },
   { key: "rd-t2-hebi", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
   // The deptak of Krakowskie in M0 (docs/lokacje/deptak-krakowskie.md, ADR-0102): Neon Koi's stand-up counter with its
   // stools, the crate and board by its door, RAMEN's door, the gate Babcia Ume sleeps in.
   { key: "rd-dp-bar", clutter: 6 },

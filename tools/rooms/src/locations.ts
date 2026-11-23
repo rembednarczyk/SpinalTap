@@ -51,7 +51,7 @@ export const LOCATIONS: readonly LocationDef[] = [
   story("koi-podworko", "Podwórko za Neon Koi", "scene", { contracts: ["koi_back"], stashes: ["stash:s7-koi-back"] }),
   // Acts II and III, the Old Town.
   story("alchemia-pawilon-dach", "Dach trójkątnego pawilonu Alchemii (Ren)", "scene", { stashes: ["stash:targ-roof"] }),
-  story("alchemia-parking-kiosk", "Parking przy kiosku windy Alchemii (Kurosawa)", "scene", { metro: ["kanal-B"] }),
+  story("alchemia-parking-kiosk", "Pasaż T0 przy windzie Alchemii (Kurosawa)", "scene", { metro: ["kanal-B"] }),
   story("alchemia-t1", "Taras T1 Alchemii z wózkiem Hany", "place", { contracts: ["hana_stall"] }),
   story("alchemia-t2-arkady", "Plac T2 i Arkady Alchemii (czujka Hebi, kamień pamięci)", "place", { territories: ["alchemia-arcades"], stashes: ["stash:targ-overpass"] }),
   story("zamek-dziedziniec", "Dziedziniec Zamku Lubelskiego, Kaplica Trójcy i Donżon", "scene"),

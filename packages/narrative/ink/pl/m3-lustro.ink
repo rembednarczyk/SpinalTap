@@ -38,7 +38,7 @@ Na optyce miga wiadomość od Kaito. Krótka, jak zawsze, kiedy chodzi o coś wa
 KAITO: Mori sprzedał fiolkę z twoim modułem. Nie leżała długo na półce.
 KAITO: Kupił ją chłopak z wężem Hebi na karku. Zapłacił gotówką i pytał, czy jeszcze żyjesz.
 { choice_crash == "ren":
-    Wąż Hebi na karku. Ren miał taki tatuaż. Ren, którego głos prowadził cię pod wiadukt.
+    Wąż Hebi na karku. Ren miał taki tatuaż. Ren, którego głos prowadził cię pod Bramę Krakowską.
 }
 Kazałaś sprzedać moduł komuś, kto lubi cudze życie. Ktoś je kupił w jeden dzień.
 ~ set_flag("seen:act2_opening")
@@ -72,7 +72,7 @@ Pod plandeką rozpiętą między antenami siedzi chudy chłopak. Na karku ma wyt
     -> talk
 * { choice_crash == "wheel" } [Pamiętam wypadek. Sama skręciłam. #tone:lifepath]
     SEKI: Pamiętam wypadek. Sama skręciłam.
-    REN: I dlatego żyjesz. Dron miał cię doprowadzić pod wiadukt, tam czekała ich ekipa.
+    REN: I dlatego żyjesz. Dron miał cię doprowadzić pod Bramę, tam czekała ich ekipa.
     -> talk
 * { choice_case == "opened" } [Widziałam chip ze swoim imieniem. #tone:lifepath]
     SEKI: Widziałam chip ze swoim imieniem. W tamtej walizce.
