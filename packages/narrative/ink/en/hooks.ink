@@ -15,11 +15,11 @@ Shard, voice memo: "Guard change at two. Whoever's on the street side goes for r
 
 // delivery: Kaito's cold modules for Hana.
 === hook_delivery_1 ===
-Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package holds its temperature in the shade. The footbridge over Grodzka is covered and faster than the street below, where the Hebi stand."
+Mail on a terminal. From: Neon Koi cold room. Subject: modules. "The package holds its temperature in the shade. The shortest way to Alchemia is through Plac Łokietka and down Lubartowska. Stare Miasto is a detour, and the Hebi stand under the footbridge on Grodzka."
 -> END
 
 === hook_delivery_2 ===
-HEBI: We grab couriers under the footbridge. We don't go up top, because Kenji's scared of heights and nobody wants to go first.
+HEBI: We grab couriers under the footbridge on Grodzka, not here. By Hana's cart we only watch, because Kenji doesn't like witnesses.
 -> END
 
 // retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.

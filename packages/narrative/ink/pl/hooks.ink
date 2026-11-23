@@ -15,11 +15,11 @@ Shard, nagranie głosowe: „Zmiana warty o drugiej. Kto stoi od ulicy, idzie wt
 
 // delivery: Kaito's cold modules for Hana.
 === hook_delivery_1 ===
-Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Kładka nad Grodzką jest kryta i szybsza niż ulica pod nią, gdzie stoją Hebi”.
+Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Do Alchemii najkrócej przez Plac Łokietka i w dół Lubartowskiej. Przez Stare Miasto nadłożysz drogi, a pod kładką na Grodzkiej stoją Hebi”.
 -> END
 
 === hook_delivery_2 ===
-HEBI: Pod kładką łapiemy kurierów. Na górę nie chodzimy, bo Kenji ma lęk wysokości i nikt nie chce pierwszy.
+HEBI: Kurierów łapiemy pod kładką na Grodzkiej, nie tutaj. Przy wózku Hany tylko patrzymy, bo Kenji nie lubi świadków.
 -> END
 
 // retrieve: Hana's crate at the Hebi stash in the air-raid shelter under Alchemia's lower square.

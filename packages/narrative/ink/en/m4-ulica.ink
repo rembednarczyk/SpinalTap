@@ -3,7 +3,7 @@
 // (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
-// Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
+// Hideo, a clerk from the Tessen office on the Bystrzyca. Down Grodzka, under the footbridge, to the Tessen bus; back to SAKE at night.
 === hideo ===
 {
 - civilians_tier == "hostile":
@@ -27,10 +27,10 @@
     SEKI: What do you do at Tessen?
     HIDEO: I count containers that don't exist. I log them into the system, then I log them out. They pay me to forget.
     -> talk
-+ { not has_flag("hideo_bridge") } [Why take the footbridge? #tone:optional]
-    SEKI: Why do you go over the top, across the footbridge?
++ { not has_flag("hideo_bridge") } [Why walk Grodzka, under the footbridge? #tone:optional]
+    SEKI: Why do you walk down Grodzka, under the footbridge?
     ~ set_flag("hideo_bridge")
-    HIDEO: Because under the footbridge, on Grodzka, the Hebi stand around counting people's wallets. From up top at least you see them coming.
+    HIDEO: Because it's the shortest way to the bus. The Hebi stand under the footbridge counting people's wallets, so I keep to the middle and look at the cobbles.
     HIDEO: Kaito supposedly pays for the ones dealing down there. I'm just saying what I see.
     -> talk
 + [Take care. #tone:leave]

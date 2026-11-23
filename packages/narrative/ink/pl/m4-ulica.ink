@@ -3,7 +3,7 @@
 // (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
-// Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
+// Hideo, a clerk from the Tessen office on the Bystrzyca. Down Grodzka, under the footbridge, to the Tessen bus; back to SAKE at night.
 === hideo ===
 {
 - civilians_tier == "hostile":
@@ -27,10 +27,10 @@
     SEKI: Co robisz w Tessen?
     HIDEO: Liczę kontenery, których nie ma. Wpisuję je do systemu, a potem wypisuję. Płacą za to, żebym nie pamiętał.
     -> talk
-+ { not has_flag("hideo_bridge") } [Czemu chodzisz górą, przez kładkę? #tone:optional]
-    SEKI: Czemu chodzisz górą, przez kładkę?
++ { not has_flag("hideo_bridge") } [Czemu chodzisz Grodzką, pod kładką? #tone:optional]
+    SEKI: Czemu chodzisz Grodzką, pod kładką?
     ~ set_flag("hideo_bridge")
-    HIDEO: Bo pod kładką, na Grodzkiej, stoją Hebi i liczą ludziom portfele. Z góry przynajmniej widać ich z daleka.
+    HIDEO: Bo tak najkrócej do autobusu. Pod kładką stoją Hebi i liczą ludziom portfele, więc idę środkiem i patrzę w bruk.
     HIDEO: Kaito podobno płaci za takich, co tam handlują. Ja tylko mówię, co widzę.
     -> talk
 + [Trzymaj się. #tone:leave]

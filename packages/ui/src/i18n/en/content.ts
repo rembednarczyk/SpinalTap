@@ -131,8 +131,8 @@ export const enContent = {
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
   "hook.eliminate_2": "At 2:00 the street ganger leaves his post for a quarter of an hour",
-  "hook.delivery_1": "Grodzka under the footbridge is faster and nobody stands there",
-  "hook.delivery_2": "The Hebi catch couriers under the footbridge on Grodzka; they don't watch Plac po Farze",
+  "hook.delivery_1": "The shortest way to Alchemia is through Plac Łokietka and down Lubartowska",
+  "hook.delivery_2": "The Hebi catch couriers under the footbridge on Grodzka; by Hana's cart they only watch",
   "hook.retrieve_1": "After midnight the stash's second guard goes out for ramen for a quarter of an hour",
   "hook.retrieve_2": "The shelter's gate from P-2 opens with 2207 (the camera takes you for one of them)",
   "hook.protect_1": "The Hebi always come for Oyaji the same way",

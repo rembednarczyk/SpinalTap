@@ -128,8 +128,8 @@ export const plContent = {
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",
   "hook.eliminate_2": "O 2:00 ganger od ulicy schodzi z posterunku na kwadrans",
-  "hook.delivery_1": "Grodzką pod kładką jest szybciej i nikt tam nie stoi",
-  "hook.delivery_2": "Hebi łapią kurierów pod kładką na Grodzkiej, Placu po Farze nie pilnują",
+  "hook.delivery_1": "Do Alchemii najkrócej przez Plac Łokietka i w dół Lubartowskiej",
+  "hook.delivery_2": "Hebi łapią kurierów pod kładką na Grodzkiej, przy wózku Hany tylko patrzą",
   "hook.retrieve_1": "Po północy drugi strażnik skrytki idzie na kwadrans po ramen",
   "hook.retrieve_2": "Brama schronu od P−2 otwiera się kodem 2207 (kamera bierze cię za swojego)",
   "hook.protect_1": "Hebi idą na Oyaji zawsze tą samą drogą",
