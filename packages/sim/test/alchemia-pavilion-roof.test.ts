@@ -14,6 +14,7 @@ import {
   REN_SPOT,
   TARG_ROOF_STASH,
   ROOM_DETAIL_SCENERY,
+  PLAC_LITEWSKI_DETAIL,
 } from "../src";
 import { ACTOR_ACTIVITIES } from "../src/content/actor-activities";
 import { isConvex } from "../src/world/prism";
@@ -88,8 +89,10 @@ describe("the pavilion's roof as Ren's camp (docs/lokacje/alchemia-pawilon-dach.
     const keys = PAVILION_ROOF_DETAIL.filter((p) => p.prop === "room-detail").map((p) => key(p.variant));
     for (const k of ["rd-ren-bed", "rd-ren-table", "rd-ren-mast", "rd-ren-pole", "rd-ren-bucket", "rd-pav-extractor", "rd-pav-neon-box", "rd-pav-bulkhead", "rd-pav-hebi", "rd-pav-carabiner"]) expect(keys).toContain(k);
     expect(keys.map((k) => ROOM_DETAIL_SHAPES.find((s) => s.key === k)?.sound).filter(Boolean).sort()).toEqual(["drip", "tubes", "vent"]);
-    // The scenery's last view, so every scenery id before it stays.
-    expect(ROOM_DETAIL_SCENERY[ROOM_DETAIL_SCENERY.length - 1]!.view).toEqual({ kind: "street-props", items: PAVILION_ROOF_DETAIL });
+    // After the scenes before it in the scenery, so every scenery id before it stays (a later scene goes after it).
+    const at = (items: unknown) => ROOM_DETAIL_SCENERY.findIndex((v) => v.view.kind === "street-props" && v.view.items === items);
+    expect(at(PAVILION_ROOF_DETAIL)).toBeGreaterThan(at(PLAC_LITEWSKI_DETAIL));
+    expect(at(PLAC_LITEWSKI_DETAIL)).toBeGreaterThanOrEqual(0);
   });
 
   it("keeps Ren's place, the bag and the way to them from the ladder's head free", () => {

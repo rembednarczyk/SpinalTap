@@ -2,6 +2,7 @@ import type { Vec3, ViewDescriptor } from "@seki/core";
 import { type ActorDef, type StaticProp, crate, v } from "./builders";
 import type { RoofStash } from "./alchemia/market";
 import { KANAL_PATROL_ACTORS } from "./kanal-patrols";
+import { GATE_STASH, HIDEO_DOORWAY } from "./brama-detail";
 import { againstWall, spotNear } from "./lublin/places";
 import { TRASA_PODZIEMNA } from "./lublin/sites";
 import { ground, groundY } from "./lublin/terrain";
@@ -75,7 +76,8 @@ export const KANAL_SCENERY: readonly { readonly view: ViewDescriptor; readonly a
  */
 export const KANAL_SPOTS = {
   hideoSake: spotNear(559.6, -83.5),
-  hideoHome: spotNear(492, -80),
+  // His doorway on Bramowa (`docs/lokacje/brama-krakowska.md`): a mat and a blanket at the wall's foot.
+  hideoHome: spotNear(HIDEO_DOORWAY.x + HIDEO_DOORWAY.nx * 0.45, HIDEO_DOORWAY.z + HIDEO_DOORWAY.nz * 0.45),
   meiKaraoke: spotNear(556, -38.5),
   meiHome: spotNear(533, -50),
   tetsu: spotNear(571.5, -31),
@@ -149,10 +151,10 @@ export const KANAL_CONTRACT_SITE_SPAWNS: Readonly<Record<"kanal_bridge", readonl
   kanal_bridge: [spotNear(659.5, 74.5), spotNear(656.5, 71.5), spotNear(662, 77.5), spotNear(657.5, 76)],
 };
 
-/** A bag left behind the dumpster under Brama Krakowska, on the deptak's side (ADR-0026). */
+/** A bag left behind the dumpster under Brama Krakowska, on the deptak's side (ADR-0026), in the wedge behind it (its card). */
 export const KANAL_ALLEY_STASH: RoofStash = {
   key: "stash:kanal-alley",
-  at: spotNear(459.5, -99),
+  at: ground(GATE_STASH.x, GATE_STASH.z),
   lines: [
     { kind: "eddies", qty: 60 },
     { kind: "stack", item: "bandage", qty: 1 },

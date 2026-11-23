@@ -1,6 +1,7 @@
 import { GAME_SECONDS_PER_REAL_SECOND, type Vec3, hm } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
 import type { ActorDef } from "./builders";
+import { BRAMOWA_POST } from "./brama-detail";
 import { againstWall } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 
@@ -89,10 +90,10 @@ export const BRAMOWA_PATROL: Route = [
   [497, -79],
 ];
 
-/** Corners the patrols hold by day: under the footbridge, on Bramowa, off the Rynek's west side. */
+/** Corners the patrols hold by day: under the footbridge, on Bramowa by the gate's east mouth (its card), off the Rynek's west side. */
 const POSTS = {
   grodzka: againstWall(654, 80.5),
-  bramowa: againstWall(506, -71),
+  bramowa: { at: ground(BRAMOWA_POST.at.x, BRAMOWA_POST.at.z), yaw: BRAMOWA_POST.yaw },
   rynek: againstWall(543, -60),
 } as const;
 
