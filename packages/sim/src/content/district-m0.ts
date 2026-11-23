@@ -118,7 +118,7 @@ export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3
   east_lot: [on(EAST_LOT, 10.5, -15.5), on(EAST_LOT, 13.5, -8.5), on(EAST_LOT, 16, -14), on(EAST_LOT, 9.5, -9)],
   koi_back: [on(KOI_BACK, 3, 12), on(KOI_BACK, -3, 14.5), on(KOI_BACK, 5, 17), on(KOI_BACK, -1, 10)],
   // On the yard's level ground (G-754's pad, old z up to 39): two of them stood on the footway past its edge before.
-  car_wash: [courierAt(), on(CAR_WASH_PLACE, -2.5, 38.4), on(CAR_WASH_PLACE, 6.6, 38), on(CAR_WASH_PLACE, -4.2, 33.8)],
+  car_wash: [courierAt(), on(CAR_WASH_PLACE, -2.5, 38.4), on(CAR_WASH_PLACE, 6.6, 38), on(CAR_WASH_PLACE, -4.6, 33)],
   south_gate: [on(WRECK, -4, -33), on(WRECK, 4.5, -34.5), on(WRECK, -1, -35), on(WRECK, 6.5, -33.5)],
 };
 

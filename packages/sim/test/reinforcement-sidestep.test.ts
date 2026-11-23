@@ -106,9 +106,12 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
   // Re-recorded for v52 (ADR-0097, the player's cars in the save, none here): the version only; as
   // v51 the runs hash to the goldens of before (the `v51` column). Re-recorded for v53 (ADR-0097 §5, a
   // car's damage, no car here): the version only; as v52 the runs hash to the goldens of before (`v52`).
+  // Re-recorded for the content (ADR-0102 point 5, the car wash scene): the M0 courier and his guard, saved keyed actors
+  // even this far off, moved onto the yard's level ground; with them at their old posts the runs hash as before (7a557170,
+  // ab9a7a86 and the columns of then), so their positions are the whole change.
   for (const [seed, level, golden, v52, v51, v50, v49, v48, v47, v40, v32, v31, v30, v28, v27] of [
-    [21, 2, "7a557170", "a93819a1", "59506546", "0360fe4a", "ddd30c98", "1c996967", "3cea5418", "1180d715", "795969fe", "5a7f2e81", "22e71fb0", "a77043e4", "e5fa5cc5"],
-    [5, 3, "ab9a7a86", "49a29a2f", "bd5316b8", "78291878", "fd67e712", "54118583", "10c40c3a", "562c3ef0", "fd93a121", "20f41254", "923c1469", "2966c63d", "6c7f8816"],
+    [21, 2, "fd5aa4fd", "a16ae864", "1b9d73c3", "d951b733", "9cb4ea49", "ba150a0c", "88a25d09", "835bfaf4", "7468b2f7", "ab5e2038", "36ce2407", "95f99667", "ad4109ea"],
+    [5, 3, "a95dccd3", "9537dc5a", "60ef0575", "61d19601", "1bb0caa3", "89aa1ca8", "0c853b33", "249a5deb", "325d6166", "bd6b6727", "882c27c4", "977df00c", "56e611f7"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on the platform of W-3's tower`, () => {
       const sim = onTheRoof(seed, level);
