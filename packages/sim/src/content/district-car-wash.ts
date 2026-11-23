@@ -1,3 +1,4 @@
+import type { ViewDescriptor } from "@seki/core";
 import { type StaticProp, building, crate, lamp, neon, placeProps, skin, slab, v } from "./builders";
 import { CAR_WASH_DETAIL } from "./car-wash-detail";
 import { furnitureProps } from "./lublin/furniture";
@@ -42,11 +43,26 @@ const carWash = (): StaticProp[] => [
  * The solids of the scene's models (ADR-0102 point 5): the machine room's pump unit on its plinth, the chemistry's tray
  * and buckets by its west wall in the bay, the payment post at the way in.
  */
-const modelSolids = (): StaticProp[] => [
-  drawnByModel(crate(16.18, 35.37, 1.35, 1.4, 0.74)),
-  drawnByModel(crate(14.7, 27.3, 0.6, 0.8, 1.8)),
-  drawnByModel(crate(6.8, 32.6, 0.6, 1.9, 0.5)),
-];
+const modelSolids = (): StaticProp[] => [crate(16.18, 35.37, 1.35, 1.4, 0.74), crate(14.7, 27.3, 0.6, 0.8, 1.8), crate(6.8, 32.6, 0.6, 1.9, 0.5)];
+
+/** No view of its own: the model draws it (`car-wash-detail.ts`), as the map's furniture's solids (`furnitureProps`). */
+const NO_VIEW: ViewDescriptor = { kind: "street-props", items: [] };
+
+/**
+ * A placed block as a street solid (ADR-0050): a prism from its foot, without a view and see-through like the map's
+ * furniture, so it may take an id from the chunk's street ids (`stream-catalog.ts`) like them.
+ */
+const asStreetSolid = (p: StaticProp): StaticProp => {
+  if (p.view.kind !== "block") throw new Error("a street solid of the car wash must be a block");
+  const { x: w, y: h, z: d } = p.view.size;
+  const points = [
+    { x: -w / 2, z: -d / 2 },
+    { x: w / 2, z: -d / 2 },
+    { x: w / 2, z: d / 2 },
+    { x: -w / 2, z: d / 2 },
+  ];
+  return { center: v(p.center.x, p.center.y - h / 2, p.center.z), view: NO_VIEW, solid: true, prisms: [{ points, bottom: 0, top: h }], scenery: true, seeThrough: true };
+};
 
 /**
  * The car wash in the world. Apart from the rest of Krakowskie Przedmieście, which finds its
@@ -60,4 +76,4 @@ export const CAR_WASH_PROPS: readonly StaticProp[] = onPaving(placeProps(CAR_WAS
  * `STREET_ID_BASE` and not the allocator (`stream-catalog.ts`), last in it: adding them moves no id of the content
  * (three blocks among the content's props moved every later id, W-3's people's too, and with them fights far off).
  */
-export const CAR_WASH_SOLIDS: readonly StaticProp[] = [...placeProps(CAR_WASH_PLACE, modelSolids()), ...furnitureProps(CAR_WASH_DETAIL)];
+export const CAR_WASH_SOLIDS: readonly StaticProp[] = [...onPaving(placeProps(CAR_WASH_PLACE, modelSolids())).map(asStreetSolid), ...furnitureProps(CAR_WASH_DETAIL)];
