@@ -77,20 +77,58 @@ const LOOT_STRIP: Readonly<Record<NonNullable<Loot["best"]> | "none", string>> =
   unique: "#ffbf4a",
 };
 
+/**
+ * The duffel's body in its own frame, its parts merged into one mesh (`docs/zasady-lokacji.md` §9: a bag's real shape,
+ * not a capsule): a cylinder of canvas lying along x and sagging a little under its own weight, a piped rim round each
+ * round end, a zip along the top with its pull, the two carry handles brought together over it and the shoulder strap
+ * lying slack beside it.
+ */
+const duffelBody = (scene: Scene, name: string): Mesh => {
+  const r = 0.15;
+  const half = 0.25;
+  const sag = 0.85;
+  const body = MeshBuilder.CreateCylinder(`${name}-body`, { height: half * 2, diameter: r * 2, tessellation: 14 }, scene);
+  body.rotation.z = Math.PI / 2;
+  const parts: Mesh[] = [body];
+  for (const x of [-half, half]) {
+    const rim = MeshBuilder.CreateTorus(`${name}-rim`, { diameter: r * 2, thickness: 0.02, tessellation: 14 }, scene);
+    rim.rotation.z = Math.PI / 2;
+    rim.position.x = x;
+    parts.push(rim);
+  }
+  const zip = MeshBuilder.CreateBox(`${name}-zip`, { width: half * 1.7, height: 0.012, depth: 0.02 }, scene);
+  zip.position.y = r;
+  const pull = MeshBuilder.CreateBox(`${name}-pull`, { width: 0.012, height: 0.035, depth: 0.018 }, scene);
+  pull.position.set(half * 0.6, r - 0.01, -0.018);
+  parts.push(zip, pull);
+  for (const z of [-0.025, 0.025]) {
+    const path = [-0.09, -0.07, -0.03, 0, 0.03, 0.07, 0.09].map((x) => new Vector3(x, r + 0.075 * Math.cos((x / 0.09) * (Math.PI / 2)), z));
+    parts.push(MeshBuilder.CreateTube(`${name}-handle`, { path, radius: 0.011, tessellation: 6 }, scene));
+  }
+  // The strap from one end's top round in a slack loop on the ground beside the bag to the other end's.
+  const strap = [new Vector3(-half + 0.02, r * 0.6, -0.08), new Vector3(-half - 0.06, 0.04, -0.2), new Vector3(-0.08, 0.012 / sag, -0.3), new Vector3(0.12, 0.012 / sag, -0.28), new Vector3(half + 0.05, 0.04, -0.18), new Vector3(half - 0.02, r * 0.6, -0.08)];
+  parts.push(MeshBuilder.CreateTube(`${name}-strap`, { path: strap, radius: 0.01, tessellation: 5 }, scene));
+  const bag = MeshClass.MergeMeshes(parts, true, true)!;
+  bag.name = `${name}-mesh`;
+  // Canvas sags: lower than it is wide; its foot on the ground.
+  bag.scaling.set(1, sag, 1);
+  bag.position.y = r * sag;
+  return bag;
+};
+
 /** A dark duffel bag with a neon strip in the colour of the best item inside (ADR-0015). */
 export const buildLootBag = (scene: Scene, materials: ToonMaterials, name: string, v: Loot, at: Vector3): PropView => {
   const root = new TransformNode(name, scene);
   root.position.copyFrom(at);
-  const bag = MeshBuilder.CreateCapsule(`${name}-mesh`, { radius: 0.15, height: 0.56, orientation: Vector3.Right(), tessellation: 10, subdivisions: 1 }, scene);
+  const bag = duffelBody(scene, name);
   bag.parent = root;
-  bag.position.y = 0.14;
-  bag.scaling.set(1, 0.85, 1);
   bag.material = materials.get("cyberDark");
   bag.isPickable = true;
   bag.freezeWorldMatrix();
-  const strip = MeshBuilder.CreateBox(`${name}-strip`, { width: 0.5, height: 0.03, depth: 0.012 }, scene);
+  const strip = MeshBuilder.CreateBox(`${name}-strip`, { width: 0.42, height: 0.03, depth: 0.012 }, scene);
   strip.parent = root;
-  strip.position.set(0, 0.2, -0.13);
+  // Along the bag's side, a hand under its top, on the canvas.
+  strip.position.set(0, 0.17, -0.145);
   strip.isPickable = false;
   const mat = new StandardMaterial(`${name}-strip-mat`, scene);
   mat.disableLighting = true;
