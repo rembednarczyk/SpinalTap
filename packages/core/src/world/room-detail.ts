@@ -269,6 +269,10 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-pav-bulkhead" },
   { key: "rd-pav-hebi", fine: true, clutter: 1 },
   { key: "rd-pav-carabiner", fine: true, clutter: 1 },
+  // Plac Zamkowy's flea market (docs/lokacje/plac-zamkowy.md, ADR-0102): a stall's blanket of goods and its festoon,
+  // the metro pavilion's green lamp.
+  { key: "rd-pz-stall", clutter: 9 },
+  { key: "rd-pz-metro-lamp", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
