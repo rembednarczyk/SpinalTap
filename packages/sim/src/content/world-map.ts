@@ -21,6 +21,7 @@ import { GRODZKA_DETAIL, GRODZKA_SOLIDS } from "./grodzka-detail";
 import { DEPTAK_DETAIL, DEPTAK_SOLIDS } from "./deptak-detail";
 import { PLAC_ZAMKOWY_DETAIL } from "./plac-zamkowy-detail";
 import { DWORZEC_DETAIL } from "./dworzec-detail";
+import { FARA_BENCHES, PO_FARZE_DETAIL } from "./po-farze-detail";
 import { SHOP_DRESSING } from "./room-dressing-shops";
 import { P1_DETAIL } from "./alchemia/p1-detail";
 import { FOODHALL_DETAIL } from "./alchemia/foodhall-detail";
@@ -211,6 +212,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...GRODZKA_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
         // The deptak's counter on Neon Koi, Nobu's bench and the lantern over Koi's door (its scene, ADR-0102), last, so the ids before them stay.
         ...DEPTAK_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
+        // Plac po Farze's benches by the telescope (its scene, ADR-0102), last, so the ids before them stay.
+        ...furnitureProps(FARA_BENCHES.filter((p) => mapChunkOf(p.x, p.z) === c.id)),
         // The map's roofs on posts (G-063), last, so the ids before them stay.
         ...chunkCanopies(c),
       ],
@@ -235,7 +238,7 @@ const roomDetail = (items: readonly StreetPropItem[]): SceneryItem => ({ chunk: 
  * came: the scenery's last views, so every id before them stays (a new room goes last). The scenes of the
  * locations' cards (ADR-0102) go the same way: Plac Litewski's wreck and its night.
  */
-export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(T1_DETAIL), roomDetail(T2_DETAIL), roomDetail(RYNEK_DETAIL), roomDetail(GRODZKA_DETAIL), roomDetail(DEPTAK_DETAIL), roomDetail(W3_OUTSIDE_DETAIL), roomDetail(PLAC_ZAMKOWY_DETAIL), roomDetail(DWORZEC_DETAIL)];
+export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAIL), roomDetail(CLINIC_DETAIL), roomDetail(TESSEN_OFFICE_DETAIL), roomDetail(TRASA_DETAIL), roomDetail(CAPSULE_DETAIL), roomDetail(W3_BASEMENT_DETAIL), roomDetail(W3_HALL_DETAIL), ...METRO_DETAIL.map(roomDetail), roomDetail(SHELTER_DETAIL), roomDetail(P2_DETAIL), roomDetail(P1_DETAIL), roomDetail(FOODHALL_DETAIL), roomDetail(P2_TUNNEL_DRESSING), roomDetail(TESSEN_OFFICE_DRESSING), roomDetail(SHOP_DRESSING), roomDetail(SHELTER_DRESSING), roomDetail(P1_DRESSING), roomDetail(W3_HALL_DRESSING), roomDetail(CAR_WASH_DETAIL), roomDetail(KOI_BACK_DETAIL), roomDetail(PLAC_LITEWSKI_DETAIL), roomDetail(PAVILION_ROOF_DETAIL), roomDetail(BRAMA_DETAIL), roomDetail(T1_DETAIL), roomDetail(T2_DETAIL), roomDetail(RYNEK_DETAIL), roomDetail(GRODZKA_DETAIL), roomDetail(DEPTAK_DETAIL), roomDetail(W3_OUTSIDE_DETAIL), roomDetail(PLAC_ZAMKOWY_DETAIL), roomDetail(DWORZEC_DETAIL), roomDetail(PO_FARZE_DETAIL)];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and

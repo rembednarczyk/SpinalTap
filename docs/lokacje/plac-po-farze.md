@@ -50,10 +50,11 @@ Frakcja: ulica.
 - §17 dług: wiatru na skarpie i ogródka nie słychać, emiterów brak. Ruch: tłum i Koji wieczorem; skala: ławka, latarnie, drzwi Warsztatów.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/po-farze-detail.ts`, `tools/blender/rooms/plac_po_farze.py`, test `packages/sim/test/po-farze-scene.test.ts`): luneta widokowa z ekranem AR na wschodniej, otwartej części placu i dwie ławki przy niej (bryły w puli ulicy). Zostaje:
 - Fundamenty fary z licem i żwirem w nawie (G-053): generator barier `packages/engine/src/renderer/mapcity` (bariery ADR-0077) i nawierzchnia w `tools/osm-import`, przegląd `topography-curator`.
-- Luneta na tarasie i holo-fara: modele w nowym `tools/blender/rooms/plac_po_farze.py`, rekwizyty w nowym `packages/sim/src/content/po-farze-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES` w `packages/core/src/world/room-detail.ts`.
+- Holo-fara nad fundamentami: model w `tools/blender/rooms/plac_po_farze.py` (z emisją w ramach §16), rekwizyt w `packages/sim/src/content/po-farze-detail.ts`.
 - Skupiska drobiazgu na murku, przy ogródku i u wylotu ku kładce: `po-farze-detail.ts` jak wyżej.
-- Ławki wzdłuż tarasu (dziś jedna): plan mebli `tools/osm-import` (gałąź `po-farze.*`).
+- Ławki wzdłuż krawędzi tarasu ze skarpy (dziś jedna z planu mebli i dwie przy lunecie): plan mebli `tools/osm-import` (gałąź `po-farze.*`).
 - Światło drogi przy górnym biegu schodów Zaułka Panasa: lampa w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).
 - Emiter wiatru na tarasie i gwaru ogródka: `packages/engine/src/audio/spatial.ts`.
 - Zmierzyć 60-30-10 nocą z Grodzkiej na taras i wpisać w §13 tej karty.

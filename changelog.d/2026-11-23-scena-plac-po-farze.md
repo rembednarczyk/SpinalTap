@@ -1,0 +1,1 @@
+- Na Placu po Farze stoi luneta widokowa na monety z płatnym ekranem AR, skierowana przez skarpę na Zamek, oklejona naklejkami, z papierowym kubkiem u stóp, a po jej obu stronach dwie ławki.
