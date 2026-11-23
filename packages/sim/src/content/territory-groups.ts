@@ -29,8 +29,11 @@ export const TERRITORY_GROUPS: readonly Group[] = [
   { territory: "panasa-lane", core: { x: 715, z: 100 }, members: 2 },
   { territory: "bus-station", core: { x: 801.4, z: 386.4 }, members: 3 },
   { territory: "bazaar-halls", core: { x: 660, z: 380 }, members: 3 },
-  { territory: "ruska-market", core: { x: 690, z: 460 }, members: 3 },
-  { territory: "lubartowska", core: { x: 569.9, z: 347.1 }, members: 2 },
+  // At the east end of the Targ na Ruskiej's stalls, which it takes its cut from, 100 m and more off the
+  // installation "Getto – drut kolczasty" (ADR-0091 §1; it stood 34 m from it) and 40 m off the market's crime.
+  { territory: "ruska-market", core: { x: 830, z: 521 }, members: 3 },
+  // West of Lubartowska's end by the roundabout, off the Evangelical church (14 m from it before).
+  { territory: "lubartowska", core: { x: 543, z: 379 }, members: 2 },
 ];
 
 /** How far from the core a member stands (m). */
