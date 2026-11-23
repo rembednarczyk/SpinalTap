@@ -1,5 +1,6 @@
 import { type CityKitData, type GeometrySink, swatchUv } from "../city-kit-data";
 import { type PavilionLook, pavilionFaces } from "./pavilion-shape";
+import { pavilionTarp } from "./pavilion-tarp";
 
 /**
  * The triangular pavilion (ADR-0074 stage 3) in Alchemia's outside mesh, on the city kit's
@@ -28,4 +29,5 @@ const SWATCH: Readonly<Record<PavilionLook, string>> = {
 export const pavilionGeometry = (sink: GeometrySink, data: CityKitData): void => {
   const uv = Object.fromEntries(Object.entries(SWATCH).map(([k, s]) => [k, swatchUv(data, s)])) as Record<PavilionLook, readonly [number, number]>;
   pavilionFaces(([a, b, c, d], n, look) => sink.quad(a, b, c, d, n, uv[look]));
+  pavilionTarp(sink, data);
 };

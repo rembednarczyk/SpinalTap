@@ -14,6 +14,11 @@ export interface SessionState {
   focusId: EntityId | null;
   /** Prompt shown for the focused entity; it can change while focus stays (a stall closing). */
   focusPrompt: string | null;
+  /**
+   * Whom the open conversation is with (the focus is cleared when it opens): the partner turns to talk (ADR-0040), Ren
+   * gets up from his box under the tarp. Read only while `dialogueActive`. Transient, not saved.
+   */
+  talkingTo?: EntityId | null;
   /** The last shot that hurt or nearly hit the player, or was fired close by; null if none. */
   lastThreat: { readonly tick: number; readonly sourceId: EntityId } | null;
   /** Noise and crimes of the current step, for the crime system at its end (ADR-0029). */

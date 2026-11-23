@@ -7,6 +7,7 @@ import { HALL, type Piece, solidProp, tiledSolidProps } from "./plan";
 import { terracePieces } from "./terrace-steps";
 import { ARKADY_PAVEMENT_PROP } from "./arkady";
 import { PAVILION_PROPS } from "./pavilion";
+import { PAVILION_ROOF_PROPS } from "./pavilion-roof-dress";
 import { METRO_DOOR_PIECES, METRO_DOOR_VAULT } from "./metro-door";
 import { P1_LINK_VAULT, P1_PIECES, P1_RAMP_CUT, P1_RAMP_PROPS, P1_STAIR_CUT, P1_VAULT } from "./parking";
 import { P2_CORRIDOR_SHELL, P2_CUT, P2_CUTTING_PIECES, P2_EARTH_PIECES, P2_STAIR_PIECES, P2_STORE_SHELL, P2_VAULT } from "./p2";
@@ -52,8 +53,10 @@ export * from "./terraces";
 export * from "./arkady";
 export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_MEMORIAL, onT2 } from "./plaza";
 export * from "./market";
+export { T1_CART, T1_DETAIL, T1_EXTRACT, T1_FURNITURE, T1_HATCH, T1_SMOKERS } from "./t1-dress";
 export * from "./sellers";
 export * from "./pavilion";
+export * from "./pavilion-roof-dress";
 export * from "./parking";
 export * from "./metro-door";
 export * from "./p2";
@@ -360,8 +363,10 @@ export const ALCHEMIA_PROPS: readonly StaticProp[] = [
   // The front's storeys as rooms (ADR-0093 O5): their slabs, glass, floors, balustrades and steps a prop per tile, their units a
   // prop each, their fittings and the terraces' planters a prop per tile.
   ...FRONT_O5_PROPS,
-  // The deptak's night by Bajkowskiego (22.11), last, so every id above stays.
+  // The deptak's night by Bajkowskiego (22.11), so every id above stays.
   ...DEPTAK_NIGHT_SOLID_PROPS,
+  // Ren's camp and the services on the pavilion's roof (23.11, `docs/lokacje/alchemia-pawilon-dach.md`), last, so every id above stays.
+  ...PAVILION_ROOF_PROPS,
 ];
 
 /** The ground dug out under Alchemia. */

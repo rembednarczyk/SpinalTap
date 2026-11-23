@@ -5,6 +5,7 @@ import {
   DEPTAK_NIGHT_CROWD,
   DEPTAK_NIGHT_PROPS,
   DEPTAK_NIGHT_SOLID_PROPS,
+  PAVILION_ROOF_PROPS,
   DEPTAK_NIGHT_STRINGS,
   DEPTAK_KIOSKS,
   Simulation,
@@ -76,7 +77,7 @@ describe("the deptak's south end at night (22.11)", () => {
     const west = Math.min(...solids.map((p) => p.box.x0));
     expect(west - (mpk.x + 1.2)).toBeGreaterThan(4);
     // The cart's solids among Alchemia's last, so every id above stays.
-    expect(ALCHEMIA_PROPS.slice(-DEPTAK_NIGHT_SOLID_PROPS.length)).toEqual(DEPTAK_NIGHT_SOLID_PROPS);
+    expect(ALCHEMIA_PROPS.slice(-DEPTAK_NIGHT_SOLID_PROPS.length - PAVILION_ROOF_PROPS.length, -PAVILION_ROOF_PROPS.length)).toEqual(DEPTAK_NIGHT_SOLID_PROPS);
   });
 
   it("puts its cook behind the cart and the two at it out of every solid", () => {
