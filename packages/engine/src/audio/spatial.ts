@@ -58,8 +58,8 @@ export const neonEmitters = (props = DISTRICT_M0_PROPS): Emitter[] =>
     return [{ position: p.center, level: Math.min(1, 0.35 + area / 20) }];
   });
 
-/** Steam vents, matching the renderer's steam particles (manhole and car-wash vent). */
-export const DISTRICT_M0_VENTS: readonly Emitter[] = STEAM_VENTS.map((position, i) => ({ position, level: i === 0 ? 1 : 0.8 }));
+/** Steam vents, matching the renderer's steam particles (manhole, car-wash vent, and the wreck's radiator, a quiet hiss). */
+export const DISTRICT_M0_VENTS: readonly Emitter[] = STEAM_VENTS.map((position, i) => ({ position, level: [1, 0.8, 0.35][i] ?? 0.8 }));
 
 /** Where the player starts, so ambience sounds right before the first listener update. */
 export const DEFAULT_POSE: AudioListenerPose = {
