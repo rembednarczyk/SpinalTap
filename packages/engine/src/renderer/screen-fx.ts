@@ -18,7 +18,8 @@ import { qualityTier } from "../npr/quality";
 import { indoorRig, mixRig, rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
-import { type Atmosphere, createSplashes, createSteam } from "./atmosphere";
+import { type Atmosphere, createSplashes } from "./atmosphere";
+import { SteamVents } from "./steam-vents";
 import { IndoorFade } from "./indoor-fade";
 import { aimShot } from "./aim-point";
 import { noteHit } from "./clips/death-clips";
@@ -80,6 +81,18 @@ export interface ScreenFxDeps {
 }
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
+/**
+ * The vents' looks in the order of `STEAM_VENTS`: the manhole on the deptak, cold; the car wash's, pinkish under its
+ * neon; the wreck's radiator on Plac Litewski, a wisp. A vent past them steams in `STEAM_LOOK`, warm grey and thin.
+ */
+const STEAM_LOOKS: readonly { readonly tint: Color4; readonly rate: number }[] = [
+  { tint: new Color4(0.6, 0.74, 0.85, 0.3), rate: 22 },
+  { tint: new Color4(0.8, 0.58, 0.64, 0.26), rate: 14 },
+  // The wreck's split radiator on Plac Litewski (ADR-0102): thin, cold, a wisp in the rain.
+  { tint: new Color4(0.7, 0.78, 0.8, 0.14), rate: 5 },
+];
+const STEAM_LOOK = { tint: new Color4(0.78, 0.72, 0.66, 0.22), rate: 10 } as const;
+
 /** The camera's local axes, for the smoke's billboards. */
 const AXES = { right: Vector3.Right(), up: Vector3.Up(), forward: Vector3.Forward() } as const;
 
@@ -129,6 +142,7 @@ export class ScreenFx {
   private readonly trailMeshes: TrailMeshes;
   private readonly rain: ReturnType<typeof createRain> | null;
   private readonly splashes: ReturnType<typeof createSplashes> | null;
+  private readonly steam: SteamVents | null;
   /** District colour script on screen, blending when the camera crosses a seam. */
   private readonly palette = new PaletteBlend(DISTRICT_PALETTES["shinsekai-7"]);
   private district: DistrictId | null = null;
@@ -161,13 +175,8 @@ export class ScreenFx {
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
     this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene, deps.roofOver);
-    if (!stage.options.reference) {
-      // The manhole on the deptak and the vent behind the car wash (ADR-0045), the wreck's radiator on Plac Litewski (thin, ADR-0102).
-      const [manhole, vent, wreck] = STEAM_VENTS;
-      if (manhole) createSteam(scene, new Vector3(manhole.x, manhole.y, manhole.z), new Color4(0.6, 0.74, 0.85, 0.3), 22);
-      if (vent) createSteam(scene, new Vector3(vent.x, vent.y, vent.z), new Color4(0.8, 0.58, 0.64, 0.26), 14);
-      if (wreck) createSteam(scene, new Vector3(wreck.x, wreck.y, wreck.z), new Color4(0.7, 0.78, 0.8, 0.14), 5);
-    }
+    // The street's vents (ADR-0045), steaming near the camera only (`SteamVents`).
+    this.steam = stage.options.reference ? null : new SteamVents(scene, STEAM_VENTS.map((at, i) => ({ at, ...(STEAM_LOOKS[i] ?? STEAM_LOOK) })));
   }
 
   private isCameraTarget(id: EntityId): boolean {
@@ -452,6 +461,7 @@ export class ScreenFx {
     const target = this.deps.cameraTarget();
     const feet = (target === null ? null : this.deps.actors.transformOf(target)?.position.y) ?? camera.camera.position.y - 1.6;
     this.splashes?.follow(camera.camera.position, feet);
+    this.steam?.follow(camera.camera.position);
   }
 
   /** Flames follow their muzzles; the smoke faces the camera. */
