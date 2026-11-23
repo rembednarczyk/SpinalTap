@@ -13,7 +13,7 @@ import { KERB_STONES } from "./ground-partition.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 import { cutHoles, holeFits, holesApart, notchOut } from "./ring-holes.ts";
-import { offSteps } from "./steps-cut.ts";
+import { flightsOffRoads, offSteps } from "./steps-cut.ts";
 import { ROAD_WIDTH, laidStrips, roadSection, roadWidth } from "./street-section.ts";
 
 /** A street's width and sidewalk sides are its cross section's (ADR-0080 PR 5): read from here as before. */
@@ -437,11 +437,17 @@ const MIN_SHARE = 0.01;
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {
   const out: { g: GroundOut; order: number; source: string; k: number }[] = [];
+  // The carriageways' pieces, their zebras and kerb stones: what a flight stops at (G-963).
+  const roads = new Set<GroundOut>();
   const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
   bands.forEach((b, k) => {
     const clipped = clipRingToRect(ccw(b.ring), rect);
     const widen = (ring: readonly Pt[] | null) => {
-      for (const w of b.widen ? widenPieces(ring, b.widen, rect) : []) out.push({ g: { surface: b.surface, outline: w.flatMap((q) => [q.x, q.z]) }, order: ORDER[b.surface], source: b.source, k });
+      for (const w of b.widen ? widenPieces(ring, b.widen, rect) : []) {
+        const g: GroundOut = { surface: b.surface, outline: w.flatMap((q) => [q.x, q.z]) };
+        if (b.carriageway) roads.add(g);
+        out.push({ g, order: ORDER[b.surface], source: b.source, k });
+      }
     };
     if (clipped.length < 3) return widen(null);
     const simple = b.holed ? clipped : simplifyRing(clipped, 0.3);
@@ -462,11 +468,13 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
       const zebra = cut ? { zebra: round(ccw(b.ring)).flatMap((q) => [q.x, q.z]) } : {};
       const g: GroundOut = { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck, ...zebra };
       if (b.kerbStone) KERB_STONES.add(g);
+      if (b.carriageway || b.kerbStone || b.surface === "crossing") roads.add(g);
       out.push({ g, order: ORDER[b.surface], source: b.source, k });
     }
     // Along the carriageway's piece as the chunk keeps it: its widening shares that edge (G-570).
     widen(pieces.length === 1 && pieces[0]!.length >= 3 ? ccw(pieces[0]!) : null);
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
-  return offSteps(out, (o) => o.g, (o, g) => ({ ...o, g })).map((o) => o.g);
+  const put = (o: (typeof out)[number], g: GroundOut) => ({ ...o, g });
+  return offSteps(flightsOffRoads(out, (o) => o.g, put, (o) => roads.has(o.g)), (o) => o.g, put).map((o) => o.g);
 };

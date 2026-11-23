@@ -1,3 +1,2 @@
 # car-lane-off-road: grid 10 m (x,z = the square's corner at its least x and z)
-podzamcze-1-2 860,600
 podzamcze-2-2 990,590

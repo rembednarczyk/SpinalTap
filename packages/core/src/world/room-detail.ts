@@ -331,6 +331,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-dw-kiku", clutter: 9 },
   // Plac po Farze (docs/lokacje/plac-po-farze.md, ADR-0102): the coin-op viewing telescope with its AR screen.
   { key: "rd-fara-telescope", clutter: 1 },
+  // Plac Katedralny (docs/lokacje/plac-katedralny.md, ADR-0102): candles under the monument, the AR legend terminal.
+  { key: "rd-kat-candles", fine: true, clutter: 9 },
+  { key: "rd-kat-terminal", clutter: 0 },
+  // Podzamcze's food markets (docs/lokacje/dzielnica-targ.md, ADR-0102): the festoon of warm bulbs over each stall of the Bazaar and Ruska.
+  { key: "rd-targ-festoon", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

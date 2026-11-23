@@ -1,0 +1,1 @@
+- Schody przy Szkolnej na Podzamczu i cztery inne biegi w mieście kończą się na krawężniku, zamiast wchodzić stopniami na jezdnię, po której jeżdżą auta.

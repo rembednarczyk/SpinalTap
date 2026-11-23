@@ -1,0 +1,1 @@
+- Pchli targ na Placu Zamkowym świeci nocą: girlandy nad straganami rzucają ciepłe światło na bruk, a lampa przy zejściu do metra zielone.

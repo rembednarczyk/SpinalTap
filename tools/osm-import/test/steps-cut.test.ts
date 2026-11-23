@@ -49,3 +49,27 @@ describe("ground over a flight of steps (G-781)", () => {
     expect(ground.filter((g) => g.bridge).length).toBe(1);
   });
 });
+
+/** G-963: a flight mapped to a street's axis stops at its carriageway's kerb; a parking area's asphalt does not cut it. */
+describe("a flight of steps at a carriageway (G-963)", () => {
+  // A street along z = 7 whose carriageway reaches 3 m either side: the flight's top 4 m lie on it.
+  const street = lineBands({ id: "w3", osmId: 3, tags: { highway: "residential", width: "6" }, line: [{ x: -10, z: 7 }, { x: 30, z: 7 }] }, false);
+  const flight = lineBands({ ...stepsWay, line: [{ x: 2, z: -4 }, { x: 2, z: 7 }] }, false);
+
+  it("ends the flight at the kerb, its sides on their line, the asphalt whole", () => {
+    expect(street.some((b) => b.carriageway)).toBe(true);
+    const ground = chunkGround([...street, ...flight], rect);
+    expect(over(ground, "road")).toBeLessThanOrEqual(0.002);
+    const treads = ground.filter((g) => g.surface === "steps").flatMap(ringOf);
+    expect(Math.max(...treads.map((p) => p.z))).toBeCloseTo(4, 2);
+    expect(new Set(treads.map((p) => p.x.toFixed(3)))).toEqual(new Set(["0.500", "3.500"]));
+    for (const x of [0.6, 2, 3.4]) for (const z of [4.05, 6, 7]) expect(ground.some((g) => g.surface === "road" && pointInRing({ x, z }, ringOf(g))), `${x},${z}`).toBe(true);
+  });
+
+  it("keeps the flight whole on a parking area's asphalt", () => {
+    const parking = area("road", [{ x: -5, z: 4 }, { x: 10, z: 4 }, { x: 10, z: 10 }, { x: -5, z: 10 }]);
+    const ground = chunkGround([parking, ...flight], rect);
+    const treads = ground.filter((g) => g.surface === "steps").flatMap(ringOf);
+    expect(Math.max(...treads.map((p) => p.z))).toBeGreaterThan(6.9);
+  });
+});
