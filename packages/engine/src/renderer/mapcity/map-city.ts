@@ -14,6 +14,7 @@ import { closeOff } from "./interior-mode";
 import { type MapCityStats, mapCityMeshes, mapCityStats } from "./map-city-stats";
 import { MapEntries } from "./map-entries";
 import { MapFurniture } from "./map-furniture";
+import { SceneLamps } from "./scene-lamps";
 import { cellKey, grow } from "./map-index";
 import { MapLook } from "./map-look";
 import { type Box2, type P2, boundsOf, centroid, cleanRing } from "./polygon";
@@ -63,6 +64,8 @@ export class MapCity {
   private readonly look: MapLook;
   private readonly builder: CellBuilder;
   private readonly furniture: MapFurniture;
+  /** The scenes' lights in their models' fittings, near their places (ADR-0102 point 5). */
+  private readonly lamps: SceneLamps;
   private readonly lod: MapLod;
   private terrainsDirty = false;
   /** Cells near the eye still waiting for their detailed buildings after the last update. */
@@ -77,6 +80,7 @@ export class MapCity {
     this.siteTexts = texts;
     this.builder = new CellBuilder({ ...deps, lite: deps.quality === "low", entries: this.entries, signs: this.look.signs, water: this.look.water, siteTexts: () => texts.texts });
     this.furniture = new MapFurniture({ scene: deps.scene, materials: deps.materials, quality: deps.quality });
+    this.lamps = new SceneLamps(deps.materials);
     this.lod = MAP_LOD[deps.quality];
     const terrain = deps.materials.get("mapTerrain");
     // Terrain gives way in depth to the surfaces laid on it, at any distance.
@@ -228,6 +232,7 @@ export class MapCity {
     this.look.update(dt, frozen);
     this.waitingNear = streamCells(this.cells.values(), eye, this.lod, (cell) => this.builder.near(cell, this.furniture.facadeProps, (x, z, r) => this.furniture.current?.obstacles(x, z, r) ?? []));
     this.furniture.current?.update(eye);
+    this.lamps.update(eye, keep === null);
     this.look.updateSkyline(dt, eye, frozen);
     if (keep !== this.keep) {
       this.keep = keep;
