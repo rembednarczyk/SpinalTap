@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 częściowo: miejsce ulicy (Hebi, kebab, lotto), ale bez prowizorki, która by to pokazywała.
 - §17 dług: silników, zapowiedzi i gwaru nie ma. Ruch: 3 Hebi, auta alei; skala: drzwi dworca, pawilon metra.
 
+## Scenariusz tła
+- Kto tu bywa: podróżni z metra (wyjście B) czekający na linie nocne; trzech Dworcowych Hebi z terytorium `bus-station`, którzy sprzedają miejsca na stanowiskach i ochronę; sprzedawcy z pawilonów przy alei; wieczorem wróżka Kiku przy pawilonie metra (`enc_targ_fortune`).
+- Co się dzieje: w dzień pawilony z pieczywem i kebabem obsługują czekających; po zmroku ruch przenosi się na peron, Hebi chodzą wzdłuż stanowisk, a między peronem a pawilonami Kiku stawia karty z pękniętej talii AR.
+- Ślad obecności: walizka na kółkach pod wiatą stanowiska 5, kubki po kawie i bilety na ławkach peronu, zielone światło nad wyjściem B metra.
+
 ## Dług sceny
 Zrobione 23.11 (`packages/sim/src/content/dworzec-detail.ts`, `tools/blender/rooms/dworzec.py`, test `packages/sim/test/dworzec-scene.test.ts`): stolik wróżki Kiku przy pawilonie metra B w miejscu jej spotkania; reklama Fumiko w `radio.ink` poprawiona w #955. Zostaje:
 - Zadaszenie peronu ze świetlówkami (zimne, migające) i wysepki stanowisk (G-063, T-170): `tools/osm-import` (zadaszenia `building=roof`) i `packages/engine/src/renderer/mapcity`, lampy gry pod zadaszeniem w nowym `packages/sim/src/content/district-targ.ts`.

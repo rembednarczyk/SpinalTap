@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 zgodne: prowizorka, beton, folia, neony sklepików.
 - §17 dług: targ bez żadnego dźwięku ze źródła. Ruch: postacie z mebli i 3 Hebi bez tłumu; skala: stragany, drzwi, wózki.
 
+## Scenariusz tła
+- Kto tu bywa: straganiarze nocnego targu na Ruskiej i ich klienci (ramen, części, wszczepy z odzysku); trzech Hebi z terytorium `ruska-market` przy bukmacherze i sklepie mięsnym; gracze STS; ludzie w drodze z Bazaru i Dworca na Ruską.
+- Co się dzieje: po zmroku zapalają się girlandy nad rzędami Ruskiej i targ się zapełnia; Hebi stoją na Nowym Placu Targowym, z dala od straganów, i co jakiś czas jeden z nich idzie po haracz wzdłuż rzędu; od bukmachera wychodzą ludzie z kuponami.
+- Ślad obecności: uchylone drzwi bukmachera STS, kupony na chodniku, skrzynie zapasu przy straganach, para nad wózkami z jedzeniem.
+
 ## Dług sceny
 - Zrobione 23.11: girlanda ciepłych żarówek nad każdym ze 171 straganów (model `rd-targ-festoon`, `tools/blender/rooms/dzielnica_targ.py`) i światło gry w każdej (`RUSKA_LAMPS` w `packages/sim/src/content/district-targ.ts`, włączone do 90 m od środka targu); daszki nad rzędami w main (G-063, #979).
 - Tłum na targu i na Nowym Placu Targowym (chunki `podzamcze-0-1` i `podzamcze-1-1` bez tłumu): `packages/sim/src/content/crowd.ts` (profil `market`).
