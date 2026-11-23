@@ -14,9 +14,9 @@ import { TRAFFIC_LANES } from "../src/content/traffic";
 
 /** Points of the car lanes off the carriageway on the ground laid in layers (glitches of their own, not the partition's). */
 // By street, lane and place: a chain's number moves with the map's data (the deptak's of T-324 moved these).
-const KNOWN_OFF_ROAD = new Set(["Radziwiłłowska:f -18.6,115.8", "Ciasna:b 583.1,575.5", "Mełgiewska:0 2448.8,249.6", "Mełgiewska:t 2448.8,249.6", "Mełgiewska:0 2459.2,304.2", "Mełgiewska:t 2459.2,304.2",
-  // The Podzamcze row north of z 580: turn rounds at dead ends (G-962) and steps on Szkolna's carriageway (G-963).
-  "Szkolna:f+Szkolna:b 843.5,552.5", "Księdza Michała Słowikowskiego:f+Księdza Michała Słowikowskiego:b 997.2,591.0", "Szkolna:f+Szkolna:b 864.5,601.8"]);
+const KNOWN_OFF_ROAD = new Set(["Radziwiłłowska:f -18.6,115.8", "Mełgiewska:0 2448.8,249.6", "Mełgiewska:t 2448.8,249.6", "Mełgiewska:0 2459.2,304.2", "Mełgiewska:t 2459.2,304.2",
+  // The Podzamcze row north of z 580: steps on Szkolna's carriageway (G-963).
+  "Szkolna:f+Szkolna:b 864.5,601.8"]);
 /** Parked cars on a sidewalk's piece on the ground laid in layers. */
 const KNOWN_ON_SIDEWALK = new Set(["taxi 733,298"]);
 

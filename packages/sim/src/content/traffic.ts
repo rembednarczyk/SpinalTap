@@ -386,6 +386,8 @@ const onTheMap = (p: Piece): Piece => {
 
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
+/** How far short of the lanes' ends the half circle's top stays (m): at a flat dead end of the carriageway it would lie on its edge, and over it by the rounding (G-962). */
+const TURN_CLEAR = 0.5;
 
 /**
  * The pieces as lanes: one cut short by a block or a dead end turns round there onto the nearest
@@ -419,15 +421,16 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
     const j = next.get(i);
     if (j === undefined) return [a.route];
     const b = pieces[j]!.route;
-    // The half circle bulges forward by its radius: both lanes give that up, so it stays clear of the block.
+    // The half circle bulges forward by its radius: both lanes give that up and a margin more, so it stays clear of the block and on the carriageway.
     const end = a.route.points[a.route.points.length - 1]!;
     const r = Math.hypot(b.points[0]![0] - end[0], b.points[0]![1] - end[1]) / 2;
-    const into = slice(a.route.points, 0, a.route.length - r);
-    const out = slice(b.points, r, b.length);
-    const t = pointAt(into, a.route.length - r);
+    const back = Math.min(r + TURN_CLEAR, a.route.length, b.length);
+    const into = slice(a.route.points, 0, a.route.length - back);
+    const out = slice(b.points, back, b.length);
+    const t = pointAt(into, a.route.length - back);
     const points = [...into, ...uTurn(into[into.length - 1]!, out[0]!, t.tx, t.tz), ...out];
     const joined = routeOf(`${a.route.id}+${b.id}`, a.route.street, a.route.use, points, a.route.speed, a.route.vehicles + b.vehicles);
-    return [{ ...joined, turns: [[a.route.length - r, joined.length - (b.length - r)]] as const }];
+    return [{ ...joined, turns: [[a.route.length - back, joined.length - (b.length - back)]] as const }];
   });
 };
 

@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-962 Zawrotki na ślepych końcach Szkolnej i Słowikowskiego wychodzą wierzchołkiem za koniec jezdni
+- Status: naprawione (23.11, gałąź fix/g962-zawrotki, PR w drodze); wcześniej: zgłoszone (S4: auto na zawrotce muska plac przez ok. 0,1 m)
+- Gdzie: nowy rząd Podzamcza (23.11): Szkolna (843,5, 552,5), gdzie jezdnia przechodzi w deptak, i Słowikowskiego (997,2, 591,0)
+- Dowód: `packages/sim/test/ground-readers.test.ts`, „keeps the car lanes on the carriageway”: wierzchołek półokręgu `uTurn` leży na płaskim końcu jezdni, a `surfacesAt` daje tam plac. Ten sam rodzaj co znany `Ciasna:b 583.1,575.5`; obie zawrotki w `KNOWN_OFF_ROAD` z odnośnikiem do tego wpisu.
+- Poprawka: `turnRound` cofa zawrotkę na ślepym końcu o promień i zapas, tak by wierzchołek został na jezdni (zmiana pasów w całym mieście, osobny PR). Test przyjęcia: punkty znikają z `KNOWN_OFF_ROAD`.
+- Naprawa (23.11): `turnRound` (`packages/sim/src/content/traffic.ts`) cofa oba pasy o promień półokręgu i 0,5 m zapasu (`TURN_CLEAR`), więc wierzchołek zawrotki zostaje 0,5 m przed końcem pasów, na jezdni. Z `KNOWN_OFF_ROAD` znikają oba punkty G-962 i znany wcześniej `Ciasna:b 583.1,575.5` tego samego rodzaju. Zmienia wszystkie zawrotki w mieście o 0,5 m.
+
 ### G-960 Schody A i B w piwnicy W-3 niewidoczne
 - Status: zamknięte 22.11: nie błąd gry. Spec roboczy wołał `teleport(page, x, y, z)`, a pomocnik e2e bierze `(x, z, yaw, pitch, y)`: gracz stał w (2530; z −33), daleko od W-3, więc propsy chunku `nabrzeze-w3` (schody, drzwi, drabiny) się nie wczytały, a kamera z `view()` patrzyła na pustą piwnicę. Z poprawnym teleportem schody A i B są widoczne (33 propsy w wypieku W-3).
 - Ważność: S2 · Zasięg: schody A (x 2517..2525, z 402..403,8) i B (x 2539..2541, z 397,6..403,6) z `tessen-w3/basement.ts` istnieją w symulacji jako bryły z `slope` (gracz po nich chodzi), ale gra ich nie rysuje: w zrzucie z wnętrza piwnicy widać podłogę, szafki i otwory w stropie, a pod nowymi poręczami z Blendera nie ma stopni. `indoor()` zostawia schody jako widok bytu („Stairs, ladders and doors stay as they are”), a hala piwnicy jest wypiekana z `W3_INSIDE_BLOCKS` bez nich; przypuszczalnie widok bytu schodów pod ziemią (w sklepieniu `GroundVault`) nie powstaje albo jest zasłonięty
