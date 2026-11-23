@@ -256,6 +256,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-lit-van-camp", fine: true, clutter: 9 },
   { key: "rd-lit-tarp", clutter: 1 },
   { key: "rd-lit-poems", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

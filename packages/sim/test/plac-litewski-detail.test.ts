@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ROOM_DETAIL_SHAPES } from "@seki/core";
 import { DISTRICT_M0_PROPS, PLAC_LITEWSKI_DETAIL, ROOM_DETAIL_SCENERY, WRECK_BODY, WRECK_FOOT, inBuilding } from "../src";
 import { WORLD_STREET_PROPS } from "../src/content/street-props";
+import { CAR_WASH_DETAIL } from "../src/content/car-wash-detail";
 import { surfaceY } from "../src/content/lublin/terrain";
 
 /**
@@ -62,7 +63,9 @@ describe("Plac Litewski's scene (ADR-0102)", () => {
     for (const s of skid) expect(Math.sin(s.yaw) > 0 && Math.cos(s.yaw) > 0).toBe(true);
   });
 
-  it("is the scenery's last view, so the ids before it stay", () => {
-    expect(ROOM_DETAIL_SCENERY[ROOM_DETAIL_SCENERY.length - 1]!.view).toEqual({ kind: "street-props", items: PLAC_LITEWSKI_DETAIL });
+  it("comes after the scenes before it in the scenery, so the ids before it stay (a later scene goes after it)", () => {
+    const at = (items: unknown) => ROOM_DETAIL_SCENERY.findIndex((s) => s.view.kind === "street-props" && s.view.items === items);
+    expect(at(PLAC_LITEWSKI_DETAIL)).toBeGreaterThan(at(CAR_WASH_DETAIL));
+    expect(at(CAR_WASH_DETAIL)).toBeGreaterThanOrEqual(0);
   });
 });
