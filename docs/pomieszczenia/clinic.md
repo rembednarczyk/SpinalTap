@@ -78,10 +78,8 @@ Nowa gra: Seki otwiera oczy na fotelu zabiegowym w gabinecie (319,6; −64,9), t
 - Lampa zabiegowa Moriego różna od lampy Kagami z retrospekcji (ink: „Inna niż u Mori, większa, z sześcioma soczewkami”).
 
 ## Dług sceny
-- Lampa Moriego ma dziś dwie głowice po sześć soczewek (`rd-clinic-lamp`), a ink `recall_operating_table` w `packages/narrative/ink/{pl,en}/m3-echo.ink` odróżnia od niej lampę Kagami właśnie sześcioma soczewkami. Propozycja: głowice Moriego z trzema albo czterema soczewkami w `tools/blender/rooms/clinic.py`, ink bez zmian.
-- Sprzeczność ink: po zakończeniu „seki” Mori w akcie II sprzedaje fiolkę (`m3-lustro.ink` `sold_module`, `m3-echo.ink` `mori.sold`: „Fiolki już nie ma”). Mimo to `mori.after_seki` mówi dalej „Fiolka dalej stoi na półce. Nikt jej nie chce”, a `act3_epilogue` w `m3-zrodlo.ink`: „Fiolka z modułem leży na półce u Mori”. Propozycja: w `packages/narrative/ink/{pl,en}/m3-echo.ink` kwestia `after_seki` tylko przed aktem II, po nim kwestia o pustej półce; w `m3-zrodlo.ink` zdanie o pustym miejscu po fiolce.
+Zrobione 23.11: lampa Moriego z czterema soczewkami na głowicę (ink odróżnia lampę Kagami po sześciu, `tools/blender/rooms/clinic.py`), stołek Kaito z kubkiem i niedopałkami przy fotelu (`tools/blender/rooms/clinic_kaito.py`, test `packages/sim/test/clinic-scene.test.ts`); sprzeczność ink o fiolce poprawiona w #955. Zostaje:
 - Monitor na ramieniu przy fotelu i biurko Moriego jako bryła: na końcu `clinic()` w `packages/sim/src/content/interiors.ts` (świadoma zmiana id i złotego hasha), rysunek w `tools/blender/rooms/clinic.py` i `packages/sim/src/content/clinic-detail.ts`.
-- Stołek Kaito przy fotelu z kubkiem i niedopałkami jako skupisko (§14): `tools/blender/rooms/clinic.py`, `packages/sim/src/content/clinic-detail.ts`.
 - Fiolka na półce szafy lekowej (`rd-clinic-cabinet`) zależy od flagi zakończenia, a rekwizyty wnętrz są dziś stałe. Do decyzji: rekwizyt zależny od flagi w `clinic-detail.ts` albo tylko kwestia w ink.
 - Część „Przeznaczenie” tej karty mówi o zapleczu za kotarą jako drodze ucieczki, a w grze kotara (`rd-k-curtain`) dzieli tylko fotel od przejścia. Propozycja: poprawić kartę albo, jeśli klinika dostanie zadanie z walką, dodać drzwi zaplecza do klatki kamienicy w `packages/sim/src/content/interiors.ts` (§9).
 
@@ -96,6 +94,7 @@ Nowa gra: Seki otwiera oczy na fotelu zabiegowym w gabinecie (319,6; −64,9), t
 - blender: rd-clinic-lamp × 1
 - blender: rd-clinic-reception × 1
 - blender: rd-clinic-sharps × 1
+- blender: rd-clinic-stool × 1
 - blender: rd-k-curtain × 1
 - blender: rd-k-washbasin × 1
 - blender: rd-tessen-lights × 1
@@ -111,7 +110,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 62 m², wysokość 3,9 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 3
-- warstwy wyposażenia: makro 6, mezo 17, mikro 14
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 14 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 6, mezo 17, mikro 18
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 4 skupisk, 18 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 7
 <!-- inwentarz-gry:end -->
