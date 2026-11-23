@@ -113,8 +113,8 @@ const PODZAMCZE_GROUPS = ["bus-station", "bazaar-halls", "ruska-market", "lubart
 const WALL_REACH = 4;
 /** How far from the ring's middle the pole stands, towards the nearest wall (m): past the group standing round it. */
 const POLE_OUT = 3.5;
-/** The bulb in its fitting's frame: off the wall on the bracket's end, or on the pole's arm (`dzielnica_targ.py`). */
-const BULB = { wall: { y: 2.72, z: 0.36 }, pole: { y: 2.52, z: 0.5 } } as const;
+/** The bulb in its fitting's frame: off the wall on the bracket's end above a ground floor's signs, or on the pole's arm (`dzielnica_targ.py`). */
+const BULB = { wall: { y: 3.32, z: 0.36 }, pole: { y: 2.52, z: 0.5 } } as const;
 /** A bare bulb's light: warm white, harsher than the festoons' (§13: the group's corner stands out). */
 const BULB_LIGHT = { color: "#ffe2b8", range: 6, intensity: 0.6 } as const;
 

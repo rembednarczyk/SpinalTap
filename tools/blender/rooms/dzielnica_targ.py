@@ -45,17 +45,18 @@ def festoon():
 
 
 def bulb_wall():
-    """On a wall (its face at z 0): a bent steel bracket out 0.35 m with a bare bulb hanging from its end on its
-    socket, its cable up the wall in a conduit, tied off on a nail (0.2 x 1.0 x 0.4)."""
+    """On a wall (its face at z 0), above a ground floor's signs: a bent steel bracket out 0.35 m with a bare bulb hanging
+    from its end on its socket, its cable up the wall in a conduit, tied off on a nail (0.2 x 1.0 x 0.4)."""
     m = Model('rd-targ-bulb-wall')
-    m.box(-0.06, 0.06, 2.84, 2.96, 0.0, 0.012, 'metal', bevel=0.004)
-    m.tube((0.0, 2.9, 0.01), (0.0, 2.9, 0.3), 0.012, 'metal', seg=6)
-    m.tube((0.0, 2.9, 0.3), (0.0, 2.86, 0.36), 0.012, 'metal', seg=6)
-    m.tube((0.0, 2.86, 0.36), (0.0, 2.8, 0.36), 0.004, 'cable', seg=4)
-    m.cyl(0.0, 0.36, 0.016, 2.76, 2.8, 'dark', seg=8)
-    m.lathe(0.0, 0.36, [(0.0, 0.0), (0.012, 0.005), (0.032, 0.03), (0.028, 0.055), (0.012, 0.07), (0.0, 0.072)], 'win-warm', seg=10, y0=2.69)
-    m.tube((0.0, 2.96, 0.01), (0.0, 3.6, 0.01), 0.006, 'cable', seg=4)
-    m.tube((0.04, 3.3, 0.005), (0.04, 3.3, 0.03), 0.003, 'metal', seg=4)
+    up = 0.6
+    m.box(-0.06, 0.06, 2.84 + up, 2.96 + up, 0.0, 0.012, 'metal', bevel=0.004)
+    m.tube((0.0, 2.9 + up, 0.01), (0.0, 2.9 + up, 0.3), 0.012, 'metal', seg=6)
+    m.tube((0.0, 2.9 + up, 0.3), (0.0, 2.86 + up, 0.36), 0.012, 'metal', seg=6)
+    m.tube((0.0, 2.86 + up, 0.36), (0.0, 2.8 + up, 0.36), 0.004, 'cable', seg=4)
+    m.cyl(0.0, 0.36, 0.016, 2.76 + up, 2.8 + up, 'dark', seg=8)
+    m.lathe(0.0, 0.36, [(0.0, 0.0), (0.012, 0.005), (0.032, 0.03), (0.028, 0.055), (0.012, 0.07), (0.0, 0.072)], 'win-warm', seg=10, y0=2.69 + up)
+    m.tube((0.0, 2.96 + up, 0.01), (0.0, 3.6 + up, 0.01), 0.006, 'cable', seg=4)
+    m.tube((0.04, 3.3 + up, 0.005), (0.04, 3.3 + up, 0.03), 0.003, 'metal', seg=4)
     return m
 
 
