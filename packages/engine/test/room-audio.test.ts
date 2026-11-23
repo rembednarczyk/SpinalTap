@@ -31,25 +31,16 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the open air's own:
-    // the car wash's in its yard (its pump on the machine room's wall, its gantry's dryer: ADR-0102 point 5) and the
-    // pavilion roof's (the neon's transformer, the kitchen's exhaust fan, the bucket's drip, 23.11).
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but those in the open air
+    // (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard; on the roof of Alchemia's pavilion the neon's
+    // transformer, the kitchen's exhaust fan and the bucket's drip.
+    const near = (e: { position: { x: number; z: number } }, x: number, z: number, r: number) => Math.hypot(e.position.x - x, e.position.z - z) < r;
     const outside = EMITTERS.filter((e) => e.room === null);
     expect(outside.map((e) => e.sound).sort()).toEqual(["drip", "pump", "tubes", "vent", "vent"]);
-    const near = (p: { readonly x: number; readonly z: number }, x: number, z: number): boolean => Math.hypot(p.x - x, p.z - z) < 8;
-    for (const e of outside) expect(near(e.position, 410, -36) || near(e.position, PAVILION_CENTRE.x, PAVILION_CENTRE.z), `${e.sound} ${e.position.x},${e.position.z}`).toBe(true);
+    for (const e of outside) expect(near(e, 410, -36, 8) || near(e, PAVILION_CENTRE.x, PAVILION_CENTRE.z, 8), `${e.sound}`).toBe(true);
   });
 
-  it("hears the car wash's pump whole in its yard, the open air being one more room", () => {
-    const pump = EMITTERS.find((e) => e.sound === "pump" && e.room === null)!;
-    const yard = roomMix(pose(pump.position.x - 2, pump.position.y, pump.position.z + 2.5), EMITTERS);
-    expect(yard.room).toBeNull();
-    expect(yard.layers.pump.gain).toBeGreaterThan(0.3);
-    expect(yard.layers.pump.cutoff).toBeGreaterThan(10000);
-    expect(yard.layers.vent.gain).toBeGreaterThan(0);
-  });
-
-  it("hears the pavilion roof's sources whole on the roof, the open air being one more room", () => {
+  it("hears the pavilion roof's sources whole on the roof (the open air is a room too) and dull from inside a room", () => {
     const roof = roomMix(pose(PAVILION_LADDER.exit.x, PAVILION_LADDER.exit.y, PAVILION_LADDER.exit.z), EMITTERS);
     expect(roof.room).toBeNull();
     // From the ladder's head: the exhaust fan 2 m off loud and open, the neon's transformer and the drip further off, open.
@@ -61,6 +52,15 @@ describe("the rooms' sound map", () => {
     // By Ren under the tarp the drip is nearer than the fan.
     const camp = roomMix(pose(REN_SPOT.x, REN_SPOT.y, REN_SPOT.z), EMITTERS);
     expect(camp.layers.drip.gain).toBeGreaterThan(roof.layers.drip.gain);
+  });
+
+  it("hears the car wash's pump whole in its yard, the open air being one more room", () => {
+    const pump = EMITTERS.find((e) => e.sound === "pump" && e.room === null)!;
+    const yard = roomMix(pose(pump.position.x - 2, pump.position.y, pump.position.z + 2.5), EMITTERS);
+    expect(yard.room).toBeNull();
+    expect(yard.layers.pump.gain).toBeGreaterThan(0.3);
+    expect(yard.layers.pump.cutoff).toBeGreaterThan(10000);
+    expect(yard.layers.vent.gain).toBeGreaterThan(0);
   });
 
   it("hears the aquarium's pump whole in Neon Koi and dull and quieter through its wall", () => {

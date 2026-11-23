@@ -17,7 +17,7 @@ W 2077 róg parkingu zajęła myjnia bezobsługowa MYJNIA 24H: maszynownia pod m
 ## Przeznaczenie
 - M0: likwidacja kuriera (`eliminate_courier`); potem zlecenie `car_wash` (likwidacja, pula `ELIMINATION_SITE_IDS`, wariant pijaka idzie stąd do Koi) i grupa Hebi neutralna, dopóki gracz jej nie sprowokuje.
 - Wejścia: od wschodu z Lubartowskiej przez lukę w ogrodzeniu parkingu (422; −30,4), na południe od ławki, i ciasne przejście 1,46 m między kontenerem a barierkami (419,4; −29,8), droga pijaka w `contract-plans.ts`; od południa, od strony Ratusza, alejką 2,2 m między maszynownią a kontenerem (x 416..418); od północy z chodnika przy Bajkowskiego, gdzie teren opada (G-754).
-- Osłony: duży kontener na śmieci (406; −31,5, kryjówka na ciało), mały (399; −30,5), skrzynia (392; −33), auto na parkingu (414,5; −31,5), auto w myjni (406,2; −38,5), automat płatniczy (401,8; −36,4), nogi bramownicy, słupki wiaty, kontener 20 ft przy wschodnim boku.
+- Osłony: duży kontener na śmieci (406; −31,5, kryjówka na ciało), mały (399; −30,5), skrzynia (392; −34,1), auto na parkingu (414,5; −31,5), auto w myjni (406,2; −38,5), automat płatniczy (401,8; −36,4), nogi bramownicy, słupki wiaty, kontener 20 ft przy wschodnim boku.
 - Punkt widokowy: brak; teren opada ku Bajkowskiemu, więc od północy podwórko widać z dołu.
 
 ## Topografia
@@ -58,7 +58,7 @@ Gracz wychodzi z Neon Koi, idzie deptakiem na wschód, przez Plac Łokietka i na
 
 ### Postacie i miejsca
 - Kurier Hebi (`courier`, tag `hebi_courier`) przy (396; −30,6) pod czerwoną lampą, twarzą na południe (yaw π), ku myjni; ochroniarz (`guard`) przy (392,5; −30,6), też na południe. Stoją od nowej gry do śmierci.
-- Zlecenie `car_wash` (po M0): 2–4 Hebi przy (396; −30,6), (392,5; −30,6), (401,6; −31), (390,8; −35,2), twarzami ku (395; −39), czyli na wjazd do myjni. Ochroniarze wariantu (394,6; −31,6), (397,4; −30), sobowtór (402,4; −32,8), czujka (397; −32,5), zasadzka (395; −36), (393,5; −39,5), (399; −38) przy wiacie.
+- Zlecenie `car_wash` (po M0): 2–4 Hebi przy (396; −30,6), (392,5; −30,6), (401,6; −31), (390,4; −36), twarzami ku (395; −39), czyli na wjazd do myjni. Ochroniarze wariantu (394,6; −31,6), (397,4; −30), sobowtór (402,4; −32,8), czujka (397; −32,5), zasadzka (395; −36), (393,5; −39,5), (399; −38) przy wiacie.
 - Grupa terytorium `car-wash-yard` po śmierci kuriera: trzech Hebi w kręgu wokół (405; −25), na północnym skraju podwórka, palą, dzwonią i gadają na zmianę (`TERRITORY_ACTIVITIES`).
 - Hina szuka robotycznego kota na Placu Łokietka (428; −99), 9:00–18:00 (`enc_s7_neko`); kot śpi „pod szczotkami myjni”.
 

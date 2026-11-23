@@ -12,8 +12,7 @@ import { type Emitter, type EmitterMix, emitterMix } from "./spatial";
  * with interior settings): an emitter in the listener's room is heard whole, one in another room or outside comes
  * through the walls quieter and low-passed. Different from them: no portals (a room's doorway does not carry the sound
  * further than its walls do) and no reverb of the room's own, as the street's ambience has none either. The open air
- * is one more room: a thing standing outside (the car wash's pump and dryer, ADR-0102 point 5; the neon's transformer,
- * the kitchen's exhaust fan and the bucket's drip on Alchemia's pavilion roof) is heard whole by a
+ * is one more room: a thing standing outside (the car wash's pump and dryer, ADR-0102 point 5) is heard whole by a
  * listener outside and dull from inside a room.
  */
 
