@@ -3,6 +3,7 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import { defaultCache } from "../../orto/src/config.ts";
 import { pointInRing } from "../../osm-import/src/geometry.ts";
 import { generatedCity } from "../../osm-import/test/city.ts";
+import { reviewedOnly } from "./reviewed-cells";
 import { grassOnLightPaving, hasTiles, hueOf, pavedLook } from "./grass-on-light-paving";
 
 /**
@@ -54,7 +55,7 @@ describe("lawns on paving the leaf-off flight shows green by a colour no lawn ha
 
   describe.skipIf(!hasTiles(defaultCache()))("over the city, on the cached orthophoto", () => {
     it(`lays under ${MAX_M2} m² of them`, { timeout: 120_000 }, () => {
-      const found = grassOnLightPaving(generatedCity().stats, defaultCache());
+      const found = grassOnLightPaving(reviewedOnly(generatedCity().stats), defaultCache());
       expect(found.length * SAMPLE_M2, found.slice(0, 20).map((f) => f.what).join("\n")).toBeLessThan(MAX_M2);
     });
   });

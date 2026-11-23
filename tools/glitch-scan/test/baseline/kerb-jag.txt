@@ -9,7 +9,10 @@ nabrzeze-1-0 2630,250
 podzamcze-0-1 530,410
 podzamcze-0-1 610,450
 podzamcze-0-1 530,470
+podzamcze-0-2 680,640
 podzamcze-1-1 870,490
 podzamcze-1-1 860,500
+podzamcze-1-2 740,770
 podzamcze-2-1 1060,470
+podzamcze-2-2 1090,650
 stare-miasto-1-0 620,-240

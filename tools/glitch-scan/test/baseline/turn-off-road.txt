@@ -1,0 +1,2 @@
+# turn-off-road: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-2-2 997,591

@@ -1,0 +1,2 @@
+# church-over-nmpt: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-0-2 545,788

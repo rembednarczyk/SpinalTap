@@ -50,9 +50,12 @@ export const DISTRICTS: readonly DistrictSpec[] = [
     id: "targ",
     slug: "podzamcze",
     name: "Podzamcze",
-    rect: { minX: 520, minZ: 160, maxX: 1120, maxZ: 580 },
+    // North to z = 790 for the rest of the Targ na Ruskiej, cut at the old edge (the new row keeps
+    // the old chunk ids and edges).
+    rect: { minX: 520, minZ: 160, maxX: 1120, maxZ: 790 },
     cols: 3,
-    rows: 2,
+    rows: 3,
+    zEdges: [160, 370, 580, 790],
     defaultLevels: [3, 4],
   },
   {

@@ -1,0 +1,1 @@
+- Pchli targ na Placu Zamkowym ma scenę według karty lokacji: przed każdym straganem leży koc z telefonami, słuchawkami, sztucznym okiem w etui, protezą dłoni, kablami i kartonową tabliczką z cenami, między przednimi słupkami straganu wisi girlanda ciepłych żarówek, wokół leżą niedopałki i kubki, a nad otworem pawilonu metra świeci zielona oprawa.

@@ -95,7 +95,7 @@ describe("minimap data", () => {
 
   it("draws Lublin from the map: its chunks, surfaces, buildings and names (ADR-0045)", () => {
     const map = buildCityMap();
-    expect(map.ground).toHaveLength(20);
+    expect(map.ground).toHaveLength(23);
     // From the west end of Krakowskie Przedmieście to the east end of Nabrzeże Bystrzycy.
     expect(map.bounds.x - map.bounds.w / 2).toBe(-200);
     expect(map.bounds.x + map.bounds.w / 2).toBe(2700);
