@@ -132,10 +132,16 @@ export const TARG_OVERPASS_STASH: RoofStash = {
   ],
 };
 
-/** Kurosawa of Kagami waits in the T0 passage under the front (B1), by the lift's doors on T0; his cleaners turn up round him. */
+/** Kurosawa of Kagami waits in the T0 passage under the front (B1), by the lift's doors on T0. */
 const LIFT_DOOR: GroundPoint = ALCHEMIA_LIFT.doors[2]!;
 export const KUROSAWA_SPOT: Vec3 = ground(LIFT_DOOR.x + 4.5, LIFT_DOOR.z - 2);
-const CLEANER_SPOTS: readonly Vec3[] = [ground(408, 26.5), ground(420.5, 24), ground(413, 22.5)];
+/** The door of the P-1 stair house on T0 (x 424.3-427.7), opening to the south (`docs/lokacje/alchemia-parking-kiosk.md`). */
+const CAGE_DOOR: GroundPoint = { x: 426, z: 12.4 };
+/**
+ * Where the cleaners come in when the deal is off (`docs/lokacje/alchemia-parking-kiosk.md`, „Dług sceny”): two out of
+ * the lift's doors on T0, one out of the P-1 stair house's, each a step into the passage, not standing round Kurosawa.
+ */
+export const CLEANER_SPOTS: readonly Vec3[] = [ground(LIFT_DOOR.x - 0.5, LIFT_DOOR.z - 0.8), ground(LIFT_DOOR.x + 0.8, LIFT_DOOR.z - 1.2), ground(CAGE_DOOR.x, CAGE_DOOR.z - 0.9)];
 
 /** Tag of the cleaners (their deaths raise `killed:kagami_cleaner`). */
 export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
@@ -160,7 +166,7 @@ const KUROSAWA: ActorDef = {
 
 const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map((key, i): ActorDef => {
   const at = CLEANER_SPOTS[i] ?? KUROSAWA_SPOT;
-  return { kind: "ganger", spawn: { key, position: at, yaw: facing(at, LIFT_DOOR), tag: KAGAMI_CLEANER_TAG }, enemy: "kagami_cleaner", when: { all: [KAGAMI_AMBUSH_FLAG] } };
+  return { kind: "ganger", spawn: { key, position: at, yaw: facing(at, KUROSAWA_SPOT), tag: KAGAMI_CLEANER_TAG }, enemy: "kagami_cleaner", when: { all: [KAGAMI_AMBUSH_FLAG] } };
 });
 
 /** A keeper behind the counter, facing out of the unit; talked to (or traded with) across it. */

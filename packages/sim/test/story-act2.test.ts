@@ -10,7 +10,7 @@ import {
   endingFlag,
   recalledFlag,
 } from "@seki/core";
-import { KUROSAWA_SPOT, REN_SPOT, SIM_HZ, Simulation, stateHash } from "../src";
+import { ALCHEMIA_LIFT, CLEANER_SPOTS, KUROSAWA_SPOT, REN_SPOT, SIM_HZ, Simulation, stateHash } from "../src";
 import { collect, run } from "./helpers";
 
 /** Act II at `stepIndex`, after the "aya" ending, built the way a load would build it. */
@@ -115,6 +115,25 @@ describe("act II in the simulation (ADR-0023)", () => {
     expect(has(restored, KAGAMI_CLEANER_KEYS[0])).toBe(false);
     expect(has(restored, KAGAMI_CLEANER_KEYS[1])).toBe(true);
     expect(stateHash(restored.snapshot(null, "x", ""))).toBe(stateHash(sim.snapshot(null, "x", "")));
+  });
+
+  it("brings the cleaners in out of the lift's doors and the P-1 stair house's, not round Kurosawa", () => {
+    const sim = inActTwo(3, [REN_TRAIL_FLAG, KAGAMI_JOB_FLAG, recalledFlag("last_call")], DECK);
+    run(sim, 1);
+    sim.enqueue({ type: "set-flag", flag: KAGAMI_AMBUSH_FLAG });
+    run(sim, 1);
+    const cleaners = [...sim.world].filter((e) => e.tag === "kagami_cleaner").sort((a, b) => a.id - b.id);
+    expect(cleaners).toHaveLength(CLEANER_SPOTS.length);
+    const lift = ALCHEMIA_LIFT.doors[2]!;
+    const near = (p: { x: number; z: number }, q: { x: number; z: number }) => Math.hypot(p.x - q.x, p.z - q.z);
+    // Two a step out of the lift's doors on T0, one out of the stair house's door on z 12.4.
+    expect(cleaners.filter((e) => near(e.position, lift) < 1.6)).toHaveLength(2);
+    expect(cleaners.filter((e) => near(e.position, { x: 426, z: 12.4 }) < 1.2)).toHaveLength(1);
+    cleaners.forEach((e, i) => {
+      expect(near(e.position, KUROSAWA_SPOT), e.key).toBeGreaterThan(3);
+      // Where they were put: no wall pushed them out of a solid.
+      expect(near(e.position, CLEANER_SPOTS[i]!), e.key).toBeLessThan(0.3);
+    });
   });
 
   it("a dead cleaner costs standing with Kagami, not with the street", () => {

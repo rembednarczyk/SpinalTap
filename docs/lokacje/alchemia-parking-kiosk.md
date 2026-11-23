@@ -86,7 +86,7 @@ Seki wchodzi od Bajkowskiego osią wejścia, między pasami LED, pod płytę L2.
 
 ## Dług sceny
 Zrobione 23.11: teksty celu, ink i `docs/narrative/lublin-names.md` mówią o pasażu pod frontem (#955), nazwa w rejestrze „Pasaż T0 przy windzie Alchemii (Kurosawa)”, id bez zmian. Zostaje:
-- Wejście czyścicieli z drzwi windy (413,5; 31,4) i z drzwi domku klatki P−1 (426; 12,4) zamiast z miejsc tuż przy Kurosawie: `CLEANER_SPOTS` w `packages/sim/src/content/alchemia/market.ts` (zmiana pozycji rusza testy sesji aktu II w `packages/app/test`, więc osobna gałąź).
+- Zrobione 23.11: czyściciele wchodzą z drzwi windy na T0 (dwóch) i z drzwi domku klatki P−1 (jeden), krok w pasaż, przodem do niego (`CLEANER_SPOTS` w `packages/sim/src/content/alchemia/market.ts`, test w `packages/sim/test/story-act2.test.ts`).
 - Kurosawa idzie do windy po decyzji, zamiast znikać w kroku flagi: krótka trasa do drzwi windy w planie dnia (`packages/sim/src/content/schedules.ts`) albo obsługa wyjścia postaci z `when` w `sim` (dziś byt z `when` znika od razu).
 - Wygląd Kagami: osobny wygląd Kurosawy i czyściciela zamiast presetu `fixer` (`market.ts`, obsada w `packages/sim/src/content/cast.ts`), biały etui jako rekwizyt w rozmowie.
 - Skupiska drobiazgu przy wylocie metra, przy grządce Kurosawy i przy drzwiach windy: nowy plik w `packages/sim/src/content/alchemia/` (wzór `roof-dress.ts`), rysunek w `packages/engine/src/renderer/alchemia/`.
