@@ -31,8 +31,25 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak).
-    expect(EMITTERS.filter((e) => e.room === null)).toEqual([]);
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but for the yard behind
+    // Neon Koi's three on the bar's back wall outdoors: the kitchen's extract, the downpipe and the meters' box.
+    const outdoors = EMITTERS.filter((e) => e.room === null);
+    expect(outdoors.map((e) => e.sound).sort()).toEqual(["drip", "hum", "vent"]);
+    for (const e of outdoors) expect(Math.hypot(e.position.x - 313, e.position.z + 110)).toBeLessThan(3);
+  });
+
+  it("hears the yard's kitchen extract whole in the yard behind Neon Koi and dull from the bar's back room", () => {
+    const fan = EMITTERS.find((e) => e.sound === "vent" && e.room === null)!;
+    const yard = roomMix(pose(fan.position.x, fan.position.y, fan.position.z - 3), EMITTERS);
+    expect(yard.room).toBeNull();
+    expect(yard.layers.vent.gain).toBeGreaterThan(0.3);
+    expect(yard.layers.vent.cutoff).toBeGreaterThan(10000);
+    // In the back room's corridor, a couple of metres off behind the bar's back wall.
+    const corridor = INTERIORS.find((i) => i.id === "neon-koi")!.rooms[1]!;
+    const inside = roomMix(pose((corridor.minX + corridor.maxX) / 2, corridor.bottom, corridor.minZ + 1), EMITTERS);
+    expect(inside.room).toBe("neon-koi");
+    expect(inside.layers.vent.cutoff).toBe(THROUGH_WALL.cutoff);
+    expect(inside.layers.vent.gain).toBeLessThan(yard.layers.vent.gain / 2);
   });
 
   it("hears the aquarium's pump whole in Neon Koi and dull and quieter through its wall", () => {

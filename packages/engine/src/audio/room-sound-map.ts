@@ -5,13 +5,14 @@ import { type Emitter, type EmitterMix, emitterMix } from "./spatial";
 /**
  * Where the rooms sound (`docs/zasady-lokacji.md` §17, ADR-0099 stage 6): every placing of a room-detail model whose
  * shape has a `sound` (an aquarium's pump, a fuse box's hum, a metro vent, a leak's drip, a pot on the hob, the strip
- * lights) is an emitter in world metres, in the interior it stands in. Pure numbers, no WebAudio: `RoomScape` turns the
- * mix into node levels.
+ * lights) is an emitter in world metres, in the interior it stands in or outdoors (the kitchen's extract and the downpipe
+ * in the yard behind Neon Koi). Pure numbers, no WebAudio: `RoomScape` turns the mix into node levels.
  *
  * Pattern: the rooms and portals of game audio's spatial middleware (Wwise Spatial Audio rooms, Unreal's audio volumes
- * with interior settings): an emitter in the listener's room is heard whole, one in another room or outside comes
- * through the walls quieter and low-passed. Different from them: no portals (a room's doorway does not carry the sound
- * further than its walls do) and no reverb of the room's own, as the street's ambience has none either.
+ * with interior settings): an emitter in the listener's room is heard whole, and one outdoors by a listener outdoors;
+ * one in another room, or outdoors for a listener inside, comes through the walls quieter and low-passed. Different
+ * from them: no portals (a room's doorway does not carry the sound further than its walls do) and no reverb of the
+ * room's own, as the street's ambience has none either.
  */
 
 export interface RoomEmitter extends Emitter {
@@ -109,8 +110,9 @@ export const roomMix = (pose: AudioListenerPose, emitters: readonly RoomEmitter[
       layers[sound] = SILENT;
       continue;
     }
-    const inside = emitterMix(pose, mine.filter((e) => e.room !== null && e.room === room), ref, max);
-    const through = emitterMix(pose, mine.filter((e) => e.room === null || e.room !== room), ref, max);
+    // Heard whole in its own room, and outdoors (a yard's extract, its downpipe) by a listener outdoors.
+    const inside = emitterMix(pose, mine.filter((e) => e.room === room), ref, max);
+    const through = emitterMix(pose, mine.filter((e) => e.room !== room), ref, max);
     const wall = through.gain * THROUGH_WALL.gain;
     layers[sound] = inside.gain >= wall ? { ...inside, cutoff: OPEN } : { gain: wall, pan: through.pan, cutoff: THROUGH_WALL.cutoff };
   }
