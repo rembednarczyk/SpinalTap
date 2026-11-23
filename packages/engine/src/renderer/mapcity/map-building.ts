@@ -48,13 +48,20 @@ export const remembranceNear = (ring: readonly P2[], places: readonly Remembranc
  */
 const canopyOf = (c: MappedCanopy | null): { canopy?: MappedCanopy } => (c ? { canopy: c } : {});
 
+/** The least depth drawn under the top of a building lifted to its soffit (m): a footbridge's or a lifted part's storey. */
+const LIFTED_MIN_DEPTH = 1;
+/** The least depth of a roof on posts (G-063, m): its sheet and fascia. */
+export const CANOPY_MIN_DEPTH = 0.2;
+
 export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: number, z: number) => number | null, around: Iterable<BuildingSource> = []): MapBuilding => {
   const v = e.view;
   const base = e.at.y;
   const towers = bellTowersAt(e.at.x, e.at.z, v.outline.length);
   const quiet = remembranceNear(e.ring);
   const plinth = v.soffit !== undefined ? 0 : Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
-  let foot = v.soffit !== undefined ? base + Math.min(Math.max(v.soffit, 0), v.height - 1) : base;
+  const canopy = v.soffit !== undefined ? canopyAt(e.at.x, e.at.z, v.outline.length) : null;
+  // A roof on posts is a thin slab (G-063); a footbridge or a lifted part keeps a storey's metre at least.
+  let foot = v.soffit !== undefined ? base + Math.min(Math.max(v.soffit, 0), v.height - (canopy ? CANOPY_MIN_DEPTH : LIFTED_MIN_DEPTH)) : base;
   if (v.soffit === undefined) for (const p of e.ring) foot = Math.min(foot, heightAt(p.x, p.z) ?? base);
   return {
     id,
@@ -73,7 +80,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.doorways?.length ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) } : {}),
     ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
     ...(v.soffit !== undefined ? { lifted: true } : {}),
-    ...canopyOf(v.soffit !== undefined ? canopyAt(e.at.x, e.at.z, v.outline.length) : null),
+    ...canopyOf(canopy),
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
     ...(towers.length > 0 ? { towers } : {}),
     ...(towerAt(e.at.x, e.at.z, v.outline.length) ? { freeTower: true } : {}),
