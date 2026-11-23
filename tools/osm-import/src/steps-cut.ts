@@ -58,3 +58,26 @@ export const offSteps = <T>(out: readonly T[], ground: (o: T) => GroundOut, put:
     return rings(difference(own, near, FillRule.NonZero)).map((r) => put(o, { ...g, outline: r.flatMap((p) => [p.x, p.z]) }));
   });
 };
+
+/**
+ * Each flight of `out` (read by `ground(o)`) less the carriageway's pieces the chunk lays (`road(o)`:
+ * the asphalt or setts of a carriageway's own band and its widened stretches, its zebras, its kerb
+ * stones), the rest as they are, in their order (G-963): a steps way mapped to the street's axis,
+ * as a path is joined to it, would lay its last treads over the lanes the cars drive on, and the
+ * steps rank first (G-781). Cut to the millimetre, as the partition cuts (`ground-partition.ts`), so
+ * the flight's sides keep their line; a flight stops at the kerb, as a laid sidewalk does.
+ */
+export const flightsOffRoads = <T>(out: readonly T[], ground: (o: T) => GroundOut, put: (o: T, g: GroundOut) => T, road: (o: T) => boolean): T[] => {
+  const roads = out.filter((o) => road(o) && !ground(o).bridge).map((o) => toPath(ringOf(ground(o).outline)));
+  if (roads.length === 0) return [...out];
+  const boxes = roads.map((p) => ringBounds(toPts(p)));
+  return out.flatMap((o) => {
+    const g = ground(o);
+    if (g.surface !== "steps" || g.bridge) return [o];
+    const own = [toPath(ringOf(g.outline))];
+    const box = ringBounds(toPts(own[0]!));
+    const near = roads.filter((_, i) => overlap(boxes[i]!, box));
+    if (near.length === 0 || area(intersect(own, near, FillRule.NonZero)) <= SPECK) return [o];
+    return rings(difference(own, near, FillRule.NonZero)).map((r) => put(o, { ...g, outline: r.flatMap((p) => [p.x, p.z]) }));
+  });
+};

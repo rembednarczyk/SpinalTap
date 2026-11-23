@@ -16,11 +16,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: `packages/sim/test/ground-readers.test.ts`, „keeps the car lanes on the carriageway”: wierzchołek półokręgu `uTurn` leży na płaskim końcu jezdni, a `surfacesAt` daje tam plac. Ten sam rodzaj co znany `Ciasna:b 583.1,575.5`; obie zawrotki w `KNOWN_OFF_ROAD` z odnośnikiem do tego wpisu.
 - Poprawka: `turnRound` cofa zawrotkę na ślepym końcu o promień i zapas, tak by wierzchołek został na jezdni (zmiana pasów w całym mieście, osobny PR). Test przyjęcia: punkty znikają z `KNOWN_OFF_ROAD`.
 
-### G-963 Schody przy Szkolnej wchodzą końcem na jezdnię
-- Status: zgłoszone (S3: schody leżą na pasie ruchu, auta jadą po stopniach)
-- Gdzie: Szkolna przy (864,5, 601,8), schody (862,7–882,7, 593,8–604,7) w podzamcze-1-2
-- Dowód: ten sam test: punkt pasa `Szkolna#109` na kawałku `steps`; zachodni koniec schodów zachodzi ok. 1,5 m na jezdnię. Punkt w `KNOWN_OFF_ROAD` z odnośnikiem.
-- Poprawka: import przycina schody do krawędzi jezdni, jak chodniki przy skrzyżowaniach. Test przyjęcia: punkt znika z listy, a skan nie ma schodów na jezdni.
+### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
+- Status: zgłoszone (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
+- Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
+- Dowód: po G-963 bieg kończy się na krawężniku Szkolnej, 3 m przed osią ulicy. Dolne 6 m biegu leży na skarpie o nachyleniu ok. 0,6 (teren gry od −9,8 m przy krawężniku do −5,7 m), a `layFlight` nie mieści tam biegu normy (najwyżej 12 stopni, potem podest) nad terenem, więc stawia stopnie po terenie (`dueAt`): stopień 0,60 m na podstopniu 0,149 m. Przed G-963 bieg sięgał 3 m dalej, na jezdnię, i mieścił się w normie. Miejsce przyjęte w bazie skanu świadomie w PR G-963.
+- Poprawka: `layFlight` na stromej skarpie: dłuższy bieg bez podestu (jak przy `step_count`) albo stopnie wyższe w normie przy stopie biegu; osobny PR renderera. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
 
 ### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
 - Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)
