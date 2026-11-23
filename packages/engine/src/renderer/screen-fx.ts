@@ -83,7 +83,7 @@ export interface ScreenFxDeps {
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
 /**
  * The vents' looks in the order of `STEAM_VENTS`: the manhole on the deptak, cold; the car wash's, pinkish under its
- * neon. A vent past them steams in `STEAM_LOOK`, warm grey and thin.
+ * neon. A vent past them steams in `STEAM_LOOK`, warm grey and thin (the kitchen's extract behind Neon Koi: frying's vapour).
  */
 const STEAM_LOOKS: readonly { readonly tint: Color4; readonly rate: number }[] = [
   { tint: new Color4(0.6, 0.74, 0.85, 0.3), rate: 22 },
@@ -173,19 +173,8 @@ export class ScreenFx {
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
     this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene, deps.roofOver);
-<<<<<<< HEAD
-    if (!stage.options.reference) {
-      // The manhole on the deptak and the vent behind the car wash (ADR-0045), the kitchen's extract behind Neon Koi
-      // (`docs/lokacje/koi-podworko.md`): frying's vapour, warm grey and thin.
-      const [manhole, vent, kitchen] = STEAM_VENTS;
-      if (manhole) createSteam(scene, new Vector3(manhole.x, manhole.y, manhole.z), new Color4(0.6, 0.74, 0.85, 0.3), 22);
-      if (vent) createSteam(scene, new Vector3(vent.x, vent.y, vent.z), new Color4(0.8, 0.58, 0.64, 0.26), 14);
-      if (kitchen) createSteam(scene, new Vector3(kitchen.x, kitchen.y, kitchen.z), new Color4(0.78, 0.72, 0.66, 0.22), 10);
-    }
-=======
     // The street's vents (ADR-0045), steaming near the camera only (`SteamVents`).
     this.steam = stage.options.reference ? null : new SteamVents(scene, STEAM_VENTS.map((at, i) => ({ at, ...(STEAM_LOOKS[i] ?? STEAM_LOOK) })));
->>>>>>> d70defd3529f720607030ea87d8aec6afaa3fd62
   }
 
   private isCameraTarget(id: EntityId): boolean {
