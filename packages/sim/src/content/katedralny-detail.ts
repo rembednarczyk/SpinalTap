@@ -20,8 +20,9 @@ const before = (p: StreetPropItem, d: number) => ({ x: p.x + Math.sin(p.yaw) * d
 const beside = (p: StreetPropItem, d: number) => ({ x: p.x + Math.cos(p.yaw) * d, z: p.z - Math.sin(p.yaw) * d });
 const model = (key: string, at: { x: number; z: number }, yaw: number): StreetPropItem => ({ prop: "room-detail", x: at.x, y: groundY(at.x, at.z), z: at.z, yaw, variant: roomDetailShape(key) });
 
-/** The candles 1 m before the monument, the terminal 1.5 m beside the stone, both facing as they face. */
+/** The candles 1 m before the monument, facing as it faces; the terminal 1.5 m beside the stone. */
 export const KATEDRALNY_DETAIL: readonly StreetPropItem[] = [
   model("rd-kat-candles", before(KATEDRALNY_MONUMENT, 1.0), KATEDRALNY_MONUMENT.yaw),
-  model("rd-kat-terminal", beside(GLAZ_KATOWSKI, 1.5), GLAZ_KATOWSKI.yaw),
+  // Its screen to the square, away from the tower's wall the stone faces.
+  model("rd-kat-terminal", beside(GLAZ_KATOWSKI, 1.5), GLAZ_KATOWSKI.yaw + Math.PI),
 ];
