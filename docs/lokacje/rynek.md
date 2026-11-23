@@ -87,12 +87,8 @@ Gracz wchodzi z Bramowej, od Bramy Krakowskiej (scena `rynek-tpp`, 21:01). Wąsk
 - Światło drogi na Grodzką w rogu Rynku (wyjście w stronę Zamku w akcie III).
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/rynek-detail.ts`, `tools/blender/rooms/rynek.py`, test `packages/sim/test/rynek-scene.test.ts`): stolik Tetsu jako model (bryła zostaje, rysuje ją model) z brzęczeniem listwy (`hum`), skupiska przy DENKI, SAKE i KARAOKE, automat z napojami przy spotkaniu `enc_kanal_vending`, latarnia na kamienicy przy wylocie Grodzkiej; zdanie Mei o piwnicach poprawione w #955. Zostaje:
 - Przepis zabytku Trybunału (fasada Merliniego, wieża z zegarem, beżowy tynk, zielony dach) i wysokość z LoD2 (G-119, T-254, T-066): `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`, korekta wysokości w `tools/osm-import` (`LOD1_LANDMARKS`).
 - Przedsionek KARAOKE z kotarą (model `rd-k-curtain` jest w zestawie Blendera) i witryna DENKI: wnętrze w `packages/sim/src/content/interiors.ts` albo nowy plik pokoju w `packages/sim/src/content/`, wpis w `INTERIORS` i karta pomieszczenia (§12: każde pomieszczenie osobnym wnętrzem).
-- Automat z napojami przy (590; −10) dla `enc_kanal_vending` (ink: „Automat z napojami przy DENKI”): `packages/sim/src/content/district-kanal.ts` (`KANAL_PROPS`, na końcu listy) albo plan mebli `tools/osm-import`.
-- Stolik Tetsu jako model zamiast bloku i skupiska drobiazgu przy SAKE, KARAOKE, DENKI: nowy `tools/blender/rooms/rynek.py`, nowy `packages/sim/src/content/rynek-detail.ts`, klucze na końcu `ROOM_DETAIL_SHAPES`.
 - Brzęczenie neonów Starego Miasta (dziś `neonEmitters()` czyta tylko `DISTRICT_M0_PROPS`) i warsztat Tetsu jako emiter: `packages/engine/src/audio/spatial.ts`, `packages/engine/src/audio/ambience.ts`.
-- Światło drogi przy wylocie Grodzkiej z Rynku (577; −23): `packages/sim/src/content/district-kanal.ts` (`streetLamp`).
-- Sprzeczność ink i gry: Mei mówi „Zanim zamknęli piwnice pod Rynkiem”, a Trasa Podziemna jest w grze otwarta z neonem nad drzwiami. Propozycja: tabliczka „zamknięte” i wyłamany zamek przy drzwiach Trybunału w `packages/sim/src/content/kanal-underground.ts` albo zmiana zdania w `packages/narrative/ink/{pl,en}/m4-ulica.ink`.
-- Sprzeczność ADR i gry: ADR-0045 („Gdzie co stoi”) podaje SAKE przy (547,5; −71,5), a gra ma (559,6; −83,5) po G-943; dopisek w `docs/adr/0045-gra-w-lublinie.md` albo w nowym ADR o przeniesieniach.
 - Zmierzyć 60-30-10 na zrzucie `rynek-tpp` i wpisać w §13 tej karty.
