@@ -85,6 +85,7 @@ Seki wchodzi od Bajkowskiego osią wejścia, między pasami LED, pod płytę L2.
 - Pomiar: ujęcie nocne z osi wejścia na drzwi główne w `tools/shots/room-spots.json`.
 
 ## Dług sceny
+Zrobione 23.11: teksty celu, ink i `docs/narrative/lublin-names.md` mówią o pasażu pod frontem (#955), nazwa w rejestrze „Pasaż T0 przy windzie Alchemii (Kurosawa)”, id bez zmian. Zostaje:
 - Wejście czyścicieli z drzwi windy (413,5; 31,4) i z drzwi domku klatki P−1 (426; 12,4) zamiast z miejsc tuż przy Kurosawie: `CLEANER_SPOTS` w `packages/sim/src/content/alchemia/market.ts` (zmiana pozycji rusza testy sesji aktu II w `packages/app/test`, więc osobna gałąź).
 - Kurosawa idzie do windy po decyzji, zamiast znikać w kroku flagi: krótka trasa do drzwi windy w planie dnia (`packages/sim/src/content/schedules.ts`) albo obsługa wyjścia postaci z `when` w `sim` (dziś byt z `when` znika od razu).
 - Wygląd Kagami: osobny wygląd Kurosawy i czyściciela zamiast presetu `fixer` (`market.ts`, obsada w `packages/sim/src/content/cast.ts`), biały etui jako rekwizyt w rozmowie.
@@ -92,7 +93,4 @@ Seki wchodzi od Bajkowskiego osią wejścia, między pasami LED, pod płytę L2.
 - Ławka i kosz przy pawilonie metra, kamera galerii nad drzwiami, tablica kierunkowa: meble z `StreetPropKind` w treści frontu (`front-dress.ts`).
 - Furgonetka Kagami na szczycie rampy, z flagą `kagami_job`: auto zaparkowane w `packages/sim/src/content/parked-cars.ts` z warunkiem obecności.
 - Dźwięk wentylacji metra, windy i pogłosu pod L2: emitery w `packages/engine/src/audio/` (mapa źródeł na zewnątrz, jak `w3-sound-map.ts`).
-- Tekst miejsca: cel i ink mówią „na placu za Alchemią”, a od ADR-0074 B1 pasaż leży pod frontem od Bajkowskiego. Propozycja: „w pasażu pod frontem Alchemii, przy windzie” w `packages/ui/src/i18n/{pl,en}/domain.ts` (`quest.m3_lustro.overpass`, `.ambush`) i w `packages/narrative/ink/{pl,en}/m0.ink` (Kaito: „czeka dziś za Alchemią”, „czeka za Alchemią”). Nagranie klienta („na placu za Alchemią, przy targu”) może zostać, bo to fałszywy głos.
-- Identyfikatory z „wiaduktem”: krok `overpass`, flaga `kenta_overpass`, skrytka `stash:targ-overpass` zostają (zapis, `docs/narrative/lublin-names.md`), ale komentarz miejsc w `packages/core/src/contracts/contracts.ts` („the market under the viaduct over aleja Tysiąclecia”) i wiersz o Kurosawie w `docs/narrative/lublin-names.md` („wiadukt nad aleją Tysiąclecia” w `m3-lustro.ink`) są nieaktualne.
-- Nazwa w rejestrze: „Parking przy kiosku windy” w `tools/rooms/src/locations.ts` opisuje stan sprzed O1 i B1 (kiosk windy stoi dziś nad dachem galerii). Propozycja: „Pasaż T0 przy windzie Alchemii (Kurosawa)”, id bez zmian.
 - Pomiar §13: ujęcie nocne z osi wejścia w `tools/shots/room-spots.json`.

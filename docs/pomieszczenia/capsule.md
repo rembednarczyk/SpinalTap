@@ -64,7 +64,7 @@ Pokój nie ma zadania, rozmowy ani skrytki. ADR-0063 (etap 3) postanowił, że t
 - Gdy użytkownik zdecyduje o kryjówce: łóżko jako miejsce zapisu i skrytka w skrzyni.
 
 ## Dług sceny
-- Sprzeczność ADR: ADR-0102 i `STORY_INTERIORS` w `tools/rooms/src/locations.ts` liczą kapsułę do wnętrz fabularnych, a ADR-0063 (etap 3) mówi, że to pokój bez fabuły, a kryjówka Seki czeka na decyzję. Propozycja: pytanie do użytkownika w `docs/backlog.md` (kryjówka Seki z łóżkiem do zapisu i skrytką w skrzyni albo kapsuła poza `STORY_INTERIORS`); do tej pory scenariusz opisuje tylko wejście z autozapisem.
+- Kryjówka gracza (decyzja rekomendowana 23.11, nota w ADR-0063): łóżko jako miejsce zapisu i skrytka w skrzyni; dziś wnętrze ma tylko wejście z autozapisem, a nazwa `interior.capsule` mówi o pokoju na wynajem (`packages/ui/src/i18n/{pl,en}/content.ts`).
 - Kryjówka, jeśli zapadnie decyzja: interakcja łóżka i skrytka w skrzyni w `packages/sim/src/content/capsule-room.ts` (bryła skrzyni już jest w `CAPSULE_FURNITURE`), tekst podpowiedzi w katalogach `i18n/{en,pl}`.
 - Pasek LED i lampki szafek przypięte do opraw modelu (§13): `packages/engine/src/renderer/rooms/room-lights.ts`.
 - Szum Jezuickiej i kroki patrolu za drzwiami jako dźwięk ze źródła (§17): `packages/engine/src/audio/room-sound-map.ts`.

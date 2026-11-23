@@ -46,7 +46,6 @@ Frakcja: ulica (handel z kiosków i straganów, nocny yatai).
 ## Dług sceny
 - Pora yatai: wózek, lampiony nad nim i kucharz stoją przez całą dobę (`DEPTAK_NIGHT_PIECES`, `DEPTAK_NIGHT_PROPS`, `DEPTAK_NIGHT_CROWD` bez godzin). Propozycja: w dzień wózek złożony (plandeka zamiast noren, bez kucharza i klientów), wieczorem rozstawiony; plan dnia kucharza w `packages/sim/src/content/schedules.ts`, rysunek pory w `packages/engine/src/renderer/alchemia/deptak-night-geometry.ts`.
 - Nawierzchnia pasa pod yatai i stołkami (x 448,8–451,9, z −8…−4), dziś goły grunt (klasa G-726): obszar kostki w korektach importu (`tools/osm-import/src/corrections-alchemia.ts`), z wierszem T i przeglądem `topography-curator`.
-- Sprzeczność planu i gry o trolejbusie i dostawach (plan W2 a T-324): decyzja użytkownika. Albo trasa trolejbusu przez deptak w tempie pieszym (wyjątek w `lanesOf` w `packages/sim/src/content/traffic.ts`, zmiana złotego hasha), albo zapis w T-324, że sieć jest martwa, i neony lub lampy podwieszone pod nią jako uzasadnienie.
 - Drobiazg przy kioskach MPK, Ruchu i naprawy telefonów: części na końcu listy w `packages/sim/src/content/alchemia/deptak-stalls.ts`.
 - Zielone wyróżnienie wylotu metra B i schodów na T1 od strony deptaku (§13 nawigacja): rysunek w `packages/engine/src/renderer/alchemia/deptak-sign-geometry.ts` albo pas LED przy wylocie w `packages/engine/src/renderer/metro/pavilion-signs.ts`.
 - Źródła dźwięku: garnek yatai, neony, sieć trakcyjna, przystanek: mapa źródeł na zewnątrz w `packages/engine/src/audio/`.
