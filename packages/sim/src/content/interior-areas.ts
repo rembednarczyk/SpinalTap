@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
+import { KOI_BACK_ROOM, ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
 import { TRASA_PODZIEMNA_ROOMS } from "./kanal-underground";
 import { CAPSULE_INTERIOR_ROOM, CAPSULE_SITE } from "./capsule-room";
 import { METRO_PLATFORMS } from "./metro";
@@ -74,6 +74,9 @@ const oldRoom = (point: (x: number, y: number, z: number) => Vec3, x0: number, x
   return { minX: Math.min(a.x, b.x), maxX: Math.max(a.x, b.x), minZ: Math.min(a.z, b.z), maxZ: Math.max(a.z, b.z), bottom: floor, top: floor + ROOM_CEILING };
 };
 
+/** Neon Koi's back room (`KOI_BACK_ROOM`): the corridor from the bar's back wall to the end wall, under its own ceiling. */
+const koiBackRoom = (): InteriorRoom => ({ ...oldRoom(koiPoint, 17, KOI_BACK_ROOM.x1, KOI_BACK_ROOM.z0, KOI_BACK_ROOM.z1, KOI_SITE.floor), top: KOI_SITE.floor + KOI_BACK_ROOM.ceiling });
+
 /** Tessen's pass office on the ground floor of W-3's tower (ADR-0082), inside its walls, up to its ceiling. */
 /** A storey of Alchemia's gallery (its rectangles' `x0..z1`) as a room. */
 const room = (r: { x0: number; x1: number; z0: number; z1: number; bottom: number; top: number }): InteriorRoom => ({ minX: r.x0, maxX: r.x1, minZ: r.z0, maxZ: r.z1, bottom: r.bottom, top: r.top });
@@ -104,7 +107,7 @@ const SHOP_INTERIORS: readonly InteriorDef[] = ALL_SHOPS.map((s) => ({
 /** Every interior the player can walk into. A new one is one more entry (ADR-0061); one inside another comes before it. */
 export const INTERIORS: readonly InteriorDef[] = [
   { id: "clinic", name: "interior.clinic", building: CLINIC_SITE.building, rooms: [oldRoom(clinicPoint, -17, -7.3, 1.3, 7.7, CLINIC_SITE.floor)] },
-  { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor)] },
+  { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor), koiBackRoom()] },
   { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM] },
   // W-3's hall and its basement with the culvert (ADR-0082 stage 2), behind the fence: no autosave.
   { id: "w3-hall", name: "interior.w3-hall", building: null, rooms: W3_HALL_ROOMS, autosave: false },

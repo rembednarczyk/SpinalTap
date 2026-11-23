@@ -21,7 +21,7 @@ import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { METRO_NAV } from "./metro-nav";
-import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
+import { CLINIC_DOOR, KOI_BACK_CUT, KOI_DOOR, S7_NAV } from "./interiors";
 import { W3_BOUNDS, W3_CHUNK, W3_CUTS, W3_NAV, W3_PROPS, W3_SCENERY, W3_VAULTS } from "./tessen-w3";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
@@ -126,7 +126,8 @@ const mapChunkOf = (x: number, z: number): string => {
  */
 const ROOM_CUTS: readonly RoomCut[] = [
   { site: CLINIC_SITE, doors: [{ x: CLINIC_DOOR.at.x, width: CLINIC_DOOR.width, height: CLINIC_DOOR.height }] },
-  { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
+  // Neon Koi with its back room through the ground floor to the yard (`docs/lokacje/koi-podworko.md`).
+  { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }], back: KOI_BACK_CUT },
   { site: CAPSULE_SITE, doors: [{ x: CAPSULE_DOOR.at.x, width: CAPSULE_DOOR.width, height: CAPSULE_DOOR.height }] },
 ];
 

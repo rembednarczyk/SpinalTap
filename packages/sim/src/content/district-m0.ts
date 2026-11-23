@@ -18,7 +18,7 @@ import {
   skin,
   v,
 } from "./builders";
-import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
+import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_BACK_ROOM_PROPS, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
 import { CAR_WASH_PLACE } from "./lublin/sites";
 import { ground, groundY, onPaving } from "./lublin/terrain";
 
@@ -81,6 +81,8 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,
+  // Neon Koi's back room to the yard, then the yard's own things (`docs/lokacje/koi-podworko.md`), last so the ids above stay.
+  ...KOI_BACK_ROOM_PROPS,
 ];
 
 /**
