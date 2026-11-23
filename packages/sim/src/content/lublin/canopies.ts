@@ -4,10 +4,9 @@
  * from the ground to the soffit. One walks and drives under them between the posts; the crowd,
  * the furniture and the ground under them are the chunk's as before.
  */
-import type { ViewDescriptor } from "@seki/core";
+import type { Vec3, ViewDescriptor } from "@seki/core";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
-import type { SceneryItem } from "./city";
 import type { LublinCanopyData, LublinChunkData } from "./types";
 
 /** A post's side, metres (`tools/osm-import/src/canopies.ts`). */
@@ -52,4 +51,7 @@ export const canopyProp = (c: LublinCanopyData): StaticProp => {
 export const chunkCanopies = (c: LublinChunkData): StaticProp[] => (c.canopies ?? []).map(canopyProp);
 
 /** A chunk's roofs on posts as views of the scenery. */
-export const canopyScenery = (c: LublinChunkData): SceneryItem[] => chunkCanopies(c).map((p) => ({ chunk: c.id, view: p.view, at: p.center }));
+/** A view of the scenery (`SceneryItem` of `city.ts`, which reaches this module back through the index). */
+type CanopyScenery = { readonly chunk: string; readonly view: ViewDescriptor; readonly at: Vec3 };
+
+export const canopyScenery = (c: LublinChunkData): CanopyScenery[] => chunkCanopies(c).map((p) => ({ chunk: c.id, view: p.view, at: p.center }));
