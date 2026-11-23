@@ -16,6 +16,7 @@ import { INTERIOR_CONTRACTS, INTERIOR_STASHES, LOCATIONS, type LocationRefs, STO
  * entrances, building sites, encounters, stashes) belongs to a location or to an interior with a room card.
  * The cards are written in batches: `locations-pending.json` lists the ones still to write and only shrinks
  * (a card that is complete while still listed is a red test too; `LOCATIONS_PENDING=update` rewrites the list).
+ * A background location (not `story`) has a short scenario instead (`## Scenariusz tła`, three lines).
  */
 
 const LOCATION_CARDS = new URL("../../../docs/lokacje/", import.meta.url);
@@ -26,6 +27,9 @@ const UPDATE = process.env.LOCATIONS_PENDING === "update";
 const SECTIONS = ["## Historia", "## Klimat", "## Przeznaczenie", "## Topografia", "## Inwentarz docelowy", "## Frakcja i zasady", "## Dług sceny"] as const;
 /** The scenario of a story location or interior: what the player sees first, who stands where, the beats, the ways in and out, the times and states, and what the scene must have. */
 const SCENARIO = ["## Scenariusz", "### Pierwszy kadr", "### Postacie i miejsca", "### Przebieg", "### Drogi", "### Pora i stan świata", "### Wymagania wobec sceny"] as const;
+/** The short scenario of a background location (the user's decision of 23.11): who comes here, what goes on, the trace they leave. */
+const BACKGROUND = ["## Scenariusz tła"] as const;
+const BACKGROUND_LINES = ["- Kto tu bywa:", "- Co się dzieje:", "- Ślad obecności:"] as const;
 const FACTION = /^Frakcja: (ulica|technika|korporacja)\b/m;
 const RULES = ["§12", "§13", "§14", "§15", "§16", "§17"] as const;
 
@@ -44,6 +48,7 @@ const missing = (file: URL, parts: readonly string[], encounters: readonly strin
     if (!FACTION.test(text)) out.push("Frakcja: ulica|technika|korporacja");
     for (const r of RULES) if (!new RegExp(`^- ${r} `, "m").test(text)) out.push(`- ${r} w audycie`);
   }
+  if (parts.includes(BACKGROUND[0])) for (const l of BACKGROUND_LINES) if (!text.split("\n").some((line) => line.startsWith(`${l} `))) out.push(l);
   if (encounters.length > 0) {
     if (!/^## Spotkania\s*$/m.test(text)) out.push("## Spotkania");
     for (const e of encounters) if (!text.includes(`\`${e}\``)) out.push(`spotkanie \`${e}\``);
@@ -51,7 +56,7 @@ const missing = (file: URL, parts: readonly string[], encounters: readonly strin
   return out;
 };
 
-const locationGaps = new Map(LOCATIONS.map((l) => [l.id, missing(new URL(`${l.id}.md`, LOCATION_CARDS), l.story ? [...SECTIONS, ...SCENARIO] : SECTIONS, l.refs?.encounters)]));
+const locationGaps = new Map(LOCATIONS.map((l) => [l.id, missing(new URL(`${l.id}.md`, LOCATION_CARDS), l.story ? [...SECTIONS, ...SCENARIO] : [...SECTIONS, ...BACKGROUND], l.refs?.encounters)]));
 const interiorGaps = new Map(STORY_INTERIORS.map((id) => [id, missing(new URL(`${id}.md`, ROOM_CARDS), SCENARIO)]));
 
 const covered = (key: keyof LocationRefs): Set<string> => new Set(LOCATIONS.flatMap((l) => l.refs?.[key] ?? []));
@@ -101,7 +106,7 @@ describe("the location cards (ADR-0102)", () => {
   });
 
   for (const l of LOCATIONS) {
-    it(`has the card of ${l.id}${l.story ? " with its scenario" : ""}`, () => {
+    it(`has the card of ${l.id}${l.story ? " with its scenario" : " with its background scenario"}`, () => {
       if (pending.locations.includes(l.id)) return;
       expect(locationGaps.get(l.id), `docs/lokacje/${l.id}.md`).toEqual([]);
     });

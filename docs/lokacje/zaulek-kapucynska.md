@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 częściowo: ulica, ale czysta jak deptak; brudu i prowizorki tylnej uliczki brak.
 - §17 dług: gwar deptaka słychać jako tło, ale lokale i bankomat nie mają źródła dźwięku. Ruch: tłum i auta; skala: drzwi, ławki, słupki.
 
+## Scenariusz tła
+- Kto tu bywa: goście kawiarni i hotelu; kucharze Ookii Ramen na zapleczu; ludzie wychodzący z deptaka na Peowiaków i Narutowicza; Hebi z terytorium `kapucynska-alley`, którzy pilnują bankomatu i kantoru.
+- Co się dzieje: w dzień uliczka jest skrótem z deptaka i kolejką do kantoru; wieczorem światło festiwali zostaje za plecami, Hebi stoją przy bankomacie, a przechodnie wracają na deptak obok wraku auta Seki przy wylocie.
+- Ślad obecności: worek z odpadkami z Ookii Ramen i uchylone drzwi zaplecza, paragony z bankomatu na chodniku, rower miejski zostawiony w poprzek stacji.
+
 ## Dług sceny
 - Sprzeczność ADR i gry: ADR-0091 i nazwa terytorium mówią o zaułku, a rdzeń (153,1; −132) stoi na chodniku Kapucyńskiej pod bankiem. Propozycja: grupa w bramie przejazdowej kamienicy w67504413 albo w podwórku za nią, jeśli OSM ma przejście (wtedy zaułek jest prawdziwy), w `packages/sim/src/content/territory-groups.ts` i `packages/sim/src/content/lublin/gate-passages.ts`; bez przejścia nazwa „Kapucyńska pod bankiem” w `tools/rooms/src/locations.ts` i komentarzu `TERRITORIES`. Przegląd `topography-curator`.
 - Kontenery na odpadki i worki przy zapleczu Ookii Ramen (153,3; −111,6), skupiska przy grupie: rekwizyty w `packages/sim/src/content/district-m0.ts` (na końcu `DISTRICT_M0_PROPS`) albo nowy `packages/sim/src/content/kapucynska-detail.ts`, modele w nowym `tools/blender/rooms/kapucynska.py`.

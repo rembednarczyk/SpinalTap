@@ -49,6 +49,11 @@ Frakcja: ulica.
 - §16 częściowo: plac ulicy bez śladu ulicy; to miejsce, gdzie Hebi czekają na klientów kładki, a nie widać po nich nic.
 - §17 dług: wiatru na skarpie i ogródka nie słychać, emiterów brak. Ruch: tłum i Koji wieczorem; skala: ławka, latarnie, drzwi Warsztatów.
 
+## Scenariusz tła
+- Kto tu bywa: spacerowicze między Rynkiem a Bramą Grodzką; turyści na tarasie widokowym przy modelu fary; goście ogródka kawiarni; Hebi spod kładki na Grodzkiej i ich rekrut Koji, który po południu ćwiczy groźby na przechodniach (`enc_kanal_recruit`).
+- Co się dzieje: w dzień ludzie przysiadają na murkach fundamentów i fotografują Zamek i Podzamcze; po południu u wylotu placu Koji zaczepia przechodniów, a ci przyspieszają ku schodom Zaułka Panasa; nocą plac jest pusty i ciemny między latarniami Grodzkiej.
+- Ślad obecności: puszka i kartka z rysunkiem fary na murku fundamentów, filiżanki na stolikach ogródka, niedopałki przy barierce tarasu.
+
 ## Dług sceny
 Zrobione 23.11 (`packages/sim/src/content/po-farze-detail.ts`, `tools/blender/rooms/plac_po_farze.py`, test `packages/sim/test/po-farze-scene.test.ts`): luneta widokowa z ekranem AR na wschodniej, otwartej części placu i dwie ławki przy niej (bryły w puli ulicy). Zostaje:
 - Fundamenty fary z licem i żwirem w nawie (G-053): generator barier `packages/engine/src/renderer/mapcity` (bariery ADR-0077) i nawierzchnia w `tools/osm-import`, przegląd `topography-curator`.

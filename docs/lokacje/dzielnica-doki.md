@@ -55,6 +55,11 @@ Frakcja: korporacja, ulica (Tessen za płotem, giełda i przemyt przed nim).
 - `doki_gull`: nabrzeże W-3 (2482,5; 434), 10:00–17:00, strażnik Tessen (`enc_doki_gull`). Strażnik celuje pałką w mewę z metalowym dziobem i diodą w oku, dron ptasi z zamkniętego programu odstraszania, który kradnie kanapki z tuńczykiem. Seki może ją strącić (strażnik „nie widział” jej tu) albo nakarmić, a wtedy mewa siada jej na ramieniu.
 - `doki_container`: plac odbioru W-3 przy basenie (2530; 445), 22:00–4:00, bez postaci (`enc_doki_container`). Z kontenera z plombą Tessen słychać pukanie trzy krótkie, trzy długie, trzy krótkie i głos: jest ich sześcioro, nie mają już wody, pośrednik obiecał im pracę. Seki może zerwać plombę, obiecać łódź Genzō albo odejść, a pukanie słychać jeszcze aż do płotu.
 
+## Scenariusz tła
+- Kto tu bywa: dokerzy i pracownicy biura Tessen (w tym Hideo); ochrona Tessen, która płaci za udaremnione przestępstwa; przemytnik Genzō przy kontenerze KAIUN za metrem; postacie spotkań: zwolniony doker Tomo przy płocie, strażnik z mewą-dronem na nabrzeżu W-3, pukanie z kontenera na placu odbioru.
+- Co się dzieje: rano Tomo pali przy płocie za metrem, a zmiana wchodzi do magazynów; w dzień dźwig pracuje nad basenem, a strażnik przegania mewę z metalowym dziobem; nocą plac odbioru W-3 cichnie, a z zaplombowanego kontenera słychać pukanie.
+- Ślad obecności: niedopałki i kubek Tomo przy płocie Tessen, pióra i porwana kanapka strażnika na nabrzeżu, świeże plomby Tessen na kontenerach przy basenie.
+
 ## Dług sceny
 - Patrol ochrony Tessen poza płotem (Tessen jako policja na całym Nabrzeżu, ADR-0091 §3a): postacie z planem dnia w `packages/sim/src/content/schedules.ts` i treści `packages/sim/src/content/tessen-w3/public.ts` (karta `nabrzeze-bystrzycy`).
 - Emitery wody, giełdy i mostów poza W-3: `packages/engine/src/audio/spatial.ts`.

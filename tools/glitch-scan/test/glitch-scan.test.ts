@@ -2953,6 +2953,7 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
     writeFileSync("reports/map-coverage-hits.json", JSON.stringify(hitsPerCell(found, MAP_CHUNKS), null, 2));
   });
   const title = (k: string) => `finds no new place of ${k} (baseline/${k}.txt)`;
+  const CITY_KINDS = ["fill-on-green", "lawn-strip-on-paving", "lawn-on-leafoff-paving", "fill-area-mismatch", "fill-gap"];
   // The kinds computed in a process of their own start it here, cold, for the kinds' tests before
   // theirs to run meanwhile: only when their test runs (not filtered out with `-t`).
   // Vitest takes the hook's fixtures from a pattern in its first argument, the suite in its second.
@@ -2960,7 +2961,11 @@ describe("the glitch scan against its baseline (ADR-0054)", () => {
   beforeAll(({}, suite) => {
     const runs = (k: string) => suite.tasks.some((t) => t.name === title(k) && t.mode === "run");
     if (MADE.some(runs)) startMade();
-  });
+    // The generated city the fill kinds share (cold in CI: about 9 s on main), here once for all of
+    // them rather than in whichever of their tests runs first (`fill-on-green` paid for it, #983, #995).
+    for (const k of CITY_KINDS) if (!(k in CHECKS)) throw new Error(`no kind ${k} in the scan`);
+    if (CITY_KINDS.some(runs)) generatedCity();
+  }, 20_000);
   for (const [k, check] of Object.entries(CHECKS)) {
     it(title(k), async () => {
       found[k] = await check();

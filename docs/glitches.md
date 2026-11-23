@@ -5,10 +5,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
-- Status: zgłoszone (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
+- Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
 - Dowód: po G-963 bieg kończy się na krawężniku Szkolnej, 3 m przed osią ulicy. Dolne 6 m biegu leży na skarpie o nachyleniu ok. 0,6 (teren gry od −9,8 m przy krawężniku do −5,7 m), a `layFlight` nie mieści tam biegu normy (najwyżej 12 stopni, potem podest) nad terenem, więc stawia stopnie po terenie (`dueAt`): stopień 0,60 m na podstopniu 0,149 m. Przed G-963 bieg sięgał 3 m dalej, na jezdnię, i mieścił się w normie. Miejsce przyjęte w bazie skanu świadomie w PR G-963.
-- Poprawka: `layFlight` na stromej skarpie: dłuższy bieg bez podestu (jak przy `step_count`) albo stopnie wyższe w normie przy stopie biegu; osobny PR renderera. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
+- Diagnoza (23.11, noc): bieg ma 17,36 m i 6,24 m wzniosu; pierwsze 10 m terenu gry wznosi się o 5,2 m (nachylenie 0,52–0,64 na odcinkach 0,5 m). Najstromszy bieg normy to podstopień 0,17 m na stopniu 0,26 m (nachylenie 0,65), czyli ok. 31 podstopni bez podestu na tym odcinku, a norma pozwala na 12 (`STEP_NORM.maxRun`); podest na takim zboczu leży pod terenem. `layFlight` nie ma więc rozwiązania w normie i wraca do stopni po terenie (`dueAt`). Sprawdzone: zapas „jeden bieg bez podestu” przed `dueAt` tego miejsca nie zdejmuje (zdejmuje inne, stare-miasto-1-1 736,143, kosztem biegu ponad 12 podstopni, więc odrzucony).
+- Poprawka: teren gry pod biegiem, nie renderer. Skarpa z NMT przy Szkolnej jest bardziej stroma niż prawdziwe schody, które leżą we wcięciu: wcięcie terenu wzdłuż biegu do profilu biegu normy (jak `FLIGHT_RAMPS` w `sites.ts`), z przeglądem kuratora. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
 
 ### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
 - Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)

@@ -49,6 +49,11 @@ Frakcja: korporacja, ulica (Tessen nad doliną, giełda i bulwar pod nią).
 - §16 częściowo: korporacja widać tylko na płocie W-3; giełda i bulwar wyglądają jak każde przedmieście, bez kamer i patroli Tessen.
 - §17 dług: rzeka, giełda i mosty bez dźwięku źródła (tylko W-3 ma swój pejzaż dźwiękowy). Ruch: tłum dokerów za dnia, auta, trolejbusy; skala: ławki, przystanki, stragany.
 
+## Scenariusz tła
+- Kto tu bywa: dokerzy z nocnej zmiany na bulwarze; handlarze i klienci Giełdy na Kresowej, gdzie sprzedaje się to, co spadło z kontenerów; ochrona Tessen, jedyna policja doliny; wędkarze przy mostach Mełgiewskiej; ludzie Genzō między metrem a rzeką.
+- Co się dzieje: rano giełda rozkłada budy i zjeżdżają auta z towarem; w dzień ochrona Tessen obchodzi płot W-3 i most Lutosławskiego; wieczorem dokerzy wracają bulwarem do metra, a nad wodą zostają wędkarze i przemytnicy.
+- Ślad obecności: wędka z żyłką w wodzie na barierce mostu Mełgiewskiej, kartony z plombami Tessen pod budami giełdy, puszki na ławkach bulwaru.
+
 ## Dług sceny
 - Emiter wody pod mostami i przy wylocie kolektora, gwar giełdy: `packages/engine/src/audio/spatial.ts` (lista emiterów spoza `DISTRICT_M0_PROPS`), poziom według pory w `packages/engine/src/audio/soundscape-clock.ts`.
 - Patrol ochrony Tessen na bulwarze i kamery na latarniach przy mostach (Tessen jako policja, ADR-0091 §3a): postacie z planem dnia w `packages/sim/src/content/schedules.ts` i treści `packages/sim/src/content/tessen-w3/public.ts`, kamery w `packages/sim/src/content/devices.ts`.

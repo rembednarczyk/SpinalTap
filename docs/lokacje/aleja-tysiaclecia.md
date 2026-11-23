@@ -49,6 +49,11 @@ Frakcja: ulica, korporacja (handel Bazaru przy alei miasta).
 - §16 częściowo: ulica w halach i korporacyjna infrastruktura alei są, ale bez kontrastu w świetle (wszystko jedna barwa latarni drogowych).
 - §17 częściowo: auta i trolejbusy słychać ze źródła; hal i grupy Hebi nie słychać. Ruch: ruch uliczny, 3 Hebi przy halach; skala: wiaty, latarnie, stragany.
 
+## Scenariusz tła
+- Kto tu bywa: kierowcy i trolejbusy cały dzień; czekający na przystanku „Muzeum Narodowe – Zamek”; trzech Hebi z grupy `bazaar-halls` przy halach od strony alei; po południu poborca Hebi i Akane (`enc_targ_debt`), wieczorem Riko z puszką na datki (`enc_targ_idol`).
+- Co się dzieje: rano rolety hal idą w górę i stragany wystawiają towar ku chodnikowi; po południu poborca liczy dług przy krawężniku, a przechodnie omijają ich szerokim łukiem; wieczorem Riko śpiewa przy wiacie, a hale gasną i robią się ciemną plamą między latarniami alei.
+- Ślad obecności: siatka z kiełbasą na barierce pasa dzielącego, niedopałki i puszki pod roletą z tagiem Hebi, bilety i kubki przy wiacie przystanku.
+
 ## Dług sceny
 - Zrobione 23.11: girlanda ciepłych żarówek nad każdym z 48 straganów Bazaru (model `rd-targ-festoon`) i światło gry w każdej (`BAZAR_LAMPS` w `packages/sim/src/content/district-targ.ts`, do 70 m od środka). Goła żarówka przy grupie Hebi (660; 380) zrobiona 23.11: na słupku w wiadrze z betonem 3,5 m od rdzenia, bo ściana hali jest 23 m dalej.
 - Daszki nad przejściami hal i brama od alei (G-063): `tools/osm-import` (zadaszenia `building=roof`) i generator straganów w `packages/engine/src/renderer/mapcity`.
