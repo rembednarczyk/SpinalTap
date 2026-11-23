@@ -21,7 +21,7 @@ KASS: Następny kawałek dla wszystkich, którzy jadą nocą przez miasto i nie 
 -> END
 
 === radio_drift_5 ===
-KASS: Szybki komunikat drogowy. Na wiadukcie nad Tysiąclecia dalej stoi auto z nocy blokady. Nikt po nie nie wrócił. Może to wy. Pomyślcie o tym przy syntezatorze.
+KASS: Szybki komunikat z miasta. Przed Arkadami w Alchemii dalej leży torba z nocy blokady. Nikt po nią nie wrócił. Może to wasza. Pomyślcie o tym przy syntezatorze.
 -> END
 
 === radio_yoru_1 ===
@@ -33,7 +33,7 @@ YUKI: Ta piosenka jest z czasów, kiedy niebo nad Trybunałem było niebieskie. 
 -> END
 
 === radio_yoru_3 ===
-REKLAMA: Ramen u Fumiko na Podzamczu, przy dworcu autobusowym. Od czwartej po południu do czwartej rano. Bulion gotowany dłużej niż wasz ostatni związek.
+REKLAMA: Ramen u Fumiko w Alchemii. Od czwartej po południu do czwartej rano. Bulion gotowany dłużej niż wasz ostatni związek.
 -> END
 
 === radio_yoru_4 ===
