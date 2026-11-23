@@ -31,6 +31,8 @@ export const CLINIC_DETAIL: readonly StreetPropItem[] = [
   // The cart and the cabinet face the room (old +x).
   item("rd-clinic-cart", -13.1, 0, 1.9, Math.PI),
   item("rd-clinic-cabinet", -16.7, 0, 6.95, Math.PI),
+  // Kaito's stool on the chair's far side from the cart, where he sat the nights she did not wake (ADR-0102 point 5).
+  item("rd-clinic-stool", -15.7, 0, 3.3, 0),
   // The bin for medical waste by the chair's foot.
   item("rd-clinic-sharps", -15.6, 0, 4.4, 0),
   // The washbasin on the surgery's south wall by the chair's head, facing into the room (old +z); the curtain on its
