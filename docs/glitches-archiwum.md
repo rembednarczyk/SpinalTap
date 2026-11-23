@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-963 Schody przy Szkolnej wchodzą końcem na jezdnię
+- Status: naprawione (23.11, gałąź fix/g963-schody-szkolna, PR w drodze); wcześniej: zgłoszone (S3: schody leżą na pasie ruchu, auta jadą po stopniach)
+- Gdzie: Szkolna przy (864,5, 601,8), schody (862,7–882,7, 593,8–604,7) w podzamcze-1-2
+- Dowód: ten sam test: punkt pasa `Szkolna#109` na kawałku `steps`; zachodni koniec schodów zachodzi ok. 1,5 m na jezdnię. Punkt w `KNOWN_OFF_ROAD` z odnośnikiem.
+- Poprawka: import przycina schody do krawędzi jezdni, jak chodniki przy skrzyżowaniach. Test przyjęcia: punkt znika z listy, a skan nie ma schodów na jezdni.
+- Naprawa (23.11): `chunkGround` tnie każdy bieg schodów kawałkami jezdni chunku (asfalt lub kostka pasa jezdni i jego poszerzeń, zebry, krawężniki), z dokładnością do milimetra jak podział gruntu (`flightsOffRoads` w `steps-cut.ts`), przed `offSteps`. Przycięte 5 biegów: Szkolna (G-963, 3 m), bieg (888; 625) w podzamcze-1-2, (1100; 655) w podzamcze-2-2, (668; −203) i (758; −210) w stare-miasto. Skan: znika `car-lane-off-road podzamcze-1-2 860,600`; przybywa `steps-riser-norm podzamcze-1-2 883,597` (G-965, przyjęte świadomie). Próba z cięciem pasów przed zaokrągleniem do 0,1 m dawała szczelinę przy skośnym boku drugiego biegu (`ground-strip-gap`) i przesunięty klucz `kerb-gap-bare`, cięcie w chunku ich nie daje.
+
 ### G-960 Schody A i B w piwnicy W-3 niewidoczne
 - Status: zamknięte 22.11: nie błąd gry. Spec roboczy wołał `teleport(page, x, y, z)`, a pomocnik e2e bierze `(x, z, yaw, pitch, y)`: gracz stał w (2530; z −33), daleko od W-3, więc propsy chunku `nabrzeze-w3` (schody, drzwi, drabiny) się nie wczytały, a kamera z `view()` patrzyła na pustą piwnicę. Z poprawnym teleportem schody A i B są widoczne (33 propsy w wypieku W-3).
 - Ważność: S2 · Zasięg: schody A (x 2517..2525, z 402..403,8) i B (x 2539..2541, z 397,6..403,6) z `tessen-w3/basement.ts` istnieją w symulacji jako bryły z `slope` (gracz po nich chodzi), ale gra ich nie rysuje: w zrzucie z wnętrza piwnicy widać podłogę, szafki i otwory w stropie, a pod nowymi poręczami z Blendera nie ma stopni. `indoor()` zostawia schody jako widok bytu („Stairs, ladders and doors stay as they are”), a hala piwnicy jest wypiekana z `W3_INSIDE_BLOCKS` bez nich; przypuszczalnie widok bytu schodów pod ziemią (w sklepieniu `GroundVault`) nie powstaje albo jest zasłonięty
