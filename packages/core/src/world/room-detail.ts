@@ -269,6 +269,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-pav-bulkhead" },
   { key: "rd-pav-hebi", fine: true, clutter: 1 },
   { key: "rd-pav-carabiner", fine: true, clutter: 1 },
+  // Plac po Farze (docs/lokacje/plac-po-farze.md, ADR-0102): the coin-op viewing telescope with its AR screen.
+  { key: "rd-fara-telescope", clutter: 1 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
