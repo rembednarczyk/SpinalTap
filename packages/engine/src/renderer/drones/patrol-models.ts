@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import type { CityProps } from "../city-props";
 import { type DroneTemplate, boxDrone, propsDrone } from "./drone-models";
+import { type DroneFlash, withLenses } from "./drone-lenses";
 import { PATROL_SCALE } from "./patrol-flight";
 
 /**
@@ -15,6 +16,8 @@ import { PATROL_SCALE } from "./patrol-flight";
  */
 
 export interface PatrolTemplate extends DroneTemplate {
+  /** Its light bar's vertex ranges that flash (near only). */
+  readonly flashes?: readonly DroneFlash[];
   /** The first vertex of the searchlight's pool. */
   readonly beam: number;
   /** The pool's points on the unit disc, each once (x, z pairs): its middle and its two rings. */
@@ -81,5 +84,10 @@ const withBeam = (data: CityKitData, t: DroneTemplate): PatrolTemplate => {
 /** The low patrol near (the props' model when there is one) and far (its boxes), each with its searchlight's pool. */
 export const patrolTemplates = (data: CityKitData, props: CityProps | null): { readonly near: PatrolTemplate; readonly far: PatrolTemplate } => {
   const far = boxDrone(data, "patrol");
-  return { near: withBeam(data, (props && propsDrone(data, props, "patrol")) ?? far), far: withBeam(data, far) };
+  // Near: its lights as lenses, the bar's red and blue flashing in turn (`drone-lenses.ts`).
+  const near = withLenses(data, (props && propsDrone(data, props, "patrol")) ?? far, PATROL_FLASH);
+  return { near: { ...withBeam(data, near), flashes: near.flashes }, far: withBeam(data, far) };
 };
+
+/** The patrol's bar: red and blue in turn, half a cycle apart. */
+export const PATROL_FLASH: Readonly<Record<string, number>> = { "neon-red": 0, "neon-blue": 0.5 };

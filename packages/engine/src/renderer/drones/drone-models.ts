@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { type CityProps, kitUvs, swatchAt } from "../city-props";
 import { DRONE_SIZE, type DroneKind } from "./drone-flight";
+import { type DroneTemplate, withLenses } from "./drone-lenses";
 
 /**
  * The drones' geometry on the city kit's texture (ADR-0022), in the drone's own frame: front +z,
@@ -10,14 +11,7 @@ import { DRONE_SIZE, type DroneKind } from "./drone-flight";
  * kept, since at night they are what shows. Pure data, no Babylon.
  */
 
-export interface DroneTemplate {
-  readonly positions: Float32Array;
-  readonly normals: Float32Array;
-  readonly uvs: Float32Array;
-  readonly colors: Float32Array;
-  readonly indices: Uint32Array;
-  readonly vertexCount: number;
-}
+export type { DroneTemplate } from "./drone-lenses";
 
 const toTemplate = (sink: GeometrySink): DroneTemplate => ({
   positions: Float32Array.from(sink.positions),
@@ -92,11 +86,11 @@ export const propsDrone = (data: CityKitData, props: CityProps, kind: DroneKind)
   return toTemplate(sink);
 };
 
-/** The near and far geometry of each kind: the props' model near when there is one. */
+/** The near and far geometry of each kind: the props' model near when there is one, its lights as lenses (`drone-lenses.ts`). */
 export const droneTemplates = (data: CityKitData, props: CityProps | null): Readonly<Record<DroneKind, { readonly near: DroneTemplate; readonly far: DroneTemplate }>> => {
   const pair = (kind: DroneKind) => {
     const far = boxDrone(data, kind);
-    return { near: (props && propsDrone(data, props, kind)) ?? far, far };
+    return { near: withLenses(data, (props && propsDrone(data, props, kind)) ?? far), far };
   };
   return { patrol: pair("patrol"), delivery: pair("delivery"), ad: pair("ad") };
 };

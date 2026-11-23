@@ -1,0 +1,1 @@
+- Światła dronów to okrągłe lampy w ciemnych oprawkach zamiast świecących klocków, belka patrolu miga na przemian czerwonym i niebieskim, a reflektor najbliższego patrolu oświetla postać stojącą w jego kręgu.
