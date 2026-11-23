@@ -99,8 +99,8 @@ export const makeCanopy = (a: Area, src: HeightSource, t: ChunkTerrain, altitude
   };
 };
 
-/** The chunk with the roofs on posts whose centroids lie in it. */
-export const withCanopies = <R extends { readonly chunk: ChunkOut }>(r: R, roofs: readonly Area[], rect: Rect, src: HeightSource, t: ChunkTerrain, altitude: number): R => {
-  const canopies = roofs.filter((a) => inRect(centroid(a.ring), rect)).flatMap((a) => makeCanopy(a, src, t, altitude) ?? []);
+/** The chunk with the map's roofs on posts (of `areas`) whose centroids lie in it: beside its buildings, not among them, so what lies under them stays. */
+export const withCanopies = <R extends { readonly chunk: ChunkOut }>(r: R, areas: readonly Area[], rect: Rect, src: HeightSource, t: ChunkTerrain, altitude: number): R => {
+  const canopies = areas.filter((a) => isCanopy(a) && inRect(centroid(a.ring), rect)).flatMap((a) => makeCanopy(a, src, t, altitude) ?? []);
   return canopies.length > 0 ? { ...r, chunk: { ...r.chunk, canopies } } : r;
 };

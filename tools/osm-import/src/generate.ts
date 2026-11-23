@@ -14,7 +14,7 @@ import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
 import { makeBuilding } from "./buildings.ts";
-import { isCanopy, withCanopies } from "./canopies.ts";
+import { withCanopies } from "./canopies.ts";
 import { COVER } from "../../orto/src/classify.ts";
 import { withBuiltSites } from "./built-sites.ts";
 import { type Cover, coverAt, coverFor } from "../../orto/src/cover.ts";
@@ -468,9 +468,7 @@ const generateMap = (
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines), frontages(lines)));
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
-  // Roofs on posts (G-063) beside the buildings, not among them: what lies under them stays.
-  const roofs = areas.filter(isCanopy);
-  const results = chunks.map((c, i) => withCanopies(generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill), roofs, c.rect, src, terrains[i]!, LUBLIN_ANCHOR.altitude));
+  const results = chunks.map((c, i) => withCanopies(generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill), areas, c.rect, src, terrains[i]!, LUBLIN_ANCHOR.altitude));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)), widths };
 };
 
