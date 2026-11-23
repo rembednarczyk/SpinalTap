@@ -116,7 +116,7 @@ const POLE_OUT = 3.5;
 /** The bulb in its fitting's frame: off the wall on the bracket's end, or on the pole's arm (`dzielnica_targ.py`). */
 const BULB = { wall: { y: 2.72, z: 0.36 }, pole: { y: 2.52, z: 0.5 } } as const;
 /** A bare bulb's light: warm white, harsher than the festoons' (§13: the group's corner stands out). */
-const BULB_LIGHT = { color: "#ffe2b8", range: 6, intensity: 1 } as const;
+const BULB_LIGHT = { color: "#ffe2b8", range: 6, intensity: 0.6 } as const;
 
 /** Where a group's bulb hangs: its fitting's foot and yaw (its front, +z, away from the wall or the arm's way). */
 export interface HebiBulb {
