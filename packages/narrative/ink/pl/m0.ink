@@ -64,7 +64,7 @@ KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Se
     SEKI: Moje imię gdzieś jest. Odzyskam je.
     KAITO: Jasne. Do tego czasu jesteś Seki.
 - KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
-KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, za Placem Łokietka, od strony Przystankowej. Nosi coś, co należy do moich klientów.
+KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, za Placem Łokietka, od strony Lubartowskiej. Nosi coś, co należy do moich klientów.
 KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem wróć tutaj, do Neon Koi. Będę przy ladzie.
 ~ set_flag("met_fixer")
 -> END

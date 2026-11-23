@@ -64,7 +64,7 @@ KAITO: The medics said you fought those seat belts like they owed you money. Sek
     SEKI: My name's out there somewhere. I'll get it back.
     KAITO: Sure. Until then, you're Seki.
 - KAITO: I paid for your patch-up, so you owe me. And you've got zero prospects. I've got work.
-KAITO: A Hebi courier's holed up in the yard behind the car wash, past Plac Łokietka, off Przystankowa. He's carrying something that belongs to my clients.
+KAITO: A Hebi courier's holed up in the yard behind the car wash, past Plac Łokietka, off Lubartowska. He's carrying something that belongs to my clients.
 KAITO: Take him out. He's got protection, so don't treat it like a stroll. Then come back here, to the Neon Koi. I'll be at the bar.
 ~ set_flag("met_fixer")
 -> END
