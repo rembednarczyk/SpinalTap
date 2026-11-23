@@ -117,6 +117,9 @@ export const atUnit = (id: string, out: number, across = 0, up = 0): Vec3 => {
   return onP3(q.minX - out, mz, up);
 };
 
+/** Where the keeper of unit `id` stands behind its counter (ADR-0101: the kitchens' cooks too). */
+export const keeperSpotOf = (id: string): Vec3 => atUnit(id, -KEEPER_IN);
+
 /** Where each keeper stands behind the counter, and which way he or she faces (out of the unit). */
 export const KEEPER_SPOTS = {
   kenta: atUnit("kenta", -KEEPER_IN),

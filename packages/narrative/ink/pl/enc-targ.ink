@@ -2,7 +2,7 @@
 
 // Kiku reads fortunes from a cracked AR deck. The cards show other people's memories.
 === enc_targ_fortune ===
-Między straganami siedzi kobieta w chuście z diodami. Na stoliku leży talia kart AR, jedna pęknięta na pół.
+Przy pawilonie metra przed dworcem siedzi kobieta w chuście z diodami. Na stoliku leży talia kart AR, jedna pęknięta na pół.
 KIKU: Siadaj, dziecko. Karty same mi powiedziały, że przyjdziesz. Albo przyjdzie ktoś w twojej kurtce.
 -> ask
 
@@ -40,15 +40,15 @@ DAIGO: Znosi jajka z certyfikatem. Bez niej jestem facetem z pustą klatką i d�
     SEKI: Czemu ona ucieka?
     DAIGO: Bo jest mądrzejsza ode mnie. Firma dała jej ten sam procesor co w kasie fiskalnej.
     -> chase
-* [Patrzysz, jak kura wbiega pod wiadukt i znika. #tone:main]
-    Kura wskakuje na schody na wiadukt i przez chwilę stoi na tle Zamku jak na plakacie. Potem jej nie ma.
+* [Patrzysz, jak kura ucieka przez plac. #tone:main]
+    Kura przebiega przez plac, wskakuje na schody zamkowe i przez chwilę stoi na tle Zamku jak na plakacie. Potem jej nie ma.
     ~ set_flag("enc_targ_chicken_free")
     DAIGO: Wolność. Zawsze o niej mówiła. Znaczy, gdakała. Co ja teraz powiem w banku?
     -> END
 
 // Akane pays her late husband's debt to Hebi. This month she is short.
 === enc_targ_debt ===
-Przy wschodniej ścianie hali targowej, od Ruskiej, kobieta w fartuchu liczy monety na dłoni. Nad nią stoi chłopak Hebi z tabletem.
+Na chodniku alei, przy dworcu, kobieta w fartuchu liczy monety na dłoni. Nad nią stoi chłopak Hebi z tabletem.
 POBORCA: Brakuje stu dwudziestu. Twój mąż wiedział, na co się pisze, kiedy pożyczał.
 AKANE: Mój mąż nie żyje od roku. Pisał się na wiele rzeczy. Ja na nic się nie pisałam.
 -> ask
@@ -79,7 +79,7 @@ AKANE: Mój mąż nie żyje od roku. Pisał się na wiele rzeczy. Ja na nic się
 
 // Riko sings under a hologram of a face that is not quite hers any more.
 === enc_targ_idol ===
-Przy północnym rzędzie śpiewa dziewczyna. Nad nią unosi się hologram idolki, która wygląda jak ona, tylko młodsza i szczęśliwsza.
+Przy przystanku na Tysiąclecia śpiewa dziewczyna. Nad nią unosi się hologram idolki, która wygląda jak ona, tylko młodsza i szczęśliwsza.
 RIKO: Kupisz płytę? Nie mam płyt. Mam kod do pobrania i dobrą wolę.
 -> ask
 
@@ -90,7 +90,7 @@ RIKO: Kupisz płytę? Nie mam płyt. Mam kod do pobrania i dobrą wolę.
     -> ask
 * [Zaśpiewaj tę, którą śpiewałaś przed wytwórnią. #tone:main]
     SEKI: Zaśpiewaj tę, którą śpiewałaś przed wytwórnią.
-    Riko gasi hologram. Śpiewa ciszej, bez podkładu. Kilku straganiarzy przestaje ważyć towar.
+    Riko gasi hologram. Śpiewa ciszej, bez podkładu. Kilku ludzi na przystanku chowa telefony.
     ~ set_flag("enc_targ_idol_song")
     ~ change_rep("civilians", 1)
     RIKO: Nikt mnie o nią nie prosił od pięciu lat. Masz, to ten kod. Prawdziwy.

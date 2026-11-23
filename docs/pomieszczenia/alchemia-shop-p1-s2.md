@@ -42,7 +42,6 @@ Frakcja: technika; druga: ulica (towar z drugiej ręki).
 - blender: rd-gl-electronics-b × 1
 - blender: rd-gl-stock × 8
 - blender: rd-gl-stock-b × 12
-- model: figure × 1
 - piece: cable × 3
 - piece: counter × 1
 - piece: cup × 1
@@ -63,7 +62,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 18 m², wysokość 4,2 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 14
-- warstwy wyposażenia: makro 15, mezo 8, mikro 12
+- warstwy wyposażenia: makro 15, mezo 7, mikro 12
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 12 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 4
 <!-- inwentarz-gry:end -->

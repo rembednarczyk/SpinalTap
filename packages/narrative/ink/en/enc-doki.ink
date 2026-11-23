@@ -14,7 +14,7 @@ TOMO: But the gate still lets me in. Nobody told it. So I come and I work. For f
     -> ask
 * [If the gate lets you in, will it let me? #tone:persuade]
     SEKI: If the gate lets you in, will it let me in too?
-    TOMO: Ha. My card opens the service gate in the fence till the end of the month. Take a copy. Let Tessen pay for that mistake.
+    TOMO: Ha. That gate lets anyone in, because nobody locks it. Tessen trusts the camera over it, not locks. Let them pay for that mistake.
     ~ set_flag("enc_doki_laidoff_badge")
     ~ change_rep("tessen", -1)
     -> END

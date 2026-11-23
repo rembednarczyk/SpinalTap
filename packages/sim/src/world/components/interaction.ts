@@ -31,6 +31,12 @@ export interface Interactable {
    * when absent. A crawl's mouth is reached from its own floor only, not from the walls by it (G-930).
    */
   readonly reachY?: number;
+  /**
+   * Reached only by her standing inside this rectangle (ADR-0101): a seller behind a shop's
+   * counter, by its side wall, is not talked to from the next shop through the wall nor from the
+   * gallery through the glass.
+   */
+  readonly from?: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
 }
 
 /**

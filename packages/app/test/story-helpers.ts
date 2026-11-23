@@ -222,7 +222,7 @@ export const playImplantFragment = (s: GameSession, ui: Ui, render: FakeRender, 
   expect(ui.getState().dialogue).toBeNull();
   s.intents.closeShop();
   steps(s, 1);
-  expect(allText(ui)).toContain("mokra obwodnica");
+  expect(allText(ui)).toContain("mokre Krakowskie Przedmieście");
   finishDialogue(s, ui, pick);
   expect(objective(ui)).toBe("Go back to Mori and decide what to do with the module (Mori's clinic)");
 };

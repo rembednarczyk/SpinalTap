@@ -30,6 +30,7 @@ import {
   groundY,
   interiorAt,
   ROOM_DETAIL_SCENERY,
+  SELLERS,
 } from "../src";
 import { routeAcrossLevels } from "../src/world/nav";
 import { PRISMS, outside } from "./alchemia-raster";
@@ -311,9 +312,12 @@ describe("the front's storeys as rooms of the gallery's arcade (ADR-0093 O5)", (
     const closed = UNITS.filter((b) => !shopOpen(b.shop)).length / UNITS.length;
     expect(closed).toBeGreaterThanOrEqual(0.2);
     expect(closed).toBeLessThanOrEqual(0.34);
-    const sellers = FRONT_ROOM_MODELS.filter((p) => p.prop === "figure");
+    // The sellers characters since ADR-0101 (`SELLERS`), no still figure behind a counter.
+    const figures = FRONT_ROOM_MODELS.filter((p) => p.prop === "figure");
     for (const b of UNITS) {
-      const mine = sellers.filter((f) => f.x > b.shop.rect.x0 && f.x < b.shop.rect.x1 && f.z > b.shop.rect.z0 && f.z < b.shop.rect.z1 && Math.abs(f.y - FRONT_FLOORS[b.shop.floor as keyof typeof FRONT_FLOORS]) < 1);
+      const inUnit = (x: number, y: number, z: number): boolean => x > b.shop.rect.x0 && x < b.shop.rect.x1 && z > b.shop.rect.z0 && z < b.shop.rect.z1 && Math.abs(y - FRONT_FLOORS[b.shop.floor as keyof typeof FRONT_FLOORS]) < 1;
+      expect(figures.filter((f) => inUnit(f.x, f.y, f.z)), b.shop.id).toEqual([]);
+      const mine = SELLERS.filter((s) => inUnit(s.at.x, s.at.y, s.at.z));
       expect(mine.length, b.shop.id).toBe(shopOpen(b.shop) ? 1 : 0);
       if (b.shop.state !== "shut") expect(b.traces.length, b.shop.id).toBeGreaterThan(0);
     }

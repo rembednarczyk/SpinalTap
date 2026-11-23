@@ -32,7 +32,7 @@ TAKUMI: Trzydzieści nocy z rzędu stoję tu z kwiatami dla Mei. Trzydzieści no
 
 // Old Sabu fishes through a drain grate over the Czechówka, which runs in pipes under the old town.
 === enc_kanal_fisherman ===
-Przy krawężniku na Grodzkiej siedzi staruszek na skrzynce i trzyma wędkę spuszczoną w kratkę ściekową.
+Przy krawężniku na Bramowej siedzi staruszek na skrzynce i trzyma wędkę spuszczoną w kratkę ściekową.
 SABU: Cicho. Bierze.
 SABU: Czechówkę zamknęli w rurach, zanim się urodziłaś, ale woda dalej płynie pod spodem. Ryby o tym wiedzą, urzędnicy nie.
 -> ask

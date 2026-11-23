@@ -51,7 +51,7 @@ EXTERNAL deliver_contract()
 + [What needs recovering? #tone:main]
     SEKI: What needs recovering?
     ~ offer_contract("retrieve")
-    HANA: The Hebi took a crate of my stock. They keep it in the hollow by the ruin behind the stalls, and a few boys guard it.
+    HANA: The Hebi took a crate of my stock. They keep it in the old air-raid shelter under Alchemia, and a few boys guard it.
     HANA: Come back with the crate. What you do about the guards is your business.
     -> END
 + { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Anyone need protecting? #tone:main]
@@ -60,7 +60,7 @@ EXTERNAL deliver_contract()
     HANA: Oyaji didn't pay the Hebi this month and they're coming for him right now. Watch him until the last of them drops.
     -> END
 + [Not now. #tone:leave]
-    HANA: I'll be by my cart, on the square behind the stalls.
+    HANA: I'll be by my cart, on the square in front of the gallery.
     -> END
 
 = delivery
@@ -80,7 +80,7 @@ HANA: I've got the package already. Go to Kaito for the money, it's his run.
 
 = running
 { contract_kind == "retrieve":
-    HANA: The crate's still with the Hebi, by the ruin behind the stalls.
+    HANA: The crate's still with the Hebi, in the shelter under Alchemia.
 - else:
     HANA: The Hebi are in the market already. Don't stand by me, watch Oyaji!
 }

@@ -21,7 +21,7 @@ KASS: Next track's for everyone driving through the city at night with no idea w
 -> END
 
 === radio_drift_5 ===
-KASS: Quick traffic update. That car from the blockade night is still parked on the viaduct over Tysiąclecia. Nobody came back for it. Maybe it's yours. Think about that over the synth.
+KASS: Quick city update. That bag from the blockade night is still lying in front of the arcades at Alchemia. Nobody came back for it. Maybe it's yours. Think about that over the synth.
 -> END
 
 === radio_yoru_1 ===
@@ -33,7 +33,7 @@ YUKI: This song is from back when the sky over the Trybunał was blue. You don't
 -> END
 
 === radio_yoru_3 ===
-REKLAMA: Ramen at Fumiko's on Podzamcze, by the bus station. Four in the afternoon to four in the morning. Broth simmered longer than your last relationship.
+REKLAMA: Ramen at Fumiko's in Alchemia. Four in the afternoon to four in the morning. Broth simmered longer than your last relationship.
 -> END
 
 === radio_yoru_4 ===

@@ -4,6 +4,7 @@ import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
 import { ALCHEMIA_MARKET_ACTORS, ALCHEMIA_MARKET_PROPS } from "./alchemia/market";
+import { SELLER_ACTORS } from "./alchemia/sellers";
 import { CASTLE_ACT3_ACTORS } from "./castle-act3";
 import { FRONT_FOOTPRINTS, L2_SLABS } from "./alchemia/front";
 import { ARCADE_FRONT } from "./alchemia/arcade-front";
@@ -26,8 +27,8 @@ const distanceToRect = (x: number, z: number, r: Rect): number => Math.hypot(Mat
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
 export const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...ALCHEMIA_MARKET_PROPS, ...W3_PROPS];
-// The gangs' groups (ADR-0091 stage 4) last, so the ids of the actors before them stay.
-export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS, ...TERRITORY_ACTORS, ...CASTLE_ACT3_ACTORS];
+// The gangs' groups (ADR-0091 stage 4) last, so the ids of the actors before them stay; Alchemia's sellers (ADR-0101) after them.
+export const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...ALCHEMIA_MARKET_ACTORS, ...W3_ACTORS, ...TERRITORY_ACTORS, ...CASTLE_ACT3_ACTORS, ...SELLER_ACTORS];
 
 /** A set piece's or a game block's clearance from the map's furniture (m). */
 const FURNITURE_CLEARANCE = 1.2;
@@ -51,7 +52,7 @@ const GATE_WALK: readonly Pt[] = [
   { x: 457, z: -95.6 },
 ];
 
-/** From Brama Grodzka down Zamkowa, across Plac Zamkowy's car park, under the viaduct to the market (ADR-0045). */
+/** From Brama Grodzka down Zamkowa, across Plac Zamkowy's car park to aleja Tysiąclecia, where the market stood until ADR-0063 moved it to Alchemia (ADR-0045). */
 const CASTLE_WALK: readonly Pt[] = [
   { x: 730, z: 155 },
   { x: 739, z: 174 },

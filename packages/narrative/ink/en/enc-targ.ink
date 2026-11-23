@@ -2,7 +2,7 @@
 
 // Kiku reads fortunes from a cracked AR deck. The cards show other people's memories.
 === enc_targ_fortune ===
-Between the stalls sits a woman in a headscarf studded with LEDs. On her little table lies a deck of AR cards, one of them cracked in half.
+By the metro pavilion outside the bus station sits a woman in a headscarf studded with LEDs. On her little table lies a deck of AR cards, one of them cracked in half.
 KIKU: Sit down, child. The cards told me you'd come. Or someone in your jacket would.
 -> ask
 
@@ -40,15 +40,15 @@ DAIGO: She lays certified eggs. Without her I'm a guy with an empty cage and a b
     SEKI: Why does she keep running?
     DAIGO: Because she's smarter than me. The company gave her the same processor as a cash register.
     -> chase
-* [You watch the hen run off under the viaduct. #tone:main]
-    The hen hops up the stairs to the viaduct and stands for a moment against the Zamek like a poster. Then she's gone.
+* [You watch the hen run off across the square. #tone:main]
+    The hen dashes across the square, hops up the Castle steps and stands for a moment against the Zamek like a poster. Then she's gone.
     ~ set_flag("enc_targ_chicken_free")
     DAIGO: Freedom. She always talked about it. Well, clucked. What do I tell the bank now?
     -> END
 
 // Akane pays her late husband's debt to Hebi. This month she is short.
 === enc_targ_debt ===
-By the east wall of the market hall, on the Ruska side, a woman in an apron counts coins in her palm. A Hebi boy with a tablet stands over her.
+On the avenue's pavement by the bus station, a woman in an apron counts coins in her palm. A Hebi boy with a tablet stands over her.
 POBORCA: You're a hundred twenty short. Your husband knew what he was signing up for when he borrowed.
 AKANE: My husband's been dead a year. He signed up for a lot of things. I never signed up for anything.
 -> ask
@@ -79,7 +79,7 @@ AKANE: My husband's been dead a year. He signed up for a lot of things. I never 
 
 // Riko sings under a hologram of a face that is not quite hers any more.
 === enc_targ_idol ===
-By the north row a girl is singing. Above her floats a hologram of an idol who looks just like her, only younger and happier.
+By the bus stop on Tysiąclecia a girl is singing. Above her floats a hologram of an idol who looks just like her, only younger and happier.
 RIKO: Buy a record? I don't have records. I've got a download code and good will.
 -> ask
 
@@ -90,7 +90,7 @@ RIKO: Buy a record? I don't have records. I've got a download code and good will
     -> ask
 * [Sing the one from before the label. #tone:main]
     SEKI: Sing the one you sang before the label.
-    Riko switches off the hologram. She sings quieter, no backing track. A few stallholders stop weighing their goods.
+    Riko switches off the hologram. She sings quieter, no backing track. A few people at the stop put their phones away.
     ~ set_flag("enc_targ_idol_song")
     ~ change_rep("civilians", 1)
     RIKO: Nobody's asked me for that one in five years. Here, that's the code. The real one.

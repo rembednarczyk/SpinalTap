@@ -147,7 +147,7 @@ export const block = (k: Fit, s: Slot, top: number): void => {
 
 /** Which way a model faces: out of the shop, into it, or along +u / -u. */
 export type Facing = "out" | "in" | "+u" | "-u";
-const yawOf = (k: Fit, to: Facing): number => (to === "out" ? k.f.out : to === "in" ? k.f.out + Math.PI : to === "+u" ? k.f.along : k.f.along + Math.PI);
+export const yawOf = (k: Fit, to: Facing): number => (to === "out" ? k.f.out : to === "in" ? k.f.out + Math.PI : to === "+u" ? k.f.along : k.f.along + Math.PI);
 
 /** One of the game's models at (u, v) on the floor (or `up` over it). */
 export const model = (k: Fit, prop: StreetPropKind, u: number, v: number, to: Facing, variant = 0, up = 0): void => {
