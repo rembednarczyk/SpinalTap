@@ -229,6 +229,20 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-cw-pay", clutter: 0 },
   { key: "rd-cw-tubes", clutter: 0 },
   { key: "rd-cw-courier", fine: true, clutter: 6 },
+  // The yard behind Neon Koi (docs/lokacje/koi-podworko.md, ADR-0102 point 5): the fittings of its lamps, the kitchen's
+  // extract and the downpipe on the bar's back wall, the cook's smoke by the door, the empties, the scooter, the bottle
+  // bank, the camera over the bins and the Hebi's mark. The lamps, the extract and the big things are on the phones too.
+  { key: "rd-kb-canopy" },
+  { key: "rd-kb-lantern" },
+  { key: "rd-kb-batten" },
+  { key: "rd-kb-extract", services: true, sound: "vent" },
+  { key: "rd-kb-downpipe", services: true, sound: "drip" },
+  { key: "rd-kb-smoke", fine: true, clutter: 5 },
+  { key: "rd-kb-crates", clutter: 0 },
+  { key: "rd-kb-scooter", clutter: 0 },
+  { key: "rd-kb-glass-bin", clutter: 1 },
+  { key: "rd-kb-camera", fine: true, clutter: 0 },
+  { key: "rd-kb-tag", fine: true, clutter: 3 },
   // Plac Litewski's scene (docs/lokacje/plac-litewski.md, ADR-0102): the wreck on its roof, the bent pastoral and the
   // drone that hit it, what the night left on the paving, the van crew's litter and tarp, Shiro's poems.
   { key: "rd-lit-wreck" },

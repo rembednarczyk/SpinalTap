@@ -10,6 +10,7 @@ export * from "./devices";
 export * from "./doors";
 export * from "./interiors";
 export * from "./koi-detail";
+export * from "./koi-back";
 export * from "./plac-litewski-detail";
 export * from "./clinic-detail";
 export * from "./tessen-w3/office-detail";
