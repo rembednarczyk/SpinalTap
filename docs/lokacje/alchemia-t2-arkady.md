@@ -88,14 +88,11 @@ Seki schodzi z T1 schodami na południowym skraju placu (ujęcie `alchemia-t2-tp
 - Teksty Sachiko i Hany mają mówić o Arkadach i schronie, a nie o ruinie.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/alchemia/t2-dress.ts`, `tools/blender/rooms/alchemia_t2.py`, test `packages/sim/test/alchemia-t2-scene.test.ts`): wykuta nazwa placu na licu kamienia (czcionka 5×7, twarzą do schodów z T1), kamyki, znicz palący się i zgaszony, wstęga; zarys osady w posadzce; skrzynka z radiem i niedopałki przy czujce; śmieci w kręgu grupy Hebi. Torba łupu jako model torby przychodzi z #960, tekst Sachiko poprawiony w #955. Zostaje:
+- Skupisko graffiti: wąż Hebi sprayem na bocznej ścianie pierwszego przęsła (model `rd-pav-hebi` z #960).
 - Napis na kamieniu (nazwa placu jako nazwa własna w języku świata, §9) i kamień w prawdziwym kształcie zamiast ciemnego bloku: `packages/engine/src/renderer/alchemia/plaza-geometry.ts` (rysunek), bryła bez zmian w `packages/sim/src/content/alchemia/plaza.ts`.
-- Kamyki i znicz na kamieniu, wstęga przy kwietniku: modele z `tools/blender/`, rozstawienie w `plaza.ts` jako rysunek bez bryły (§7).
-- Zarys osady wczesnośredniowiecznej w posadzce placu (ADR-0074, tabela poziomów, T2): rysunek w `plaza-geometry.ts`, bez bryły, poza 10 m od kamienia nic do roboty.
-- Skupiska przy posterunku czujki i przy grupie Hebi (skrzynka, niedopałki, radio, butelki, graffiti na pierwszym przęśle): nowy plik w `packages/sim/src/content/alchemia/` (wzór `roof-dress.ts`), rysunek w `packages/engine/src/renderer/alchemia/arkady-geometry.ts`.
 - Stoliki restauracji przed witrynami, poza drogą pod łukami: meble w treści Arkad (`packages/sim/src/content/alchemia/arkady.ts`), z wolnym grafem podcienia.
-- Torba z blokady jako model torby (jak w karcie `alchemia-pawilon-dach`).
 - Kałuże po deszczu na kostce placu: `plaza-geometry.ts`.
 - Dźwięk restauracji i radia czujki: emitery w `packages/engine/src/audio/`.
-- Tekst Sachiko w `packages/narrative/ink/{pl,en}/m4-ulica.ink`: „Uważaj przy ruinie za straganami” i „Za ruiną na końcu placu leży torba”. Ruiny nie ma od etapu 2, a torba leży przed łukami Arkad, w środku placu. Propozycja: „Pod Arkadami, przed łukiem przy chłopakach Hebi, leży torba”. Komentarz pliku mówi jeszcze o „bag behind the ruin at Alchemia”.
 - Komentarz terytorium w `packages/core/src/world/territories.ts` („Under Alchemia's arcades, by today's lookout”): grupa stoi 2,3 m przed zachodnią ścianą Arkad, a czujka od etapu 5d2 stoi przy włazie, ok. 10 m dalej. Opis ADR-0074 etapu 2 („czujka w dzień pod łukami dziewiątego przęsła”) jest nieaktualny wobec etapu 5d2.
 - Pomiar §13: ujęcie `alchemia-t2-tpp` nocą w `tools/shots/room-spots.json`.

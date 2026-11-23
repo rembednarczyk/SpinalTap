@@ -286,6 +286,13 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t1-extract", services: true, sound: "vent" },
   { key: "rd-t1-stools", clutter: 8 },
   { key: "rd-t1-butts", fine: true, clutter: 6 },
+  // Alchemia's T2 under the Arkady (docs/lokacje/alchemia-t2-arkady.md, ADR-0102): the square's name cut in the memorial
+  // stone with its pebbles, candles and ribbon, the settlement's outline in the paving, the lookout's and the group's
+  // leavings.
+  { key: "rd-t2-tribute", clutter: 4 },
+  { key: "rd-t2-settlement", clutter: 0 },
+  { key: "rd-t2-lookout", fine: true, clutter: 6 },
+  { key: "rd-t2-hebi", fine: true, clutter: 6 },
   // The deptak of Krakowskie in M0 (docs/lokacje/deptak-krakowskie.md, ADR-0102): Neon Koi's stand-up counter with its
   // stools, the crate and board by its door, RAMEN's door, the gate Babcia Ume sleeps in.
   { key: "rd-dp-bar", clutter: 6 },
