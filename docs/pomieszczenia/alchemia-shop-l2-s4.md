@@ -42,7 +42,6 @@ Frakcja: technika; druga: korporacja.
 - blender: rd-gl-stock × 25
 - blender: rd-gl-stock-b × 19
 - model: atm × 2
-- model: figure × 1
 - model: ticket-machine × 4
 - piece: cable × 3
 - piece: ceiling-light × 6
@@ -66,7 +65,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 38 m², wysokość 3,9 m
 - siatka 0,5 m: 1 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 16
-- warstwy wyposażenia: makro 17, mezo 19, mikro 9
+- warstwy wyposażenia: makro 17, mezo 18, mikro 9
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 8 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 11
 <!-- inwentarz-gry:end -->

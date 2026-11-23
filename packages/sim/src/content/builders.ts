@@ -90,6 +90,8 @@ export type ActorDef =
       readonly maxHp?: number;
       /** Stays under a roof (ADR-0041): no umbrella in hand. */
       readonly indoor?: true;
+      /** Drawn as one of the crowd's figures but near the player (ADR-0101: Alchemia's sellers). */
+      readonly standIn?: true;
     }
   | {
       readonly kind: "ganger";

@@ -305,6 +305,7 @@ const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string)
   const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false, ...cast } : { kind: "npc" as const, preset: def.preset, ...cast };
   const e: Entity = { ...actor(id, def.spawn), chunk, view, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
+  if (def.standIn) e.standIn = { view: { kind: "crowd", look: cast.look, umbrella: !def.indoor } };
   if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };
   if (def.bystander) {
     e.velocity = { x: 0, y: 0, z: 0 };

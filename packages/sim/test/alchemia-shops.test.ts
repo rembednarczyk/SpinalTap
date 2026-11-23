@@ -14,6 +14,8 @@ import {
   SHOP_DOOR,
   SHOP_PROPS,
   SHOP_RING_WAYS,
+  SELLERS,
+  SELLER_ACTORS,
   STAIR_CORES,
   SW_CORE,
   WORLD_SCENERY,
@@ -102,19 +104,26 @@ describe("the gallery's shops on P0, P1 and P2 (ADR-0093 O2, O3)", () => {
     }
   });
 
-  it("stands a seller behind the counter of every open shop (the still crowd's figure), a customer before every other one's (the crowd's)", () => {
-    const figures = SHOP_PROPS.filter((p) => p.prop === "figure");
-    // Drawn in one street-props view with the food hall's models (O3).
+  it("stands a seller behind the counter of every open shop (a character since ADR-0101, no still figure), a customer before every other one's (the crowd's)", () => {
+    // Drawn in one street-props view with the food hall's models (O3); the sellers no longer among them (ADR-0101).
     expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && SHOP_PROPS.every((p) => s.view.kind === "street-props" && s.view.items.includes(p)))).toBe(true);
+    expect(SHOP_PROPS.filter((p) => p.prop === "figure")).toEqual([]);
     for (const b of BUILDS) {
-      const mine = figures.filter((f) => within(b.shop.rect, f.x, f.z) && Math.abs(f.y - FLOORS[fl(b)]) < 1);
+      const mine = SELLERS.filter((s) => within(b.shop.rect, s.at.x, s.at.z) && Math.abs(s.at.y - FLOORS[fl(b)]) < 1);
       expect(mine.length, b.shop.id).toBe(shopOpen(b.shop) ? 1 : 0);
       if (!shopOpen(b.shop)) continue;
-      const f = mine[0]!;
+      const f = mine[0]!.at;
       expect(Math.abs(f.y - FLOORS[fl(b)])).toBeLessThan(1e-6);
       // Clear of every solid by a body (a figure's 0.24 m), and not on the customers' side.
       expect(prisms.every((q) => q.bottom > f.y + 1.6 || q.top < f.y + 0.3 || outside(q, f.x, f.z) > 0.2), b.shop.id).toBe(true);
       expect(RASTERS[fl(b)].near(REACHED[fl(b)], f.x, f.z, 0)).toBe(false);
+      // Talked to from the customer's spot, from inside the shop only: never from the gallery through the glass nor from the next shop through its wall (ADR-0101).
+      const actor = SELLER_ACTORS.find((a) => a.spawn.key === mine[0]!.key)!;
+      const reach = actor.kind === "npc" ? actor.interactable : undefined;
+      const c = b.customer!;
+      expect(Math.hypot(c.x - f.x, c.z - f.z), b.shop.id).toBeLessThan((reach?.radius ?? 0) - 0.4);
+      expect(reach?.from, b.shop.id).toEqual({ minX: b.shop.rect.x0, maxX: b.shop.rect.x1, minZ: b.shop.rect.z0, maxZ: b.shop.rect.z1 });
+      expect(within(b.shop.rect, c.x, c.z), b.shop.id).toBe(true);
     }
     const customers = GALLERY_CROWD.filter((c) => shopAt(c.at.x, c.at.y, c.at.z));
     expect(customers.length).toBeGreaterThanOrEqual(5);

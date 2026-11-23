@@ -18,6 +18,7 @@ import metroPl from "../ink/pl/metro.ink?raw";
 import radioPl from "../ink/pl/radio.ink?raw";
 import m3ZrodloPl from "../ink/pl/m3-zrodlo.ink?raw";
 import streetCrimesPl from "../ink/pl/street-crimes.ink?raw";
+import sellersPl from "../ink/pl/sellers.ink?raw";
 import m0En from "../ink/en/m0.ink?raw";
 import m3EchoEn from "../ink/en/m3-echo.ink?raw";
 import m3LustroEn from "../ink/en/m3-lustro.ink?raw";
@@ -36,6 +37,7 @@ import metroEn from "../ink/en/metro.ink?raw";
 import radioEn from "../ink/en/radio.ink?raw";
 import m3ZrodloEn from "../ink/en/m3-zrodlo.ink?raw";
 import streetCrimesEn from "../ink/en/street-crimes.ink?raw";
+import sellersEn from "../ink/en/sellers.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -60,6 +62,7 @@ export const INK_FILES = [
   "radio",
   "m3-zrodlo",
   "street-crimes",
+  "sellers",
 ] as const;
 export type InkFile = (typeof INK_FILES)[number];
 
@@ -83,6 +86,7 @@ export const INK_PL: Readonly<Record<InkFile, string>> = {
   "radio": radioPl,
   "m3-zrodlo": m3ZrodloPl,
   "street-crimes": streetCrimesPl,
+  sellers: sellersPl,
 };
 
 /**
@@ -108,6 +112,7 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   radio: radioEn,
   "m3-zrodlo": m3ZrodloEn,
   "street-crimes": streetCrimesEn,
+  sellers: sellersEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */

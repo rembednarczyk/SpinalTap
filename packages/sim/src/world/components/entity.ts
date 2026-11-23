@@ -33,6 +33,12 @@ export interface Entity {
   pitch: number;
   velocity?: Vec3;
   view?: ViewDescriptor;
+  /**
+   * A cheap picture of it from afar (ADR-0101: a seller as one of the crowd's figures, drawn in
+   * bulk): `RenderSync` draws `view` only while the player is near and this one past that. The
+   * presentation's choice alone; no system reads it.
+   */
+  standIn?: { readonly view: ViewDescriptor };
   /** Geometry: collides, blocks line of sight and is walked on (ADR-0020). Moves only on lifts and gates. */
   solid?: Aabb;
   /**
