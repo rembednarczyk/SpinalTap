@@ -293,6 +293,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t2-settlement", clutter: 0 },
   { key: "rd-t2-lookout", fine: true, clutter: 6 },
   { key: "rd-t2-hebi", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
   // Grodzka under the footbridge (docs/lokacje/grodzka-kladka.md, ADR-0102): the Hebi traders' table of chips, what they
   // leave where they stand, the bridge's downpipe dripping.
   { key: "rd-gr-chips", clutter: 9 },
