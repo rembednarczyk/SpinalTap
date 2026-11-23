@@ -279,6 +279,13 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-bk-doorway", clutter: 3 },
   { key: "rd-bk-grate", fine: true, clutter: 0 },
   { key: "rd-bk-neon-box", services: true, sound: "hum" },
+  // Alchemia's T1 (docs/lokacje/alchemia-t1.md, ADR-0102): Hana's handcart with the cool box open on it, the awning and
+  // the kitchen's extract over Fumiko's hatch, her stools with the bowls and cups on its counter, the smokers' leavings.
+  { key: "rd-t1-cart", clutter: 6, sound: "hum" },
+  { key: "rd-t1-hatch", clutter: 0 },
+  { key: "rd-t1-extract", services: true, sound: "vent" },
+  { key: "rd-t1-stools", clutter: 8 },
+  { key: "rd-t1-butts", fine: true, clutter: 6 },
   // Plac Katedralny (docs/lokacje/plac-katedralny.md, ADR-0102): candles under the monument, the AR legend terminal.
   { key: "rd-kat-candles", fine: true, clutter: 9 },
   { key: "rd-kat-terminal", clutter: 0 },
