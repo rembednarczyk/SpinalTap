@@ -131,6 +131,8 @@ const markerKind = (e: Entity, targetTags: ReadonlySet<string>, contract: boolea
   // Only accepted contracts (ADR-0035): the defector of an escort, a hack job's terminal, a retrieval crate.
   if (contract && (e.escort || e.interactable?.kind === "terminal" || e.interactable?.kind === "pickup")) return "target";
   if (e.tag && targetTags.has(e.tag) && (e.health?.current ?? 0) > 0) return "target";
+  // Traders open now (ADR-0100): Mori's clinic, Oyaji's stall and Fumiko's bar; shut, the schedule swaps the shop for a word.
+  if (e.interactable?.kind === "shop" && (e.health?.current ?? 1) > 0) return (e.interactable.shopId ?? "clinic") === "clinic" ? "ripperdoc" : "vendor";
   if (ctx.disguised && (e.health?.current ?? 1) > 0 && isEnforcer(e, ctx.enforcers)) return "enforcer";
   return null;
 };
@@ -185,7 +187,7 @@ const playerVm = (e: Entity, moving: boolean, groundAt: GroundAt, floor: ((heigh
 
 /**
  * Tracks the player and what is worth finding: fixers and the targets of accepted contracts
- * (ADR-0035), and enforcers while the player is disguised. Eases the zoom towards the speed's.
+ * (ADR-0035), the traders open now (ADR-0100), and enforcers while the player is disguised. Eases the zoom towards the speed's.
  * Returns the previous objects when nothing moved past the snap, so per-frame syncs do not
  * re-render.
  */

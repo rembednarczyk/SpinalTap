@@ -61,3 +61,22 @@ describe("the minimap indoors (ADR-0100)", () => {
     expect(screen.getByTestId("minimap-level").textContent).toContain("6 m");
   });
 });
+
+describe("the traders on the map (ADR-0100)", () => {
+  const traders = [
+    { id: "mori", kind: "ripperdoc" as const, x: 4, z: 3 },
+    { id: "oyaji", kind: "vendor" as const, x: -5, z: 2 },
+  ];
+
+  it("shows Mori's clinic and an open stall on the minimap and the map tab, and hides them with the markers", () => {
+    const store = mount({ screen: "playing", map, mapPlayer: { x: 0, z: 0, yaw: 0 }, mapMarkers: traders });
+    expect(screen.getByTestId("minimap-marker-ripperdoc").textContent).toBe("Mori's clinic");
+    expect(screen.getByTestId("minimap-marker-vendor").textContent).toBe("Shop");
+    act(() => patchUi(store, { characterTab: "map" }));
+    expect(screen.getByTestId("citymap-marker-vendor")).toBeTruthy();
+    act(() => patchUi(store, { settings: { ...store.getState().settings, mapMarkers: false } }));
+    expect(screen.queryByTestId("minimap-marker-vendor")).toBeNull();
+    expect(screen.queryByTestId("citymap-marker-vendor")).toBeNull();
+    expect(screen.queryByTestId("minimap-marker-ripperdoc")).toBeNull();
+  });
+});

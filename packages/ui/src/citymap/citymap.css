@@ -46,6 +46,9 @@
 .citymap__marker circle { stroke: rgba(4, 7, 12, 0.9); stroke-width: 1; }
 .citymap__marker--fixer { fill: var(--amber); }
 .citymap__marker--target { fill: var(--magenta); }
+/* Traders open now (ADR-0100), in the minimap's colours. */
+.citymap__marker--ripperdoc { fill: #39ffd0; }
+.citymap__marker--vendor { fill: #b48cff; }
 .citymap__marker--enforcer { fill: var(--danger); }
 .citymap__marker--quest circle { fill: none; stroke: var(--magenta); stroke-width: 2.5; }
 .citymap__area { fill: rgba(255, 61, 139, 0.16); stroke: var(--magenta); stroke-width: 1; stroke-dasharray: 3 2; }
