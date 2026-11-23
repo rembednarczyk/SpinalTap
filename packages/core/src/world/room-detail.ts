@@ -216,6 +216,19 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-k-office-chair", fine: true, clutter: 0 },
   { key: "rd-k-shredder", fine: true, clutter: 0 },
   { key: "rd-k-binders", fine: true, clutter: 6 },
+  // Plac Litewski's scene (docs/lokacje/plac-litewski.md, ADR-0102): the wreck on its roof, the bent pastoral and the
+  // drone that hit it, what the night left on the paving, the van crew's litter and tarp, Shiro's poems.
+  { key: "rd-lit-wreck" },
+  { key: "rd-lit-bent-lamp" },
+  { key: "rd-lit-drone", clutter: 3 },
+  { key: "rd-lit-glass", fine: true, clutter: 5 },
+  { key: "rd-lit-spill", fine: true, clutter: 0, sound: "drip" },
+  { key: "rd-lit-skid", fine: true, clutter: 0 },
+  { key: "rd-lit-tape", clutter: 1 },
+  { key: "rd-lit-candles", fine: true, clutter: 8 },
+  { key: "rd-lit-van-camp", fine: true, clutter: 9 },
+  { key: "rd-lit-tarp", clutter: 1 },
+  { key: "rd-lit-poems", fine: true, clutter: 6 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
