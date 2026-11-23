@@ -40,7 +40,6 @@ Frakcja: ulica (handel); druga: korporacja (leki z sieci).
 - blender: rd-gl-pharmacy-b × 19
 - blender: rd-gl-stock × 14
 - blender: rd-gl-stock-b × 11
-- model: figure × 1
 - piece: cable × 3
 - piece: carton × 6
 - piece: counter × 3
@@ -62,7 +61,7 @@ Pomiary zasad (§12–§16):
 - rzut: 1 prostokąt, 34 m², wysokość 4,2 m
 - siatka 0,5 m: 0 z 2 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 14
-- warstwy wyposażenia: makro 27, mezo 21, mikro 13
+- warstwy wyposażenia: makro 27, mezo 20, mikro 13
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 3 skupisk, 13 rzeczy w nich, 0 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 6
 <!-- inwentarz-gry:end -->

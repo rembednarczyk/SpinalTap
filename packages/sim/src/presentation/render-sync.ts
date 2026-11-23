@@ -4,6 +4,7 @@ import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 import type { SceneryItem } from "../content/lublin/city";
 import { takenParked } from "../content/parked-taken";
+import { StandIns } from "./stand-in";
 
 /** Ids of the scenery's views (ADR-0045): far above the entities' and the crowd's. */
 export const SCENERY_ID_BASE = 5_000_000;
@@ -75,6 +76,8 @@ export class RenderSync {
   /** Grab phase sent last per entity (ADR-0075), so a still one gets its change too. */
   private readonly grabbed = new Map<EntityId, GrabPhase>();
   private playerLook: { inv: unknown; eq: unknown; cyber: unknown; look: AppearanceDescriptor } | null = null;
+  /** Who is drawn near as a full character and far as one of the crowd (ADR-0101). */
+  private readonly standIns = new StandIns();
 
   /** The scenery has been handed to the port (again after every reset). */
   private sceneryShown = false;
@@ -129,6 +132,7 @@ export class RenderSync {
     this.hideTakenParked(domain?.flags);
     const seen = new Set<EntityId>();
     const phase = takedown ? grabPhaseOf(takedown) : null;
+    const player = world.with("player").first?.position ?? null;
     for (const e of world.with("view")) {
       seen.add(e.id);
       const grab = phase !== null && (e.player || e.id === takedown?.target) ? phase : null;
@@ -161,9 +165,17 @@ export class RenderSync {
         ...(e.carPose ? { car: betweenSteps(e, e.carPose, alpha) } : {}),
         ...(e.car ? { tilt: carTilt(e.car), wheels: carWheels(e.car), ...(e.car.damage > 0 ? { damage: e.car.damage } : {}), ...(e.car.door > 0 ? { door: e.car.door } : {}) } : {}),
       };
+      const view = this.standIns.pick(e, player);
+      if (this.spawned.has(e.id) && this.standIns.changed(e.id, view)) {
+        // Near or far now (ADR-0101): the other picture, at once (no fall), with its activity again.
+        this.port.despawn(e.id, "unloaded");
+        this.spawned.delete(e.id);
+        this.activities.delete(e.id);
+      }
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);
-        this.port.spawn(e.id, e.view, transform);
+        this.standIns.spawned(e, view);
+        this.port.spawn(e.id, view, transform);
       } else if (moving) {
         this.port.updateTransform(e.id, transform);
       }
@@ -184,6 +196,7 @@ export class RenderSync {
       this.looks.delete(id);
       this.activities.delete(id);
       this.grabbed.delete(id);
+      this.standIns.forget(id);
       this.port.despawn(id, streamedOut?.has(id) ? "unloaded" : "removed");
     }
   }
@@ -198,6 +211,7 @@ export class RenderSync {
     this.looks.clear();
     this.activities.clear();
     this.grabbed.clear();
+    this.standIns.clear();
     this.playerLook = null;
     this.cameraTarget = null;
   }
