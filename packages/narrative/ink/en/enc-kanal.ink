@@ -32,7 +32,7 @@ TAKUMI: Thirty nights in a row I've stood here with flowers for Mei. Thirty nigh
 
 // Old Sabu fishes through a drain grate over the Czechówka, which runs in pipes under the old town.
 === enc_kanal_fisherman ===
-By the kerb on Grodzka an old man sits on a crate, holding a fishing rod dropped through a storm drain.
+By the kerb on Bramowa an old man sits on a crate, holding a fishing rod dropped through a storm drain.
 SABU: Quiet. Something's biting.
 SABU: They shut the Czechówka in pipes before you were born, but the water still runs underneath. The fish know it, the bureaucrats don't.
 -> ask
