@@ -50,8 +50,8 @@ Frakcja: ulica, korporacja (skrzyżowanie alei miasta).
 - §17 częściowo: ruch aut i trolejbusów słychać ze źródła; nic poza tym. Ruch: auta, 2 Hebi; skala: latarnie, sygnalizatory, drzwi.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/lubartowska-detail.ts`, test `packages/sim/test/lubartowska-scene.test.ts`): kiosk całodobowy (model gry `kiosk`, bryła w puli ulicy) przy kamienicy obok grupy Hebi, drobiazg z modeli ADR-0096 wokół grupy. Zostaje:
 - Sprzeczność ADR i gry: ADR-0091 §1 stawia terytoria bez kościołów, a rdzeń (569,9; 347,1) leży 26 m od wejścia do Kościoła Ewangelicznego Zgromadzenia Bożego (miejsca przestępstw w toku mają co najmniej 50 m, `street-crime-board.test.ts`). Propozycja: rdzeń na zachodni chodnik Lubartowskiej, co najmniej 50 m od kościoła, np. ok. (552; 380), i ta sama kontrola odległości od kościołów w teście terytoriów: `packages/sim/src/content/territory-groups.ts`, przegląd `topography-curator`.
 - Nazwa w komentarzu `TERRITORIES` („by the roundabout”, `packages/core/src/world/territories.ts`) i w rejestrze lokacji (`tools/rooms/src/locations.ts`): „przy skrzyżowaniu z aleją Tysiąclecia” zamiast „przy rondzie” (zmiana komentarza w `core` przez architekta, nazwa w rejestrze w `tools`).
-- Kiosk 24H i drobiazg przy grupie Hebi: rekwizyt w nowym `packages/sim/src/content/district-targ.ts`, modele w nowym `tools/blender/rooms/lubartowska.py`, skupiska w nowym `packages/sim/src/content/lubartowska-detail.ts`.
 - Neony na parterze kamienic przy skrzyżowaniu (lokale z OSM albo `venues` importu): `tools/osm-import` (venues), przegląd `topography-curator`.
 - Tłum na chodnikach Lubartowskiej (chunk `podzamcze-0-0` bez tłumu): `packages/sim/src/content/crowd.ts`.
