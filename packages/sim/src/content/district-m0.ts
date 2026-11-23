@@ -37,7 +37,7 @@ const group = (x: number, z: number): Placement => ({ x, y: groundY(x, z), z });
 
 /** The wreck and the old south gate of Shinsekai, at the corner of Plac Litewski (old origin near (0, -30)). */
 const WRECK = group(150, -20);
-/** The east lot with Tetsuo's van, on Plac Litewski (old origin (0, 0)). */
+/** The east lot with the van nobody claims, on Plac Litewski (old origin (0, 0)). */
 const EAST_LOT = group(100, -30);
 /** Behind Neon Koi: the courtyard south of the bar (old origin (0, 0) of the street north of the bar). */
 const KOI_BACK = group(300, -132);
@@ -67,12 +67,31 @@ const standing = (g: Placement, props: readonly StaticProp[]): StaticProp[] =>
   placeProps(g, props).map((p) => ({ ...p, center: { ...p.center, y: p.center.y - g.y + groundY(p.center.x, p.center.z) } }));
 
 /**
+ * The wreck Seki was pulled out of (`docs/lokacje/plac-litewski.md`): the solid of the car on its roof, level on the
+ * paving (G-130), drawn by its model of the scene (`plac-litewski-detail.ts`, `rd-lit-wreck`), its front to the north.
+ */
+const WRECK_HEIGHT = 1.25;
+export const WRECK_BODY: StaticProp = onPaving(placeProps(WRECK, [{ ...crate(2.6, -31, 1.9, WRECK_HEIGHT, 4.5, skin("wreck", "z+")), scenery: true }]))[0]!;
+/** Where the wreck's model stands: the middle of its solid's foot. */
+export const WRECK_FOOT: Vec3 = v(WRECK_BODY.center.x, WRECK_BODY.center.y - WRECK_HEIGHT / 2, WRECK_BODY.center.z);
+
+/**
+ * The night's solids by the wreck, drawn by their models (`plac-litewski-detail.ts`): the driver's door swung open to
+ * the east, and the foot and the kinked shaft of the pastoral lamp the car hit, on the OSM lamp's spot (155.1, -50.9),
+ * which gives way to it. The camera's rays pass them, as street furniture.
+ */
+const WRECK_NIGHT: readonly StaticProp[] = standing(WRECK, [
+  { ...crate(4.0, -30.5, 1.1, 0.95, 0.56), scenery: true, seeThrough: true },
+  { ...crate(5.0, -30.83, 0.8, 1.8, 0.65), scenery: true, seeThrough: true },
+]);
+
+/**
  * What the game adds to Krakowskie Przedmieście: the wreck, the van, the car wash, the bins
  * behind Neon Koi, the signs and lamps, and the interiors with their doors.
  */
 export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
-  ...onPaving(placeProps(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))])),
+  WRECK_BODY,
   // The van of the east lot.
   ...onPaving(placeProps(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))])),
   ...CAR_WASH_PROPS,
@@ -81,13 +100,16 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,
+  // Plac Litewski's scene (ADR-0102), last so the ids before stay: the wreck's open door and the bent lamp.
+  ...WRECK_NIGHT,
 ];
 
 /**
  * Where steam rises (the renderer's particles and the ambience's hiss): a manhole on the deptak
- * in front of the clinic and the vent behind the car wash.
+ * in front of the clinic, the vent behind the car wash, and the wreck's split radiator on Plac
+ * Litewski hissing in the rain (`recall_last_call`), out of the bonnet's gap over the paving.
  */
-export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44))];
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44)), ground(152.6, -49.1, 0.35)];
 
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };

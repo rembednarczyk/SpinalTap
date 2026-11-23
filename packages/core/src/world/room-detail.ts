@@ -36,8 +36,11 @@ export interface RoomDetailShape {
   readonly sound?: RoomSound;
 }
 
-/** The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz. */
-export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes";
+/**
+ * The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz, and a
+ * square's fountain splashing (its jets are the map's `fountain-jets`, not a room-detail model).
+ */
+export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes" | "fountain";
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
 export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [

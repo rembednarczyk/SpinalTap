@@ -20,7 +20,7 @@ export interface RoomEmitter extends Emitter {
   readonly room: string | null;
 }
 
-export const ROOM_SOUNDS: readonly RoomSound[] = ["vent", "hum", "pump", "drip", "simmer", "tubes"];
+export const ROOM_SOUNDS: readonly RoomSound[] = ["vent", "hum", "pump", "drip", "simmer", "tubes", "fountain"];
 
 /** Each sound's reach: loudest within `ref` metres, silent past `max` (small things heard in their room, not the street's). */
 export const ROOM_SOUND_REACH: Readonly<Record<RoomSound, { readonly ref: number; readonly max: number }>> = {
@@ -30,7 +30,11 @@ export const ROOM_SOUND_REACH: Readonly<Record<RoomSound, { readonly ref: number
   drip: { ref: 1.5, max: 14 },
   simmer: { ref: 1.5, max: 12 },
   tubes: { ref: 2, max: 14 },
+  fountain: { ref: 2, max: 16 },
 };
+
+/** One jet of a dry fountain (a column of mist over its grate, `fountain-jets`): a row of them sounds as one, louder. */
+const JET_LEVEL = 0.45;
 
 /** Through a wall: this much of the sound, low-passed at `cutoff` Hz (as W-3's hall heard from its basement). */
 export const THROUGH_WALL = { gain: 0.18, cutoff: 420 } as const;
@@ -52,12 +56,20 @@ const roomOf = (p: Vec3): string | null => {
   return near?.id ?? null;
 };
 
-/** Every placed room-detail model with a sound, its interior found once. */
+/**
+ * Every placed room-detail model with a sound, its interior found once, and the jets of the squares' fountains, the
+ * street's (Plac Litewski's card: the fountain as an emitter, §17).
+ */
 export const roomEmitters = (): RoomEmitter[] => {
   const out: RoomEmitter[] = [];
   for (const s of WORLD_SCENERY) {
     if (s.view.kind !== "street-props") continue;
     for (const item of s.view.items) {
+      if (item.prop === "fountain-jets") {
+        const position: Vec3 = { x: s.at.x + item.x, y: s.at.y + item.y + 0.6, z: s.at.z + item.z };
+        out.push({ position, level: JET_LEVEL, sound: "fountain", room: roomOf(position) });
+        continue;
+      }
       if (item.prop !== "room-detail") continue;
       const sound = ROOM_DETAIL_SHAPES[item.variant % ROOM_DETAIL_SHAPES.length]?.sound;
       if (!sound) continue;
@@ -109,8 +121,9 @@ export const roomMix = (pose: AudioListenerPose, emitters: readonly RoomEmitter[
       layers[sound] = SILENT;
       continue;
     }
-    const inside = emitterMix(pose, mine.filter((e) => e.room !== null && e.room === room), ref, max);
-    const through = emitterMix(pose, mine.filter((e) => e.room === null || e.room !== room), ref, max);
+    // In the listener's room, or out on the street with her (a wreck's leak, a fountain): heard whole.
+    const inside = emitterMix(pose, mine.filter((e) => e.room === room), ref, max);
+    const through = emitterMix(pose, mine.filter((e) => e.room !== room), ref, max);
     const wall = through.gain * THROUGH_WALL.gain;
     layers[sound] = inside.gain >= wall ? { ...inside, cutoff: OPEN } : { gain: wall, pan: through.pan, cutoff: THROUGH_WALL.cutoff };
   }

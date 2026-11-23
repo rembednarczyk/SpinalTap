@@ -31,8 +31,23 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak).
-    expect(EMITTERS.filter((e) => e.room === null)).toEqual([]);
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the street's own:
+    // the wreck's leak on Plac Litewski and the dry fountains' jets (docs/lokacje/plac-litewski.md, §17).
+    expect(EMITTERS.filter((e) => e.room === null).every((e) => e.sound === "fountain" || (e.sound === "drip" && Math.hypot(e.position.x - 152.6, e.position.z + 49) < 3))).toBe(true);
+  });
+
+  it("hears the wreck's leak and the dry fountain by the square whole outside, not through a wall (Plac Litewski)", () => {
+    // Two metres off the oil under the wreck's bonnet, and off the nearest jet of the square's dry fountains.
+    const leak = EMITTERS.find((e) => e.sound === "drip" && e.room === null)!;
+    expect(leak).toBeDefined();
+    const byLeak = roomMix(pose(leak.position.x + 2, leak.position.y, leak.position.z), EMITTERS);
+    expect(byLeak.room).toBeNull();
+    expect(byLeak.layers.drip.gain).toBeGreaterThan(0.5);
+    expect(byLeak.layers.drip.cutoff).toBeGreaterThan(10000);
+    const jet = EMITTERS.filter((e) => e.sound === "fountain").sort((a, b) => Math.hypot(a.position.x - 128, a.position.z + 49) - Math.hypot(b.position.x - 128, b.position.z + 49))[0]!;
+    const byJet = roomMix(pose(jet.position.x - 2, jet.position.y, jet.position.z), EMITTERS);
+    expect(byJet.layers.fountain.gain).toBeGreaterThan(0.3);
+    expect(byJet.layers.fountain.cutoff).toBeGreaterThan(10000);
   });
 
   it("hears the aquarium's pump whole in Neon Koi and dull and quieter through its wall", () => {

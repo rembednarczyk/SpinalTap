@@ -162,10 +162,11 @@ export class ScreenFx {
     this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
     this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene, deps.roofOver);
     if (!stage.options.reference) {
-      // The manhole on the deptak and the vent behind the car wash (ADR-0045).
-      const [manhole, vent] = STEAM_VENTS;
+      // The manhole on the deptak and the vent behind the car wash (ADR-0045), the wreck's radiator on Plac Litewski (thin, ADR-0102).
+      const [manhole, vent, wreck] = STEAM_VENTS;
       if (manhole) createSteam(scene, new Vector3(manhole.x, manhole.y, manhole.z), new Color4(0.6, 0.74, 0.85, 0.3), 22);
       if (vent) createSteam(scene, new Vector3(vent.x, vent.y, vent.z), new Color4(0.8, 0.58, 0.64, 0.26), 14);
+      if (wreck) createSteam(scene, new Vector3(wreck.x, wreck.y, wreck.z), new Color4(0.7, 0.78, 0.8, 0.14), 5);
     }
   }
 
