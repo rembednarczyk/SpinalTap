@@ -45,7 +45,7 @@ import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passage
 import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { sidewalkIndex } from "./sidewalk-index.ts";
-import { lod1Index, withLod1Height } from "./lod1-heights.ts";
+import { lod1Index, ruinTops, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { withSurfaceTop } from "./corrections-surface.ts";
 import { RingBins } from "./ring-bins.ts";
@@ -463,7 +463,7 @@ const generateMap = (
     return edge ? { ...b, edge } : b;
   });
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
-  const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines });
+  const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines, ...ruinTops(lod1) });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines), frontages(lines)));
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).

@@ -96,7 +96,24 @@ export interface BarrierCuts {
   readonly buildings: readonly { readonly ring: readonly Pt[] }[];
   readonly bands: readonly { readonly ring: readonly Pt[]; readonly surface: string; readonly carriageway?: true }[];
   readonly lines: readonly Line[];
+  /** The height of GUGiK's LoD1 block over a ruin's outline, when one matches it (`ruinTops` of `lod1-heights.ts`). */
+  readonly ruinHeight?: (ring: readonly Pt[]) => number | undefined;
 }
+
+/**
+ * A ruin mapped as a building (`building=ruins`, G-053: the old shop's ruin on Plac po Farze, the
+ * walls by Grodzka): the walls left standing round its outline, as high as GUGiK's LoD1 block over
+ * it (the measured masonry), else `RUIN_STANDING`; open inside, a wall of the map's barriers.
+ */
+export const RUIN_STANDING = 1.5;
+/** Standing walls past these are not a ruin's (a block of the LoD1 over a whole building). */
+const RUIN_TALLEST = 4;
+
+const ruinHeightOf = (l: Line, cuts: BarrierCuts): number => {
+  const tagged = parseLength(l.tags.height);
+  const measured = tagged ?? cuts.ruinHeight?.(l.line);
+  return measured !== undefined && measured !== null && measured >= MIN_HEIGHT ? r1(Math.min(measured, RUIN_TALLEST)) : RUIN_STANDING;
+};
 
 interface Indexed {
   readonly ring: readonly Pt[];
@@ -280,6 +297,8 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
   const barrierLines: Line[] = [
     ...lines.filter((l) => barrierKind(l.tags) && l.tags.building === undefined),
     ...areas.filter((a) => barrierKind(a.tags) && a.tags.building === undefined).map((a) => ({ id: a.id, osmId: a.osmId, tags: a.tags, line: [...a.ring, a.ring[0]!] })),
+    // A ruin mapped as a building: its standing walls round the outline (G-053).
+    ...areas.filter((a) => a.tags.building === "ruins").map((a) => ({ id: a.id, osmId: a.osmId, tags: { ...a.tags, barrier: "wall" }, line: [...a.ring, a.ring[0]!] })),
   ];
   const gates = gateNodes(data, barrierLines, ways);
   const streams = cuts.lines.filter((l) => l.tags.waterway !== undefined && l.tags.tunnel === undefined && l.tags.covered !== "yes");
@@ -290,7 +309,7 @@ export const worldBarriers = (data: OsmData, lines: readonly Line[], areas: read
     // A ring of walls round a stream is its channel's lining: the water and its banks are drawn on their own.
     if (channelLining(l.line, streams)) continue;
     const kind = barrierKind(l.tags)!;
-    const height = kind === "wall" && ruinWall(l, ruins) ? RUIN_WALL_HEIGHT : barrierHeight(l.tags, kind);
+    const height = l.tags.building === "ruins" ? ruinHeightOf(l, cuts) : kind === "wall" && ruinWall(l, ruins) ? RUIN_WALL_HEIGHT : barrierHeight(l.tags, kind);
     const material = materialOf(l.tags, kind);
     const extra = material ? { material } : {};
     // A gate mapped as a way is an opening of its own.

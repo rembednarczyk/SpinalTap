@@ -15,6 +15,7 @@
  * tenements of the Rynek, G-632) take LoD1 like the rest.
  */
 import { type Lod1Building } from "../../gugik/src/extracts.ts";
+import type { BarrierCuts } from "./barriers.ts";
 import { BoxIndex, type Footprint, footprint, iou } from "../../gugik/src/overlap.ts";
 import { MIN_STOREY, SHOP_STOREY, STOREY } from "./building-tags.ts";
 import { TAG_CORRECTIONS } from "./corrections.ts";
@@ -121,4 +122,15 @@ export const withLod1Height = (b: BuildingOut, index: BoxIndex<Indexed> | undefi
   if (!index || (b.source !== "default" && b.source !== "levels") || lod1Exempt(b, crowned) !== undefined) return b;
   const m = lod1Match(index, whole ?? worldRing(b));
   return m ? { ...b, ...lod1Massing(b, m.lod1.height), source: "lod1" } : b;
+};
+
+/**
+ * The LoD1 heights over the ruins' outlines for the barriers (`BarrierCuts`, G-053). Here, not in
+ * `barriers.ts`: the barriers' module is read by the model's, and this one's tables need the model
+ * read first.
+ */
+export const ruinTops = (lod1: readonly Lod1Building[] | undefined): Pick<BarrierCuts, "ruinHeight"> => {
+  if (!lod1) return {};
+  const index = lod1Index(lod1);
+  return { ruinHeight: (ring) => lod1Match(index, ring)?.lod1.height };
 };
