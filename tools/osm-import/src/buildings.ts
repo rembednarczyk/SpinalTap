@@ -76,7 +76,7 @@ export interface BuildingContext {
 export type BuildingResult = { readonly ok: BuildingOut; readonly lifted: readonly BuildingOut[] } | { readonly skipped: string };
 
 /** An outline as the game's footprint: centred, simplified and split into convex parts for the prisms. */
-const footprint = (ring: readonly Pt[]): { center: Pt; outline: Pt[]; parts: Pt[][] } | string => {
+export const footprint = (ring: readonly Pt[]): { center: Pt; outline: Pt[]; parts: Pt[][] } | string => {
   const prepared = prepareOutline(ring);
   if (!prepared) return "degenerate outline";
   const parts = convexParts(prepared.outline);

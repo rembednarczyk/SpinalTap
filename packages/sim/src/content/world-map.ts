@@ -48,6 +48,7 @@ import type { GroundDeck } from "../world/deck";
 import { furnitureProps } from "./lublin/furniture";
 import { basinRimProps } from "./lublin/basins";
 import { barrierProps } from "./lublin/barriers";
+import { canopyScenery, chunkCanopies } from "./lublin/canopies";
 import { WORLD_BARRIERS } from "./world-barriers";
 import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { PARKED_CARS, parkedProp, parkedView } from "./parked-cars";
@@ -209,6 +210,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...GRODZKA_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
         // The deptak's counter on Neon Koi, Nobu's bench and the lantern over Koi's door (its scene, ADR-0102), last, so the ids before them stay.
         ...DEPTAK_SOLIDS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
+        // The map's roofs on posts (G-063), last, so the ids before them stay.
+        ...chunkCanopies(c),
       ],
       ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
       ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
@@ -239,7 +242,8 @@ export const ROOM_DETAIL_SCENERY: readonly SceneryItem[] = [roomDetail(KOI_DETAI
  * carry `scenery`, so their entities are solids without a view.
  */
 export const WORLD_SCENERY: readonly SceneryItem[] = [
-  ...MAP_CHUNKS.flatMap((c) => chunkScenery(c, MAP_BUILDINGS.get(c.id) ?? [])),
+  // Each chunk's roofs on posts (G-063) after its buildings, drawn as buildings lifted to their soffits.
+  ...MAP_CHUNKS.flatMap((c) => [...chunkScenery(c, MAP_BUILDINGS.get(c.id) ?? []), ...canopyScenery(c)]),
   // The game's own buildings drawn with the city: the covered footbridge over Grodzka (ADR-0048).
   ...KANAL_SCENERY.map((s): SceneryItem => ({ chunk: mapChunkOf(s.at.x, s.at.z), view: s.view, at: s.at })),
   // The furniture (ADR-0050), so the views above keep their scenery ids.
