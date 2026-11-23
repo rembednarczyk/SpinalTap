@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_LAMPS, BAZAR_STALLS, METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, RUSKA_LAMPS, RUSKA_STALLS, SCENE_LAMP_GROUPS, TARG_MARKET_DETAIL, WORLD_SCENERY, groundY } from "../src";
+import { HEBI_BULBS, HEBI_BULB_DETAIL, HEBI_LAMPS, TERRITORY_GROUPS, inBuilding, BAZAR_LAMPS, BAZAR_STALLS, METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, RUSKA_LAMPS, RUSKA_STALLS, SCENE_LAMP_GROUPS, TARG_MARKET_DETAIL, WORLD_SCENERY, groundY } from "../src";
 import { roomDetailShape } from "@seki/core";
+import { onRoad } from "../src/content/lublin/roads";
 import { turnLocal } from "../src/content/lublin/furniture";
 
 /*
@@ -75,6 +76,28 @@ describe("the Bazaar's and Targ na Ruskiej's festoons and their lights (§13)", 
   it("leaves the flea market's stalls to Plac Zamkowy's own festoons", () => {
     const flea = new Set(PLAC_ZAMKOWY_STALLS);
     expect([...BAZAR_STALLS, ...RUSKA_STALLS].some((s) => flea.has(s))).toBe(false);
+  });
+});
+
+describe("the bare bulb by each Hebi group on Podzamcze (§13)", () => {
+  it("hangs one by each of the four groups, on the wall by its ring or on a pole out of the way, lighting the ring", () => {
+    expect(HEBI_BULBS.map((b) => b.territory).sort()).toEqual(["bazaar-halls", "bus-station", "lubartowska", "ruska-market"]);
+    expect(HEBI_BULB_DETAIL).toHaveLength(4);
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === HEBI_BULB_DETAIL)).toBe(true);
+    for (const b of HEBI_BULBS) {
+      const core = TERRITORY_GROUPS.find((g) => g.territory === b.territory)!.core;
+      const lamp = HEBI_LAMPS.find((g) => g.id === `targ-hebi-${b.territory}`)!.lamps[0]!;
+      // The light falls on the ring the group stands round, from out of the houses.
+      expect(Math.hypot(lamp.at.x - core.x, lamp.at.z - core.z), b.territory).toBeLessThan(lamp.range);
+      expect(inBuilding(lamp.at.x, lamp.at.z), b.territory).toBe(false);
+      expect(lamp.at.y - groundY(b.at.x, b.at.z), b.territory).toBeGreaterThan(2.4);
+      if (b.kind === "pole") {
+        expect(inBuilding(b.at.x, b.at.z), b.territory).toBe(false);
+        expect(onRoad(b.at.x, b.at.z), b.territory).toBe(false);
+        expect(Math.hypot(b.at.x - core.x, b.at.z - core.z), b.territory).toBeCloseTo(3.5, 6);
+      }
+    }
+    expect(HEBI_BULBS.filter((b) => b.kind === "wall").map((b) => b.territory).sort()).toEqual(["bus-station", "lubartowska"]);
   });
 });
 

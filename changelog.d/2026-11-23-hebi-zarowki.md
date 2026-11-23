@@ -1,0 +1,1 @@
+- Przy każdej z czterech grup Hebi na Podzamczu wisi goła żarówka: na wysięgniku na ścianie przy dworcu i na Lubartowskiej, na słupku w wiadrze z betonem przy Bazarze i Ruskiej. Jej ostre światło pada na miejsce, gdzie stoi grupa.
