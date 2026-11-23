@@ -158,3 +158,25 @@ export const deptakMouthRoutes = (routes: readonly TrafficRoute[], lanes: readon
   const as = (x: TrafficRoute, vehicles: number): TrafficRoute => ({ ...x, vehicles: Math.max(1, vehicles) });
   return [...routes.map((x, i) => (i === ri ? as(rightRoute, right.vehicles) : i === li ? as(leftRoute, left.vehicles - onRing) : x)), as(ring, onRing)];
 };
+
+/** A route's end this near a ring's start, heading its way, runs on into it (m). */
+const ONTO_RING = 0.5;
+
+/**
+ * The routes with each car lane that ends where a ring starts, on its lane, linked on into it (`TrafficRoute.then`, G-966):
+ * Bajkowskiego's two and the way out of Alchemia's P-1 end at the start of the pocket's ring south of the deptak, and a
+ * vehicle held on its end in the player's view stood in the ring's way. Pattern: a lane graph's successor link, as
+ * traffic simulations join lanes (a vehicle at a lane's end goes on in the next).
+ */
+export const ontoRings = (routes: readonly TrafficRoute[]): TrafficRoute[] =>
+  routes.map((r) => {
+    if (r.ring || r.use !== "cars" || r.points.length < 2) return r;
+    const end = pointAt(r.points, r.length);
+    const ring = routes.findIndex((o) => {
+      if (!o.ring) return false;
+      const start = pointAt(o.points, 0);
+      return Math.hypot(start.x - end.x, start.z - end.z) < ONTO_RING && start.tx * end.tx + start.tz * end.tz > 0.9;
+    });
+    return ring < 0 ? r : { ...r, then: { route: ring, s: 0 } };
+  });
+

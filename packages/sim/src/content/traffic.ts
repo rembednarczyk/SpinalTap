@@ -8,7 +8,7 @@ import { groundY } from "./lublin/terrain";
 import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice, uTurn } from "./traffic-lane";
 import { joinAtJunctions } from "./traffic-junctions";
 import { alchemiaRampRoutes } from "./traffic-ramp";
-import { deptakMouthRoutes } from "./traffic-deptak";
+import { deptakMouthRoutes, ontoRings } from "./traffic-deptak";
 import { type Street, reachAt, roadHalfWidth, turnedRound } from "./traffic-reach";
 
 export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt, projectOn } from "./traffic-lane";
@@ -440,8 +440,11 @@ export const JUNCTION_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_
 /** The city's routes: the junctions' routes, Bajkowskiego's turned south at the deptak's mouth with the ring past it (T-324, `traffic-deptak.ts`). */
 export const CITY_ROUTES: readonly TrafficRoute[] = deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES);
 
-/** The routes the vehicles drive: the city's, then the two in and out of Alchemia's P-1 off Bajkowskiego (ADR-0074 §4, G-491). */
-export const TRAFFIC_ROUTES: readonly TrafficRoute[] = [...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)];
+/**
+ * The routes the vehicles drive: the city's, then the two in and out of Alchemia's P-1 off Bajkowskiego (ADR-0074 §4,
+ * G-491); the ones ending where the deptak's ring starts linked on into it (G-966).
+ */
+export const TRAFFIC_ROUTES: readonly TrafficRoute[] = ontoRings([...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)]);
 
 /** How busy the roads are by the hour (0..1 of full traffic): the rush hours, a quiet night. */
 export const TRAFFIC_BY_HOUR: readonly number[] = [
