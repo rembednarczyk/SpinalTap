@@ -9,7 +9,7 @@ import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-par
 import { belowGround, parseLength } from "./building-tags.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
-import { type WorldBarrier, chunkBarriers, ruinTops, worldBarriers } from "./barriers.ts";
+import { type WorldBarrier, chunkBarriers, worldBarriers } from "./barriers.ts";
 import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills, onCarriagewayDecks } from "./bridge-fill.ts";
 import { type EdgeCut, edgeOutlines, partsWithin } from "./building-edge.ts";
@@ -44,7 +44,7 @@ import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passage
 import { type BuildingOut, type ChunkOut, type GroundOut, type SteepWayOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { sidewalkIndex } from "./sidewalk-index.ts";
-import { lod1Index, withLod1Height } from "./lod1-heights.ts";
+import { lod1Index, ruinTops, withLod1Height } from "./lod1-heights.ts";
 import { lod2Index, withLod2Roof } from "./lod2-roofs.ts";
 import { withSurfaceTop } from "./corrections-surface.ts";
 import { RingBins } from "./ring-bins.ts";

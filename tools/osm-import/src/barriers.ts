@@ -8,9 +8,7 @@
  */
 import type { BarrierKind } from "../../../packages/core/src/world/barriers.ts";
 import { axesNear, bandAxes, outOfBands } from "./barrier-edges.ts";
-import { type Lod1Building } from "../../gugik/src/extracts.ts";
 import { parseLength } from "./building-tags.ts";
-import { lod1Index, lod1Match } from "./lod1-heights.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, pointAlong, pointInRing, r1, ringBounds, simplifyLine, sliceLine } from "./geometry.ts";
 import { pathWidth, roadWidth } from "./ground.ts";
@@ -98,7 +96,7 @@ export interface BarrierCuts {
   readonly buildings: readonly { readonly ring: readonly Pt[] }[];
   readonly bands: readonly { readonly ring: readonly Pt[]; readonly surface: string; readonly carriageway?: true }[];
   readonly lines: readonly Line[];
-  /** The height of GUGiK's LoD1 block over a ruin's outline, when one matches it (`ruinTops`). */
+  /** The height of GUGiK's LoD1 block over a ruin's outline, when one matches it (`ruinTops` of `lod1-heights.ts`). */
   readonly ruinHeight?: (ring: readonly Pt[]) => number | undefined;
 }
 
@@ -110,13 +108,6 @@ export interface BarrierCuts {
 export const RUIN_STANDING = 1.5;
 /** Standing walls past these are not a ruin's (a block of the LoD1 over a whole building). */
 const RUIN_TALLEST = 4;
-
-/** The LoD1 heights over the ruins' outlines, for `BarrierCuts`. */
-export const ruinTops = (lod1: readonly Lod1Building[] | undefined): Pick<BarrierCuts, "ruinHeight"> => {
-  if (!lod1) return {};
-  const index = lod1Index(lod1);
-  return { ruinHeight: (ring) => lod1Match(index, ring)?.lod1.height };
-};
 
 const ruinHeightOf = (l: Line, cuts: BarrierCuts): number => {
   const tagged = parseLength(l.tags.height);
