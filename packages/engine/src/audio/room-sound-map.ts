@@ -9,10 +9,11 @@ import { type Emitter, type EmitterMix, emitterMix } from "./spatial";
  * in the yard behind Neon Koi). Pure numbers, no WebAudio: `RoomScape` turns the mix into node levels.
  *
  * Pattern: the rooms and portals of game audio's spatial middleware (Wwise Spatial Audio rooms, Unreal's audio volumes
- * with interior settings): an emitter in the listener's room is heard whole, and one outdoors by a listener outdoors;
- * one in another room, or outdoors for a listener inside, comes through the walls quieter and low-passed. Different
- * from them: no portals (a room's doorway does not carry the sound further than its walls do) and no reverb of the
- * room's own, as the street's ambience has none either.
+ * with interior settings): an emitter in the listener's room is heard whole, one in another room or outside comes
+ * through the walls quieter and low-passed. Different from them: no portals (a room's doorway does not carry the sound
+ * further than its walls do) and no reverb of the room's own, as the street's ambience has none either. The open air
+ * is one more room: a thing standing outside (the car wash's pump and dryer, the kitchen's extract and the
+ * downpipe in the yard behind Neon Koi, ADR-0102 point 5) is heard whole by a listener outside and dull from inside a room.
  */
 
 export interface RoomEmitter extends Emitter {
