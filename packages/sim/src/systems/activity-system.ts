@@ -10,10 +10,12 @@ export const activitySystem: System = {
   name: "activity",
   run(ctx) {
     const clock = ctx.state.domain.clock;
-    const { dialogueActive, focusId } = ctx.session;
+    // The conversation's partner: the one it was opened with (the interaction clears the focus as it opens).
+    const { dialogueActive, focusId, talkingTo } = ctx.session;
+    const partner = talkingTo ?? focusId;
     for (const e of ctx.world.with("view")) {
       if (e.view.kind !== "npc" && e.view.kind !== "enemy" && e.view.kind !== "crowd") continue;
-      const next = activityOf(e, clock, dialogueActive && focusId === e.id);
+      const next = activityOf(e, clock, dialogueActive && partner === e.id);
       if (next === (e.activity ?? null)) continue;
       if (next === null) delete e.activity;
       else e.activity = next;

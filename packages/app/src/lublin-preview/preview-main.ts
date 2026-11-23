@@ -109,7 +109,7 @@ const start = async (): Promise<void> => {
   const asset = (f: string) => new URL(`city/${f}`, document.baseURI).href;
   const renderer = new BabylonRenderer(stage, {
     cityKit: kit ? asset("city-kit.glb") : null,
-    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb"), asset("door-props.glb"), asset("vehicle-props.glb"), asset("drone-props.glb"), asset("crowd-props.glb"), asset("room-props.glb"), asset("extra-props.glb"), asset("room-detail-props.glb"), asset("room-detail-doki-props.glb"), asset("room-detail-stare-props.glb"), asset("room-detail-w3-props.glb"), asset("room-detail-metro-props.glb"), asset("room-detail-alchemia-props.glb"), asset("room-detail-galeria-props.glb"), asset("room-detail-kits-props.glb"), asset("room-detail-myjnia-props.glb"), asset("room-detail-sceny-props.glb"), asset("room-detail-t1-props.glb")] : null,
+    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb"), asset("door-props.glb"), asset("vehicle-props.glb"), asset("drone-props.glb"), asset("crowd-props.glb"), asset("room-props.glb"), asset("extra-props.glb"), asset("room-detail-props.glb"), asset("room-detail-doki-props.glb"), asset("room-detail-stare-props.glb"), asset("room-detail-w3-props.glb"), asset("room-detail-metro-props.glb"), asset("room-detail-alchemia-props.glb"), asset("room-detail-galeria-props.glb"), asset("room-detail-kits-props.glb"), asset("room-detail-myjnia-props.glb"), asset("room-detail-sceny-props.glb"), asset("room-detail-krakowskie-props.glb"), asset("room-detail-brama-props.glb"), asset("room-detail-t1-props.glb")] : null,
     world: [],
     fogScale: fog,
     detailTextures: new URL("textures/", document.baseURI).href,

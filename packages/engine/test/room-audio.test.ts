@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AudioListenerPose, ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, T1_CART, T1_EXTRACT, interiorAt } from "@seki/sim";
+import { INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, T1_CART, T1_EXTRACT, interiorAt } from "@seki/sim";
 import { ROOM_SOUNDS, ROOM_SOUND_NEAR, THROUGH_WALL, roomEmitters, roomMix } from "../src/audio/room-sound-map";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -31,13 +31,37 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but those in the open
-    // air (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard; on Neon Koi's back wall the kitchen's
-    // extract, the downpipe and the meters' box; on Alchemia's T1 Hana's cool box and the extract of Fumiko's kitchen.
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but those in the open air
+    // (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard; on Neon Koi's back wall the kitchen's
+    // extract, the downpipe and the meters' box; the wreck's leak on Plac Litewski and the dry fountains' jets
+    // (docs/lokacje/plac-litewski.md, §17); on the roof of Alchemia's pavilion the neon's transformer, the kitchen's
+    // exhaust fan and the bucket's drip; by Brama Krakowska its scanner, its neon's transformer and the booth's plate.
     const near = (e: { position: { x: number; z: number } }, x: number, z: number, r: number) => Math.hypot(e.position.x - x, e.position.z - z) < r;
-    const outside = EMITTERS.filter((e) => e.room === null);
-    expect(outside.map((e) => e.sound).sort()).toEqual(["drip", "hum", "hum", "pump", "vent", "vent", "vent"]);
-    for (const e of outside) expect(near(e, 410, -36, 8) || near(e, 313, -110, 3) || near(e, T1_CART.x, T1_CART.z, 1) || near(e, T1_EXTRACT.x, T1_EXTRACT.z, 1), `${e.sound}`).toBe(true);
+    for (const e of EMITTERS.filter((x) => x.room === null)) {
+      const wash = (e.sound === "pump" || e.sound === "vent") && near(e, 410, -36, 8);
+      const koi = near(e, 313, -110, 3);
+      const wreck = e.sound === "drip" && near(e, 152.6, -49, 3);
+      const roof = near(e, PAVILION_CENTRE.x, PAVILION_CENTRE.z, 8);
+      // By Brama Krakowska: the scanner in the passage, the neon's transformer, the zapiekanki booth's hot plate.
+      const brama = near(e, 470, -90, 12) || near(e, 456, -76, 4);
+      // On Alchemia's T1: Hana's cool box, the extract of Fumiko's kitchen.
+      const t1 = near(e, T1_CART.x, T1_CART.z, 1) || near(e, T1_EXTRACT.x, T1_EXTRACT.z, 1);
+      expect(wash || koi || wreck || roof || brama || t1 || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
+    }
+  });
+
+  it("hears the pavilion roof's sources whole on the roof (the open air is a room too) and dull from inside a room", () => {
+    const roof = roomMix(pose(PAVILION_LADDER.exit.x, PAVILION_LADDER.exit.y, PAVILION_LADDER.exit.z), EMITTERS);
+    expect(roof.room).toBeNull();
+    // From the ladder's head: the exhaust fan 2 m off loud and open, the neon's transformer and the drip further off, open.
+    expect(roof.layers.vent.gain).toBeGreaterThan(0.3);
+    for (const s of ["vent", "tubes", "drip"] as const) {
+      expect(roof.layers[s].gain, s).toBeGreaterThan(0);
+      expect(roof.layers[s].cutoff, s).toBeGreaterThan(10000);
+    }
+    // By Ren under the tarp the drip is nearer than the fan.
+    const camp = roomMix(pose(REN_SPOT.x, REN_SPOT.y, REN_SPOT.z), EMITTERS);
+    expect(camp.layers.drip.gain).toBeGreaterThan(roof.layers.drip.gain);
   });
 
   it("hears the car wash's pump whole in its yard, the open air being one more room", () => {
@@ -47,6 +71,20 @@ describe("the rooms' sound map", () => {
     expect(yard.layers.pump.gain).toBeGreaterThan(0.3);
     expect(yard.layers.pump.cutoff).toBeGreaterThan(10000);
     expect(yard.layers.vent.gain).toBeGreaterThan(0);
+  });
+
+  it("hears the wreck's leak and the dry fountain by the square whole outside, not through a wall (Plac Litewski)", () => {
+    // Two metres off the oil under the wreck's bonnet, and off the nearest jet of the square's dry fountains.
+    const leak = EMITTERS.find((e) => e.sound === "drip" && e.room === null && Math.hypot(e.position.x - 152.6, e.position.z + 49) < 3)!;
+    expect(leak).toBeDefined();
+    const byLeak = roomMix(pose(leak.position.x + 2, leak.position.y, leak.position.z), EMITTERS);
+    expect(byLeak.room).toBeNull();
+    expect(byLeak.layers.drip.gain).toBeGreaterThan(0.5);
+    expect(byLeak.layers.drip.cutoff).toBeGreaterThan(10000);
+    const jet = EMITTERS.filter((e) => e.sound === "fountain").sort((a, b) => Math.hypot(a.position.x - 128, a.position.z + 49) - Math.hypot(b.position.x - 128, b.position.z + 49))[0]!;
+    const byJet = roomMix(pose(jet.position.x - 2, jet.position.y, jet.position.z), EMITTERS);
+    expect(byJet.layers.fountain.gain).toBeGreaterThan(0.3);
+    expect(byJet.layers.fountain.cutoff).toBeGreaterThan(10000);
   });
 
   it("hears the yard's kitchen extract whole in the yard behind Neon Koi and dull from the bar's back room", () => {
