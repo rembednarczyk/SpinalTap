@@ -342,6 +342,25 @@ kbd {
 /* Up on a level (ADR-0021): the floors up there light up, the street below fades. */
 .minimap--upper .minimap__deck { fill: rgba(255, 176, 0, 0.3); stroke: rgba(255, 176, 0, 0.85); stroke-dasharray: none; }
 .minimap--upper .minimap__street, .minimap--upper .minimap__block { opacity: 0.55; }
+/* Indoors (ADR-0100): the storey's rooms over the street and its blocks, which fade. */
+.minimap--indoor .minimap__city, .minimap--indoor .minimap__street, .minimap--indoor .minimap__block, .minimap--indoor .minimap__deck, .minimap--indoor .minimap__labels { opacity: 0.25; }
+.minimap__room { fill: rgba(95, 242, 255, 0.2); stroke: rgba(95, 242, 255, 0.9); stroke-width: 0.35; }
+.minimap__floor {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 64%;
+  font-family: var(--font-mono);
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 0 4px rgba(4, 7, 12, 0.95);
+}
+.minimap__floor-name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 9px; color: var(--ink); }
+.minimap__floor-level { font-size: 11px; color: var(--amber); }
 .minimap__link path { fill: none; stroke: var(--amber); stroke-width: 0.55; stroke-linecap: square; }
 .minimap__link--lift path { fill: rgba(255, 176, 0, 0.25); }
 .minimap__level {

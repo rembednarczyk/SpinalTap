@@ -1,0 +1,1 @@
+- Minimapa we wnętrzu pokazuje nazwę miejsca i poziom (np. Poziom -2 w parkingu Alchemii, głębokość peronu metra) oraz rzut pokoi piętra, na którym stoisz; na mapie są otwarci sprzedawcy (Mori, Oyaji, Fumiko) i lokale miasta z nazwami (ADR-0100).

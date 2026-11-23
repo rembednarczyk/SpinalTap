@@ -25,6 +25,7 @@ export * from "./alchemia/foodhall-detail";
 export * from "./trasa-detail";
 export * from "./capsule-detail";
 export * from "./interior-areas";
+export * from "./interior-floors";
 export * from "./capsule-room";
 export * from "./alchemia";
 export { ARCHIVIST_SPOT, CASTLE_ACT3_ACTORS, KUROSAWA_CASTLE_SPOT } from "./castle-act3";
