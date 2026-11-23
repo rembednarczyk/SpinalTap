@@ -1,0 +1,1 @@
+- Bazar przy alei Tysiąclecia i Targ na Ruskiej świecą nocą: nad każdym straganem wisi girlanda ciepłych żarówek, a jej światło pada na ladę i bruk.

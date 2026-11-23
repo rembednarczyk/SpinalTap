@@ -1,13 +1,15 @@
-import type { Vec3 } from "@seki/core";
+import { type StreetPropItem, type Vec3, roomDetailShape } from "@seki/core";
 import { turnLocal } from "./lublin/furniture";
 import { groundY } from "./lublin/terrain";
 import { PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_METRO, PLAC_ZAMKOWY_STALLS } from "./plac-zamkowy-detail";
+import { WORLD_STREET_PROPS } from "./street-props";
 
 /*
  * Podzamcze's first lights of the game (`docs/lokacje/dzielnica-targ.md`, „Dług sceny” point 1; `docs/zasady-lokacji.md`
- * §13): the warm light of trade on Plac Zamkowy's flea market and the green of the way down at its metro pavilion. Each
- * light stands in a fitting the scene's models draw (Blender's `rd-pz-stall` festoon between a stall's front posts,
- * `rd-pz-metro-lamp` over the pavilion's opening, `tools/blender/rooms/plac_zamkowy.py`): no light from nowhere. The
+ * §13): the warm light of trade on Plac Zamkowy's flea market, the Bazaar and Targ na Ruskiej, and the green of the way
+ * down at the metro pavilion. Each light stands in a fitting the scene's models draw (Blender's festoons between a
+ * stall's front posts, `rd-pz-stall` and `rd-targ-festoon`, and `rd-pz-metro-lamp` over the pavilion's opening,
+ * `tools/blender/rooms/plac_zamkowy.py`, `dzielnica_targ.py`): no light from nowhere. The
  * renderer turns them on near the square only (`SceneLamps`, as Alchemia's pavilion lamps), so the shader's light
  * slots go to the street everywhere else. Pattern: motivated lighting (the light's source visible in the frame, as
  * film and game lighting practice name it); they carry no entity, so no id of the content moves.
@@ -40,10 +42,10 @@ const FESTOON_LIGHT = { color: "#ffc27a", range: 5, intensity: 0.9 } as const;
 /** The way down marked in the green of the ways (§13), as Alchemia's ladder lamp. */
 const METRO_LIGHT = { color: "#3dff86", range: 6, intensity: 0.9 } as const;
 
-const festoonOf = (i: number): SceneLamp => {
-  const s = PLAC_ZAMKOWY_STALLS[i]!;
+/** The light in the festoon of the stall `s`, under the key `key`. */
+const festoonOf = (s: StreetPropItem, key: string): SceneLamp => {
   const d = turnLocal(s.yaw, FESTOON.x, FESTOON.z);
-  return { key: `targ-pz-festoon-${i}`, at: { x: s.x + d.x, y: s.y + FESTOON.y, z: s.z + d.z }, ...FESTOON_LIGHT };
+  return { key, at: { x: s.x + d.x, y: s.y + FESTOON.y, z: s.z + d.z }, ...FESTOON_LIGHT };
 };
 
 const metroLamp = (): SceneLamp => {
@@ -57,8 +59,50 @@ export const PLAC_ZAMKOWY_LAMPS: SceneLampGroup = {
   id: "targ-plac-zamkowy",
   centre: { x: (PLAC_ZAMKOWY_AREA.minX + PLAC_ZAMKOWY_AREA.maxX) / 2, z: (PLAC_ZAMKOWY_AREA.minZ + PLAC_ZAMKOWY_AREA.maxZ) / 2 },
   near: 60,
-  lamps: [...PLAC_ZAMKOWY_STALLS.map((_, i) => festoonOf(i)), metroLamp()],
+  lamps: [...PLAC_ZAMKOWY_STALLS.map((s, i) => festoonOf(s, `targ-pz-festoon-${i}`)), metroLamp()],
 };
 
+type Area = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+
+/** The Bazaar's stalls by the halls on aleja Tysiąclecia (T-026), round the Hebi group's `bazaar-halls`. */
+export const BAZAR_AREA: Area = { minX: 640, maxX: 720, minZ: 355, maxZ: 445 };
+/** Targ na Ruskiej's stalls on its square (w182461192, T-341). */
+export const RUSKA_AREA: Area = { minX: 700, maxX: 845, minZ: 518, maxZ: 598 };
+
+/** The import's market stalls in `area` (`WORLD_STREET_PROPS`), in its chunks' order. */
+const stallsIn = (area: Area): StreetPropItem[] =>
+  Object.values(WORLD_STREET_PROPS)
+    .flat()
+    .filter((i) => i.prop === "market-stall" && i.x > area.minX && i.x < area.maxX && i.z > area.minZ && i.z < area.maxZ);
+
+export const BAZAR_STALLS: readonly StreetPropItem[] = stallsIn(BAZAR_AREA);
+export const RUSKA_STALLS: readonly StreetPropItem[] = stallsIn(RUSKA_AREA);
+
+/**
+ * The festoon of warm bulbs over each stall of the two food markets (Blender's `rd-targ-festoon`,
+ * `tools/blender/rooms/dzielnica_targ.py`), drawn only: the stall's solid is the import's.
+ */
+export const TARG_MARKET_DETAIL: readonly StreetPropItem[] = [...BAZAR_STALLS, ...RUSKA_STALLS].map((s) => ({
+  prop: "room-detail",
+  x: s.x,
+  y: s.y,
+  z: s.z,
+  yaw: s.yaw,
+  variant: roomDetailShape("rd-targ-festoon"),
+}));
+
+/** A market's lights, one in each stall's festoon, on within `near` of its area's middle. */
+const marketLamps = (id: string, area: Area, stalls: readonly StreetPropItem[], near: number): SceneLampGroup => ({
+  id,
+  centre: { x: (area.minX + area.maxX) / 2, z: (area.minZ + area.maxZ) / 2 },
+  near,
+  lamps: stalls.map((s, i) => festoonOf(s, `${id}-festoon-${i}`)),
+});
+
+/** The Bazaar: a light in each stall's festoon, on within 70 m of its middle. */
+export const BAZAR_LAMPS: SceneLampGroup = marketLamps("targ-bazar", BAZAR_AREA, BAZAR_STALLS, 70);
+/** Targ na Ruskiej: a light in each stall's festoon, on within 90 m of its middle (its square is 145 m long). */
+export const RUSKA_LAMPS: SceneLampGroup = marketLamps("targ-ruska", RUSKA_AREA, RUSKA_STALLS, 90);
+
 /** Every scene's lights the renderer turns on near their place. */
-export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS];
+export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS];
