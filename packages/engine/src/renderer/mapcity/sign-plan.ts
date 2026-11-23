@@ -16,7 +16,7 @@ import { type Uv, quadUv } from "./sink-ops";
  * from the wall outwards), uv2 = (atlas cell, holo seed or name slot; kind), colour rgb = tint,
  * a = brightness.
  */
-export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6, ad: 7, beam: 8, mist: 9, strobe: 10, venue: 11, glyph: 12, screen: 13 } as const;
+export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6, ad: 7, beam: 8, mist: 9, strobe: 10, venue: 11, glyph: 12, screen: 13, holoPanel: 14 } as const;
 
 /**
  * A kind plus `kind` is drawn near only (ADR-0074 C4): Alchemia's front hangs its letters, holograms

@@ -11,7 +11,6 @@ const DOOR = paint("#25272c");
 const WINDOW = glow("#9fd8ff");
 const SCREENS = ["#14b4d8", "#d83aa8", "#e0a030", "#4ad08a"].map(glow);
 /** The board's screen under its letters: dark, so the neon reads on it. */
-const SCREEN = paint("#0c1218");
 
 /**
  * An office container of a site's back yard (ADR-0087 stage 1): a 20 ft cabin, its roof's rim and
@@ -31,22 +30,20 @@ export const cabinModel = (variant: number): MeshSink => {
 };
 
 /**
- * The information board on the fence by the gate (ADR-0087 step 8), facing the street (+z): a
- * graphite frame round a dark screen with a lit rim and a rule under the name, a hazard strip
- * under it. Its three lines are neon letters in the map's signs' mesh (stage 2,
- * `site-signs.ts`), in the player's language.
+ * The information board on the fence by the gate (ADR-0087 step 8), facing the street (+z): a hologram since 22.11 (the
+ * user's note), so of it only its projector stands, a graphite bar on the fence under the picture with its lens lit in the
+ * board's colour, and a hazard strip under it. The pane of light over it and its three lines are in the map's signs' mesh
+ * (`site-signs.ts`), in the player's language.
  */
 export const boardModel = (variant: number): MeshSink => {
   const sink = new MeshSink();
   const hw = SITE_BOARD.width / 2;
-  const [b, t] = [SITE_BOARD.bottom, SITE_BOARD.top];
+  const b = SITE_BOARD.bottom;
   const rim = SCREENS[variant % SCREENS.length]!;
-  slab(sink, FLAT, -hw, hw, -0.03, 0.03, b, t, GRAPHITE);
-  slab(sink, FLAT, -hw - 0.03, hw + 0.03, -0.04, 0.04, t, t + 0.05, GRAPHITE_LIGHT);
-  facing(sink, FLAT, 0.035, -hw + 0.06, hw - 0.06, b + 0.06, t - 0.06, rim);
-  facing(sink, FLAT, 0.045, -hw + 0.09, hw - 0.09, b + 0.09, t - 0.09, SCREEN);
-  // The rule between the name and the developer, under the letters (`site-signs.ts`: 6 cm off the board).
-  facing(sink, FLAT, 0.052, -hw + 0.18, hw - 0.18, t - 0.42, t - 0.405, rim);
-  facing(sink, FLAT, 0.035, -hw, hw, b - 0.12, b - 0.02, HAZARD);
+  slab(sink, FLAT, -hw * 0.8, hw * 0.8, -0.06, 0.14, b - 0.2, b - 0.06, GRAPHITE);
+  slab(sink, FLAT, -hw * 0.8 - 0.03, hw * 0.8 + 0.03, -0.07, 0.15, b - 0.24, b - 0.2, GRAPHITE_LIGHT);
+  // The lens along its top, lit: the picture's light comes from it.
+  slab(sink, FLAT, -hw * 0.72, hw * 0.72, 0.02, 0.1, b - 0.06, b - 0.045, rim);
+  facing(sink, FLAT, 0.035, -hw * 0.8, hw * 0.8, b - 0.36, b - 0.26, HAZARD);
   return sink;
 };
