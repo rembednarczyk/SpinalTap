@@ -84,6 +84,7 @@ Seki podchodzi od placu odbioru wzdłuż ściany rzędu N i widzi wieżę z doł
 - Tablica Plage i Laśkiewicz przy wieży albo na cokole śluz.
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/tessen-w3/outside-dress.ts`): kąt palaczy przy drzwiach biura (wiadro z piaskiem, woda, kask). Zostaje:
 - Światło nawigacji nad drzwiami biura i przy stopie schodów: oprawy w `packages/engine/src/renderer/tessen-w3/w3-dress.ts`, światło w `w3-lights.ts` (tryb wnętrza) albo `w3-fx.ts` (na zewnątrz).
 - Światła przeszkodowe na masztach (+32,4 i +34), migające: rysunek w `w3-dress.ts`, miganie z zegara renderera jak animacja linii (`w3-line-anim.ts`).
 - Skupiska na podeście, spocznikach i przy drzwiach biura: nowy plik `packages/sim/src/content/tessen-w3/tower-dress.ts` (rysunek bez bryły poza skrzynkami na spocznikach), rysunek w `w3-dress.ts`.
