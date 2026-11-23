@@ -91,5 +91,4 @@ Zrobione 23.11 (`packages/sim/src/content/rynek-detail.ts`, `tools/blender/rooms
 - Przepis zabytku Trybunału (fasada Merliniego, wieża z zegarem, beżowy tynk, zielony dach) i wysokość z LoD2 (G-119, T-254, T-066): `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`, korekta wysokości w `tools/osm-import` (`LOD1_LANDMARKS`).
 - Przedsionek KARAOKE z kotarą (model `rd-k-curtain` jest w zestawie Blendera) i witryna DENKI: wnętrze w `packages/sim/src/content/interiors.ts` albo nowy plik pokoju w `packages/sim/src/content/`, wpis w `INTERIORS` i karta pomieszczenia (§12: każde pomieszczenie osobnym wnętrzem).
 - Brzęczenie neonów Starego Miasta (dziś `neonEmitters()` czyta tylko `DISTRICT_M0_PROPS`) i warsztat Tetsu jako emiter: `packages/engine/src/audio/spatial.ts`, `packages/engine/src/audio/ambience.ts`.
-- Sprzeczność ADR i gry: ADR-0045 („Gdzie co stoi”) podaje SAKE przy (547,5; −71,5), a gra ma (559,6; −83,5) po G-943; dopisek w `docs/adr/0045-gra-w-lublinie.md` albo w nowym ADR o przeniesieniach.
 - Zmierzyć 60-30-10 na zrzucie `rynek-tpp` i wpisać w §13 tej karty.
