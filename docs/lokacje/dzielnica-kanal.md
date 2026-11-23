@@ -57,8 +57,6 @@ Frakcja: ulica.
 - `kanal_recruit`: pod kładką nad Grodzką (652; 64), 16:00–23:00, Koji (`enc_kanal_recruit`). Chłopak w za dużej kurtce Hebi zastępuje drogę i łamiącym się głosem żąda portfela, „proszę”. Seki może go nauczyć grozić („Ciebie nie ruszymy”) albo odesłać do mamy, która robi lepszy ramen niż Fumiko.
 
 ## Dług sceny
-- Sprzeczność ink i gry: `enc_kanal_fisherman` mówi „Przy krawężniku na Grodzkiej”, a punkt (510; −68) leży na Bramowej (komentarz w `encounters.ts` też mówi Bramowa); w promieniu 15 m nie ma kratki ściekowej. Propozycja: zdanie „Przy krawężniku na Bramowej” w `packages/narrative/ink/{pl,en}/enc-kanal.ink` i kratka przy punkcie (karta `brama-krakowska`).
-- Sprzeczność ink i gry: `enc_kanal_vending` stoi 27 m od neonu DENKI (567,4; −25), w miejscu bez automatu (cała dzielnica ma w meblach jeden automat). Propozycja: automat z mówiącym panelem przy DENKI, np. (572; −27), i punkt spotkania przy nim w `packages/sim/src/content/encounters.ts`, rekwizyt w `packages/sim/src/content/district-kanal.ts` (karta `rynek`).
 - Graffiti i tagi Hebi na Starym Mieście (dziś 0, T-123): kilka tagów tylko w bramach i pod kładką, poza fasadami zabytków (§16 ulicy przy ochronie zabytku): decale ADR-0058 w `tools/osm-import` albo `packages/sim/src/content/district-kanal.ts`, przegląd `topography-curator`.
 - Światło drogi przy wyjściach z Rynku i zejściach ze skarpy (Grodzka, Zaułek Panasa, schody Podwala): lampy gry na końcu `KANAL_PROPS` w `packages/sim/src/content/district-kanal.ts`.
 - Emitery brzęczenia neonów Rynku i dzwonów katedry: `packages/engine/src/audio/spatial.ts` (`neonEmitters` czyta dziś tylko `DISTRICT_M0_PROPS`).

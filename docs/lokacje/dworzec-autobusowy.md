@@ -56,6 +56,4 @@ Frakcja: ulica.
 - Tłum czekających na peronie i w poczekalni (chunk `podzamcze-1-1` bez tłumu): `packages/sim/src/content/crowd.ts` (miejsca na końcu `CROWD_SPOTS`).
 - Emitery silników, zapowiedzi i automatu z kawą: `packages/engine/src/audio/spatial.ts`.
 - Sprzeczność ADR i gry: ADR-0091 i `TERRITORIES` (`packages/core/src/world/territories.ts`: „The stalls by the bus station”) stawiają grupę przy straganach dworca, a najbliższy stragan jest 91 m od rdzenia (801,4; 386,4). Propozycja: 4–6 straganów dworcowych przy pawilonach alei (x 810..860, z 375..380) w planie mebli `tools/osm-import` albo w `district-targ.ts`, przegląd `topography-curator`.
-- Sprzeczność ink i gry: `enc_targ_fortune` („Między straganami siedzi kobieta”) stoi 37 m od najbliższego straganu Bazaru; przy straganach dworcowych z punktu wyżej zdanie się zgadza bez zmiany ink.
-- Sprzeczność ink i gry: `radio.ink` reklamuje „Ramen u Fumiko na Podzamczu, przy dworcu autobusowym”, a Fumiko gotuje w Alchemii (food hall i okienko na P0, `schedules.ts`). Propozycja: „Ramen u Fumiko w Alchemii” w `packages/narrative/ink/{pl,en}/radio.ink` i poprawka wiersza w `docs/narrative/lublin-names.md`.
 - Zmierzyć 60-30-10 nocą z alei na dworzec i wpisać w §13 tej karty.
