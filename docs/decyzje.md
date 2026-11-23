@@ -66,6 +66,8 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 - **Historie i scenariusze wszystkich lokacji (23.11, noc):** polecenie użytkownika: każda lokacja gry (nie tylko wnętrza z kartami) dostaje historię i podlega zasadom level designu (`docs/zasady-lokacji.md`). Lokacja fabularna (scena misji, miejsce postaci fabularnej, punkt zlecenia) dostaje dodatkowo szczegółowy scenariusz. Potem detal i konfigurację scen przeprojektowujemy albo uzupełniamy według historii i scenariusza.
 - **Minimapa: piętra, sprzedawcy, POI (23.11):** polecenie użytkownika: minimapa reaguje na kondygnację gracza (także pod ziemią) i pokazuje prawdziwych sprzedawców oraz punkty orientacyjne. Zmienia to decyzję ADR-0035 (sklepy zdjęte z mapy) w zakresie sprzedawców, którzy naprawdę handlują.
 - **Sprzedawcy (23.11):** polecenie użytkownika: z każdym sprzedawcą możliwa luźna interakcja według napisanego scenariusza, a każdy sprzedawca dostaje model. Zmienia to ADR-0093 (sprzedawcy jako nieruchome figury).
+- **Hook nowej siatki (23.11):** polecenie użytkownika: dodanie siatki chunków do mapy prowadzi lista kontrolna z hookiem Stop (`pnpm grid:verify <nazwa>`, umiejętność `nowa-siatka`, deklaracje w `docs/siatki/`). Sesja nie kończy pracy nad siatką, dopóki każdy punkt nie jest zielony, zrobiony albo przyjęty z odnośnikiem.
+- **Scenariusze lokacji tła (23.11):** zgoda użytkownika na krótkie scenariusze dla 25 kart lokacji tła (kilka zdań: kto tu bywa, co się dzieje, ślad obecności), partiami, z zapadką w teście kart.
 
 - **Ustawienia domyślne (decyzja użytkownika 1.11):** grafika High na każdym urządzeniu, liczby obrażeń przy trafieniu, przycisk Ustawienia na ekranie tytułowym; jednorazowa migracja starych wpisów ustawień (`rev: 2`); w main (#121).
 

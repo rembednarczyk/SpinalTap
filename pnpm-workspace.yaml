@@ -12,6 +12,7 @@ packages:
   - "tools/bench-ab"
   - "tools/test-rerun"
   - "tools/hashes"
+  - "tools/grid-verify"
   - "tools/pr-prep"
   - "tools/map-refresh"
   - "tools/city-cache"

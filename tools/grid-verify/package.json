@@ -1,0 +1,13 @@
+{
+  "name": "@seki/grid-verify",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The checklist of a new grid of map chunks, run end to end: its gates, its probes and the decisions it needs, in one report the Stop hook reads.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
