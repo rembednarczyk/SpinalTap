@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AudioListenerPose, ROOM_DETAIL_SHAPES } from "@seki/core";
-import { INTERIORS, interiorAt } from "@seki/sim";
+import { INTERIORS, PAVILION_CENTRE, PAVILION_LADDER, REN_SPOT, interiorAt } from "@seki/sim";
 import { ROOM_SOUNDS, ROOM_SOUND_NEAR, THROUGH_WALL, roomEmitters, roomMix } from "../src/audio/room-sound-map";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, type FakeNode, ManualTimer } from "./fixtures/fake-audio-context";
@@ -31,8 +31,25 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak).
-    expect(EMITTERS.filter((e) => e.room === null)).toEqual([]);
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the open air's own:
+    // the pavilion roof's neon transformer, the kitchen's exhaust fan and the bucket's drip (23.11), outside every interior.
+    const outside = EMITTERS.filter((e) => e.room === null);
+    expect(outside.map((e) => e.sound).sort()).toEqual(["drip", "tubes", "vent"]);
+    for (const e of outside) expect(Math.hypot(e.position.x - PAVILION_CENTRE.x, e.position.z - PAVILION_CENTRE.z)).toBeLessThan(8);
+  });
+
+  it("hears the pavilion roof's sources whole on the roof (the open air is a room too) and dull from inside a room", () => {
+    const roof = roomMix(pose(PAVILION_LADDER.exit.x, PAVILION_LADDER.exit.y, PAVILION_LADDER.exit.z), EMITTERS);
+    expect(roof.room).toBeNull();
+    // From the ladder's head: the exhaust fan 2 m off loud and open, the neon's transformer and the drip further off, open.
+    expect(roof.layers.vent.gain).toBeGreaterThan(0.3);
+    for (const s of ["vent", "tubes", "drip"] as const) {
+      expect(roof.layers[s].gain, s).toBeGreaterThan(0);
+      expect(roof.layers[s].cutoff, s).toBeGreaterThan(10000);
+    }
+    // By Ren under the tarp the drip is nearer than the fan.
+    const camp = roomMix(pose(REN_SPOT.x, REN_SPOT.y, REN_SPOT.z), EMITTERS);
+    expect(camp.layers.drip.gain).toBeGreaterThan(roof.layers.drip.gain);
   });
 
   it("hears the aquarium's pump whole in Neon Koi and dull and quieter through its wall", () => {

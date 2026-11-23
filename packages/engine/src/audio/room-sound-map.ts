@@ -11,7 +11,9 @@ import { type Emitter, type EmitterMix, emitterMix } from "./spatial";
  * Pattern: the rooms and portals of game audio's spatial middleware (Wwise Spatial Audio rooms, Unreal's audio volumes
  * with interior settings): an emitter in the listener's room is heard whole, one in another room or outside comes
  * through the walls quieter and low-passed. Different from them: no portals (a room's doorway does not carry the sound
- * further than its walls do) and no reverb of the room's own, as the street's ambience has none either.
+ * further than its walls do) and no reverb of the room's own, as the street's ambience has none either. The open air
+ * is one more room (null): a thing outside every interior (the neon's transformer, a kitchen's exhaust fan and a
+ * bucket's drip on the pavilion's roof, 23.11) is heard whole by a listener outside and through the walls from inside.
  */
 
 export interface RoomEmitter extends Emitter {
@@ -109,8 +111,8 @@ export const roomMix = (pose: AudioListenerPose, emitters: readonly RoomEmitter[
       layers[sound] = SILENT;
       continue;
     }
-    const inside = emitterMix(pose, mine.filter((e) => e.room !== null && e.room === room), ref, max);
-    const through = emitterMix(pose, mine.filter((e) => e.room === null || e.room !== room), ref, max);
+    const inside = emitterMix(pose, mine.filter((e) => e.room === room), ref, max);
+    const through = emitterMix(pose, mine.filter((e) => e.room !== room), ref, max);
     const wall = through.gain * THROUGH_WALL.gain;
     layers[sound] = inside.gain >= wall ? { ...inside, cutoff: OPEN } : { gain: wall, pan: through.pan, cutoff: THROUGH_WALL.cutoff };
   }
