@@ -108,7 +108,8 @@ const SHOP_INTERIORS: readonly InteriorDef[] = ALL_SHOPS.map((s) => ({
 export const INTERIORS: readonly InteriorDef[] = [
   { id: "clinic", name: "interior.clinic", building: CLINIC_SITE.building, rooms: [oldRoom(clinicPoint, -17, -7.3, 1.3, 7.7, CLINIC_SITE.floor)] },
   { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor), koiBackRoom()] },
-  { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM] },
+  // The pass office in W-3's tower, behind the fence too (ADR-0082 §3): no autosave, as the hall and its basement.
+  { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM], autosave: false },
   // W-3's hall and its basement with the culvert (ADR-0082 stage 2), behind the fence: no autosave.
   { id: "w3-hall", name: "interior.w3-hall", building: null, rooms: W3_HALL_ROOMS, autosave: false },
   { id: "w3-basement", name: "interior.w3-basement", building: null, rooms: W3_BASEMENT_ROOMS, autosave: false },
