@@ -99,4 +99,36 @@ describe("the cars at the deptak's south mouth (T-324)", () => {
     expect(rounds).toHaveLength(1);
     expect(Number(rounds[0])).toBeLessThan(0.5);
   });
+
+  it("drives a vehicle of Bajkowskiego on round the ring from its lane's end in view, not standing in the ring's way (G-966)", () => {
+    const ringRoute = TRAFFIC_ROUTES.findIndex((r) => r.ring);
+    const ring = TRAFFIC_ROUTES[ringRoute]!;
+    const feeders = TRAFFIC_ROUTES.flatMap((r, i) => (r.then?.route === ringRoute ? [i] : []));
+    // Bajkowskiego's two lanes and the way out of Alchemia's P-1.
+    expect(feeders.map((i) => TRAFFIC_ROUTES[i]!.id).filter((id) => id.includes("Bajkowskiego") || id === "alchemia-p1:out")).toHaveLength(3);
+    for (const i of feeders) expect(TRAFFIC_ROUTES[i]!.then!.s).toBe(0);
+    // Seed 4 at eight: a vehicle of Bajkowskiego's left lane reaches its end at the seam within the first second.
+    const sim = Simulation.create({ seed: 4, crowd: "high" });
+    const now = Math.floor((sim.clock.seconds % 86400) / 60);
+    sim.enqueue({ type: "wait", minutes: (hm(8) - now + 1440) % 1440 });
+    sim.step();
+    const seam = pointAt(ring.points, 0);
+    const eye = { x: seam.x - seam.tz * 8, z: seam.z + seam.tx * 8 };
+    teleportPlayer(sim, ground(eye.x, eye.z), Math.atan2(seam.x - eye.x, seam.z - eye.z));
+    let arrived: number | null = null;
+    let at = 0;
+    for (let t = 0; t < 60 * 10 && arrived === null; t++) {
+      sim.step();
+      for (const v of sim.world) {
+        if (v.vehicle && feeders.includes(v.vehicle.route) && v.vehicle.s > TRAFFIC_ROUTES[v.vehicle.route]!.length - 0.5) [arrived, at] = [v.id, t];
+      }
+    }
+    expect(arrived).not.toBeNull();
+    for (let t = 0; t < 60 * 4; t++) sim.step();
+    const v = [...sim.world].find((e) => e.id === arrived)!;
+    // On round the ring as a guest, well past its start: not held on its lane's end.
+    expect(v.vehicle!.route, `arrived at step ${at}`).toBe(ringRoute);
+    expect(v.vehicle!.guest).toBe(true);
+    expect(v.vehicle!.s).toBeGreaterThan(8);
+  });
 });

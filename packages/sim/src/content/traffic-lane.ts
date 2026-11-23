@@ -34,6 +34,12 @@ export interface TrafficRoute {
   readonly ownWay?: readonly (readonly [number, number])[];
   /** Its end is its start, the way it set out: driven round and round, its vehicles on from the end to the start (the pocket south of the deptak, T-324). */
   readonly ring?: true;
+  /**
+   * Its lane runs on into another route's at its end (Bajkowskiego's into the pocket's ring south of the deptak, G-966):
+   * that route's index and the arc length its lane goes on from there. A vehicle reaching the end in the player's view
+   * drives on along it as a guest instead of standing on its end.
+   */
+  readonly then?: { readonly route: number; readonly s: number };
   /** The models that drive it, by weight, where not every car of the city fits (Alchemia's hand-over cabins take cars up to a taxi). */
   readonly models?: readonly (readonly [VehicleModel, number])[];
 }
