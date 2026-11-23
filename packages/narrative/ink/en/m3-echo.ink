@@ -62,7 +62,7 @@ MORI: The module reacts to new chrome. If I put something in you, it might let m
 
 === recall_crash_night ===
 The new implant catches a current and something in your head trips like a fuse.
-Night, a wet ring road, a hundred sixty on the clock. You're driving someone else's car. On the seat beside you lies a cut wristband with a Kagami code.
+Night, wet Krakowskie Przedmieście, a hundred sixty on the clock. You're driving someone else's car. On the seat beside you lies a cut wristband with a Kagami code.
 A drone hangs over the hood, its spotlight in your eyes.
 REN: Can you hear me? Drive straight for the viaduct. Under it, it'll lose the signal. Don't turn.
 The voice in the earpiece sounds like Ren. A little too calm.

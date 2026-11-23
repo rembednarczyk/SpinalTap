@@ -62,7 +62,7 @@ MORI: Moduł reaguje na nowy chrom. Jak coś ci wszczepię, może puści więcej
 
 === recall_crash_night ===
 Nowy implant łapie prąd i coś w głowie przeskakuje jak bezpiecznik.
-Noc, mokra obwodnica, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samochód. Na fotelu obok leży przecięta opaska z kodem Kagami.
+Noc, mokre Krakowskie Przedmieście, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samochód. Na fotelu obok leży przecięta opaska z kodem Kagami.
 Nad maską wisi dron i świeci ci reflektorem w oczy.
 REN: Słyszysz mnie? Jedź prosto do wiaduktu. Pod nim zgubi sygnał. Nie skręcaj.
 Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
