@@ -1,0 +1,1 @@
+- Zadaszenia z mapy Lublina stoją w grze: peron autobusowy przy Alei Tysiąclecia, daszki straganów Targu na Ruskiej, daszek studni przy Zamku i dwie wiaty. Każde to płyta na stalowych słupach, pod którą da się przejść.

@@ -1,0 +1,1 @@
+- Grupy Hebi stoją dalej od kościołów i miejsc pamięci: przy Targu na Ruskiej na wschodnim skraju straganów, z dala od instalacji „Getto – drut kolczasty”, a na Lubartowskiej przy kamienicach na zachód od skrzyżowania, z dala od kościoła ewangelickiego. Kiosk całodobowy i śmieci tej grupy przeszły razem z nią.

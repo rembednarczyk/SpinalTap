@@ -2,7 +2,7 @@ import type { BuildingPassage, EntityId, Vec3, ViewDescriptor } from "@seki/core
 import { MEMORIAL_CLEAR, REMEMBRANCE_PLACES, type RemembrancePlace } from "@seki/sim";
 import { SPAN_MAX } from "./canyon-plan";
 import type { MapBuilding, WorldPassage } from "./facade-frame";
-import { bellTowersAt, towerAt, wallAt } from "./landmarks/match";
+import { type MappedCanopy, bellTowersAt, canopyAt, towerAt, wallAt } from "./landmarks/match";
 import { type P2, boundsOf, centroid, pointInRing } from "./polygon";
 
 /** A building view of the map city, with its clean ring in world metres. */
@@ -46,6 +46,8 @@ export const remembranceNear = (ring: readonly P2[], places: readonly Remembranc
  * its soffit up. `heightAt` is the terrain under a point, or null outside it; `around` are the
  * buildings near it, for the parts lifted onto it.
  */
+const canopyOf = (c: MappedCanopy | null): { canopy?: MappedCanopy } => (c ? { canopy: c } : {});
+
 export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: number, z: number) => number | null, around: Iterable<BuildingSource> = []): MapBuilding => {
   const v = e.view;
   const base = e.at.y;
@@ -71,6 +73,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.doorways?.length ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) } : {}),
     ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
     ...(v.soffit !== undefined ? { lifted: true } : {}),
+    ...canopyOf(v.soffit !== undefined ? canopyAt(e.at.x, e.at.z, v.outline.length) : null),
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
     ...(towers.length > 0 ? { towers } : {}),
     ...(towerAt(e.at.x, e.at.z, v.outline.length) ? { freeTower: true } : {}),

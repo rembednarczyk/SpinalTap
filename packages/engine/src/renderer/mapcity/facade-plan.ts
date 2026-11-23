@@ -2,6 +2,7 @@ import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, hexColor } from "../mesh-sink";
 import { type FacadeFrame, PLINTH_BAND, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, plinthBand, frameRoofMeta, trimMeta } from "./facade-frame";
 import { planBrackets } from "./bracket-plan";
+import { planCanopy } from "./canopy-plan";
 import { DOWN, band, slab, wallQuad } from "./facade-parts";
 import { planPassages } from "./passage-plan";
 import { WINDOW_STYLE } from "./facade-style";
@@ -123,6 +124,7 @@ const atticFaces = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
 
 /** The detailed building for the near cells. */
 export const planNearBuilding = (sink: MeshSink, f: FacadeFrame): void => {
+  if (f.b.canopy) return planCanopy(sink, f);
   const p = paletteOf(f);
   const s = f.style;
   const b = f.b;
@@ -201,6 +203,7 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
 
 /** One block per building for the far cells: same walls, the pitched roof or a flat top, towers as boxes. */
 export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
+  if (f.b.canopy) return planCanopy(sink, f);
   const p = paletteOf(f);
   const roof = f.b.roof ?? 0;
   if (stacked(f)) {
