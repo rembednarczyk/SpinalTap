@@ -293,6 +293,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t2-settlement", clutter: 0 },
   { key: "rd-t2-lookout", fine: true, clutter: 6 },
   { key: "rd-t2-hebi", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
   // Trasa Podziemna's loch (docs/pomieszczenia/trasa-podziemna.md, ADR-0102): Mei's old poster with its song list and
   // the rose and candle under it, the south corridor's leak with its puddle and bucket.
   { key: "rd-trasa-poster", fine: true, clutter: 4 },
