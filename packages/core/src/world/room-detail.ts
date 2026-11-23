@@ -279,6 +279,9 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-bk-doorway", clutter: 3 },
   { key: "rd-bk-grate", fine: true, clutter: 0 },
   { key: "rd-bk-neon-box", services: true, sound: "hum" },
+  // Plac Katedralny (docs/lokacje/plac-katedralny.md, ADR-0102): candles under the monument, the AR legend terminal.
+  { key: "rd-kat-candles", fine: true, clutter: 9 },
+  { key: "rd-kat-terminal", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
