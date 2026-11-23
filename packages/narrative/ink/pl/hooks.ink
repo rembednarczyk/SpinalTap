@@ -4,8 +4,9 @@
 // a habit of the target. Mails and shards are narration, so they carry no speaker prefix.
 
 // eliminate: Kaito's sites on Krakowskie Przedmieście and under the Grodzka footbridge in Stare Miasto.
+// The bark plays at every one of the five sites (`carrier: { post: 1 }`), so it names none of them.
 === hook_eliminate_1 ===
-HEBI: Szef co godzinę chodzi sam za myjnię. Mówi, że dzwoni do matki, a wraca pachnący sake.
+HEBI: Szef co godzinę odchodzi sam za róg. Mówi, że dzwoni do matki, a wraca pachnący sake.
 -> END
 
 === hook_eliminate_2 ===
