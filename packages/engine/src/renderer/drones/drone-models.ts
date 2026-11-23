@@ -2,7 +2,7 @@ import type { Vec3 } from "@seki/core";
 import { type CityKitData, GeometrySink, swatchUv } from "../city-kit-data";
 import { type CityProps, kitUvs, swatchAt } from "../city-props";
 import { DRONE_SIZE, type DroneKind } from "./drone-flight";
-import { withLenses } from "./drone-lenses";
+import { type DroneTemplate, withLenses } from "./drone-lenses";
 
 /**
  * The drones' geometry on the city kit's texture (ADR-0022), in the drone's own frame: front +z,
@@ -11,14 +11,7 @@ import { withLenses } from "./drone-lenses";
  * kept, since at night they are what shows. Pure data, no Babylon.
  */
 
-export interface DroneTemplate {
-  readonly positions: Float32Array;
-  readonly normals: Float32Array;
-  readonly uvs: Float32Array;
-  readonly colors: Float32Array;
-  readonly indices: Uint32Array;
-  readonly vertexCount: number;
-}
+export type { DroneTemplate } from "./drone-lenses";
 
 const toTemplate = (sink: GeometrySink): DroneTemplate => ({
   positions: Float32Array.from(sink.positions),

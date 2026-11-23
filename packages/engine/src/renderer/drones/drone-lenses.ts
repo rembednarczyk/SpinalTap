@@ -1,5 +1,4 @@
 import { type CityKitData, swatchUv } from "../city-kit-data";
-import type { DroneTemplate } from "./drone-models";
 
 /**
  * A drone's lights as lamps, not blocks (the user's note of 22.11): every light of the model (its triangles on a neon
@@ -8,6 +7,16 @@ import type { DroneTemplate } from "./drone-models";
  * swatch flashes (the patrol's bar) keeps its vertices in a range of its own, so the views blink it, red and blue in
  * turn, as a police bar does. Pure data, no Babylon.
  */
+
+/** A drone's mesh as data, one template drawn at every drone of its kind. */
+export interface DroneTemplate {
+  readonly positions: Float32Array;
+  readonly normals: Float32Array;
+  readonly uvs: Float32Array;
+  readonly colors: Float32Array;
+  readonly indices: Uint32Array;
+  readonly vertexCount: number;
+}
 
 /** A range of the template's vertices that flashes, and its phase in the flashing's cycle (0 or 0.5). */
 export interface DroneFlash {
