@@ -16,6 +16,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: ten sam test: punkt pasa `Szkolna#109` na kawałku `steps`; zachodni koniec schodów zachodzi ok. 1,5 m na jezdnię. Punkt w `KNOWN_OFF_ROAD` z odnośnikiem.
 - Poprawka: import przycina schody do krawędzi jezdni, jak chodniki przy skrzyżowaniach. Test przyjęcia: punkt znika z listy, a skan nie ma schodów na jezdni.
 
+### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
+- Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)
+- Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
+- Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
+- Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.
+
 ### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
 - Status: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
 - Gdzie: wszystkie 52 lokale galerii i frontu (`alchemia-shop-*`)
