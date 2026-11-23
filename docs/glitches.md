@@ -4,12 +4,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-966 Auta z Bajkowskiego stoją na szwie pętli przy deptaku i blokują pętlę, gdy gracz patrzy
-- Status: zgłoszone (S4: auto stoi na pasie pętli, auta pętli czekają za nim, po kilku sekundach przeskakują na rozkład)
-- Gdzie: kieszeń na południe od deptaka (T-324), szew pętli `Lubartowska#13:b>Królewska#18:b+Królewska#18:f>Lubartowska#13:f+ring` przy (457,5; −153,9), początek zawrotki na Królewskiej
-- Dowód: trasy prawego i lewego pasa Bajkowskiego (`deptakMouthRoutes` w `packages/sim/src/content/traffic-deptak.ts`) kończą się w `back[0]`, dokładnie na szwie pętli, na tym samym pasie. Pojazd na końcu trasy, którą gracz widzi, stoi (`traffic-system.ts`, „held while the player watches”), więc auta pętli stają za nim (s ≈ 256 z 272) i po zwłoce wracają na rozkład skokiem. Sonda 23.11 (seed 3, 8:00, gracz 8 m od szwu): auto trasy 115 stoi na końcu (0,0 m od szwu), auto pętli 3003618 czeka 16 m przed szwem i przeskakuje z 256,1 na 54,9. Test `traffic-deptak.test.ts` („drives a ring vehicle on from its end to its start in view”) przechodzi na main przypadkiem: w jego 45 s żadne auto z Bajkowskiego nie dojeżdża do końca. Każda zmiana długości pasów (np. G-962, zawrotki o 0,5 m krótsze) przestawia rozkład i test pada.
-- Poprawka: kieszeń bez końca trasy na pasie pętli. Wzorzec: graf pasów z przejściem na następny pas (lane links), jak w symulacjach ruchu: auto z Bajkowskiego na końcu przechodzi na pętlę zamiast stać, a pętla oddaje nadmiar poza wzrokiem gracza; albo wyjazd z kieszeni z powrotem na Bajkowskiego na zachód (przegląd kuratora, T-324). Test przyjęcia: żadne auto innej trasy nie stoi na pasie pętli; test pętli przechodzi przy innym rozkładzie (np. z G-962).
-
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: zgłoszone (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`

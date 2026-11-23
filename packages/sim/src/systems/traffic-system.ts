@@ -99,7 +99,7 @@ const vehicleEntity = (ctx: SimContext, route: number, index: number, s: number)
     pitch: 0,
     view: { kind: "vehicle", model: plan.model, tint: plan.tint },
     velocity: { x: pose.tx * plan.speed, y: 0, z: pose.tz * plan.speed },
-    vehicle: { route, index, half: halfSize(plan.model), s, v: plan.speed, aside: 0, blocked: 0, horn: 0, panic: null },
+    vehicle: { route, index, guest: false, half: halfSize(plan.model), s, v: plan.speed, aside: 0, blocked: 0, horn: 0, panic: null },
   };
 };
 
@@ -497,20 +497,21 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   const plan = vehiclePlan(ctx.seed, st.route, st.index);
   const dt = ctx.dt;
   const tt = timetable(plan, ctx.state.domain.clock);
-  let lag = tt.s - st.s;
+  // A guest has no timetable on the lane it drives on as one (G-966): it keeps the lane's pace.
+  let lag = st.guest ? 0 : tt.s - st.s;
   if (lag > lane.length / 2) lag -= lane.length;
   if (lag < -lane.length / 2) lag += lane.length;
   // Far off its timetable (the clock skipped ahead, a long hold-up): back on it where nobody sees.
   const turning = () => lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b) === true;
   // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place; nor round a body (G-951).
-  const back = Math.abs(lag) > RESYNC ? lanePose(lane, tt.s) : null;
+  const back = !st.guest && Math.abs(lag) > RESYNC ? lanePose(lane, tt.s) : null;
   if (back && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, back) && clearOfBodies(ctx, back, st.half, Math.min(st.v, tt.v))) {
     st.s = tt.s;
     lag = 0;
     // It lands at the speed of where it lands: braking from its old speed would take it through a turn round fast.
     st.v = Math.min(st.v, tt.v, turning() ? TURN_SPEED : Infinity);
   }
-  let want = Math.max(0, Math.min(plan.speed * HURRY, tt.v + GAIN * lag));
+  let want = st.guest ? plan.speed : Math.max(0, Math.min(plan.speed * HURRY, tt.v + GAIN * lag));
   if (turning()) want = Math.min(want, TURN_SPEED);
   if (!st.panic && shots.some((p) => flat(p, v.position) < PANIC_RADIUS)) {
     const kind = coin(v.id, ctx.tick) ? "stop" : "flee";
@@ -552,8 +553,11 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   st.v += Math.max(-BRAKE * 1.5 * dt, Math.min(ACCEL * dt, goal - st.v));
   if (goal <= 0 && st.v < 0.05) st.v = 0;
   st.s += st.v * dt;
-  // A ring's end is its start: on round it (the pocket south of the deptak, T-324).
-  if (lane.ring && st.s >= lane.length) st.s -= lane.length;
+  // A ring's end is its start: on round it (the pocket south of the deptak, T-324); a guest leaves it there unseen (G-966).
+  if (lane.ring && st.s >= lane.length) {
+    st.s -= lane.length;
+    if (st.guest && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius)) return remove(ctx, live, v);
+  }
   if (st.s >= lane.length) {
     // The end of the lane: gone out of sight, round to its start again (held while the player watches).
     const end = lanePose(lane, lane.length);
@@ -561,11 +565,13 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
       remove(ctx, live, v);
       return;
     }
-    st.s = lane.length - 0.01;
-    st.v = 0;
+    // Where its lane runs on into another's, on along it as a guest: held on its end it would stand in that lane's way (G-966).
+    if (lane.then) [st.route, st.s, st.guest] = [lane.then.route, lane.then.s + (st.s - lane.length), true];
+    else [st.s, st.v] = [lane.length - 0.01, 0];
   }
-  const next = lanePose(lane, st.s, st.aside);
-  const y = roadY(ctx, lane, next.x, next.z);
+  const on = TRAFFIC_ROUTES[st.route]!;
+  const next = lanePose(on, st.s, st.aside);
+  const y = roadY(ctx, on, next.x, next.z);
   v.velocity = { x: (next.x - v.position.x) / dt, y: 0, z: (next.z - v.position.z) / dt };
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;

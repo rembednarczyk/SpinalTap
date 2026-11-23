@@ -23,7 +23,9 @@ describe("the cars in and out of Alchemia's P-1 (ADR-0074 §4)", () => {
   it("drive two routes after the city's, the same every time", () => {
     expect(TRAFFIC_ROUTES).toHaveLength(CITY_ROUTES.length + 2);
     expect([IN!.id, OUT!.id]).toEqual(["alchemia-p1:in", "alchemia-p1:out"]);
-    expect(alchemiaRampRoutes(CITY_ROUTES)).toEqual([IN, OUT]);
+    // The way out ends where the deptak's ring starts and runs on into it (G-966); otherwise the routes as made.
+    expect(OUT!.then).toEqual({ route: TRAFFIC_ROUTES.findIndex((r) => r.ring), s: 0 });
+    expect(alchemiaRampRoutes(CITY_ROUTES)).toEqual([IN, { ...OUT!, then: undefined }]);
     expect(ofStreet(bajkowskiegoLeft.id).street).toBe("Wacława Bajkowskiego");
   });
 

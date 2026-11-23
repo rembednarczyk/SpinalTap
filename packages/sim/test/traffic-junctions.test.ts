@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt } from "../src/content/traffic";
-import { deptakMouthRoutes } from "../src/content/traffic-deptak";
+import { deptakMouthRoutes, ontoRings } from "../src/content/traffic-deptak";
+import { alchemiaRampRoutes } from "../src/content/traffic-ramp";
 import { JUNCTION_REACH, joinAtJunctions, junctionJoins } from "../src/content/traffic-junctions";
 import { surfacesAt } from "../src/content/lublin/roads";
 import { inBuilding } from "../src/content/lublin/places";
@@ -13,6 +14,13 @@ const laneEnding = (street: string, n: string, x: number, z: number): TrafficRou
 const joinOf = (r: TrafficRoute) => junctionJoins(TRAFFIC_LANES).find((j) => TRAFFIC_LANES[j.from] === r);
 /** The route a lane drives on. */
 const routeOf = (id: string) => TRAFFIC_ROUTES.find((r) => r.id.split(">").includes(id));
+
+/** A route as made, without its link on into a ring (`ontoRings`, G-966). */
+const withoutLink = (r: TrafficRoute): TrafficRoute => {
+  const copy: { -readonly [K in keyof TrafficRoute]?: TrafficRoute[K] } = { ...r };
+  delete copy.then;
+  return copy as TrafficRoute;
+};
 
 describe("turns at junctions (ADR-0055)", () => {
   it.each([
@@ -108,7 +116,9 @@ describe("turns at junctions (ADR-0055)", () => {
     const again = joinAtJunctions(TRAFFIC_LANES);
     expect(again).toEqual(JUNCTION_ROUTES);
     expect(deptakMouthRoutes(again, TRAFFIC_LANES)).toEqual(CITY_ROUTES);
-    expect(TRAFFIC_ROUTES.slice(0, CITY_ROUTES.length)).toEqual(CITY_ROUTES);
+    // The routes driven are the city's and Alchemia's, as they are but for the links on into the deptak's ring (G-966).
+    expect(TRAFFIC_ROUTES).toEqual(ontoRings([...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)]));
+    expect(TRAFFIC_ROUTES.slice(0, CITY_ROUTES.length).map(withoutLink)).toEqual(CITY_ROUTES);
     expect(junctionJoins(TRAFFIC_LANES)).toEqual(junctionJoins(TRAFFIC_LANES));
   });
 });

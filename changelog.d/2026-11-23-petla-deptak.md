@@ -1,0 +1,1 @@
+- Auta wjeżdżające z Bajkowskiego i wyjeżdżające z parkingu Alchemii nie stają już na pasie pętli przy deptaku, gdy na nie patrzysz: jadą dalej po pętli i znikają z niej poza zasięgiem wzroku.
