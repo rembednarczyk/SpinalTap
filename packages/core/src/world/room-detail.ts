@@ -321,6 +321,8 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   // the rose and candle under it, the south corridor's leak with its puddle and bucket.
   { key: "rd-trasa-poster", fine: true, clutter: 4 },
   { key: "rd-trasa-drip", clutter: 1, sound: "drip" },
+  // Mori's clinic (docs/pomieszczenia/clinic.md, ADR-0102): Kaito's stool by the chair with his mug and his butts.
+  { key: "rd-clinic-stool", clutter: 4 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
