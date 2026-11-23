@@ -110,7 +110,7 @@ REN: Reszta archiwum leży u mnie. Kagami chce je z powrotem i wystawiło na mni
 { quest_step == "kaito_job":
     REN: Idź do Kaito. Chcę wiedzieć, ile jestem dla nich wart.
 - else:
-    REN: Kurosawa czeka na placu na dole, przy windzie. Cokolwiek postanowisz, ja tu będę.
+    REN: Kurosawa czeka na dole, w pasażu pod galerią, przy windzie. Cokolwiek postanowisz, ja tu będę.
 }
 -> END
 
@@ -161,7 +161,7 @@ REN: Hebi biorą już zamówienia. Wiesz, ile ktoś da za wspomnienie własnego 
 === function cleaners_down() ===
 ~ return has_flag("dead:kagami-cleaner-1") && has_flag("dead:kagami-cleaner-2") && has_flag("dead:kagami-cleaner-3")
 
-// Kurosawa of Kagami on the square behind Alchemia, by the lift (present from kagami_job until the ambush or the ending).
+// Kurosawa of Kagami in the T0 passage under Alchemia's front, by the lift (ADR-0074 B1; present from kagami_job until the ambush or the ending).
 === kurosawa ===
 { quest_step == "overpass" && choice_archive == "":
     -> deal

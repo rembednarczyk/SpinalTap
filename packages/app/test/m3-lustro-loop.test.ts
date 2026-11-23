@@ -85,7 +85,7 @@ const kaitoJob = (s: GameSession, ui: Ui, jobPick: number, voicePick: number) =>
   expect(s.sim.domain.character.memories).toContain("last_call");
   expect(allText(ui)).toContain("Wyłączam filtr Odagiri.");
   finishDialogue(s, ui, voicePick);
-  expect(objective(ui)).toBe("Kurosawa from Kagami is waiting on the square behind Alchemia, by the lift. Decide what happens to the archive");
+  expect(objective(ui)).toBe("Kurosawa from Kagami is waiting in the passage under Alchemia's front, by the lift. Decide what happens to the archive");
 };
 
 /** Step 4 up to the decision: Kurosawa's offer on the overpass deck. */
@@ -133,7 +133,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     } else {
       // The deal is off: Kurosawa leaves and his cleaners attack on the deck.
       expect(present(session, "kurosawa")).toBe(false);
-      expect(objective(ui)).toBe("Kagami's cleaners are attacking on the square behind Alchemia. Fight them off");
+      expect(objective(ui)).toBe("Kagami's cleaners are attacking in the passage under Alchemia's front. Fight them off");
       for (const key of KAGAMI_CLEANER_KEYS) shootDown(session, key);
       steps(session, 1);
       expect(objective(ui)).toBe("Kagami's cleaners are down. Go back up to Ren on Alchemia's roof");
