@@ -31,8 +31,20 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak).
-    expect(EMITTERS.filter((e) => e.room === null)).toEqual([]);
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the car wash's in
+    // the open air of its yard (its pump on the machine room's wall, its gantry's dryer: ADR-0102 point 5).
+    const outside = EMITTERS.filter((e) => e.room === null);
+    expect(outside.map((e) => e.sound).sort()).toEqual(["pump", "vent"]);
+    for (const e of outside) expect(Math.hypot(e.position.x - 410, e.position.z + 36)).toBeLessThan(8);
+  });
+
+  it("hears the car wash's pump whole in its yard, the open air being one more room", () => {
+    const pump = EMITTERS.find((e) => e.sound === "pump" && e.room === null)!;
+    const yard = roomMix(pose(pump.position.x - 2, pump.position.y, pump.position.z + 2.5), EMITTERS);
+    expect(yard.room).toBeNull();
+    expect(yard.layers.pump.gain).toBeGreaterThan(0.3);
+    expect(yard.layers.pump.cutoff).toBeGreaterThan(10000);
+    expect(yard.layers.vent.gain).toBeGreaterThan(0);
   });
 
   it("hears the aquarium's pump whole in Neon Koi and dull and quieter through its wall", () => {
