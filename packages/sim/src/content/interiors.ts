@@ -210,6 +210,13 @@ const KOI_BACK_JAMB_FOOT = 0.3;
 /** The back door's leaf from the top step, under the corridor's ceiling. */
 const KOI_BACK_DOOR_HEIGHT = 2.3;
 
+/**
+ * The staff door from the bar to the back room at the west end of the bottle shelf: a threshold (§12), and a wall to the
+ * bar's people fleeing into its west end, as the back wall was (G-317, G-328: the corridor's dead end behind a shut back
+ * door made one run on the spot). It slides west into the back wall.
+ */
+export const KOI_STAFF_DOOR: DoorDef = turnDoor(KOI, { key: "door:neon-koi-staff", at: v(17.15, 0, KOI_BACK_MID), along: "z", width: KOI_BACK_WIDTH, height: DOOR_TOP, leaves: 1, dir: -1 });
+
 /** The steel back door to the yard in the building's back wall; it slides east, into the end wall and the corridor's. */
 export const KOI_BACK_DOOR: DoorDef = turnDoor(KOI, {
   key: "door:neon-koi-back",
@@ -255,6 +262,8 @@ const koiBack = (): StaticProp[] => {
   const d1 = KOI_BACK_MID + KOI_BACK_WIDTH / 2;
   return [
     box(17, 17.3, DOOR_TOP, ROOM_STOREY, z0, z1),
+    box(17, 17.3, 0, DOOR_TOP, z0, d0),
+    box(17, 17.3, 0, DOOR_TOP, d1, z1),
     box(17, 17.3, 0, ROOM_STOREY, z1, 11),
     box(17.3, x1 + 0.3, 0, ROOM_STOREY, z0 - 0.2, z0),
     box(17.3, x1 + 0.3, 0, ROOM_STOREY, z1, z1 + 0.2),
@@ -269,7 +278,7 @@ const koiBack = (): StaticProp[] => {
  * The back room, its ramp and its door, after every other prop of the district (`DISTRICT_M0_PROPS`), so their ids
  * stay (`docs/zasady-lokacji.md` §7).
  */
-export const KOI_BACK_ROOM_PROPS: readonly StaticProp[] = [...indoor([...koiBack().map((p) => turnProp(KOI, p)), koiBackRamp()]), ...doorParts(KOI_BACK_DOOR)];
+export const KOI_BACK_ROOM_PROPS: readonly StaticProp[] = [...indoor([...koiBack().map((p) => turnProp(KOI, p)), koiBackRamp()]), ...doorParts(KOI_STAFF_DOOR), ...doorParts(KOI_BACK_DOOR)];
 
 /** Signs on the street: over the clinic's door and over the bar's, facing the deptak. */
 const signs = (): StaticProp[] => [

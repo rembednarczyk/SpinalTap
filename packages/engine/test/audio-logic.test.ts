@@ -186,8 +186,9 @@ describe("positional ambience", () => {
 
   it("hums louder under the Neon Koi sign than in the middle of nowhere", () => {
     const neon = neonEmitters();
-    // The deptak's signs and the screens and strips inside the clinic and the bar (ADR-0038).
-    expect(neon).toHaveLength(14);
+    // The deptak's signs and the screens and strips inside the clinic and the bar (ADR-0038), 14, and the three lamps of
+    // the yard behind Neon Koi (`koi-back.ts`): its bulkhead, lantern and batten hum faintly as their small lit faces.
+    expect(neon).toHaveLength(17);
     // On the deptak in front of Neon Koi (ADR-0045); far off on the west end of Krakowskie.
     const near = emitterMix(at(312, -91), neon);
     const far = emitterMix(at(0, -60), neon);

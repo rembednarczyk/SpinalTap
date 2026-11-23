@@ -56,9 +56,9 @@ Frakcja: ulica (bar).
 - blender: rd-koi-table × 2
 - blender: rd-w3b-bulb × 1
 - blender: rd-w3h-exit × 1
-- prop: blok (concrete) × 1
+- prop: blok (concrete) × 3
 - prop: blok (concrete, pochyły) × 1
-- prop: blok (metal) × 1
+- prop: blok (metal) × 2
 - prop: blok (metal), rysunek osobno × 12
 - prop: neon × 1
 - prop: neon, rysunek osobno × 2
@@ -67,7 +67,7 @@ Pomiary zasad (§12–§16):
 - rzut: 2 prostokąty, 176 m², wysokość 3,9 / 2,8 m
 - siatka 0,5 m: 1 z 4 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 6
-- warstwy wyposażenia: makro 2, mezo 23, mikro 17
+- warstwy wyposażenia: makro 5, mezo 23, mikro 17
 - drobiazg w skupiskach (≥ 3 w 1,2 m): 2 skupisk, 13 rzeczy w nich, 4 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 3
 <!-- inwentarz-gry:end -->
