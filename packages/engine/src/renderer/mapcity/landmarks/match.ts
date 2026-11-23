@@ -1,4 +1,4 @@
-import { LUBLIN_CHUNKS, type LublinBuildingData, type LublinChunkData } from "@seki/sim/lublin";
+import { CANOPY_POST, LUBLIN_CHUNKS, type LublinBuildingData, type LublinChunkData, canopyPosts } from "@seki/sim/lublin";
 import type { WallMaterial } from "../facade-style";
 import { BELL_TOWERS, type BellTower } from "./bell-towers";
 import { type P2, centroid, pointInRing } from "../polygon";
@@ -80,4 +80,20 @@ export const wallAt = (x: number, z: number, corners: number): MappedWall => {
     LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b): [string, MappedWall][] => (b.material || b.colour ? [[keyOf(b.x, b.z, b.outline.length / 2), { ...(b.material ? { material: b.material } : {}), ...(b.colour ? { wallColour: b.colour } : {}) }]] : []))),
   );
   return walls.get(keyOf(x, z, corners)) ?? {};
+};
+
+/** A roof on posts of the map (G-063): its posts' centres in world metres and their side. */
+export interface MappedCanopy {
+  readonly posts: readonly P2[];
+  readonly post: number;
+}
+
+let canopies: ReadonlyMap<string, MappedCanopy> | null = null;
+
+/** The roof on posts standing at (x, z) with an outline of `corners` points (`canopies` of the data), or null. */
+export const canopyAt = (x: number, z: number, corners: number): MappedCanopy | null => {
+  canopies ??= new Map(
+    LUBLIN_CHUNKS.flatMap((c) => (c.canopies ?? []).map((k): [string, MappedCanopy] => [keyOf(k.x, k.z, k.outline.length / 2), { posts: canopyPosts(k).map((p) => ({ x: p.x + k.x, z: p.z + k.z })), post: CANOPY_POST }])),
+  );
+  return canopies.get(keyOf(x, z, corners)) ?? null;
 };

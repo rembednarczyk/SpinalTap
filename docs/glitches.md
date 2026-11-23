@@ -121,7 +121,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
 
 ### G-063 Zadaszenia `building=roof` pominięte (perony dworca, daszki Targu na Ruskiej, studnia)
-- Status: zgłoszone (audyt topografii 2)
+- Status: naprawione na gałęzi `fix/g063-zadaszenia` (23.11): każde z 8 zadaszeń to płyta od prześwitu na stalowych słupach, we własnej liście chunku (`canopies`), z bryłami na końcu ulicznej puli; testy `tools/osm-import/test/canopies.test.ts` i `packages/sim/test/canopies.test.ts`. Do archiwum po scaleniu.
 - Ważność: S3 (proponowana) · Zasięg: 8 w mieście · Koszt: średni
 - Gdzie: w458862470 (837, 386), w1547216433/35/36/37 (747..813, 529..577), w828763988 (859, 226), w175886790 (2619, 207), w1382568876 (340, −16); T-025
 - Dowód: `SKIP_BUILDING` w `tools/osm-import/src/generate.ts`

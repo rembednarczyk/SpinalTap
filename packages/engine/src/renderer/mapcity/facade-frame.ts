@@ -1,6 +1,7 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
 import type { RemembrancePlace } from "@seki/sim";
 import type { BellTower } from "./landmarks/bell-towers";
+import type { MappedCanopy } from "./landmarks/match";
 import { ROOF_DETAIL, WALL_DETAIL } from "../../npr/detail-layers";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, type WallMaterial, facadeStyle } from "./facade-style";
 import { type Box2, type Obb, type P2, orientedBox, signedArea } from "./polygon";
@@ -37,6 +38,8 @@ export interface MapBuilding {
   readonly passages?: readonly WorldPassage[];
   /** Lifted over the street (a covered footbridge, ADR-0048): the walls start at `foot`, an underside closes them; `base` stays the street. */
   readonly lifted?: boolean;
+  /** A roof on posts of the map (G-063): drawn as a plain slab on its posts, no storeys. */
+  readonly canopy?: MappedCanopy;
   /** Parts of it from the map stand on it, lifted (G-049): its towers and turrets are theirs. */
   readonly carriesParts?: boolean;
   /** The church's bell towers from the data (`BELL_TOWERS`, G-215): none where absent. */

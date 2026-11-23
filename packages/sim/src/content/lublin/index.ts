@@ -12,6 +12,7 @@ import { type NearLandmark, nearLandmarks, verticalOf } from "./vertical";
 export type * from "./types";
 export { RISE_STOREY, isLandmark, nearLandmarks, verticalOf } from "./vertical";
 export { COLUMN_TOP, PORTICOES, type Portico, porticoOf } from "./porticoes";
+export { CANOPY_POST, canopyPosts } from "./canopies";
 /** The building sites (ADR-0087): the renderer reads the crane's beacon, the board's keys and the drone's way from them (stage 2). */
 export { LUBLIN_CONSTRUCTION_SITES, sitePieces } from "./construction";
 

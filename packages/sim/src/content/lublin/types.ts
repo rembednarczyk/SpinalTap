@@ -216,6 +216,26 @@ export interface LublinBarrierData {
   readonly material?: string;
 }
 
+/**
+ * A roof on posts of the map (`building=roof`, G-063): a slab from `soffit` to `height` over `y`
+ * on the outline, carried by square steel posts; walked under. Its own list, not a building.
+ */
+export interface LublinCanopyData {
+  readonly id: string;
+  readonly x: number;
+  readonly z: number;
+  readonly y: number;
+  readonly outline: FlatPoints;
+  readonly parts: readonly FlatPoints[];
+  readonly soffit: number;
+  readonly height: number;
+  readonly plinth: number;
+  readonly look: number;
+  readonly name?: string;
+  /** The posts' centres relative to (x, z). */
+  readonly posts: FlatPoints;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -249,6 +269,8 @@ export interface LublinChunkData {
   readonly multiLaneWays?: readonly { readonly line: FlatPoints }[];
   /** Walls, fences, hedges and their gates (ADR-0077), when it has any. */
   readonly barriers?: readonly LublinBarrierData[];
+  /** Roofs on posts (G-063), when it has any. */
+  readonly canopies?: readonly LublinCanopyData[];
   /**
    * The big squares and footways' bands as laid before the ground became a partition (ADR-0078
    * step 3), the crowd's loops drawn round them, when it has any: `ground` has them cut by what lies on them.

@@ -44,6 +44,7 @@ const chunkText = (c: ChunkOut): string =>
     ...(c.multiLaneWays ? [`    multiLaneWays: ${list(c.multiLaneWays)},`] : []),
     ...(c.barriers ? [`    barriers: ${list(c.barriers)},`] : []),
     ...(c.walkAreas ? [`    walkAreas: ${list(c.walkAreas)},`] : []),
+    ...(c.canopies ? [`    canopies: ${list(c.canopies)},`] : []),
     "  },",
   ].join("\n");
 
