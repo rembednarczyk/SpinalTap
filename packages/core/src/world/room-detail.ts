@@ -240,6 +240,13 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-kb-glass-bin", clutter: 1 },
   { key: "rd-kb-camera", fine: true, clutter: 0 },
   { key: "rd-kb-tag", fine: true, clutter: 3 },
+  // Alchemia's T2 under the Arkady (docs/lokacje/alchemia-t2-arkady.md, ADR-0102): the square's name cut in the memorial
+  // stone with its pebbles, candles and ribbon, the settlement's outline in the paving, the lookout's and the group's
+  // leavings.
+  { key: "rd-t2-tribute", clutter: 4 },
+  { key: "rd-t2-settlement", clutter: 0 },
+  { key: "rd-t2-lookout", fine: true, clutter: 6 },
+  { key: "rd-t2-hebi", fine: true, clutter: 6 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

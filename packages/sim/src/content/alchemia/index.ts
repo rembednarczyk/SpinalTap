@@ -52,6 +52,7 @@ export * from "./terraces";
 export * from "./arkady";
 export { T2 as ALCHEMIA_T2, T2_PADS, T2_RECTS, T2_STAIRS, MEMORIAL as ALCHEMIA_MEMORIAL, onT2 } from "./plaza";
 export * from "./market";
+export { T2_DETAIL, T2_HEBI_RING, T2_SETTLEMENT, T2_STONE } from "./t2-dress";
 export * from "./sellers";
 export * from "./pavilion";
 export * from "./parking";
