@@ -1,0 +1,1 @@
+- Nad zejściem do metra B przy Dworcu Autobusowym świeci zielona lampa, jak przy wejściu A na Placu Zamkowym.

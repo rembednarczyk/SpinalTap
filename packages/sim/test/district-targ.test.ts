@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HEBI_BULBS, HEBI_BULB_DETAIL, HEBI_LAMPS, TERRITORY_GROUPS, inBuilding, BAZAR_LAMPS, BAZAR_STALLS, METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, RUSKA_LAMPS, RUSKA_STALLS, SCENE_LAMP_GROUPS, TARG_MARKET_DETAIL, WORLD_SCENERY, groundY } from "../src";
+import { DWORZEC_METRO_DETAIL, DWORZEC_METRO_LAMPS, HEBI_BULBS, HEBI_BULB_DETAIL, HEBI_LAMPS, TERRITORY_GROUPS, inBuilding, BAZAR_LAMPS, BAZAR_STALLS, METRO_STATIONS, PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_LAMPS, PLAC_ZAMKOWY_STALLS, RUSKA_LAMPS, RUSKA_STALLS, SCENE_LAMP_GROUPS, TARG_MARKET_DETAIL, WORLD_SCENERY, groundY } from "../src";
 import { roomDetailShape } from "@seki/core";
 import { onRoad } from "../src/content/lublin/roads";
 import { turnLocal } from "../src/content/lublin/furniture";
@@ -98,6 +98,21 @@ describe("the bare bulb by each Hebi group on Podzamcze (§13)", () => {
       }
     }
     expect(HEBI_BULBS.filter((b) => b.kind === "wall").map((b) => b.territory).sort()).toEqual(["bus-station", "lubartowska"]);
+  });
+});
+
+describe("the green lamp at the metro pavilion B by the Dworzec (§13)", () => {
+  it("hangs Plac Zamkowy's lamp over the pavilion's opening to the south, its green light just out of it", () => {
+    const pavilion = METRO_STATIONS.flatMap((s) => s.entrances).find((e) => e.name === "Dworzec Autobusowy")!.outline;
+    expect(DWORZEC_METRO_DETAIL).toHaveLength(1);
+    expect(DWORZEC_METRO_DETAIL[0]!.variant).toBe(roomDetailShape("rd-pz-metro-lamp"));
+    expect(WORLD_SCENERY.some((s) => s.view.kind === "street-props" && s.view.items === DWORZEC_METRO_DETAIL)).toBe(true);
+    const lamp = DWORZEC_METRO_LAMPS[0]!.lamps[0]!;
+    expect(lamp.at.x).toBeGreaterThan(pavilion.minX);
+    expect(lamp.at.x).toBeLessThan(pavilion.maxX);
+    expect(pavilion.minZ - lamp.at.z).toBeGreaterThan(0);
+    expect(pavilion.minZ - lamp.at.z).toBeLessThan(0.5);
+    expect(lamp.color).toBe("#3dff86");
   });
 });
 
