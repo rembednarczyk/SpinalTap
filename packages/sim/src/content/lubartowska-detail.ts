@@ -1,5 +1,6 @@
 import { CLUTTER, type StreetPropItem } from "@seki/core";
 import { againstWall } from "./lublin/places";
+import { TERRITORY_GROUPS } from "./territory-groups";
 import { groundY } from "./lublin/terrain";
 
 /*
@@ -10,8 +11,9 @@ import { groundY } from "./lublin/terrain";
  * odds and ends of ADR-0096), drawn only.
  */
 
-/** The Hebi group's ring on the pavement (`TERRITORY_GROUPS`, `lubartowska`). */
-export const LUBARTOWSKA_RING = { x: 569.9, z: 347.1 } as const;
+/** The Hebi group's ring on the pavement (`TERRITORY_GROUPS`, `lubartowska`): the scene goes where the group stands. */
+const GROUP = TERRITORY_GROUPS.find((g) => g.territory === "lubartowska")!;
+export const LUBARTOWSKA_RING = { x: GROUP.core.x, z: GROUP.core.z } as const;
 
 const WALL = againstWall(LUBARTOWSKA_RING.x, LUBARTOWSKA_RING.z, 0);
 const along = { x: Math.cos(WALL.yaw), z: -Math.sin(WALL.yaw) };
