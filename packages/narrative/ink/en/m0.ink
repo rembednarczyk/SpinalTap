@@ -64,7 +64,7 @@ KAITO: The medics said you fought those seat belts like they owed you money. Sek
     SEKI: My name's out there somewhere. I'll get it back.
     KAITO: Sure. Until then, you're Seki.
 - KAITO: I paid for your patch-up, so you owe me. And you've got zero prospects. I've got work.
-KAITO: A Hebi courier's holed up in the yard behind the car wash, past Plac Łokietka, off Przystankowa. He's carrying something that belongs to my clients.
+KAITO: A Hebi courier's holed up in the yard behind the car wash, past Plac Łokietka, off Lubartowska. He's carrying something that belongs to my clients.
 KAITO: Take him out. He's got protection, so don't treat it like a stroll. Then come back here, to the Neon Koi. I'll be at the bar.
 ~ set_flag("met_fixer")
 -> END
@@ -123,7 +123,7 @@ KAITO: One more thing, Seki. Someone's already been asking about the woman from 
     KAITO: Kagami paid for Ren down to the last eddie. I won't ask how you feel about it.
     ~ set_flag("kaito_after_act2")
 - (act2_ending == "street" || act2_ending == "hebi") && not has_flag("kaito_after_act2"):
-    KAITO: Kagami tore up my contract over your stunt on the viaduct. Lucky the Hebi and the street pay cash.
+    KAITO: Kagami tore up my contract over your stunt at Alchemia. Lucky the Hebi and the street pay cash.
     ~ set_flag("kaito_after_act2")
 }
 { contracts_done >= 1 && not has_flag("met_hana"):
@@ -179,13 +179,13 @@ KAITO: Your boy's setting up meets with Kagami himself. Or someone's talking wit
     ~ choice_job = "refused"
     ~ story_choice("job", "refused")
     SEKI: I'm not hunting Ren. Find someone else.
-    KAITO: I will. So will Kagami. Their man, Kurosawa, is waiting behind Alchemia tonight.
+    KAITO: I will. So will Kagami. Their man, Kurosawa, is waiting in the passage under Alchemia's front tonight.
     ~ change_rep("fixers", -3)
 * [I'm in. I want to see this client. #tone:main]
     ~ choice_job = "taken"
     ~ story_choice("job", "taken")
     SEKI: I'm in. I want to see this client.
-    KAITO: Sensible. His name's Kurosawa and he's waiting behind Alchemia. Just don't turn it into a war, he's my client.
+    KAITO: Sensible. His name's Kurosawa and he's waiting in the passage under Alchemia's front. Just don't turn it into a war, he's my client.
     ~ change_rep("fixers", 3)
 - ~ set_flag("kagami_job")
 -> END
@@ -286,7 +286,7 @@ UME: I saw them pull you out of that car. I thought you were gone.
 + [Where do I find Ren Odagiri? #tone:main]
     SEKI: Where do I find Ren Odagiri?
     UME: He came back a week ago. Thin, unshaven, nothing like the boy from two years back.
-    UME: He sleeps on the roof of Alchemia, over the market. You ride up in the lift behind the hall.
+    UME: He sleeps on the roof of the glass pavilion on Alchemia's corner. You climb the ladder at the back.
     { has_flag("ume_ren"):
         UME: I told you he looked for you for half a year. Now he's the one hiding.
     }

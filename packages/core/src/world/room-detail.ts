@@ -219,6 +219,16 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-k-office-chair", fine: true, clutter: 0 },
   { key: "rd-k-shredder", fine: true, clutter: 0 },
   { key: "rd-k-binders", fine: true, clutter: 6 },
+  // MYJNIA 24H and the yard behind it (docs/lokacje/myjnia-podworko.md, ADR-0102 point 5): the gantry and its dryer's hiss,
+  // the machine room's wall with its pump, the chemistry by the bay, the bay's wet floor, the payment post, the canopy's
+  // tubes and what the courier left round his feet.
+  { key: "rd-cw-gantry", clutter: 0, sound: "vent" },
+  { key: "rd-cw-machine", services: true, sound: "pump" },
+  { key: "rd-cw-chem", clutter: 4 },
+  { key: "rd-cw-bay", fine: true, clutter: 0 },
+  { key: "rd-cw-pay", clutter: 0 },
+  { key: "rd-cw-tubes", clutter: 0 },
+  { key: "rd-cw-courier", fine: true, clutter: 6 },
   // Plac Litewski's scene (docs/lokacje/plac-litewski.md, ADR-0102): the wreck on its roof, the bent pastoral and the
   // drone that hit it, what the night left on the paving, the van crew's litter and tarp, Shiro's poems.
   { key: "rd-lit-wreck" },

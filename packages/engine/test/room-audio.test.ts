@@ -31,9 +31,24 @@ describe("the rooms' sound map", () => {
     expect(EMITTERS.some((e) => e.sound === "tubes" && e.room === "tessen-office")).toBe(true);
     expect(EMITTERS.find((e) => e.sound === "vent")?.room).toMatch(/^metro-/);
     expect(ROOM_DETAIL_SHAPES.filter((s) => s.sound).length).toBeGreaterThanOrEqual(10);
-    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but the street's own:
-    // the wreck's leak on Plac Litewski and the dry fountains' jets (docs/lokacje/plac-litewski.md, §17).
-    expect(EMITTERS.filter((e) => e.room === null).every((e) => e.sound === "fountain" || (e.sound === "drip" && Math.hypot(e.position.x - 152.6, e.position.z + 49) < 3))).toBe(true);
+    // Every one of them in a room, the wall-hung ones too (the basement's panel, the hall's leak), but those in the open air
+    // (ADR-0102 point 5): the car wash's pump and its gantry's dryer in its yard, the wreck's leak on Plac Litewski and the
+    // dry fountains' jets (docs/lokacje/plac-litewski.md, §17).
+    const near = (e: { position: { x: number; z: number } }, x: number, z: number, r: number) => Math.hypot(e.position.x - x, e.position.z - z) < r;
+    for (const e of EMITTERS.filter((x) => x.room === null)) {
+      const wash = (e.sound === "pump" || e.sound === "vent") && near(e, 410, -36, 8);
+      const wreck = e.sound === "drip" && near(e, 152.6, -49, 3);
+      expect(wash || wreck || e.sound === "fountain", `${e.sound} at ${e.position.x}, ${e.position.z}`).toBe(true);
+    }
+  });
+
+  it("hears the car wash's pump whole in its yard, the open air being one more room", () => {
+    const pump = EMITTERS.find((e) => e.sound === "pump" && e.room === null)!;
+    const yard = roomMix(pose(pump.position.x - 2, pump.position.y, pump.position.z + 2.5), EMITTERS);
+    expect(yard.room).toBeNull();
+    expect(yard.layers.pump.gain).toBeGreaterThan(0.3);
+    expect(yard.layers.pump.cutoff).toBeGreaterThan(10000);
+    expect(yard.layers.vent.gain).toBeGreaterThan(0);
   });
 
   it("hears the wreck's leak and the dry fountain by the square whole outside, not through a wall (Plac Litewski)", () => {

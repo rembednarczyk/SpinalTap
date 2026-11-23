@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CYBERWARE_CATALOG, STACKABLE_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
-import { FLEE_DEAD_ZONE, FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, KRAKOWSKIE_SITE_POINTS, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
+import { FLEE_DEAD_ZONE, FLEE_RADIUS, GANGER_SPAWNS, HOSTILE_AGGRO_MULTIPLIER, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
 import { byKey, collect, input, passerbyOnDeptak, run, teleportPlayer } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
@@ -14,8 +14,8 @@ const gangerShots = (sim: Simulation) => {
   return () => shots.filter((s) => s.shooterId !== sim.player()?.id);
 };
 
-/** The M0 guard's post in the yard behind the car wash on Plac Łokietka (ADR-0045). */
-const POST = KRAKOWSKIE_SITE_POINTS.car_wash(-2.5, 39.5);
+/** The M0 guard's post in the yard behind the car wash on Plac Łokietka (ADR-0045), as the content places it. */
+const POST = GANGER_SPAWNS.find((s) => s.key === "guard")!.position;
 
 /**
  * Turns the guard towards `at`: he faces into the yard, and the mouth of it is behind his back

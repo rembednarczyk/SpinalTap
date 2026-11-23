@@ -44,5 +44,5 @@ GENZO: Half the river heard that line go up. The money is in your account. Tesse
 -> END
 
 === phone_genzo_failed_shipped ===
-GENZO: The batch left the quay at six. Nobody saw you, so Tessen does not know it was us. There will be other jobs.
+GENZO: The batch left the pickup yard at six. Nobody saw you, so Tessen does not know it was us. There will be other jobs.
 -> END

@@ -27,7 +27,7 @@ export const CONTRACT_SITES = {
   south_gate: site("south_gate"),
   // Stare Miasto (ADR-0026, ADR-0045).
   kanal_bridge: site("kanal_bridge"),
-  // Podzamcze: the market under the viaduct over aleja Tysiąclecia (M4, ADR-0045).
+  // The market in Alchemia on Krakowskie (M4, ADR-0045; under the viaduct over aleja Tysiąclecia until ADR-0063 stage 6).
   hana_stall: site("hana_stall"),
   hebi_stash: site("hebi_stash"),
   raid_north: site("raid_north"),

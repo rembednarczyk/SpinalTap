@@ -3,6 +3,7 @@ import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./alchemia/market";
 import { CAR_WASH_PROPS } from "./district-car-wash";
+import { BAY_DRAIN, COURIER_SPOT } from "./car-wash-detail";
 import { W3_CONTRACT_SITE_SPAWNS } from "./tessen-w3";
 import {
   type ActorDef,
@@ -47,6 +48,9 @@ const on = (g: Placement, x: number, z: number): Vec3 => {
   const p = placeAt(g, v(x, 0, z));
   return v(p.x, groundY(p.x, p.z), p.z);
 };
+
+/** The courier's spot under the car wash yard's red lamp (`car-wash-detail.ts`): M0's mark and the job's first. */
+const courierAt = (): Vec3 => on(CAR_WASH_PLACE, COURIER_SPOT.x, COURIER_SPOT.z);
 
 /** Signs and lamps of the deptak around the clinic and the bar. */
 const deptak = (): StaticProp[] => [
@@ -106,10 +110,12 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
 
 /**
  * Where steam rises (the renderer's particles and the ambience's hiss): a manhole on the deptak
- * in front of the clinic, the vent behind the car wash, and the wreck's split radiator on Plac
- * Litewski hissing in the rain (`recall_last_call`), out of the bonnet's gap over the paving.
+ * in front of the clinic, the wreck's split radiator on Plac Litewski hissing in the rain
+ * (`recall_last_call`, out of the bonnet's gap over the paving) and the car wash bay's drain, where the hot wash water steams under the
+ * neon (`car-wash-detail.ts`; it hung 2 m over the slope north of the yard before, with nothing
+ * there to come from, `docs/zasady-lokacji.md` §4).
  */
-export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44)), ground(152.6, -49.1, 0.35)];
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), on(CAR_WASH_PLACE, BAY_DRAIN.x, BAY_DRAIN.z), ground(152.6, -49.1, 0.35)];
 
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };
@@ -133,7 +139,8 @@ export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3
   ...KANAL_CONTRACT_SITE_SPAWNS,
   east_lot: [on(EAST_LOT, 10.5, -15.5), on(EAST_LOT, 13.5, -8.5), on(EAST_LOT, 16, -14), on(EAST_LOT, 9.5, -9)],
   koi_back: [on(KOI_BACK, 3, 12), on(KOI_BACK, -3, 14.5), on(KOI_BACK, 5, 17), on(KOI_BACK, -1, 10)],
-  car_wash: [on(CAR_WASH_PLACE, 1, 43), on(CAR_WASH_PLACE, -2.5, 39.5), on(CAR_WASH_PLACE, 4, 47), on(CAR_WASH_PLACE, -4, 47)],
+  // On the yard's level ground (G-754's pad, old z up to 39): two of them stood on the footway past its edge before.
+  car_wash: [courierAt(), on(CAR_WASH_PLACE, -2.5, 38.4), on(CAR_WASH_PLACE, 6.6, 38), on(CAR_WASH_PLACE, -4.6, 33)],
   south_gate: [on(WRECK, -4, -33), on(WRECK, 4.5, -34.5), on(WRECK, -1, -35), on(WRECK, 6.5, -33.5)],
 };
 
@@ -174,10 +181,13 @@ export const contractSpawnYaw = (site: ContractSiteId, position: Vec3): number =
   return Math.hypot(dx, dz) < 1e-6 ? 0 : Math.atan2(dx, dz);
 };
 
-/** The M0 courier and his guard, in the yard behind the car wash. */
+/**
+ * The M0 courier and his guard, in the yard behind the car wash under its red lamp, on the level ground of its pad
+ * (`docs/lokacje/myjnia-podworko.md`): they stood 0.3 and 0.05 m down the slope past its north edge before.
+ */
 export const GANGER_SPAWNS: readonly GangerSpawn[] = [
-  { key: "courier", position: on(CAR_WASH_PLACE, 1, 43), yaw: Math.PI, tag: M0_TARGET_TAG },
-  { key: "guard", position: on(CAR_WASH_PLACE, -2.5, 39.5), yaw: Math.PI, tag: null },
+  { key: "courier", position: courierAt(), yaw: Math.PI, tag: M0_TARGET_TAG },
+  { key: "guard", position: on(CAR_WASH_PLACE, -2.5, 38.4), yaw: Math.PI, tag: null },
 ];
 
 /** Every keyed character of the district, in creation order. */

@@ -1,9 +1,9 @@
 // Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls in Alchemia (ADR-0063).
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the bag behind the ruin at Alchemia, the Hebi under the Grodzka footbridge).
+// (the bag behind the dumpster, the bag before the Arkady at Alchemia, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
-// Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
+// Hideo, a clerk from the Tessen office on the Bystrzyca. Down Grodzka, under the footbridge, to the Tessen bus; back to SAKE at night.
 === hideo ===
 {
 - civilians_tier == "hostile":
@@ -27,10 +27,10 @@
     SEKI: What do you do at Tessen?
     HIDEO: I count containers that don't exist. I log them into the system, then I log them out. They pay me to forget.
     -> talk
-+ { not has_flag("hideo_bridge") } [Why take the footbridge? #tone:optional]
-    SEKI: Why do you go over the top, across the footbridge?
++ { not has_flag("hideo_bridge") } [Why walk Grodzka, under the footbridge? #tone:optional]
+    SEKI: Why do you walk down Grodzka, under the footbridge?
     ~ set_flag("hideo_bridge")
-    HIDEO: Because under the footbridge, on Grodzka, the Hebi stand around counting people's wallets. From up top at least you see them coming.
+    HIDEO: Because it's the shortest way to the bus. The Hebi stand under the footbridge counting people's wallets, so I keep to the middle and look at the cobbles.
     HIDEO: Kaito supposedly pays for the ones dealing down there. I'm just saying what I see.
     -> talk
 + [Take care. #tone:leave]
@@ -93,7 +93,7 @@
 = talk
 + [You sing here every night? #tone:optional]
     SEKI: You sing here every night?
-    MEI: Three years now. Before they shut the cellars under the Rynek, I sang in the Trasa Podziemna vaults for spare change. Better acoustics.
+    MEI: Three years now. Before that I sang for spare change in the Trasa Podziemna vaults. Better acoustics, worse tourists.
     -> talk
 + { not has_flag("mei_song") } [Sing something for me? #tone:optional]
     SEKI: Will you sing something for me?
@@ -105,7 +105,7 @@
     MEI: You say good night in the morning. But fine.
     -> END
 
-// Sachiko keeps the first stall of Alchemia, by the car park. She sees everyone who comes in.
+// Sachiko keeps the kiosk in Alchemia's food hall (P3, ADR-0093 O3). She sees everyone who comes in.
 === sachiko ===
 {
 - civilians_tier == "hostile":
@@ -125,7 +125,7 @@
 + [What's new at the market? #tone:optional]
     SEKI: What's new at the market?
     { hebi_stance == "hostile":
-        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself by the ruin behind the stalls.
+        SACHIKO: The Hebi talk about you. Not by name, more in curses. Watch yourself on the lower square, by the arcades.
     - else:
         SACHIKO: Hana's got new stock, Oyaji old prices, and the Hebi the same faces. Nothing ever changes here.
     }
@@ -133,7 +133,7 @@
 + { not has_flag("sachiko_car") } [Seen anything odd here? #tone:optional]
     SEKI: Have you seen anything strange around here?
     ~ set_flag("sachiko_car")
-    SACHIKO: There's a bag behind the ruin at the back of the square. Someone left it the night of the blockade and never came back for it.
+    SACHIKO: There's a bag in front of the arcades, on the lower square. Someone left it the night of the blockade and never came back for it.
     SACHIKO: Nobody's looked inside. At least nobody who'd admit it.
     -> talk
 + [Thanks for everything. #tone:leave]
@@ -141,7 +141,7 @@
     SACHIKO: Don't thank me. Buy something next time.
     -> END
 
-// Goro sells umbrellas at the east end of the north row.
+// Goro sells umbrellas from his unit in the food hall, open 10:00 to midnight like the hall (FOODHALL_HOURS, schedules.ts).
 === goro ===
 {
 - civilians_tier == "hostile":
@@ -150,7 +150,7 @@
 - civilians_tier == "wary":
     GORO: I sell umbrellas to everyone. Friendship, not so much.
 }
-{ game_hour >= 8 && game_hour < 22:
+{ game_hour >= 10:
     GORO: Umbrellas, rain jackets, implant wrap. Here it rains even when it doesn't.
 - else:
     GORO: The stall's closed, but I'm not asleep. Making sure nobody borrows my awning.

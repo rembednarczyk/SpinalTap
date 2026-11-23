@@ -44,5 +44,5 @@ GENZO: Pół rzeki słyszało, jak ta linia poszła w powietrze. Pieniądze są 
 -> END
 
 === phone_genzo_failed_shipped ===
-GENZO: Partia odpłynęła z nabrzeża o szóstej. Nikt cię nie widział, więc Tessen nie wie, że to my. Będą inne zlecenia.
+GENZO: Partia wyjechała z placu odbioru o szóstej. Nikt cię nie widział, więc Tessen nie wie, że to my. Będą inne zlecenia.
 -> END
