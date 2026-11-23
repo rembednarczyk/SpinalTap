@@ -12,7 +12,7 @@ const LISTENER_TC = 0.15;
 const WALL_TC = 0.25;
 
 /** Each sound's loudness at full mix on the ambience bus (the street's rain is about 0.26, W-3's transformers 0.12). */
-export const ROOM_SOUND_LEVEL: Readonly<Record<RoomSound, number>> = { vent: 0.12, hum: 0.07, pump: 0.1, drip: 0.14, simmer: 0.1, tubes: 0.03 };
+export const ROOM_SOUND_LEVEL: Readonly<Record<RoomSound, number>> = { vent: 0.12, hum: 0.07, pump: 0.1, drip: 0.14, simmer: 0.1, tubes: 0.03, fountain: 0.1 };
 
 interface Layer {
   readonly strip: Strip;
@@ -66,8 +66,17 @@ const buildTubes = (k: Kit, s: Strip): void => {
   k.lfo(9.1, 0.15, flicker.gain);
 };
 
+/** A dry fountain's jets: the hiss of the mist off them and the patter of the water falling back onto the grates. */
+const buildFountain = (k: Kit, s: Strip): void => {
+  const src = k.noise(1.1);
+  src.connect(k.filter("bandpass", 3200, 0.7)).connect(k.gain(0.35)).connect(s.gain);
+  const patter = k.gain(0.5);
+  src.connect(k.filter("bandpass", 700, 0.9)).connect(patter).connect(s.gain);
+  k.lfo(0.4, 0.15, patter.gain);
+};
+
 /** The drip is one-shots (`RoomScape.schedule`): its strip only carries them. */
-const BUILD: Readonly<Record<RoomSound, ((k: Kit, s: Strip) => void) | null>> = { vent: buildVent, hum: buildHum, pump: buildPump, drip: null, simmer: buildSimmer, tubes: buildTubes };
+const BUILD: Readonly<Record<RoomSound, ((k: Kit, s: Strip) => void) | null>> = { vent: buildVent, hum: buildHum, pump: buildPump, drip: null, simmer: buildSimmer, tubes: buildTubes, fountain: buildFountain };
 
 /**
  * The rooms' soundscape (`docs/zasady-lokacji.md` §17: sound from its source; ADR-0099 stage 6): the steady sounds of

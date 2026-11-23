@@ -140,6 +140,13 @@ class Model:
         # Wound in the game's frame, mirrored by `_b`: listed backwards.
         self._finish([self.bm.faces.new(list(reversed(vs)))], role)
 
+    def tri(self, a, b, c, role):
+        """A triangle from three corners in the game's frame, wound counter-clockwise round its outward normal
+        (numerically: (b - a) x (c - a) points out), as `game_models.triangles` gives the game's own models."""
+        vs = [self.bm.verts.new(_b(*p)) for p in (a, b, c)]
+        # Mirrored by `_b`: listed backwards, as a quad.
+        self._finish([self.bm.faces.new(list(reversed(vs)))], role)
+
     def mirrored(self, key):
         """The same model mirrored across x under another key: the same goods in the other order (a second variant)."""
         bmesh.ops.scale(self.bm, vec=Vector((-1.0, 1.0, 1.0)), verts=list(self.bm.verts))

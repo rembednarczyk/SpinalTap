@@ -36,8 +36,11 @@ export interface RoomDetailShape {
   readonly sound?: RoomSound;
 }
 
-/** The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz. */
-export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes";
+/**
+ * The rooms' steady sounds: a fan's hiss, mains hum, a water pump, a drip, a pot simmering, strip lights' buzz, and a
+ * square's fountain splashing (its jets are the map's `fountain-jets`, not a room-detail model).
+ */
+export type RoomSound = "vent" | "hum" | "pump" | "drip" | "simmer" | "tubes" | "fountain";
 
 /** Shapes in the order the rooms came: a new one goes last, so the variants of those before stay. */
 export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
@@ -240,6 +243,19 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-kb-glass-bin", clutter: 1 },
   { key: "rd-kb-camera", fine: true, clutter: 0 },
   { key: "rd-kb-tag", fine: true, clutter: 3 },
+  // Plac Litewski's scene (docs/lokacje/plac-litewski.md, ADR-0102): the wreck on its roof, the bent pastoral and the
+  // drone that hit it, what the night left on the paving, the van crew's litter and tarp, Shiro's poems.
+  { key: "rd-lit-wreck" },
+  { key: "rd-lit-bent-lamp" },
+  { key: "rd-lit-drone", clutter: 3 },
+  { key: "rd-lit-glass", fine: true, clutter: 5 },
+  { key: "rd-lit-spill", fine: true, clutter: 0, sound: "drip" },
+  { key: "rd-lit-skid", fine: true, clutter: 0 },
+  { key: "rd-lit-tape", clutter: 1 },
+  { key: "rd-lit-candles", fine: true, clutter: 8 },
+  { key: "rd-lit-van-camp", fine: true, clutter: 9 },
+  { key: "rd-lit-tarp", clutter: 1 },
+  { key: "rd-lit-poems", fine: true, clutter: 6 },
   // Alchemia's T2 under the Arkady (docs/lokacje/alchemia-t2-arkady.md, ADR-0102): the square's name cut in the memorial
   // stone with its pebbles, candles and ribbon, the settlement's outline in the paving, the lookout's and the group's
   // leavings.

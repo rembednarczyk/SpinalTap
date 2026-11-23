@@ -1,29 +1,29 @@
 # Plac Litewski: wrak przy południowej bramie i furgonetka na parkingu (`plac-litewski`)
 
-Plac Litewski (x −100..135, z −55..70) i wylot deptaka przy Kapucyńskiej. Dwa miejsca zleceń Kaito: wrak, z którego wyciągnięto Seki (`south_gate`, wrak (152,6; −51)), i furgonetka na wschodnim skraju placu (`east_lot`, (112; −42)). Pod placem stacja metra Plac Litewski z wejściem A (74; 16,9). Stan gry na `1de4702`.
+Plac Litewski (x −100..135, z −55..70) i wylot deptaka przy Kapucyńskiej. Dwa miejsca zleceń Kaito: wrak, z którego wyciągnięto Seki (`south_gate`, wrak (152,6; −51)), i furgonetka na wschodnim skraju placu (`east_lot`, (112; −42)). Pod placem stacja metra Plac Litewski z wejściem A (74; 16,9). Stan gry na `1de4702`, scena przebudowana 23.11 (gałąź `feat/scena-plac-litewski`).
 
 ## Historia
 Plac wziął nazwę od obozu szlachty litewskiej, która stanęła tu w czasie sejmu 1569 roku, kiedy w Lublinie zawarto unię Polski z Litwą. W XIX wieku powstał tu reprezentacyjny plac z Pomnikiem Unii Lubelskiej (żeliwny obelisk z 1826 roku), potem doszły Pomnik Konstytucji 3 Maja, Grób Nieznanego Żołnierza i konny pomnik Piłsudskiego. W 2017 plac przebudowano: granitowa posadzka, ławy na łukach rabat i fontanna multimedialna z pokazami w letnie wieczory.
 
-W 2077 plac jest wizytówką miasta i jego granicą: za dnia festiwale i reklamy na fasadzie Poczty, nocą wschodni skraj przy deptaku przejmuje półświatek. W kodzie miejsce wraku nosi stare id `south_gate`, po „południowej bramie” dawnej dzielnicy Shinsekai; w Lublinie bramy tu nie ma, został wrak. Noc wypadku: Seki jechała cudzym autem z przeciętą opaską Kagami na fotelu, dron strzelał w opony, auto weszło w słup i skończyło na dachu przy wylocie Kapucyńskiej (`recall_crash_night`, `recall_last_call`: „Wisisz w pasach głową w dół”). Ratownicy wyciągnęli ją wczoraj w nocy, Ume patrzyła. Wraku nikt nie odholował: Hebi traktują go jak punkt spotkań, a obok, na skraju placu, od tygodni stoi furgonetka bez właściciela (w kodzie „Tetsuo”, postać bez roli w ink). Przed chwilą ktoś wyjął z wraku radio i zostawił otwarte drzwi.
+W 2077 plac jest wizytówką miasta i jego granicą: za dnia festiwale i reklamy na fasadzie Poczty, nocą wschodni skraj przy deptaku przejmuje półświatek. W kodzie miejsce wraku nosi stare id `south_gate`, po „południowej bramie” dawnej dzielnicy Shinsekai; w Lublinie bramy tu nie ma, został wrak. Noc wypadku: Seki jechała cudzym autem z przeciętą opaską Kagami na fotelu, dron strzelał w opony, auto weszło w słup i skończyło na dachu przy wylocie Kapucyńskiej (`recall_crash_night`, `recall_last_call`: „Wisisz w pasach głową w dół”). Ratownicy wyciągnęli ją wczoraj w nocy, Ume patrzyła. Wraku nikt nie odholował: Hebi traktują go jak punkt spotkań, a obok, na skraju placu, od tygodni stoi furgonetka bez właściciela (w kodzie dawniej „Tetsuo”, od 23.11 bez imienia). Przed chwilą ktoś wyjął z wraku radio i zostawił otwarte drzwi. Ślady nocy leżą do dziś: opony z Kapucyńskiej, zgięty pastorał z krzywo wiszącą latarnią, szczątki drona, szkło, olej i taśma policji, a pod latarnią ktoś z ulicy zapalił znicze.
 
 ## Klimat
-- Światło: ciepła lampa Shiro (100; −21, #ffcf8a) na zachodzie, zimna niebieska przy wraku (160; −48, #9ad7ff), pastorał (155,1; −50,9) tuż przy wraku, grafitowe słupy z płaskimi oprawami nad placem, fontanna i iluminacja pomników daleko w głębi. Wschodni skraj jest ciemniejszy od reszty placu.
-- Dźwięk: deszcz na granicie, szum fontanny (dziś bez źródła w grze), gwar deptaka za plecami. Neonów deptaka stąd już nie słychać (najbliższy 140 m).
+- Światło: ciepła lampa Shiro (100; −21, #ffcf8a) na zachodzie, zimna niebieska przy wraku (160; −48, #9ad7ff), zgięty pastorał (155,1; −50,9) z latarnią wiszącą krzywo nad wrakiem (dwie szyby jeszcze świecą ciepło), czerwone tylne światła wraku (akumulator żyje) i płomyki zniczy, grafitowe słupy z płaskimi oprawami nad placem, fontanna i iluminacja pomników daleko w głębi. Wschodni skraj jest ciemniejszy od reszty placu.
+- Dźwięk: deszcz na granicie, szum suchych fontann wzdłuż Krakowskiego (emiter na każdej dyszy `fountain-jets`, najbliższa (128,2; −49,3)), kapanie oleju spod maski wraku i cichy syk pękniętej chłodnicy (para nad szczeliną maski), gwar deptaka za plecami. Neonów deptaka stąd już nie słychać (najbliższy 140 m).
 - Zapach: mokry granit, płyn chłodniczy i spalona guma od wraku.
 - Kontrast: wypielęgnowany plac z holo-flagami miasta obok wraku z drutami na wierzchu i furgonetki z zaklejonymi szybami.
-- Ruch: tłum na alejkach, Shiro czytający wiersze wieczorem, ludzie wychodzący z metra.
+- Ruch: tłum na alejkach, Shiro czytający wiersze wieczorem, ludzie wychodzący z metra, cienka para z chłodnicy wraku, mgła nad dyszami suchych fontann.
 
 ## Przeznaczenie
 - Dwa miejsca likwidacji Kaito (pula `ELIMINATION_SITE_IDS`, także krok `echo_contract` aktu I) i miejsce pamięci wątku: wrak jest kotwicą retrospekcji „wrak”.
 - Wejścia: deptak od wschodu (x 135), Kapucyńska od południa przy wraku, aleje placu z zachodu i północy, metro A (74; 16,9) otwarte na wschód.
-- Osłony: furgonetka 2,4 × 2,2 × 5 m, wrak 2 × 1,4 × 4,4 m, 39 granitowych kostek, 32 ławki, 24 drzewa, słupy ogłoszeniowe. Plac jest szeroki i płaski, więc osłony są niskie.
+- Osłony: furgonetka 2,4 × 2,2 × 5 m, wrak 1,9 × 1,25 × 4,5 m z otwartymi drzwiami (1,1 × 0,95 × 0,56) i stopą zgiętego słupa (0,8 × 1,8 × 0,65) od wschodu, 39 granitowych kostek, 32 ławki, 24 drzewa, słupy ogłoszeniowe. Plac jest szeroki i płaski, więc osłony są niskie.
 - Punkty widokowe: brak wysokich; z alejek placu widać oba miejsca zleceń naraz (50 m między nimi).
 
 ## Topografia
 - Prawdziwe miejsce: Plac Litewski (OSM, rewitalizacja 2017), wylot Kapucyńskiej na Krakowskie Przedmieście. Teren z NMT ok. 196,3–196,5 m n.p.m. (y 0,5..0,7), płaski.
 - Zgodne: obrys placu, fontanna multimedialna w miejscu z OSM (niecka i 16 dysz, T-076), pomniki Piłsudskiego i 3 Maja w miejscach z OSM (T-075), ławki i kostki z OSM.
-- Odstępstwa: wrak i furgonetka na nawierzchni pieszej (T-077, celowe, scena gry; skan `vehicle-on-pavement` ma je na liście celowych); pomniki jako ta sama stojąca postać, Piłsudski bez konia (G-128); fontanna bez strumieni, czaszy i pokazu (G-129); wzór bruku przesuwa się na szwie chunków przy x ≈ 20 (G-041).
+- Odstępstwa: wrak i furgonetka na nawierzchni pieszej (T-077, celowe, scena gry; skan `vehicle-on-pavement` ma je na liście celowych); zgięty pastorał w miejscu prostego z OSM (155,1; −50,9), ślady opon i taśma (T-077, celowe, noc wypadku); pomniki jako ta sama stojąca postać, Piłsudski bez konia (G-128); fontanna bez strumieni, czaszy i pokazu (G-129); wzór bruku przesuwa się na szwie chunków przy x ≈ 20 (G-041).
 
 ## Inwentarz docelowy
 Architektura:
@@ -31,23 +31,23 @@ Architektura:
 - pomniki Unii, 3 Maja, Piłsudskiego (model gry `monument`, do poprawy G-128), fontanna (G-129);
 - pawilon metra Plac Litewski (`metro.ts`).
 Duże obiekty:
-- wrak na dachu: zgnieciony dach, wybite szyby, przecięte pasy zwisające do środka, otwarte drzwi kierowcy (dziś blok ze skórką `wreck` stojący na kołach; do zrobienia: Blender `tools/blender/rooms/plac_litewski.py`);
-- zgięty słup pastorału (155,1; −50,9) i szczątki drona przy nim („Dron uderza w słup razem z tobą”; do zrobienia: Blender);
+- wrak na dachu: zgnieciony dach, wybite szyby, przecięte pasy zwisające do środka, otwarte drzwi kierowcy (zrobione 23.11: `rd-lit-wreck`, auto gry `veh-dirty` obrócone na dach skryptem Blendera `tools/blender/rooms/plac_litewski.py`, z wnętrzem, poduszką, kablami po radiu i podwoziem);
+- zgięty słup pastorału (155,1; −50,9) i szczątki drona przy nim („Dron uderza w słup razem z tobą”; zrobione: `rd-lit-bent-lamp`, `rd-lit-drone`);
 - furgonetka z zaklejonymi szybami i uchylonymi tylnymi drzwiami (skórka `van`);
 - ławy, kostki, drzewa, słupy, kosze (model gry, meble uliczne).
 Drobiazg w skupiskach:
-- przy wraku: odłamki szkła, kawałek pasa, ślady opon od jezdni Kapucyńskiej, zapalone znicze i kartka od kogoś z ulicy (Blender, `plac_litewski.py`);
-- przy furgonetce: kubki, niedopałki, karton po jedzeniu, plandeka (generator ADR-0096 `litter`, `boxes`);
-- pod lampą Shiro: kartki z wierszami, plastikowy kubek (Blender).
+- przy wraku: odłamki szkła, kawałek pasa, rękawiczka ratownika, urwana taśma (`rd-lit-glass`), olej i płyn chłodniczy (`rd-lit-spill`), ślady opon od jezdni Kapucyńskiej (`rd-lit-skid` ×3), taśma policji na słupku (`rd-lit-tape`), zapalone znicze, goździki i kartka od kogoś z ulicy (`rd-lit-candles`); zrobione 23.11, Blender `plac_litewski.py`;
+- przy furgonetce: kubki, niedopałki wokół puszki, karton po makaronie z pałeczkami, puszki, zapalniczka, telefon (`rd-lit-van-camp`), plandeka z oponą (`rd-lit-tarp`), kartony, butelki i kałuża z zestawu wspólnego (`rd-c-cartons`, `rd-c-bottles`, `rd-c-puddle`); zrobione 23.11;
+- pod lampą Shiro: kartki z wierszami przyciśnięte kamieniem, plastikowy kubek (`rd-lit-poems`; zrobione 23.11).
 
 ## Frakcja i zasady
 Frakcja: ulica, korporacja (plac miejski Lublina 2077).
 - §12 zgodne: deptak (ok. 21 m) otwiera się przy x ≈ 135 na plac szeroki na ponad 200 m; wylot Kapucyńskiej jest ciasnym progiem. Dług: brak progu między placem a jego wschodnim skrajem (półświatek) w świetle albo nawierzchni.
-- §13 częściowo: dwie lampy gry ze źródłem, słupy placu z mebli. Nawigacja: wrak nie ma żadnego wyróżnienia, a jest celem zlecenia i miejscem pamięci; nocą 60-30-10 niemierzone (zrzut nocny od deptaka na zachód, `pnpm shots:palette`).
-- §14 częściowo: makro i mezo z mebli (39 kostek, 32 ławki, 27 słupków), mikro tylko 9 naklejek i 2 rzeczy `clutter` w 60 m; przy wraku i furgonetce zero drobiazgu.
-- §15 częściowo: mokry granit z odbiciami lamp; brak szkła i rozlanych płynów przy wraku.
-- §16 częściowo: plac ma porządek miasta (korporacja) i powinien mieć brud na skraju (ulica); dziś skraj wygląda jak reszta placu.
-- §17 dług: fontanna bez dźwięku, wrak bez dźwięku (syk chłodnicy z `recall_last_call`, kapanie), żadnego emitera na placu. Ruch: tłum i Shiro wieczorem; skala: ławki, latarnie, pomniki.
+- §13 częściowo: dwie lampy gry ze źródłem, słupy placu z mebli. Nawigacja (23.11): wrak wyróżniają akcenty, których nie ma nigdzie indziej na placu, każdy na swoim źródle: czerwone tylne światła auta, ciepła latarnia wisząca krzywo nad nim na zgiętym pastorale, czerwono-biała taśma, płomyki zniczy i para nad maską. Lampy gry ze światłem silnika nie ruszałem (zimna (160; −48) zostaje). 60-30-10 nocą (`pnpm shots:palette`, 23:00): pierwszy kadr przed 81,3 / 15,4 / 3,3%, po 81,5 / 15,1 / 3,4% (poza pasmem: baza za duża, światło za małe, bo deptak przed wrakiem jest ciemny); przy wraku przed 70,6 / 27,7 / 1,7%, po 69,4 / 28,6 / 2,0% (akcenty poniżej 3%). Dług: latarnia zgiętego pastorału nie rzuca światła (model nie ma lampy silnika), więc auto oświetla tylko zimna lampa z boku.
+- §14 częściowo (23.11): makro i mezo z mebli (39 kostek, 32 ławki, 27 słupków) i sceny (wrak, zgięty pastorał, drzwi, dron, plandeka); mikro w skupiskach: przy wraku i latarni 16 rzeczy w promieniu 3 m (szkło z pasem i rękawiczką, znicze z goździkami i kartką, szczątki drona, taśma), przy furgonetce 13 w promieniu 4 m (kubki, niedopałki, karton, puszki, telefon, kartony, butelki), pod lampą Shiro 6 (wiersze, kamień, kubek). Na telefonie drobiazg `fine` znika jak w innych scenach; wrak, pastorał, dron, taśma i plandeka zostają.
+- §15 częściowo (23.11): mokry granit z odbiciami lamp; olej (ciemne lustro) i płyn chłodniczy pod maską, szkło na bruku i w środku auta, matowe podwozie z rdzą obok lakieru. Emisja z umiarem: tylne światła, dwie szyby latarni i płomyki to małe plamy.
+- §16 częściowo: plac ma porządek miasta (korporacja); skraj od 23.11 ma brud ulicy przy wraku i furgonetce (śmieci, plandeka, kałuża, plama oleju), ale nawierzchnia i światło skraju są te same co placu (dług §12).
+- §17 częściowo (23.11): dźwięk ze źródła: kapanie z plamy oleju pod maską (`drip`), cichy syk i para z chłodnicy (trzeci `STEAM_VENTS`), szum suchych fontann z każdej dyszy `fountain-jets` (nowy dźwięk `fountain`); emiter na ulicy słyszany z ulicy idzie w pełni, nie jak zza ściany. Ruch: para nad wrakiem, mgła dysz, tłum i Shiro wieczorem; skala: ławki, latarnie, pomniki, auto.
 
 ## Scenariusz
 
@@ -80,17 +80,25 @@ Najczęściej gracz przychodzi deptakiem z Neon Koi na zachód (droga pijaka `ea
 - Po akcie I: retrospekcja wraku zamyka pytanie, jak Seki trafiła na deptak.
 
 ### Wymagania wobec sceny
-- Wrak czytelny jako wrak z tamtej nocy: auto na dachu, pasy, szkło, zgięty słup, ślady z jezdni Kapucyńskiej. Dziś: blok `wreck` na kołach.
-- Źródło dźwięku przy wraku (kapanie, cichy syk) i fontanna jako emiter.
-- Skraj placu ciemniejszy i brudniejszy niż reszta, z drobiazgiem przy furgonetce.
-- Światło wyróżniające wrak jako cel (§13), np. lampa ze zgiętego słupa świecąca krzywo na auto.
+- Wrak czytelny jako wrak z tamtej nocy: auto na dachu, pasy, szkło, zgięty słup, ślady z jezdni Kapucyńskiej. Od 23.11 jest (`rd-lit-*`, `plac-litewski-detail.ts`).
+- Źródło dźwięku przy wraku (kapanie, cichy syk) i fontanna jako emiter. Od 23.11 jest.
+- Skraj placu ciemniejszy i brudniejszy niż reszta, z drobiazgiem przy furgonetce. Drobiazg jest, ciemniejszego skraju nie ma (dług).
+- Światło wyróżniające wrak jako cel (§13), np. lampa ze zgiętego słupa świecąca krzywo na auto. Latarnia wisi krzywo i świeci, ale tylko jako emisja (dług: światło silnika).
 
 ## Dług sceny
-- Wrak jako auto na dachu z pasami, wybitymi szybami i otwartymi drzwiami: model w `tools/blender/rooms/plac_litewski.py` (albo nowa skórka pojazdu), rekwizyt w `packages/sim/src/content/district-m0.ts` (blok wraku zostaje bryłą, rysunek `scenery`).
-- Zgięty pastorał (155,1; −50,9) i szczątki drona przy wraku: plan mebli `tools/osm-import` (wyjątek dla latarni) albo rekwizyt w `district-m0.ts`.
-- Skupiska drobiazgu przy wraku (szkło, znicze, kartka) i przy furgonetce (kubki, karton, plandeka): `packages/sim/src/content/district-m0.ts` lub nowy `packages/sim/src/content/plac-litewski-detail.ts`, modele w `tools/blender/rooms/plac_litewski.py`.
-- Emiter kapania i syku przy wraku oraz szum fontanny: `packages/engine/src/audio/spatial.ts` (lista emiterów spoza `DISTRICT_M0_PROPS`).
-- Sprzeczność ink i gry: `recall_crash_night` mówi „mokra obwodnica… Jedź prosto do wiaduktu”, a wrak leży na deptaku przy Placu Litewskim (T-077, `lublin-names.md` trzyma wiadukt na obwodnicy). Propozycja: ślady opon z Kapucyńskiej do wraku w scenie i jedno zdanie w `packages/narrative/ink/{pl,en}/m3-echo.ink`, które łączy obwodnicę z deptakiem (decyzja narracji).
-- Nazwa „Tetsuo” furgonetki w komentarzu `district-m0.ts` myli się z Tetsu z DENKI: zmienić albo opisać w ink.
+Zrobione 23.11 (gałąź `feat/scena-plac-litewski`, zrzuty przed i po nocą i w dzień z pierwszego kadru, przy wraku i przy furgonetce):
+- wrak jako auto gry na dachu z pasami, wybitymi szybami, otwartymi drzwiami, wnętrzem i podwoziem (`rd-lit-wreck`, `tools/blender/rooms/plac_litewski.py`); bryła 1,9 × 1,25 × 4,5 m zostaje w `district-m0.ts` jako `scenery`;
+- zgięty pastorał w miejscu tego z OSM i szczątki drona (`rd-lit-bent-lamp`, `rd-lit-drone`), bryły stopy słupa i otwartych drzwi na końcu `DISTRICT_M0_PROPS` (T-077);
+- skupiska drobiazgu przy wraku, przy furgonetce i pod lampą Shiro, ślady opon z Kapucyńskiej, taśma, olej (`packages/sim/src/content/plac-litewski-detail.ts`);
+- dźwięk: kapanie wycieku, syk i para chłodnicy, szum suchych fontann (`packages/engine/src/audio/room-sound-map.ts`, `room-scape.ts`, `STEAM_VENTS`);
+- nazwa „Tetsuo” zniknęła z komentarza furgonetki;
+- 60-30-10 zmierzone (§13); koszt: wywołania rysowania w kadrze 143 → 141, przy wraku 180 → 178, przy furgonetce 208 → 209 (para), trójkąty +1,4 tys. do +15 tys.
+
+Zostaje:
+- Światło silnika z latarni zgiętego pastorału na auto (§13): dziś świeci tylko emisja szyb latarni. Potrzebny punkt światła bez modelu lampy gry (`PointLightDef` przy modelu `room-detail` albo nowy rodzaj lampy), czyli zmiana kontraktu widoku (`packages/core/src/ports`) albo światło sceny w `packages/engine/src/renderer` (ADR).
+- Próg między placem a jego wschodnim skrajem (§12, §16): ciemniejsza i brudniejsza nawierzchnia przy furgonetce i wraku (nakładka ADR-0077 albo plamy z generatora ADR-0096 w `tools/osm-import`).
+- Sprzeczność ink i gry: `recall_crash_night` mówi „mokra obwodnica… Jedź prosto do wiaduktu”, a wrak leży na deptaku. Ślady opon z Kapucyńskiej są już w scenie; zdanie w ink przenosi na „mokre Krakowskie Przedmieście” PR #955 (narracja).
+- Furgonetka: zaklejone szyby i uchylone tylne drzwi (skórka `van` jest blokiem z kitu, model z Blendera albo `vehicle-props`).
 - Pomniki (G-128) i fontanna (G-129): `packages/engine` i `tools/osm-import` według zgłoszeń.
-- Zmierzyć 60-30-10 nocą od deptaka i wpisać w §13 tej karty.
+- 60-30-10 pierwszego kadru poza pasmem (baza 81,5%, światło 15,1%): deptak przed wrakiem potrzebuje światła ze źródła (witryny parteru, latarnie), osobno od sceny.
+- Lampa Shiro (100; −21) stoi 1,3 m w kamienicy w67498725 (G-502, osobna poprawka): wiersze leżą przed nią na bruku, (97,9; −22).
