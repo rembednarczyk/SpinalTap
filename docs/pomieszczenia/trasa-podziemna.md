@@ -76,11 +76,10 @@ Zadania, rozmowy ani haka tu nie ma (ADR-0048: „Brak spotkania i haka terminal
 - Kapanie i echo ze źródła (§17).
 
 ## Dług sceny
+Zrobione 23.11 (`packages/sim/src/content/trasa-detail.ts`, `tools/blender/rooms/trasa_mei.py`, test `packages/sim/test/trasa-scene.test.ts`): znak wyjścia u stopy schodów (model `rd-w3h-exit`), plakat Mei z listą piosenek, różą i ogarkiem w lochu, przeciek w korytarzu z kałużą i kapaniem (`drip`). Zostaje:
 - Część „Przeznaczenie” tej karty mówi o „miejscu zadania („m4-ulica”)”, a w grze to znalezisko z kwestii Mei, bez zadania (ADR-0048). Poprawka karty.
-- Plakat Mei albo lista piosenek przy scenie w lochu: `tools/blender/rooms/trasa.py`, rozstawienie w `packages/sim/src/content/trasa-detail.ts`.
-- Znak wyjścia u stopy schodów (zielony, ISO 7010 E001 jak w Alchemii): `trasa-detail.ts` i lampa w `packages/engine/src/renderer/rooms/room-lights.ts`.
-- Kapanie i echo jako emitery w lochu i korytarzach: `packages/engine/src/audio/room-sound-map.ts`.
 - Szeroki różowy neon KARAOKE oświetla cały loch (dług §13 w audycie): mniejszy neon albo ciemniejsza cegła w `packages/sim/src/content/kanal-underground.ts` (`lights()`; zmiana bryły na końcu listy nie rusza id).
+- Światło znaku wyjścia (lampa w `packages/engine/src/renderer/rooms/room-lights.ts`) i echo lochu.
 
 ## Inwentarz gry
 
@@ -89,10 +88,13 @@ Zadania, rozmowy ani haka tu nie ma (ADR-0048: „Brak spotkania i haka terminal
 - blender: rd-trasa-arch-24 × 3
 - blender: rd-trasa-bedding × 1
 - blender: rd-trasa-board × 2
+- blender: rd-trasa-drip × 1
 - blender: rd-trasa-lamp × 1
+- blender: rd-trasa-poster × 1
 - blender: rd-trasa-rope × 1
 - blender: rd-trasa-speaker × 1
 - blender: rd-trasa-stage × 1
+- blender: rd-w3h-exit × 1
 - prop: blok (concrete) × 4
 - prop: blok (concrete), rysunek osobno × 6
 - prop: blok (concrete, pochyły) × 1
@@ -104,7 +106,7 @@ Pomiary zasad (§12–§16):
 - rzut: 4 prostokąty, 104 m², wysokość 3,6 / 7,6 / 2,7 m
 - siatka 0,5 m: 3 z 8 wymiarów
 - architektura (ściany, płyty, stopnie, instalacje na wierzchu): 7
-- warstwy wyposażenia: makro 11, mezo 11, mikro 14
-- drobiazg w skupiskach (≥ 3 w 1,2 m): 4 skupisk, 14 rzeczy w nich, 0 luzem
+- warstwy wyposażenia: makro 11, mezo 12, mikro 19
+- drobiazg w skupiskach (≥ 3 w 1,2 m): 4 skupisk, 18 rzeczy w nich, 1 luzem
 - widoczne źródła światła (lampy, neony, ekrany, szyldy): 7
 <!-- inwentarz-gry:end -->
