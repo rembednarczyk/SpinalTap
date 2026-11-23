@@ -352,6 +352,8 @@ export const plWorld = {
   "map.witness": "Świadek dzwoni",
   "map.lastKnown": "Ostatnia znana pozycja",
   "map.above": "Jesteś wyżej niż ulica",
+  "map.floor.level": "Poziom {n}",
+  "map.floor.below": "Jesteś niżej niż ulica",
   "scan.kind.camera": "Kamera",
   "scan.kind.device": "Urządzenie",
   "scan.kind.person": "Osoba",

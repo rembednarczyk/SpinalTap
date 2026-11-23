@@ -1,8 +1,9 @@
 import { memo, useMemo } from "react";
 import "../citymap/citymap.css";
-import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, CrimeMarkerVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
+import type { MapBox, MapFloorVm, MapLabelKind, MapLinkKind, MapLinkVm, CrimeMarkerVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { useT } from "../i18n/use-t";
+import { isMessageKey } from "../i18n/t";
 import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
 import { MetroEntranceIcons } from "../metro/metro-layer";
 import { CrimeIcon } from "../citymap/crime-layer";
@@ -57,6 +58,22 @@ const District = memo(({ map, city, window }: { map: MapVm; city: CityIndex; win
   </>
 ));
 District.displayName = "District";
+
+/** The rooms of the storey the player stands on (ADR-0100), over the dimmed street; re-renders on a new storey. */
+const FloorPlan = memo(({ floor }: { floor: MapFloorVm }) => <g className="minimap__floor-plan">{floor.rooms.map((r, i) => rect(r, "minimap__room", i))}</g>);
+FloorPlan.displayName = "FloorPlan";
+
+/** The interior's name and its level, or how deep it lies, where the height over the street shows outdoors. */
+const FloorName = ({ floor }: { floor: MapFloorVm }) => {
+  const t = useT();
+  const level = floor.level !== undefined ? t("map.floor.level", { n: floor.level }) : floor.depth !== undefined ? `▼ ${floor.depth} m` : null;
+  return (
+    <div className="minimap__floor" data-testid="minimap-floor" title={floor.depth !== undefined ? t("map.floor.below") : undefined}>
+      <span className="minimap__floor-name">{isMessageKey(floor.name) ? t(floor.name) : floor.name}</span>
+      {level !== null && <span className="minimap__floor-level">{level}</span>}
+    </div>
+  );
+};
 
 /**
  * What the minimap is centred on and how much it shrinks the world: `k` is 1 at the default
@@ -158,7 +175,8 @@ const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView 
 /**
  * North-up minimap: district outline, view direction and what is worth finding. It zooms out
  * with speed and, while the player moves, looks ahead so the arrow sits in the lower third
- * (ADR-0035). The no-markers setting hides objective and fixer markers.
+ * (ADR-0035). The no-markers setting hides objective and fixer markers. Indoors it draws the
+ * storey under the player over the dimmed street, with its name and level (ADR-0100).
  */
 export const Minimap = () => {
   const t = useT();
@@ -180,10 +198,11 @@ export const Minimap = () => {
   const me = markerOffset(player, view);
   const at = me.x === 0 && me.y === 0 ? "" : `translate(${me.x.toFixed(2)} ${me.y.toFixed(2)}) `;
   return (
-    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label={t("map.minimap")}>
+    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}${player.floor ? " minimap--indoor" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label={t("map.minimap")}>
       <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
         <g transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}>
           <District map={map} city={city} window={window} />
+          {player.floor && <FloorPlan floor={player.floor} />}
         </g>
         {showMarkers && markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
         {showMarkers && crimes.filter((c) => c.near || c.tracked).map((c) => <Crime key={c.id} crime={c} view={view} />)}
@@ -197,6 +216,7 @@ export const Minimap = () => {
         </g>
       </svg>
       <div className="minimap__north">N</div>
+      {player.floor && <FloorName floor={player.floor} />}
       {player.level !== undefined && (
         <div className="minimap__level" data-testid="minimap-level" title={t("map.above")}>
           ▲ {player.level} m

@@ -1,6 +1,6 @@
 import { type ContractLog, type EntityId, M0_TARGET_TAG, contractTag } from "@seki/core";
-import { type Entity, SIDEWALKS, SIDEWALK_HEIGHT, type StaticProp } from "@seki/sim";
-import type { MapLinkVm, MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "@seki/ui";
+import { type Entity, type InteriorFloor, SIDEWALKS, SIDEWALK_HEIGHT, type StaticProp, interiorFloorAt } from "@seki/sim";
+import type { MapFloorVm, MapLinkVm, MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "@seki/ui";
 import type { QuestMark } from "./quest-target";
 
 /** Flat walkable strips (sidewalks) are thinner than this; anything solid is a building or cover. */
@@ -118,6 +118,8 @@ export interface MinimapContext {
   readonly focus?: "story" | "contract";
   /** Whom the shown quest step sends the player to, and where they should be if not in the world. */
   readonly quest?: QuestMark;
+  /** The interior the player is in (`session.interior`, ADR-0061): the minimap shows its storey (ADR-0100). */
+  readonly interior?: string | null;
 }
 
 /** An enforcer (ADR-0033): its look says so (`view.enforcer`), or it has already seen through the disguise. */
@@ -155,10 +157,29 @@ export const targetZoom = (speed: number, sprinting: boolean, ctx: MinimapContex
   return sprinting || speed > RUN_SPEED ? MAP_ZOOM_RUN : 1;
 };
 
-const playerVm = (e: Entity, moving: boolean, groundAt: GroundAt): MapPlayerVm => {
+const tenth = (v: number) => Math.round(v * 10) / 10;
+
+/** A storey as the minimap draws it (ADR-0100): its name, its number or how deep it lies, its rooms. */
+const floorVm = (f: InteriorFloor, depth: number | null): MapFloorVm => ({
+  name: f.interior.name,
+  ...(f.level !== null ? { level: f.level } : depth !== null ? { depth } : {}),
+  rooms: f.rooms.map((r) => ({ x: tenth((r.minX + r.maxX) / 2), z: tenth((r.minZ + r.maxZ) / 2), w: tenth(r.maxX - r.minX), d: tenth(r.maxZ - r.minZ) })),
+});
+
+/** The last storey's view model, kept while the player stays on it, so the store sees the same object. */
+const createFloorCache = () => {
+  let last: { floor: InteriorFloor; depth: number | null; vm: MapFloorVm } | null = null;
+  return (floor: InteriorFloor, depth: number | null): MapFloorVm => {
+    if (last?.floor !== floor || last.depth !== depth) last = { floor, depth, vm: floorVm(floor, depth) };
+    return last.vm;
+  };
+};
+
+const playerVm = (e: Entity, moving: boolean, groundAt: GroundAt, floor: ((height: number) => MapFloorVm) | null): MapPlayerVm => {
   const at = { x: snap(e.position.x, SNAP), z: snap(e.position.z, SNAP), yaw: snap(e.yaw, ANGLE_SNAP) };
   const height = e.position.y - groundAt(e.position.x, e.position.z);
-  const up = height > UPPER ? { ...at, level: Math.round(height) } : at;
+  // Indoors the storey replaces the height over the street (ADR-0100).
+  const up = floor ? { ...at, floor: floor(height) } : height > UPPER ? { ...at, level: Math.round(height) } : at;
   return moving ? { ...up, moving: true } : up;
 };
 
@@ -172,6 +193,7 @@ export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
   let player: MapPlayerVm | null = null;
   let markers: readonly MapMarkerVm[] = [];
   let zoom = 1;
+  const floors = createFloorCache();
   return (entities: Iterable<Entity>, flags: readonly string[], contracts: ContractLog, ctx: MinimapContext = { ticksPerSecond: 60 }): MinimapFrame => {
     const targetTags = new Set<string>();
     // The map marks the same job as the HUD (`shownEntryId`): the main thread or the contract.
@@ -188,7 +210,9 @@ export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
         // Movement over the last step (an entity built by hand in a test may have no previous position).
         const prev = (e.prevPosition as Entity["prevPosition"] | undefined) ?? e.position;
         const speed = Math.hypot(e.position.x - prev.x, e.position.z - prev.z) * ctx.ticksPerSecond;
-        nextPlayer = playerVm(e, !ctx.riding && speed > MOVING_SPEED, groundAt);
+        const storey = ctx.interior ? interiorFloorAt(e.position, ctx.interior) : null;
+        const floor = storey ? (height: number) => floors(storey, height < -UPPER ? Math.round(-height) : null) : null;
+        nextPlayer = playerVm(e, !ctx.riding && speed > MOVING_SPEED, groundAt, floor);
         goal = targetZoom(speed, e.posture?.sprinting ?? false, ctx);
         continue;
       }
@@ -202,7 +226,7 @@ export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
     const move = Math.min(Math.abs(delta), Math.max(ZOOM_STEP, Math.abs(delta) * ZOOM_EASE));
     zoom = Math.round((zoom + Math.sign(delta) * move) / ZOOM_STEP) * ZOOM_STEP;
     if (!nextPlayer) player = null;
-    else if (!player || player.x !== nextPlayer.x || player.z !== nextPlayer.z || player.yaw !== nextPlayer.yaw || player.level !== nextPlayer.level || player.moving !== nextPlayer.moving) player = nextPlayer;
+    else if (!player || player.x !== nextPlayer.x || player.z !== nextPlayer.z || player.yaw !== nextPlayer.yaw || player.level !== nextPlayer.level || player.floor !== nextPlayer.floor || player.moving !== nextPlayer.moving) player = nextPlayer;
     if (!sameMarkers(markers, nextMarkers)) markers = nextMarkers;
     return { mapPlayer: player, mapMarkers: markers, mapZoom: Math.round(zoom * 100) / 100 };
   };

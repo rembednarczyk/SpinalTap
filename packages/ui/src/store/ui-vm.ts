@@ -168,13 +168,31 @@ export interface CrimeMarkerVm {
   readonly tracked: boolean;
 }
 
+/**
+ * The floor plan of the storey the player stands on (ADR-0100), as the floor layers of maps in
+ * Hitman or Cyberpunk 2077: its rooms drawn over the dimmed street, its name and level instead of
+ * the height. The same object while she stays on the storey.
+ */
+export interface MapFloorVm {
+  /** Catalog key of the interior's name (`interior.*`, ADR-0056). */
+  readonly name: string;
+  /** The storey's number from the plan (P-2 is -2, the gallery's P3 is 3); absent where the plan numbers none. */
+  readonly level?: number;
+  /** Whole metres under the street, for a floor without a number that lies under it (a metro platform). */
+  readonly depth?: number;
+  /** The storey's rooms. */
+  readonly rooms: readonly MapRectVm[];
+}
+
 export interface MapPlayerVm {
   readonly x: number;
   readonly z: number;
   /** Radians; 0 looks north (+z), PI/2 east (+x). */
   readonly yaw: number;
-  /** Height above the street in whole metres while the player is up on a level (ADR-0021); absent on the street. */
+  /** Height above the street in whole metres while the player is up on a level (ADR-0021); absent on the street and indoors. */
   readonly level?: number;
+  /** The storey of the interior she stands in (ADR-0100); absent outdoors. */
+  readonly floor?: MapFloorVm;
   /** Moving: the minimap looks ahead, with the arrow in the lower third (ADR-0035). */
   readonly moving?: boolean;
 }
