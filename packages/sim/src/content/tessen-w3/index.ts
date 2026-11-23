@@ -12,6 +12,7 @@ export * from "./site";
 export { W3_NAV } from "./nav";
 export { ESCORT_AMBUSH_Z, ESCORT_ROUTE, SNIPER_PERCHES, W3_CONTRACT_POSTS, W3_CONTRACT_SITE_SPAWNS, W3_ITEM_SPOTS, W3_SHIFT_MANAGER, W3_SMOKER, W3_TERMINAL_SPOTS, type ContractPost } from "./posts";
 export { GENZO_SPOT } from "./public";
+export { GENZO_BRAZIER, KAIUN_WALL, LADDER_BOARD, PIPE_LANDING, TOWER_SMOKERS, W3_OUTSIDE_DETAIL } from "./outside-dress";
 export {
   W3_AIRLOCK_POST,
   W3_CORE_BLIND_SPOT,
