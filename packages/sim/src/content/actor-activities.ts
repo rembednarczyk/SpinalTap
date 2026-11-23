@@ -22,8 +22,9 @@ export const ACTOR_ACTIVITIES: Readonly<Record<string, ActivityPlan>> = {
   genzo: { cycle: ["phone", "smoke"], minutes: 20 },
   // The docker on his smoke break by the fence.
   doker: "smoke",
-  // Ren sleeps rough on the roof.
-  ren: "sleep",
+  // Ren sleeps rough on the pavilion's roof, but waits awake under his tarp (`docs/lokacje/alchemia-pawilon-dach.md`):
+  // he sits on an ammunition box looking to the Trybunał, gets up for a cigarette by the attic, and stands to talk.
+  ren: { cycle: ["sit", "sit", "smoke"], minutes: 20 },
   kurosawa: "smoke",
   // The gangs' groups (ADR-0091 stage 4).
   ...TERRITORY_ACTIVITIES,

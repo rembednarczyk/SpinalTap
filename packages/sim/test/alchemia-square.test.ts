@@ -26,6 +26,7 @@ import {
   ARCADE_FRONT,
   DEPTAK_NIGHT_PIECES,
   DEPTAK_NIGHT_SOLID_PROPS,
+  PAVILION_ROOF_PROPS,
 } from "../src";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { teleportPlayer } from "./helpers";
@@ -60,7 +61,7 @@ describe("T0 under the front's storeys (ADR-0074 stage 7, B1)", () => {
     expect(ALCHEMIA_PIECES.filter((p) => (p.kind === "pergola" || p.kind === "lantern") && p.box.z1 < FOODHALL.minZ && p.box.y0 < 2 && !inArcade(p.box) && !night.has(p))).toEqual([]);
     // Its solids are still one prop of Alchemia's, the last before stage 10's passage, P-2's (stage 5a), the front's (B1), P-2's robots (5b), the shelter, the car lift and the gallery (ADR-0093 O1, which took the tiers' two away).
     // The green roof's solids (ADR-0093 O4) come after the food hall's, then the square before the front (ADR-0074 C5), the last of Alchemia's.
-    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length - DEPTAK_NIGHT_SOLID_PROPS.length]!;
+    const beds = ALCHEMIA_PROPS[ALCHEMIA_PROPS.length - 3 - P2_PROPS.length - P2_ROBOTS.length - SHELTER_PROPS.length - CAR_LIFT_PROPS.length - MALL_PROPS.length - SHOP_SOLID_PROPS.length - FOODHALL_SOLID_PROPS.length - ROOF_SOLID_PROPS.length - FRONT_PLAZA_SOLID_PROPS.length - DEPTAK_SOLID_PROPS.length - FRONT_O5_PROPS.length - DEPTAK_NIGHT_SOLID_PROPS.length - PAVILION_ROOF_PROPS.length]!;
     expect(beds.prisms).toHaveLength(square.filter((p) => p.solid).length);
   });
 
