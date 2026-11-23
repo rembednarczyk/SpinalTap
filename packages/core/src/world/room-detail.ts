@@ -293,6 +293,11 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t2-settlement", clutter: 0 },
   { key: "rd-t2-lookout", fine: true, clutter: 6 },
   { key: "rd-t2-hebi", fine: true, clutter: 6 },
+  // The Rynek (docs/lokacje/rynek.md, ADR-0102): Tetsu's table of gadgets, DENKI's boxes, SAKE's barrels, KARAOKE's board.
+  { key: "rd-ry-table", clutter: 9, sound: "hum" },
+  { key: "rd-ry-denki", clutter: 6 },
+  { key: "rd-ry-sake", clutter: 8 },
+  { key: "rd-ry-karaoke", fine: true, clutter: 9 },
   // W-3's outside (docs/lokacje/w3-pas-publiczny.md, w3-wieza.md, w3-rurociag-basen.md, ADR-0102): Genzō's brazier and
   // things by KAIUN, the smokers' corner by the pass office, the fitters' things on the pipe landing, the ladder's board.
   { key: "rd-w3-barrel", clutter: 0 },
