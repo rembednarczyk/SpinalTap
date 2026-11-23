@@ -179,7 +179,7 @@ const keeper = (key: KeeperKey, interactable: NonNullable<Extract<ActorDef, { ki
 /** The Hebi lookout by the shelter's hatch on T2 (stage 5d2, ADR-0074 §3): watches it and the stairs from T1 by day, walks P-2 at night. */
 export const HEBI_LOOKOUT_POST: Vec3 = HATCH_POST;
 /** He looks south-west, over the hatch to the stairs from T1. */
-const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
+export const HEBI_LOOKOUT_YAW = Math.atan2(431 - HEBI_LOOKOUT_POST.x, 90 - HEBI_LOOKOUT_POST.z);
 
 export const ALCHEMIA_MARKET_ACTORS: readonly ActorDef[] = [
   // By day the shop; from 22:00 the schedule swaps in `oyaji_closed`.

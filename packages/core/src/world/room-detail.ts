@@ -286,6 +286,13 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-t1-extract", services: true, sound: "vent" },
   { key: "rd-t1-stools", clutter: 8 },
   { key: "rd-t1-butts", fine: true, clutter: 6 },
+  // Alchemia's T2 under the Arkady (docs/lokacje/alchemia-t2-arkady.md, ADR-0102): the square's name cut in the memorial
+  // stone with its pebbles, candles and ribbon, the settlement's outline in the paving, the lookout's and the group's
+  // leavings.
+  { key: "rd-t2-tribute", clutter: 4 },
+  { key: "rd-t2-settlement", clutter: 0 },
+  { key: "rd-t2-lookout", fine: true, clutter: 6 },
+  { key: "rd-t2-hebi", fine: true, clutter: 6 },
   // W-3's outside (docs/lokacje/w3-pas-publiczny.md, w3-wieza.md, w3-rurociag-basen.md, ADR-0102): Genzō's brazier and
   // things by KAIUN, the smokers' corner by the pass office, the fitters' things on the pipe landing, the ladder's board.
   { key: "rd-w3-barrel", clutter: 0 },
