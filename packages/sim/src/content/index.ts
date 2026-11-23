@@ -15,6 +15,7 @@ export * from "./plac-litewski-detail";
 export * from "./rynek-detail";
 export * from "./grodzka-detail";
 export * from "./deptak-detail";
+export * from "./plac-zamkowy-detail";
 export * from "./clinic-detail";
 export * from "./tessen-w3/office-detail";
 export * from "./tessen-w3/basement-detail";

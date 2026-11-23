@@ -323,6 +323,10 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   { key: "rd-trasa-drip", clutter: 1, sound: "drip" },
   // Mori's clinic (docs/pomieszczenia/clinic.md, ADR-0102): Kaito's stool by the chair with his mug and his butts.
   { key: "rd-clinic-stool", clutter: 4 },
+  // Plac Zamkowy's flea market (docs/lokacje/plac-zamkowy.md, ADR-0102): a stall's blanket of goods and its festoon,
+  // the metro pavilion's green lamp.
+  { key: "rd-pz-stall", clutter: 9 },
+  { key: "rd-pz-metro-lamp", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */
