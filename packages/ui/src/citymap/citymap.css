@@ -42,10 +42,18 @@
 .citymap__label--district { fill: var(--cyan); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85; }
 .citymap__label--landmark { fill: var(--amber); font-style: italic; }
 .citymap__label--station { fill: #39ffd0; font-weight: 700; }
+/* Venues and named interiors (ADR-0100): a dot in the venue's neon, the name beside it. */
+.minimap__label--venue, .citymap__label--venue { text-anchor: start; fill: rgba(225, 245, 255, 0.75); letter-spacing: 0.02em; }
+.minimap__venue circle, .citymap__venue circle { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.25; }
+.minimap__venue--interior circle, .citymap__venue--interior circle { fill: var(--amber); }
+.minimap__venue--interior .minimap__label--venue, .citymap__venue--interior .citymap__label--venue { fill: var(--amber); }
 .citymap__player path { fill: var(--ink); stroke: rgba(4, 7, 12, 0.9); stroke-width: 1; }
 .citymap__marker circle { stroke: rgba(4, 7, 12, 0.9); stroke-width: 1; }
 .citymap__marker--fixer { fill: var(--amber); }
 .citymap__marker--target { fill: var(--magenta); }
+/* Traders open now (ADR-0100), in the minimap's colours. */
+.citymap__marker--ripperdoc { fill: #39ffd0; }
+.citymap__marker--vendor { fill: #b48cff; }
 .citymap__marker--enforcer { fill: var(--danger); }
 .citymap__marker--quest circle { fill: none; stroke: var(--magenta); stroke-width: 2.5; }
 .citymap__area { fill: rgba(255, 61, 139, 0.16); stroke: var(--magenta); stroke-width: 1; stroke-dasharray: 3 2; }

@@ -1,0 +1,41 @@
+{
+  "locations": [
+    "dzielnica-shinsekai-7",
+    "dzielnica-kanal",
+    "dzielnica-targ",
+    "dzielnica-doki",
+    "plac-lokietka",
+    "plac-po-farze",
+    "plac-katedralny",
+    "plac-zamkowy",
+    "aleja-tysiaclecia",
+    "dworzec-autobusowy",
+    "nowy-plac-targowy",
+    "lubartowska",
+    "zaulek-kapucynska",
+    "zaulek-panasa",
+    "nabrzeze-bystrzycy",
+    "alchemia-plac-frontu",
+    "alchemia-deptak",
+    "alchemia-t0",
+    "alchemia-zielony-dach",
+    "alchemia-dom-z-arkadami",
+    "kosciol-sw-ducha",
+    "cerkiew-przemienienia",
+    "budowa-arkologia",
+    "budowa-wzgorza",
+    "budowa-plac-koziolka"
+  ],
+  "interiors": [
+    "clinic",
+    "neon-koi",
+    "capsule",
+    "tessen-office",
+    "w3-hall",
+    "w3-basement",
+    "trasa-podziemna",
+    "alchemia-shelter",
+    "alchemia-gallery",
+    "alchemia-foodhall"
+  ]
+}

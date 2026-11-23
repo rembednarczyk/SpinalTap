@@ -1,5 +1,5 @@
 import type { GroundSurface } from "@seki/core";
-import { DISTRICTS, type DistrictId, MAP_CHUNKS, WORLD_CHUNKS, WORLD_METRO, clearedBuilding, ground } from "@seki/sim";
+import { DISTRICTS, type DistrictId, INTERIORS, type InteriorRoom, MAP_CHUNKS, METRO_PLATFORMS, WORLD_CHUNKS, WORLD_METRO, clearedBuilding, ground } from "@seki/sim";
 import type { LublinChunkData, LublinStreetData } from "@seki/sim/lublin";
 import type { MapAreaKind, MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon, MapRectVm, MapVm } from "@seki/ui";
 import { buildDistrictMap, sidewalkProps } from "./minimap";
@@ -8,7 +8,8 @@ import { metroLayerVm } from "./presenters/metro-map";
 /**
  * Lublin for the minimap and the map tab (ADR-0045): the surfaces and the buildings of the map
  * data under the game's own blocks, decks and links, with the names of the streets, the
- * districts, the landmarks and the metro stations, and the metro line as a layer (ADR-0071).
+ * districts, the landmarks and the metro stations, the venues and the named interiors (ADR-0100),
+ * and the metro line as a layer (ADR-0071).
  */
 
 const AREA: Readonly<Record<GroundSurface, MapAreaKind>> = {
@@ -78,6 +79,28 @@ const LANDMARK_USES: ReadonlySet<string> = new Set(["historic", "civic", "church
 const landmarkLabels = (chunks: readonly LublinChunkData[]): MapLabelVm[] =>
   chunks.flatMap((c) => c.buildings.filter((b) => b.name && LANDMARK_USES.has(b.use)).map((b) => ({ kind: "landmark" as const, text: b.name ?? "", x: b.x, z: b.z, angle: 0 })));
 
+/** The venues of the map's buildings that stand (ADR-0064 stage 4) with their 2077 names, kinds and neon (ADR-0100). */
+export const venueLabels = (chunks: readonly LublinChunkData[]): MapLabelVm[] =>
+  chunks.flatMap((c) =>
+    c.buildings
+      .filter((b) => !clearedBuilding(b))
+      .flatMap((b) => (b.venues ?? []).map((v) => ({ kind: "venue" as const, text: v.name, x: round(b.x + v.x), z: round(b.z + v.z), angle: 0, venue: v.kind, color: v.color }))),
+  );
+
+const roomArea = (r: InteriorRoom) => (r.maxX - r.minX) * (r.maxZ - r.minZ);
+/** The metro's platforms go by their stations' names already. */
+const PLATFORMS: ReadonlySet<string> = new Set(METRO_PLATFORMS.map((e) => `metro-${e.station}`));
+
+/**
+ * The game's named interiors (ADR-0061) as venues (ADR-0100): the name's key over the middle of
+ * the biggest room; neither a shop inside another (`within`, the gallery's) nor a metro platform.
+ */
+export const interiorLabels = (): MapLabelVm[] =>
+  INTERIORS.filter((i) => !i.within && !PLATFORMS.has(i.id)).flatMap((i) => {
+    const r = i.rooms.reduce<InteriorRoom | null>((best, room) => (!best || roomArea(room) > roomArea(best) ? room : best), null);
+    return r ? [{ kind: "venue" as const, text: i.name, key: true as const, venue: "interior" as const, x: round((r.minX + r.maxX) / 2), z: round((r.minZ + r.maxZ) / 2), angle: 0 }] : [];
+  });
+
 /** Each district's name over the middle of its chunks. */
 export const districtPlaces = (chunks: readonly LublinChunkData[]): MapPlaceVm[] =>
   (Object.keys(DISTRICTS) as DistrictId[]).flatMap((d) => {
@@ -110,6 +133,8 @@ export const buildCityMap = (chunks: readonly LublinChunkData[] = MAP_CHUNKS): M
     ...landmarkLabels(chunks),
     ...WORLD_METRO.map((s) => ({ kind: "station" as const, text: `Ⓜ ${s.name}`, x: s.node.x, z: s.node.z, angle: 0 })),
     ...streetLabels(chunks),
+    ...venueLabels(chunks),
+    ...interiorLabels(),
   ];
   return {
     ...game,

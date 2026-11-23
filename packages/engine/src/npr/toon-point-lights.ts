@@ -131,7 +131,9 @@ export class ToonPointLights {
       if (this.scope !== null && !key.startsWith(this.scope)) continue;
       (f === null || Math.hypot(l.position.x - f.x, l.position.z - f.z) <= LIGHT_SLOT_DISTANCE ? near : far).push(l);
     }
-    const next = [...near, ...far].slice(0, MAX_POINT_LIGHTS);
+    // A light with a priority goes first (stable: the rest keep their registration order).
+    const byPriority = (a: PointLightDef, b: PointLightDef) => (b.priority ?? 0) - (a.priority ?? 0);
+    const next = [...near.sort(byPriority), ...far.sort(byPriority)].slice(0, MAX_POINT_LIGHTS);
     if (next.length === this.active.length && next.every((l, i) => l === this.active[i])) return false;
     this.active = next;
     return true;

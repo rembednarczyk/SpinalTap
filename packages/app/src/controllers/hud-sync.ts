@@ -1,6 +1,6 @@
 import { W3MissionSync } from "../presenters/w3-mission";
 import { ABILITY_CATALOG, type DomainState, type AudioPort, type ImplantGrades, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom, workingCyberware } from "@seki/core";
-import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
+import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground, interiorAt } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
@@ -21,6 +21,8 @@ const ZOOM_STEP = 0.01;
 const NO_GRADES: ImplantGrades = {};
 /** HUD aim spread is rounded to this many radians, so the store changes only when the cone visibly moves. */
 const SPREAD_STEP = 0.002;
+/** A point in no interior, for a frame without the player (on the metro). */
+const NOWHERE = { x: 0, y: -1000, z: 0 } as const;
 /** Daylight reaches the renderer in steps of 1/64. */
 const DAYLIGHT_STEPS = 64;
 
@@ -185,6 +187,8 @@ export class HudSync implements ContractIntents {
       enforcers: wave2.enforcers,
       focus: mapFocus(sim.domain),
       quest: questMark(sim.domain),
+      // Before the first step has read it (a new game), from the position, so the start shows the storey at once.
+      interior: sim.session.interior === undefined ? (interiorAt(sim.player()?.position ?? NOWHERE)?.id ?? null) : sim.session.interior,
     });
   }
 

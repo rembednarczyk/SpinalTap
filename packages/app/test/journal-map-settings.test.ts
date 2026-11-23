@@ -157,20 +157,27 @@ describe("minimap data", () => {
     const contracts = { active: { id: "c1", siteId: "koi_back", targets: 1, reward: 1, status: "active" }, completed: 0 } as const;
     const a = track([player, fixer, mori, courier, hired], [], contracts);
     expect(a.mapPlayer).toEqual({ x: 1, z: 2, yaw: expect.closeTo(0.5, 1) });
-    expect(a.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "target", "target"]);
+    expect(a.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "ripperdoc", "target", "target"]);
     const b = track([player, fixer, mori, courier, hired], [], contracts);
     expect(b.mapPlayer).toBe(a.mapPlayer);
     expect(b.mapMarkers).toBe(a.mapMarkers);
     const c = track([player, fixer, mori, courier, hired], ["killed:hebi_courier"], { active: null, completed: 1 });
-    expect(c.mapMarkers.map((m) => m.kind)).toEqual(["fixer"]);
+    expect(c.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "ripperdoc"]);
     expect(track([fixer], [], contracts).mapPlayer).toBeNull();
   });
 
-  it("leaves the shops off the map: only fixers and accepted contracts (ADR-0035)", () => {
+  it("puts the traders open now on the map, not the shut ones nor the figures (ADR-0100, formerly none: ADR-0035)", () => {
     const track = createMinimapTracker();
     const mori = { id: 3, key: "mori", position: { x: -6, y: 0, z: 2 }, interactable: { kind: "shop", dialogueId: "mori" } } as unknown as Entity;
     const oyaji = { id: 6, key: "oyaji", position: { x: 80, y: 0, z: 66 }, interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji" } } as unknown as Entity;
-    expect(track([mori, oyaji], [], { active: null, completed: 0 }).mapMarkers).toEqual([]);
+    const fumiko = { id: 7, key: "fumiko", position: { x: 70, y: 0, z: 60 }, interactable: { kind: "dialogue", dialogueId: "fumiko_closed" } } as unknown as Entity;
+    const kenta = { id: 8, key: "kenta", position: { x: 72, y: 0, z: 60 }, interactable: { kind: "dialogue", dialogueId: "kenta" } } as unknown as Entity;
+    const walker = { id: 9, key: "w1", position: { x: 1, y: 0, z: 1 } } as unknown as Entity;
+    const out = track([mori, oyaji, fumiko, kenta, walker], [], { active: null, completed: 0 }).mapMarkers;
+    expect(out).toEqual([
+      { id: "mori", kind: "ripperdoc", x: -6, z: 2 },
+      { id: "oyaji", kind: "vendor", x: 80, z: 66 },
+    ]);
   });
 
   it("reaches the store through the session", () => {
@@ -181,7 +188,8 @@ describe("minimap data", () => {
     // On the chair in the clinic (ADR-0038), on Krakowskie Przedmieście (ADR-0045).
     expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
     // Kaito at the Neon Koi counter is the first step's target: his fixer dot gets the quest ring too.
-    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "target"]);
+    // Mori's clinic is open: a trader on the map (ADR-0100).
+    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "ripperdoc", "target"]);
     expect(st.journal.quests[0]?.title).toBe("First job");
     const before = ui.getState().mapPlayer;
     s.step(EMPTY_INPUT);

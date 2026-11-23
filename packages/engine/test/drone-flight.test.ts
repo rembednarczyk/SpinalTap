@@ -10,6 +10,7 @@ import { mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/c
 import { BOB, DRONE_KINDS, DRONE_LAYER, DRONE_SIZE, type Drone, droneFleet, dronePose, loopLength } from "../src/renderer/drones/drone-flight";
 import { type DroneLane, type DroneWorld, LEG, STEP } from "../src/renderer/drones/drone-lanes";
 import { boxDrone, droneTemplates } from "../src/renderer/drones/drone-models";
+import { withLenses } from "../src/renderer/drones/drone-lenses";
 import { DRONE_LOD, DroneViews } from "../src/renderer/drones/drone-views";
 
 const file = (name: string): ArrayBuffer => {
@@ -63,7 +64,8 @@ describe("drone-props.glb (ADR-0058 stage 7)", () => {
         for (const i of t.indices) expect(i).toBeLessThan(t.vertexCount);
       }
       expect(withFile[kind].near.vertexCount, kind).toBeGreaterThan(withFile[kind].far.vertexCount * 5);
-      expect(without[kind].near).toEqual(boxDrone(kitData, kind));
+      // Without the file: its boxes, the lights as lenses (`drone-lenses.ts`).
+      expect(without[kind].near).toEqual(withLenses(kitData, boxDrone(kitData, kind)));
     }
   });
 });

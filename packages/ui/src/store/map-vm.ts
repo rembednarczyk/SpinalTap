@@ -1,3 +1,5 @@
+import type { VenueKind } from "@seki/core";
+
 /**
  * The city on the minimap and the map tab (ADR-0045): Lublin's surfaces, buildings and names
  * from the map data, in world metres (x east, z north). Sent once with the rest of `MapVm`.
@@ -14,8 +16,11 @@ export interface MapAreaVm {
   readonly points: MapPolygon;
 }
 
-/** A street name, a district, a landmark (Zamek, Brama Krakowska) or a metro station. */
-export type MapLabelKind = "street" | "district" | "landmark" | "station";
+/** A street name, a district, a landmark (Zamek, Brama Krakowska), a metro station or a venue (ADR-0100). */
+export type MapLabelKind = "street" | "district" | "landmark" | "station" | "venue";
+
+/** What a venue label stands for (ADR-0100): a venue of the map by its kind (ADR-0064), or a named interior of the game. */
+export type MapVenueKind = VenueKind | "interior";
 
 export interface MapLabelVm {
   readonly kind: MapLabelKind;
@@ -24,6 +29,12 @@ export interface MapLabelVm {
   readonly z: number;
   /** Direction of the text on the map, radians counter-clockwise from east; kept readable (−π/2..π/2]. */
   readonly angle: number;
+  /** A venue's kind, for its icon and the word for it. */
+  readonly venue?: MapVenueKind;
+  /** A venue's neon colour (`#rrggbb`, ADR-0064), for its icon. */
+  readonly color?: string;
+  /** `text` is a catalogue key (an interior's name, ADR-0056), translated where it is drawn. */
+  readonly key?: true;
 }
 
 /** A place the map tab can jump to: a district by name. */

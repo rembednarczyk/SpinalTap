@@ -354,6 +354,8 @@ export const enWorld = {
   "map.witness": "Witness calling",
   "map.lastKnown": "Last known position",
   "map.above": "You're above street level",
+  "map.floor.level": "Level {n}",
+  "map.floor.below": "You're below street level",
   "scan.kind.camera": "Camera",
   "scan.kind.device": "Device",
   "scan.kind.person": "Person",

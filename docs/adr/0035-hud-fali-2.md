@@ -37,7 +37,7 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - W czasie przejazdu `sim.player()` zwraca `undefined`; HUD i minimapa to znoszą (test sesji z prawdziwym przejazdem).
 
 ### Minimapa
-- Na mapie są tylko fixerzy i cele przyjętych zleceń. Sklepy zniknęły, a terminal, skrzynia i eskortowany są widoczne tylko przy aktywnym zleceniu.
+- Na mapie są tylko fixerzy i cele przyjętych zleceń. Sklepy zniknęły (od ADR-0100 wracają sprzedawcy, którzy handlują teraz), a terminal, skrzynia i eskortowany są widoczne tylko przy aktywnym zleceniu.
 - Cel to okrąg o promieniu 10 m wokół punktu zaokrąglonego do siatki 8 m, więc nie zdradza wejścia.
 - Zoom: 1,35 przy sprincie, 1,6 po zrywie. W metrze zoom jest wyłączony. Przy ruchu widok wyprzedza gracza o 1/3 zasięgu, a strzałka siedzi w dolnej tercji.
 - Ustawienia: `mapMarkers` (tryb bez znaczników) i `highlights` (podświetlenia, przekazywane do renderera).
