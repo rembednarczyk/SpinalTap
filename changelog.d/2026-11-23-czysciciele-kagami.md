@@ -1,0 +1,1 @@
+- Czyściciele Kagami w zasadzce pod frontem Alchemii wychodzą z drzwi windy i z domku klatki parkingu, zamiast pojawiać się na środku pasażu.
