@@ -45,9 +45,20 @@ const UP_TO_P3: readonly { x: number; z: number }[] = [
   { x: 416.6, z: 40.75 },
   { x: 416.6, z: 39.2 },
 ];
-/** On P3, from the gallery's south side by the escalators' landing round the tables to a keeper's counter. */
-const onP3To = (key: Keeper): { x: number; z: number }[] => {
+/** The counters on the hall's west side, along the aisle at x 409.2 north of the tables. */
+const WEST: ReadonlySet<Keeper> = new Set(["kenta", "goro", "fumiko"]);
+
+/**
+ * On P3, from the gallery's south side by the escalators' landing round the tables to a keeper's
+ * counter; from a counter of the west side to another one, along the aisle without going back to
+ * the landing (a third of the test's steps went there and back).
+ */
+const onP3To = (key: Keeper, from?: Keeper): { x: number; z: number }[] => {
   const before = beforeKeeper(key);
+  if (from && WEST.has(from) && WEST.has(key)) {
+    if (key === "fumiko") return [{ x: 409.2, z: 51.5 }, { x: 409.2, z: 48.8 }, { x: 405.3, z: 49.6 }, before];
+    return [{ x: 409.2, z: 51.5 }, { x: before.x, z: 51.5 }, before];
+  }
   const hub = { x: 416.6, z: 39.2 };
   if (key === "kenta" || key === "goro") return [hub, { x: 409.2, z: 39.2 }, { x: 409.2, z: 51.5 }, { x: before.x, z: 51.5 }, before];
   if (key === "fumiko") return [hub, { x: 409.2, z: 39.2 }, { x: 409.2, z: 48.8 }, { x: 405.3, z: 49.6 }, before];
@@ -80,8 +91,10 @@ describe("the market in Alchemia's food hall (ADR-0074 stage 1)", () => {
     // Up from T1 to P3 once (ADR-0093 O3: the climb takes a game half-hour), then from counter to counter along P3, Oyaji's first.
     const expected: Readonly<Record<Keeper, RegExp>> = { oyaji: /Oyaji's stall/, sachiko: /Sachiko/, kenta: /Kenta/, goro: /Goro/, fumiko: /Fumiko/ };
     walkToKeeper(session, "oyaji");
+    let from: Keeper | undefined;
     for (const key of Object.keys(expected) as Keeper[]) {
-      for (const p of onP3To(key)) walkAt(session, p, 600);
+      for (const p of onP3To(key, from)) walkAt(session, p, 600);
+      from = key;
       face(session, key);
       const p = session.sim.player()!.position;
       expect(Math.hypot(p.x - beforeKeeper(key).x, p.z - beforeKeeper(key).z), key).toBeLessThan(0.5);
