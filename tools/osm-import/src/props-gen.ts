@@ -16,7 +16,7 @@ import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf
 import { bulkyPieces } from "./props-bulky.ts";
 import { litSpot } from "./props-lit-spot.ts";
 import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
-import { marketEntrances, marketStalls } from "./props-market.ts";
+import { type Tent, marketEntrances, marketStalls } from "./props-market.ts";
 import { EntranceZones, boardDoor } from "./props-entrances.ts";
 import { venueGardens } from "./props-gardens.ts";
 import { venueClutter } from "./props-clutter.ts";
@@ -62,6 +62,8 @@ export interface PlanItem {
    * the plan's lines were.
    */
   readonly keepOff?: number;
+  /** A marketplace's tents mapped from the orthophoto (G-964, `Tent` in `props-market.ts`): its stalls stand under them. */
+  readonly tents?: readonly Tent[];
 }
 
 export interface PropsPlan {
@@ -292,7 +294,7 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
     if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
     // A marketplace's count is the place, not its stalls: they fill it in rows.
-    if (item.kind === "market") return marketStalls(site, ring, bulkyItems(placed)).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
+    if (item.kind === "market") return marketStalls(site, ring, bulkyItems(placed), item.tents).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
     if (BULKY.has(prop)) return bulkyPieces(site, ring, prop, item.count ?? 1, item.id, placed);
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).

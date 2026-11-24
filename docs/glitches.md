@@ -4,6 +4,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-966 Słupy daszka nad straganami Targu na Ruskiej w płótnie straganów
+- Status: zgłoszone (S4: słup 0,25 m przechodzi przez daszek straganu)
+- Gdzie: Targ na Ruskiej, daszek w1547216433 (G-063), słupy (765,8; 566,4) i (770,9; 564,4); T-346
+- Dowód: przegląd kuratora 24.11 (PR #1014): 2 stragany ze słupem w płótnie (odstęp 0,05 i 0,00 m), 4 bliżej niż 0,3 m; na main 21 i 26. Generator straganów (`props-market.ts`) nie zna słupów zadaszeń. Słupy leżą na południowej krawędzi daszka z OSM, ok. 0,85 m w głębi prawdziwego dachu.
+- Poprawka: stragany omijają słupy zadaszeń (kontrola jak `clearOf` dla brył), ewentualnie krawędź daszka według ortofoto; kontrola skanu `prop-on-canopy-post` (płótno bliżej niż 0,125 m od słupa, baza 2) proponowana przez kuratora.
+
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
@@ -12,7 +18,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: teren gry pod biegiem, nie renderer. Skarpa z NMT przy Szkolnej jest bardziej stroma niż prawdziwe schody, które leżą we wcięciu: wcięcie terenu wzdłuż biegu do profilu biegu normy (jak `FLIGHT_RAMPS` w `sites.ts`), z przeglądem kuratora. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
 
 ### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
-- Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)
+- Status: w PR #1014 (S4: stragan obok prawdziwego namiotu, nie pod nim); namioty z ortofoto w planie mebli, 154 stragany pod 20 dachami, przegląd kuratora 24.11 przyjęty z uwagami (naniesione)
 - Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
 - Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
 - Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.
