@@ -107,6 +107,8 @@ export interface Tier {
   readonly roofing?: "metal" | "patina";
   /** A portico of the simulation's `PORTICOES` before a wall, its terrace's floor at this world y (the Archikatedra). */
   readonly portico?: { readonly floor: number };
+  /** A church's front in bays on the wall facing the plaza (`cathedral-front.ts`). */
+  readonly westFront?: WestFront;
   /** The upper zone's colour over the split (a tower's copper-clad storey); absent: the tier's. */
   readonly upper?: "patina";
   /** A palace front (Nowy Ratusz): storeys of windows on every shown wall, a portico where the data has one. */
@@ -268,4 +270,26 @@ export interface LandmarkRecipe {
   readonly key: string;
   readonly parts: readonly PartRecipe[];
   readonly layer: Layer2077;
+}
+
+/** A round-headed opening of a church's front: its middle's offset from the axis along the wall, width and world y of its bottom and top. */
+export interface FrontOpening {
+  readonly at: number;
+  readonly width: number;
+  readonly y0: number;
+  readonly y1: number;
+}
+
+/**
+ * A church's front in bays (the Archikatedra, T-349 stage K2): pilasters, windows and doors by their
+ * offsets (m) from where the axis through `axis` (a point on it, world) meets the wall, the sun in
+ * the pediment's tympanum, a frieze band at a world y.
+ */
+export interface WestFront {
+  readonly axis: { readonly x: number; readonly z: number };
+  readonly pilasters?: readonly number[];
+  readonly windows?: readonly FrontOpening[];
+  readonly doors?: readonly FrontOpening[];
+  readonly sun?: true;
+  readonly frieze?: number;
 }

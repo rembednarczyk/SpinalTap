@@ -1,8 +1,10 @@
 import type {
   BlindRow,
+  FrontOpening,
   LandmarkRecipe,
   PartRecipe,
   Tier,
+  WestFront,
 } from "./recipe-types";
 
 /**
@@ -42,6 +44,55 @@ const flat = (osm: string, tier: Partial<Tier> = {}): PartRecipe => ({
   crown: { kind: "flat" },
 });
 
+/** The portal at the top of its steps (w66335060): the church's axis through it, the bays' offsets measured from it. */
+const AXIS = { x: 603.52, z: -184.59 } as const;
+
+/** A round-headed opening `width` metres wide on the axis or off it, world y from y0 to y1. */
+const at = (
+  offset: number,
+  width: number,
+  y0: number,
+  y1: number,
+): FrontOpening => ({ at: offset, width, y0, y1 });
+
+/**
+ * The vestibule behind the portico: a pilaster behind each column (their axes 4.16 m apart, the
+ * middle bay on the axis), the main door at the top of the steps (y −1.5) and a window over each of
+ * the three middle bays under the portico's ceiling.
+ */
+const VESTIBULE: WestFront = {
+  axis: AXIS,
+  pilasters: [-10.4, -6.24, -2.08, 2.08, 6.24, 10.4],
+  doors: [at(0, 2.6, -1.5, 6.2)],
+};
+const VESTIBULE_UP: WestFront = {
+  axis: AXIS,
+  pilasters: VESTIBULE.pilasters!,
+  windows: [
+    at(0, 2, 9, 12),
+    at(-4.16, 1.4, 9.4, 11.8),
+    at(4.16, 1.4, 9.4, 11.8),
+  ],
+};
+
+/**
+ * The upper storey between the turrets: four pilasters (the middle bay 5.2 m wide), a tall
+ * round-headed window on the axis and narrower ones in the side bays on the nave's west wall,
+ * one more on the axis in the screen front, the sun in its pediment (the photograph of the front).
+ */
+const UPPER: readonly number[] = [-6.6, -2.6, 2.6, 6.6];
+const NAVE_FRONT: WestFront = {
+  axis: AXIS,
+  pilasters: UPPER,
+  windows: [at(0, 2.6, 16, 23.4), at(-4.6, 1.4, 17, 22), at(4.6, 1.4, 17, 22)],
+};
+const SCREEN_FRONT: WestFront = {
+  axis: AXIS,
+  pilasters: UPPER,
+  windows: [at(0, 1.8, 26.3, 31.2)],
+  sun: true,
+};
+
 export const ARCHIKATEDRA: LandmarkRecipe = {
   key: "archikatedra",
   parts: [
@@ -52,21 +103,22 @@ export const ARCHIKATEDRA: LandmarkRecipe = {
       cornice: false,
       eaves: true,
       portico: { floor: 13 },
+      westFront: VESTIBULE,
     }),
-    flat("T-349/katedra-korpus"),
+    flat("T-349/katedra-korpus", { westFront: VESTIBULE_UP }),
     flat("T-349/katedra-pod-nawa", { pilasters: false, cornice: false }),
     flat("T-349/katedra-prezbiterium-pn"),
     flat("T-349/katedra-prezbiterium-pd"),
     // The nave and the apse under the data's gabled roof in dark sheet metal (the photograph in the snow).
     {
       osm: "w617763433",
-      tier: { ...PLASTER, roofing: "metal" },
+      tier: { ...PLASTER, roofing: "metal", westFront: NAVE_FRONT },
       crown: { kind: "roof" },
     },
     // The screen front: its pediment's slopes in the same metal over the cornice.
     {
       osm: "T-349/katedra-fronton",
-      tier: { ...PLASTER, roofing: "metal" },
+      tier: { ...PLASTER, roofing: "metal", westFront: SCREEN_FRONT },
       crown: { kind: "roof" },
     },
     ...["w617763434", "w617763435"].map(
