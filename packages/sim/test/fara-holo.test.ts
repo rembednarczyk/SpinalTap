@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FARA_CHANCEL, FARA_HEIGHTS, FARA_HOLO, FARA_HOLO_FACETS, FARA_NAVE, FARA_NAVE_WALLS, FARA_TOWER, groundY } from "../src";
+import { FARA_CHANCEL, FARA_CHAPELS, FARA_DOORS, FARA_HEIGHTS, FARA_HOLO, FARA_HOLO_FACETS, FARA_NAVE, FARA_NAVE_WALLS, FARA_OPENINGS, FARA_TOWER, groundY } from "../src";
 import { LUBLIN_CHUNKS } from "../src/content/lublin";
 
 /*
@@ -61,5 +61,31 @@ describe("the hologram of the parish church over its foundations (Plac po Farze)
     }
     expect(FARA_HOLO.x).toBeGreaterThan(FARA_NAVE[0]![0]);
     expect(FARA_HOLO.x).toBeLessThan(FARA_NAVE[1]![0]);
+  });
+
+  it("stands the side chapels, the sacristy and the annex on the foundations round the nave and the chancel", () => {
+    expect(FARA_CHAPELS.length).toBeGreaterThanOrEqual(7);
+    for (const c of FARA_CHAPELS) {
+      // Their far corners on the foundations' outline (within 1.5 m), their lean-to under the wall they lean on.
+      const far = c.pts.filter((p) => Math.abs(p[1] - c.wall) > 1);
+      for (const [x, z] of far) expect(toFoundations(x, z), `${x},${z}`).toBeLessThan(1.5);
+      expect(c.inner).toBeGreaterThan(c.out);
+      expect(c.inner).toBeLessThan(FARA_HEIGHTS.chancel);
+    }
+  });
+
+  it("opens windows and doors within their walls: each inside its wall's length, the doors on the ground, the windows under the wall's top", () => {
+    expect(FARA_OPENINGS.length).toBeGreaterThan(15);
+    for (const o of FARA_OPENINGS) {
+      const len = Math.hypot(o.b[0] - o.a[0], o.b[1] - o.a[1]);
+      expect(o.at * len - o.width / 2, JSON.stringify(o)).toBeGreaterThan(0);
+      expect(o.at * len + o.width / 2, JSON.stringify(o)).toBeLessThan(len);
+      expect(o.sill + o.height + o.rise).toBeLessThan(FARA_HEIGHTS.tower);
+    }
+    for (const d of FARA_DOORS) expect(d.sill).toBe(0);
+    // The west portal on the nave's axis, in the tower's west wall.
+    const west = FARA_DOORS[0]!;
+    expect(west.a[1] + (west.b[1] - west.a[1]) * west.at).toBeCloseTo(42.4, 6);
+    expect(west.a[0]).toBe(FARA_TOWER[0]![0]);
   });
 });
