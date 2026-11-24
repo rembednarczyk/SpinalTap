@@ -9,6 +9,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { REPO } from "../src/paths.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
+import type { Tent } from "../src/props-market.ts";
 import { Site } from "../src/props-site.ts";
 import { cityProps } from "./city.ts";
 
@@ -48,8 +49,8 @@ const square = (w: number, d: number): { chunk: LublinChunkData; ring: Pt[] } =>
   };
 };
 
-const stallsOf = (ring: readonly Pt[], chunk: LublinChunkData) =>
-  generateProps({ items: [{ id: "test.market", kind: "market", polygon: ring.flatMap((p) => [p.x, p.z]), count: 1 }] }, [chunk])
+const stallsOf = (ring: readonly Pt[], chunk: LublinChunkData, tents?: readonly Tent[]) =>
+  generateProps({ items: [{ id: "test.market", kind: "market", polygon: ring.flatMap((p) => [p.x, p.z]), count: 1, ...(tents ? { tents } : {}) }] }, [chunk])
     .byChunk.get(chunk.id)!
     .filter((i) => i.prop === "market-stall");
 
@@ -110,5 +111,39 @@ describe("marketplace stalls (G-064)", () => {
     expect(stallsOf(ringOf([200, 200, 260, 200, 260, 240, 200, 240]), chunk)).toEqual([]);
     const built = { ...chunk, buildings: [{ id: "w1", x: 60, z: 40, y: 0, outline: [-50, -25, 50, -25, 50, 25, -50, 25], parts: [], height: 6, plinth: 0, levels: 1, use: "commercial", look: 1, source: "default" }] } as LublinChunkData;
     expect(stallsOf(ringOf([20, 20, 100, 20, 100, 60, 20, 60]), built)).toEqual([]);
+  });
+
+  /** Is p under a tent, its roof grown by `by` metres? */
+  const underTent = (tents: readonly Tent[], p: Pt, by = 0.3): boolean =>
+    tents.some(([cx, cz, deg, len, wid]) => {
+      const a = (deg * Math.PI) / 180;
+      const [du, dv] = [(p.x - cx) * Math.cos(a) + (p.z - cz) * Math.sin(a), -(p.x - cx) * Math.sin(a) + (p.z - cz) * Math.cos(a)];
+      return Math.abs(du) <= len / 2 + by && Math.abs(dv) <= wid / 2 + by;
+    });
+
+  it("stands the stalls under a marketplace's mapped tents: two rows back to back under a wide one, one under a narrow one (G-964)", () => {
+    const { chunk, ring } = square(90, 40);
+    const tents: Tent[] = [[40, 30, 0, 20, 6.5], [40, 50, 90, 10, 3]];
+    const stalls = stallsOf(ring, chunk, tents);
+    expect(stalls).toEqual(stallsOf(ring, chunk, tents));
+    for (const s of stalls) expect(underTent(tents, s, 0), `${s.x}, ${s.z}`).toBe(true);
+    const wide = stalls.filter((s) => underTent([tents[0]!], s, 0));
+    // 20 m takes 7 stalls at 2.6 m; two rows, their fronts to the aisles either side.
+    expect(wide).toHaveLength(14);
+    expect(new Set(wide.map((s) => s.z)).size).toBe(2);
+    expect(new Set(wide.map((s) => Math.round(Math.cos(s.yaw))))).toEqual(new Set([1, -1]));
+    // A narrow tent's one row faces the marketplace's middle (+x from x = 40).
+    const narrow = stalls.filter((s) => underTent([tents[1]!], s, 0));
+    expect(narrow).toHaveLength(3);
+    for (const s of narrow) expect(Math.round(Math.sin(s.yaw))).toBe(1);
+  });
+
+  it("stands every stall of Targ na Ruskiej under a tent the orthophoto shows (G-964)", () => {
+    const ruska = PLAN.items.find((i) => i.osm === "w182461192")!;
+    expect(ruska.tents?.length).toBeGreaterThan(10);
+    const ring = ringOf(ruska.polygon!);
+    const stalls = [...cityProps().byChunk.values()].flat().filter((i) => i.prop === "market-stall" && pointInRing(i, ring));
+    expect(stalls.length).toBeGreaterThan(120);
+    expect(stalls.filter((s) => !underTent(ruska.tents!, s)).map((s) => `${s.x}, ${s.z}`)).toEqual([]);
   });
 });
