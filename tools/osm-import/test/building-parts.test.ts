@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STOREY } from "../src/building-tags.ts";
 import { ALL_CHUNKS } from "../src/config.ts";
+import { TAG_CORRECTIONS } from "../src/corrections.ts";
 import { generate } from "../src/generate.ts";
 import { type Pt, inRect, pointInRing } from "../src/geometry.ts";
 import { loadInputs } from "../src/load.ts";
@@ -25,18 +26,19 @@ const peakAt = (all: readonly BuildingOut[], p: Pt): number => Math.max(...all.f
 describe("building parts (G-049)", () => {
   const inputs = loadInputs();
   const at = (p: Pt) => ALL_CHUNKS.filter((c) => inRect(p, c.rect));
-  const specs = [...new Set([...at({ x: 591.3, z: -147.3 }), ...at({ x: 472.6, z: -91.2 }), ...at({ x: 634.2, z: -183.8 }), ...at({ x: 416.1, z: -69.6 }), ...at({ x: 731.1, z: -55.5 })])];
+  const specs = [...new Set([...at({ x: 586.4, z: -147.3 }), ...at({ x: 472.6, z: -91.2 }), ...at({ x: 634.2, z: -183.8 }), ...at({ x: 416.1, z: -69.6 }), ...at({ x: 731.1, z: -55.5 })])];
   const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
   const byId = (id: string) => all.find((b) => b.id === id);
 
-  it("raises Wieża Trynitarska to its helmet at 60 m", () => {
+  it("raises Wieża Trynitarska to its spire at y 58.6 where LoD2 and NMPT have it (T-353)", () => {
     const tower = byId("w66286371")!;
-    // The pyramidal helmet w617763432: from 55 m to 60 m over the ground at the tower.
-    const helmet = byId("w617763432");
-    expect(helmet).toBeDefined();
-    expect(helmet!.soffit! - helmet!.plinth).toBeCloseTo(55, 1);
-    expect(helmet!.height - helmet!.plinth + (helmet!.roof ?? 0)).toBeCloseTo(60, 1);
-    expect(peakAt(all, { x: 590.9, z: -147.6 }) - tower.y).toBeGreaterThanOrEqual(59);
+    // OSM's octagonal body to 50 m and its 10 m green top give way to the recipe's spire over LoD2's eaves.
+    for (const id of ["w617763431", "w618268118", "w617763432"]) expect(byId(id), id).toBeUndefined();
+    expect(tower.y + tower.height + tower.roof!).toBeCloseTo(58.6, 1);
+    expect(tower.roofShape).toBe("pyramidal");
+    // 4.9 m west of OSM's outline: its middle on LoD2's and NMPT's (x 586.3-586.4), Gruella's passage on its axis.
+    expect(tower.x).toBeCloseTo(586.4, 1);
+    expect(peakAt(all, { x: 586.4, z: -147.3 }) - tower.y).toBeGreaterThanOrEqual(58);
   });
 
   it("gives Brama Krakowska a two-storey annex, the tower and the octagon with its helmet on top", () => {
@@ -131,7 +133,9 @@ describe("roof shapes of the landmarks' parts (ADR-0064, G-056)", () => {
   });
 
   it("keeps the shape off buildings without the tag", () => {
-    const untagged = all.filter((b) => b.id.startsWith("w") && !inputs.osm.ways.get(Number(b.id.slice(1)))?.tags?.["roof:shape"]);
+    // The map's tag or a correction's (Wieża Trynitarska's spire, T-353).
+    const corrected = new Set(TAG_CORRECTIONS.filter((c) => c.tags["roof:shape"]).map((c) => c.id));
+    const untagged = all.filter((b) => b.id.startsWith("w") && !corrected.has(b.id) && !inputs.osm.ways.get(Number(b.id.slice(1)))?.tags?.["roof:shape"]);
     expect(untagged.length).toBeGreaterThan(20);
     for (const b of untagged) expect(b.roofShape, b.id).toBeUndefined();
   });

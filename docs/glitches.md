@@ -1514,8 +1514,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-683 Wylot bramy poza osią frontu: Brama Krakowska i Wieża Trynitarska
 - Status: potwierdzone dla (463; −94) (12.11, kurator; zrzut `sm00-krakowska-zach`; OSM −0,74 m, gra −1,80 m); poprawka: oś przejazdu łamana jak w OSM (w491869410 i w66264116, po ok. 21°) albo wylot w środku frontu przedbramia; Trynitarska liczona względem obrysu OSM, który LoD2 przesuwa o ok. 4 m (T-264), do potwierdzenia zdjęciem
-- Klucze skanu: gate-mouth-off-axis stare-miasto-0-0 463,-94; gate-mouth-off-axis stare-miasto-0-0 587,-140; gate-mouth-off-axis stare-miasto-0-0 588,-154
-- Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 3 (cała baza miasta w tej komórce): (463; −94) −1,80 m od środka frontu 7,47 m; (587; −140) −0,81 m z 5,90 m; (588; −154) −4,44 m z 15,84 m (ten może być fałszywy: front obejmuje sąsiednią ścianę); G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
+- Klucze skanu: gate-mouth-off-axis stare-miasto-0-0 463,-94 (Trynitarska (587; −140) i (588; −154) zeszły z bazy 24.11)
+- Wieża Trynitarska naprawiona (24.11, gałąź `feat/wieza-trynitarska`, etap K4 Archikatedry, T-353): obrys wieży 4,9 m na zachód jak w LoD2 i NMPT, przejazd Gruella w osi; zostaje Brama Krakowska (463; −94)
+- Ważność: S4 · Zasięg: `gate-mouth-off-axis` = 1 (od 24.11, K4): (463; −94) −1,80 m od środka frontu 7,47 m; wcześniej także Trynitarska (587; −140) −0,81 m z 5,90 m i (588; −154) −4,44 m z 15,84 m; G-136 (Brama Grodzka) zapowiadał pomiar Krakowskiej; najpierw pomiar z OSM i ortofoto
 - Pakiet właściciela: packages/sim (`GATE_PASSAGES`), tools/glitch-scan
 
 ### G-687 `startOf` wybiera komórkę za cienkim płotem

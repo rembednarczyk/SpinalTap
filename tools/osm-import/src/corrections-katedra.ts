@@ -105,6 +105,55 @@ export const KATEDRA_CORRECTIONS: readonly TagCorrection[] = [
   },
 ];
 
+/**
+ * Wieża Trynitarska (T-353, G-683, T-264, the curator's audit `docs/plany/archikatedra-otoczenie.md`
+ * §3): OSM's outline stands 4.9 m east of LoD2's (x 578.9-593.6) and NMPT's (its middle at x 586.4),
+ * Gruella's passage w298307007 (x 586.6-587.6) on the tower's axis when moved; OSM's parts are an
+ * octagonal body to 50 m and a 10 m green top, where LoD2 has the eaves at 37.8 m over the ground and
+ * the ridge at 59.5 m (y 36.9 and 58.6) and NMPT the corners at y 25-27, the sides' middles at 37-39
+ * (the gables) and the spire to 51 m and over. The body's cornice at y 25.5 (NMPT's ring round the
+ * body at 24-27) and the spire's tip at 58.6: `height` over the 2 m plinth (y −0.9), so 57.4 with a
+ * 33.1 m roof (a measured roof is kept as tagged, `building-tags.ts`). The spire, the gables to 37.5
+ * and the pinnacles are the recipe's (`landmarks/spire.ts`). OSM's parts give way to them.
+ */
+const TOWER_SHIFT = { x: -4.9, z: 0 };
+
+export const TRYNITARSKA_CORRECTIONS: readonly TagCorrection[] = [
+  {
+    id: "w66286371",
+    tags: { height: "57.4", "roof:height": "33.1", "roof:shape": "pyramidal" },
+    shift: TOWER_SHIFT,
+    reason: "Wieża Trynitarska: obrys 4,9 m na zachód jak w LoD2 i NMPT (przejazd Gruella w osi), korpus do y 27 i iglica do y 58,6 z LoD2 i NMPT wobec beżowego korpusu do 51,2 i hełmu do 61,2",
+    ref: "T-353",
+  },
+  ...["w617763431", "w618268118", "w617763432"].map(
+    (id): TagCorrection => ({
+      id,
+      tags: { "building:part": "no" },
+      reason: "Wieża Trynitarska: część OSM (ośmioboczny korpus do 50 m i zielony hełm 50–60 m) zastąpiona iglicą ze szczytami z przepisu według LoD2 i NMPT",
+      ref: "T-353",
+    }),
+  ),
+  {
+    // The rectory w66286370: its east wall was the tower's west wall in OSM (x 582.8-584.0); now on the
+    // tower's moved one (x 577.9-579.1), its north-east corner moved onto that line, two nodes by its south end left out.
+    id: "w66286370",
+    tags: {},
+    drop: [
+      { x: 579.91, z: -154.2 },
+      { x: 580.0, z: -154.63 },
+    ],
+    move: [
+      // Its north-east corner on the tower's moved wall's line (NMPT has its roof to z −139 there).
+      { from: { x: 578.93, z: -139.96 }, to: { x: 577.85, z: -139.96 } },
+      { from: { x: 582.81, z: -141.02 }, to: { x: 577.91, z: -141.02 } },
+      { from: { x: 584.03, z: -153.86 }, to: { x: 579.13, z: -153.86 } },
+    ],
+    reason: "plebania przy Wieży Trynitarskiej: ściana wschodnia na przesuniętej ścianie wieży (x 577,9–579,1), jak w LoD2",
+    ref: "T-353",
+  },
+];
+
 const part = (
   name: string,
   ring: readonly Pt[],
@@ -127,6 +176,28 @@ const part = (
 /** The north-west and south-west corners of the outline (OSM nodes), the vestibule's ends behind the portico. */
 const NW = { x: 601.82, z: -169.83 };
 const SW = at(-30.45, -12.3);
+
+/**
+ * The strip between the moved tower and the State Archive r5420359 (x 594-600, z −140..−153): OSM's
+ * tower stood on it; NMPT has a roof there at y 16-21 with its ridge along x at z −146, as the
+ * archive's (LoD2 gives the strip to the cathedral's complex). A building of its own on the tower's
+ * moved east wall and the archive's west wall (their nodes), walls to 16.5 and a ridge to 21.
+ */
+export const TRYNITARSKA_AREAS: readonly AddedArea[] = [
+  {
+    id: "T-353/lacznik-archiwum",
+    tags: { building: "yes", height: "19.8", "roof:height": "4.5", "roof:shape": "gabled", "roof:orientation": "across" },
+    ring: [
+      { x: 593.9, z: -140.06 },
+      { x: 595.01, z: -153.21 },
+      { x: 599.91, z: -153.21 },
+      { x: 598.8, z: -140.06 },
+    ],
+    nodesOf: [null, null, null, null],
+    reason: "budynek między przesuniętą Wieżą Trynitarską a Archiwum Państwowym: dach NMPT y 16–21 z kalenicą wzdłuż x, w OSM pas był pod obrysem wieży",
+    ref: "T-353",
+  },
+];
 
 export const KATEDRA_PARTS: readonly AddedArea[] = [
   // The chapels along both sides of the nave and the vestibule behind the portico, NMPT y 13-15 from

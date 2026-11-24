@@ -117,7 +117,8 @@ describe("Lublin from map data (ADR-0042)", () => {
   });
 
   it("lifts the parts of the landmarks onto them: the view and the solid start at the soffit (G-049)", () => {
-    const helmet = buildings.find(({ b }) => b.id === "w617763432")?.b;
+    // The Archikatedra's nave on its chapels (T-349).
+    const helmet = buildings.find(({ b }) => b.id === "w617763433")?.b;
     expect(helmet?.soffit).toBeDefined();
     const v = buildingView(helmet!, "kanal");
     expect(v.kind === "building" && v.soffit).toBe(helmet!.soffit);
@@ -125,8 +126,8 @@ describe("Lublin from map data (ADR-0042)", () => {
     expect(v.kind === "building" && v.vertical).toBeFalsy();
     const prop = buildingProp(helmet!, undefined, "kanal");
     for (const p of prop.prisms ?? []) expect(p).toMatchObject({ bottom: helmet!.soffit, top: helmet!.height });
-    // The ground under it stays the tower's, not the helmet's: the outline's prisms start on the ground.
-    const tower = buildings.find(({ b }) => b.id === "w66286371")!.b;
+    // The ground under it stays the church's, not the nave's: the outline's prisms start on the ground.
+    const tower = buildings.find(({ b }) => b.id === "w66286341")!.b;
     expect(buildingProp(tower).prisms?.every((p) => p.bottom === 0)).toBe(true);
   });
 });

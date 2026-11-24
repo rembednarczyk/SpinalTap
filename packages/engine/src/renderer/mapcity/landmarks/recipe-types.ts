@@ -40,7 +40,23 @@ export type Crown =
       readonly height: number;
       readonly profile: HelmProfile;
     }
-  | { readonly kind: "roof"; readonly rise?: number };
+  | { readonly kind: "roof"; readonly rise?: number }
+  | SpireCrown;
+
+/**
+ * A neo-Gothic tower's top (`spire.ts`): over the cornice a gable `gable` metres tall on each side
+ * (a clock in it), pinnacles `pinnacle` metres in from the corners, an octagonal spire to the data's
+ * peak, its foot `base` of the body's half side, as wide to `shoulder` metres over the cornice.
+ */
+export interface SpireCrown {
+  readonly kind: "spire";
+  readonly gable: number;
+  readonly pinnacle: number;
+  readonly base: number;
+  /** Metres over the cornice the spire keeps (nearly) its foot's width to, its broach behind the gables, before it tapers. */
+  readonly shoulder: number;
+  readonly clock: boolean;
+}
 
 /**
  * A helmet as a profile of revolution: [radius, height] from the eaves up, the radius a fraction
@@ -107,6 +123,8 @@ export interface Tier {
   readonly roofing?: "metal" | "patina";
   /** A portico of the simulation's `PORTICOES` before a wall, its terrace's floor at this world y (the Archikatedra). */
   readonly portico?: { readonly floor: number };
+  /** A tower's storeys of pointed windows in pairs on each side, [bottom, top] over the base (`spire.ts`). */
+  readonly towerWindows?: readonly (readonly [number, number])[];
   /** A church's front in bays on the wall facing the plaza (`cathedral-front.ts`). */
   readonly westFront?: WestFront;
   /** The upper zone's colour over the split (a tower's copper-clad storey); absent: the tier's. */
