@@ -60,6 +60,6 @@ Zrobione 23.11 (`packages/sim/src/content/po-farze-detail.ts`, `tools/blender/ro
 - Holo-fara nad fundamentami: model w `tools/blender/rooms/plac_po_farze.py` (z emisją w ramach §16), rekwizyt w `packages/sim/src/content/po-farze-detail.ts`.
 - Skupiska drobiazgu na murku, przy ogródku i u wylotu ku kładce: `po-farze-detail.ts` jak wyżej.
 - Ławki wzdłuż krawędzi tarasu ze skarpy (dziś jedna z planu mebli i dwie przy lunecie): plan mebli `tools/osm-import` (gałąź `po-farze.*`).
-- Światło drogi przy górnym biegu schodów Zaułka Panasa: lampa w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).
+- Światło drogi przy górnym biegu schodów Zaułka Panasa: zrobione 24.11 jako światło sceny bez bytu (`PO_FARZE_LAMPS` w `po-farze-detail.ts`: żarówka `rd-targ-bulb-pole` przy (694,6; 47,4) i turkusowy akcent ekranu lunety).
 - Emiter wiatru na tarasie i gwaru ogródka: `packages/engine/src/audio/spatial.ts`.
-- Zmierzyć 60-30-10 nocą z Grodzkiej na taras i wpisać w §13 tej karty.
+- Pomiar 60-30-10 nocą (24.11, `tools/shots/plaza-spots.json`): z zachodu na plac 87/12,8/0,2 przed i 86,9/12,9/0,2 po świetle sceny; z tarasu na schody 84,1/15,3/0,6 przed i 83/16,4/0,5 po. Dalej poza pasmem: plac nie ma akcentu w kadrze. Następny krok to holo-fara nad fundamentami (model z emisją w `plac_po_farze.py`, §16) jako akcent widoczny z Grodzkiej i z tarasu.
