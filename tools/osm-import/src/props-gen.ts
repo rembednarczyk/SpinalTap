@@ -520,7 +520,16 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   placeProps(plan, chunks, tags, boards, market, kerbRule).finish();
 
 /** `generateProps` up to its rows of bollards, the kerbs' (G-820) and the plan's, which `finish` lays and strings. */
-export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}, kerbRule?: KerbRuleContext): PropsDraft => {
+export const placeProps = (
+  plan: PropsPlan,
+  chunks: readonly LublinChunkData[],
+  tags: NodeTags = new Map(),
+  boards: readonly BoardSpan[] = [],
+  market: MarketContext = {},
+  kerbRule?: KerbRuleContext,
+  /** Pieces placed before the furniture (the building sites' fences and cabins): its solids step aside from them. */
+  fixed: readonly StreetPropItem[] = [],
+): PropsDraft => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
   const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
@@ -531,6 +540,7 @@ export const placeProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], 
   // The pieces kept so far by kind, in grids: each next one is looked for near it, not in every one.
   const kept = new Map<StreetPropKind, SpatialHash<Pt>>();
   const solids = new PropSolidIndex();
+  for (const f of fixed) solids.add(f);
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
   // The plan's bollards (not the drinking fountains drawn as one), to string into rows.

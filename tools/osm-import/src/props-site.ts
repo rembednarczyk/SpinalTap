@@ -31,6 +31,8 @@ interface Shape {
   readonly path?: boolean;
   /** A flight of steps (with the rails in `surface`). */
   readonly steps?: boolean;
+  /** The ground's own surface (a square's paving or a sidewalk's), under the coarser `surface`. */
+  readonly ground?: GroundSurface;
   /** A bridge's piece: its deck's axis and the terrain's height at the axis' ends, the sim's deck (`makeDeck`). */
   readonly deck?: { readonly a: Pt; readonly b: Pt; readonly ya: number; readonly yb: number };
 }
@@ -96,7 +98,7 @@ export class Site {
         if (g.front) continue;
         const [a, b] = g.deck ? flat(g.deck) : [];
         const deck = a && b ? { a, b, ya: this.heightAt(a), yb: this.heightAt(b) } : undefined;
-        const shape = { ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", deck, box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } };
+        const shape = { ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", ground: g.surface, deck, box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } };
         this.add(shape, g.bridge ? this.decks : this.bins);
       }
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
@@ -216,6 +218,24 @@ export class Site {
   /** Whether p lies on a footpath's outline (a market's aisle in the map data, a path across a square). */
   onPath(p: Pt): boolean {
     return this.bins.some(p.x, p.z, p.x, p.z, (s) => s.path === true && pointInRing(p, s.ring));
+  }
+
+  /**
+   * Whether the paving at p is only an area's (a square's or a courtyard's `square`/`cobble`, no sidewalk, footway or
+   * steps over it): ground a building site's fence may take inside its outline (the user's decision of 24.11), where a
+   * street's sidewalk or a path through stays open.
+   */
+  onAreaPaving(p: Pt): boolean {
+    let area = false;
+    const other = this.bins.some(p.x, p.z, p.x, p.z, (s) => {
+      if (s.surface !== "walk" || !pointInRing(p, s.ring)) return false;
+      if (s.ground === "square" || s.ground === "cobble") {
+        area = true;
+        return false;
+      }
+      return true;
+    });
+    return area && !other;
   }
 
   /** Whether p lies on a flight of steps. */

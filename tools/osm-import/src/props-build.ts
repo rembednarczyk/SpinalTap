@@ -77,7 +77,10 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // no scaffold over one), which the renderer hangs by the buildings alone: framed here with no site.
   const buildingTags = loadBuildingTags();
   const siteBoards = (await runWith<typeof VenueBoards>("tools/osm-import/src/venue-boards.ts", new Map(), emitSites([]), extra)).lublinVenueBoards();
-  const sites = planSites(loadSiteOutlines(), chunks, { tags: buildingTags, boards: siteBoards });
+  // The plan's furniture at its points: the building sites' pieces keep off the map's lamps and benches (24.11).
+  const furniture = plan.items.flatMap((i) => [...(i.position ? [i.position] : []), ...(i.points ?? []).map(([x, z]) => ({ x, z }))]);
+  const ways = loadStreetWays().filter((w) => w.tags.area !== "yes").map((w) => w.pts);
+  const sites = planSites(loadSiteOutlines(), chunks, { tags: buildingTags, boards: siteBoards, furniture, ways });
   const sitesText = emitSites(sites);
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
@@ -91,7 +94,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // The map's entrances: the doors (below) take them, and the furniture keeps their fronts clear (ADR-0094 stage 1).
   const entrances = loadEntrances();
   const [tags, boards, market] = [loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors(), entrances: [...entrances.map((e) => e.p), ...doors.passageMouths()], addresses: buildingAddresses(chunks, buildingTags) }];
-  const place = (p: typeof plan) => placeProps(p, chunks, tags, boards, market, kerbRule);
+  // The sites' pieces stand first: the furniture steps aside from their fences and cabins (24.11).
+  const sitePieces = sites.flatMap((s) => s.pieces);
+  const place = (p: typeof plan) => placeProps(p, chunks, tags, boards, market, kerbRule, sitePieces);
   // The `lit` rule's second pass (G-798): once the lamps stand, its plain lamps on a way with styled ones take their look, and
   // the lit ways still dark get lamps of their own; the furniture is placed again. Then the trees of the crowns no tree
   // stands under (G-797), after every other piece, and the furniture once more.

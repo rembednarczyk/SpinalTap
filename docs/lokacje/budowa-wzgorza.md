@@ -51,7 +51,7 @@ Frakcja: korporacja (deweloper na zabytku); druga: ulica (Plac Litewski przed p�
 ## Dług sceny
 - Sprzeczność danych i gry: tablica „Wzgórza Miedzianych Dachów” (osiedle) na budowie, którą OSM nazywa adaptacją na Muzeum Ziem Wschodnich. Propozycja: plac z nazwą w OSM dostaje tablicę z puli pasującej do niej, np. nowy klucz „Muzeum Ziem Wschodnich 2077” z inwestorem miejskim, w `tools/osm-import/src/construction-site.ts` (wybór klucza tablicy) i w `packages/ui/src/i18n/{en,pl}/site.ts`; albo zostawić osiedle jako satyrę świata z dopiskiem w T-321. Decyzja użytkownika; nazwa w rejestrze `tools/rooms/src/locations.ts` idzie za tablicą.
 - Kontenery i wykop na podwórzu północnym, jak na ortofoto 2025-04: generator `tools/osm-import/src/construction-site.ts` i `construction-dig.ts` (dziś `dig: null`, kontenerów brak), z przeglądem `topography-curator`.
-- Płot domknięty na wolnych bokach od Niecałej i Radziwiłłowskiej (dziś 37,5 m z 269 m): `construction-fence.ts`.
+- Płot: od 24.11 stoi także na nawierzchni wewnątrz obrysu (decyzja użytkownika), na całym boku od Placu Litewskiego jak na ortofoto 2025-04, z przerwą na deptak w1054556920 w narożniku SW (1,5 m od osi drogi, przegląd kuratora, T-344); bez płotu zostaje 140 m z 269 m (wschodni bok przy ścieżkach, północne podwórza z płotami OSM). Furtka od strony deptaka.
 - Rusztowanie z siatką i banerem przy skrzydle od podwórza (krok 5): `construction-scaffold.ts`.
 - Drobiazg i kartka protestu przy bramie: generator `clutter` placów w `construction-site.ts`.
 - Podświetlenie fasady pałacu od Placu Litewskiego (zabytek, warstwa 2077 stonowana, ADR-0062): przepis albo reflektory planu w `docs/world/lublin-props.todo.json`.

@@ -58,7 +58,16 @@ const near = (box: Rect, pts: readonly Pt[], by: number): boolean => pts.some((p
 export interface SiteMapInfo {
   readonly tags?: ReadonlyMap<string, Tags>;
   readonly boards?: readonly BoardSpan[];
+  /** The plan's furniture at its points (lamps, bins, benches of the map): a site's pieces keep off them. */
+  readonly furniture?: readonly Pt[];
+  /** The map's ways through (every `highway` line, no area), in the world: a fence on paving keeps off their axes. */
+  readonly ways?: readonly (readonly Pt[])[];
 }
+
+/** How far a site's fence on paving keeps from the axis of a street or path (m): a walker's way past it (the curator, 24.11). */
+const WAY_CLEAR = 1.5;
+/** How far a site's piece keeps from the plan's furniture at its points (m): a lamp's base and a hand. */
+const FURNITURE_GAP = 0.9;
 
 /** Does a venue's board hang on the wall from a to b: its frame's wall along it, 0.6 m or nearer to its middle? */
 const boardOn = (a: Pt, b: Pt, s: BoardSpan): boolean => {
@@ -82,6 +91,9 @@ export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): Site
   const barriers = chunks.flatMap((c) => (c.barriers ?? []).filter((b) => b.kind !== "gate").map((b) => flat(b.line))).filter((l) => near(box, l, 2));
   const streets = site.streets.filter((s) => near(box, s.line, 80));
   const drive = streets.filter((s) => !FOOT_KINDS.has(s.kind));
+  const furniture = (info.furniture ?? []).filter((q) => q.x > box.minX - 2 && q.x < box.maxX + 2 && q.z > box.minZ - 2 && q.z < box.maxZ + 2);
+  const ways = (info.ways ?? []).filter((w) => near(box, w, WAY_CLEAR + 1));
+  const byFurniture = (p: Pt) => furniture.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < FURNITURE_GAP);
   const byBarrier = (p: Pt) => barriers.some((l) => l.some((a, i) => i + 1 < l.length && segmentDistance(p.x, p.z, a.x, a.z, l[i + 1]!.x, l[i + 1]!.z) < BARRIER_GAP));
   // The buildings round it (stage 2), each once (a building cut at a seam is in each chunk's table),
   // with their protection (G-894) and the walls with a venue's board (G-893).
@@ -107,7 +119,15 @@ export const chunkGround = (site: Site, box: Rect, info: SiteMapInfo = {}): Site
     free: (p) => {
       if (!site.chunkAt(p) || site.deckAt(p) !== null) return false;
       const s = site.surfaceAt(p);
-      return (s === null || s === "green") && !fronts.some((r) => pointInRing(p, r)) && !byBarrier(p);
+      return (s === null || s === "green") && !fronts.some((r) => pointInRing(p, r)) && !byBarrier(p) && !byFurniture(p);
+    },
+    // A square's or a courtyard's paving inside the site takes its fence (the user's decision of 24.11); a sidewalk or a path stays open.
+    fenceFree: (p) => {
+      if (!site.chunkAt(p) || site.deckAt(p) !== null) return false;
+      const s = site.surfaceAt(p);
+      // On paving, off the axis of every way through by `WAY_CLEAR` (the curator's rule of 24.11: a deptak's line stays open).
+      const paving = s === "walk" && site.onAreaPaving(p) && !ways.some((w) => lineDistance(p, w) < WAY_CLEAR);
+      return (s === null || s === "green" || paving) && !fronts.some((r) => pointInRing(p, r)) && !byBarrier(p) && !byFurniture(p);
     },
     open: (p) => site.chunkAt(p) !== null && site.standable(p),
     verge: (p) => {
