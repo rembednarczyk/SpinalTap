@@ -5,7 +5,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-966 Słupy daszka nad straganami Targu na Ruskiej w płótnie straganów
-- Status: zgłoszone (S4: słup 0,25 m przechodzi przez daszek straganu)
+- Status: w PR (S4: słup 0,25 m przechodzi przez daszek straganu); gałąź fix/g966-slupy: płótno straganu co najmniej 0,3 m od środka słupa (`POST_CLEAR`), 7 straganów bliżej niż 0,3 m przed poprawką, 0 po niej
 - Gdzie: Targ na Ruskiej, daszek w1547216433 (G-063), słupy (765,8; 566,4) i (770,9; 564,4); T-346
 - Dowód: przegląd kuratora 24.11 (PR #1014): 2 stragany ze słupem w płótnie (odstęp 0,05 i 0,00 m), 4 bliżej niż 0,3 m; na main 21 i 26. Generator straganów (`props-market.ts`) nie zna słupów zadaszeń. Słupy leżą na południowej krawędzi daszka z OSM, ok. 0,85 m w głębi prawdziwego dachu.
 - Poprawka: stragany omijają słupy zadaszeń (kontrola jak `clearOf` dla brył), ewentualnie krawędź daszka według ortofoto; kontrola skanu `prop-on-canopy-post` (płótno bliżej niż 0,125 m od słupa, baza 2) proponowana przez kuratora.
