@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FARA_BENCHES, FARA_STEPS_BULB, FARA_TELESCOPE, PO_FARZE_DETAIL, PO_FARZE_LAMPS, SCENE_LAMP_GROUPS, WORLD_SCENERY, groundY, inBuilding, nearestWall } from "../src";
+import { FARA_BENCHES, FARA_HOLO, FARA_STEPS_BULB, FARA_TELESCOPE, PO_FARZE_DETAIL, PO_FARZE_LAMPS, SCENE_LAMP_GROUPS, WORLD_SCENERY, groundY, inBuilding, nearestWall } from "../src";
 import { LUBLIN_CHUNKS } from "../src/content/lublin";
 
 /*
@@ -39,5 +39,15 @@ describe("Plac po Farze's scene (ADR-0102 point 5)", () => {
     expect(screen!.at.y - groundY(FARA_TELESCOPE.x, FARA_TELESCOPE.z)).toBeCloseTo(1.055, 3);
     expect(Math.hypot(bulb!.at.x - FARA_STEPS_BULB.x, bulb!.at.z - FARA_STEPS_BULB.z)).toBeCloseTo(0.5, 3);
     expect(SCENE_LAMP_GROUPS).toContain(PO_FARZE_LAMPS);
+  });
+
+  it("raises the hologram of the parish church over its foundations, facing east along the nave's axis", () => {
+    const holo = PO_FARZE_DETAIL.find((p) => p.x === FARA_HOLO.x && p.z === FARA_HOLO.z);
+    expect(holo).toBeDefined();
+    // On the foundations' axis (z 42.3), between the west wall and the chancel arch (x 659-681), facing east.
+    expect(FARA_HOLO.z).toBeCloseTo(42.3, 1);
+    expect(FARA_HOLO.x).toBeGreaterThan(659);
+    expect(FARA_HOLO.x).toBeLessThan(681);
+    expect(Math.sin(holo!.yaw)).toBeCloseTo(1, 9);
   });
 });
