@@ -54,7 +54,8 @@ describe("Plac Zamkowy's lights in their fittings (§13)", () => {
 describe("the Bazaar's and Targ na Ruskiej's festoons and their lights (§13)", () => {
   it("hangs a festoon over every stall of the two markets and a warm light in each, under its roof between its front posts", () => {
     expect(BAZAR_STALLS.length).toBeGreaterThanOrEqual(40);
-    expect(RUSKA_STALLS.length).toBeGreaterThanOrEqual(150);
+    // 150 and more until the stalls stood under the orthophoto's tents (G-964): 142 under 17 roofs.
+    expect(RUSKA_STALLS.length).toBeGreaterThanOrEqual(140);
     const stalls = [...BAZAR_STALLS, ...RUSKA_STALLS];
     expect(TARG_MARKET_DETAIL).toHaveLength(stalls.length);
     expect(TARG_MARKET_DETAIL.every((d) => d.prop === "room-detail" && d.variant === roomDetailShape("rd-targ-festoon"))).toBe(true);

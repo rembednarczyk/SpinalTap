@@ -35,7 +35,8 @@ describe("the market's furniture of ADR-0058 stage 3", () => {
   });
 
   it("Lublin has them where the rules put them, on the game's ground", () => {
-    expect(ofKind("market-goods").length).toBeGreaterThan(50);
+    // Over 50 until Targ na Ruskiej's stalls stood under its tents in continuous rows (G-964), stock beside them only at the rows' ends.
+    expect(ofKind("market-goods").length).toBeGreaterThan(45);
     expect(ofKind("food-stall").length).toBeGreaterThan(8);
     for (const i of [...ofKind("market-goods"), ...ofKind("food-stall")]) expect(i.y, i.prop).toBeCloseTo(groundY(i.x, i.z), 1);
   });

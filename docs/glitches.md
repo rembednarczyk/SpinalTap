@@ -12,7 +12,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: teren gry pod biegiem, nie renderer. Skarpa z NMT przy Szkolnej jest bardziej stroma niż prawdziwe schody, które leżą we wcięciu: wcięcie terenu wzdłuż biegu do profilu biegu normy (jak `FLIGHT_RAMPS` w `sites.ts`), z przeglądem kuratora. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
 
 ### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
-- Status: zgłoszone (S4: stragan obok prawdziwego namiotu, nie pod nim)
+- Status: w PR (S4: stragan obok prawdziwego namiotu, nie pod nim); gałąź fix/g964-namioty, namioty z ortofoto w planie mebli, 142 stragany pod dachami
 - Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
 - Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
 - Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.

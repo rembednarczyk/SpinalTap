@@ -2,7 +2,8 @@
  * The stalls of a marketplace's outline (G-064): rows along its longer axis, back to back in
  * pairs with an aisle between the pairs and a passage across every few stalls, off the paths,
  * the streets and the entrances where they come in. No randomness: the rows' phase is the one
- * that fits the most stalls, the first on a tie.
+ * that fits the most stalls, the first on a tie. A marketplace whose tents the plan maps from the
+ * orthophoto (G-964: Targ na Ruskiej) has its rows under them instead (`tentStalls`).
  */
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
@@ -146,10 +147,49 @@ const layout = (
 };
 
 /**
- * Rows of stalls on a marketplace's outline (empty when none fits), their canvases a walkway clear
- * of `pieces` set on it before them (the containers of a flea market, ADR-0058 stage 2).
+ * A tent's roof as the orthophoto shows it (G-964): its middle (x, z), the angle of its long axis
+ * from +x towards +z (degrees), its length and its width (m).
  */
-export const marketStalls = (site: Site, ring: readonly Pt[], pieces: readonly StreetPropItem[] = []): MarketStall[] => {
+export type Tent = readonly [number, number, number, number, number];
+
+/** Under a tent this wide or wider (m) two rows stand back to back, as at the market's long tents; under a narrower one, one. */
+const TWO_ROWS = 2 * BACK + 0.8;
+
+/**
+ * The stalls under the mapped tents (G-964): along each tent's axis, at `PITCH` from its middle out,
+ * as many as its length takes; two rows back to back facing the aisles either side, or one under a
+ * narrow tent facing the marketplace's middle. Each kept only where a row's stall fits (`fits`).
+ * The pattern is the one of the rows (`layout`), its axis and phase read off the roofs instead of
+ * the outline's principal direction, which put rows in the aisles between the tents.
+ */
+export const tentStalls = (site: Site, ring: readonly Pt[], tents: readonly Tent[], pieces: readonly StreetPropItem[] = []): MarketStall[] => {
+  const gates = marketEntrances(site, ring);
+  const mid = { x: ring.reduce((s, p) => s + p.x, 0) / ring.length, z: ring.reduce((s, p) => s + p.z, 0) / ring.length };
+  const out: MarketStall[] = [];
+  for (const [cx, cz, deg, len, wid] of tents) {
+    const a = (deg * Math.PI) / 180;
+    const u = { x: Math.cos(a), z: Math.sin(a) };
+    const v = { x: -u.z, z: u.x };
+    const n = Math.max(0, Math.floor((len - STALL_W) / PITCH + 1e-9) + 1);
+    const inward = (mid.x - cx) * v.x + (mid.z - cz) * v.z >= 0 ? 1 : -1;
+    const rows: readonly (readonly [number, 1 | -1])[] = wid >= TWO_ROWS ? [[-BACK / 2, -1], [BACK / 2, 1]] : [[0, inward]];
+    for (const [sv, side] of rows)
+      for (let k = 0; k < n; k++) {
+        const su = (k - (n - 1) / 2) * PITCH;
+        const p = { x: cx + u.x * su + v.x * sv, z: cz + u.z * su + v.z * sv };
+        if (fits(site, ring, gates, p, u, pieces)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
+      }
+  }
+  return out;
+};
+
+/**
+ * Rows of stalls on a marketplace's outline (empty when none fits), their canvases a walkway clear
+ * of `pieces` set on it before them (the containers of a flea market, ADR-0058 stage 2); under its
+ * mapped `tents` when it has them.
+ */
+export const marketStalls = (site: Site, ring: readonly Pt[], pieces: readonly StreetPropItem[] = [], tents: readonly Tent[] = []): MarketStall[] => {
+  if (tents.length > 0) return tentStalls(site, ring, tents, pieces);
   const ground = openGround(site, ring);
   if (ground.length === 0) return [];
   const u = longAxis(ground);
