@@ -4,6 +4,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-967 Meble ulic wiszą albo toną tam, gdzie płyty terenu zmieniają grunt
+- Status: zgłoszone (S4: latarnia z koszem 0,2 m nad gruntem, krzewy do 0,39 m nad)
+- Gdzie: całe miasto, 28 miejsc; m.in. latarnia `lamp-pastoral` z `hanging-basket` (686,0; 35,8) nad płytą fary T-347, (328,8; -90,2) -0,25 m, krzewy przy (562; 131) do +0,39 m
+- Dowód: przegląd kuratora 24.11 (PR #1015): generator mebli bierze wysokość z surowego NMT (`props-site.ts`, `heightAt`), a gra kształtuje teren płytami i rampami (`PADS`, `RAMPS`), więc |y − groundY| w 0,15–1,5 m w 29 miejscach na gałęzi #1015 (27 bez płyty fary).
+- Poprawka: generator mebli czyta ukształtowany teren gry (`groundY`, jak `decal-walls.ts`), z kontrolą skanu `street-prop-off-ground` (proponowana przez kuratora, baza do zejścia do 0).
+
 ### G-966 Słupy daszka nad straganami Targu na Ruskiej w płótnie straganów
 - Status: w PR (S4: słup 0,25 m przechodzi przez daszek straganu); gałąź fix/g966-slupy: płótno straganu co najmniej 0,3 m od środka słupa (`POST_CLEAR`), 7 straganów bliżej niż 0,3 m przed poprawką, 0 po niej
 - Gdzie: Targ na Ruskiej, daszek w1547216433 (G-063), słupy (765,8; 566,4) i (770,9; 564,4); T-346

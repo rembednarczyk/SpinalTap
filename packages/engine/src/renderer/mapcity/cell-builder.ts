@@ -11,6 +11,7 @@ import { planAlchemiaSigns } from "../alchemia/front-signs";
 import { planDeptakSigns } from "../alchemia/deptak-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
+import { planFaraHolo } from "./fara-holo-signs";
 import { planGround } from "./cell-ground";
 import { planFarFrames, planNearFrames } from "./cell-plan";
 import { facadeFrame } from "./facade-frame";
@@ -91,6 +92,8 @@ export class CellBuilder {
     if (!signs.empty) planAlchemiaSigns(signs, cell.bounds);
     // And the neons of the deptak on Lubartowska on the tenement across from it (ADR-0074 C7).
     if (!signs.empty) planDeptakSigns(signs, cell.bounds);
+    // And the hologram of the parish church over its foundations on Plac po Farze, whether the cell has signs or not.
+    planFaraHolo(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       // The neon's streaks shine in the puddles of the ground under them (ADR-0084).

@@ -339,8 +339,6 @@ export const ROOM_DETAIL_SHAPES: readonly RoomDetailShape[] = [
   // The bare bulb by each Hebi group on Podzamcze (docs/lokacje/dzielnica-targ.md): on a wall's bracket, or on a pole in a bucket of concrete.
   { key: "rd-targ-bulb-wall", clutter: 0 },
   { key: "rd-targ-bulb-pole", clutter: 0 },
-  // Plac po Farze (docs/lokacje/plac-po-farze.md): the hologram of St Michael's parish church over its foundations, lines of light.
-  { key: "rd-fara-holo", clutter: 0 },
 ];
 
 /** A shape's index by its key (throws on a key that is not in the table: a typo in a room's list). */

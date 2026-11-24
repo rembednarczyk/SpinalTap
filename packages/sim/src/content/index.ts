@@ -19,6 +19,7 @@ export * from "./plac-zamkowy-detail";
 export * from "./district-targ";
 export * from "./dworzec-detail";
 export * from "./po-farze-detail";
+export * from "./fara-holo";
 export * from "./lubartowska-detail";
 export * from "./katedralny-detail";
 export * from "./clinic-detail";

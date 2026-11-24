@@ -8,6 +8,7 @@ import { abutmentRamps, flightTopRamps } from "./abutments";
 import { LUBLIN_CONSTRUCTION_SITES, digPads } from "./construction";
 import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
 import { type SteepWay, steepWays } from "./steep-ways";
+import { FARA_PAD } from "./fara-pad";
 import type { LublinChunkData } from "./types";
 import { ALCHEMIA_PADS, ALCHEMIA_RAMPS } from "../alchemia/terraces";
 import { W3_BASIN, W3_BASIN_FLOOR, W3_CLEAR_RECTS, W3_PIER, W3_PIPES, W3_QUAY, W3_TOWER, W3_Y, W3_ZONE_RECTS } from "../tessen-w3/site";
@@ -191,6 +192,8 @@ export const PADS: readonly Pad[] = [
   // Alchemia's terraces by the investor's plan (ADR-0074, T-206, T-207, T-217): T1 in front of the food
   // hall, the line of the grid under its back wall at T0, T2 before the Arkady where the Hebi hollow was (T-186).
   ...ALCHEMIA_PADS,
+  // Plac po Farze's foundations of the parish church on one level, the hologram's plinth (T-347, the user's proposal of 24.11).
+  FARA_PAD,
 ];
 
 /**
