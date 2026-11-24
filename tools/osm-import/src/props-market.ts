@@ -36,6 +36,9 @@ const WALKWAY = 1;
 /** The step of the canvas samples checked against them (m). */
 const CANVAS_STEP = 0.3;
 
+/** How far a stall's canvas keeps from the middle of a canopy's post (m, G-966): the post's half (`CANOPY.post` 0.25) and a hand's breadth. */
+const POST_CLEAR = 0.3;
+
 /** Phases tried along and across the rows, in parts of a period. */
 const PHASES = 4;
 
@@ -101,13 +104,31 @@ const clearOf = (pieces: readonly StreetPropItem[], p: Pt, u: Pt): boolean => {
   return true;
 };
 
-/** Is a stall at p (its counter along u) clear: its canvas with a margin on the outline's open ground, off paths, streets, entrances and the pieces set before? */
-const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: Pt, pieces: readonly StreetPropItem[]): boolean => {
+/** The posts of the map's roofs on posts (G-063) round a ring, in the world. */
+const postsNear = (site: Site, ring: readonly Pt[]): Pt[] => {
+  const b = ringBounds(ring);
+  return site.chunks.flatMap((c) =>
+    (c.canopies ?? []).flatMap((cp) =>
+      Array.from({ length: cp.posts.length / 2 }, (_, k) => ({ x: cp.x + cp.posts[2 * k]!, z: cp.z + cp.posts[2 * k + 1]! })).filter((q) => q.x > b.minX - 5 && q.x < b.maxX + 5 && q.z > b.minZ - 5 && q.z < b.maxZ + 5),
+    ),
+  );
+};
+
+/** Does a stall's canvas at p (its counter along u) keep `POST_CLEAR` from every post (G-966: the posts of Targ na Ruskiej's roof stood in canvases)? */
+const clearOfPosts = (posts: readonly Pt[], p: Pt, u: Pt): boolean =>
+  posts.every((q) => {
+    const [dx, dz] = [q.x - p.x, q.z - p.z];
+    const [a, b] = [dx * u.x + dz * u.z, -dx * u.z + dz * u.x];
+    return Math.hypot(Math.max(Math.abs(a) - STALL_W / 2, 0), Math.max(Math.abs(b) - STALL_D / 2, 0)) >= POST_CLEAR;
+  });
+
+/** Is a stall at p (its counter along u) clear: its canvas with a margin on the outline's open ground, off paths, streets, entrances, the canopies' posts and the pieces set before? */
+const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: Pt, pieces: readonly StreetPropItem[], posts: readonly Pt[] = []): boolean => {
   // The canvas's middle sample is p itself: most rows' stalls fall off the outline, so it goes
   // before the checks against every street of the city (G-200).
   if (!pointInRing(p, ring)) return false;
   if (gates.some((g) => Math.hypot(g.x - p.x, g.z - p.z) < ENTRANCE_ROOM) || nearTraffic(site, p, TRAFFIC_REACH)) return false;
-  if (!clearOf(pieces, p, u)) return false;
+  if (!clearOf(pieces, p, u) || !clearOfPosts(posts, p, u)) return false;
   const hw = STALL_W / 2 + EDGE;
   const hd = STALL_D / 2 + EDGE;
   const v = { x: -u.z, z: u.x };
@@ -130,6 +151,7 @@ const layout = (
   span: { u0: number; u1: number; v0: number; v1: number },
   du: number,
   dv: number,
+  posts: readonly Pt[] = [],
 ): MarketStall[] => {
   const v = { x: -u.z, z: u.x };
   const out: MarketStall[] = [];
@@ -141,7 +163,7 @@ const layout = (
         const sv = vc + (side * BACK) / 2;
         const p = { x: u.x * uc + v.x * sv, z: u.z * uc + v.z * sv };
         // Back to back: each row's counters face its own aisle.
-        if (fits(site, ring, gates, p, u, pieces)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
+        if (fits(site, ring, gates, p, u, pieces, posts)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
       }
   return out;
 };
@@ -164,6 +186,7 @@ const TWO_ROWS = 2 * BACK + 0.8;
  */
 export const tentStalls = (site: Site, ring: readonly Pt[], tents: readonly Tent[], pieces: readonly StreetPropItem[] = []): MarketStall[] => {
   const gates = marketEntrances(site, ring);
+  const posts = postsNear(site, ring);
   const mid = { x: ring.reduce((s, p) => s + p.x, 0) / ring.length, z: ring.reduce((s, p) => s + p.z, 0) / ring.length };
   const out: MarketStall[] = [];
   for (const [cx, cz, deg, len, wid] of tents) {
@@ -177,7 +200,7 @@ export const tentStalls = (site: Site, ring: readonly Pt[], tents: readonly Tent
       for (let k = 0; k < n; k++) {
         const su = (k - (n - 1) / 2) * PITCH;
         const p = { x: cx + u.x * su + v.x * sv, z: cz + u.z * su + v.z * sv };
-        if (fits(site, ring, gates, p, u, pieces)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
+        if (fits(site, ring, gates, p, u, pieces, posts)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
       }
   }
   return out;
@@ -197,10 +220,11 @@ export const marketStalls = (site: Site, ring: readonly Pt[], pieces: readonly S
   const vs = ground.map((p) => -p.x * u.z + p.z * u.x);
   const span = { u0: Math.min(...us) - PERIOD_U, u1: Math.max(...us), v0: Math.min(...vs) - PERIOD_V, v1: Math.max(...vs) };
   const gates = marketEntrances(site, ring);
+  const posts = postsNear(site, ring);
   let best: MarketStall[] = [];
   for (let i = 0; i < PHASES; i++)
     for (let k = 0; k < PHASES; k++) {
-      const stalls = layout(site, ring, gates, pieces, u, span, (PERIOD_U * i) / PHASES, (PERIOD_V * k) / PHASES);
+      const stalls = layout(site, ring, gates, pieces, u, span, (PERIOD_U * i) / PHASES, (PERIOD_V * k) / PHASES, posts);
       if (stalls.length > best.length) best = stalls;
     }
   return best;
