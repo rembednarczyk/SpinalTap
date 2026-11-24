@@ -13,6 +13,7 @@ import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFaraHolo } from "./fara-holo-signs";
 import { planFestoons, planNeonEdges } from "./festoon-signs";
+import { planBeacons } from "./beacon-signs";
 import { planGround } from "./cell-ground";
 import { planFarFrames, planNearFrames } from "./cell-plan";
 import { facadeFrame } from "./facade-frame";
@@ -98,6 +99,8 @@ export class CellBuilder {
     // And the markets' festoons (Plac Zamkowy's from its lamp posts, the night markets' across their aisles) and their canopies' neon strips (24.11).
     planFestoons(signs, cell.bounds);
     planNeonEdges(signs, cell.bounds);
+    // And the masts' obstruction lights (Plac Katedralny's tower, 24.11).
+    planBeacons(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       // The neon's streaks shine in the puddles of the ground under them (ADR-0084).

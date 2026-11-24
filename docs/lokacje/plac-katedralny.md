@@ -42,7 +42,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: korporacja, ulica (kościół jako właściciel placu; ulica na jego skraju).
 - §12 zgodne: wąska Jezuicka i przejście pod wieżą (3,4 m) otwierają się na plac szeroki na ok. 60 m z fasadą katedry; to najmocniejsza kompresja i otwarcie Starego Miasta. Dług: przejście poza osią (G-683).
-- §13 częściowo: iluminacja ma oprawy (reflektory), latarenki i pastorały też. Brakuje czerwonego światła masztu, które plan ulic daje wieży, i światła drogi przy schodach ku Podwalu. 60-30-10 niemierzone (zrzut nocny z bramy wieży na katedrę). Pomiar nocny 24.11 (22:00, ujęcie `plac-katedralny` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 83,4/15,3/1,3, za ciemno.
+- §13 częściowo: iluminacja ma oprawy (reflektory), latarenki i pastorały też. Brakuje czerwonego światła masztu, które plan ulic daje wieży, i światła drogi przy schodach ku Podwalu. 60-30-10 niemierzone (zrzut nocny z bramy wieży na katedrę). Pomiar nocny 24.11 (22:00, ujęcie `plac-katedralny` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 83,4/15,3/1,3, za ciemno. Po świetle placu (24.11, po K1–K4): reflektory oświetlają wieżę i front jako lampy sceny (`katedralny-lights.ts`), na szczycie iglicy miga czerwone światło przeszkodowe, zegary wieży mają cyjanową obwódkę i wskazówki, a słońce IHS świeci złotem. To samo ujęcie: 69,5/29,7/0,7; z placu na front (545; −188): 76,3/23,5/0,2. Światło w normie, akcenty poniżej 3%, bo Stare Miasto ma przygaszoną warstwę (ADR-0058).
 - §14 częściowo: makro i mezo z mebli (18 drzew, 4 ławki, pomnik, figura), mikro brak (0 rzeczy `clutter` w obrysie placu); dla placu kościelnego to dopuszczalne tylko na płycie przed portykiem.
 - §15 częściowo: mokry bruk i płyty, szkło drzwi; brak połysku metalu (antena, kasa) i wosku pod pomnikiem.
 - §16 częściowo: porządek właściciela jest (pusto, czysto), ale nic nie mówi, kto go pilnuje: brak ochrony, kamery i bramek muzeum.
@@ -55,10 +55,10 @@ Frakcja: korporacja, ulica (kościół jako właściciel placu; ulica na jego sk
 
 ## Dług sceny
 Zrobione 23.11 (znicze LED z kwiatami i intencjami pod pomnikiem, terminal legendy AR przy Głazie Katowskim). Zostaje:
-- Antena i czerwone światło na hełmie wieży oraz zielony hełm (T-143): przepis w `packages/engine/src/renderer/mapcity/landmarks/recipes.ts`, światło jako lampa gry w `packages/sim/src/content/district-kanal.ts` (na końcu `KANAL_PROPS`).
 - Przejście pod wieżą w osi (G-683, T-264): `packages/sim/src/content/lublin/gate-passages.ts` albo korekta obrysu w `tools/osm-import`, przegląd `topography-curator`.
 - Przepis Archikatedry: bryła z NMPT, portyk z kolumnami, tynk, gzymsy i hełmy wieżyczek zrobione w etapie K1 (24.11, T-349, `landmarks/archikatedra.ts`, `tools/osm-import/src/corrections-katedra.ts`). Zostają K2 (fasada: osie, okna, tarcza IHS we frontonie, drzwi i schody portalu), K3 (lukarny, sygnaturka, kopuły kaplic), K4 (Wieża Trynitarska) i K5 (murki, taras, parking): `docs/plany/archikatedra.md`.
 - Budka ochrony parafii z ochroniarzem (plan dnia: obchód placu po 22:00) i kamera nad portykiem: rekwizyt i postać w `packages/sim/src/content/district-kanal.ts`, plan w `packages/sim/src/content/schedules.ts`, kamera w `packages/sim/src/content/devices.ts`.
 - Holo-kasa w bramie wieży: model w `tools/blender/rooms/plac_katedralny.py`, rekwizyt w `packages/sim/src/content/katedralny-detail.ts`, klucz na końcu `ROOM_DETAIL_SHAPES`.
 - Emitery dzwonów (o pełnych godzinach) i organów przy drzwiach katedry: `packages/engine/src/audio/spatial.ts` i `packages/engine/src/audio/soundscape-clock.ts`.
-- Zmierzyć 60-30-10 nocą z bramy wieży na fasadę katedry i wpisać w §13 tej karty.
+- Akcent placu (poniżej 3%, pomiar 24.11): barwny punkt nawigacji przy wejściu do bramy wieży albo przy budce ochrony, bez neonu na zabytkach.
+- Drugi reflektor fasady w południowej połowie portyku (ok. 603; −195), T-355, i kontrole skanu z przeglądu kuratora PR #1032: `beacon-off-tip` (światło przeszkodowe dalej niż 0,3 m od środka obrysu albo poza [wierzchołek; +0,5]) i `scene-lamp-in-solid` (lampa sceny w bryle albo pod terenem), obie z bazą 0.

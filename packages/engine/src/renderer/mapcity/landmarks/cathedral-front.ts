@@ -3,7 +3,7 @@ import { type Wall, trimMeta } from "../facade-frame";
 import { type Uv, quadUv } from "../sink-ops";
 import { gableOver } from "./classicist";
 import { alongWall } from "./elevation";
-import { SWATCH, archPanel, onWall, panel, shownWalls, solid } from "./kit";
+import { SWATCH, archPanel, lit, onWall, panel, shownWalls, solid } from "./kit";
 import type { LandmarkFrame } from "./landmark-frame";
 import { facing } from "./layer2077";
 import type { WestFront } from "./recipe-types";
@@ -215,7 +215,8 @@ export const westFront = (
         false,
         meta,
       );
-  if (spec.sun) sun(sink, f, w, mid, solid(SWATCH.gold), meta);
+  // Gilded and lit: it catches the floodlights by night, the front's warm accent.
+  if (spec.sun) sun(sink, f, w, mid, lit(SWATCH.gold), meta);
   // A plain frieze band between the shafts' capitals and the cornice.
   if (spec.frieze)
     panel(
