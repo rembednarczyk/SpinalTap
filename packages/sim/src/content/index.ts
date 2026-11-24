@@ -16,6 +16,7 @@ export * from "./rynek-detail";
 export * from "./grodzka-detail";
 export * from "./deptak-detail";
 export * from "./plac-zamkowy-detail";
+export * from "./plac-zamkowy-festoons";
 export * from "./district-targ";
 export * from "./metro-hall-lamps";
 export * from "./dworzec-detail";

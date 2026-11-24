@@ -11,8 +11,11 @@ import { WORLD_STREET_PROPS } from "./street-props";
  * leaves round it; the metro pavilion's opening gets its green lamp (§13: the way down marked).
  */
 
-/** The square between the castle's slope and the tenements' arc, where the market stands. */
-export const PLAC_ZAMKOWY_AREA = { minX: 690, maxX: 770, minZ: 260, maxZ: 330 } as const;
+/**
+ * The square between the castle's slope and the tenements' arc, where the market stands: all its 23 stalls (x 705..763,
+ * z 177..289, the card's); till 24.11 only the northern end by the metro (6 stalls).
+ */
+export const PLAC_ZAMKOWY_AREA = { minX: 690, maxX: 770, minZ: 170, maxZ: 300 } as const;
 /** The metro pavilion on the square (entrance A of Targ, ADR-0071): its outline; it opens to the north (+z). */
 const PAVILION = METRO_STATIONS.flatMap((s) => s.entrances).find((e) => e.name === "Plac Zamkowy")!.outline;
 /** Over the pavilion's opening, on its front, facing out of it. */
