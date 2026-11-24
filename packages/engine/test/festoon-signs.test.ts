@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MARKET_FESTOONS, PLAC_ZAMKOWY_FESTOONS } from "@seki/sim";
-import { planFestoons } from "../src/renderer/mapcity/festoon-signs";
+import { MARKET_FESTOONS, MARKET_NEON_EDGES, PLAC_ZAMKOWY_FESTOONS } from "@seki/sim";
+import { planFestoons, planNeonEdges } from "../src/renderer/mapcity/festoon-signs";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
 import { MeshSink } from "../src/renderer/mesh-sink";
 
@@ -40,5 +40,16 @@ describe("Plac Zamkowy's festoons in the signs' mesh (24.11)", () => {
     // The cable alone: 16 pieces, two ribbons each both ways, four corners.
     expect(count("strip")).toBe(16 * 4 * 4);
     expect(count("bulbs")).toBeGreaterThan(16 * 4 * 4 + 20 * 8 * 4);
+  });
+
+  it("draws every stall's neon strip once, in the cell holding its middle, as tubes of light", () => {
+    let total = 0;
+    for (let x = 600; x < 900; x += 20)
+      for (let z = 140; z < 640; z += 20) {
+        const sink = new MeshSink();
+        total += planNeonEdges(sink, { minX: x, maxX: x + 20, minZ: z, maxZ: z + 20 });
+        for (let i = 0; i < sink.vertexCount; i++) expect(Math.round(sink.uvs2[i * 2 + 1]!)).toBe(MAP_SIGN_KIND.tube);
+      }
+    expect(total).toBe(MARKET_NEON_EDGES.length);
   });
 });
