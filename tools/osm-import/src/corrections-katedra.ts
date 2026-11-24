@@ -86,10 +86,10 @@ export const KATEDRA_CORRECTIONS: readonly TagCorrection[] = [
   },
   {
     // The north turret: NMPT body u −26..−20, v 10..16 of the axis (its middle (609.9; −172.9)), the
-    // cornice y 33-35, the helmet's tip y 43 at (u −23, v 13); OSM's 3.5 m east and 0.2 m north of it.
+    // cornice y 33-35, the helmet's tip y 43 at (u −23, v 13); OSM's 3.5 m east and 0.2 m north of it; moved 3.3 m, so its middle stays in the cell of the church (x ≥ 610, the streaming's chunk).
     id: "w617763434",
     tags: { height: "42.7", "roof:height": "9.5", "roof:shape": "onion" },
-    shift: { x: -3.5, z: -0.2 },
+    shift: { x: -3.3, z: -0.2 },
     reason:
       "Archikatedra, wieżyczka północna: korpus do y 33,5 i hełm do y 43 z NMPT wobec 29,3 i 32,3; obrys OSM 3,5 m na wschód od NMPT i LoD2",
     ref: REF,
@@ -167,10 +167,10 @@ export const KATEDRA_PARTS: readonly AddedArea[] = [
     "Archikatedra: pomieszczenia przy prezbiterium od południa do y 11,5 z NMPT (10–13), w OSM bez części",
   ),
   // The screen front between the turrets, NMPT y 33-34 at u −26..−24 with its pediment to y 35.3 at
-  // v 2-4, 0.15 m proud of the nave's west gable: a gable facing the plaza (ridge across the long side).
+  // v 2-4 and 30-34 to u −22, 0.15 m proud of the nave's west gable and over its roof to u −21.4 (its middle in the cell of the church, x ≥ 610): a gable facing the plaza (ridge across the long side).
   part(
     "fronton",
-    [at(-26.15, -5.3), at(-26.15, 9.6), at(-23.5, 9.6), at(-23.5, -5.3)],
+    [at(-26.15, -5.3), at(-26.15, 9.6), at(-21.4, 9.6), at(-21.4, -5.3)],
     {
       height: "35",
       "roof:height": "2.3",

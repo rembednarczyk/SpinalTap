@@ -70,10 +70,8 @@ describe("Lublin from map data (ADR-0042)", () => {
       const parts = b.parts.map(toPoints);
       for (const p of parts) expect(convex(p), b.id).toBe(true);
       expect(parts.reduce((s, p) => s + area(p), 0)).toBeCloseTo(a, 3);
-      // A lifted part goes with its building's chunk (`generate.ts`): its middle may lie a metre past the edge (the Archikatedra's front, T-349).
-      const slack = b.soffit !== undefined ? 1 : 0.1;
-      expect(b.x, b.id).toBeGreaterThanOrEqual(chunk.bounds.minX - slack);
-      expect(b.x, b.id).toBeLessThanOrEqual(chunk.bounds.maxX + slack);
+      expect(b.x).toBeGreaterThanOrEqual(chunk.bounds.minX - 0.1);
+      expect(b.x).toBeLessThanOrEqual(chunk.bounds.maxX + 0.1);
       expect(b.height).toBeGreaterThan(b.plinth);
       expect(b.levels).toBeGreaterThanOrEqual(1);
       // The foot never floats above the chunk's terrain.
