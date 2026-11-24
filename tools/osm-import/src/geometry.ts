@@ -331,3 +331,8 @@ export const sliceLine = (line: readonly Pt[], from: number, to: number): Pt[] =
 
 /** Rounds to 0.1 m. */
 export const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
+
+/** An outline moved whole by `shift` (world metres): a part the map draws beside where NMPT and LoD2 have it (T-349). */
+export interface Shifted {
+  readonly shift?: Pt;
+}

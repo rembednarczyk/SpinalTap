@@ -139,7 +139,7 @@ const flags = (sink: MeshSink, f: LandmarkFrame, po: PorticoOn, floor: number): 
 };
 
 /** The portico on its wall: the columns up to the entablature under the balcony's `floor` (world y), the balcony, planters and flags. */
-export const planPortico = (sink: MeshSink, f: LandmarkFrame, floor: number): void => {
+export const planPortico = (sink: MeshSink, f: LandmarkFrame, floor: number, planters = true): void => {
   const po = porticoOn(f);
   if (!po) return;
   const stone = solid(SWATCH.stone);
@@ -160,7 +160,7 @@ export const planPortico = (sink: MeshSink, f: LandmarkFrame, floor: number): vo
   if (plate) panel(sink, plate.w, plate.u - plate.width / 2 - 0.1, plate.u + plate.width / 2 + 0.1, plate.y - plate.height / 2 - 0.03, plate.y + plate.height / 2 + 0.03, plate.out - 0.01, solid(SWATCH.tablet), trimMeta(f.style.seed));
   // At the foot of the steps, either side of them, as on the photographs.
   const foot = po.p.out + 2.9;
-  planter(sink, po.w, Math.min(...po.us) - 0.5, foot);
-  planter(sink, po.w, Math.max(...po.us) + 0.5, foot);
+  if (planters) planter(sink, po.w, Math.min(...po.us) - 0.5, foot);
+  if (planters) planter(sink, po.w, Math.max(...po.us) + 0.5, foot);
   flags(sink, f, po, floor);
 };

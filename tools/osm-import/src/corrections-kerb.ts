@@ -10,6 +10,7 @@
 import type { AddedArea, TagCorrection } from "./corrections.ts";
 import { CAR_FREE_CORRECTIONS } from "./corrections-car-free.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
+import { KATEDRA_CORRECTIONS, KATEDRA_PARTS } from "./corrections-katedra.ts";
 import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import type { Line } from "./features.ts";
 import { type Pt, lineLength, offsetPoints, pointAlong } from "./geometry.ts";
@@ -78,8 +79,8 @@ const AISLE_VERGE: AddedArea = t247(
   "pas trawy przed szklarniami przy alejce parkingu w1561106064 na ortofoto PZGiK, w OSM bez obszaru; import kładł tu chodnik",
 );
 
-/** The tail of `ADDED_AREAS` in draw order: Krakowskie Przedmieście's (T-243, T-245), then T-247's lawns. */
-export const ADDED_AREAS_TAIL: readonly AddedArea[] = [...KRAKOWSKIE_ADDED_AREAS, ANDERSA_VERGE, AISLE_VERGE];
+/** The tail of `ADDED_AREAS` in draw order: Krakowskie Przedmieście's (T-243, T-245), T-247's lawns, then the Archikatedra's parts (T-349). */
+export const ADDED_AREAS_TAIL: readonly AddedArea[] = [...KRAKOWSKIE_ADDED_AREAS, ANDERSA_VERGE, AISLE_VERGE, ...KATEDRA_PARTS];
 
 /**
  * The carriageways' widths measured on the orthophoto (ADR-0080 PR 10, `pnpm orto:widths`, the
@@ -151,4 +152,4 @@ export const withOrtho = (manual: readonly TagCorrection[]): Map<string, TagCorr
 };
 
 /** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199) and the setts of the streets the game closes to cars (T-324). */
-export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...CAR_FREE_CORRECTIONS];
+export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...CAR_FREE_CORRECTIONS, ...KATEDRA_CORRECTIONS];

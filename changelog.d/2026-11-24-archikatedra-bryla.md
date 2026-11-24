@@ -1,0 +1,1 @@
+Archikatedra ma bryłę z pomiaru. Przed frontem stoi portyk z sześcioma kolumnami i tarasem z balustradą, a między kolumnami można przejść do schodów portalu. Kaplice są niższe, nawa wyższa i kryta ciemną blachą, a fronton ma trójkątny szczyt. Dwie wieżyczki mają zielone hełmy cebulaste z latarniami i krzyżami.
