@@ -1,3 +1,4 @@
+import { FARA_FOUNDATION_TOP } from "./lublin/fara-pad";
 import { groundY } from "./lublin/terrain";
 
 /*
@@ -62,17 +63,20 @@ export const FARA_HEIGHTS = { nave: 13, ridge: 27, chancel: 12, chancelRidge: 19
 /** The nave's and the chancel's axis (z). */
 const AXIS = 42.4;
 
-const base = groundY(668, AXIS);
+/** The hologram's foot: the foundations' top, one level over the levelled square (`fara-pad.ts`). */
+const base = FARA_FOUNDATION_TOP;
 const top = (x: number, h: number, z: number): HoloPoint => [x, base + h, z];
+/** A wall's foot: on the foundations' top, or on the south-west chapel's walls left on the rising NMT (`fara-pad.ts`), on theirs. */
+const foot = (x: number, z: number): HoloPoint => [x, Math.max(base, groundY(x, z) + 0.5), z];
 
-/** The walls along a run of points, from the ground under each up to `h`; closed or open. */
+/** The walls along a run of points, from the foundations' top up to `h` over it; closed or open. */
 const walls = (pts: readonly (readonly [number, number])[], h: number, closed: boolean): HoloFacet[] => {
   const out: HoloFacet[] = [];
   const n = closed ? pts.length : pts.length - 1;
   for (let k = 0; k < n; k++) {
     const [ax, az] = pts[k]!;
     const [bx, bz] = pts[(k + 1) % pts.length]!;
-    out.push([[ax, groundY(ax, az), az], [bx, groundY(bx, bz), bz], top(bx, h, bz), top(ax, h, az)]);
+    out.push([foot(ax, az), foot(bx, bz), top(bx, h, bz), top(ax, h, az)]);
   }
   return out;
 };
@@ -143,7 +147,7 @@ const chapel = (c: FaraChapel): HoloFacet[] => {
     const [ax, az] = c.pts[k]!;
     const [bx, bz] = c.pts[(k + 1) % n]!;
     if (c.skip?.includes(k) || (Math.abs(az - c.wall) < 1e-6 && Math.abs(bz - c.wall) < 1e-6)) continue;
-    out.push([[ax, groundY(ax, az), az], [bx, groundY(bx, bz), bz], top(bx, chapelHeight(c, bz), bz), top(ax, chapelHeight(c, az), az)]);
+    out.push([foot(ax, az), foot(bx, bz), top(bx, chapelHeight(c, bz), bz), top(ax, chapelHeight(c, az), az)]);
   }
   // The roof: a fan of triangles from its first corner (the plans are convex), on the lean-to's plane.
   const roof = c.pts.map(([x, z]) => top(x, chapelHeight(c, z), z));

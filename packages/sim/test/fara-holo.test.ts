@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FARA_CHANCEL, FARA_CHAPELS, FARA_DOORS, FARA_HEIGHTS, FARA_HOLO, FARA_HOLO_FACETS, FARA_NAVE, FARA_NAVE_WALLS, FARA_OPENINGS, FARA_TOWER, groundY } from "../src";
+import { FARA_FOUNDATION_TOP, FARA_LEVEL, FARA_PAD } from "../src/content/lublin/fara-pad";
 import { LUBLIN_CHUNKS } from "../src/content/lublin";
 
 /*
@@ -56,7 +57,7 @@ describe("the hologram of the parish church over its foundations (Plac po Farze)
       expect([3, 4]).toContain(f.length);
       for (const [x, y, z] of f) {
         expect(y).toBeGreaterThanOrEqual(groundY(x, z) - 0.6);
-        expect(y - groundY(668, 42.4)).toBeLessThanOrEqual(FARA_HEIGHTS.spire + 1e-9);
+        expect(y - FARA_FOUNDATION_TOP).toBeLessThanOrEqual(FARA_HEIGHTS.spire + 1e-9);
       }
     }
     expect(FARA_HOLO.x).toBeGreaterThan(FARA_NAVE[0]![0]);
@@ -87,5 +88,17 @@ describe("the hologram of the parish church over its foundations (Plac po Farze)
     const west = FARA_DOORS[0]!;
     expect(west.a[1] + (west.b[1] - west.a[1]) * west.at).toBeCloseTo(42.4, 6);
     expect(west.a[0]).toBe(FARA_TOWER[0]![0]);
+  });
+
+  it("stands on the foundations levelled to one height: the square under their walls flat at the pad's level, off the south-west wedge on Archidiakońska", () => {
+    expect(FARA_PAD.y).toBe(FARA_LEVEL);
+    expect(FARA_PAD.row).toBe("T-347");
+    const samples = ruinWalls.flatMap((w) => Array.from({ length: w.line.length / 2 }, (_, k) => [w.line[2 * k]!, w.line[2 * k + 1]!] as const));
+    const flat = samples.filter(([x, z]) => Math.abs(groundY(x, z) - FARA_LEVEL) < 0.1);
+    // Nine in ten of the walls' corners on the level within 0.1 m (on the NMT they ran from -4.9 to -2.4 m); the rest
+    // within 0.3 m (the pad's edge on the import's 5 m grid), but the south-west wedge left on the NMT (z under 27).
+    expect(flat.length / samples.length).toBeGreaterThan(0.9);
+    const wedge = (x: number, z: number) => z < 27 || (x < 669 && z < 31);
+    for (const [x, z] of samples.filter(([x, z]) => !wedge(x, z))) expect(Math.abs(groundY(x, z) - FARA_LEVEL), `${x},${z}`).toBeLessThan(0.3);
   });
 });
