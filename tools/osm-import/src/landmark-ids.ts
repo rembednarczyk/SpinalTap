@@ -9,9 +9,12 @@ export const LANDMARK_BUILDINGS: readonly string[] = [
   ...["w48500136", "w450180469", "w66258167", "w67508958", "w66330578", "w617597407", "w617878341"],
   // Nowy Ratusz's risalit block and tower (G-119).
   ...["w619138853", "w619138854"],
+  // The Archikatedra's nave and turrets and the parts the import adds from NMPT (T-349).
+  ...["w617763433", "w617763434", "w617763435"],
+  ...["T-349/katedra-korpus", "T-349/katedra-pod-nawa", "T-349/katedra-prezbiterium-pn", "T-349/katedra-prezbiterium-pd", "T-349/katedra-fronton"],
 ];
 
 const LISTED: ReadonlySet<string> = new Set(LANDMARK_BUILDINGS);
 
 /** Whether a building (`w…`, `r…`, a split's `/n` dropped) is on the list. */
-export const isListedLandmark = (id: string): boolean => LISTED.has(id.split("/")[0]!);
+export const isListedLandmark = (id: string): boolean => LISTED.has(id) || LISTED.has(id.split("/")[0]!);

@@ -186,7 +186,8 @@ describe("roofs of the generated centre (G-056)", () => {
 
   it("passes the shape from the view to the frame", () => {
     expect(roofOf("w617878341")).toBe("onion");
-    expect(roofOf("w617763434")).toBe("dome");
+    // The Archikatedra's turrets: onions with a lantern after the photographs (T-349).
+    expect(roofOf("w617763434")).toBe("onion");
     expect(roofOf("w617763433")).toBe("gable");
     expect(mapBuilding(1, source("w618270604"), () => null)).toMatchObject({ roofShape: "gabled", roofAcross: true });
   });

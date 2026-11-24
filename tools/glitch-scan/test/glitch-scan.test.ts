@@ -2026,8 +2026,12 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
    */
   "building-part-ignored": () => {
     const kept = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    // The map's tags and place as the import corrects them (a part's height or a shift onto NMPT's, T-349).
+    const fixes = new Map(TAG_CORRECTIONS.map((c) => [c.id, c]));
     return [...SOURCE_OSM.ways.values()].flatMap((w) => {
-      const t = w.tags ?? {};
+      const fix = fixes.get(`w${w.id}`);
+      const d = fix?.shift ?? { x: 0, z: 0 };
+      const t = { ...(w.tags ?? {}), ...(fix?.tags ?? {}) };
       const height = Number(t.height ?? NaN) - Number(t["roof:height"] ?? 0);
       const eaves = Number.isFinite(height) ? height : Number(t["building:levels"] ?? NaN) * 3.2;
       if (!t["building:part"] || t["building:part"] === "no" || t.building || !Number.isFinite(eaves)) return [];
@@ -2035,7 +2039,7 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
         const n = SOURCE_OSM.nodes.get(id);
         return n ? [geoToWorld(n.lat, n.lon)] : [];
       });
-      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length + d.x, z: pts.reduce((s, p) => s + p.z, 0) / pts.length + d.z };
       const over = kept.filter((b) => inOutline(c.x, c.z, b.outline, b.x, b.z));
       if (pts.length === 0 || over.length === 0) return [];
       const top = Math.max(...over.map((b) => b.y + b.height)) - Math.min(...over.map((b) => b.y + b.plinth));
@@ -2522,7 +2526,11 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
+/** The tags of the areas the import adds (`ADDED_AREAS`: a building's parts NMPT shows, T-349), by id. */
+const ADDED_TAGS: ReadonlyMap<string, Readonly<Record<string, string>>> = new Map(ADDED_AREAS.map((a) => [a.id, a.tags]));
 const osmTags = (id: string): Readonly<Record<string, string>> => {
+  const added = ADDED_TAGS.get(id);
+  if (added) return added;
   const key = id.split("/")[0]!;
   const n = Number(key.slice(1));
   return (key.startsWith("r") ? SOURCE_OSM.relations.get(n)?.tags : SOURCE_OSM.ways.get(n)?.tags) ?? {};

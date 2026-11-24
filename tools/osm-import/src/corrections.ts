@@ -5,7 +5,7 @@
  * `data/osm` stays as downloaded, so a new extract keeps the correction until OSM agrees.
  */
 import { type Area, type Line } from "./features.ts";
-import { type Pt, centroid } from "./geometry.ts";
+import { type Pt, type Shifted, centroid } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL, withOrtho } from "./corrections-kerb.ts";
@@ -14,7 +14,7 @@ import { SURFACE_STOREYS } from "./corrections-surface.ts";
 import { PODZAMCZE_AREAS } from "./corrections-podzamcze.ts";
 import { type Tags } from "./osm.ts";
 
-export interface TagCorrection {
+export interface TagCorrection extends Shifted {
   /** `w<id>` or `r<id>`, as `Area.id` or `Line.id`. */
   readonly id: string;
   readonly tags: Tags;
@@ -689,7 +689,7 @@ export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrectio
   const c = corrections.get(a.id);
   if (!c) return a;
   const k = c.scale ?? 1;
-  const ring = a.ring.filter((p) => !(c.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2));
+  const ring = a.ring.filter((p) => !(c.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2)).map((p) => (c.shift ? { x: p.x + c.shift.x, z: p.z + c.shift.z } : p));
   const o = centroid(ring);
   return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? ring : ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
 };

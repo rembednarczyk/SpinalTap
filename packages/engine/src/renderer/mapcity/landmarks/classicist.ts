@@ -166,9 +166,8 @@ export const gableTrim = (sink: MeshSink, f: FacadeFrame, trim: Rgba, dark: Rgba
 };
 
 /** The data's own roof (`roof:shape`, ADR-0064) in the kit's tiles: planes, hipped or a pyramid, else flat. */
-export const dataRoof = (sink: MeshSink, f: FacadeFrame, wall: Rgba, trim: Rgba, near: boolean): void => {
+export const dataRoof = (sink: MeshSink, f: FacadeFrame, wall: Rgba, trim: Rgba, near: boolean, tile: Rgba = solid(SWATCH.tile)): void => {
   const rise = f.b.roof ?? 0;
-  const tile = solid(SWATCH.tile);
   const planes = planesKind(f);
   if (planes) addPlanesRoof(sink, f, planes, rise, { roof: tile, wall, trim }, near);
   else if (rise > 0.3 && (f.style.roof === "hip" || f.style.roof === "pyramid")) addHipRoof(sink, f, rise, tile, trim, near, f.style.roof === "pyramid");

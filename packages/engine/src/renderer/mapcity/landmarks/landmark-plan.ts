@@ -6,8 +6,8 @@ import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
 import { pointInRing } from "../polygon";
-import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, panel, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
-import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
+import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, panel, pilasters, shownWalls, skirtRoof, slabRing, solid, spireCross, stonePlinth } from "./kit";
+import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, freeCornice, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
 import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
@@ -192,7 +192,8 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
     return;
   }
   if (c.kind === "roof") {
-    dataRoof(sink, f, solid(wallOf(part.tier)), solid(trimOf(part.tier)), near);
+    const roofing = part.tier.roofing;
+    dataRoof(sink, f, solid(wallOf(part.tier)), solid(trimOf(part.tier)), near, solid(roofing === "metal" ? SWATCH.roofMetal : roofing === "patina" ? SWATCH.patina : SWATCH.tile));
     return;
   }
   if (roof <= 0.5) {
@@ -201,6 +202,10 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   }
   const layer = f.landmark.recipe.layer;
   const base = helmet(sink, f, c.profile, roof, solid(SWATCH.patina), solid(SWATCH.plasterTrim), near);
+  if (c.profile.cross) {
+    spireCross(sink, base.c, f.top + roof * c.profile.mast, f.top + roof, base.phase);
+    return;
+  }
   helmLeds(sink, f, base, c.profile, roof, layer);
   if (near) mast(sink, base.c, f.top + roof * c.profile.mast, f.top + roof, base.phase);
   else sink.box({ x: base.c.x, y: f.top + roof - 0.15, z: base.c.z }, 0.3, 0.3, 0.3, lit("#ff2a2a"));
@@ -329,6 +334,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   if (t.pilasters) pilasters(sink, f, t.front ? stringCourse(f) + 0.24 : f.b.foot + (t.base ? 0.35 : 0), f.top - 0.55, solid(SWATCH.plasterTrim));
   if (t.base) band(sink, f.b.ring, 0.16, f.b.foot - 0.02, f.b.foot + 0.35, trim, trimMeta(f.style.seed), f.b.base);
   if (t.cornice) cornice(sink, f, f.b.ring, f.top, trim);
+  if (t.eaves) freeCornice(sink, f, f.top, trim);
   if (t.material === "brick") brickwork(sink, f, t);
   if (t.front) classicFront(sink, f, t.front, trim);
   if (t.palace) {
@@ -336,6 +342,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
     const course = palaceFront(sink, f, t.palace, (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
     if (course !== null) planPortico(sink, f, balconyFloor(f, t.palace));
   }
+  if (t.portico) planPortico(sink, f, t.portico.floor, false);
   if (t.castle) castleFront(sink, f, t.castle, trim);
   faces(sink, f, part);
   crown(sink, f, part, true);

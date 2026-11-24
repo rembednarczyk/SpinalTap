@@ -59,8 +59,10 @@ describe("building parts (G-049)", () => {
   it("gives the Archikatedra its higher nave and the turrets of its facade, the Town Hall its tower, the Dominicans their chapels", () => {
     const cathedral = byId("w66286341")!;
     const nave = byId("w617763433");
-    expect(nave?.height).toBeCloseTo(cathedral.plinth + 9 * STOREY, 1);
-    for (const turret of ["w617763434", "w617763435"]) expect(byId(turret)?.height).toBeCloseTo(cathedral.plinth + 10 * STOREY, 1);
+    // From NMPT (T-349, `corrections-katedra.ts`): the nave's eaves at y 25, the turrets' cornices at 33.5 with helmets to 43.
+    expect(cathedral.y + nave!.height).toBeCloseTo(25, 1);
+    expect(cathedral.y + nave!.height + nave!.roof!).toBeCloseTo(31.5, 1);
+    for (const turret of ["w617763434", "w617763435"]) expect(cathedral.y + byId(turret)!.height + byId(turret)!.roof!).toBeCloseTo(43, 1);
     expect(peakAt(all, { x: 415.0, z: -79.3 }) - byId("w66264120")!.y).toBeGreaterThan(8 * STOREY);
     for (const chapel of ["w617763428", "w617763429"]) expect(byId(chapel)?.levels).toBe(6);
   });
@@ -119,9 +121,11 @@ describe("roof shapes of the landmarks' parts (ADR-0064, G-056)", () => {
   const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
   const byId = (id: string) => all.find((b) => b.id === id);
 
-  it("gives the octagon of Brama Krakowska its onion, the turrets and chapels their domes, the naves their gables", () => {
+  it("gives the octagon of Brama Krakowska and the Archikatedra's turrets their onions, the chapels their domes, the naves their gables", () => {
     expect(byId("w617878341")?.roofShape).toBe("onion");
-    for (const id of ["w617763434", "w617763435", "w617763428", "w617763429"]) expect(byId(id)?.roofShape, id).toBe("dome");
+    for (const id of ["w617763428", "w617763429"]) expect(byId(id)?.roofShape, id).toBe("dome");
+    // The Archikatedra's turrets: copper onions with a lantern on the photograph (T-349), OSM's `dome` corrected.
+    for (const id of ["w617763434", "w617763435"]) expect(byId(id)?.roofShape, id).toBe("onion");
     expect(byId("w617763433")?.roofShape).toBe("gabled");
     expect(byId("w618270604")).toMatchObject({ roofShape: "gabled", roofAcross: true });
   });
