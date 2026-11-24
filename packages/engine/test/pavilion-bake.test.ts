@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { METRO_ENTRANCES, WORLD_SCENERY } from "@seki/sim";
+import { METRO_ENTRANCES, PAVILION, WORLD_SCENERY } from "@seki/sim";
 import { cellBounds, cellKey } from "../src/renderer/mapcity/map-index";
 import { PROP_BLOCK } from "../src/renderer/mapcity/prop-shapes";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
@@ -113,20 +113,26 @@ describe("the metro's pavilions in the furniture's blocks (ADR-0071 stages 2 and
   });
 
   it.each(ENTRANCES)("%s: no upright face of the frames shares a plane with the glass (no flicker)", (_n, e) => {
-    const sink = new MeshSink();
-    bakePavilion(sink, e);
-    expect(flushUprights(sink)).toEqual([]);
-  });
-
-  it("leaves the reflections off the glass on the phone (ADR-0071)", () => {
-    const e = METRO_ENTRANCES[0]!;
-    const wet = (q: "low" | "high") => {
+    for (const q of ["low", "high"] as const) {
       const sink = new MeshSink();
       bakePavilion(sink, e, q);
-      return vertices(sink).filter((v) => v.rgba[3] === DRESS_FLAG.wet).length;
+      expect(flushUprights(sink), q).toEqual([]);
+    }
+  });
+
+  it("bakes opaque panes only on the phone: off it the glass is the signs' and the hall shows through (ADR-0071)", () => {
+    const e = METRO_ENTRANCES[0]!;
+    const panes = (q: "low" | "high") => {
+      const sink = new MeshSink();
+      bakePavilion(sink, e, q);
+      // The panes' colour (#4f7488), solid on the phone; nothing of it off the phone, wet or solid.
+      return vertices(sink).filter((v) => [0x4f, 0x74, 0x88].every((c, i) => Math.abs(v.rgba[i]! - c / 255) < 1e-6)).length;
     };
-    expect(wet("high")).toBeGreaterThan(0);
-    expect(wet("low")).toBe(0);
+    expect(panes("low")).toBeGreaterThan(0);
+    expect(panes("high")).toBe(0);
+    const wet = new MeshSink();
+    bakePavilion(wet, e, "low");
+    expect(vertices(wet).filter((v) => v.rgba[3] === DRESS_FLAG.wet).length).toBe(0);
   });
 });
 
@@ -140,7 +146,7 @@ describe("the metro pavilions' names in the signs' mesh (ADR-0071 stage 3)", () 
 
   it.each(ENTRANCES)("%s: letters on the fascias and the pylon's plate, inside the roof's outline", (_n, e) => {
     const sink = new MeshSink();
-    expect(planPavilionSigns(sink, { minX: e.spot.x - 1, maxX: e.spot.x + 1, minZ: e.spot.z - 1, maxZ: e.spot.z + 1 })).toBe(1);
+    expect(planPavilionSigns(sink, { minX: e.spot.x - 1, maxX: e.spot.x + 1, minZ: e.spot.z - 1, maxZ: e.spot.z + 1 }, true)).toBe(1);
     const vs = vertices(sink);
     expect(vs.every((v) => Math.round(v.meta[1]!) === MAP_SIGN_KIND.glyph)).toBe(true);
     const r = e.roof;
@@ -156,10 +162,28 @@ describe("the metro pavilions' names in the signs' mesh (ADR-0071 stage 3)", () 
     expect(vs.length).toBe((letters * faces + 1) * 4);
   });
 
-  it("plan nothing for a cell without a pavilion", () => {
+  it.each(ENTRANCES)("%s: off the phone, glass on both long sides and the end, over the plinth up to the roof, inside the roof's outline", (_n, e) => {
     const sink = new MeshSink();
-    expect(planPavilionSigns(sink, { minX: 0, maxX: 10, minZ: 0, maxZ: 10 })).toBe(0);
-    expect(sink.empty).toBe(true);
+    planPavilionSigns(sink, { minX: e.spot.x - 1, maxX: e.spot.x + 1, minZ: e.spot.z - 1, maxZ: e.spot.z + 1 }, false);
+    const glass = vertices(sink).filter((v) => Math.round(v.meta[1]!) === MAP_SIGN_KIND.glass);
+    // Three panes, each drawn both ways (the signs cull their backs).
+    expect(glass.length).toBe(3 * 2 * 4);
+    for (const v of glass) {
+      expect(v.y).toBeGreaterThanOrEqual(e.street + 0.5 - 1e-6);
+      expect(v.y).toBeLessThanOrEqual(e.street + PAVILION.height + 1e-6);
+      expect(v.x).toBeGreaterThan(e.roof.minX - 0.05);
+      expect(v.x).toBeLessThan(e.roof.maxX + 0.05);
+      expect(v.z).toBeGreaterThan(e.roof.minZ - 0.05);
+      expect(v.z).toBeLessThan(e.roof.maxZ + 0.05);
+    }
+  });
+
+  it("plan nothing for a cell without a pavilion", () => {
+    for (const lite of [true, false]) {
+      const sink = new MeshSink();
+      expect(planPavilionSigns(sink, { minX: 0, maxX: 10, minZ: 0, maxZ: 10 }, lite)).toBe(0);
+      expect(sink.empty).toBe(true);
+    }
   });
 });
 

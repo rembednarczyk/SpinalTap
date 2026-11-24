@@ -30,8 +30,8 @@ const CLERESTORY: Rgba = hexColor("#2a5468", DRESS_FLAG.lit);
 const SCREEN: Rgba = hexColor("#36c5ff", DRESS_FLAG.lit);
 
 /** The plinth over the street, the transom over the doors' height, a bar of the frames. */
-const PLINTH = 0.5;
-const TRANSOM = 2.3;
+export const PLINTH = 0.5;
+export const TRANSOM = 2.3;
 const BAR = 0.07;
 /** Spacing of the mullions along the long side. */
 const BAY = 1.2;
@@ -51,11 +51,15 @@ const bakeShell = (sink: MeshSink, f: PavilionFrame, quality: RenderQuality): vo
   const base = f.floor - 0.3;
   const end = L - 0.25;
   const pane = glass(quality);
+  const opaque = quality === "low";
   for (const k of [-1, 1] as const) {
     // A side wall: the plinth a hair proud of the glass, so its top reads as a ledge.
     frameBox(sink, f, [0, L], [k * inner, k * (half + 0.02)], [base, s + PLINTH], C.granite);
-    frameBox(sink, f, [0, L], [k * inner, k * half], [s + PLINTH, s + TRANSOM], pane);
-    frameBox(sink, f, [0, L], [k * inner, k * half], [s + TRANSOM, top], CLERESTORY);
+    // The glass itself is the signs' (`pavilion-signs.ts`): see-through, the lit stairs behind it; opaque on the phone.
+    if (opaque) {
+      frameBox(sink, f, [0, L], [k * inner, k * half], [s + PLINTH, s + TRANSOM], pane);
+      frameBox(sink, f, [0, L], [k * inner, k * half], [s + TRANSOM, top], CLERESTORY);
+    }
   }
   // The end wall; under an entrance A with the doorway down to the platform (ADR-0071 stage 4), at
   // metro B by Alchemia with the doorway down to P-1 (ADR-0074 stage 10).
@@ -65,15 +69,20 @@ const bakeShell = (sink: MeshSink, f: PavilionFrame, quality: RenderQuality): vo
     frameBox(sink, f, [end, L + 0.02], [-inner, inner], [head, s + PLINTH], C.granite);
     frameBox(sink, f, [end - 0.01, end], [-inner, inner], [head - 0.08, head], C.nosing);
   }
-  frameBox(sink, f, [end, L], [-inner, inner], [s + PLINTH, s + TRANSOM], pane);
-  frameBox(sink, f, [end, L], [-inner, inner], [s + TRANSOM, top], CLERESTORY);
+  if (opaque) {
+    frameBox(sink, f, [end, L], [-inner, inner], [s + PLINTH, s + TRANSOM], pane);
+    frameBox(sink, f, [end, L], [-inner, inner], [s + TRANSOM, top], CLERESTORY);
+  }
   // The lintel over the opening: a steel panel the screen hangs on.
   frameBox(sink, f, [0, 0.25], [-inner, inner], [s + 2.5, top], C.steel);
   // Mullions through the glass every bay, and round the end. The corner posts stand a hair proud
   // of the glass's ends: flush, their faces shared the panes' plane and flickered with them.
   for (let u = 0; u <= L + 1e-6; u += BAY) {
     const at = Math.min(Math.max(u, BAR / 2 - PROUD), L - BAR / 2 + PROUD);
-    for (const k of [-1, 1]) frameBox(sink, f, [at - BAR / 2, at + BAR / 2], [k * (inner - 0.02), k * (half + 0.03)], [s + PLINTH, top], C.steel);
+    // Through the whole wall behind opaque glass; at the glass's face alone where the glass shows the hall (a fin as deep
+    // as the wall hid it from an eye at the side).
+    const fin = opaque ? inner - 0.02 : half - BAR;
+    for (const k of [-1, 1]) frameBox(sink, f, [at - BAR / 2, at + BAR / 2], [k * fin, k * (half + 0.03)], [s + PLINTH, top], C.steel);
   }
   for (const w of [-0.6, 0.6]) frameBox(sink, f, [end - 0.02, L + 0.03], [w - BAR / 2, w + BAR / 2], [s + PLINTH, top], C.steel);
   // The sill rail, the transom and the head rail on the outer faces.

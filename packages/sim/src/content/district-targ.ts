@@ -1,4 +1,5 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
+import { METRO_HALL_LAMPS } from "./metro-hall-lamps";
 import type { SceneLamp, SceneLampGroup, SceneRadio } from "./scene-lamp";
 import { LUBLIN_CHUNKS } from "./lublin";
 import { turnLocal } from "./lublin/furniture";
@@ -166,7 +167,7 @@ export const DWORZEC_METRO_LAMPS: readonly SceneLampGroup[] = DWORZEC_METRO
   : [];
 
 /** Every scene's lights the renderer turns on near their place. */
-export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS, PO_FARZE_LAMPS];
+export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS, PO_FARZE_LAMPS, ...METRO_HALL_LAMPS];
 
 /** A speaker over a venue's door stands this high over the street (m): under its sign, as the neons' (`radio-speakers.ts`). */
 const RADIO_HEIGHT = 2.4;

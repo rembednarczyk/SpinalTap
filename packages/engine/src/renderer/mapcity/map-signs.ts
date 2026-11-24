@@ -79,7 +79,14 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 13.5) {
+  if (kind > 14.5) {
+    // A pane of glass (the metro's pavilions, ADR-0071: a low glass pavilion): additive, so what is behind it shows; a
+    // faint tint, brighter where it turns away from the eye (Fresnel), and one soft streak of the sky slanting over it.
+    float fres = 1.0 - vFacing;
+    float streak = smoothstep(0.18, 0.0, abs(fract(uv.x * 0.45 + uv.y * 0.35 + seed) - 0.5) - 0.12);
+    a = 0.035 + 0.22 * fres * fres + 0.05 * streak;
+    col = mix(col, vec3(1.0), 0.15 * streak);
+  } else if (kind > 13.5) {
     // A hologram board over its projector (a building site's, ADR-0087, 22.11): a pane of light, brightest at its
     // frame and at its foot by the lens, scanlines running up it, a flicker now and then; its letters on top of it.
     float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
