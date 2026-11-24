@@ -61,3 +61,4 @@ Zrobione 23.11 (znicze LED z kwiatami i intencjami pod pomnikiem, terminal legen
 - Holo-kasa w bramie wieży: model w `tools/blender/rooms/plac_katedralny.py`, rekwizyt w `packages/sim/src/content/katedralny-detail.ts`, klucz na końcu `ROOM_DETAIL_SHAPES`.
 - Emitery dzwonów (o pełnych godzinach) i organów przy drzwiach katedry: `packages/engine/src/audio/spatial.ts` i `packages/engine/src/audio/soundscape-clock.ts`.
 - Akcent placu (poniżej 3%, pomiar 24.11): barwny punkt nawigacji przy wejściu do bramy wieży albo przy budce ochrony, bez neonu na zabytkach.
+- Drugi reflektor fasady w południowej połowie portyku (ok. 603; −195), T-355, i kontrole skanu z przeglądu kuratora PR #1032: `beacon-off-tip` (światło przeszkodowe dalej niż 0,3 m od środka obrysu albo poza [wierzchołek; +0,5]) i `scene-lamp-in-solid` (lampa sceny w bryle albo pod terenem), obie z bazą 0.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { KATEDRALNY_BEACON, KATEDRALNY_LAMPS, SCENE_LAMP_GROUPS, WORLD_STREET_PROPS, groundY, inBuilding } from "../src";
+import { LUBLIN_CHUNKS } from "../src/content/lublin";
 
 /*
  * Plac Katedralny by night (24.11): the washes of the square's four floodlights on the Trinitarian Tower and the
@@ -23,10 +24,16 @@ describe("Plac Katedralny's lights (24.11)", () => {
     expect(SCENE_LAMP_GROUPS).toContain(KATEDRALNY_LAMPS);
   });
 
-  it("blinks a red obstruction light at the tip of the tower's spire (y 58.6, T-353)", () => {
-    expect(inBuilding(KATEDRALNY_BEACON.x, KATEDRALNY_BEACON.z)).toBe(true);
-    expect(KATEDRALNY_BEACON.y).toBeGreaterThan(58.6);
-    expect(KATEDRALNY_BEACON.y).toBeLessThan(59.5);
+  it("blinks a red obstruction light at the tip of the tower's spire, wherever the data put the tower (T-353)", () => {
+    // The tip from the tower's own data (w66286371), so the light follows it when the tower moves (as T-264 and T-353 moved it).
+    const tower = LUBLIN_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === "w66286371");
+    expect(tower).toBeDefined();
+    const t = tower!;
+    const tip = t.y + t.height + (t.roof ?? 0);
+    // The building's (x, z) is its outline's centroid, the spire's axis.
+    expect(Math.hypot(KATEDRALNY_BEACON.x - t.x, KATEDRALNY_BEACON.z - t.z)).toBeLessThan(0.3);
+    expect(KATEDRALNY_BEACON.y).toBeGreaterThan(tip);
+    expect(KATEDRALNY_BEACON.y).toBeLessThan(tip + 0.5);
     expect(KATEDRALNY_BEACON.color.startsWith("#ff")).toBe(true);
   });
 });
