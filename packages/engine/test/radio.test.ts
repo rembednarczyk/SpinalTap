@@ -1,6 +1,7 @@
 import type { AudioListenerPose } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import { VENUE_STATIONS, radioMix, radioSpeakers, speakerMix } from "../src/audio/radio-speakers";
+import { VENUE_KIND_STATIONS, VENUE_STATIONS, radioMix, radioSpeakers, sceneSpeakers, speakerMix } from "../src/audio/radio-speakers";
+import { SCENE_RADIOS, TARG_RADIOS } from "@seki/sim";
 import { RADIO_STATIONS, RADIO_STATION_IDS, STEPS_PER_BAR, buildStationLoop, chordOn, degreeToMidi } from "../src/audio/radio-stations";
 import { SynthAudio } from "../src/audio/synth-audio";
 import { FakeAudioContext, ManualTimer } from "./fixtures/fake-audio-context";
@@ -71,7 +72,22 @@ describe("diegetic speakers", () => {
     expect(labels.has("KARAOKE")).toBe(true);
     expect(labels.has("SAKE")).toBe(true);
     expect(labels.has("NEON KOI")).toBe(true);
-    for (const s of speakers) expect(s.station).toBe(VENUE_STATIONS[s.label]);
+    for (const s of speakers) if (!SCENE_RADIOS.some((r) => r.label === s.label)) expect(s.station).toBe(VENUE_STATIONS[s.label]);
+  });
+
+  it("play at Podzamcze's food venues too, under their map signs, with no entity (the district's card: no radio there)", () => {
+    // The kebab by the Dworzec and two counters on Ruska, each a map venue of street food (its 2077 name on its sign).
+    expect(TARG_RADIOS).toHaveLength(3);
+    for (const r of TARG_RADIOS) expect([r.kind, r.label.length > 0]).toEqual(["fast-food", true]);
+    const scene = sceneSpeakers();
+    expect(scene).toHaveLength(SCENE_RADIOS.length);
+    for (const s of scene) {
+      expect(s.station).toBe(VENUE_KIND_STATIONS["fast-food"]);
+      expect(speakers).toContainEqual(s);
+      // Heard in its doorway, silent a street away.
+      expect(speakerMix(pose(s.position.x + 2, s.position.z), scene)?.station).toBe(s.station);
+    }
+    expect(speakerMix(pose(TARG_RADIOS[0]!.at.x + 200, TARG_RADIOS[0]!.at.z), sceneSpeakers())).toBeNull();
   });
 
   it("play the loudest venue's station, panned towards it, and fall silent away from it", () => {

@@ -5,7 +5,7 @@
  * a wicket by the nearest street of any kind.
  */
 import { type StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { SITE_BOARD, SITE_GATE, SITE_LEAF, SITE_LOOKS, SITE_PANEL, siteFenceVariant, siteGateVariant } from "../../../packages/core/src/world/sites.ts";
+import { SITE_BOARD, SITE_FENCE, SITE_GATE, SITE_LEAF, SITE_LOOKS, SITE_PANEL, siteFenceVariant, siteGateVariant } from "../../../packages/core/src/world/sites.ts";
 import { type SiteGround } from "./construction-ground.ts";
 import { type Pt, ccw } from "./geometry.ts";
 
@@ -79,7 +79,8 @@ export const fenceEdges = (ring: readonly Pt[]): FenceEdge[] =>
   });
 
 /** Free ground under the fence's line at a point of an edge: the line and either side of it. */
-const freeAt = (g: SiteGround, e: FenceEdge, s: number): boolean => g.free(along(e, s)) && g.free(along(e, s, ACROSS)) && g.free(along(e, s, -ACROSS));
+const fenceFree = (g: SiteGround, p: Pt): boolean => (g.fenceFree ?? g.free).call(g, p);
+const freeAt = (g: SiteGround, e: FenceEdge, s: number): boolean => fenceFree(g, along(e, s)) && fenceFree(g, along(e, s, ACROSS)) && fenceFree(g, along(e, s, -ACROSS));
 
 /** The stretches of the edges over free ground, `SHORTEST` m and longer. */
 export const freeRuns = (edges: readonly FenceEdge[], g: SiteGround): FenceRun[] => {
@@ -145,6 +146,12 @@ const pieceAt = (e: FenceEdge, s: number, out: number, faceOut: boolean): { x: n
 
 const round = (v: number, k = 100): number => Math.round(v * k) / k + 0;
 
+/** How far a panel stops short of the corner between edges `a` and `b`: half its thickness times the tangent of half the turn, at most 0.5 m. */
+const cornerTrim = (a: FenceEdge, b: FenceEdge): number => {
+  const turn = Math.acos(Math.max(-1, Math.min(1, a.d.x * b.d.x + a.d.z * b.d.z)));
+  return Math.min(0.5, (SITE_FENCE.thick / 2) * Math.tan(Math.min(turn, 2.8) / 2));
+};
+
 export interface FenceLook {
   /** Every how many panels one carries a hologram ad (3-5). */
   readonly every: number;
@@ -177,10 +184,14 @@ export const fencePieces = (edges: readonly FenceEdge[], runs: readonly FenceRun
   };
   for (const r of runs) {
     const e = edges[r.edge]!;
-    if (gate && gate.edge === r.edge && gate.at > r.from && gate.at < r.to) {
-      lay(e, r.from, gate.at - gate.width / 2 - POST_GAP);
-      lay(e, gate.at + gate.width / 2 + POST_GAP, r.to);
-    } else lay(e, r.from, r.to);
+    // A run reaching a corner stops short of it by the panels' half thickness over the turn, so the two panels meeting
+    // there touch on their inner faces and do not cut into each other (a sharp corner of Arkologia's yard, 24.11).
+    const from = r.from < 1e-6 ? r.from + cornerTrim(edges[(r.edge + edges.length - 1) % edges.length]!, e) : r.from;
+    const to = r.to > e.len - 1e-6 ? r.to - cornerTrim(e, edges[(r.edge + 1) % edges.length]!) : r.to;
+    if (gate && gate.edge === r.edge && gate.at > from && gate.at < to) {
+      lay(e, from, gate.at - gate.width / 2 - POST_GAP);
+      lay(e, gate.at + gate.width / 2 + POST_GAP, to);
+    } else lay(e, from, to);
   }
   if (!gate) return out;
   const e = edges[gate.edge]!;

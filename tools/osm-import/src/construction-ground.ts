@@ -9,6 +9,11 @@ import { type Pt } from "./geometry.ts";
 export interface SiteGround {
   /** Ground a site's piece may stand on: no carriageway, pavement, building, water or rails, and clear of the map's own walls and fences. */
   free(p: Pt): boolean;
+  /**
+   * Ground the site's fence may stand on: as `free`, and a square's or a courtyard's paving inside the outline too (no
+   * sidewalk, path or steps over it; the user's decision of 24.11). Without it, `free`.
+   */
+  fenceFree?(p: Pt): boolean;
   /** Ground a body may stand on outside a gate: no building, water or rails. */
   open(p: Pt): boolean;
   /** Ground outside a site's fence its cones and barriers may stand on (ADR-0096 rule 2): pavement, grass or bare ground, no carriageway; none, none laid. */
