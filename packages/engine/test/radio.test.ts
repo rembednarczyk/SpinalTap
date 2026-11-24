@@ -76,7 +76,9 @@ describe("diegetic speakers", () => {
   });
 
   it("play at Podzamcze's food venues too, under their map signs, with no entity (the district's card: no radio there)", () => {
-    expect(TARG_RADIOS.map((r) => r.label).sort()).toEqual(["KAMBUZ", "KEBAB CHŁODNY DZBAN", "KEBAB ZNAD BOSFORU"]);
+    // The kebab by the Dworzec and two counters on Ruska, each a map venue of street food (its 2077 name on its sign).
+    expect(TARG_RADIOS).toHaveLength(3);
+    for (const r of TARG_RADIOS) expect([r.kind, r.label.length > 0]).toEqual(["fast-food", true]);
     const scene = sceneSpeakers();
     expect(scene).toHaveLength(SCENE_RADIOS.length);
     for (const s of scene) {

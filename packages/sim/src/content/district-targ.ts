@@ -172,20 +172,29 @@ export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS,
 const RADIO_HEIGHT = 2.4;
 /**
  * The venues of Podzamcze whose doors play a station (the card's debt, `docs/lokacje/dzielnica-targ.md`: no radio in
- * the district): the kebab by the Dworzec's pavilions and two on Targ na Ruskiej, the night market's food (§17: sound
- * from its source). Found by their 2077 names in the map's venues, so a moved venue moves its speaker.
+ * the district): the kebab by the Dworzec's pavilions and two street-food counters on Targ na Ruskiej, the night
+ * market's food (§17: sound from its source). Each is the map's fast-food venue nearest its point (within 3 m), so a
+ * venue moved a little keeps its speaker; their 2077 names stay in the import's table, not here (ADR-0056).
  */
-const TARG_RADIO_VENUES = ["KEBAB CHŁODNY DZBAN", "KEBAB ZNAD BOSFORU", "KAMBUZ"] as const;
+const TARG_RADIO_AT: readonly { readonly x: number; readonly z: number }[] = [
+  { x: 803.1, z: 382.4 },
+  { x: 772.3, z: 496.1 },
+  { x: 831.0, z: 495.2 },
+];
+/** How far from its point a venue is still the one meant (m). */
+const RADIO_REACH = 3;
 
-export const TARG_RADIOS: readonly SceneRadio[] = TARG_RADIO_VENUES.flatMap((name) => {
+export const TARG_RADIOS: readonly SceneRadio[] = TARG_RADIO_AT.flatMap((want, i) => {
+  let best: { x: number; z: number; kind: string; label: string; d: number } | null = null;
   for (const c of LUBLIN_CHUNKS)
     for (const b of c.buildings)
       for (const v of b.venues ?? []) {
-        if (v.name !== name) continue;
+        if (v.kind !== "fast-food") continue;
         const [x, z] = [b.x + v.x, b.z + v.z];
-        return [{ key: `targ-radio-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, at: { x, y: groundY(x, z) + RADIO_HEIGHT, z }, kind: v.kind, label: v.name }];
+        const d = Math.hypot(x - want.x, z - want.z);
+        if (d < RADIO_REACH && (!best || d < best.d)) best = { x, z, kind: v.kind, label: v.name, d };
       }
-  return [];
+  return best ? [{ key: `targ-radio-${i}`, at: { x: best.x, y: groundY(best.x, best.z) + RADIO_HEIGHT, z: best.z }, kind: best.kind, label: best.label }] : [];
 });
 
 /** Every scene's speakers the engine's radio plays near their place. */
