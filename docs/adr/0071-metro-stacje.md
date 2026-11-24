@@ -137,3 +137,10 @@ Uwagi kuratora (5.11, sonda na danych gry PR #270 @ a57b56a: `groundY`, wyciągi
 
 - Tabliczka pylonu pokazuje tylko literę wejścia; pełna nazwa stacji jest na blendach dachu (etap 3, #303).
 - Etap 4: biletomat wejścia A stoi na peronie, przy pociągu, i stamtąd rusza przejazd (odpowiedź na pytanie 3). Wejścia B (Alchemia, Dworzec Autobusowy) zostają bez peronu i sprzedają bilet w hali.
+
+## Szklane pawilony (decyzja użytkownika 24.11)
+
+- Szyby pawilonów są przezroczyste we wszystkich wejściach: rysuje je siatka szyldów komórki (`MAP_SIGN_KIND.glass`, `pavilion-signs.ts`) jako taflę addytywną, obie strony, z odbiciem Fresnela (`0,035 + 0,22·(1 − cos)²`) i jedną smugą nieba. Wzorzec: szkło jako warstwa przezroczysta rysowana po bryłach (forward pass dla transparentów, Akenine-Möller i in., „Real-Time Rendering”, rozdz. 5.5); u nas addytywna, bez sortowania, bo szyldy już tak działają i nie dokładamy wywołań rysowania.
+- Wypiek (`pavilion-bake.ts`) zostawia cokół, słupki, rygle i dach; słupki przy szkle są cienkie (tylko lico ściany), żeby z boku nie zasłaniały hali. Na telefonie (`quality: "low"`) zostają nieprzezroczyste szyby z wypieku i szkła z szyldów nie ma.
+- Hala ma własne światło pod dachem (`metro-hall-lamps.ts`, jedno na wejście, zimna biel, zasięg 6 m) w grupach świateł scen: schody i posadzka widać przez szkło, a światło wychodzi na chodnik (zasada „bez światła znikąd”).
+- Komórka z pawilonem dostaje siatkę szyldów zawsze, bo szkło jest ścianą pawilonu.

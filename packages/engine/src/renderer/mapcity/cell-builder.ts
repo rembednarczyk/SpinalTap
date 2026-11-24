@@ -84,8 +84,8 @@ export class CellBuilder {
     cell.names = names;
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, lite);
-    // The metro's names (ADR-0071 stage 3) join a cell's signs, never make a mesh of their own.
-    if (!signs.empty) planPavilionSigns(signs, cell.bounds);
+    // The metro's glass and names (ADR-0071 stage 3) join a cell's signs; the glass is a pavilion's walls, so in any cell.
+    planPavilionSigns(signs, cell.bounds, lite);
     // So do the building sites' beacons and boards (ADR-0087 stage 2), the boards in the player's language.
     if (!signs.empty) planSiteSigns(signs, cell.bounds, this.deps.siteTexts(), lite);
     // So does the light of Alchemia's front (ADR-0074 C4): its sign's letters, the holograms, the screens' pictures.

@@ -6,6 +6,7 @@ import { glyphAdvance, glyphCell } from "../mapcity/venue-plan";
 import type { MeshSink, Vec } from "../mesh-sink";
 import { LINE_AMBER, PYLON, PYLON_PLATE, pylonAt } from "./pavilion-dress";
 import { type Entrance, type PavilionFrame, pavilionFrame } from "./pavilion-frame";
+import { PLINTH } from "./pavilion-bake";
 
 /**
  * The names of the metro's entrances (ADR-0071 stage 3) in the map city's signs' mesh, one quad
@@ -54,8 +55,30 @@ export const letters = (sink: MeshSink, text: string, c: Vec, n: Vec, h: number,
   }
 };
 
-const planOne = (sink: MeshSink, f: PavilionFrame): void => {
+/** The glass's tint: a cool green of float glass. */
+const GLASS = "#9fe3e0";
+
+/** One pane both ways (the signs cull their backs), corners in the frame's (u, w, y). */
+const pane = (sink: MeshSink, f: PavilionFrame, c: readonly (readonly [number, number, number])[], n: Vec, seed: number): void => {
+  const [a, b, d, g] = c.map(([u, w, y]) => f.at(u, w, y)) as [Vec, Vec, Vec, Vec];
+  const color = signTint(GLASS, 1);
+  quadUv(sink, [a, b, d, g], n, color, UV, [seed, MAP_SIGN_KIND.glass]);
+  quadUv(sink, [b, a, g, d], { x: -n.x, y: -n.y, z: -n.z }, color, [UV[1], UV[0], UV[3], UV[2]], [seed, MAP_SIGN_KIND.glass]);
+};
+
+/** The pavilion's glass (ADR-0071: a low glass pavilion): the long sides and the end over the plinth, up to the roof. */
+const planGlass = (sink: MeshSink, f: PavilionFrame): void => {
+  const [y0, y1] = [f.street + PLINTH, f.top];
+  for (const k of [-1, 1] as const)
+    pane(sink, f, [[0, k * f.half, y0], [f.length, k * f.half, y0], [f.length, k * f.half, y1], [0, k * f.half, y1]], { x: f.across.x * k, y: 0, z: f.across.z * k }, k > 0 ? 0.13 : 0.61);
+  const end = f.length - 0.25;
+  pane(sink, f, [[end, -f.inner, y0], [end, f.inner, y0], [end, f.inner, y1], [end, -f.inner, y1]], { x: f.inward.x, y: 0, z: f.inward.z }, 0.37);
+};
+
+const planOne = (sink: MeshSink, f: PavilionFrame, lite: boolean): void => {
   const e = f.e;
+  // On the phone the bake keeps its opaque panes (`pavilion-bake.ts`), so no glass over them.
+  if (!lite) planGlass(sink, f);
   const r = e.roof;
   const text = [...pavilionTitle(e)].filter((ch) => glyphCell(ch) !== null).join("");
   const y = f.top + 0.025;
@@ -75,11 +98,11 @@ const planOne = (sink: MeshSink, f: PavilionFrame): void => {
 };
 
 /**
- * The letters of the pavilions standing in a cell of the map city. The cell builder calls it
- * only for a cell that has signs already, so they never make a mesh of their own.
+ * The glass and the letters of the pavilions standing in a cell of the map city. The glass is the
+ * pavilion's walls off the phone, so the cell builder calls it for every cell, signs or none.
  */
-export const planPavilionSigns = (sink: MeshSink, bounds: Box2, entrances: readonly Entrance[] = METRO_ENTRANCES): number => {
+export const planPavilionSigns = (sink: MeshSink, bounds: Box2, lite: boolean, entrances: readonly Entrance[] = METRO_ENTRANCES): number => {
   const here = entrances.filter((e) => e.spot.x >= bounds.minX && e.spot.x < bounds.maxX && e.spot.z >= bounds.minZ && e.spot.z < bounds.maxZ);
-  for (const e of here) planOne(sink, pavilionFrame(e));
+  for (const e of here) planOne(sink, pavilionFrame(e), lite);
   return here.length;
 };

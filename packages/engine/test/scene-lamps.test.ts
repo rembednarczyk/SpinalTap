@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLAC_ZAMKOWY_LAMPS, RUSKA_LAMPS } from "@seki/sim";
+import { METRO_HALL_LAMPS, PLAC_ZAMKOWY_LAMPS, RUSKA_LAMPS, SCENE_LAMP_GROUPS } from "@seki/sim";
 import type { PointLightDef } from "../src/npr/lighting";
 import { SCENE_LAMP_SLOTS, SceneLamps } from "../src/renderer/mapcity/scene-lamps";
 
@@ -28,8 +28,11 @@ describe("the scenes' lamps", () => {
     lamps.update({ x: x + 200, y: 0, z }, true);
     expect(lights.size).toBe(0);
     lamps.update({ x: x + 20, y: 0, z }, true);
-    expect(lamps.groupsOn).toEqual([PLAC_ZAMKOWY_LAMPS.id]);
-    expect(lights.size).toBe(Math.min(SCENE_LAMP_SLOTS, PLAC_ZAMKOWY_LAMPS.lamps.length));
+    // The square's group, and the halls of the metro's glass pavilions within their reach (the square's own, 24.11).
+    expect(lamps.groupsOn[0]).toBe(PLAC_ZAMKOWY_LAMPS.id);
+    const on = SCENE_LAMP_GROUPS.filter((g) => lamps.groupsOn.includes(g.id));
+    expect(on.slice(1).every((g) => METRO_HALL_LAMPS.includes(g))).toBe(true);
+    expect(lights.size).toBe(Math.min(SCENE_LAMP_SLOTS, on.reduce((n, g) => n + g.lamps.length, 0)));
     // Just past its reach it holds, a margin farther it goes.
     lamps.update({ x: x + PLAC_ZAMKOWY_LAMPS.near + 2, y: 0, z }, true);
     expect(lights.size).toBeGreaterThan(0);
