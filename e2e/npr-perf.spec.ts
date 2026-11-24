@@ -77,8 +77,8 @@ const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; y?: 
  * The city's scenes in TPP share one game (ADR-0046, 21.11): the title screen and a new game took
  * about 30 s of each scene's 55 (some 50 s of 85-90 on a slow runner, past the 90 s limit with
  * the frames), so the game starts once and each scene only puts the player at its spot and walks.
- * In order, as before; the W-3 and phone scenes keep a game of their own (W-3's checks its chunks
- * exactly, the phones another quality).
+ * In order, as before, P-2 after P-1 and the building site at Zielona last (24.11); the W-3 and phone
+ * scenes keep a game of their own (W-3's checks its chunks exactly, the phones another quality).
  */
 test.describe("the city in TPP, one game", () => {
   test.describe.configure({ mode: "serial" });
@@ -134,23 +134,25 @@ test.describe("the city in TPP, one game", () => {
     expect(s.loadedChunks).toContain("krakowskie-2-1");
     within("alchemia-p1", await sampleNow(page));
   });
-});
 
-test("Alchemia's car park P-2 in TPP stays within the perf budget", async ({ page }) => {
-  // In P-2's automated store under P-1 (ADR-0074 stage 5a), on the service aisle by the control room walking north-west:
-  // the racks with the cars on their pallets, the robots' lane with its orange beacons, the flight from P-1 in the frame.
-  await tppAt(page, { x: 413.5, z: 8, y: -9.2, yaw: -Math.PI / 5, walk: 12 });
-  const s = await gameState(page);
-  expect(s.loadedChunks).toContain("krakowskie-2-1");
-  within("alchemia-p2", await sampleNow(page));
-});
+  // In the shared game since 24.11, as the building site at Zielona after it: on its own each paid a new game (some 50 s
+  // of a slow runner's 90); P-2 ran out of time on main and on pull requests three times that day, Zielona once.
+  test("Alchemia's car park P-2 in TPP stays within the perf budget", async () => {
+    // In P-2's automated store under P-1 (ADR-0074 stage 5a), on the service aisle by the control room walking north-west:
+    // the racks with the cars on their pallets, the robots' lane with its orange beacons, the flight from P-1 in the frame.
+    await tppAt(page, { x: 413.5, z: 8, y: -9.2, yaw: -Math.PI / 5, walk: 12 });
+    const s = await gameState(page);
+    expect(s.loadedChunks).toContain("krakowskie-2-1");
+    within("alchemia-p2", await sampleNow(page));
+  });
 
-test("the building site at Zielona 5A in TPP stays within the perf budget", async ({ page }) => {
-  // On Zielona south-west of the site's gate (ADR-0087), walking north-east to it: the fence with its ads, the gate and
-  // the board, the containers and the crane over the dig in the frame (no scaffold since G-893: its wall bears a venue's board).
-  await tppAt(page, { x: 238.8, z: -6.5, yaw: 0.675, walk: 20 });
-  expect((await gameState(page)).loadedChunks).toContain("krakowskie-1-1");
-  within("zielona-budowa-tpp", await sampleNow(page));
+  test("the building site at Zielona 5A in TPP stays within the perf budget", async () => {
+    // On Zielona south-west of the site's gate (ADR-0087), walking north-east to it: the fence with its ads, the gate and
+    // the board, the containers and the crane over the dig in the frame (no scaffold since G-893: its wall bears a venue's board).
+    await tppAt(page, { x: 238.8, z: -6.5, yaw: 0.675, walk: 20 });
+    expect((await gameState(page)).loadedChunks).toContain("krakowskie-1-1");
+    within("zielona-budowa-tpp", await sampleNow(page));
+  });
 });
 
 test("Tessen's W-3 from the Lutosławski bridge at night in TPP stays within the perf budget", async ({ page }) => {
