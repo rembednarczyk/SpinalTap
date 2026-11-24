@@ -49,11 +49,11 @@ const metroLight = (key: string, at: { readonly x: number; readonly z: number },
 
 const metroLamp = (): SceneLamp => metroLight("targ-pz-metro", PLAC_ZAMKOWY_METRO.at, PLAC_ZAMKOWY_METRO.yaw);
 
-/** Plac Zamkowy: one light in each stall's festoon and the pavilion's green lamp, on within 60 m of the square's middle. */
+/** Plac Zamkowy: one light in each stall's festoon and the pavilion's green lamp, on within 85 m of the market's middle (its 23 stalls over 130 m). */
 export const PLAC_ZAMKOWY_LAMPS: SceneLampGroup = {
   id: "targ-plac-zamkowy",
   centre: { x: (PLAC_ZAMKOWY_AREA.minX + PLAC_ZAMKOWY_AREA.maxX) / 2, z: (PLAC_ZAMKOWY_AREA.minZ + PLAC_ZAMKOWY_AREA.maxZ) / 2 },
-  near: 60,
+  near: 85,
   lamps: [...PLAC_ZAMKOWY_STALLS.map((s, i) => festoonOf(s, `targ-pz-festoon-${i}`)), metroLamp()],
 };
 
