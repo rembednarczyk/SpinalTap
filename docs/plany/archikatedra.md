@@ -11,12 +11,12 @@ Układ osi kościoła: oś 6,3° od osi x świata ku +z przez środek obrysu (63
 | Element | NMPT | Gra przed K1 | K1 |
 |---|---|---|---|
 | Portyk | u −37…−31 (6 m przed frontem OSM), v −8…14, taras y 13–14 | brak | 6 kolumn r 0,7 m co 4,16 m, 5,8 m od frontu, taras y 13 (`PORTICOES`) |
-| Kruchta i kaplice | u −31…11, v −12,5…17,5: y 13–15 | ściany do y 19,5 | część `korpus` do y 14 |
+| Kruchta i kaplice | u −31…11, v −12,5…17,5: y 13–15 | ściany do y 19,5, dach czterospadowy 7 m do 26,5 | część `korpus` do y 14 |
 | Pomieszczenia przy prezbiterium | u 11…21, y 10–13 | 19,5 | `prezbiterium-pn/pd` do 11,5, pas pod nawą do 14 |
 | Zakrystie i przybudówki (wschód, południe) | y 7–9 | 19,5 | obrys do y 8,3, płaski |
-| Nawa | okap y 25 (v 10,5 i −4,5), kalenica 31 (v 2–4), absyda do u 21 | okap 22,1, kalenica 29,1, absyda do u 24,5 | okap 25, kalenica 31,5, obrys OSM przesunięty o 3,5 m na zachód |
-| Fronton między wieżyczkami | u −26…−24, y 33–34, szczyt 35 przy v 2–4 | brak | część `fronton` do 33 z trójkątem do 35,3 |
-| Wieżyczki fasady | korpusy u −26…−20, v 10…16 i −11…−5, gzyms 33–35, szczyt hełmu 43 | ściany do 29,3, kopuła do 32,3, 3,3–3,5 m na wschód | do 33,5, hełm cebulasty z latarnią i krzyżem do 43, obrysy przesunięte |
+| Nawa | okap y 25 (v 10,5 i −4,5), kalenica 31 (v 2–4), absyda do u 21 | okap 29,1, kalenica 36,1 (4,5 m za wysoko), absyda do u 24,5 | okap 25, kalenica 31,5, obrys OSM przesunięty o 3,5 m na zachód |
+| Fronton między wieżyczkami | u −26…−23,3, y 33–34, szczyt 35 przy v 2–4 | brak | część `fronton` do 33 z trójkątem do 35,3, nad dachem nawy do u −21,4 (środek części w chunku katedry, x ≥ 610; do skrócenia, gdy import przypisze część do chunku jej budynku) |
+| Wieżyczki fasady | korpusy u −26…−20, v 10…16 i −11…−5, gzyms 33–35, szczyt hełmu 43 | ściany do 32,3, kopuła do 35,3, 3,3–3,5 m na wschód | do 33,5, hełm cebulasty z latarnią i krzyżem do 43, obrysy przesunięte |
 | Sygnaturka na kalenicy | u 3…5, v 2…4, do ok. 35 | brak | K3 |
 | Kopuły kaplic | u ≈ 5, v ≈ 13,5 i −7, do 22–23 | brak | K3 |
 
