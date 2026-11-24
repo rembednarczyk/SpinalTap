@@ -38,7 +38,7 @@ Przed chwilą (§5, jest w grze): przy stoliku na wschód od fontanny ktoś zerw
 ## Frakcja i zasady
 Frakcja: korporacja, ulica (plac galerii inwestora, na którym siedzi i je deptak).
 - §12 zgodne: z wąskiego chodnika Bajkowskiego schody prowadzą na szeroki, podniesiony plac, a z niego pod niski podcień arkad (strop 2,3, około 2,9 m nad podium) albo w dół do przejścia pod L2. Próg zmienia wysokość i materiał (kostka ulicy, kamień podium, posadzka podcienia). Wymiary stopni według §6 (0,16 × 0,30), podium na rzucie z planszy i NMT, poza siatką 0,5 m.
-- §13 częściowo: każde światło ma oprawę (pas w nosie, obręcz, witryny, lampy parasoli), droga po schodach jest jaśniejsza. Brak pomiaru 60-30-10 nocą. Akcentów jest dużo naraz (różowy i cyjanowy holo-ekran, szyldy kiosków, hologram fontanny, napis L3), do sprawdzenia, czy nie przekraczają 15%.
+- §13 częściowo: każde światło ma oprawę (pas w nosie, obręcz, witryny, lampy parasoli), droga po schodach jest jaśniejsza. Brak pomiaru 60-30-10 nocą. Akcentów jest dużo naraz (różowy i cyjanowy holo-ekran, szyldy kiosków, hologram fontanny, napis L3), do sprawdzenia, czy nie przekraczają 15%. Pomiar nocny 24.11 (22:00, ujęcie `alchemia-plac-frontu` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 42,6/54,9/2,5, za jasno, akcent poniżej 3%.
 - §14 zgodne: trzy warstwy (kioski i stoliki, automaty i donice, kubki, ulotki, kartony) i skupiska przy ladach i stolikach. Do dołożenia drobiazg przy automatach i koszach.
 - §15 częściowo: woda fontanny i szkło witryn dają połysk, posadzka jest ciemna jak mokry kamień, ale bez kałuż i bez wody kapiącej z markiz, choć deszcz tu pada.
 - §16 zgodne: czysty kamień i franczyzowe kioski inwestora z ulicznym tłumem i prowizorycznym kablem; kontrast jest treścią placu.

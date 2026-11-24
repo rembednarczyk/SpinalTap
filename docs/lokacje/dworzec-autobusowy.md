@@ -43,7 +43,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 częściowo: wąskie przejście między pawilonami przy alei a dworcem prowadzi na długi peron, ale bez zadaszenia nie ma ciasnego stropu ani otwarcia; peron i parking to jedna płaska płyta.
-- §13 dług: 7 latarni parkowych na całe 170 m; tablica odjazdów, wiaty i stanowiska bez światła; wejście do metra bez zielonego światła. 60-30-10 niemierzone (zrzut nocny z alei na dworzec).
+- §13 dług: 7 latarni parkowych na całe 170 m; tablica odjazdów, wiaty i stanowiska bez światła; wejście do metra bez zielonego światła. 60-30-10 niemierzone (zrzut nocny z alei na dworzec). Pomiar nocny 24.11 (22:00, ujęcie `dworzec` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 87,3/11,2/1,5, za ciemno.
 - §14 dług: makro i mezo prawie brak (1 budka, 1 automat, 1 bankomat, 2 postacie), mikro 3 rzeczy `clutter` i 6 graffiti; peron jest pusty.
 - §15 dług: mokry beton bez szkła wiat, bez blachy zadaszenia, bez lakieru autobusów.
 - §16 częściowo: miejsce ulicy (Hebi, kebab, lotto), ale bez prowizorki, która by to pokazywała.

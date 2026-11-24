@@ -46,7 +46,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica, technika (klinika Mori).
 - §12 zgodne: deptak ok. 21 m szerokości między fasadami (z −72,5 i −94) po wejściu z ciasnych drzwi kliniki (1,6 m) daje otwarcie. Próg ulica/wnętrze zmienia światło i strop (drzwi kliniki i baru). Dług: przerwa przy x ≈ 280–292 na podwórko za Koi jest szeroka jak plac, bez bramy ani zwężenia.
-- §13 częściowo: każde światło ma źródło (neony na fasadach, lampy gry). Nawigacja: cel prologu (drzwi Koi) jest oznaczony tylko różowym neonem nad drzwiami, który jest akcentem, a nie światłem drogi; zielony PACHINKO myli barwę wejść z §4. Udziału 60-30-10 nie mierzono: zrzut nocny ze sceny `reference` (Neon Koi od deptaka) przez `pnpm shots:palette`.
+- §13 częściowo: każde światło ma źródło (neony na fasadach, lampy gry). Nawigacja: cel prologu (drzwi Koi) jest oznaczony tylko różowym neonem nad drzwiami, który jest akcentem, a nie światłem drogi; zielony PACHINKO myli barwę wejść z §4. Udziału 60-30-10 nie mierzono: zrzut nocny ze sceny `reference` (Neon Koi od deptaka) przez `pnpm shots:palette`. Pomiar nocny 24.11 (22:00, ujęcie `deptak-krakowskie` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 82,9/15,8/1,3, za ciemno.
 - §14 częściowo: makro i mezo z mebli ulicznych (17 ławek, 11 drzew, 5 donic, automat), mikro tylko 5 naklejek i 5 rzeczy `clutter` w 45 m. Brak skupisk przy drzwiach baru i kliniki.
 - §15 zgodne: mokre płyty z odbiciami neonów i lamp (`atmosphere.addReflection`), szkło witryn obok matowego tynku.
 - §16 zgodne: ulica (neony, ciepły brudny żółty, prowizorka); klinika jako wtręt techniki.

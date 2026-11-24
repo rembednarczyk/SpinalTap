@@ -42,7 +42,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: korporacja, ulica (urząd miasta nad deptakiem).
 - §12 zgodne: deptak (ok. 20 m) otwiera się na plac szeroki na ok. 90 m, a za placem Bramowa zwęża się do 3,6 m w przejeździe bramy; to kompresja i otwarcie z prawdziwego układu. Dług: próg Krakowskie i Stare Miasto czytelny tylko przez bramę, plac sam nie zmienia nawierzchni ani światła przed nią.
-- §13 częściowo: wszystkie światła mają oprawy (pastorały, reflektory bramy), ale żadne nie niesie znaczenia nawigacji: wejście do metra nie ma zielonego światła, brama ma ciepłe reflektory, jak cała reszta. 60-30-10 niemierzone (zrzut nocny z deptaka na Bramę, `pnpm shots:palette`).
+- §13 częściowo: wszystkie światła mają oprawy (pastorały, reflektory bramy), ale żadne nie niesie znaczenia nawigacji: wejście do metra nie ma zielonego światła, brama ma ciepłe reflektory, jak cała reszta. 60-30-10 niemierzone (zrzut nocny z deptaka na Bramę, `pnpm shots:palette`). Pomiar nocny 24.11 (22:00, ujęcie `plac-lokietka` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 63,8/35,2/1,1, brak akcentu.
 - §14 częściowo: makro i mezo z mebli (53 słupki, 14 ławek, 2 budki, automat, bankomat), mikro 5 naklejek i 4 rzeczy `clutter`; skupisk przy budkach i makiecie brak.
 - §15 częściowo: mokra posadzka z odbiciami; szkła i chromu brak poza pawilonem metra.
 - §16 częściowo: porządek urzędu (korporacja) jest, brud ulicy tylko na pierzei południowej; brak stróża albo kamery Ratusza, która mówiłaby, czyj to plac.

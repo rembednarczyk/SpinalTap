@@ -43,7 +43,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 zgodne: ciasne rzędy straganów pod daszkami otwierają się na Ruską i plac przed cerkwią; Ciasna i Targowa są wąskimi przejściami. Dług: bez daszków (G-063) rzędy nie mają niskiego stropu.
-- §13 dług: tylko latarnie drogowe; nocny targ bez girland i lamp nad ladami, a 10% akcentów to wyłącznie neony sklepów. Grupa Hebi bez czerwonego akcentu. 60-30-10 niemierzone (zrzut nocny z Nowego Placu Targowego na wschód).
+- §13 dług: tylko latarnie drogowe; nocny targ bez girland i lamp nad ladami, a 10% akcentów to wyłącznie neony sklepów. Grupa Hebi bez czerwonego akcentu. 60-30-10 niemierzone (zrzut nocny z Nowego Placu Targowego na wschód). Pomiar nocny 24.11 (22:00, ujęcie `ruska` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 87,3/11,8/0,9, za ciemno.
 - §14 częściowo: makro i mezo z mebli (131 straganów, 25 `market-goods`, 3 wózki), mikro 22 naklejki, 11 graffiti, 4 rzeczy `clutter`; skupisk przy wózkach i grupie Hebi brak. Gęstość targu odpowiada biedzie (§2), drobiazgu za mało.
 - §15 częściowo: mokry asfalt; brak folii, plandek i mokrej posadzki pod straganami z rybami.
 - §16 zgodne: prowizorka, beton, folia, neony sklepików.
