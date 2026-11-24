@@ -54,15 +54,16 @@ describe("a tower of the map (G-232)", () => {
     }
   });
 
-  it("the belfries have a tented roof, the keep its flat top, the Trinity Tower its parts", () => {
+  it("the belfries have a tented roof, the keep its flat top, the Trinity Tower its spire", () => {
     for (const id of ["w680377807", "w1382552285"]) {
       expect(frameOf(id).style.roof, id).toBe("pyramid");
       expect(byId(id).roof ?? 0, id).toBeGreaterThan(0.3);
     }
     expect(frameOf("w450180469").style.roof, "the keep's crown is flat in the map").toBe("flat");
     const trinity = frameOf("w66286371");
-    expect(trinity.b.carriesParts).toBe(true);
-    expect(trinity.style.roof, "its helmet and lantern are its parts").toBe("flat");
+    // Its OSM parts are off since T-353 (K4): the tower carries its own spire roof, the recipe's crown.
+    expect(trinity.b.carriesParts ?? false, "no parts on the tower").toBe(false);
+    expect(trinity.style.roof, "the spire is its own roof").toBe("pyramid");
     expect(trinity.style.window).toBe(WINDOW_STYLE.civic);
   });
 });
