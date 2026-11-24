@@ -146,4 +146,23 @@ describe("marketplace stalls (G-064)", () => {
     expect(stalls.length).toBeGreaterThan(120);
     expect(stalls.filter((s) => !underTent(ruska.tents!, s)).map((s) => `${s.x}, ${s.z}`)).toEqual([]);
   });
+
+  it("keeps every stall's canvas clear of the canopies' posts (G-966: Targ na Ruskiej's roof w1547216433)", () => {
+    const posts = CHUNKS.flatMap((c) => (c.canopies ?? []).flatMap((cp) => Array.from({ length: cp.posts.length / 2 }, (_, k) => ({ x: cp.x + cp.posts[2 * k]!, z: cp.z + cp.posts[2 * k + 1]! }))));
+    expect(posts.length).toBeGreaterThan(10);
+    const stalls = [...cityProps().byChunk.values()].flat().filter((i) => i.prop === "market-stall");
+    const near = stalls.flatMap((s) =>
+      posts
+        .map((p) => {
+          // The post in the stall's frame: across its counter (local x) and through it (local z).
+          const [dx, dz] = [p.x - s.x, p.z - s.z];
+          const [u, v] = [dx * Math.cos(s.yaw) - dz * Math.sin(s.yaw), dx * Math.sin(s.yaw) + dz * Math.cos(s.yaw)];
+          return { s, d: Math.hypot(Math.max(Math.abs(u) - 1.2, 0), Math.max(Math.abs(v) - 0.9, 0)) };
+        })
+        // The generator keeps 0.3 m (`POST_CLEAR`); the table rounds positions to 0.1 m and yaws to 0.01, so 0.25 here.
+        .filter((x) => x.d < 0.25)
+        .map((x) => `${x.s.x},${x.s.z}: ${x.d.toFixed(2)} m`),
+    );
+    expect(near).toEqual([]);
+  });
 });
