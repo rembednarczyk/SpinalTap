@@ -1,4 +1,5 @@
-import { type StreetPropItem, type Vec3, roomDetailShape } from "@seki/core";
+import { type StreetPropItem, roomDetailShape } from "@seki/core";
+import type { SceneLamp, SceneLampGroup } from "./scene-lamp";
 import { turnLocal } from "./lublin/furniture";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { onRoad } from "./lublin/roads";
@@ -20,22 +21,7 @@ import { TERRITORY_GROUPS } from "./territory-groups";
  * film and game lighting practice name it); they carry no entity, so no id of the content moves.
  */
 
-/** A light of a scene, in its fitting: where, its colour, how far it reaches and how strong it is. */
-export interface SceneLamp {
-  readonly key: string;
-  readonly at: Vec3;
-  readonly color: string;
-  readonly range: number;
-  readonly intensity: number;
-}
-
-/** Lights of one place, on while the eye is within `near` of `centre`. */
-export interface SceneLampGroup {
-  readonly id: string;
-  readonly centre: { readonly x: number; readonly z: number };
-  readonly near: number;
-  readonly lamps: readonly SceneLamp[];
-}
+export type { SceneLamp, SceneLampGroup } from "./scene-lamp";
 
 /** The festoon's middle in a stall's frame (`rd-pz-stall`): between its front posts, a little under its sagging bulbs. */
 const FESTOON = { x: 0, y: 2.0, z: 0.72 } as const;

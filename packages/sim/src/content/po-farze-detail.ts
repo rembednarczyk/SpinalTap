@@ -1,5 +1,5 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
-import type { SceneLampGroup } from "./district-targ";
+import type { SceneLampGroup } from "./scene-lamp";
 import { turnLocal } from "./lublin/furniture";
 import { groundY } from "./lublin/terrain";
 
