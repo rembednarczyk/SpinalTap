@@ -111,17 +111,17 @@ export const KATEDRA_CORRECTIONS: readonly TagCorrection[] = [
  * Gruella's passage w298307007 (x 586.6-587.6) on the tower's axis when moved; OSM's parts are an
  * octagonal body to 50 m and a 10 m green top, where LoD2 has the eaves at 37.8 m over the ground and
  * the ridge at 59.5 m (y 36.9 and 58.6) and NMPT the corners at y 25-27, the sides' middles at 37-39
- * (the gables) and the spire to 51 m and over. The spire's tip at 58.6: `height` over the 2 m plinth
- * (y −0.9), so 57.4; the import holds a roof to half the height, so the eaves stand at y 29.9, 3 m over
- * NMPT's corners, and the gables over them reach 38.5. The spire, gables and pinnacles are the
- * recipe's (`landmarks/spire.ts`). OSM's parts give way to them.
+ * (the gables) and the spire to 51 m and over. The body's cornice at y 25.5 (NMPT's ring round the
+ * body at 24-27) and the spire's tip at 58.6: `height` over the 2 m plinth (y −0.9), so 57.4 with a
+ * 33.1 m roof (a measured roof is kept as tagged, `building-tags.ts`). The spire, the gables to 37.5
+ * and the pinnacles are the recipe's (`landmarks/spire.ts`). OSM's parts give way to them.
  */
 const TOWER_SHIFT = { x: -4.9, z: 0 };
 
 export const TRYNITARSKA_CORRECTIONS: readonly TagCorrection[] = [
   {
     id: "w66286371",
-    tags: { height: "57.4", "roof:height": "31.6", "roof:shape": "pyramidal" },
+    tags: { height: "57.4", "roof:height": "33.1", "roof:shape": "pyramidal" },
     shift: TOWER_SHIFT,
     reason: "Wieża Trynitarska: obrys 4,9 m na zachód jak w LoD2 i NMPT (przejazd Gruella w osi), korpus do y 27 i iglica do y 58,6 z LoD2 i NMPT wobec beżowego korpusu do 51,2 i hełmu do 61,2",
     ref: "T-353",
@@ -136,15 +136,16 @@ export const TRYNITARSKA_CORRECTIONS: readonly TagCorrection[] = [
   ),
   {
     // The rectory w66286370: its east wall was the tower's west wall in OSM (x 582.8-584.0); now on the
-    // tower's moved one (x 577.9-579.1), its two corner nodes by it left out.
+    // tower's moved one (x 577.9-579.1), its north-east corner moved onto that line, two nodes by its south end left out.
     id: "w66286370",
     tags: {},
     drop: [
-      { x: 578.93, z: -139.96 },
       { x: 579.91, z: -154.2 },
       { x: 580.0, z: -154.63 },
     ],
     move: [
+      // Its north-east corner on the tower's moved wall's line (NMPT has its roof to z −139 there).
+      { from: { x: 578.93, z: -139.96 }, to: { x: 577.85, z: -139.96 } },
       { from: { x: 582.81, z: -141.02 }, to: { x: 577.91, z: -141.02 } },
       { from: { x: 584.03, z: -153.86 }, to: { x: 579.13, z: -153.86 } },
     ],

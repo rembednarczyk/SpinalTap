@@ -46,13 +46,15 @@ export type Crown =
 /**
  * A neo-Gothic tower's top (`spire.ts`): over the cornice a gable `gable` metres tall on each side
  * (a clock in it), pinnacles `pinnacle` metres in from the corners, an octagonal spire to the data's
- * peak, its foot `base` of the body's half side.
+ * peak, its foot `base` of the body's half side, as wide to `shoulder` metres over the cornice.
  */
 export interface SpireCrown {
   readonly kind: "spire";
   readonly gable: number;
   readonly pinnacle: number;
   readonly base: number;
+  /** Metres over the cornice the spire keeps (nearly) its foot's width to, its broach behind the gables, before it tapers. */
+  readonly shoulder: number;
   readonly clock: boolean;
 }
 
