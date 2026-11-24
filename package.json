@@ -47,6 +47,7 @@
     "topo:review": "bash tools/topo-review.sh",
     "apk:fetch": "bash tools/apk-fetch.sh",
     "hashes:check": "node tools/hashes/src/check.ts",
+    "grid:verify": "node tools/grid-verify/src/verify.ts",
     "map:refresh": "node tools/map-refresh/src/refresh.ts"
   },
   "devDependencies": {

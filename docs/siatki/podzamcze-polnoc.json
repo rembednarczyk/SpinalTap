@@ -1,0 +1,10 @@
+{
+  "nazwa": "podzamcze-polnoc",
+  "chunki": ["podzamcze-0-2", "podzamcze-1-2", "podzamcze-2-2"],
+  "baza": "origin/main",
+  "decyzje": {
+    "nmt": { "status": "zrobione", "odnosnik": "T-343" },
+    "brzeg": { "status": "zrobione", "odnosnik": "T-342 (cerkiew św. Eliasza, 13% obrysu)" },
+    "skan-siatka": { "status": "przyjete", "odnosnik": "G-965", "uwagi": "steps-riser-norm przy Szkolnej przyjęte do naprawy osobno" }
+  }
+}

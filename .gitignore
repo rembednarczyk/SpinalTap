@@ -15,3 +15,6 @@ __pycache__/
 .vitest/
 # tryb nieobecności użytkownika (tools/session-mode)
 .claude/asleep
+
+# Hook nowej siatki (tools/grid-verify): stan sesji, nie repozytorium.
+.claude/grid-active

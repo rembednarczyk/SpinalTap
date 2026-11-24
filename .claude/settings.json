@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/tools/grid-verify/hook.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
