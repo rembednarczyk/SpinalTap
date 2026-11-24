@@ -43,7 +43,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 zgodne: ciasne przejście pod wiaduktem i wąska grobla Zamkowej otwierają się na plac szeroki na ok. 120 m, a schody zamkowe wznoszą się na nim ku bramie Zamku; to sekwencja ciasno i szeroko w górę. Dług: przecięte Podwale (T-024) zamyka jedno z dojść.
-- §13 częściowo: kandelabry i pastorały mają oprawy, ale cały plac świeci jedną ciepłą barwą. Nawigacja: wejście do metra i dolny bieg schodów bez wyróżnienia (G-205: kandelabry dolne na skarpie). 60-30-10 niemierzone (zrzut nocny z wiaduktu na plac, `pnpm shots:palette`).
+- §13 częściowo: kandelabry i pastorały mają oprawy, ale cały plac świeci jedną ciepłą barwą. Nawigacja: wejście do metra i dolny bieg schodów bez wyróżnienia (G-205: kandelabry dolne na skarpie). 60-30-10 niemierzone (zrzut nocny z wiaduktu na plac, `pnpm shots:palette`). Pomiar nocny 24.11 (22:00, ujęcie `plac-zamkowy` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 85,3/14,4/0,3, za ciemno.
 - §14 częściowo: makro i mezo bogate (23 stragany, 27 aut, 43 drzewa, 23 kosze z kwiatami), mikro 2 rzeczy `market-goods` i 2 graffiti; skupisk przy kocach brak.
 - §15 częściowo: mokry bruk i lakier aut; brak szkła i chromu na straganach z elektroniką.
 - §16 zgodne: ulica w socrealistycznej oprawie, ciepły żółty kandelabrów, prowizoryczne stragany.

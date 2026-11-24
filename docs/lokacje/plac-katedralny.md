@@ -42,7 +42,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: korporacja, ulica (kościół jako właściciel placu; ulica na jego skraju).
 - §12 zgodne: wąska Jezuicka i przejście pod wieżą (3,4 m) otwierają się na plac szeroki na ok. 60 m z fasadą katedry; to najmocniejsza kompresja i otwarcie Starego Miasta. Dług: przejście poza osią (G-683).
-- §13 częściowo: iluminacja ma oprawy (reflektory), latarenki i pastorały też. Brakuje czerwonego światła masztu, które plan ulic daje wieży, i światła drogi przy schodach ku Podwalu. 60-30-10 niemierzone (zrzut nocny z bramy wieży na katedrę).
+- §13 częściowo: iluminacja ma oprawy (reflektory), latarenki i pastorały też. Brakuje czerwonego światła masztu, które plan ulic daje wieży, i światła drogi przy schodach ku Podwalu. 60-30-10 niemierzone (zrzut nocny z bramy wieży na katedrę). Pomiar nocny 24.11 (22:00, ujęcie `plac-katedralny` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 83,4/15,3/1,3, za ciemno.
 - §14 częściowo: makro i mezo z mebli (18 drzew, 4 ławki, pomnik, figura), mikro brak (0 rzeczy `clutter` w obrysie placu); dla placu kościelnego to dopuszczalne tylko na płycie przed portykiem.
 - §15 częściowo: mokry bruk i płyty, szkło drzwi; brak połysku metalu (antena, kasa) i wosku pod pomnikiem.
 - §16 częściowo: porządek właściciela jest (pusto, czysto), ale nic nie mówi, kto go pilnuje: brak ochrony, kamery i bramek muzeum.

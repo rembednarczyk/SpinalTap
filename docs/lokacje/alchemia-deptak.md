@@ -37,7 +37,7 @@ Przed chwilą (§5, jest w grze): klient yatai odszedł od stołka, a jego miska
 ## Frakcja i zasady
 Frakcja: ulica (handel z kiosków i straganów, nocny yatai).
 - §12 zgodne: z ciasnego wylotu metra B i spod płyty L2 wychodzi się na szeroki deptak; na południu przestrzeń zamykają sznury lampionów między pawilonem a kamienicą (niski „sufit” ze światła), na północy otwiera się Lubartowska. Próg na końcach daje zmiana nawierzchni (kostka i asfalt) i rząd słupków. Wymiary z obrysów OSM, poza siatką 0,5 m (§1).
-- §13 częściowo: każde światło ma oprawę (lampiony, lampy straganów, neony na wspornikach, latarnie). Ciepłe światło jedzenia zgodne z §4. Pomiar 60-30-10 nocą nie istnieje. Wylot metra B i schody na T1 nie są wyróżnione zielenią nawigacji.
+- §13 częściowo: każde światło ma oprawę (lampiony, lampy straganów, neony na wspornikach, latarnie). Ciepłe światło jedzenia zgodne z §4. Pomiar 60-30-10 nocą nie istnieje. Wylot metra B i schody na T1 nie są wyróżnione zielenią nawigacji. Pomiar nocny 24.11 (22:00, ujęcie `alchemia-deptak` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 73,7/22,9/3,4, zgodne.
 - §14 częściowo: trzy warstwy przy straganach i yatai, skupiska przy ladach. Kioski mają tylko klientów, bez drobiazgu.
 - §15 zgodne: mokra kostka z odbiciami latarni i neonów, szkło pawilonu; mat drewna yatai i kartonów obok.
 - §16 zgodne: prowizorka ulicy (kable na taśmie, skrzynki jako podstawa) przy szkle galerii i neonach.

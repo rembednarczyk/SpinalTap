@@ -43,7 +43,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica.
 - §12 zgodne: ciasna, kręta Bramowa otwiera się na Rynek 62 × 72 m z Trybunałem pośrodku; kompresja i otwarcie są w prawdziwym układzie miasta.
-- §13 częściowo: latarenki i neony mają źródła, barwy niosą znaczenie (ciepły handel, cyjan techniki u Tetsu). Nawigacja: drzwi Trasy Podziemnej mają ciepły neon (zgodne); wyjście na Grodzką nie ma światła drogi. 60-30-10 niemierzone: zrzut sceny `rynek-tpp` (Bramowa na Rynek o 21:01) przez `pnpm shots:palette`.
+- §13 częściowo: latarenki i neony mają źródła, barwy niosą znaczenie (ciepły handel, cyjan techniki u Tetsu). Nawigacja: drzwi Trasy Podziemnej mają ciepły neon (zgodne); wyjście na Grodzką nie ma światła drogi. 60-30-10 niemierzone: zrzut sceny `rynek-tpp` (Bramowa na Rynek o 21:01) przez `pnpm shots:palette`. Pomiar nocny 24.11 (22:00, ujęcie `rynek` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 71,2/27,4/1,4, brak akcentu.
 - §14 częściowo: makro i mezo z mebli (stragany, ogródki, latarenki), mikro 7 rzeczy `clutter` w 40 m; skupisk przy lokalach brak.
 - §15 zgodne: mokre kocie łby z odbiciami neonów i lamp; szkło witryn.
 - §16 zgodne: ulica w zabytkowej oprawie, ciepły żółty latarenek i neony lokali.

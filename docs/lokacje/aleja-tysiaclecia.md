@@ -43,7 +43,7 @@ Drobiazg w skupiskach:
 ## Frakcja i zasady
 Frakcja: ulica, korporacja (handel Bazaru przy alei miasta).
 - §12 częściowo: aleja to szeroka otwarta przestrzeń bez ciasnego przedsionka; ciasne są tylko przejścia między budami hal. Dług: wejście z alei do hal bez progu (brama, daszek, zmiana nawierzchni).
-- §13 częściowo: latarnie mają oprawy, ale aleja świeci jednolicie, a hale są ciemne; brak ciepłego światła handlu przy straganach i czerwonego przy grupie Hebi. Scena budżetu `podzamcze-tpp` (795; 339, na zachód) jest punktem do pomiaru 60-30-10 (`pnpm shots:palette`), dziś niemierzone.
+- §13 częściowo: latarnie mają oprawy, ale aleja świeci jednolicie, a hale są ciemne; brak ciepłego światła handlu przy straganach i czerwonego przy grupie Hebi. Scena budżetu `podzamcze-tpp` (795; 339, na zachód) jest punktem do pomiaru 60-30-10 (`pnpm shots:palette`), dziś niemierzone. Pomiar nocny 24.11 (22:00, ujęcie `aleja-tysiaclecia` w `tools/shots/plaza-spots.json`, baza/światło/akcenty w %): 68,8/30,4/0,8, brak akcentu.
 - §14 częściowo: makro i mezo z mebli (48 straganów, 12 `market-goods`, 29 drzew na alei), mikro 69 naklejek i 22 graffiti na alei, przy halach 3 naklejki; skupisk przy grupie Hebi i przy przystankach brak.
 - §15 częściowo: mokry asfalt z odbiciami latarni; brak szkła wiat i blachy hal z połyskiem.
 - §16 częściowo: ulica w halach i korporacyjna infrastruktura alei są, ale bez kontrastu w świetle (wszystko jedna barwa latarni drogowych).
