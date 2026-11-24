@@ -1,6 +1,6 @@
 import type { MeshSink, Rgba } from "../../mesh-sink";
 import { type Wall, trimMeta } from "../facade-frame";
-import { quadUv } from "../sink-ops";
+import { type Uv, quadUv } from "../sink-ops";
 import { gableOver } from "./classicist";
 import { alongWall } from "./elevation";
 import { SWATCH, archPanel, lit, onWall, panel, shownWalls, solid } from "./kit";
@@ -76,7 +76,7 @@ const opening = (
   fill: Rgba,
   trim: Rgba,
   sill: boolean,
-  meta: [number, number],
+  meta: Uv,
 ): void => {
   archPanel(
     sink,
@@ -105,7 +105,7 @@ const sun = (
   w: Wall,
   u: number,
   gold: Rgba,
-  meta: [number, number],
+  meta: Uv,
 ): void => {
   const g = gableOver(f, w);
   if (!g) return;
