@@ -1,4 +1,4 @@
-import { type FestoonSpan, PLAC_ZAMKOWY_FESTOONS, festoonAt } from "@seki/sim";
+import { type FestoonSpan, MARKET_FESTOONS, festoonAt } from "@seki/sim";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import type { Box2 } from "./polygon";
 import { MAP_SIGN_KIND, signTint } from "./sign-plan";
@@ -76,7 +76,7 @@ const planOne = (sink: MeshSink, s: FestoonSpan, k: number): void => {
 };
 
 /** The festoons whose middle lies in a cell of the map city; their count. */
-export const planFestoons = (sink: MeshSink, bounds: Box2, spans: readonly FestoonSpan[] = PLAC_ZAMKOWY_FESTOONS): number => {
+export const planFestoons = (sink: MeshSink, bounds: Box2, spans: readonly FestoonSpan[] = MARKET_FESTOONS): number => {
   let count = 0;
   spans.forEach((s, k) => {
     const mx = (s.a.x + s.b.x) / 2;

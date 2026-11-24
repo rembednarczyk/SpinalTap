@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PLAC_ZAMKOWY_FESTOONS } from "@seki/sim";
+import { MARKET_FESTOONS, PLAC_ZAMKOWY_FESTOONS } from "@seki/sim";
 import { planFestoons } from "../src/renderer/mapcity/festoon-signs";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
 import { MeshSink } from "../src/renderer/mesh-sink";
@@ -7,9 +7,10 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 describe("Plac Zamkowy's festoons in the signs' mesh (24.11)", () => {
   it("plans each festoon once, in the cell holding its middle", () => {
     let total = 0;
-    for (let x = 640; x < 800; x += 20)
-      for (let z = 140; z < 340; z += 20) total += planFestoons(new MeshSink(), { minX: x, maxX: x + 20, minZ: z, maxZ: z + 20 });
-    expect(total).toBe(PLAC_ZAMKOWY_FESTOONS.length);
+    for (let x = 600; x < 900; x += 20)
+      for (let z = 140; z < 640; z += 20) total += planFestoons(new MeshSink(), { minX: x, maxX: x + 20, minZ: z, maxZ: z + 20 });
+    expect(total).toBe(MARKET_FESTOONS.length);
+    expect(MARKET_FESTOONS.length).toBeGreaterThan(PLAC_ZAMKOWY_FESTOONS.length);
   });
 
   it.each(PLAC_ZAMKOWY_FESTOONS.map((s, i) => [i, s] as const))("%i: tubes of light along its cable, between its posts and under their tops", (_i, s) => {
