@@ -15,8 +15,12 @@ import { type Pt, type Rect, centroid, inRect, pointInRing, r1 } from "./geometr
 import { type CanopyOut, type ChunkOut } from "./model.ts";
 import { type ChunkTerrain } from "./terrain.ts";
 
-/** The roof's slab (the renderer draws a lifted outline at least 1 m deep), the posts' side, their bay and how far in from the eaves, metres. */
-export const CANOPY = { slab: 1, post: 0.25, bay: 6, inset: 0.35, minGap: 1.5 } as const;
+/**
+ * The roof's slab (a sheet roof on its purlins with a fascia, about 0.3 m; the renderer draws a
+ * roof on posts at least 0.2 m deep, `CANOPY_MIN_DEPTH`), the posts' side, their bay and how far
+ * in from the eaves, metres.
+ */
+export const CANOPY = { slab: 0.3, post: 0.25, bay: 6, inset: 0.35, minGap: 1.5 } as const;
 
 /** The clearance under a roof the map gives no height: a car wash's for vans, a well's over its windlass, a platform's over the bus doors. */
 const clearanceOf = (t: Area["tags"]): number => {
