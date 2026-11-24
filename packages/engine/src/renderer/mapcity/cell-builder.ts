@@ -12,7 +12,7 @@ import { planDeptakSigns } from "../alchemia/deptak-signs";
 import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFaraHolo } from "./fara-holo-signs";
-import { planFestoons } from "./festoon-signs";
+import { planFestoons, planNeonEdges } from "./festoon-signs";
 import { planGround } from "./cell-ground";
 import { planFarFrames, planNearFrames } from "./cell-plan";
 import { facadeFrame } from "./facade-frame";
@@ -95,8 +95,9 @@ export class CellBuilder {
     if (!signs.empty) planDeptakSigns(signs, cell.bounds);
     // And the hologram of the parish church over its foundations on Plac po Farze, whether the cell has signs or not.
     planFaraHolo(signs, cell.bounds);
-    // And the flea market's festoons over Plac Zamkowy (24.11), hung from its lamp posts.
+    // And the markets' festoons (Plac Zamkowy's from its lamp posts, the night markets' across their aisles) and their canopies' neon strips (24.11).
     planFestoons(signs, cell.bounds);
+    planNeonEdges(signs, cell.bounds);
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       // The neon's streaks shine in the puddles of the ground under them (ADR-0084).

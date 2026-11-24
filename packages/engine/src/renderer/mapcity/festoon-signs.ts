@@ -1,4 +1,4 @@
-import { type FestoonSpan, MARKET_FESTOONS, festoonAt } from "@seki/sim";
+import { type FestoonSpan, MARKET_FESTOONS, MARKET_NEON_EDGES, type NeonEdge, festoonAt } from "@seki/sim";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import type { Box2 } from "./polygon";
 import { MAP_SIGN_KIND, signTint } from "./sign-plan";
@@ -85,5 +85,22 @@ export const planFestoons = (sink: MeshSink, bounds: Box2, spans: readonly Festo
     planOne(sink, s, k);
     count++;
   });
+  return count;
+};
+
+/** A canopy's neon strip: a little wider than a festoon's, a tube of the signs' neon. */
+const EDGE_STRIP = 0.12;
+const EDGE_BRIGHTNESS = 0.95;
+
+/** The markets' stalls' canopy strips whose middle lies in a cell of the map city (24.11); their count. */
+export const planNeonEdges = (sink: MeshSink, bounds: Box2, edges: readonly NeonEdge[] = MARKET_NEON_EDGES): number => {
+  let count = 0;
+  for (const e of edges) {
+    const mx = (e.a.x + e.b.x) / 2;
+    const mz = (e.a.z + e.b.z) / 2;
+    if (mx < bounds.minX || mx >= bounds.maxX || mz < bounds.minZ || mz >= bounds.maxZ) continue;
+    ribbon(sink, e.a, e.b, EDGE_STRIP, signTint(e.color, EDGE_BRIGHTNESS));
+    count++;
+  }
   return count;
 };

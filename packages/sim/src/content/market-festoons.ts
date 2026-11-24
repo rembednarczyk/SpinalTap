@@ -4,6 +4,7 @@ import { turnLocal } from "./lublin/furniture";
 import { inBuilding } from "./lublin/places";
 import { surfacesAt } from "./lublin/roads";
 import { type FestoonSpan, PLAC_ZAMKOWY_FESTOONS, festoonAt } from "./plac-zamkowy-festoons";
+import { PLAC_ZAMKOWY_STALLS } from "./plac-zamkowy-detail";
 
 /*
  * Festoons across the aisles of Podzamcze's night markets (decision of the user 24.11: garlands and strips of light as
@@ -75,3 +76,38 @@ export const BAZAR_FESTOONS: readonly FestoonSpan[] = aisleFestoons(BAZAR_STALLS
 
 /** Every festoon the renderer draws: Plac Zamkowy's from its lamp posts, the night markets' across their aisles. */
 export const MARKET_FESTOONS: readonly FestoonSpan[] = [...PLAC_ZAMKOWY_FESTOONS, ...RUSKA_FESTOONS, ...BAZAR_FESTOONS];
+
+/** A neon strip along a stall's canopy's front edge: its ends and its colour. */
+export interface NeonEdge {
+  readonly a: { readonly x: number; readonly y: number; readonly z: number };
+  readonly b: { readonly x: number; readonly y: number; readonly z: number };
+  readonly color: string;
+}
+
+/** The canopy's front edge in a stall's frame (the model's canopy 2.4 x 1.8 m at 2.35 m, `prop-civic.ts`), just under it. */
+const EDGE = { half: 1.2, y: 2.31, z: 0.92 } as const;
+/** The city's neon, by turns along the market: the 10% of §13 the market lacked by night (24.11 measure). */
+const NEON = ["#ff3fa4", "#38e4ff", "#ffb13b", "#b66bff"] as const;
+
+/**
+ * The strips of light along every stall's canopy edge on the three markets (decision of the user 24.11: strips of
+ * light as in the rest of the game): the accent the night's measure found missing, in the city's neon colours, a stall's
+ * colour fixed by where it stands.
+ */
+export const neonEdges = (stalls: readonly StreetPropItem[]): NeonEdge[] =>
+  stalls.flatMap((s) => {
+    const p = (x: number, z: number) => {
+      const d = turnLocal(s.yaw, x, z);
+      return { x: s.x + d.x, y: s.y + EDGE.y, z: s.z + d.z };
+    };
+    const color = NEON[Math.abs(Math.round(s.x * 7 + s.z * 13)) % NEON.length]!;
+    const [h, z] = [EDGE.half, EDGE.z];
+    // The front, and both sides back to the canopy's rear edge: seen from the aisle and from along the row.
+    return [
+      { a: p(-h, z), b: p(h, z), color },
+      { a: p(-h, -z), b: p(-h, z), color },
+      { a: p(h, z), b: p(h, -z), color },
+    ];
+  });
+
+export const MARKET_NEON_EDGES: readonly NeonEdge[] = [...neonEdges(PLAC_ZAMKOWY_STALLS), ...neonEdges(RUSKA_STALLS), ...neonEdges(BAZAR_STALLS)];
