@@ -4,6 +4,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
+- Status: zgłoszone (24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
+- Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
+- Dowód: NMT: taras −2,2…−2,8, chodnik −3,7…−5,3 (uskok 1,0–2,8 m); siatka terenu komórki 5 m rozmywa go na ok. 8 m (z −204…−196): taras przy murku do 0,6 m za nisko, przy szczycie schodów 0,8–1,3 m (gra −3,66), chodnik u stopy do 0,36 m za wysoko, schody 15 stopni wznoszą się o 0,39 m, Figura Matki Bożej n6191145919 1,0 m pod tarasem
+- Ważność: S3 · Zasięg: jeden taras (ok. 50 m muru), widoczny z Królewskiej i placu; `wall-step-smeared` w całym mieście ok. 26 kawałków (propozycja kontroli kuratora)
+- Poprawka: linia nieciągłości terenu pod murem (breakline w NMT/TIN): siatka zagęszczona do 1,25 m w pasie ±3 m wzdłuż muru, punkty górnej strony na górnym poziomie NMT, dolnej na dolnym (etap K5b planu `docs/plany/archikatedra.md`), osobny PR z przeglądem kuratora
+- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+
+### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
+- Status: zgłoszone (24.11, przegląd kuratora K5a)
+- Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
+- Dowód: NMPT ±0,1 m nad terenem po obu stronach (−5,0…−5,3), bez uskoku NMT; po K5a (T-350) cały mur ma jedną wysokość 1,4 m od osi
+- Ważność: S4 · Zasięg: ok. 7 m muru
+- Poprawka: odcinek jako niski krawężnik (ok. 0,3 m) albo poza importem po potwierdzeniu zdjęciem od Królewskiej
+- Pakiet właściciela: tools/osm-import
+
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
