@@ -159,6 +159,7 @@ import { geoToWorld } from "../../osm-import/src/project.ts";
 import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES, CROWD_SPOTS } from "../../../packages/sim/src/content/crowd";
 import { ACTIVITY_SPOTS } from "../../../packages/sim/src/content/activity-spots";
+import { FARA_RUIN_AREA } from "../../../packages/sim/src/content/lublin/fara-pad";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
 import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/capsule-room";
@@ -2508,12 +2509,13 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
     inFurniture: (x, z) => inFootprint(x, z, 0) || furnitureNear(x, z).some((f) => distanceToPiece(f.item, x, z) <= 0),
     spots: [...CROWD_SPOTS.map((s) => s.at), ...ACTIVITY_SPOTS.map((s) => s.at)],
   }),
-  // How much of the map's barriers the game keeps, and the ruins' low walls (`barrier-cover.ts`).
+  // How much of the map's barriers the game keeps, and the ruins' low walls (`barrier-cover.ts`); the parish church's
+  // foundations aside: their tops lie level as the hologram's plinth (`levelTop`, T-348), held by `fara-holo.test.ts`.
   ...barrierCoverChecks(
     MAP_CHUNKS,
     Object.values(WORLD_BARRIERS).flat(),
     extractFeatures(SOURCE_OSM)
-      .areas.filter((a) => a.tags.historic === "ruins" && a.tags.building === undefined)
+      .areas.filter((a) => a.tags.historic === "ruins" && a.tags.building === undefined && a.id !== FARA_RUIN_AREA)
       .map((a) => a.ring),
     pointInRing,
   ),

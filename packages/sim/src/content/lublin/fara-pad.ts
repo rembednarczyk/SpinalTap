@@ -16,6 +16,16 @@ export const FARA_LEVEL = -3.6;
 export const FARA_FOUNDATION_TOP = FARA_LEVEL + 0.5;
 
 /**
+ * The foundations' masonry on the map (`barriers.ts`): the ruin's two outlines and its seven piers and blocks. Their
+ * walls' tops lie level at `FARA_FOUNDATION_TOP` all round (the user's note of 24.11): a piece where the ground falls
+ * off the pad stands taller (`world-barriers.ts`), so the hologram meets the foundations everywhere.
+ */
+/** The ruin's area on the map, "Fundamenty Kościoła Farnego" (`historic=ruins`): the whole foundations' outline. */
+export const FARA_RUIN_AREA = "w173519315";
+
+export const FARA_RUIN_IDS: readonly string[] = ["r18507552", "r18507551", "w1348806697", "w1348806700", "w1348806701", "w1348806702", "w1348806706", "w1348806707", "w1348806708"];
+
+/**
  * The convex hull of the foundations' walls (counter-clockwise), 0.5 m out round them, less the south-west wedge (the
  * south-west chapel's corner lies on Archidiakońska's paving, which climbs to it, -2.4 m: its walls stay on the NMT),
  * and pulled in on the north, the east and the south-east so the blend, which on the terrain's 2.5 m grid reaches some
