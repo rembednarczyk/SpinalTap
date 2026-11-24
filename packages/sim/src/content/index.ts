@@ -25,6 +25,7 @@ export * from "./po-farze-detail";
 export * from "./fara-holo";
 export * from "./lubartowska-detail";
 export * from "./katedralny-detail";
+export * from "./katedralny-lights";
 export * from "./clinic-detail";
 export * from "./tessen-w3/office-detail";
 export * from "./tessen-w3/basement-detail";
