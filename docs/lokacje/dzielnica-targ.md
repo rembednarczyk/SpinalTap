@@ -34,7 +34,7 @@ Architektura:
 - łuk kamienic z podcieniami, hale Bazaru, dworzec z zadaszonym peronem (mapa, G-063);
 - daszki nad rzędami straganów Ruskiej (G-063).
 Duże obiekty:
-- stragany: Bazar 48, Ruska 142 w rzędach pod 17 namiotami i daszkami z ortofotomapy (G-964, 24.11), pchli targ 23 i dalsze; wózki z jedzeniem, auta parkingu (meble, ADR-0058);
+- stragany: Bazar 48, Ruska 154 w rzędach pod 20 namiotami i daszkami z ortofotomapy (G-964, 24.11), pchli targ 23 i dalsze; wózki z jedzeniem, auta parkingu (meble, ADR-0058);
 - kandelabry, latarnie drogowe z kamerami, wiaty przystanków (meble);
 - autobusy nocne na Dworcu (do zrobienia, karta `dworzec-autobusowy`).
 Drobiazg w skupiskach:
