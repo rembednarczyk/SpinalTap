@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAZAR_FESTOONS, BAZAR_STALLS, MARKET_FESTOONS, PLAC_ZAMKOWY_FESTOONS, RUSKA_FESTOONS, RUSKA_STALLS, festoonAt, groundY, inBuilding } from "../src";
+import { BAZAR_FESTOONS, BAZAR_STALLS, MARKET_FESTOONS, MARKET_NEON_EDGES, PLAC_ZAMKOWY_STALLS, PLAC_ZAMKOWY_FESTOONS, RUSKA_FESTOONS, RUSKA_STALLS, festoonAt, groundY, inBuilding } from "../src";
 import { turnLocal } from "../src/content/lublin/furniture";
 import { surfacesAt } from "../src/content/lublin/roads";
 
@@ -44,5 +44,22 @@ describe("the night markets' festoons across their aisles (24.11)", () => {
         expect(inBuilding(p.x, p.z)).toBe(false);
         expect(surfacesAt(p.x, p.z)).not.toContain("road");
       }
+  });
+});
+
+describe("the markets' stalls' neon strips (24.11)", () => {
+  it("run along every stall's canopy front (2.4 m) and sides (1.84 m) on the three markets, under the canopy's edge, in the city's neon", () => {
+    // The front and both sides of every canopy.
+    expect(MARKET_NEON_EDGES).toHaveLength(3 * (PLAC_ZAMKOWY_STALLS.length + RUSKA_STALLS.length + BAZAR_STALLS.length));
+    const stalls = [...PLAC_ZAMKOWY_STALLS, ...RUSKA_STALLS, ...BAZAR_STALLS];
+    for (const [k, e] of MARKET_NEON_EDGES.entries()) {
+      expect(Math.hypot(e.b.x - e.a.x, e.b.z - e.a.z)).toBeCloseTo(k % 3 === 0 ? 2.4 : 1.84, 6);
+      // Just under the canopy (2.32 m over the stall's foot), level.
+      const s = stalls[Math.floor(k / 3)]!;
+      expect(e.a.y - s.y).toBeCloseTo(2.31, 6);
+      expect(e.b.y).toBe(e.a.y);
+      for (const p of [e.a, e.b]) expect(Math.hypot(p.x - s.x, p.z - s.z)).toBeLessThan(1.6);
+    }
+    expect(new Set(MARKET_NEON_EDGES.map((e) => e.color)).size).toBeGreaterThanOrEqual(3);
   });
 });
