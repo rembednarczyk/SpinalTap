@@ -20,6 +20,8 @@ import type {
  * Town: Lublin 2077's subdued layer (ADR-0058).
  */
 
+import { ANNEX_WINDOWS, CHAPEL_WINDOWS, CLERESTORY, NAVE_ROOF, SIDE_ROOM_WINDOWS } from "./archikatedra-roof";
+
 const NO_BLINDS: readonly BlindRow[] = [];
 
 /** The church's pale plaster with its pilasters and a cornice at the top: the common tier of its parts. */
@@ -102,15 +104,16 @@ export const ARCHIKATEDRA: LandmarkRecipe = {
       eaves: true,
       portico: { floor: 13 },
       westFront: VESTIBULE,
+      sideWindows: ANNEX_WINDOWS,
     }),
-    flat("T-349/katedra-korpus", { westFront: VESTIBULE_UP }),
+    flat("T-349/katedra-korpus", { westFront: VESTIBULE_UP, sideWindows: CHAPEL_WINDOWS }),
     flat("T-349/katedra-pod-nawa", { pilasters: false, cornice: false }),
-    flat("T-349/katedra-prezbiterium-pn"),
-    flat("T-349/katedra-prezbiterium-pd"),
+    flat("T-349/katedra-prezbiterium-pn", { sideWindows: SIDE_ROOM_WINDOWS }),
+    flat("T-349/katedra-prezbiterium-pd", { sideWindows: SIDE_ROOM_WINDOWS }),
     // The nave and the apse under the data's gabled roof in dark sheet metal (the photograph in the snow).
     {
       osm: "w617763433",
-      tier: { ...PLASTER, roofing: "metal", westFront: NAVE_FRONT },
+      tier: { ...PLASTER, roofing: "metal", westFront: NAVE_FRONT, sideWindows: CLERESTORY, roofscape: NAVE_ROOF },
       crown: { kind: "roof" },
     },
     // The screen front: its pediment's slopes in the same metal over the cornice.

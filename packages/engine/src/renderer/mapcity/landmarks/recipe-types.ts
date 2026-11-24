@@ -123,6 +123,10 @@ export interface Tier {
   readonly roofing?: "metal" | "patina";
   /** A portico of the simulation's `PORTICOES` before a wall, its terrace's floor at this world y (the Archikatedra). */
   readonly portico?: { readonly floor: number };
+  /** Round-headed windows along the walls facing away from the plaza (`church-roof.ts`). */
+  readonly sideWindows?: SideWindows;
+  /** A church's roofscape over this part: dormers, ridge turret, chapels' domes (`church-roof.ts`). */
+  readonly roofscape?: ChurchRoof;
   /** A tower's storeys of pointed windows in pairs on each side, [bottom, top] over the base (`spire.ts`). */
   readonly towerWindows?: readonly (readonly [number, number])[];
   /** A church's front in bays on the wall facing the plaza (`cathedral-front.ts`). */
@@ -310,4 +314,23 @@ export interface WestFront {
   readonly doors?: readonly FrontOpening[];
   readonly sun?: true;
   readonly frieze?: number;
+}
+
+/** Round-headed windows `pitch` metres apart, `width` wide, from world y0 to y1. */
+export interface SideWindows {
+  readonly pitch: number;
+  readonly width: number;
+  readonly y0: number;
+  readonly y1: number;
+}
+
+/**
+ * A church's roofscape in world metres: dormers (their front's middle at x, z facing fx, fz, from
+ * y0 to y1), a ridge turret (its foot at y, its cross's foot at top) and the chapels' domes (a drum
+ * of radius r from y, `drum` tall, the lantern's cross at top).
+ */
+export interface ChurchRoof {
+  readonly dormers: readonly { readonly x: number; readonly z: number; readonly fx: number; readonly fz: number; readonly y0: number; readonly y1: number }[];
+  readonly turret?: { readonly x: number; readonly z: number; readonly y: number; readonly top: number };
+  readonly domes: readonly { readonly x: number; readonly z: number; readonly y: number; readonly r: number; readonly drum: number; readonly top: number }[];
 }
