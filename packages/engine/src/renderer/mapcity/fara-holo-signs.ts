@@ -1,4 +1,4 @@
-import { FARA_HOLO, FARA_HOLO_FACETS, FARA_HOLO_OUTLINES, type HoloFacet, type HoloPoint } from "@seki/sim";
+import { FARA_HOLO, FARA_HOLO_FACETS, FARA_HOLO_INNER, FARA_HOLO_OUTLINES, type HoloFacet, type HoloPoint } from "@seki/sim";
 import type { MeshSink, Vec } from "../mesh-sink";
 import type { Box2 } from "./polygon";
 import { MAP_SIGN_KIND, signTint } from "./sign-plan";
@@ -17,6 +17,8 @@ import { type Uv, quadUv } from "./sink-ops";
 const TINT = "#38e4ff";
 /** The panes' brightness: under the boards' (1), the church is large and many of its panes overlap. */
 const BRIGHTNESS = 0.55;
+/** The panes inside the shell (the rooms' faces of the thick walls, the piers): faint, the structure seen through it. */
+const INNER_BRIGHTNESS = 0.16;
 
 const UV: readonly [Uv, Uv, Uv, Uv] = [
   [0, 0],
@@ -35,14 +37,14 @@ const normalOf = (a: Vec, b: Vec, c: Vec): Vec => {
 };
 
 /** One facet both ways (the signs cull their backs). */
-const pane = (sink: MeshSink, f: HoloFacet, seed: number): void => {
+const pane = (sink: MeshSink, f: HoloFacet, seed: number, brightness = BRIGHTNESS): void => {
   const c = f.map(v);
   const quad: [Vec, Vec, Vec, Vec] = c.length === 3 ? [c[0]!, c[1]!, c[2]!, c[2]!] : [c[0]!, c[1]!, c[2]!, c[3]!];
   // A triangle is a quad whose last two corners are its point: its frame along its base and one side, the other side
   // framed by the next facet round (the spire's, the hips').
   const uv = UV;
   const n = normalOf(quad[0], quad[1], quad[2]);
-  const color = signTint(TINT, BRIGHTNESS);
+  const color = signTint(TINT, brightness);
   quadUv(sink, quad, n, color, uv, [seed, MAP_SIGN_KIND.holoPanel]);
   quadUv(sink, [quad[1], quad[0], quad[3], quad[2]], { x: -n.x, y: -n.y, z: -n.z }, color, [uv[1], uv[0], uv[3], uv[2]], [seed, MAP_SIGN_KIND.holoPanel]);
 };
@@ -58,9 +60,25 @@ const TUBE_UV: readonly [Uv, Uv, Uv, Uv] = [
 ];
 
 /** One closed outline as tubes along its sides, in its own plane, both ways. */
+/**
+ * An outline's plane: the first three of its points not on one line; a straight line's (a mullion, a string course)
+ * the upright plane through it, or for an upright line the plane facing along x.
+ */
+const planeOf = (c: readonly Vec[]): Vec => {
+  for (let k = 2; k < c.length; k++) {
+    const n = normalOf(c[0]!, c[1]!, c[k]!);
+    const [ux, uy, uz] = [c[1]!.x - c[0]!.x, c[1]!.y - c[0]!.y, c[1]!.z - c[0]!.z];
+    const [wx, wy, wz] = [c[k]!.x - c[0]!.x, c[k]!.y - c[0]!.y, c[k]!.z - c[0]!.z];
+    if (Math.hypot(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx) > 1e-6) return n;
+  }
+  const d = { x: c[1]!.x - c[0]!.x, z: c[1]!.z - c[0]!.z };
+  const l = Math.hypot(d.x, d.z);
+  return l < 1e-6 ? { x: 1, y: 0, z: 0 } : { x: -d.z / l, y: 0, z: d.x / l };
+};
+
 const outline = (sink: MeshSink, pts: readonly HoloPoint[]): void => {
   const c = pts.map(v);
-  const n = normalOf(c[0]!, c[1]!, c[2]!);
+  const n = planeOf(c);
   const color = signTint(TINT, TUBE.brightness);
   c.forEach((a, k) => {
     const b = c[(k + 1) % c.length]!;
@@ -86,11 +104,13 @@ export const planFaraHolo = (
   bounds: Box2,
   facets: readonly HoloFacet[] = FARA_HOLO_FACETS,
   outlines: readonly (readonly HoloPoint[])[] = FARA_HOLO_OUTLINES,
+  inner: readonly HoloFacet[] = FARA_HOLO_INNER,
 ): number => {
   const { x, z } = FARA_HOLO;
   if (x < bounds.minX || x >= bounds.maxX || z < bounds.minZ || z >= bounds.maxZ) return 0;
   // One seed for the whole church: its panes flicker together, as one projection.
   facets.forEach((f) => pane(sink, f, 0.31));
+  inner.forEach((f) => pane(sink, f, 0.31, INNER_BRIGHTNESS));
   outlines.forEach((o) => outline(sink, o));
-  return facets.length + outlines.length;
+  return facets.length + inner.length + outlines.length;
 };

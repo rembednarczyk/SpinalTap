@@ -1,6 +1,7 @@
-import { BARRIER_OPENINGS, BARRIER_THICKNESS, type GroundPoint, type StreetPropItem, barrierMaterial } from "@seki/core";
+import { BARRIER_OPENINGS, BARRIER_THICKNESS, type GroundPoint, type StreetPropItem, barrierLayout, barrierMaterial, barrierVariant } from "@seki/core";
 import { barrierBlocked, pointsOf } from "./barrier-room";
 import { barrierPieces } from "./lublin/barriers";
+import { FARA_FOUNDATION_TOP, FARA_RUIN_IDS } from "./lublin/fara-pad";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { clearOfGame } from "./street-props";
 import { groundY } from "./lublin/terrain";
@@ -55,12 +56,27 @@ const simplifyRun = (run: readonly Pt[]): Pt[] =>
     return Math.abs((p.x - a.x) * (b.z - a.z) - (p.z - a.z) * (b.x - a.x)) > 1e-4;
   });
 
+/**
+ * A piece whose top lies under `top` (the ground falling off a pad under it) standing taller to it: level, from under its
+ * low end. The parish church's foundations (`fara-pad.ts`): their tops one level all round, under the hologram's foot.
+ */
+export const levelTop = (item: StreetPropItem, top: number): StreetPropItem => {
+  const b = barrierLayout(item.variant);
+  const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
+  const low = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z), item.y);
+  if (low + b.height >= top - 0.02) return item;
+  // On its low end, its top rounded up to the variant's decimetre: over the level by under 0.1 m, never short of it.
+  const height = Math.ceil((top - low) * 10 - 1e-6) / 10;
+  return { ...item, y: Math.round(low * 100) / 100, variant: barrierVariant({ ...b, height, rise: 0 }) };
+};
+
 /** The pieces of one barrier of the map in the game: an opening whole where its posts stand clear, a solid kind in its clear runs. */
 const piecesOf = (b: LublinBarrierData): StreetPropItem[] => {
   const line = pointsOf(b.line);
   const material = barrierMaterial(b.material);
   if (BARRIER_OPENINGS.has(b.kind)) return line.every((p) => clearOfGame(p.x, p.z, 0.2)) ? barrierPieces(b.kind, b.height, line, groundY, material) : [];
-  return clearRuns(line, BARRIER_THICKNESS[b.kind] / 2).flatMap((run) => barrierPieces(b.kind, b.height, run, groundY, material));
+  const pieces = clearRuns(line, BARRIER_THICKNESS[b.kind] / 2).flatMap((run) => barrierPieces(b.kind, b.height, run, groundY, material));
+  return FARA_RUIN_IDS.includes(b.id) ? pieces.map((p) => levelTop(p, FARA_FOUNDATION_TOP)) : pieces;
 };
 
 /** The barriers of the game's Lublin per chunk (ADR-0077), as street pieces of kind `barrier`. */

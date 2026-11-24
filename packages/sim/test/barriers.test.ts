@@ -54,7 +54,10 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       const b = barrierLayout(item.variant);
       kinds.set(b.kind, (kinds.get(b.kind) ?? 0) + b.length);
       expect(b.length).toBeLessThanOrEqual(BARRIER_PIECE + 0.01);
-      expect(item.y).toBeCloseTo(groundY(item.x, item.z), 1);
+      // On the ground at its middle; a piece of the parish church's foundations raised to their level (`levelTop`) on its low end.
+      const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
+      const lowEnd = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z));
+      expect(Math.min(Math.abs(item.y - groundY(item.x, item.z)), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
     }
     expect(kinds.get("wall")).toBeGreaterThan(1500);
     expect(kinds.get("fence")).toBeGreaterThan(4000);
