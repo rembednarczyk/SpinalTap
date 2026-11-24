@@ -77,7 +77,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // no scaffold over one), which the renderer hangs by the buildings alone: framed here with no site.
   const buildingTags = loadBuildingTags();
   const siteBoards = (await runWith<typeof VenueBoards>("tools/osm-import/src/venue-boards.ts", new Map(), emitSites([]), extra)).lublinVenueBoards();
-  const sites = planSites(loadSiteOutlines(), chunks, { tags: buildingTags, boards: siteBoards });
+  // The plan's furniture at its points: the building sites' pieces keep off the map's lamps and benches (24.11).
+  const furniture = plan.items.flatMap((i) => [...(i.position ? [i.position] : []), ...(i.points ?? []).map(([x, z]) => ({ x, z }))]);
+  const sites = planSites(loadSiteOutlines(), chunks, { tags: buildingTags, boards: siteBoards, furniture });
   const sitesText = emitSites(sites);
   // The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
   // decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.

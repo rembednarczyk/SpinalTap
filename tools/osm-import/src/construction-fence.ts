@@ -79,7 +79,8 @@ export const fenceEdges = (ring: readonly Pt[]): FenceEdge[] =>
   });
 
 /** Free ground under the fence's line at a point of an edge: the line and either side of it. */
-const freeAt = (g: SiteGround, e: FenceEdge, s: number): boolean => g.free(along(e, s)) && g.free(along(e, s, ACROSS)) && g.free(along(e, s, -ACROSS));
+const fenceFree = (g: SiteGround, p: Pt): boolean => (g.fenceFree ?? g.free).call(g, p);
+const freeAt = (g: SiteGround, e: FenceEdge, s: number): boolean => fenceFree(g, along(e, s)) && fenceFree(g, along(e, s, ACROSS)) && fenceFree(g, along(e, s, -ACROSS));
 
 /** The stretches of the edges over free ground, `SHORTEST` m and longer. */
 export const freeRuns = (edges: readonly FenceEdge[], g: SiteGround): FenceRun[] => {

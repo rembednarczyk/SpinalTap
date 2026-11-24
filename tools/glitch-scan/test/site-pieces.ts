@@ -22,7 +22,8 @@ import type { Site } from "../../osm-import/src/props-site.ts";
 /**
  * The building sites' pieces of ADR-0087 against the ground the game draws (bases 0):
  * - `site-on-road`: a sample of a piece's footprint on a carriageway or a pavement (the chunks'
- *   ground, the frontages' fills of G-853 among it), one finding a piece;
+ *   ground, the frontages' fills of G-853 among it), one finding a piece; a square's paving alone
+ *   (`paving`, no sidewalk or path over it) is the site's own ground (decision of 24.11);
  * - `site-through-wall`: a sample in a building's outline or within `WALL_GAP` of the map's own
  *   walls and fences, one finding a piece;
  * - `site-gate-blocked`: a gate whose opening has a building, water or rails, or a solid of the
@@ -42,7 +43,7 @@ const OUTSIDE = 1.2;
 const INSIDE = 2;
 
 export interface SiteGroundQuery {
-  /** What the game draws at p: `road`, `walk`, `building`, `water`, `rail`, or null for bare ground and lawns. */
+  /** What the game draws at p: `road`, `walk`, `paving` (a square's alone), `building`, `water`, `rail`, or null for bare ground and lawns. */
   readonly surfaceAt: (p: Pt) => string | null;
   /** The map's walls and fences (ADR-0077) as lines. */
   readonly barriers: readonly (readonly Pt[])[];
@@ -126,6 +127,8 @@ export const siteGroundOf = (site: Site, chunks: readonly LublinChunkData[]): Si
   return {
     surfaceAt: (p) => {
       const s = site.surfaceAt(p);
+      // A square's or a courtyard's paving inside a site is the site's (the user's decision of 24.11, `onAreaPaving`).
+      if (s === "walk" && site.onAreaPaving(p)) return "paving";
       if (s === "building" || s === "road" || s === "walk") return s;
       return fronts.some((r) => pointInRing(p, r)) ? "walk" : s;
     },
