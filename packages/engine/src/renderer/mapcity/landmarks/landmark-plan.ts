@@ -16,6 +16,7 @@ import { atticLights, castleCrown } from "./castle";
 import { castleFront } from "./castle-front";
 import { planPortico } from "./portico";
 import { westFront } from "./cathedral-front";
+import { spireTop, towerWindows } from "./spire";
 import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
@@ -192,6 +193,10 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
     skirtRoof(sink, f, Math.min(c.rise, roof || c.rise), c.inset, solid(SWATCH.tile));
     return;
   }
+  if (c.kind === "spire") {
+    spireTop(sink, f, c, near);
+    return;
+  }
   if (c.kind === "roof") {
     const roofing = part.tier.roofing;
     dataRoof(sink, f, solid(wallOf(part.tier)), solid(trimOf(part.tier)), near, solid(roofing === "metal" ? SWATCH.roofMetal : roofing === "patina" ? SWATCH.patina : SWATCH.tile));
@@ -345,6 +350,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   }
   if (t.portico) planPortico(sink, f, t.portico.floor, false);
   if (t.westFront) westFront(sink, f, t.westFront, trim);
+  if (t.towerWindows) towerWindows(sink, f, t.towerWindows, trim);
   if (t.castle) castleFront(sink, f, t.castle, trim);
   faces(sink, f, part);
   crown(sink, f, part, true);
