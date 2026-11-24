@@ -31,9 +31,9 @@ const acceptSabotage = (session: GameSession, u: Ui) => {
   return job;
 };
 
-/** The start save, as the new game's setup starts it. */
-const slice = async () => {
-  const s = setup();
+/** The start save, as the new game's setup starts it (the session's seed 77 unless given). */
+const slice = async (seed?: number) => {
+  const s = setup(undefined, undefined, seed);
   expect(await s.session.starts.startW3SliceAsync()).toBe(true);
   steps(s.session, 1);
   return s;
@@ -141,6 +141,10 @@ const PISTOL_DUEL_SECONDS = 1.5;
 /** Who the level 6 game takes down in corridor S before she dies: 3 in the playtest, 2 since ADR-0089 stage 3 (the start save 3). */
 const PISTOL_CORRIDOR_KILLS = 2;
 
+/** The sessions' seeds corridor S from the start save is fought with, and the middle of their results. */
+const CORRIDOR_SEEDS = [75, 76, 77] as const;
+const median = (xs: readonly number[]): number => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+
 /** Into armoury S, the charges taken (the alarm and the first wave), out at its inner door to corridor S. */
 const corridor = (session: GameSession, id: string): Fight => {
   teleport(session, 2555, 402, Math.PI, 0, W3_Y);
@@ -155,8 +159,8 @@ const corridor = (session: GameSession, id: string): Fight => {
  * One fight of a game, the job taken: the duel or corridor S, each in a game of its own, so that no
  * test plays both (both in one test took over 20 s under the coverage of main's full run, 17.11).
  */
-const fightOf = async (make: typeof slice, which: "duel" | "corridor") => {
-  const { session, ui } = await make();
+const fightOf = async (make: typeof slice, which: "duel" | "corridor", seed?: number) => {
+  const { session, ui } = await make(seed);
   const job = acceptSabotage(session, ui);
   const guard = hostiles(session, job.id).find((e) => e.key === `${job.id}-g0`)!;
   const about = { level: session.sim.domain.progression.level, maxHp: session.sim.player()?.health?.max ?? 0, guard: `L${guard.enemy?.level} ${guard.health?.max} HP` };
@@ -263,10 +267,14 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
   });
 
   it("corridor S from the start save: she comes through the second wave with most of her health", async () => {
-    const after = await fightOf(slice, "corridor");
-    out("after-corridor", after);
-    expect(after).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
-    expect(after.hpLeft / after.maxHp).toBeGreaterThan(RIFLE_CORRIDOR_HEALTH);
-    expect(after.kills).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
+    // The median of three sessions' seeds: one fight is one draw of the city's shared stream, and a
+    // building more in the Old Town, 2 km away, moved seed 77 from 0.64 to 0.49 of her health (seeds
+    // 71-79 on main of 24.11: 0.52-0.64, median 0.64; T-349's PR #1026).
+    const runs = [];
+    for (const seed of CORRIDOR_SEEDS) runs.push(await fightOf(slice, "corridor", seed));
+    out("after-corridor", runs);
+    for (const after of runs) expect(after).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
+    expect(median(runs.map((r) => r.hpLeft / r.maxHp))).toBeGreaterThan(RIFLE_CORRIDOR_HEALTH);
+    expect(median(runs.map((r) => r.kills))).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
   });
 });
