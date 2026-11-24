@@ -25,10 +25,19 @@ export const FARA_BENCHES: readonly StreetPropItem[] = [at("bench", 688.6, 52.2,
  */
 export const FARA_STEPS_BULB = { x: 694.6, z: 47.4, yaw: Math.PI / 2 } as const;
 
+/**
+ * The hologram of St Michael's parish church over its foundations (the card's debt: the square's accent seen from Grodzka,
+ * §13; ADR-0062: the 2077 layer on a monument is light): lines of light on the church's plan from the foundations (the
+ * curator's review of 24.11), its heights approximate (`plac_po_farze.py`). Its origin on the nave's axis, the model's
+ * +z along the world's +x (the church faces east).
+ */
+export const FARA_HOLO = { x: 676.0, z: 42.3, yaw: Math.PI / 2 } as const;
+
 export const PO_FARZE_DETAIL: readonly StreetPropItem[] = [
   { ...at("room-detail", FARA_TELESCOPE.x, FARA_TELESCOPE.z, FARA_TELESCOPE.yaw, 0), variant: roomDetailShape("rd-fara-telescope") },
   ...FARA_BENCHES,
   { ...at("room-detail", FARA_STEPS_BULB.x, FARA_STEPS_BULB.z, FARA_STEPS_BULB.yaw, 0), variant: roomDetailShape("rd-targ-bulb-pole") },
+  { ...at("room-detail", FARA_HOLO.x, FARA_HOLO.z, FARA_HOLO.yaw, 0), variant: roomDetailShape("rd-fara-holo") },
 ];
 
 /** A light in its fitting's frame, from the fitting's foot `f` turned by its yaw. */
