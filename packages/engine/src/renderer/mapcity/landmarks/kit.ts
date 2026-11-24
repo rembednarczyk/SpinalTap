@@ -36,6 +36,10 @@ export const SWATCH = {
   // Zamek Lubelski's cream plaster (`building:colour=beige`, the photograph's warm off-white),
   // the shade of its portal's recess and the dark tracery of its rose windows (G-841).
   ivory: "#e8d6a8",
+  // The Archikatedra's pale grey-white plaster (`building:colour=lightgrey`, the photographs) and its nave's dark sheet metal.
+  pale: "#e6e3dc",
+  roofMetal: "#454b52",
+  gold: "#d8b04a",
   ivoryNiche: "#cfc096",
   rose: "#3a4050",
   // Its main door's dark oak.
@@ -330,4 +334,12 @@ export const clockFace = (sink: MeshSink, w: Wall, u: number, y: number, r: numb
   };
   hand(Math.PI / 2 - (Math.PI * 2 * 10) / 12 + 0.1, r * 0.5, r * 0.05);
   hand(Math.PI / 2 - (Math.PI * 2 * 2) / 12, r * 0.78, r * 0.035);
+};
+
+/** A gilded cross on a church's spire from y0 to y1 at c: the shaft and its arm two thirds up, facing `phase`. */
+export const spireCross = (sink: MeshSink, c: P2, y0: number, y1: number, phase: number): void => {
+  const gold = solid(SWATCH.gold);
+  const h = y1 - y0;
+  sink.box({ x: c.x, y: y0 + h / 2, z: c.z }, 0.09, h, 0.09, gold, { rotY: phase });
+  sink.box({ x: c.x, y: y0 + h * 0.68, z: c.z }, h * 0.55, 0.09, 0.09, gold, { rotY: phase });
 };

@@ -95,7 +95,8 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
         const columns = porticoOf(ids.get(`${p.center.x},${p.center.z}`) ?? "")?.columns.length ?? 0;
         const parts = (p.prisms ?? []).slice(0, (p.prisms ?? []).length - columns);
         for (const prism of parts) expect(prism.top).toBeCloseTo(p.view.height + rise, 6);
-        for (const prism of (p.prisms ?? []).slice(parts.length)) expect([prism.bottom, prism.top]).toEqual([-1, COLUMN_TOP]);
+        const top = porticoOf(ids.get(`${p.center.x},${p.center.z}`) ?? "")?.top ?? COLUMN_TOP;
+        for (const prism of (p.prisms ?? []).slice(parts.length)) expect([prism.bottom, prism.top]).toEqual([-1, top]);
         if (rise > 0) grown++;
       }
     }

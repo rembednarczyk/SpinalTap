@@ -61,6 +61,23 @@ export const coveredRanges = (f: LandmarkFrame, w: Wall): { free: [number, numbe
   return out;
 };
 
+/** A two-step cornice under `y` on each shown wall where no part of the recipe stands on it (`coveredRanges`). */
+export const freeCornice = (sink: MeshSink, f: LandmarkFrame, y: number, color: Rgba, deep = 0.3): void => {
+  for (const w of shownWalls(f)) {
+    const rotY = alongWall(w);
+    for (const [u0, u1] of coveredRanges(f, w).free) {
+      if (u1 - u0 < 0.3) continue;
+      for (const [out, y0, y1] of [
+        [deep * 0.45, y - 0.55, y - 0.32],
+        [deep, y - 0.32, y],
+      ] as const) {
+        const c = onWall(w, (u0 + u1) / 2, (y0 + y1) / 2, out / 2);
+        sink.box(c, u1 - u0, y1 - y0, out, color, { rotY, bottom: false });
+      }
+    }
+  }
+};
+
 /** Battlements within the data's height: merlons `merlon` metres tall every `pitch` metres on the free walls, the wall going on up under a lifted part. */
 export const battlements = (sink: MeshSink, f: LandmarkFrame, merlon: number, pitch: number, color: Rgba, floor: Rgba): void => {
   const meta = trimMeta(f.style.seed);

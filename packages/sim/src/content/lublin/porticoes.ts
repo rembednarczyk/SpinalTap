@@ -16,6 +16,8 @@ export interface Portico {
   readonly radius: number;
   /** How far the columns stand off the wall (their axes), metres. */
   readonly out: number;
+  /** The columns' solids' top over the building's centre (its `y`), metres; absent: `COLUMN_TOP`. */
+  readonly top?: number;
 }
 
 /**
@@ -36,6 +38,25 @@ export const PORTICOES: readonly Portico[] = [
     ],
     radius: 0.45,
     out: 1.6,
+  },
+  {
+    // The Archikatedra (w66286341, T-349): six columns of a giant order before the west front, NMPT's
+    // portico 6 m deep (u −37..−31 of the church's axis) and 22 m wide (v −8..14) under its terrace at
+    // y 13-14, the front of the data straight there (`corrections-katedra.ts`). The middle bay on the
+    // portal's axis (the steps w66335060), 4.16 m between the axes, 5.8 m off the front; the terrace's
+    // floor y 13.0, so the solids reach y 13 over the church's y −9.6.
+    building: "w66286341",
+    columns: [
+      { x: 598.94, z: -195.57 },
+      { x: 598.47, z: -191.43 },
+      { x: 597.99, z: -187.3 },
+      { x: 597.51, z: -183.17 },
+      { x: 597.04, z: -179.03 },
+      { x: 596.56, z: -174.9 },
+    ],
+    radius: 0.7,
+    out: 5.8,
+    top: 22.6,
   },
 ];
 
@@ -60,5 +81,5 @@ export const porticoPrisms = (building: string, centre: GroundPoint): PrismDef[]
       const a = ((k + 0.5) / 8) * Math.PI * 2;
       return { x: c.x - centre.x + Math.cos(a) * r, z: c.z - centre.z + Math.sin(a) * r };
     });
-    return { points, bottom: -1, top: COLUMN_TOP };
+    return { points, bottom: -1, top: (porticoOf(building) as Portico).top ?? COLUMN_TOP };
   });
