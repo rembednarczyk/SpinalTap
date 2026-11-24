@@ -184,7 +184,8 @@ const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readon
   const minHeight = parseLength(tags.min_height) ?? 0;
   const tagLevels = parseLevels(tags["building:levels"]);
   if (height !== null) {
-    const r = Math.min(roof, height * 0.5);
+    // A guessed roof stays within half the height; a measured one (`roof:height`, a spire over its tower) as tagged.
+    const r = tags["roof:height"] !== undefined ? Math.min(roof, height - minHeight - 2.5) : Math.min(roof, height * 0.5);
     const walls = Math.max(height - minHeight - r, 2.5);
     return { walls, roof: r, levels: tagLevels !== null ? wholeStoreys(tagLevels) : Math.max(1, Math.round(walls / STOREY)), source: "height" };
   }
