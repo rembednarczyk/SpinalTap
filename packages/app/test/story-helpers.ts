@@ -47,11 +47,11 @@ const audio: AudioPort = { play() {}, stopAll() {} };
 
 export const frame = (p: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...p });
 
-export const setup = (store = new MemorySaveStore(), sound: AudioPort = audio) => {
+export const setup = (store = new MemorySaveStore(), sound: AudioPort = audio, seed = 77) => {
   const render = new FakeRender();
   const ui = createUiStore();
   const persistence = new SavePersistence(store);
-  const session = new GameSession({ render, audio: sound, persistence, ui, story: STORY_SOURCE, seed: () => 77, now: () => new Date(2026, 9, 27) });
+  const session = new GameSession({ render, audio: sound, persistence, ui, story: STORY_SOURCE, seed: () => seed, now: () => new Date(2026, 9, 27) });
   return { session, ui, render, store };
 };
 
