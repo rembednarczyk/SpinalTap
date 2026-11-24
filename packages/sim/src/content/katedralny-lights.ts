@@ -8,7 +8,7 @@ import type { SceneLamp, SceneLampGroup } from "./scene-lamp";
  * their own glow: their washes are lights of the scene now,
  * each a few metres off the face it lights, on the side of its floodlight (motivated lighting: the source in the frame).
  * Two wash the Trinitarian Tower (w66286371, its body to y 25.5 and spire to 58.6 since K4), one the cathedral's west front
- * before the portico's columns (w66286341, K1) and one its south wall. The tower is a broadcast mast in 2077 (the card): a red obstruction light blinks on its helm, the
+ * from under the portico, behind its columns (w66286341, K1: the floodlight stands there) and one its south wall. The tower is a broadcast mast in 2077 (the card): a red obstruction light blinks on its helm, the
  * square's accent seen across the Old Town (ICAO Annex 14's red obstruction light, as on the building sites' cranes).
  */
 
@@ -25,7 +25,7 @@ export const KATEDRALNY_LAMPS: SceneLampGroup = {
   lamps: [
     lamp("kat-wash-tower-north", 581.5, -138.6, 9),
     lamp("kat-wash-tower-south", 591.0, -156.5, 12),
-    lamp("kat-wash-front", 592.0, -186.0, 9),
+    lamp("kat-wash-front", 599.5, -179.5, 8),
     lamp("kat-wash-south-wall", 620.0, -201.0, 10),
   ],
 };

@@ -3,7 +3,7 @@ import { KATEDRALNY_BEACON, KATEDRALNY_LAMPS, SCENE_LAMP_GROUPS, WORLD_STREET_PR
 
 /*
  * Plac Katedralny by night (24.11): the washes of the square's four floodlights on the Trinitarian Tower and the
- * cathedral's front, each with its floodlight in the frame, and the red obstruction light on the tower's helm.
+ * cathedral's front, each with its floodlight in the frame, and the red obstruction light at the tip of the tower's spire.
  */
 const floodlights = Object.values(WORLD_STREET_PROPS)
   .flat()
@@ -16,16 +16,17 @@ describe("Plac Katedralny's lights (24.11)", () => {
     for (const l of KATEDRALNY_LAMPS.lamps) {
       expect(Math.min(...floodlights.map((f) => Math.hypot(f.x - l.at.x, f.z - l.at.z))), l.key).toBeLessThan(7);
       expect(inBuilding(l.at.x, l.at.z), l.key).toBe(false);
-      // Up the face, under the cathedral's 29 m and the tower's 42 m.
+      // Up the face, under the cathedral's portico (13 m) and the tower's cornice (25.5 m).
       expect(l.at.y - groundY(l.at.x, l.at.z)).toBeGreaterThan(5);
       expect(l.at.y - groundY(l.at.x, l.at.z)).toBeLessThan(20);
     }
     expect(SCENE_LAMP_GROUPS).toContain(KATEDRALNY_LAMPS);
   });
 
-  it("blinks a red obstruction light over the tower's helm (42 m)", () => {
+  it("blinks a red obstruction light at the tip of the tower's spire (y 58.6, T-353)", () => {
     expect(inBuilding(KATEDRALNY_BEACON.x, KATEDRALNY_BEACON.z)).toBe(true);
-    expect(KATEDRALNY_BEACON.y - groundY(KATEDRALNY_BEACON.x, KATEDRALNY_BEACON.z)).toBeGreaterThan(42);
+    expect(KATEDRALNY_BEACON.y).toBeGreaterThan(58.6);
+    expect(KATEDRALNY_BEACON.y).toBeLessThan(59.5);
     expect(KATEDRALNY_BEACON.color.startsWith("#ff")).toBe(true);
   });
 });

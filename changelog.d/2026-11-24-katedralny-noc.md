@@ -1,0 +1,1 @@
+Plac Katedralny nocą: reflektory oświetlają Wieżę Trynitarską i front Archikatedry, na szczycie iglicy miga czerwone światło przeszkodowe, zegary wieży świecą cyjanową obwódką, a słońce we frontonie złotem.

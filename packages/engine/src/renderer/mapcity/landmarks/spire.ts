@@ -128,12 +128,13 @@ export const spireTop = (sink: MeshSink, f: LandmarkFrame, s: SpireCrown, near: 
     [0.06, roof - 1.6],
   ], 8, Math.atan2(sq.d.z, sq.d.x) + Math.PI / 8, copper, meta);
   const sides = sidesOf(sq);
-  // The clocks on the gables' faces (0.25 m proud of the body's), so on walls 0.3 m out.
+  // The clocks on the gables' faces (0.25 m proud of the body's), so on walls 0.3 m out: a cream dial, its ring and
+  // hands lit cyan (Lublin 2077, as Nowy Ratusz's clock towards the new town): the square's accent by night.
   const faces = sidesOf(sq, -0.3);
   sides.forEach((w, k) => {
     const width = w.length - 2 * s.pinnacle - 0.4;
     gable(sink, w, f.top - 0.05, s.gable, width, near ? 2.2 : 0.6, trim, copper, meta);
-    if (near && s.clock) clockFace(sink, faces[k] as Wall, w.length / 2, f.top + s.gable * 0.34, Math.min(1.5, s.gable * 0.17), solid("#efe6cf"), solid("#1b1d22"), meta);
+    if (near && s.clock) clockFace(sink, faces[k] as Wall, w.length / 2, f.top + s.gable * 0.34, Math.min(1.5, s.gable * 0.17), solid("#efe6cf"), lit("#5ce1ff"), meta);
   });
   if (!near) {
     sink.box({ x: sq.c.x, y: tip - 0.4, z: sq.c.z }, 0.3, 0.3, 0.3, lit("#ff2a2a"));
