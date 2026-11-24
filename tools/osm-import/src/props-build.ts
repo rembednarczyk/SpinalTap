@@ -67,6 +67,28 @@ export interface BuiltProps {
   readonly crowns: CrownStats & { readonly placed: number };
 }
 
+/**
+ * Each piece whose height is the map's terrain under it (to the table's centimetre) takes the game's ground there
+ * instead (G-967): the furniture is placed on the chunks' NMT, the game walks on it shaped by the pads and ramps. A
+ * piece on a deck, a ledge or a roof keeps its own height.
+ */
+export const onShapedGround = (table: Map<string, StreetPropItem[]>, site: Site, groundY: (p: { x: number; z: number }) => number): number => {
+  const r2 = (v: number) => Math.round(v * 100) / 100 + 0;
+  let moved = 0;
+  for (const [id, items] of table)
+    table.set(
+      id,
+      items.map((i) => {
+        if (Math.abs(i.y - r2(site.heightAt(i))) > 0.006) return i;
+        const y = r2(groundY(i));
+        if (y === i.y) return i;
+        moved++;
+        return { ...i, y };
+      }),
+    );
+  return moved;
+};
+
 /** The whole table, in one pass: furniture, doors, decals, then the still crowd. */
 export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltProps> => {
   // The current extract's furniture the plan lacks, after the plan's groups (ADR-0077 point 4, G-099).
@@ -102,6 +124,9 @@ export const buildProps = async (extra: readonly Plugin[] = []): Promise<BuiltPr
   // stands under (G-797), after every other piece, and the furniture once more.
   const { byChunk, stats, crowns } = placeWithCrowns(plan, place, loadLitWays(), loadStreetWays(), new Site(chunks), loadCrownData());
   const table = byChunk as Map<string, StreetPropItem[]>;
+  // The pieces stood on the map's terrain (`Site.heightAt`, the NMT of the chunks) onto the game's (G-967): the pads
+  // and ramps the simulation shapes it with (`terrain.ts`) left lamps hanging and shrubs sunk where they reshape it.
+  onShapedGround(table, new Site(chunks), (p) => decalWalls.groundY(p.x, p.z));
   // The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
   const doorWalls = decalWalls.lublinDoorWalls();
   const doorsOut = addDoors(table, new Site(chunks), doorWalls, entrances, { surfaceY: (p) => decalWalls.surfaceY(p.x, p.z), gameDoors: doors.gameDoors(), underground: loadUndergroundWays() });

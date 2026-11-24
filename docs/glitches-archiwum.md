@@ -2,6 +2,26 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-967 Meble ulic wiszą albo toną tam, gdzie płyty terenu zmieniają grunt
+- Status: naprawione (24.11, PR #1017); wcześniej: zgłoszone (S4: latarnia z koszem 0,2 m nad gruntem, krzewy do 0,39 m nad)
+- Gdzie: całe miasto, 28 miejsc; m.in. latarnia `lamp-pastoral` z `hanging-basket` (686,0; 35,8) nad płytą fary T-347, (328,8; -90,2) -0,25 m, krzewy przy (562; 131) do +0,39 m
+- Dowód: przegląd kuratora 24.11 (PR #1015): generator mebli bierze wysokość z surowego NMT (`props-site.ts`, `heightAt`), a gra kształtuje teren płytami i rampami (`PADS`, `RAMPS`), więc |y − groundY| w 0,15–1,5 m w 29 miejscach na gałęzi #1015 (27 bez płyty fary).
+- Poprawka: generator mebli czyta ukształtowany teren gry (`groundY`, jak `decal-walls.ts`), z kontrolą skanu `street-prop-off-ground` (proponowana przez kuratora, baza do zejścia do 0).
+
+- Naprawa (24.11): `onShapedGround` w `tools/osm-import/src/props-build.ts` kładzie na ukształtowany teren gry (`groundY` z `decal-walls`) każdy mebel, którego wysokość jest surowym NMT; kontrola skanu `street-prop-off-ground` (|y − groundY| 0,15–1,5 m, bez drzwi, figur, naklejek, tabliczek, kratek i elementów placów budowy): 24 miejsca na main, 0 po poprawce, latarnia nad płytą fary T-347 na −3,6.
+
+### G-966 Słupy daszka nad straganami Targu na Ruskiej w płótnie straganów
+- Status: naprawione (24.11, PR #1016); wcześniej: w PR (S4: słup 0,25 m przechodzi przez daszek straganu); gałąź fix/g966-slupy: płótno straganu co najmniej 0,3 m od środka słupa (`POST_CLEAR`), 7 straganów bliżej niż 0,3 m przed poprawką, 0 po niej
+- Gdzie: Targ na Ruskiej, daszek w1547216433 (G-063), słupy (765,8; 566,4) i (770,9; 564,4); T-346
+- Dowód: przegląd kuratora 24.11 (PR #1014): 2 stragany ze słupem w płótnie (odstęp 0,05 i 0,00 m), 4 bliżej niż 0,3 m; na main 21 i 26. Generator straganów (`props-market.ts`) nie zna słupów zadaszeń. Słupy leżą na południowej krawędzi daszka z OSM, ok. 0,85 m w głębi prawdziwego dachu.
+- Poprawka: stragany omijają słupy zadaszeń (kontrola jak `clearOf` dla brył), ewentualnie krawędź daszka według ortofoto; kontrola skanu `prop-on-canopy-post` (płótno bliżej niż 0,125 m od słupa, baza 2) proponowana przez kuratora.
+
+### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
+- Status: naprawione (24.11, PR #1014); wcześniej: S4, stragan obok prawdziwego namiotu, nie pod nim; namioty z ortofoto w planie mebli, 154 stragany pod 20 dachami, przegląd kuratora 24.11 przyjęty z uwagami (naniesione)
+- Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
+- Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
+- Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.
+
 ### G-962 Zawrotki na ślepych końcach Szkolnej i Słowikowskiego wychodzą wierzchołkiem za koniec jezdni
 - Status: naprawione (23.11, gałąź fix/g962-zawrotki, PR po G-966, który jest w main: #992); wcześniej: zgłoszone (S4: auto na zawrotce muska plac przez ok. 0,1 m)
 - Gdzie: nowy rząd Podzamcza (23.11): Szkolna (843,5, 552,5), gdzie jezdnia przechodzi w deptak, i Słowikowskiego (997,2, 591,0)

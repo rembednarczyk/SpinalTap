@@ -315,6 +315,9 @@ const standingGround = (x: number, z: number, bottom: number): number => {
   const vault = bottom < terrain - 1 ? CHUNK_VAULTS.find((v) => inBounds(v.bounds, x, z)) : undefined;
   return vault ? vault.floor : terrain;
 };
+/** The street furniture with a height of its own, not the ground's (`street-prop-off-ground`). */
+const OWN_HEIGHT: ReadonlySet<string> = new Set(["door", "figure", "sticker", "graffiti", "house-plate", "drain-grate"]);
+
 /** The game's ground, NaN off the map's chunks (where `groundY` is 0, no ground of the map). */
 const onMapGround = (x: number, z: number): number =>
   MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) ? groundY(x, z) : Number.NaN;
@@ -783,6 +786,20 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       .flatMap((i) => {
         const hit = [1, 2, 3, 4, 5].find((t) => inBuilding(i.x + Math.sin(i.yaw) * t, i.z + Math.cos(i.yaw) * t));
         return hit === undefined ? [] : [{ at: near(i.x, i.z), what: `${i.prop} facing a wall ${hit} m ahead` }];
+      }),
+  /**
+   * A piece of the street furniture hanging over or sunk into the game's ground by 0.15-1.5 m (G-967): the generator
+   * stood it on the chunks' NMT, where the pads and ramps shape the ground the game walks on. Not the pieces with a
+   * height of their own (the doors on their thresholds, the figures, the decals on walls, the building sites' pieces);
+   * a piece more than 1.5 m off stands on a deck or a roof on purpose.
+   */
+  "street-prop-off-ground": () =>
+    Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => !OWN_HEIGHT.has(i.prop) && !i.prop.startsWith("site-"))
+      .flatMap((i) => {
+        const d = i.y - groundY(i.x, i.z);
+        return Math.abs(d) >= 0.15 && Math.abs(d) <= 1.5 ? [{ at: near(i.x, i.z), what: `${i.prop} ${d > 0 ? "over" : "under"} the ground by ${Math.abs(d).toFixed(2)} m` }] : [];
       }),
   /** A bulky free-standing piece reaching into a wall. */
   "furniture-in-wall": () =>
