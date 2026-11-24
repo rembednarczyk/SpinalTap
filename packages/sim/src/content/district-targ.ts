@@ -5,6 +5,7 @@ import { onRoad } from "./lublin/roads";
 import { groundY } from "./lublin/terrain";
 import { METRO_STATIONS } from "./metro";
 import { PLAC_ZAMKOWY_AREA, PLAC_ZAMKOWY_METRO, PLAC_ZAMKOWY_STALLS } from "./plac-zamkowy-detail";
+import { PO_FARZE_LAMPS } from "./po-farze-detail";
 import { WORLD_STREET_PROPS } from "./street-props";
 import { TERRITORY_GROUPS } from "./territory-groups";
 
@@ -178,4 +179,4 @@ export const DWORZEC_METRO_LAMPS: readonly SceneLampGroup[] = DWORZEC_METRO
   : [];
 
 /** Every scene's lights the renderer turns on near their place. */
-export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS];
+export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS, PO_FARZE_LAMPS];
