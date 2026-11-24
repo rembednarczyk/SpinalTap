@@ -1,5 +1,5 @@
 import type { AudioListenerPose, MusicMood, Vec3 } from "@seki/core";
-import { type ChunkDef, WORLD_CHUNKS } from "@seki/sim";
+import { type ChunkDef, SCENE_RADIOS, type SceneRadio, WORLD_CHUNKS } from "@seki/sim";
 import type { RadioStationId } from "./radio-stations";
 import { emitterMix } from "./spatial";
 
@@ -30,9 +30,26 @@ const SPEAKER_HEIGHT = 2.4;
 /** The speaker hangs this far under the bottom of its sign. */
 const SPEAKER_DROP = 0.4;
 
-/** Speakers of every chunk (or the ones given), one per venue sign. */
-export const radioSpeakers = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): RadioSpeaker[] =>
-  chunks.flatMap((c) =>
+/** The station a scene's speaker plays by its venue's kind (`SCENE_RADIOS`): street food the news, bars the night drive. */
+export const VENUE_KIND_STATIONS: Readonly<Record<string, RadioStationId>> = {
+  "fast-food": "tessen",
+  restaurant: "yoru",
+  cafe: "yoru",
+  bar: "drift",
+  pub: "drift",
+  club: "drift",
+};
+
+/** The scenes' speakers (no entity: at the doors of the map's venues whose signs the renderer hangs), with a station. */
+export const sceneSpeakers = (radios: readonly SceneRadio[] = SCENE_RADIOS): RadioSpeaker[] =>
+  radios.flatMap((r) => {
+    const station = VENUE_KIND_STATIONS[r.kind];
+    return station ? [{ position: r.at, station, label: r.label }] : [];
+  });
+
+/** Speakers of every chunk (or the ones given), one per venue sign, and the scenes' own (`sceneSpeakers`). */
+export const radioSpeakers = (chunks: readonly ChunkDef[] = WORLD_CHUNKS, radios: readonly SceneRadio[] = SCENE_RADIOS): RadioSpeaker[] => [
+  ...chunks.flatMap((c) =>
     c.props.flatMap((p) => {
       if (p.view.kind !== "neon" || !p.view.label) return [];
       const station = VENUE_STATIONS[p.view.label];
@@ -40,7 +57,9 @@ export const radioSpeakers = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): Radio
       const y = Math.max(p.center.y - p.view.size.y / 2 - SPEAKER_DROP, p.center.y - SPEAKER_HEIGHT);
       return station ? [{ position: { x: p.center.x, y, z: p.center.z }, station, label: p.view.label }] : [];
     }),
-  );
+  ),
+  ...sceneSpeakers(radios),
+];
 
 /** Distance at which a speaker is loudest, and beyond which it is silent (a small speaker in a doorway). */
 export const SPEAKER_REF = 3;

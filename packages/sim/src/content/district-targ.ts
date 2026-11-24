@@ -1,5 +1,6 @@
 import { type StreetPropItem, roomDetailShape } from "@seki/core";
-import type { SceneLamp, SceneLampGroup } from "./scene-lamp";
+import type { SceneLamp, SceneLampGroup, SceneRadio } from "./scene-lamp";
+import { LUBLIN_CHUNKS } from "./lublin";
 import { turnLocal } from "./lublin/furniture";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { onRoad } from "./lublin/roads";
@@ -21,7 +22,7 @@ import { TERRITORY_GROUPS } from "./territory-groups";
  * film and game lighting practice name it); they carry no entity, so no id of the content moves.
  */
 
-export type { SceneLamp, SceneLampGroup } from "./scene-lamp";
+export type { SceneLamp, SceneLampGroup, SceneRadio } from "./scene-lamp";
 
 /** The festoon's middle in a stall's frame (`rd-pz-stall`): between its front posts, a little under its sagging bulbs. */
 const FESTOON = { x: 0, y: 2.0, z: 0.72 } as const;
@@ -166,3 +167,27 @@ export const DWORZEC_METRO_LAMPS: readonly SceneLampGroup[] = DWORZEC_METRO
 
 /** Every scene's lights the renderer turns on near their place. */
 export const SCENE_LAMP_GROUPS: readonly SceneLampGroup[] = [PLAC_ZAMKOWY_LAMPS, BAZAR_LAMPS, RUSKA_LAMPS, ...HEBI_LAMPS, ...DWORZEC_METRO_LAMPS, PO_FARZE_LAMPS];
+
+/** A speaker over a venue's door stands this high over the street (m): under its sign, as the neons' (`radio-speakers.ts`). */
+const RADIO_HEIGHT = 2.4;
+/**
+ * The venues of Podzamcze whose doors play a station (the card's debt, `docs/lokacje/dzielnica-targ.md`: no radio in
+ * the district): the kebab by the Dworzec's pavilions and two on Targ na Ruskiej, the night market's food (§17: sound
+ * from its source). Found by their 2077 names in the map's venues, so a moved venue moves its speaker.
+ */
+const TARG_RADIO_VENUES = ["KEBAB CHŁODNY DZBAN", "KEBAB ZNAD BOSFORU", "KAMBUZ"] as const;
+
+export const TARG_RADIOS: readonly SceneRadio[] = TARG_RADIO_VENUES.flatMap((name) => {
+  for (const c of LUBLIN_CHUNKS)
+    for (const b of c.buildings)
+      for (const v of b.venues ?? []) {
+        if (v.name !== name) continue;
+        const [x, z] = [b.x + v.x, b.z + v.z];
+        return [{ key: `targ-radio-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, at: { x, y: groundY(x, z) + RADIO_HEIGHT, z }, kind: v.kind, label: v.name }];
+      }
+  return [];
+});
+
+/** Every scene's speakers the engine's radio plays near their place. */
+export const SCENE_RADIOS: readonly SceneRadio[] = [...TARG_RADIOS];
+

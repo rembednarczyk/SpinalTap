@@ -22,3 +22,18 @@ export interface SceneLampGroup {
   readonly near: number;
   readonly lamps: readonly SceneLamp[];
 }
+
+/**
+ * A speaker of a scene (ADR-0036's diegetic radio, ADR-0102 point 5): in the door of a venue of the map whose sign the
+ * renderer already hangs (the venue boards, scenery with no entity), so the street hears a station there; no entity.
+ */
+export interface SceneRadio {
+  readonly key: string;
+  /** Under the venue's sign, over its door. */
+  readonly at: Vec3;
+  /** The venue's kind (`LublinVenueData.kind`): the engine plays a station by it. */
+  readonly kind: string;
+  /** The venue's 2077 name, its sign's text. */
+  readonly label: string;
+}
+
