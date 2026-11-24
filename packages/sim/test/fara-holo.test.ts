@@ -98,7 +98,39 @@ describe("the hologram of the parish church over its foundations (Plac po Farze)
     // Nine in ten of the walls' corners on the level within 0.1 m (on the NMT they ran from -4.9 to -2.4 m); the rest
     // within 0.3 m (the pad's edge on the import's 5 m grid), but the south-west wedge left on the NMT (z under 27).
     expect(flat.length / samples.length).toBeGreaterThan(0.9);
-    const wedge = (x: number, z: number) => z < 27 || (x < 669 && z < 31);
+    // The south-west wedge on Archidiakońska, and the north-west turret's tip on the slope down to the footway.
+    const wedge = (x: number, z: number) => z < 27 || (x < 669 && z < 31) || (x < 659 && z > 55);
     for (const [x, z] of samples.filter(([x, z]) => !wedge(x, z))) expect(Math.abs(groundY(x, z) - FARA_LEVEL), `${x},${z}`).toBeLessThan(0.3);
+  });
+
+  it("opens the doors in the foundations' gaps: under 0.3 m of a door's width over the ruin's masonry (the curator's review of 24.11)", () => {
+    // The closed outlines of the ruin's masonry (the walls' faces drawn round them).
+    const masonry = ruinWalls.filter((w) => w.line.length >= 8 && w.line[0] === w.line[w.line.length - 2] && w.line[1] === w.line[w.line.length - 1]);
+    const inside = (x: number, z: number) =>
+      masonry.some((w) => {
+        let c = false;
+        for (let i = 0, j = w.line.length / 2 - 1; i < w.line.length / 2; j = i++) {
+          const [xi, zi, xj, zj] = [w.line[2 * i]!, w.line[2 * i + 1]!, w.line[2 * j]!, w.line[2 * j + 1]!];
+          if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+        }
+        return c;
+      });
+    for (const d of FARA_DOORS) {
+      const len = Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]);
+      let over = 0;
+      for (let s = -d.width / 2 + 0.05; s < d.width / 2; s += 0.1) {
+        const t = d.at + s / len;
+        if (inside(d.a[0] + (d.b[0] - d.a[0]) * t, d.a[1] + (d.b[1] - d.a[1]) * t)) over += 0.1;
+      }
+      expect(over, JSON.stringify(d)).toBeLessThan(0.3);
+    }
+  });
+
+  it("opens a chancel's window over the lean-to of a chapel leaning on it, not into its roof", () => {
+    for (const o of FARA_OPENINGS) {
+      const [x, z] = [o.a[0] + (o.b[0] - o.a[0]) * o.at, o.a[1] + (o.b[1] - o.a[1]) * o.at];
+      const ch = FARA_CHAPELS.find((c) => Math.abs(c.wall - z) < 0.8 && x > Math.min(...c.pts.map((q) => q[0])) && x < Math.max(...c.pts.map((q) => q[0])));
+      if (ch) expect(o.sill, `${x.toFixed(1)},${z.toFixed(1)}`).toBeGreaterThan(ch.inner);
+    }
   });
 });

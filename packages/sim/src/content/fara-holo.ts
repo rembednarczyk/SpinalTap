@@ -206,7 +206,14 @@ const windows = (): FaraOpening[] => {
   const c = FARA_CHANCEL;
   for (let k = 0; k + 1 < c.length; k++) {
     const len = Math.hypot(c[k + 1]![0] - c[k]![0], c[k + 1]![1] - c[k]![1]);
-    for (const at of len > 8 ? [0.6, 0.85] : [0.5]) out.push({ a: c[k]!, b: c[k + 1]!, at, width: 1.3, sill: 3.5, height: 5.5, rise: 1.4 });
+    for (const at of len > 8 ? [0.6, 0.85] : [0.5]) {
+      const [x, z] = [c[k]![0] + (c[k + 1]![0] - c[k]![0]) * at, c[k]![1] + (c[k + 1]![1] - c[k]![1]) * at]
+      // Over a chapel leaning on the chancel (the annex, the sacristy) a window opens above its lean-to, to under the eaves.
+      const under = FARA_CHAPELS.find((ch) => Math.abs(ch.wall - z) < 0.8 && x > Math.min(...ch.pts.map((q) => q[0])) && x < Math.max(...ch.pts.map((q) => q[0])));
+      const sill = under ? under.inner + 0.4 : 3.5;
+      const rise = under ? 0.5 : 1.4;
+      out.push({ a: c[k]!, b: c[k + 1]!, at, width: 1.3, sill, height: Math.min(5.5, FARA_HEIGHTS.chancel - 0.4 - rise - sill), rise });
+    }
   }
   for (const ch of FARA_CHAPELS) {
     // The chapel's far side: the side whose middle lies farthest off the wall it leans on.
@@ -219,10 +226,11 @@ const windows = (): FaraOpening[] => {
   return out;
 };
 
-/** The west portal in the tower's west wall on the nave's axis, and the south door between the chapels. */
+/** The west portal in the tower's west wall on the nave's axis, in the foundations' gap there, and the south door in the gap of the south wall. */
 export const FARA_DOORS: readonly FaraOpening[] = [
   { a: [659.8, 46.6], b: [659.8, 38.2], at: (46.6 - AXIS) / 8.4, width: 2.6, sill: 0, height: 3.6, rise: 1.4 },
-  { a: [659.8, 32.6], b: [678.0, 32.6], at: (669.7 - 659.8) / 18.2, width: 2.2, sill: 0, height: 3.2, rise: 1.1 },
+  // In the foundations' gap of the south wall (x 668.1-669.3, between r18507551 and r18507552), the porch south of it.
+  { a: [659.8, 32.6], b: [678.0, 32.6], at: (668.7 - 659.8) / 18.2, width: 1.2, sill: 0, height: 2.8, rise: 0.8 },
 ];
 
 /** The windows (`windows`) and the doors, each a pane of its own on its wall. */

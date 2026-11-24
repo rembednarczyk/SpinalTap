@@ -16,12 +16,15 @@ export const FARA_LEVEL = -3.6;
 export const FARA_FOUNDATION_TOP = FARA_LEVEL + 0.5;
 
 /**
- * The convex hull of the foundations' walls (counter-clockwise), 0.5 m out round them, less the south-west wedge: the
- * south-west chapel's corner lies on Archidiakońska's paving, which climbs to it (-2.4 m), so its walls stay on the NMT.
+ * The convex hull of the foundations' walls (counter-clockwise), 0.5 m out round them, less the south-west wedge (the
+ * south-west chapel's corner lies on Archidiakońska's paving, which climbs to it, -2.4 m: its walls stay on the NMT),
+ * and pulled in on the north, the east and the south-east so the blend, which on the terrain's 2.5 m grid reaches some
+ * 2.5 m past the ring, leaves the footway of Plac Po Farze, the steps of Zaułek Panasa and the pavement south-east of the
+ * chancel within 0.2 m of the NMT (the curator's review of 24.11).
  */
 const HULL: readonly (readonly [number, number])[] = [
-  [658.0, 32.5], [678.5, 25.8], [692.3, 35.8], [695.0, 38.7], [695.7, 40.1], [695.3, 45.0],
-  [693.5, 53.1], [691.3, 54.0], [680.8, 58.0], [677.5, 59.0], [671.6, 60.0], [661.7, 57.9], [657.7, 56.3],
+  [659.3, 33.4], [678.9, 26.7], [691.8, 36.6], [694.4, 38.9], [695.0, 40.1], [694.6, 45.0],
+  [693.0, 52.6], [691.3, 54.0], [680.8, 57.4], [677.5, 58.3], [671.6, 59.2], [661.7, 57.3], [657.9, 55.8],
 ];
 const MIDDLE = { x: 676, z: 42 } as const;
 const OUT = 0.5;
