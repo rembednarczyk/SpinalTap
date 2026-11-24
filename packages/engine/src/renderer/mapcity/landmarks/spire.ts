@@ -13,9 +13,9 @@ import type { SpireCrown } from "./recipe-types";
  * cornice a steep gable over the middle of each side with a clock in it, a slim octagonal pinnacle
  * on each corner, and between them a tall octagonal copper spire with its ball and, in Lublin 2077,
  * a mast with a red obstruction light (ICAO Annex 14, as the cranes'); on the body pointed windows
- * in pairs. Heights from GUGiK LoD2 and NMPT (`corrections-katedra.ts`): the body's corners at y 27,
- * the gables' peaks 38.5 (NMPT 37-39 on the sides' middles, 25-27 on the corners), the spire's tip
- * 58.6 (LoD2's ridge). Pattern: the Gothic Revival tower top of gabled faces round a broach spire
+ * in pairs. Heights from GUGiK LoD2 and NMPT (`corrections-katedra.ts`): the body's cornice at y
+ * 25.5 (NMPT's ring at 24-27), the gables' peaks 37.5 (NMPT 37-39 on the sides' middles), the spire
+ * broad to the gables' tops (NMPT 12-13 m at y 37, 7-8 m at 46) and to its tip at 58.6 (LoD2's ridge). Pattern: the Gothic Revival tower top of gabled faces round a broach spire
  * (Pugin's "wimpergs" and pinnacles), cut down to the elements the photograph shows.
  */
 
@@ -124,7 +124,7 @@ export const spireTop = (sink: MeshSink, f: LandmarkFrame, s: SpireCrown, near: 
   const foot = inner * s.base;
   revolve(sink, { x: sq.c.x, y: f.top - 0.05, z: sq.c.z }, [
     [foot, 0],
-    [foot * 0.97, roof * 0.08],
+    [foot * 0.93, s.shoulder],
     [0.06, roof - 1.6],
   ], 8, Math.atan2(sq.d.z, sq.d.x) + Math.PI / 8, copper, meta);
   const sides = sidesOf(sq);
