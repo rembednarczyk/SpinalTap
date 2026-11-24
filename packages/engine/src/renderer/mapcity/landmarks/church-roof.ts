@@ -1,6 +1,6 @@
 import type { MeshSink, Rgba } from "../../mesh-sink";
 import { trimMeta } from "../facade-frame";
-import { quadUv } from "../sink-ops";
+import { type Uv, quadUv } from "../sink-ops";
 import { coveredRanges } from "./elevation";
 import { SWATCH, archPanel, clearOf, revolve, shownWalls, solid, spireCross } from "./kit";
 import type { LandmarkFrame } from "./landmark-frame";
@@ -44,7 +44,7 @@ const UV: [[number, number], [number, number], [number, number], [number, number
 ];
 
 /** A dormer facing (fx, fz) at (x, z): plaster cheeks and front to y1 over its sill at y0, a dark window, a small metal gable roof. */
-const dormer = (sink: MeshSink, d: ChurchRoof["dormers"][number], wall: Rgba, roof: Rgba, meta: [number, number]): void => {
+const dormer = (sink: MeshSink, d: ChurchRoof["dormers"][number], wall: Rgba, roof: Rgba, meta: Uv): void => {
   const rotY = Math.atan2(-d.fz, d.fx) + Math.PI / 2;
   const [w, h, depth] = [1.5, d.y1 - d.y0, 2.2];
   const c = { x: d.x - (d.fx * depth) / 2, y: d.y0 + h / 2, z: d.z - (d.fz * depth) / 2 };
@@ -66,7 +66,7 @@ const dormer = (sink: MeshSink, d: ChurchRoof["dormers"][number], wall: Rgba, ro
 };
 
 /** A chapel's dome: a drum with its cornice, the copper dome, an open lantern with its own small dome, a ball and a cross. */
-const dome = (sink: MeshSink, d: ChurchRoof["domes"][number], wall: Rgba, trim: Rgba, copper: Rgba, meta: [number, number]): void => {
+const dome = (sink: MeshSink, d: ChurchRoof["domes"][number], wall: Rgba, trim: Rgba, copper: Rgba, meta: Uv): void => {
   const r = d.r;
   revolve(sink, { x: d.x, y: d.y, z: d.z }, [[r, 0], [r, d.drum]], 8, Math.PI / 8, wall, meta);
   revolve(sink, { x: d.x, y: d.y + d.drum - 0.3, z: d.z }, [[r + 0.15, 0], [r + 0.15, 0.3]], 8, Math.PI / 8, trim, meta);
