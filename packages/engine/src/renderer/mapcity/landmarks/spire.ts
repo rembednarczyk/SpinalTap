@@ -2,7 +2,7 @@ import type { MeshSink, Rgba, Vec } from "../../mesh-sink";
 import { type Wall, trimMeta } from "../facade-frame";
 import { band } from "../facade-parts";
 import type { P2 } from "../polygon";
-import { quadUv } from "../sink-ops";
+import { type Uv, quadUv } from "../sink-ops";
 import { SWATCH, archPanel, clockFace, helmBase, lit, revolve, solid } from "./kit";
 import type { LandmarkFrame } from "./landmark-frame";
 import { mast } from "./layer2077";
@@ -61,7 +61,7 @@ const along = (w: Wall, u: number, y: number, out: number): Vec => {
 };
 
 /** A gable over the side from y0 up `h` metres, `width` wide at its foot: its face, `depth` metres thick, a copper coping on both slopes. */
-const gable = (sink: MeshSink, w: Wall, y0: number, h: number, width: number, depth: number, wall: Rgba, roof: Rgba, meta: [number, number]): void => {
+const gable = (sink: MeshSink, w: Wall, y0: number, h: number, width: number, depth: number, wall: Rgba, roof: Rgba, meta: Uv): void => {
   const m = w.length / 2;
   const n = { x: w.nx, y: 0, z: w.nz };
   const [l, r, top] = [along(w, m - width / 2, y0, 0.25), along(w, m + width / 2, y0, 0.25), along(w, m, y0 + h, 0.25)];
@@ -80,7 +80,7 @@ const gable = (sink: MeshSink, w: Wall, y0: number, h: number, width: number, de
 };
 
 /** A corner pinnacle: an octagonal shaft from y0 to y1 and its pointed copper cap to y2, with a small ball. */
-const pinnacle = (sink: MeshSink, at: P2, y0: number, y1: number, y2: number, r: number, wall: Rgba, roof: Rgba, meta: [number, number]): void => {
+const pinnacle = (sink: MeshSink, at: P2, y0: number, y1: number, y2: number, r: number, wall: Rgba, roof: Rgba, meta: Uv): void => {
   revolve(sink, { x: at.x, y: y0, z: at.z }, [
     [r, 0],
     [r, y1 - y0],
