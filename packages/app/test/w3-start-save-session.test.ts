@@ -266,14 +266,23 @@ describe("W-3's start save at level 12 (ADR-0082, G-909)", () => {
     expect(after.shots).toBeLessThanOrEqual(24);
   });
 
-  it("corridor S from the start save: she comes through the second wave with most of her health", async () => {
-    // The median of three sessions' seeds: one fight is one draw of the city's shared stream, and a
-    // building more in the Old Town, 2 km away, moved seed 77 from 0.64 to 0.49 of her health (seeds
-    // 71-79 on main of 24.11: 0.52-0.64, median 0.64; T-349's PR #1026).
-    const runs = [];
-    for (const seed of CORRIDOR_SEEDS) runs.push(await fightOf(slice, "corridor", seed));
+  // Corridor S from the start save, as the median of three sessions' seeds: one fight is one draw of
+  // the city's shared stream, and a building more in the Old Town, 2 km away, moved seed 77 from 0.64
+  // to 0.49 of her health (seeds 71-79 on main of 24.11: 0.52-0.64, median 0.64; T-349's PR #1026).
+  // Each seed is a test of its own, one fight to a test as in the rest of the file, and the last test
+  // takes their median (vitest runs a file's tests in order).
+  const runs: Awaited<ReturnType<typeof fightOf>>[] = [];
+  for (const seed of CORRIDOR_SEEDS) {
+    it(`corridor S from the start save, seed ${seed}: she lives through the second wave`, async () => {
+      const after = await fightOf(slice, "corridor", seed);
+      runs.push(after);
+      expect(after).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
+    });
+  }
+
+  it("corridor S from the start save: she comes through the second wave with most of her health", () => {
     out("after-corridor", runs);
-    for (const after of runs) expect(after).toMatchObject({ died: false, seconds: CORRIDOR_SECONDS });
+    expect(runs).toHaveLength(CORRIDOR_SEEDS.length);
     expect(median(runs.map((r) => r.hpLeft / r.maxHp))).toBeGreaterThan(RIFLE_CORRIDOR_HEALTH);
     expect(median(runs.map((r) => r.kills))).toBeGreaterThan(PISTOL_CORRIDOR_KILLS);
   });
