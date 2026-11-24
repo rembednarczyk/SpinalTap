@@ -4,30 +4,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-967 Meble ulic wiszą albo toną tam, gdzie płyty terenu zmieniają grunt
-- Status: zgłoszone (S4: latarnia z koszem 0,2 m nad gruntem, krzewy do 0,39 m nad)
-- Gdzie: całe miasto, 28 miejsc; m.in. latarnia `lamp-pastoral` z `hanging-basket` (686,0; 35,8) nad płytą fary T-347, (328,8; -90,2) -0,25 m, krzewy przy (562; 131) do +0,39 m
-- Dowód: przegląd kuratora 24.11 (PR #1015): generator mebli bierze wysokość z surowego NMT (`props-site.ts`, `heightAt`), a gra kształtuje teren płytami i rampami (`PADS`, `RAMPS`), więc |y − groundY| w 0,15–1,5 m w 29 miejscach na gałęzi #1015 (27 bez płyty fary).
-- Poprawka: generator mebli czyta ukształtowany teren gry (`groundY`, jak `decal-walls.ts`), z kontrolą skanu `street-prop-off-ground` (proponowana przez kuratora, baza do zejścia do 0).
-
-### G-966 Słupy daszka nad straganami Targu na Ruskiej w płótnie straganów
-- Status: w PR (S4: słup 0,25 m przechodzi przez daszek straganu); gałąź fix/g966-slupy: płótno straganu co najmniej 0,3 m od środka słupa (`POST_CLEAR`), 7 straganów bliżej niż 0,3 m przed poprawką, 0 po niej
-- Gdzie: Targ na Ruskiej, daszek w1547216433 (G-063), słupy (765,8; 566,4) i (770,9; 564,4); T-346
-- Dowód: przegląd kuratora 24.11 (PR #1014): 2 stragany ze słupem w płótnie (odstęp 0,05 i 0,00 m), 4 bliżej niż 0,3 m; na main 21 i 26. Generator straganów (`props-market.ts`) nie zna słupów zadaszeń. Słupy leżą na południowej krawędzi daszka z OSM, ok. 0,85 m w głębi prawdziwego dachu.
-- Poprawka: stragany omijają słupy zadaszeń (kontrola jak `clearOf` dla brył), ewentualnie krawędź daszka według ortofoto; kontrola skanu `prop-on-canopy-post` (płótno bliżej niż 0,125 m od słupa, baza 2) proponowana przez kuratora.
-
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
 - Dowód: po G-963 bieg kończy się na krawężniku Szkolnej, 3 m przed osią ulicy. Dolne 6 m biegu leży na skarpie o nachyleniu ok. 0,6 (teren gry od −9,8 m przy krawężniku do −5,7 m), a `layFlight` nie mieści tam biegu normy (najwyżej 12 stopni, potem podest) nad terenem, więc stawia stopnie po terenie (`dueAt`): stopień 0,60 m na podstopniu 0,149 m. Przed G-963 bieg sięgał 3 m dalej, na jezdnię, i mieścił się w normie. Miejsce przyjęte w bazie skanu świadomie w PR G-963.
 - Diagnoza (23.11, noc): bieg ma 17,36 m i 6,24 m wzniosu; pierwsze 10 m terenu gry wznosi się o 5,2 m (nachylenie 0,52–0,64 na odcinkach 0,5 m). Najstromszy bieg normy to podstopień 0,17 m na stopniu 0,26 m (nachylenie 0,65), czyli ok. 31 podstopni bez podestu na tym odcinku, a norma pozwala na 12 (`STEP_NORM.maxRun`); podest na takim zboczu leży pod terenem. `layFlight` nie ma więc rozwiązania w normie i wraca do stopni po terenie (`dueAt`). Sprawdzone: zapas „jeden bieg bez podestu” przed `dueAt` tego miejsca nie zdejmuje (zdejmuje inne, stare-miasto-1-1 736,143, kosztem biegu ponad 12 podstopni, więc odrzucony).
 - Poprawka: teren gry pod biegiem, nie renderer. Skarpa z NMT przy Szkolnej jest bardziej stroma niż prawdziwe schody, które leżą we wcięciu: wcięcie terenu wzdłuż biegu do profilu biegu normy (jak `FLIGHT_RAMPS` w `sites.ts`), z przeglądem kuratora. Test przyjęcia: miejsce znika z bazy `steps-riser-norm`.
-
-### G-964 Stragany Targu na Ruskiej stoją w alejkach między namiotami
-- Status: w PR #1014 (S4: stragan obok prawdziwego namiotu, nie pod nim); namioty z ortofoto w planie mebli, 154 stragany pod 20 dachami, przegląd kuratora 24.11 przyjęty z uwagami (naniesione)
-- Gdzie: Targ na Ruskiej (podzamcze-0-1, 1-1, pas z 580–590 w 0-2 i 1-2); T-341
-- Dowód: przegląd kuratora rzędu Podzamcza (23.11): pod namiotami z ortofotomapy stoi 91 ze 164 straganów, na main 101 ze 155; 7 nowych straganów na pasie z 580–590 stoi poza namiotami. Faza rzędów jest brana z prostokąta obrysu targu, który z nowym rzędem objął cały wielokąt.
-- Poprawka: oś i faza rzędów wzdłuż namiotów z ortofotomapy (najpierw domapować namioty); kontrola skanu `market-stall-off-tent` proponowana przez kuratora.
 
 ### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
 - Status: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
