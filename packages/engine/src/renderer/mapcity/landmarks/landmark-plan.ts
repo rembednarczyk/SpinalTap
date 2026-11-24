@@ -17,6 +17,7 @@ import { castleFront } from "./castle-front";
 import { planPortico } from "./portico";
 import { westFront } from "./cathedral-front";
 import { spireTop, towerWindows } from "./spire";
+import { churchRoof, sideWindows } from "./church-roof";
 import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
@@ -351,6 +352,8 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   if (t.portico) planPortico(sink, f, t.portico.floor, false);
   if (t.westFront) westFront(sink, f, t.westFront, trim);
   if (t.towerWindows) towerWindows(sink, f, t.towerWindows, trim);
+  if (t.sideWindows) sideWindows(sink, f, t.sideWindows, trim);
+  if (t.roofscape) churchRoof(sink, f, t.roofscape);
   if (t.castle) castleFront(sink, f, t.castle, trim);
   faces(sink, f, part);
   crown(sink, f, part, true);
