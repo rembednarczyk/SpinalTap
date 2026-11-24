@@ -5,7 +5,7 @@
  * `data/osm` stays as downloaded, so a new extract keeps the correction until OSM agrees.
  */
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Shifted, centroid } from "./geometry.ts";
+import { type Pt, type Shifted, centroid, editRing } from "./geometry.ts";
 import { ALCHEMIA_AREAS } from "./corrections-alchemia.ts";
 import { CZECHOWICZA_AREAS } from "./corrections-czechowicza.ts";
 import { ADDED_AREAS_TAIL, TAG_CORRECTIONS_TAIL, withOrtho } from "./corrections-kerb.ts";
@@ -20,11 +20,6 @@ export interface TagCorrection extends Shifted {
   readonly tags: Tags;
   /** The outline scaled round its centroid by this factor (a mapped outline too small against the photograph); areas only. */
   readonly scale?: number;
-  /**
-   * Vertices of the outline left out, each the map's node within 0.2 m of one of these points: a
-   * jog of the mapped outline that the surface model and the photograph do not have; areas only.
-   */
-  readonly drop?: readonly Pt[];
   readonly reason: string;
   /** The entry of `docs/topografia.md` it answers. */
   readonly ref: string;
@@ -689,7 +684,7 @@ export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrectio
   const c = corrections.get(a.id);
   if (!c) return a;
   const k = c.scale ?? 1;
-  const ring = a.ring.filter((p) => !(c.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2)).map((p) => (c.shift ? { x: p.x + c.shift.x, z: p.z + c.shift.z } : p));
+  const ring = editRing(a.ring, c);
   const o = centroid(ring);
   return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? ring : ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
 };

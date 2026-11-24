@@ -8,6 +8,7 @@
  */
 
 import { ARCHIKATEDRA } from "./archikatedra";
+import { WIEZA_TRYNITARSKA } from "./wieza-trynitarska";
 import type { BlindRow, PartRecipe, LandmarkRecipe } from "./recipe-types";
 
 export type {
@@ -380,6 +381,7 @@ export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [
   NOWY_RATUSZ,
   ZAMEK,
   ARCHIKATEDRA,
+  WIEZA_TRYNITARSKA,
 ];
 
 /** Every text the landmarks write in the names atlas: screens, plaques, dated tablets and the castle's sign. */

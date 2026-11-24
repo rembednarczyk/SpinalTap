@@ -332,7 +332,21 @@ export const sliceLine = (line: readonly Pt[], from: number, to: number): Pt[] =
 /** Rounds to 0.1 m. */
 export const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
-/** An outline moved whole by `shift` (world metres): a part the map draws beside where NMPT and LoD2 have it (T-349). */
+/**
+ * Edits of a mapped outline (world metres, T-349): vertices left out (each the map's node within 0.2 m
+ * of a point of `drop`: a jog NMPT and the photograph do not have), vertices moved (`move`: the node
+ * within 0.2 m of `from` put at `to`, a wall onto its neighbour's moved one), then the whole outline
+ * moved by `shift` (a building the map draws beside where NMPT and LoD2 have it).
+ */
 export interface Shifted {
+  readonly drop?: readonly Pt[];
+  readonly move?: readonly { readonly from: Pt; readonly to: Pt }[];
   readonly shift?: Pt;
 }
+
+/** The outline with the edits applied: dropped vertices out, moved ones moved, then all shifted. */
+export const editRing = (ring: readonly Pt[], e: Shifted): Pt[] =>
+  ring
+    .filter((p) => !(e.drop ?? []).some((d) => Math.hypot(d.x - p.x, d.z - p.z) <= 0.2))
+    .map((p) => (e.move ?? []).find((m) => Math.hypot(m.from.x - p.x, m.from.z - p.z) <= 0.2)?.to ?? p)
+    .map((p) => (e.shift ? { x: p.x + e.shift.x, z: p.z + e.shift.z } : p));

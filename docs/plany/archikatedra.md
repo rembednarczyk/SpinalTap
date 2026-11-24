@@ -29,7 +29,7 @@ Obrys OSM i jego części stoją ok. 3,5 m na wschód od NMPT i LoD2 tak samo ja
 | K1 | bryła z NMPT (korekty importu i części), portyk z kolumnami w symulacji i rysunku, przepis z tynkiem, pilastrami, gzymsami, otworami dzwonnic, hełmami z krzyżem i ciemną blachą nawy | ten PR |
 | K2 | fasada: osie pilastrów (za kolumnami co 4,16 m, wyżej co 4 i 5,2 m), okna łukowe kruchty, nawy i frontonu, drzwi portalu na szczycie schodów (y −1,5), złote słońce z tarczą IHS w tympanonie (`cathedral-front.ts`); zostają schody portalu jako bryła i zegar albo otwory wieżyczek według zdjęć | przepis |
 | K3 | dach i bok: lukarny, sygnaturka, kopuły kaplic, okna naw i absydy, gzymsy boczne, warstwa 2077 (ciepłe linie na gzymsach, reflektory) | przepis |
-| K4 | Wieża Trynitarska: położenie (G-683, T-264), wysokości części według LoD2 i NMPT, iglica ze szczytami i sterczynami, zegar | import i przepis |
+| K4 | Wieża Trynitarska (T-353): obrys 4,9 m na zachód (G-683, T-264), części OSM zdjęte, korpus z oknami ostrołukowymi, cztery szczyty z zegarami, sterczyny, iglica do y 58,6 z masztem 2077 (`spire.ts`); plebania i pas przy Archiwum Państwowym dopasowane; zostaje światło przeszkodowe sceny (`feat/katedralny-noc`) na szczyt iglicy | import i przepis |
 | K5 | murki z parapetem z pomiaru, uskok tarasu i schody, parking z kamienną nawierzchnią i autami, drzewa | import, teren, sim |
 
 Szczegóły K4 i K5: audyt kuratora `docs/plany/archikatedra-otoczenie.md` (propozycje T-350…T-354).

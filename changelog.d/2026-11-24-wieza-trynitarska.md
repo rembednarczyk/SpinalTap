@@ -1,0 +1,1 @@
+Wieża Trynitarska stoi tam, gdzie w rzeczywistości, z przejściem na ulicę Gruella w osi. Ma jasny korpus z parami ostrołukowych okien, cztery strome szczyty z zegarami, smukłe sterczyny na narożach i wysoką zieloną iglicę z kulą, a nad nią maszt z czerwonym światłem.
