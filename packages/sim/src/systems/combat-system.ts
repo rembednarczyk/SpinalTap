@@ -26,7 +26,7 @@ import {
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { crouchOf } from "../world/hitboxes";
-import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitscan";
+import { chestOf, hitscan, type HitscanResult, shotOrigin } from "../world/hitscan";
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
 import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
@@ -274,7 +274,7 @@ export const combatSystem: System = {
         ctx,
         {
           shooter: p,
-          origin: car ? driveByOrigin(p, car) : aimOrigin(p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
+          origin: car ? driveByOrigin(p, car) : shotOrigin(ctx.world, p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
           dir: directionFromAngles(p.yaw, p.pitch),
           spread: aimSpreadOf(p, stats),
           critChance: stats.critChance,
