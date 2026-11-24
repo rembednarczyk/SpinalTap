@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
+- Status: naprawione (24.11, gałąź fix/g961-strzal-sciany); wcześniej: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
+- Gdzie: wszystkie 52 lokale galerii i frontu (`alchemia-shop-*`)
+- Dowód: `packages/sim/test/tpp-shoulder.test.ts`, przypadek „from inside the rooms”: 1254 miejsca przy ścianach sklepów (1261 przy osobnej grze na każdy pokój), w których linia celowania 0,55 m w bok zaczyna się za ścianą. Ściany boczne i działowe lokali mają 0,1–0,2 m. Zmierzone 22.11, gdy sklepy stały się osobnymi wnętrzami; wcześniej test liczył tylko obrys galerii.
+- Poprawka: jak G-275 i G-939, czyli ściany lokali grubsze (0,25 m) albo linia celowania przycięta do pomieszczenia gracza. Baza w teście tylko spada.
+- Naprawa (24.11): strzał zaczyna się na linii barku, ale przed tym, co stoi między okiem a barkiem (`shotOrigin` w `packages/sim/src/world/hitscan.ts`, 5 cm przed przeszkodą); wzorzec: sprawdzenie przeszkody przed lufą w strzelankach TPP (najpierw ślad od postaci do przesuniętego punktu startu). Używają go strzał gracza, odbicie pocisku i asysta celowania. Test `tpp-shoulder.test.ts` pada bez poprawki (8 miejsc poza Alchemią) i przechodzi z nią: 0 w pokojach, 0 w sklepach Alchemii (było 1254), 0 w galerii.
+
 ### G-967 Meble ulic wiszą albo toną tam, gdzie płyty terenu zmieniają grunt
 - Status: naprawione (24.11, PR #1017); wcześniej: zgłoszone (S4: latarnia z koszem 0,2 m nad gruntem, krzewy do 0,39 m nad)
 - Gdzie: całe miasto, 28 miejsc; m.in. latarnia `lamp-pastoral` z `hanging-basket` (686,0; 35,8) nad płytą fary T-347, (328,8; -90,2) -0,25 m, krzewy przy (562; 131) do +0,39 m

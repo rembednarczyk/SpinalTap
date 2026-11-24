@@ -1,6 +1,6 @@
 import { type Vec3, angleDelta, directionFromAngles } from "@seki/core";
 import type { AimAssistLevel, AimTarget } from "@seki/engine";
-import { type Entity, type Simulation, aimOrigin, lineOfSight } from "@seki/sim";
+import { type Entity, type Simulation, lineOfSight, shotOrigin } from "@seki/sim";
 import type { SettingsVm } from "@seki/ui";
 
 /** The part of the engine's AimAssist the app feeds before each poll (ADR-0072). */
@@ -12,7 +12,7 @@ export interface AimAssistSink {
 
 /**
  * One target along the aim axis: the ray from `origin` at the player's yaw and pitch. The TPP
- * camera sits on that ray behind the shoulder and the shots start on it (`aimOrigin`), so the
+ * camera sits on that ray behind the shoulder and the shots start on it (`shotOrigin`, short of a wall between the eye and the shoulder), so the
  * angles are the camera's as the crosshair shows them.
  */
 export const aimTargetAlong = (origin: Vec3, yaw: number, pitch: number, point: Vec3, radius: number): AimTarget | null => {
@@ -41,7 +41,7 @@ export const aimTargetAlong = (origin: Vec3, yaw: number, pitch: number, point: 
  */
 export const aimTargetsFor = (sim: Simulation, player: Entity, leftShoulder: boolean): AimTarget[] => {
   const mode = sim.domain.preferences.cameraMode;
-  const origin = aimOrigin(player, mode, leftShoulder);
+  const origin = shotOrigin(sim.world, player, mode, leftShoulder);
   const out: AimTarget[] = [];
   for (const c of sim.aimTargets()) {
     if (mode === "TPP" && !lineOfSight(sim.world, origin, c.point)) continue;

@@ -132,7 +132,7 @@ export const chestOf = (e: Entity): Vec3 => {
 export const TPP_SHOULDER_OFFSET = 0.55;
 export const TPP_HEIGHT_OFFSET = 0;
 
-/** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP (the left one with `left`). */
+/** The camera's shoulder line: the eye in FPP, over the shoulder in TPP (the left one with `left`). */
 export const aimOrigin = (e: Entity, mode: CameraMode, left = false): Vec3 => {
   const eye = eyeOf(e);
   if (mode === "FPP") return eye;
@@ -142,4 +142,27 @@ export const aimOrigin = (e: Entity, mode: CameraMode, left = false): Vec3 => {
     y: eye.y + TPP_HEIGHT_OFFSET,
     z: eye.z - Math.sin(e.yaw) * side,
   };
+};
+
+/** How far short of a wall between the eye and the shoulder a shot starts (m). */
+const SHOT_CLEAR = 0.05;
+
+/**
+ * Where the player's shots start (G-961): the shoulder line (`aimOrigin`), but short of whatever stands between the eye
+ * and it, so a shot fired with a wall on the shoulder's side starts in the shooter's own room, not past a thin wall in
+ * the next one. Pattern: the muzzle obstruction check of third-person shooters (trace from the character to the
+ * offset origin first, start where it stops).
+ */
+export const shotOrigin = (world: World<Entity>, e: Entity, mode: CameraMode, left = false): Vec3 => {
+  const o = aimOrigin(e, mode, left);
+  if (mode === "FPP") return o;
+  const eye = eyeOf(e);
+  const d = { x: o.x - eye.x, y: o.y - eye.y, z: o.z - eye.z };
+  const len = Math.hypot(d.x, d.y, d.z);
+  if (len < 1e-9) return o;
+  const dir = { x: d.x / len, y: d.y / len, z: d.z / len };
+  const t = rayGeometry(world, eye, dir, len);
+  if (t === null) return o;
+  const k = Math.max(0, t - SHOT_CLEAR);
+  return { x: eye.x + dir.x * k, y: eye.y + dir.y * k, z: eye.z + dir.z * k };
 };

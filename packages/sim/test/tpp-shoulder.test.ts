@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { type Entity, ALCHEMIA_LIFT, ALCHEMIA_LIFT_NE, CAPSULE_INTERIOR_ROOM, INTERIORS, Simulation, TPP_SHOULDER_OFFSET, aimOrigin, eyeOf, ground, hitscan, lineOfSight, rayGeometry } from "../src";
+import { type Entity, ALCHEMIA_LIFT, ALCHEMIA_LIFT_NE, CAPSULE_INTERIOR_ROOM, INTERIORS, Simulation, TPP_SHOULDER_OFFSET, aimOrigin, eyeOf, shotOrigin, ground, hitscan, lineOfSight, rayGeometry } from "../src";
 import { BODY } from "../src/world/factory";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
@@ -116,7 +116,7 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
             const eye = eyeOf(p);
             if (inSolid(eye)) continue;
             places++;
-            const o = aimOrigin(p, "TPP");
+            const o = shotOrigin(w, p, "TPP");
             // Past a wall, in the open on the other side, with a clear metre of flight from there.
             if (!lineOfSight(w, eye, o, false) && !inSolid(o) && hitscan(w, o, { x: Math.sin(s.yaw), y: 0, z: Math.cos(s.yaw) }, 30, -1).distance > 1) {
               if (def.within === "alchemia-gallery") shopLeaks++;
@@ -128,8 +128,9 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
       }
     }
     expect(places).toBeGreaterThan(700);
-    // 8 of 739 with the aim line 0.55 m out (before G-275 and now), 388 with 0.8 m.
-    expect(leaks).toBeLessThanOrEqual(8);
+    // 8 of 739 with the aim line 0.55 m out (before G-275), 388 with 0.8 m; none since the shot starts short of a wall
+    // between the eye and the shoulder (`shotOrigin`, G-961).
+    expect(leaks).toBe(0);
     // Alchemia's gallery (ADR-0093 O2) is measured on its own, a baseline that only falls: 770 with its
     // glass 0.12 thick and open behind the front's L2, none along the glass now (0.2 thick, closed all
     // round). Its storeys are the gallery's P0..P2 and the food hall's P3 since O3. 11 stood in the hall's
@@ -139,9 +140,9 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
     // and gates 0.2 thick (G-939, the test below).
     expect(galleryLeaks).toBe(0);
     // Alchemia's shops, each a room of its own since 22.11, measured apart: their side walls and partitions
-    // are 0.1..0.2 m, so the aim line 0.55 m out starts in the next shop or on the gallery (G-961). Measured
-    // when they became rooms, not raised by it: a baseline that only falls (1261, 1254 in one game for every room).
-    expect(shopLeaks).toBeLessThanOrEqual(1254);
+    // are 0.1..0.2 m, so the aim line 0.55 m out started in the next shop or on the gallery: 1254 (G-961). None
+    // since the shot starts short of the wall (`shotOrigin`).
+    expect(shopLeaks).toBe(0);
   });
 
   it("by Alchemia's lifts, in the shaft or out by it at any level, crouched and aimed, never start past the shaft's walls or gates (G-939)", () => {
@@ -168,7 +169,7 @@ describe("TPP shots by a wall on the shoulder's side (G-275)", () => {
             for (const yaw of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) {
               const p = crouchedAt(x, y, z, yaw);
               const eye = eyeOf(p);
-              const o = aimOrigin(p, "TPP");
+              const o = shotOrigin(sim.world, p, "TPP");
               if (!across(eye) && !across(o)) continue;
               // Where a body stands (32 rays) asked last, of a leak only: the same leaks in a third of the time (10 of its 20 s on CI).
               const past = !lineOfSight(sim.world, eye, o, false) && !inSolid(o) && hitscan(sim.world, o, { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) }, 30, -1).distance > 1;
