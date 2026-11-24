@@ -1,8 +1,10 @@
 import type {
   BlindRow,
+  FrontOpening,
   LandmarkRecipe,
   PartRecipe,
   Tier,
+  WestFront,
 } from "./recipe-types";
 
 /**
