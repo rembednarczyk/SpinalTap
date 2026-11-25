@@ -30,6 +30,20 @@ const MIN_STRETCH = 0.3;
 
 const round2 = (v: number): number => Math.round(v * 100) / 100;
 
+/** How far either side of a retaining wall's axis its lower side's ground is read (m): past a 1.25 m cell's half. */
+const RETAINED_SIDE = 1;
+
+/**
+ * The ground a retaining wall's piece stands on at (x, z): the lowest of its axis and a metre to
+ * either side, so its face reaches down to the lower side where the terrain steps under it
+ * (`breaklines.ts`, T-351) instead of leaving the step's slope bare under the wall.
+ */
+const retainedFoot = (a: GroundPoint, b: GroundPoint, groundY: (x: number, z: number) => number) => {
+  const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+  const [nx, nz] = [-(b.z - a.z) / len, (b.x - a.x) / len];
+  return (x: number, z: number): number => Math.min(groundY(x, z), groundY(x + nx * RETAINED_SIDE, z + nz * RETAINED_SIDE), groundY(x - nx * RETAINED_SIDE, z - nz * RETAINED_SIDE));
+};
+
 /**
  * The pieces of one polyline of a barrier: its segments split evenly into stretches of at most
  * `BARRIER_PIECE` metres, each with the ground's height at its middle and its rise end to end.
@@ -53,9 +67,12 @@ export const barrierPieces = (
       const q = { x: a.x + ((b.x - a.x) * (k + 1)) / n, z: a.z + ((b.z - a.z) * (k + 1)) / n };
       const x = (p.x + q.x) / 2;
       const z = (p.z + q.z) / 2;
-      const rise = groundY(q.x, q.z) - groundY(p.x, p.z);
-      const variant = barrierVariant({ kind, length: len / n, height, rise, material });
-      out.push({ prop: "barrier", x: round2(x), y: round2(groundY(x, z)), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
+      const foot = kind === "retaining-wall" ? retainedFoot(a, b, groundY) : groundY;
+      const rise = foot(q.x, q.z) - foot(p.x, p.z);
+      // A retaining wall stands from its lower side's ground, its top where the axis puts it (T-351).
+      const y = foot(x, z);
+      const variant = barrierVariant({ kind, length: len / n, height: height + groundY(x, z) - y, rise, material });
+      out.push({ prop: "barrier", x: round2(x), y: round2(y), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
     }
   }
   return out;

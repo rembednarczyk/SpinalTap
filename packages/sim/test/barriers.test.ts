@@ -57,7 +57,10 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       // On the ground at its middle; a piece of the parish church's foundations raised to their level (`levelTop`) on its low end.
       const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
       const lowEnd = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z));
-      expect(Math.min(Math.abs(item.y - groundY(item.x, item.z)), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
+      // A retaining wall from its lower side: the lowest ground of its axis and a metre to either side (T-351).
+      const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
+      const ground = b.kind === "retaining-wall" ? Math.min(groundY(item.x, item.z), groundY(item.x + across.x, item.z + across.z), groundY(item.x - across.x, item.z - across.z)) : groundY(item.x, item.z);
+      expect(Math.min(Math.abs(item.y - ground), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
     }
     expect(kinds.get("wall")).toBeGreaterThan(1500);
     expect(kinds.get("fence")).toBeGreaterThan(4000);
