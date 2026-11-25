@@ -22,10 +22,13 @@ export const sideWindows = (sink: MeshSink, f: LandmarkFrame, spec: SideWindows,
   const dark = solid(SWATCH.opening);
   const plaza = f.landmark.recipe.layer.newTown;
   for (const w of shownWalls(f)) {
-    if (facing(w, plaza) > 0.5 || w.length < spec.pitch) continue;
-    const free = coveredRanges(f, w).free.flatMap(([a, b]) => clearOf(f, w, 0.5).flatMap(([c, d]): [number, number][] => (Math.min(b, d) - Math.max(a, c) > spec.pitch ? [[Math.max(a, c), Math.min(b, d)]] : [])));
+    // A facet takes one window if the window and its frame fit with 0.6 m of wall either side.
+    const facet = spec.facets === true && w.length < spec.pitch && w.length >= spec.width + 1.6;
+    if (facing(w, plaza) > 0.5 || (w.length < spec.pitch && !facet)) continue;
+    const span = facet ? spec.width + 1.2 : spec.pitch;
+    const free = coveredRanges(f, w).free.flatMap(([a, b]) => clearOf(f, w, 0.5).flatMap(([c, d]): [number, number][] => (Math.min(b, d) - Math.max(a, c) > span ? [[Math.max(a, c), Math.min(b, d)]] : [])));
     for (const [u0, u1] of free) {
-      const n = Math.floor((u1 - u0) / spec.pitch);
+      const n = facet ? 1 : Math.floor((u1 - u0) / spec.pitch);
       const start = u0 + (u1 - u0 - (n - 1) * spec.pitch) / 2;
       for (let k = 0; k < n; k++) {
         const u = start + k * spec.pitch;
