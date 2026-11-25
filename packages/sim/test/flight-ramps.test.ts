@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { terrainHeightAt } from "@seki/core";
 import { FLIGHT_CELL, STEP_RISE, flightGrid, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
 import { underDecks } from "../src/content/lublin/abutments";
+import { breakGrid, nearBreakline } from "../src/content/lublin/breaklines";
 import { inBuilding } from "../src/content/lublin/places";
 import { stitchSeams } from "../src/content/lublin/seams";
 import { DIG_PADS, FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
@@ -11,6 +12,8 @@ import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/ty
 
 /** The chunks' terrain after the flights' ramps and the building sites' digs (ADR-0087, on a grid refined under them), before the ground is kept under the decks (`terrain.ts`). */
 const FLIGHTS_SHAPED = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(siteGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS)), FLIGHT_RAMPS), DIG_PADS, FLIGHT_RAMPS)]));
+/** Then the steps under the retaining walls (T-351, `breaklines.ts`). */
+const BROKEN = new Map([...FLIGHTS_SHAPED].map(([id, g]) => [id, breakGrid(g)]));
 
 /**
  * Flights of steps against their map `incline` (G-236): where the terrain falls from a flight's
@@ -91,7 +94,8 @@ describe("flights' ramps in the city (G-236)", () => {
     for (const r of FLIGHT_RAMPS) {
       for (let x = Math.min(r.a.x, r.b.x) - 12; x <= Math.max(r.a.x, r.b.x) + 12; x += 0.5) {
         for (let z = Math.min(r.a.z, r.b.z) - 12; z <= Math.max(r.a.z, r.b.z) + 12; z += 0.5) {
-          if (FLIGHT_RAMPS.some((q) => off(x, z, q) < 2) || inBuilding(x, z)) continue;
+          // The steps under the retaining walls shape their own ground (T-351, `breaklines.test.ts`).
+          if (FLIGHT_RAMPS.some((q) => off(x, z, q) < 2) || inBuilding(x, z) || nearBreakline(x, z)) continue;
           checked++;
           expect(Math.abs(game(x, z) - map(x, z)), `(${x.toFixed(1)}, ${z.toFixed(1)})`).toBeLessThanOrEqual(0.05);
         }
@@ -128,8 +132,8 @@ describe("flights' ramps in the city (G-236)", () => {
     expect(worst).toBeLessThan(1e-6);
   });
 
-  it("are the city's terrain with the steep ways (G-755) and the ground kept under the bridges' decks after them (G-736), the seams stitched last (G-748)", () => {
-    const ways = new Map([...FLIGHTS_SHAPED].map(([id, g]) => [id, shapeWays(flightGrid(g, waySegments(WAY_RAMPS)), WAY_RAMPS)]));
+  it("are the city's terrain with the walls' steps (T-351), the steep ways (G-755) and the ground kept under the bridges' decks after them (G-736), the seams stitched last (G-748)", () => {
+    const ways = new Map([...BROKEN].map(([id, g]) => [id, shapeWays(flightGrid(g, waySegments(WAY_RAMPS)), WAY_RAMPS)]));
     expect(SHAPED_TERRAIN).toEqual(stitchSeams(MAP_CHUNKS, underDecks(MAP_CHUNKS, ways)));
   });
 
