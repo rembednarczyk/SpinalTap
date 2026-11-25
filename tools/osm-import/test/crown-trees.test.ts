@@ -75,13 +75,16 @@ const everywhere = coverOf(() => true);
 const run = (chm: Chm, cover: Cover = everywhere, trees: { p: Pt; reach: number }[] = [], c = chunk(), structures: Structure[] = []) => crownTrees([RECT], new Site([c]), [cover], [chm], trees, structures);
 
 describe("trees of the crowns (G-797)", () => {
-  it("stands one tree under a crown, at its top, and none where the orthophoto shows no crown", () => {
+  it("stands one tree under a crown, at its top, and none where neither the orthophoto nor its height shows a crown", () => {
     const chm = chmOf(highest(crown({ x: 20, z: 12 }, 12, 5)));
     const { trees } = run(chm);
     expect(trees).toHaveLength(1);
     expect(Math.hypot(trees[0]!.p.x - 20, trees[0]!.p.z - 12)).toBeLessThan(1.5);
     expect(trees[0]!.top).toBeGreaterThan(10);
-    expect(run(chm, coverOf(() => false)).trees).toEqual([]);
+    // Where the orthophoto shows no crown, a crown 8 m tall all round its top stands a tree all the
+    // same (T-354: a crown over a lawn the cover reads as the lawn), a lower one none.
+    expect(run(chm, coverOf(() => false)).trees).toHaveLength(1);
+    expect(run(chmOf(highest(crown({ x: 20, z: 12 }, 7.5, 5))), coverOf(() => false)).trees).toEqual([]);
     // A district without its extracts (no surface model, no cover) stands none.
     expect(crownTrees([RECT], new Site([chunk()]), [everywhere], [], []).trees).toEqual([]);
     expect(crownTrees([RECT], new Site([chunk()]), [], [chm], []).trees).toEqual([]);

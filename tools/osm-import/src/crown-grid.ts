@@ -154,8 +154,9 @@ export const crownGrid = (rect: Rect, ctx: CrownContext): CrownGrid => {
     if (!(h >= MIN_TOP && h <= NOT_A_CROWN) || CROWN_CLEARED.some((r) => inRect(p, r)) || ctx.structures.at(p) || byRoof(ctx.site, p, OFF_ROOF)) continue;
     g.raw[i] = h;
     const cover = coverFor(ctx.covers, p);
-    const onCover = cover !== undefined && QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length >= 2;
-    if (!onCover && !tallAllRound(ctx.chms, p)) continue;
+    // Without the orthophoto's cover no crown: a district needs both extracts (G-797).
+    if (!cover) continue;
+    if (QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length < 2 && !tallAllRound(ctx.chms, p)) continue;
     g.h[i] = h;
     if (trunkGround(ctx.site, ctx.keep, p)) g.stand[i] = 1;
   }
@@ -185,17 +186,17 @@ const around = (g: CrownGrid, i: number, reach: number): number[] => {
   return out;
 };
 
-/**
- * The crowns' tops of a grid: cells of `raw` no other within `TOP_REACH` tops (ties to the earlier),
- * the orthophoto showing crown over `TOP_SHARE` of the ground within `TOP_CONFIRM` of them: the top
- * of a crown is often in its shadow's class, and a shed's green edge beside its higher roof is no top.
- */
 /** The share of the cells within `reach` of i, and i, that are crown cells of the grid. */
 const gridShare = (g: CrownGrid, i: number, reach: number): number => {
   const cells = [i, ...around(g, i, reach)];
   return cells.filter((j) => !Number.isNaN(g.h[j]!)).length / cells.length;
 };
 
+/**
+ * The crowns' tops of a grid: cells of `raw` no other within `TOP_REACH` tops (ties to the earlier),
+ * the orthophoto showing crown over `TOP_SHARE` of the ground within `TOP_CONFIRM` of them: the top
+ * of a crown is often in its shadow's class, and a shed's green edge beside its higher roof is no top.
+ */
 export const topsOf = (g: CrownGrid, ctx: CrownContext): number[] => {
   const out: number[] = [];
   for (let i = 0; i < g.raw.length; i++) {
