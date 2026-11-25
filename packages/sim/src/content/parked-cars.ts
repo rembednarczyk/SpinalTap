@@ -1,5 +1,6 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor, pointInPairRingEvenOdd } from "@seki/core";
 import type { StaticProp } from "./builders";
+import { aisleBays } from "./aisle-bays";
 import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
@@ -387,6 +388,19 @@ const squareCars = (): ParkedCar[] => {
   return out;
 };
 
+/**
+ * Cars in the bays along the aisles of the surface car parks (T-352, `aisle-bays.ts`): as full as
+ * Plac Zamkowy's bays (`SQUARE_TAKEN`), each whole on the park's paving where `fits` lets it.
+ */
+const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0).map((p) => [p.id, p])).values()];
+const aisleCars = (): ParkedCar[] =>
+  aisleBays(SURFACE_PARKS.map((p) => ({ id: p.id, outline: p.outline, aisles: p.aisles ?? [] }))).flatMap((b) => {
+    if (hash(b.x, b.z, 6) / 0x100000000 >= SQUARE_TAKEN) return [];
+    const model = modelAt(b.x, b.z);
+    if (model === "delivery" || !fits(b.x, b.z, b.yaw, model)) return [];
+    return [{ chunk: chunkOf(b.x, b.z), x: b.x, y: 0, z: b.z, yaw: b.yaw, model, tint: hash(b.x, b.z, 7) }];
+  });
+
 /** Do two footprints overlap (separating axes of two rectangles)? */
 const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
   const pa = footprint(a.x, a.z, a.yaw, a.model, 0.15);
@@ -408,9 +422,9 @@ const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
 
 /**
  * Every parked car of the city, on the paving drawn under its body (G-130), in a stable order;
- * the square's bays first, then the kerbs' and the mapped kerb car parks', no two overlapping.
+ * the square's bays first, then the surface car parks' along their aisles, the kerbs' and the mapped kerb car parks', no two overlapping.
  */
-export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars(), ...bayCars()]
+export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...aisleCars(), ...kerbCars(), ...bayCars()]
   .reduce<ParkedCar[]>((kept, c) => (kept.some((k) => Math.hypot(k.x - c.x, k.z - c.z) < 8 && overlap(k, c)) ? kept : [...kept, c]), [])
   .map((c) => ({ ...c, y: Math.round(restingY(underBody(c.x, c.z, c.yaw, c.model)) * 100) / 100 }));
 

@@ -37,7 +37,7 @@ import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
 import { roundJoints } from "./line-buffer.ts";
-import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
+import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays, isParkingAisle } from "./kerbside.ts";
 import { type StreetHalves, streetHalves } from "./street-half.ts";
 import { type LaidWay, type StreetWidths, carriagewaySource, streetWidths } from "./street-section.ts";
 import { allPois, chunkFlights, chunkFootWays, chunkPois, chunkServiceWays, chunkStepRuns, chunkStreets } from "./labels.ts";
@@ -133,7 +133,7 @@ const generateChunk = (
   alone: ReadonlySet<string>,
   towered: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
-  kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
+  kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[]; readonly aisles: readonly Line[] },
   barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly lod2?: ReturnType<typeof lod2Index>; readonly orphans: ReadonlySet<string> },
   halves: StreetHalves,
@@ -197,7 +197,7 @@ const generateChunk = (
   const flights = chunkFlights(lines, spec.rect);
   const stepRuns = chunkStepRuns(lines, spec.rect);
   const steepWays = chunkSteepWays(steep, spec.rect);
-  const parks = chunkCarParks(kerb.carParks, spec.rect);
+  const parks = chunkCarParks(kerb.carParks, spec.rect, kerb.aisles);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
   const wide = chunkMultiLaneWays(lines, spec.rect);
   const walls = chunkBarriers(barriers, spec.rect);
@@ -454,7 +454,7 @@ const generateMap = (
   // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
-  const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
+  const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas), aisles: mapLines.filter((l) => isParkingAisle(l.tags)) };
   // A building across the map's edge, centred off it, is cut at the edge rather than dropped (G-556);
   // the whole map's districts, so it is cut the same whichever chunks are built.
   const cut = edgeOutlines(buildings, DISTRICTS.map((d) => d.rect));

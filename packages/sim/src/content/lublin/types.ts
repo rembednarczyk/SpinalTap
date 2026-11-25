@@ -196,6 +196,8 @@ export interface LublinCarParkData {
   readonly orientation?: string;
   /** World outline. */
   readonly outline: FlatPoints;
+  /** A surface car park's aisles (`service=parking_aisle`) in it, world polylines: the bays line up along them (T-352). */
+  readonly aisles?: readonly FlatPoints[];
 }
 
 /**

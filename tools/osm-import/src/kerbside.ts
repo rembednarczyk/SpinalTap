@@ -1,6 +1,6 @@
 /** What the kerbs of the map allow a parked car: the car parks mapped as areas, the bus stops and the streets of many lanes. */
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, rectsOverlap, ringBounds, simplifyLine } from "./geometry.ts";
+import { type Pt, type Rect, clipLineToRect, inRect, lineLength, pointInRing, r1, rectsOverlap, ringBounds, simplifyLine } from "./geometry.ts";
 import { type CarParkOut, type MultiLaneWayOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
@@ -14,15 +14,39 @@ const groundCarPark = (t: Tags): boolean =>
  * with their `parking` kind, the `orientation` of their bays when mapped and outline: the kerbs
  * where the map says cars park, and how (along the kerb or across it, G-177).
  */
-export const chunkCarParks = (areas: readonly Area[], rect: Rect): CarParkOut[] =>
+export const chunkCarParks = (areas: readonly Area[], rect: Rect, aisles: readonly Line[] = []): CarParkOut[] =>
   areas
     .filter((a) => groundCarPark(a.tags) && rectsOverlap(ringBounds(a.ring), rect))
-    .map((a) => ({
-      id: a.id,
-      kind: a.tags.parking ?? "surface",
-      ...(a.tags.orientation !== undefined ? { orientation: a.tags.orientation } : {}),
-      outline: a.ring.flatMap((p) => [r1(p.x), r1(p.z)]),
-    }));
+    .map((a) => {
+      const kind = a.tags.parking ?? "surface";
+      const mine = kind === "surface" ? aislesIn(a.ring, aisles) : [];
+      return {
+        id: a.id,
+        kind,
+        ...(a.tags.orientation !== undefined ? { orientation: a.tags.orientation } : {}),
+        outline: a.ring.flatMap((p) => [r1(p.x), r1(p.z)]),
+        ...(mine.length > 0 ? { aisles: mine } : {}),
+      };
+    });
+
+/** Is a line a car park's aisle (`service=parking_aisle`, on the ground)? */
+export const isParkingAisle = (t: Tags): boolean => t.highway === "service" && t.service === "parking_aisle" && Number(t.layer ?? 0) >= 0;
+
+/**
+ * The aisles of a surface car park: its runs inside its ring (an aisle drawn on past the ring to
+ * the street it leaves by is cut at the ring), each at least a bay long (T-352).
+ */
+const aislesIn = (ring: readonly Pt[], aisles: readonly Line[]): number[][] =>
+  aisles.flatMap((l) => {
+    const runs: Pt[][] = [];
+    let run: Pt[] = [];
+    for (const p of l.line) {
+      if (pointInRing(p, ring)) run.push(p);
+      else if (run.length > 0) (runs.push(run), (run = []));
+    }
+    if (run.length > 0) runs.push(run);
+    return runs.filter((r) => r.length >= 2 && lineLength(r) >= 5).map((r) => r.flatMap((p) => [r1(p.x), r1(p.z)]));
+  });
 
 /** A bus stop's post or platform (not the stop position on the carriageway). */
 const stopPost = (t: Tags): boolean => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";
