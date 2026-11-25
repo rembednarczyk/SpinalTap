@@ -42,7 +42,10 @@ const aislesIn = (ring: readonly Pt[], aisles: readonly Line[]): number[][] =>
     let run: Pt[] = [];
     for (const p of l.line) {
       if (pointInRing(p, ring)) run.push(p);
-      else if (run.length > 0) (runs.push(run), (run = []));
+      else if (run.length > 0) {
+        runs.push(run);
+        run = [];
+      }
     }
     if (run.length > 0) runs.push(run);
     return runs.filter((r) => r.length >= 2 && lineLength(r) >= 5).map((r) => r.flatMap((p) => [r1(p.x), r1(p.z)]));
