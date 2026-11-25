@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -655,6 +655,10 @@ const DECK_PAINT = (() => {
   return () => (memo ??= deckPaint(mapGround(WORLD_SCENERY)));
 })();
 
+/** Is (x, z) in a surface car park with aisles (`carParks`, T-352)? Its cars stand in bays off the streets. */
+const SURFACE_PARKS = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0);
+const inSurfacePark = (x: number, z: number): boolean => SURFACE_PARKS.some((p) => pointInPairRingEvenOdd(x, z, Array.from({ length: p.outline.length / 2 }, (_, i): [number, number] => [p.outline[2 * i]!, p.outline[2 * i + 1]!])));
+
 const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
@@ -980,10 +984,22 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
    * A parked car on a one-way street (or a roundabout) facing against its traffic: its street is
    * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside, and a car
    * standing across the kerb of the car road nearest it (within 12 m, within 20° of square to it,
-   * a bay across the kerb, G-177): it faces no traffic's way.
+   * a bay across the kerb, G-177): it faces no traffic's way. Nor a car in a surface car park's
+   * bays along its aisles (T-352, `aisle-bays.ts`): it parks off the streets.
    */
+  /** A parked car whose body stands within 1.5 m of a car park's aisle (T-352, the curator's review of #1037): in the way it drives in by. */
+  "parked-car-in-aisle": () => {
+    const aisles = SURFACE_PARKS.flatMap((p) => (p.aisles ?? []).map((a) => Array.from({ length: a.length / 2 }, (_, i): [number, number] => [a[2 * i]!, a[2 * i + 1]!])));
+    return PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const corners = [-0.5, 0.5].flatMap((a) => [-0.5, 0.5].map((b): [number, number] => [c.x + fx * length * b + fz * width * a, c.z + fz * length * b - fx * width * a]));
+      const inAisle = aisles.some((l) => l.some((_, i) => i > 0 && corners.some(([x, z]) => segmentDistance(x, z, l[i - 1]![0], l[i - 1]![1], l[i]![0], l[i]![1]) < 1.5)));
+      return inAisle ? [{ at: near(c.x, c.z), what: `${c.model} in a car park's aisle` }] : [];
+    });
+  },
   "parked-car-against-traffic": () =>
-    PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300)).flatMap((c) => {
+    PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300) && !inSurfacePark(c.x, c.z)).flatMap((c) => {
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
       let street: { name: string; d: number; dot: number; directed: boolean } | undefined;

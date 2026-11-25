@@ -250,6 +250,15 @@ const GARAGE_VIVO: AddedArea = {
   ref: "T-261",
 };
 
+/**
+ * The row of garages or the shed in the car park w73976159 by Nadstawna (the curator's review of
+ * #1037): a two-tone roof about 5.5 x 24.5 m with its shadow on the PZGiK orthophoto, none in OSM
+ * or the game, so the aisle's west row of cars stood in it. Its west wall on the yard's edge
+ * of `nadstawna-4` (that strip of setts ends at it), its east wall read off the orthophoto; the
+ * height of a row of garages, 3 m, assumed.
+ */
+const SHED_NADSTAWNA = area("szopa-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.5, 484.13, 742.01, 508.93, 748.5, 507.6, 742.9, 484.75], "szopa albo rząd garaży ok. 5,5 × 24,5 m w parkingu w73976159 na ortofoto PZGiK (dach dwukolorowy, cień), w OSM i w grze bez budynku", "T-356");
+
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
 export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   ...DWORZEC_EAST_AREAS,
@@ -281,4 +290,5 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   FRONT_KIOSKS,
   RUSKA_B,
   GARAGE_VIVO,
+  SHED_NADSTAWNA,
 ];

@@ -11,7 +11,7 @@ import type { AddedArea, TagCorrection } from "./corrections.ts";
 import { CAR_FREE_CORRECTIONS } from "./corrections-car-free.ts";
 import { DEPTAKI_CORRECTIONS } from "./corrections-deptaki.ts";
 import { KATEDRA_CORRECTIONS, KATEDRA_PARTS, TRYNITARSKA_AREAS, TRYNITARSKA_CORRECTIONS } from "./corrections-katedra.ts";
-import { MURKI_CORRECTIONS } from "./corrections-murki.ts";
+import { KATEDRALNY_PARKING_CORRECTIONS, MURKI_CORRECTIONS } from "./corrections-murki.ts";
 import { KRAKOWSKIE_ADDED_AREAS } from "./corrections-radziwillowska.ts";
 import type { Line } from "./features.ts";
 import { type Pt, lineLength, offsetPoints, pointAlong } from "./geometry.ts";
@@ -153,4 +153,4 @@ export const withOrtho = (manual: readonly TagCorrection[]): Map<string, TagCorr
 };
 
 /** The tail of `TAG_CORRECTIONS`: the pedestrian streets' widths (T-199) and the setts of the streets the game closes to cars (T-324). */
-export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...CAR_FREE_CORRECTIONS, ...KATEDRA_CORRECTIONS, ...TRYNITARSKA_CORRECTIONS, ...MURKI_CORRECTIONS];
+export const TAG_CORRECTIONS_TAIL: readonly TagCorrection[] = [...DEPTAKI_CORRECTIONS, ...CAR_FREE_CORRECTIONS, ...KATEDRA_CORRECTIONS, ...TRYNITARSKA_CORRECTIONS, ...MURKI_CORRECTIONS, ...KATEDRALNY_PARKING_CORRECTIONS];

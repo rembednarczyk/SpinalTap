@@ -540,7 +540,8 @@ describe("tag corrections (ADR-0042)", () => {
     const mapped = withoutReplaced(extractFeatures(osm))
       .areas.filter((a) => PAVED.has(areaSurface(a.tags) ?? ""))
       .map((a) => ({ ...a, bounds: ringBounds(a.ring) }));
-    for (const a of ADDED_AREAS) {
+    // A building added on a paving (T-356, a shed in a car park) stands on it, it adds no paving.
+    for (const a of ADDED_AREAS.filter((x) => x.tags.building === undefined)) {
       const xs = a.ring.map((p) => p.x);
       const zs = a.ring.map((p) => p.z);
       const covered: string[] = [];

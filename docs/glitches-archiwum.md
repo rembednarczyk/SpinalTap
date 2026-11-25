@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
+- Status: naprawione (25.11, PR #1038, T-351, przegląd kuratora runda 2 PRZYJĘTE); wcześniej: w naprawie (gałąź `feat/katedra-taras`), zgłoszone 24.11 (przegląd kuratora K5a)
+- Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
+- Dowód: NMT: taras −2,2…−2,8, chodnik −3,7…−5,3 (uskok 1,0–2,8 m); siatka terenu komórki 5 m rozmywa go na ok. 8 m (z −204…−196): taras przy murku do 0,6 m za nisko, przy szczycie schodów 0,8–1,3 m (gra −3,66), chodnik u stopy do 0,36 m za wysoko, schody 15 stopni wznoszą się o 0,39 m, Figura Matki Bożej n6191145919 1,0 m pod tarasem
+- Ważność: S3 · Zasięg: jeden taras (ok. 50 m muru), widoczny z Królewskiej i placu; `wall-step-smeared` w całym mieście ok. 26 kawałków (propozycja kontroli kuratora)
+- Poprawka: linia nieciągłości terenu pod murem (breakline w NMT/TIN): siatka zagęszczona do 1,25 m w pasie ±3 m wzdłuż muru, punkty górnej strony na górnym poziomie NMT, dolnej na dolnym (etap K5b planu `docs/plany/archikatedra.md`), osobny PR z przeglądem kuratora
+- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+- Naprawa (25.11, #1038): linie nieciągłości `breaklines.ts` (wzorzec breaklines z TIN/NMT), siatka `stare-miasto-0-0` 1,25 m, poziom strony odczytany 5,5 m od muru, bieg schodów rampą 3,6 m; schody wznoszą się 2,25 m (NMT 2,2–2,4); murki przy liniach od niższej strony z parapetem 0,5 m. Zostają G-971, G-972, G-969.
+
 ### G-961 Strzał TPP w sklepach Alchemii zaczyna się za cienką ścianą
 - Status: naprawione (24.11, gałąź fix/g961-strzal-sciany); wcześniej: zgłoszone (S3: kucając z bronią przy ścianie sklepu gracz może trafić kogoś w sąsiednim lokalu albo na galerii)
 - Gdzie: wszystkie 52 lokale galerii i frontu (`alchemia-shop-*`)
