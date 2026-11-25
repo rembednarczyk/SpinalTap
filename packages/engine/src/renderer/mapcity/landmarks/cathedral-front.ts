@@ -5,7 +5,7 @@ import { gableOver } from "./classicist";
 import { alongWall } from "./elevation";
 import { SWATCH, archPanel, lit, onWall, panel, shownWalls, solid } from "./kit";
 import type { LandmarkFrame } from "./landmark-frame";
-import { facing } from "./layer2077";
+import { camera, facing } from "./layer2077";
 import type { WestFront } from "./recipe-types";
 
 /**
@@ -106,6 +106,7 @@ const sun = (
   u: number,
   gold: Rgba,
   meta: Uv,
+  halo?: Rgba,
 ): void => {
   const g = gableOver(f, w);
   if (!g) return;
@@ -139,6 +140,10 @@ const sun = (
     }
   };
   ring(0, r * 0.62, 0.16, gold, 16);
+  // Lublin 2077's halo round the rays' tips, as broad as the tower's clocks' rims (0.2 m) to read from the plaza.
+  // Kept inside the tympanum, clear of the cornice under it.
+  const r1 = Math.min(r * 1.35, y - g.y0 - 0.08);
+  if (halo && r1 > r * 1.1) ring(Math.max(r * 1.06, r1 - 0.17), r1, 0.2, halo, 24);
   ring(r * 0.36, r * 0.46, 0.2, solid(SWATCH.opening), 16);
   // The rays, long and short by turns, from the disc's rim.
   for (let i = 0; i < 16; i++) {
@@ -216,7 +221,11 @@ export const westFront = (
         meta,
       );
   // Gilded and lit: it catches the floodlights by night, the front's warm accent.
-  if (spec.sun) sun(sink, f, w, mid, lit(SWATCH.gold), meta);
+  const tech = f.landmark.recipe.layer.tech;
+  if (spec.sun) sun(sink, f, w, mid, lit(SWATCH.gold), meta, tech ? lit(tech) : undefined);
+  // Lublin 2077's camera over the portal's door, under the window of the middle bay.
+  const door = spec.doors?.find((o) => o.at === 0);
+  if (tech && door && inside(mid, 1)) camera(sink, w, mid, door.y1 + 1.1);
   // A plain frieze band between the shafts' capitals and the cornice.
   if (spec.frieze)
     panel(

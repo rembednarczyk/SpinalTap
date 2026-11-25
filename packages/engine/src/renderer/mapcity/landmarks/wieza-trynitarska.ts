@@ -37,5 +37,5 @@ export const WIEZA_TRYNITARSKA: LandmarkRecipe = {
     },
   ],
   // The plaza's side (south, towards the cathedral's front): its normal.
-  layer: { newTown: { x: 0.07, z: -1 }, neon: "#ffc98a", warm: "#ffc98a", checkpoint: false, subdued: true },
+  layer: { newTown: { x: 0.07, z: -1 }, neon: "#ffc98a", warm: "#ffc98a", checkpoint: false, subdued: true, tech: "#5ce1ff", gate: true },
 };

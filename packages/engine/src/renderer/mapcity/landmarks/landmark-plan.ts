@@ -6,9 +6,9 @@ import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
 import { pointInRing } from "../polygon";
-import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, panel, pilasters, shownWalls, skirtRoof, slabRing, solid, spireCross, stonePlinth } from "./kit";
+import { type HelmBase, SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, panel, pilasters, revolve, shownWalls, skirtRoof, slabRing, solid, spireCross, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, freeCornice, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
-import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
+import { camera, corniceLights, facing, helmLeds, lanternLights, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
 import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
 import { balconyFloor, palaceFront } from "./palace";
@@ -18,7 +18,7 @@ import { planPortico } from "./portico";
 import { westFront } from "./cathedral-front";
 import { spireTop, towerWindows } from "./spire";
 import { churchRoof, sideWindows } from "./church-roof";
-import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
+import type { GableFace, HelmProfile, LandmarkPart, Layer2077, Material, PartRecipe, Tier } from "./recipes";
 
 /**
  * A landmark's building or part from its recipe (ADR-0062), in place of the facade plan: the
@@ -211,11 +211,28 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   const base = helmet(sink, f, c.profile, roof, solid(SWATCH.patina), solid(SWATCH.plasterTrim), near);
   if (c.profile.cross) {
     spireCross(sink, base.c, f.top + roof * c.profile.mast, f.top + roof, base.phase);
+    if (layer.tech) techHelm(sink, f, base, c.profile, roof, layer, layer.tech, near);
     return;
   }
   helmLeds(sink, f, base, c.profile, roof, layer);
   if (near) mast(sink, base.c, f.top + roof * c.profile.mast, f.top + roof, base.phase);
   else sink.box({ x: base.c.x, y: f.top + roof - 0.15, z: base.c.z }, 0.3, 0.3, 0.3, lit("#ff2a2a"));
+};
+
+/**
+ * Lublin 2077 on a church's helmet under its cross (the Archikatedra's turrets, 25.11): thin LED
+ * strips on the ribs facing the plaza and red obstruction lights over the lantern's cornice, the
+ * Trinitarian Tower's mast light seen again on the plaza's other tops.
+ */
+const techHelm = (sink: MeshSink, f: LandmarkFrame, base: HelmBase, h: HelmProfile, roof: number, layer: Layer2077, hex: string, near: boolean): void => {
+  helmLeds(sink, f, base, h, roof, layer, hex);
+  // A lit ring round the helmet's drum, its outline from the plaza (the strips are too thin past 50 m).
+  const drum = h.shell[1] ?? h.shell[0]!;
+  revolve(sink, { x: base.c.x, y: f.top + roof * drum[1] - 0.07, z: base.c.z }, [[base.r * drum[0] + 0.06, 0], [base.r * drum[0] + 0.06, 0.16]], 16, base.phase, lit(hex), trimMeta(f.style.seed));
+  const y = f.top + roof * h.lantern[1] + 0.18;
+  const r = base.r * h.lanternRadius * 1.2 + 0.04;
+  if (near) lanternLights(sink, base.c, y, r, base.phase);
+  else sink.box({ x: base.c.x, y, z: base.c.z }, r * 2, 0.16, r * 2, lit("#ff2a2a"));
 };
 
 /** Top of a part's walls: under the merlons of battlements (an attic's stand over the top), else the top. */
@@ -239,7 +256,7 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   // Beside the arch's head on a classicist front, off its windows over the string course.
   if (old) camera(sink, old.w, cameraAlong(old), old.top + (t.front ? -0.6 : 1.1));
   for (const m of litMouths(f)) uplightFittings(sink, m.w, uplights(f, m), layer.warm, meta);
-  if (layer.checkpoint) for (const p of f.b.passages ?? []) scanner(sink, f, p, "#5ce1ff");
+  if (layer.checkpoint || layer.gate) for (const p of f.b.passages ?? []) scanner(sink, f, p, layer.checkpoint ? "#5ce1ff" : (layer.tech ?? "#5ce1ff"), !layer.checkpoint);
 };
 
 /**

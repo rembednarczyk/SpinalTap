@@ -40,6 +40,13 @@ Stałe decyzje użytkownika o sposobie pracy zespołu agentów i o produkcie. Cz
 
 ## Produkt
 
+- **Warstwa 2077 na zabytkach Starego Miasta (25.11):** decyzja użytkownika po Wieży Trynitarskiej („podobał mi się ten cyberpunkowy szlif, możesz iść w tę estetykę”). Na historycznej bryle stoi technika 2077, a nie neon:
+  - cienkie cyjanowe linie tam, gdzie budynek ma przyrząd albo tarczę: żebra hełmów od strony placu, obwódki zegarów, aureola tarczy we frontonie;
+  - czerwone światła przeszkodowe na szczytach, czyli maszty i latarnie hełmów;
+  - kamery nad wejściami i bramki muzeów w przejazdach.
+
+  Ciepłe linie na gzymsach i przygaszona warstwa Starego Miasta (ADR-0058) zostają. Kolor techniki to pole `tech` warstwy przepisu (ADR-0062). Akcenty mierzymy nocą (60-30-10, `pnpm shots:palette`), a cel to akcenty bliżej 10% niż dzisiejsze 1%.
+
 - **Zasady lokacji (19.11):** decyzja użytkownika: wszystkie miejsca w grze projektujemy według `docs/zasady-lokacji.md`:
   - gęsto i bez pustych, sterylnych pokoi (poza korporacją), w trzech warstwach;
   - z kontrastem techniki i biedy, z ostrym sztucznym światłem i ze śladem świeżej obecności;
