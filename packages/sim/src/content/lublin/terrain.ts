@@ -1,6 +1,7 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
 import { underDecks } from "./abutments";
+import { breakGrid } from "./breaklines";
 import { FLIGHT_CELL, type Pad, flightGrid, refineGrid, shapeGrid } from "./shape";
 import { shapeWays, wayRamps, waySegments } from "./steep-ways";
 import { bridgeDeckAt, deckGroundAt } from "./decks";
@@ -40,10 +41,11 @@ export const siteGrid = (g: TerrainGrid, pads: readonly Pad[] = DIG_PADS): Terra
  * are laid at an even grade along them, on the finer grid too (G-755). Last the seams are
  * stitched (G-748): each grid's points by a coarser neighbour take its surface, so the chunks'
  * terrain meets there. The building sites' digs are laid with the flights' ramps, on a grid
- * refined under them (`siteGrid`).
+ * refined under them (`siteGrid`). The steps under retaining walls (`breaklines.ts`, T-351) are
+ * laid after them, on a grid refined to `BREAK_CELL`, with the flights between the walls.
  */
 const LAID: ReadonlyMap<string, TerrainGrid> = new Map(
-  MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(siteGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS)), FLIGHT_RAMPS), DIG_PADS, FLIGHT_RAMPS)]),
+  MAP_CHUNKS.map((c) => [c.id, breakGrid(shapeGrid(flightGrid(siteGrid(shapeGrid(w3Grid(c.terrain), PADS, RAMPS)), FLIGHT_RAMPS), DIG_PADS, FLIGHT_RAMPS))]),
 );
 /** The steep ways' stretches laid (G-755), read on the ground walked there: a way on a bridge's deck is not on the bank under it. */
 export const WAY_RAMPS = wayRamps(
