@@ -35,4 +35,4 @@ export const NAVE_ROOF: ChurchRoof = {
 export const ANNEX_WINDOWS: SideWindows = { pitch: 4.5, width: 1.2, y0: 2.6, y1: 6.6 };
 export const SIDE_ROOM_WINDOWS: SideWindows = { pitch: 4, width: 1, y0: 9, y1: 10.8 };
 export const CHAPEL_WINDOWS: SideWindows = { pitch: 5, width: 1.4, y0: 9.4, y1: 12.8 };
-export const CLERESTORY: SideWindows = { pitch: 5.5, width: 1.8, y0: 16.5, y1: 22.5 };
+export const CLERESTORY: SideWindows = { pitch: 5.5, width: 1.8, y0: 16.5, y1: 22.5, facets: true };
