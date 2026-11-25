@@ -163,5 +163,6 @@ export const ARCHIKATEDRA: LandmarkRecipe = {
     warm: "#ffc98a",
     checkpoint: false,
     subdued: true,
+    tech: "#5ce1ff",
   },
 };
