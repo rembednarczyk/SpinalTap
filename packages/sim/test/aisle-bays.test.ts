@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BAY_OFF, BAY_PITCH, aisleBays } from "../src/content/aisle-bays";
+import { AISLE_ROOM, BAY_OFF, BAY_PITCH, aisleBays } from "../src/content/aisle-bays";
 
 /** The bays of a surface car park along its aisles (T-352): perpendicular rows either side, nose to the aisle. */
 
@@ -31,5 +31,20 @@ describe("bays along a car park's aisles (T-352)", () => {
     const narrow = { ...park, outline: [0, 0, 40, 0, 40, 14, 0, 14] };
     const bays = aisleBays([narrow]);
     expect(bays.every((b) => b.z < 10)).toBe(true);
+  });
+});
+
+describe("bays between two aisles (the curator's review of #1037)", () => {
+  // Two parallel aisles 9 m apart: one row on the line between them, none on either aisle.
+  const two = { id: "q", outline: [0, 0, 40, 0, 40, 30, 0, 30], aisles: [[0, 10, 40, 10], [0, 19, 40, 19]] };
+
+  it("sets one row on the middle line between aisles nearer than two rows' reach", () => {
+    const middle = aisleBays([two]).filter((b) => b.z > 10 && b.z < 19);
+    expect(middle.length).toBeGreaterThan(0);
+    for (const b of middle) expect(b.z).toBeCloseTo(14.5, 6);
+  });
+
+  it("keeps every body 1.5 m off every aisle's axis", () => {
+    for (const b of aisleBays([two])) for (const z of [10, 19]) expect(Math.abs(b.z - z)).toBeGreaterThanOrEqual(2.4 + AISLE_ROOM - 1e-6);
   });
 });

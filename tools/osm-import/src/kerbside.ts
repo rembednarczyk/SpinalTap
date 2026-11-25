@@ -33,23 +33,50 @@ export const chunkCarParks = (areas: readonly Area[], rect: Rect, aisles: readon
 export const isParkingAisle = (t: Tags): boolean => t.highway === "service" && t.service === "parking_aisle" && Number(t.layer ?? 0) >= 0;
 
 /**
- * The aisles of a surface car park: its runs inside its ring (an aisle drawn on past the ring to
- * the street it leaves by is cut at the ring), each at least a bay long (T-352).
+ * The aisles of a surface car park: their runs inside its ring, each cut at the ring's edge where it
+ * crosses it (the line clipped to the polygon, as `ST_Intersection` clips it: an aisle drawn on past
+ * the ring to the street it leaves by keeps its part inside), each run at least 5 m long (T-352).
  */
 const aislesIn = (ring: readonly Pt[], aisles: readonly Line[]): number[][] =>
-  aisles.flatMap((l) => {
-    const runs: Pt[][] = [];
-    let run: Pt[] = [];
-    for (const p of l.line) {
-      if (pointInRing(p, ring)) run.push(p);
-      else if (run.length > 0) {
-        runs.push(run);
-        run = [];
-      }
+  aisles.flatMap((l) => clipToRing(l.line, ring).filter((r) => r.length >= 2 && lineLength(r) >= 5).map((r) => r.flatMap((p) => [r1(p.x), r1(p.z)])));
+
+/** Where segment a-b crosses segment c-d, as a's parameter in (0, 1), or null. */
+const crossAt = (a: Pt, b: Pt, c: Pt, d: Pt): number | null => {
+  const den = (b.x - a.x) * (d.z - c.z) - (b.z - a.z) * (d.x - c.x);
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((c.x - a.x) * (d.z - c.z) - (c.z - a.z) * (d.x - c.x)) / den;
+  const u = ((c.x - a.x) * (b.z - a.z) - (c.z - a.z) * (b.x - a.x)) / den;
+  return t > 0 && t < 1 && u >= 0 && u <= 1 ? t : null;
+};
+
+/** The runs of a polyline inside a ring: each segment split where it crosses the ring's edges, a piece kept when its middle is inside. */
+export const clipToRing = (line: readonly Pt[], ring: readonly Pt[]): Pt[][] => {
+  const runs: Pt[][] = [];
+  let run: Pt[] = [];
+  const end = () => {
+    if (run.length >= 2) runs.push(run);
+    run = [];
+  };
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const ts = [0, ...ring.flatMap((c, k) => crossAt(a, b, c, ring[(k + 1) % ring.length]!) ?? []).sort((x, y) => x - y), 1];
+    for (let k = 0; k + 1 < ts.length; k++) {
+      const p = { x: a.x + (b.x - a.x) * ts[k]!, z: a.z + (b.z - a.z) * ts[k]! };
+      const q = { x: a.x + (b.x - a.x) * ts[k + 1]!, z: a.z + (b.z - a.z) * ts[k + 1]! };
+      if (pointInRing({ x: (p.x + q.x) / 2, z: (p.z + q.z) / 2 }, ring)) {
+        const last = run[run.length - 1];
+        if (!last || Math.hypot(last.x - p.x, last.z - p.z) > 1e-9) {
+          end();
+          run.push(p);
+        }
+        run.push(q);
+      } else end();
     }
-    if (run.length > 0) runs.push(run);
-    return runs.filter((r) => r.length >= 2 && lineLength(r) >= 5).map((r) => r.flatMap((p) => [r1(p.x), r1(p.z)]));
-  });
+  }
+  end();
+  return runs;
+};
 
 /** A bus stop's post or platform (not the stop position on the carriageway). */
 const stopPost = (t: Tags): boolean => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";

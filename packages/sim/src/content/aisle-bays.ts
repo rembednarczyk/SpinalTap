@@ -32,6 +32,42 @@ export const BAY_PITCH = 2.5;
 export const BAY_OFF = 5.5;
 /** Kept clear at an aisle's ends (m): where it turns into the next or leaves for the street. */
 const END_CLEAR = 3;
+/** Half a bay's depth (m): the body's reach from the bay's middle along the normal. */
+const HALF_DEPTH = 2.4;
+/** Room a body keeps from every aisle's axis (m): a car's half width and a hand (the curator's review of #1037). */
+export const AISLE_ROOM = 1.5;
+/** The nearest a bay's middle may stand to an aisle's axis (m). */
+const NEAREST = HALF_DEPTH + AISLE_ROOM;
+
+/** Distance from p to a polyline. */
+const toLine = (line: readonly Pt[], px: number, pz: number): number => {
+  let best = Infinity;
+  for (let i = 0; i + 1 < line.length; i++) {
+    const [ax, az] = line[i]!;
+    const [bx, bz] = line[i + 1]!;
+    const [dx, dz] = [bx - ax, bz - az];
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / (dx * dx + dz * dz || 1)));
+    best = Math.min(best, Math.hypot(px - ax - dx * t, pz - az - dz * t));
+  }
+  return best;
+};
+
+/** How far along the ray from (cx, cz) by (nx, nz) it meets another aisle, within `max`; Infinity if it does not. */
+const rayToAisle = (others: readonly (readonly Pt[])[], cx: number, cz: number, nx: number, nz: number, max: number): number => {
+  let best = Infinity;
+  for (const line of others)
+    for (let i = 0; i + 1 < line.length; i++) {
+      const [ax, az] = line[i]!;
+      const [bx, bz] = line[i + 1]!;
+      const [ex, ez] = [bx - ax, bz - az];
+      const den = nx * ez - nz * ex;
+      if (Math.abs(den) < 1e-9) continue;
+      const t = ((ax - cx) * ez - (az - cz) * ex) / den;
+      const u = ((ax - cx) * nz - (az - cz) * nx) / den;
+      if (t > 0.5 && t < max && u >= 0 && u <= 1) best = Math.min(best, t);
+    }
+  return best;
+};
 
 const pairs = (flat: readonly number[]): Pt[] => Array.from({ length: flat.length / 2 }, (_, i): Pt => [flat[2 * i]!, flat[2 * i + 1]!]);
 
@@ -39,8 +75,9 @@ const pairs = (flat: readonly number[]): Pt[] => Array.from({ length: flat.lengt
 export const aisleBays = (parks: readonly AislePark[]): AisleBay[] =>
   parks.flatMap((park) => {
     const ring = pairs(park.outline);
-    return park.aisles.flatMap((flat) => {
-      const line = pairs(flat);
+    const lines = park.aisles.map(pairs);
+    return lines.flatMap((line, li) => {
+      const others = lines.filter((_, k) => k !== li);
       const out: AisleBay[] = [];
       let run = 0;
       const total = line.slice(1).reduce((a, p, i) => a + Math.hypot(p[0] - line[i]![0], p[1] - line[i]![1]), 0);
@@ -57,9 +94,14 @@ export const aisleBays = (parks: readonly AislePark[]): AisleBay[] =>
           const [cx, cz] = [ax + tx * s, az + tz * s];
           for (const side of [1, -1]) {
             const [nx, nz] = [-tz * side, tx * side];
-            const x = cx + nx * BAY_OFF;
-            const z = cz + nz * BAY_OFF;
+            // Between two aisles nearer than two rows' reach, one row on the line between them.
+            const across = rayToAisle(others, cx, cz, nx, nz, 2 * BAY_OFF);
+            const off = across < 2 * BAY_OFF ? across / 2 : BAY_OFF;
+            const x = cx + nx * off;
+            const z = cz + nz * off;
             if (!pointInPairRingEvenOdd(x, z, ring)) continue;
+            // The body clear of every aisle's axis, its own and the others'.
+            if (lines.some((l) => toLine(l, x, z) < NEAREST - 1e-6)) continue;
             // Nose to the aisle: facing back along the normal.
             out.push({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(Math.atan2(-nx, -nz) * 1000) / 1000, park: park.id });
           }

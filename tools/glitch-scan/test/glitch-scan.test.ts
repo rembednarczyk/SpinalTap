@@ -984,6 +984,17 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
    * a bay across the kerb, G-177): it faces no traffic's way. Nor a car in a surface car park's
    * bays along its aisles (T-352, `aisle-bays.ts`): it parks off the streets.
    */
+  /** A parked car whose body stands within 1.5 m of a car park's aisle (T-352, the curator's review of #1037): in the way it drives in by. */
+  "parked-car-in-aisle": () => {
+    const aisles = SURFACE_PARKS.flatMap((p) => (p.aisles ?? []).map((a) => Array.from({ length: a.length / 2 }, (_, i): [number, number] => [a[2 * i]!, a[2 * i + 1]!])));
+    return PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const corners = [-0.5, 0.5].flatMap((a) => [-0.5, 0.5].map((b): [number, number] => [c.x + fx * length * b + fz * width * a, c.z + fz * length * b - fx * width * a]));
+      const inAisle = aisles.some((l) => l.some((_, i) => i > 0 && corners.some(([x, z]) => segmentDistance(x, z, l[i - 1]![0], l[i - 1]![1], l[i]![0], l[i]![1]) < 1.5)));
+      return inAisle ? [{ at: near(c.x, c.z), what: `${c.model} in a car park's aisle` }] : [];
+    });
+  },
   "parked-car-against-traffic": () =>
     PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300) && !inSurfacePark(c.x, c.z)).flatMap((c) => {
       const fx = Math.sin(c.yaw);
