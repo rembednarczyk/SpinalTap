@@ -30,18 +30,26 @@ const MIN_STRETCH = 0.3;
 
 const round2 = (v: number): number => Math.round(v * 100) / 100;
 
-/** How far either side of a retaining wall's axis its lower side's ground is read (m): past a 1.25 m cell's half. */
+/** How far either side of a retaining wall's axis its two sides' ground is read (m): past a 1.25 m cell's half. */
 const RETAINED_SIDE = 1;
+/** A retaining wall's parapet over its upper side's ground at the least (m): the curator's default where NMPT has no top (`docs/plany/archikatedra-otoczenie.md` §1.4). */
+export const RETAINED_PARAPET = 0.5;
+/** The step between a retaining wall's sides from which it is read as holding a terrace (m). */
+const RETAINED_STEP = 0.5;
 
 /**
- * The ground a retaining wall's piece stands on at (x, z): the lowest of its axis and a metre to
- * either side, so its face reaches down to the lower side where the terrain steps under it
- * (`breaklines.ts`, T-351) instead of leaving the step's slope bare under the wall.
+ * The ground of a retaining wall's two sides at (x, z): the lowest and highest of its axis and a
+ * metre to either side. Its face reaches down to the lower side and its top over the upper one
+ * where the terrain steps under it (`breaklines.ts`, T-351), instead of leaving the step's slope
+ * bare under it or the terrace's edge over it.
  */
-const retainedFoot = (a: GroundPoint, b: GroundPoint, groundY: (x: number, z: number) => number) => {
+const retainedSides = (a: GroundPoint, b: GroundPoint, groundY: (x: number, z: number) => number) => {
   const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
   const [nx, nz] = [-(b.z - a.z) / len, (b.x - a.x) / len];
-  return (x: number, z: number): number => Math.min(groundY(x, z), groundY(x + nx * RETAINED_SIDE, z + nz * RETAINED_SIDE), groundY(x - nx * RETAINED_SIDE, z - nz * RETAINED_SIDE));
+  return (x: number, z: number): { low: number; high: number } => {
+    const ys = [groundY(x, z), groundY(x + nx * RETAINED_SIDE, z + nz * RETAINED_SIDE), groundY(x - nx * RETAINED_SIDE, z - nz * RETAINED_SIDE)];
+    return { low: Math.min(...ys), high: Math.max(...ys) };
+  };
 };
 
 /**
@@ -67,11 +75,15 @@ export const barrierPieces = (
       const q = { x: a.x + ((b.x - a.x) * (k + 1)) / n, z: a.z + ((b.z - a.z) * (k + 1)) / n };
       const x = (p.x + q.x) / 2;
       const z = (p.z + q.z) / 2;
-      const foot = kind === "retaining-wall" ? retainedFoot(a, b, groundY) : groundY;
+      const sides = kind === "retaining-wall" ? retainedSides(a, b, groundY) : null;
+      const foot = sides ? (fx: number, fz: number) => sides(fx, fz).low : groundY;
       const rise = foot(q.x, q.z) - foot(p.x, p.z);
-      // A retaining wall stands from its lower side's ground, its top where the axis puts it (T-351).
+      // A retaining wall stands from its lower side's ground; where it holds a step, its top is a
+      // parapet over the upper side, else its height over the axis (T-351).
       const y = foot(x, z);
-      const variant = barrierVariant({ kind, length: len / n, height: height + groundY(x, z) - y, rise, material });
+      const side = sides?.(x, z);
+      const top = side && side.high - side.low > RETAINED_STEP ? side.high + RETAINED_PARAPET : groundY(x, z) + height;
+      const variant = barrierVariant({ kind, length: len / n, height: top - y, rise, material });
       out.push({ prop: "barrier", x: round2(x), y: round2(y), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
     }
   }
