@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { VEHICLE_SIZE } from "@seki/core";
 import { AISLE_ROOM, BAY_OFF, BAY_PITCH, aisleBays } from "../src/content/aisle-bays";
 
 /** The bays of a surface car park along its aisles (T-352): perpendicular rows either side, nose to the aisle. */
@@ -45,6 +46,13 @@ describe("bays between two aisles (the curator's review of #1037)", () => {
   });
 
   it("keeps every body 1.5 m off every aisle's axis", () => {
-    for (const b of aisleBays([two])) for (const z of [10, 19]) expect(Math.abs(b.z - z)).toBeGreaterThanOrEqual(2.4 + AISLE_ROOM - 1e-6);
+    for (const b of aisleBays([two])) for (const z of [10, 19]) expect(Math.abs(b.z - z)).toBeGreaterThanOrEqual(VEHICLE_SIZE.van.length / 2 + AISLE_ROOM - 1e-6);
+  });
+
+  it("keeps a van's 5 m body clear too: no middle row between aisles 7.9 m apart", () => {
+    // The middle line 3.95 m off each axis: room for a 4.8 m body, not for a van's.
+    const tight = { id: "t", outline: [0, 0, 40, 0, 40, 30, 0, 30], aisles: [[0, 10, 40, 10], [0, 17.9, 40, 17.9]] };
+    const reach = VEHICLE_SIZE.van.length / 2 + AISLE_ROOM;
+    for (const b of aisleBays([tight])) for (const z of [10, 17.9]) expect(Math.abs(b.z - z)).toBeGreaterThanOrEqual(reach - 1e-6);
   });
 });

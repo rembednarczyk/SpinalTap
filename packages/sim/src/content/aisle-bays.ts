@@ -1,4 +1,4 @@
-import { pointInPairRingEvenOdd } from "@seki/core";
+import { VEHICLE_SIZE, pointInPairRingEvenOdd } from "@seki/core";
 
 /**
  * The bays of a surface car park along its aisles (T-352, the curator's audit of Plac Katedralny
@@ -32,8 +32,12 @@ export const BAY_PITCH = 2.5;
 export const BAY_OFF = 5.5;
 /** Kept clear at an aisle's ends (m): where it turns into the next or leaves for the street. */
 const END_CLEAR = 3;
-/** Half a bay's depth (m): the body's reach from the bay's middle along the normal. */
-const HALF_DEPTH = 2.4;
+/**
+ * The body's reach from the bay's middle along the normal (m): half the longest car a bay takes,
+ * the van (delivery trucks stay at the kerb). A van's 5 m reached 0.1 m nearer an aisle than a
+ * 4.8 m bay's half (the scan's parked-car-in-aisle, podzamcze-1-1 752,489).
+ */
+const HALF_DEPTH = VEHICLE_SIZE.van.length / 2;
 /** Room a body keeps from every aisle's axis (m): a car's half width and a hand (the curator's review of #1037). */
 export const AISLE_ROOM = 1.5;
 /** The nearest a bay's middle may stand to an aisle's axis (m). */
