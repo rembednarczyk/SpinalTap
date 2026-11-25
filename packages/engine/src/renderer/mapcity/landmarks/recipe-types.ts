@@ -286,6 +286,15 @@ export interface Layer2077 {
    * thin warm lines on the cornices, uplights at both mouths of the passage, no neon.
    */
   readonly subdued?: boolean;
+  /**
+   * Lublin 2077's technology on the old stone of a subdued landmark (the user's choice of 25.11,
+   * after the Trinitarian Tower's mast and lit clocks): thin lines in this colour where the
+   * building has an instrument (a helmet's ribs, a disc in a pediment), red obstruction lights on
+   * its tops, a camera over its door. The warm lines on the cornices stay the Old Town's.
+   */
+  readonly tech?: string;
+  /** A museum's gate in the passage (the tower's, `docs/lokacje/plac-katedralny.md`): the checkpoint's scanner arch in `tech`. */
+  readonly gate?: boolean;
 }
 
 export interface LandmarkRecipe {

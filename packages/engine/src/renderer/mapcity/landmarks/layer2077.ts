@@ -40,10 +40,10 @@ export const corniceLights = (sink: MeshSink, f: FacadeFrame, y: number, out: nu
   }
 };
 
-/** LED strips down the helmet's ribs that face the new town. */
-export const helmLeds = (sink: MeshSink, f: FacadeFrame, base: HelmBase, h: HelmProfile, roof: number, layer: Layer2077): void => {
+/** LED strips down the helmet's ribs that face the new town, in the layer's neon or in `hex`. */
+export const helmLeds = (sink: MeshSink, f: FacadeFrame, base: HelmBase, h: HelmProfile, roof: number, layer: Layer2077, hex = layer.neon): void => {
   const shell = helmProfile(h, base.r, roof).shell;
-  const color = lit(layer.neon);
+  const color = lit(hex);
   const meta = trimMeta(f.style.seed);
   for (let j = 0; j < 8; j++) {
     const a = base.phase + (j / 8) * Math.PI * 2;
@@ -77,6 +77,18 @@ export const mast = (sink: MeshSink, c: P2, y0: number, y1: number, phase: numbe
     for (const s of [-1, 1]) sink.box({ x: c.x + Math.cos(phase) * s * (w / 2), y: y + 0.05, z: c.z - Math.sin(phase) * s * (w / 2) }, 0.07, 0.07, 0.07, red);
   }
   sink.box({ x: c.x, y: y1 - 0.1, z: c.z }, 0.18, 0.18, 0.18, red);
+};
+
+/**
+ * Red obstruction lights round a helmet's lantern at world y, `r` from its axis: one at each of
+ * four points of the compass from `phase`, as on a mast's arms (ICAO Annex 14, low-intensity).
+ */
+export const lanternLights = (sink: MeshSink, c: P2, y: number, r: number, phase: number): void => {
+  const red = lit("#ff2a2a");
+  for (let k = 0; k < 4; k++) {
+    const a = phase + (k * Math.PI) / 2;
+    sink.box({ x: c.x + Math.cos(a) * r, y, z: c.z + Math.sin(a) * r }, 0.2, 0.2, 0.2, red);
+  }
 };
 
 /** A frame of dark metal on the wall round a screen centred at (u, y). */
@@ -116,12 +128,19 @@ export const passageAxis = (p: WorldPassage): { o: P2; u: P2; n: P2; length: num
   return { o: p.from, u, n: { x: -u.z, z: u.x }, length };
 };
 
-/** The checkpoint's scanner: a lit arch hugging the vault and the walls at the middle of the passage under the building. */
-export const scanner = (sink: MeshSink, f: FacadeFrame, p: WorldPassage, color: string): void => {
+/**
+ * The checkpoint's scanner: a lit arch hugging the vault and the walls at the middle of the passage
+ * under the building; with `mouths` also just inside both mouths, the gate's lit outline seen from outside.
+ */
+export const scanner = (sink: MeshSink, f: FacadeFrame, p: WorldPassage, color: string, mouths = false): void => {
   const ax = passageAxis(p);
   const span = ax ? spanAt(f.b.ring, ax, 0) : null;
   if (!ax || !span) return;
-  const t = (span[0] + span[1]) / 2;
+  const mid = (span[0] + span[1]) / 2;
+  for (const t of mouths ? [span[0] + 0.3, mid, span[1] - 0.3] : [mid]) scannerArch(sink, f, ax, p, t, color);
+};
+
+const scannerArch = (sink: MeshSink, f: FacadeFrame, ax: NonNullable<ReturnType<typeof passageAxis>>, p: WorldPassage, t: number, color: string): void => {
   const meta = trimMeta(f.style.seed);
   const half = p.width / 2 - 0.06;
   const rise = Math.max(p.crown - p.spring, 0) - 0.06;
