@@ -178,11 +178,34 @@ const offHeading = (from: Vec3, to: Vec3, heading: number): number => {
  * line grazed a corner that the way round, in cells with room for a body, keeps clear of: the
  * line opened and closed every step, and the heading swung by 0.42 rad 25 times.
  */
-const fleeStep = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, running: boolean): Vec3 => {
+const fleeStep = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, running: boolean, radius: number): Vec3 => {
   if (!straightWalk(ctx.world, from, ahead)) return steerPoint(ctx.world, from, ahead, true, fleeDetourStep);
   if (!running || offHeading(from, ahead, heading) <= FLEE_HELD_STEP) return ahead;
   const round = fleeDetourStep(ctx.world, from, ahead);
-  return round && offHeading(from, round, heading) <= FLEE_HELD_STEP ? round : ahead;
+  if (round && offHeading(from, round, heading) <= FLEE_HELD_STEP) return round;
+  return heldCourse(ctx, from, ahead, heading, radius) ?? ahead;
+};
+
+/**
+ * The course a runner off its straight way keeps while the straight walk is free only along its
+ * axis (G-928 round 3, a Schmitt trigger: two thresholds, so it does not chatter at one). The way
+ * round starts when the knee-high line to `ahead` is cut; the straight way takes over again only
+ * once the body's width clears it too (both side lines). A runner closing on a fence at a shallow
+ * angle (the Bystrzyca's, 0.24 rad) grazed its posts with the one line: cut, free, cut, and its
+ * heading swung between the way round and the straight way 8 times in 5 s. Null when the body
+ * clears the straight walk, or the course itself is not free.
+ */
+const heldCourse = (ctx: SimContext, from: Vec3, ahead: Vec3, heading: number, radius: number): Vec3 | null => {
+  const away = Math.atan2(ahead.x - from.x, ahead.z - from.z);
+  const side = radius;
+  const [ux, uz] = [Math.sin(away), Math.cos(away)];
+  const clear = [side, -side].every((s) => {
+    const start = { x: from.x + uz * s, y: from.y, z: from.z - ux * s };
+    return straightWalk(ctx.world, start, { x: start.x + ux * FLEE_LOOKAHEAD, y: from.y, z: start.z + uz * FLEE_LOOKAHEAD });
+  });
+  if (clear) return null;
+  const on = { x: from.x + Math.sin(heading) * FLEE_PROBE, y: from.y, z: from.z + Math.cos(heading) * FLEE_PROBE };
+  return straightWalk(ctx.world, from, on) ? on : null;
 };
 
 const FEAR: Readonly<Record<CrowdState, number>> = { calm: 0, alarmed: 1, fleeing: 2, cowering: 3 };
@@ -389,7 +412,7 @@ class CivilianAgent {
     const ux = Math.sin(away + turn);
     const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
-    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running);
+    const p = fleeStep(ctx, self.position, ahead, Math.atan2(self.velocity.x, self.velocity.z), running, self.body?.radius ?? 0);
     const sx = p.x - self.position.x;
     const sz = p.z - self.position.z;
     const s = Math.hypot(sx, sz);
