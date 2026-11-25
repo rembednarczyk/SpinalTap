@@ -5,7 +5,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
-- Status: zgłoszone (24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
+- Status: w naprawie (25.11, gałąź `feat/katedra-taras`, linie nieciągłości `breaklines.ts`, T-351; zgłoszone 24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
 - Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
 - Dowód: NMT: taras −2,2…−2,8, chodnik −3,7…−5,3 (uskok 1,0–2,8 m); siatka terenu komórki 5 m rozmywa go na ok. 8 m (z −204…−196): taras przy murku do 0,6 m za nisko, przy szczycie schodów 0,8–1,3 m (gra −3,66), chodnik u stopy do 0,36 m za wysoko, schody 15 stopni wznoszą się o 0,39 m, Figura Matki Bożej n6191145919 1,0 m pod tarasem
 - Ważność: S3 · Zasięg: jeden taras (ok. 50 m muru), widoczny z Królewskiej i placu; `wall-step-smeared` w całym mieście ok. 26 kawałków (propozycja kontroli kuratora)

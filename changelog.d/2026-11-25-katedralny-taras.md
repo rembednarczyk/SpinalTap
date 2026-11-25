@@ -1,0 +1,1 @@
+Taras Placu Katedralnego ma prawdziwy uskok nad Królewską: teren zmienia poziom tuż pod murkiem zamiast łagodnego stoku na 8 m, parking i Figura stoją na tarasie, a schody między murkami wznoszą się na pełną wysokość tarasu.

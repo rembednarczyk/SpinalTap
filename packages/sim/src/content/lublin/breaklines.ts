@@ -121,17 +121,22 @@ export interface BreakFlight {
  * 5.5 m south of its foot, to the terrace's, read 5.5 m north of its top (the lines' `read`).
  */
 export const BREAK_FLIGHTS: readonly BreakFlight[] = [
-  { id: "w565845673", foot: { x: 584.5, z: -199 }, top: { x: 589.9, z: -198.5 }, readFoot: { x: 584.5, z: -204.5 }, readTop: { x: 589.9, z: -193 }, width: 2.6 },
+  { id: "w565845673", foot: { x: 584.5, z: -199 }, top: { x: 589.9, z: -198.5 }, readFoot: { x: 584.5, z: -204.5 }, readTop: { x: 589.9, z: -193 }, width: 3.6 },
 ];
 
-/** The flights' ramps on the coarse grid's levels: a level landing a cell on past the top. */
+/** The flights' ramps on the coarse grid's levels, level a cell before the foot and past the top. */
 export const breakRamps = (g: TerrainGrid, flights: readonly BreakFlight[]): Ramp[] =>
   flights.flatMap((f) => {
     const ya = terrainHeightAt(g, f.readFoot.x, f.readFoot.z);
     const yb = terrainHeightAt(g, f.readTop.x, f.readTop.z);
     const d = Math.hypot(f.top.x - f.foot.x, f.top.z - f.foot.z) || 1;
-    const on = { x: f.top.x + ((f.top.x - f.foot.x) / d) * BREAK_CELL, z: f.top.z + ((f.top.z - f.foot.z) / d) * BREAK_CELL };
+    const [ux, uz] = [(f.top.x - f.foot.x) / d, (f.top.z - f.foot.z) / d];
+    const on = { x: f.top.x + ux * BREAK_CELL, z: f.top.z + uz * BREAK_CELL };
+    const before = { x: f.foot.x - ux * BREAK_CELL, z: f.foot.z - uz * BREAK_CELL };
+    // Level a cell before the foot and past the top: else the grid's points just outside pull the
+    // first and last treads towards the other level, and the drawn flight gets a landing there.
     return [
+      { a: before, b: f.foot, ya, yb: ya, width: f.width, blend: 0, square: true },
       { a: f.foot, b: f.top, ya, yb, width: f.width, blend: 0, square: true },
       { a: f.top, b: on, ya: yb, yb, width: f.width, blend: 0, square: true },
     ];
