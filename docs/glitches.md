@@ -4,6 +4,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
+- Status: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
+- Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
+- Dowód: ortofoto PZGiK: blok ok. 6,5 × 6 m z niebieskim dachem; w OSM i w grze bez budynku, nawierzchnia alejki przechodzi przez jego miejsce (nakładka kuratora `topo-1037/r3-crop.png`)
+- Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
+- Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
+- Pakiet właściciela: tools/osm-import
+
 ### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
 - Status: zgłoszone (24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
 - Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
