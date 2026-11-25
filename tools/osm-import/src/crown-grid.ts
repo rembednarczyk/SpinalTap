@@ -121,6 +121,16 @@ const QUARTERS = [
   [0.25, 0.25],
 ] as const;
 
+/**
+ * How tall the surface model stands at all four quarters of a cell for a crown the orthophoto's
+ * cover misses (m): a tree the leaf-off flight shows as the paving or lawn under its bare twigs and
+ * the summer flights do not mark (T-354, Plac Katedralny's lawn: NMPT 7-22 m over asphalt, paving
+ * and green). Out of the map's structures and off the roofs, a thing 8 m tall and a metre across is
+ * a crown: a lamp's post is thinner than a quarter of a cell, a mast's top is caught by the walls' rules.
+ */
+export const TALL_CROWN = 8;
+const tallAllRound = (chms: readonly Chm[], p: Pt): boolean => QUARTERS.every(([dx, dz]) => chmOf(chms, { x: p.x + dx, z: p.z + dz }) >= TALL_CROWN);
+
 /** The height over the ground at p (m), NaN without data. */
 export const chmOf = (chms: readonly Chm[], p: Pt): number => {
   const q = worldToPuwg(p);
@@ -144,7 +154,8 @@ export const crownGrid = (rect: Rect, ctx: CrownContext): CrownGrid => {
     if (!(h >= MIN_TOP && h <= NOT_A_CROWN) || CROWN_CLEARED.some((r) => inRect(p, r)) || ctx.structures.at(p) || byRoof(ctx.site, p, OFF_ROOF)) continue;
     g.raw[i] = h;
     const cover = coverFor(ctx.covers, p);
-    if (!cover || QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length < 2) continue;
+    const onCover = cover !== undefined && QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length >= 2;
+    if (!onCover && !tallAllRound(ctx.chms, p)) continue;
     g.h[i] = h;
     if (trunkGround(ctx.site, ctx.keep, p)) g.stand[i] = 1;
   }
