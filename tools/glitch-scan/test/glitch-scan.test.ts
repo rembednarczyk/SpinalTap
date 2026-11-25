@@ -70,6 +70,9 @@ import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroS
 import { lanternsByPassages } from "./passage-lanterns";
 import { bareOnCover } from "./bare-on-cover";
 import { lampOnOrtoCarriageway } from "./lamp-on-orto-carriageway";
+import { beaconOffTip, sceneLampInSolid } from "./scene-lamps";
+import { SCENE_LAMP_GROUPS } from "../../../packages/sim/src/content/district-targ";
+import { KATEDRALNY_BEACON } from "../../../packages/sim/src/content/katedralny-lights";
 import { fillAreaMismatch } from "./fill-area";
 import { fillGap } from "./fill-gap";
 import { fillOnGreen, lawnOnLeafOffPaving } from "./fill-on-green";
@@ -1475,6 +1478,18 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
    * the `lit` rule (ADR-0064 stage 3, `props-lit.ts`) lamps the lit ways the plan's lines left dark.
    */
   "lit-street-dark": () => litStreetDark(loadLitWays(), Object.values(LUBLIN_STREET_PROPS).flat(), onChunk),
+  /** A scene's lamp inside a building's outline or under the ground (`scene-lamps.ts`, the review of PR #1032). */
+  "scene-lamp-in-solid": () =>
+    sceneLampInSolid(
+      SCENE_LAMP_GROUPS.flatMap((g) => g.lamps.map((l) => ({ group: g.id, key: l.key, at: l.at }))),
+      inBuilding,
+      groundY,
+    ),
+  /** An obstruction light off its building's middle or out of the band over its tip (`scene-lamps.ts`, T-353). */
+  "beacon-off-tip": () => {
+    const tower = MAP_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === "w66286371");
+    return tower ? beaconOffTip([{ id: "kat-beacon", at: KATEDRALNY_BEACON, top: { x: tower.x, z: tower.z, y: tower.y + tower.height + (tower.roof ?? 0) } }]) : [];
+  },
   /** A lamp on the orthophoto's asphalt further than 0.5 m from its edge: in a carriageway the import draws narrower than it is (G-821, `lamp-on-orto-carriageway.ts`). */
   "lamp-on-orto-carriageway": () => lampOnOrtoCarriageway(Object.values(LUBLIN_STREET_PROPS).flat(), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */
