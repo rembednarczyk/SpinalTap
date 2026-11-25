@@ -5,7 +5,3 @@ krakowskie-2-0 279,-166
 podzamcze-2-1 1019,394
 podzamcze-2-1 1021,394
 podzamcze-2-1 1022,394
-stare-miasto-0-0 519,-190
-stare-miasto-0-0 517,-189
-stare-miasto-0-0 515,-188
-stare-miasto-0-0 513,-187

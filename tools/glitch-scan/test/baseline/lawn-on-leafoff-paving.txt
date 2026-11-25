@@ -125,8 +125,6 @@ podzamcze-2-1 950,560
 poza 760,40
 stare-miasto-0-0 500,-190
 stare-miasto-0-0 510,-190
-stare-miasto-0-0 520,-180
-stare-miasto-0-0 530,-180
 stare-miasto-0-0 500,-130
 stare-miasto-1-0 660,-240
 stare-miasto-1-0 670,-240
