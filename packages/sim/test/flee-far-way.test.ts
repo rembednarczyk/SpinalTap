@@ -85,7 +85,7 @@ describe("runners round a way out of the flee window (G-928, round 2)", () => {
     const at = ground(2366.5, 459.5);
     const ring = Array.from({ length: 8 }, (_, i) => ({ x: at.x + 0.7 * Math.cos(((i + 0.5) * Math.PI) / 4), z: at.z + 0.7 * Math.sin(((i + 0.5) * Math.PI) / 4) }));
     const trunk = makePrism(ring, at.y - 0.3, at.y + 3);
-    sim.world.add({ position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, chunk: sim.player()!.chunk ?? "", seeThrough: true, solid: trunk.box, prisms: [trunk] });
+    sim.world.add({ id: 9300, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, chunk: sim.player()!.chunk ?? "", seeThrough: true, solid: trunk.box, prisms: [trunk] });
     const c = alone(sim, (e) => !e.vehicle);
     const run = runFrom(sim, c, ground(2362, 449), 2);
     expect({ far: run.gone >= 10, stood: run.stood <= 2, swings: run.swings < 5 }, JSON.stringify(run)).toEqual({ far: true, stood: true, swings: true });
