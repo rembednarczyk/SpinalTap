@@ -331,6 +331,8 @@ export interface SideWindows {
   readonly width: number;
   readonly y0: number;
   readonly y1: number;
+  /** One window on the middle of each wall shorter than the pitch with room for it: an apse's facets (the photograph in the snow). */
+  readonly facets?: boolean;
 }
 
 /**

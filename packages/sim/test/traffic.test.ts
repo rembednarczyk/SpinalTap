@@ -248,17 +248,28 @@ describe("the lanes of the traffic (ADR-0050)", () => {
       }
       return d;
     };
+    // Each way's box widened by its half width and the room: a car whose body stays out of it is clear of the way.
+    const boxes = ways.map((w) => {
+      const xs = w.line.filter((_, i) => i % 2 === 0);
+      const zs = w.line.filter((_, i) => i % 2 === 1);
+      const r = w.width / 2 + 0.5;
+      return { w, minX: Math.min(...xs) - r, maxX: Math.max(...xs) + r, minZ: Math.min(...zs) - r, maxZ: Math.max(...zs) + r };
+    });
+    const across: string[] = [];
     for (const c of PARKED_CARS) {
       const { width, length } = VEHICLE_SIZE[c.model];
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
+      const reach = Math.hypot(width, length) / 2;
+      const near = boxes.filter((b) => c.x + reach >= b.minX && c.x - reach <= b.maxX && c.z + reach >= b.minZ && c.z - reach <= b.maxZ);
       for (let a = -0.5; a <= 0.5; a += 0.125)
         for (let b = -0.5; b <= 0.5; b += 0.125) {
           const x = c.x + fz * width * a + fx * length * b;
           const z = c.z - fx * width * a + fz * length * b;
-          for (const w of ways) expect(gap(x, z, w.line), `${c.model} at ${c.x},${c.z}`).toBeGreaterThanOrEqual(w.width / 2 + 0.5 - 0.05);
+          for (const { w } of near) if (gap(x, z, w.line) < w.width / 2 + 0.5 - 0.05) across.push(`${c.model} at ${c.x},${c.z}`);
         }
     }
+    expect([...new Set(across)]).toEqual([]);
   });
 });
 

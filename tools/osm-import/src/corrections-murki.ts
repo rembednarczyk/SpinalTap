@@ -18,3 +18,12 @@ export const MURKI_CORRECTIONS: readonly TagCorrection[] = ["w590597335", "w2323
   reason: REASON,
   ref: "T-350",
 }));
+
+/**
+ * The car park of Plac Katedralny on the terrace (T-352, the curator's audit §2): OSM gives it no
+ * `surface`, so it was drawn as a carriageway's asphalt; its aisles w232362937 and w720908362 are
+ * `sett`, and the orthophoto (2024-06, 2025-04) shows light stone with white bay lines.
+ */
+export const KATEDRALNY_PARKING_CORRECTIONS: readonly TagCorrection[] = [
+  { id: "w179262652", tags: { surface: "sett" }, reason: "parking Placu Katedralnego: kamienna kostka jak jego alejki (sett) i ortofoto, nie asfalt", ref: "T-352" },
+];

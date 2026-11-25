@@ -167,6 +167,8 @@ export interface CarParkOut {
   /** Its bays' `orientation` when mapped: `parallel`, `perpendicular` or `diagonal` (G-177). */
   readonly orientation?: string;
   readonly outline: readonly number[];
+  /** A surface car park's aisles (`service=parking_aisle`) in it, world polylines: the bays line up along them (T-352). */
+  readonly aisles?: readonly (readonly number[])[];
 }
 
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";

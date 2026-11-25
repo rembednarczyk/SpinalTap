@@ -182,18 +182,19 @@ const bySpot = (x: number, z: number, half: number): boolean => SPOTS.some((s) =
 /**
  * Does the game need a barrier `half` metres thick either side of its line (x, z), running along
  * `dir`, out of the way: its line in a building, its faces in a door's way, by a lane, a crossing
- * flight, steps, a deck, furniture or a resident's place?
+ * flight, steps, a deck, furniture or a resident's place? A wall at a terrace's edge
+ * (`stepEdge`, `breaklines.ts`, T-351) stands along the flight it flanks: steps and flights do not cut it.
  */
-export const barrierBlocked = (x: number, z: number, half = 0, dir?: GroundPoint): boolean =>
+export const barrierBlocked = (x: number, z: number, half = 0, dir?: GroundPoint, stepEdge = false): boolean =>
   inBuilding(x, z) ||
   !clearOfGame(x, z, 0.3 + half) ||
   DOOR_WAYS.some((d) => Math.abs(x - d.x) < 4 && Math.abs(z - d.z) < 4 && beforeDoor(x, z, d, half)) ||
   crowdLanes.near(x, z, CROWD_ROOM + half, dir) ||
   crowdLanes.near(x, z, CROWD_LINE + half) ||
   carLanes.near(x, z, CAR_ROOM + half) ||
-  flights.near(x, z, FLIGHT_ROOM + half, dir) ||
+  (!stepEdge && flights.near(x, z, FLIGHT_ROOM + half, dir)) ||
   byDeck(x, z) ||
-  onStepsOrZebra(x, z, half) ||
+  (!stepEdge && onStepsOrZebra(x, z, half)) ||
   furnitureClearance(x, z) < FURNITURE_ROOM + half ||
   inFootprint(x, z, half + 0.05) ||
   bySpot(x, z, half) ||

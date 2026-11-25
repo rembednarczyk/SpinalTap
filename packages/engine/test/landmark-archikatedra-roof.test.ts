@@ -36,3 +36,19 @@ describe("the Archikatedra's roofscape (T-349, K3)", () => {
     }
   });
 });
+
+describe("the Archikatedra's apse (T-349, after the photograph in the snow)", () => {
+  it("has a round-headed window on each facet of the apse with room for it, at the clerestory's height", async () => {
+    const { cityAround, colored, near3 } = await import("./landmark-fixture");
+    const { SWATCH } = await import("../src/renderer/mapcity/landmarks/kit");
+    const sink = near3(cityAround(615, -184).frameOf("w617763433"));
+    // The apse's facets lie past x 650 (the nave's long walls end there); the openings are dark.
+    const apse = colored(sink, SWATCH.opening).filter((p) => p.x > 650.3);
+    expect(apse.length).toBeGreaterThan(0);
+    for (const p of apse) expect(p.y).toBeGreaterThan(16.4);
+    for (const p of apse) expect(p.y).toBeLessThan(23.3);
+    // Five facets of 3.5-4.6 m take a window (the two of about 3.1 m and 3.6 m by the long walls too, where clear).
+    const facets = new Set(apse.map((p) => Math.round(Math.atan2(p.z + 180.3, p.x - 650.5) * 4)));
+    expect(facets.size).toBeGreaterThanOrEqual(4);
+  });
+});

@@ -4,6 +4,10 @@ import { barrierPieces } from "./lublin/barriers";
 import { FARA_FOUNDATION_TOP, FARA_RUIN_IDS } from "./lublin/fara-pad";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { clearOfGame } from "./street-props";
+import { BREAKLINES, nearBreakline } from "./lublin/breaklines";
+
+/** The walls the terrain steps under (`breaklines.ts`, T-351). */
+const BREAKLINE_IDS: ReadonlySet<string> = new Set(BREAKLINES.map((l) => l.id));
 import { groundY } from "./lublin/terrain";
 import type { LublinBarrierData } from "./lublin/types";
 
@@ -22,7 +26,7 @@ const STEP = 0.25;
 const MIN_RUN = 0.6;
 
 /** The stretches of a polyline the game leaves clear of: tested every `STEP` metres, runs shorter than `MIN_RUN` dropped. */
-const clearRuns = (line: readonly Pt[], half: number): Pt[][] => {
+const clearRuns = (line: readonly Pt[], half: number, stepEdge = false): Pt[][] => {
   const out: Pt[][] = [];
   let run: Pt[] = [];
   const close = () => {
@@ -39,7 +43,8 @@ const clearRuns = (line: readonly Pt[], half: number): Pt[][] => {
       const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
       // A corner is tested along both its sides: a route may cross the one and run along the other.
       const c = k === n ? line[i + 2] : undefined;
-      if (barrierBlocked(p.x, p.z, half, { x: b.x - a.x, z: b.z - a.z }) || (c !== undefined && barrierBlocked(p.x, p.z, half, { x: c.x - b.x, z: c.z - b.z }))) close();
+      const edge = stepEdge && nearBreakline(p.x, p.z);
+      if (barrierBlocked(p.x, p.z, half, { x: b.x - a.x, z: b.z - a.z }, edge) || (c !== undefined && barrierBlocked(p.x, p.z, half, { x: c.x - b.x, z: c.z - b.z }, edge))) close();
       else run.push(p);
     }
   }
@@ -75,7 +80,9 @@ const piecesOf = (b: LublinBarrierData): StreetPropItem[] => {
   const line = pointsOf(b.line);
   const material = barrierMaterial(b.material);
   if (BARRIER_OPENINGS.has(b.kind)) return line.every((p) => clearOfGame(p.x, p.z, 0.2)) ? barrierPieces(b.kind, b.height, line, groundY, material) : [];
-  const pieces = clearRuns(line, BARRIER_THICKNESS[b.kind] / 2).flatMap((run) => barrierPieces(b.kind, b.height, run, groundY, material));
+  // A retaining wall on a terrace's breakline (T-351) stands along its flight and from its lower side.
+  const edge = BREAKLINE_IDS.has(b.id);
+  const pieces = clearRuns(line, BARRIER_THICKNESS[b.kind] / 2, edge).flatMap((run) => barrierPieces(b.kind, b.height, run, groundY, material, (x, z) => edge && nearBreakline(x, z)));
   return FARA_RUIN_IDS.includes(b.id) ? pieces.map((p) => levelTop(p, FARA_FOUNDATION_TOP)) : pieces;
 };
 

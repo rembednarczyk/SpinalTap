@@ -4,13 +4,28 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
-- Status: zgłoszone (24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
-- Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
-- Dowód: NMT: taras −2,2…−2,8, chodnik −3,7…−5,3 (uskok 1,0–2,8 m); siatka terenu komórki 5 m rozmywa go na ok. 8 m (z −204…−196): taras przy murku do 0,6 m za nisko, przy szczycie schodów 0,8–1,3 m (gra −3,66), chodnik u stopy do 0,36 m za wysoko, schody 15 stopni wznoszą się o 0,39 m, Figura Matki Bożej n6191145919 1,0 m pod tarasem
-- Ważność: S3 · Zasięg: jeden taras (ok. 50 m muru), widoczny z Królewskiej i placu; `wall-step-smeared` w całym mieście ok. 26 kawałków (propozycja kontroli kuratora)
-- Poprawka: linia nieciągłości terenu pod murem (breakline w NMT/TIN): siatka zagęszczona do 1,25 m w pasie ±3 m wzdłuż muru, punkty górnej strony na górnym poziomie NMT, dolnej na dolnym (etap K5b planu `docs/plany/archikatedra.md`), osobny PR z przeglądem kuratora
-- Pakiet właściciela: tools/osm-import (teren), packages/sim (content/lublin)
+### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
+- Status: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
+- Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
+- Dowód: ortofoto PZGiK: blok ok. 6,5 × 6 m z niebieskim dachem; w OSM i w grze bez budynku, nawierzchnia alejki przechodzi przez jego miejsce (nakładka kuratora `topo-1037/r3-crop.png`)
+- Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
+- Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
+- Pakiet właściciela: tools/osm-import
+### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
+- Status: zgłoszone (25.11, przegląd kuratora K5b runda 2, T-351)
+- Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
+- Dowód: wierzch kawałka poziomy na −3,66; od strony schodów parapet maleje z ok. 1,1 m do −0,2 m, na x 587,4…587,8 wierzch pod stopniem; ok. 0,5 m krawędzi biegu bez osłony nad spadkiem ok. 1,3 m na chodnik (sonda kuratora 25.11). Przed zmianą muru przy biegu nie było wcale
+- Ważność: S4 · Zasięg: jeden kawałek muru, ok. 0,5 m
+- Poprawka: dla kawałków przy linii nieciągłości wierzch = maksimum poziomu wyższej strony z końców i środka kawałka + `RETAINED_PARAPET` (`barriers.ts`); kontrola `wall-parapet-under-flight` (kawałek przy linii nieciągłości, którego wierzch schodzi pod poziom biegu po stronie schodów), baza 1
+- Pakiet właściciela: packages/sim (content/lublin)
+
+### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
+- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
+- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
+- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
+- Ważność: S3 (przegląd kuratora runda 2: nasyp przed licem widać z chodnika Królewskiej z ok. 8 m, przy x 593 klin ok. 2 m wysokości na ok. 1 m szerokości) · Zasięg: ok. 50 m muru, widoczne z Królewskiej
+- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
+- Pakiet właściciela: packages/sim (content/lublin)
 
 ### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
 - Status: zgłoszone (24.11, przegląd kuratora K5a)
