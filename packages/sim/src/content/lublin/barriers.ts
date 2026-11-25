@@ -62,6 +62,7 @@ export const barrierPieces = (
   line: readonly GroundPoint[],
   groundY: (x: number, z: number) => number,
   material: BarrierMaterial = "plain",
+  stepEdge: (x: number, z: number) => boolean = () => false,
 ): StreetPropItem[] => {
   const out: StreetPropItem[] = [];
   for (let i = 0; i + 1 < line.length; i++) {
@@ -75,7 +76,9 @@ export const barrierPieces = (
       const q = { x: a.x + ((b.x - a.x) * (k + 1)) / n, z: a.z + ((b.z - a.z) * (k + 1)) / n };
       const x = (p.x + q.x) / 2;
       const z = (p.z + q.z) / 2;
-      const sides = kind === "retaining-wall" ? retainedSides(a, b, groundY) : null;
+      // Only a retaining wall on a breakline (T-351): elsewhere the terrain does not step under the wall
+      // and its sides' ground is the smeared slope's, or off the map (the curator's review of 25.11).
+      const sides = kind === "retaining-wall" && stepEdge((p.x + q.x) / 2, (p.z + q.z) / 2) ? retainedSides(a, b, groundY) : null;
       const foot = sides ? (fx: number, fz: number) => sides(fx, fz).low : groundY;
       const rise = foot(q.x, q.z) - foot(p.x, p.z);
       // A retaining wall stands from its lower side's ground; where it holds a step, its top is a

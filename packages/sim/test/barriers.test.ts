@@ -1,3 +1,4 @@
+import { nearBreakline } from "../src/content/lublin/breaklines";
 import { describe, expect, it } from "vitest";
 import { BARRIER_PIECE, BARRIER_THICKNESS, type StreetPropItem, barrierLayout } from "@seki/core";
 import { Simulation, W3_BARRIERS, WORLD_BARRIERS, WORLD_CHUNKS, WORLD_SCENERY, ground, groundY } from "../src";
@@ -57,9 +58,10 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       // On the ground at its middle; a piece of the parish church's foundations raised to their level (`levelTop`) on its low end.
       const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
       const lowEnd = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z));
-      // A retaining wall from its lower side: the lowest ground of its axis and a metre to either side (T-351).
+      // A retaining wall on a terrace's breakline from its lower side: the lowest ground of its axis and a metre to either side (T-351).
       const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
-      const ground = b.kind === "retaining-wall" ? Math.min(groundY(item.x, item.z), groundY(item.x + across.x, item.z + across.z), groundY(item.x - across.x, item.z - across.z)) : groundY(item.x, item.z);
+      const stepped = b.kind === "retaining-wall" && nearBreakline(item.x, item.z);
+      const ground = stepped ? Math.min(groundY(item.x, item.z), groundY(item.x + across.x, item.z + across.z), groundY(item.x - across.x, item.z - across.z)) : groundY(item.x, item.z);
       expect(Math.min(Math.abs(item.y - ground), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
     }
     expect(kinds.get("wall")).toBeGreaterThan(1500);
@@ -85,7 +87,9 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
         // On the line or a hair either side of it: the piece's place is rounded to the centimetre.
         const half = BARRIER_THICKNESS[b.kind] / 2;
         const dir = { x: Math.sin(item.yaw), z: Math.cos(item.yaw) };
-        const clear = [0, 0.05, -0.05].some((a) => !barrierBlocked(p.x + Math.cos(item.yaw) * a, p.z - Math.sin(item.yaw) * a, half, dir));
+        // A retaining wall at a terrace's edge stands along its flight (T-351).
+        const edge = b.kind === "retaining-wall" && nearBreakline(p.x, p.z);
+        const clear = [0, 0.05, -0.05].some((a) => !barrierBlocked(p.x + Math.cos(item.yaw) * a, p.z - Math.sin(item.yaw) * a, half, dir, edge));
         expect(clear, `${b.kind} at ${p.x.toFixed(1)}, ${p.z.toFixed(1)}`).toBe(true);
       }
     }
@@ -133,5 +137,19 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       p.yaw = Math.atan2(b.x - a.x, b.z - a.z);
       if (seen) expect(inPlayerView({ world: sim.world } as never, p, { ...at(b), y: groundY(b.x, b.z) }), kind).toBe(true);
     }
+  });
+});
+
+describe("retaining walls off the terrace's breaklines (the curator's review of T-351)", () => {
+  it("stand on their axis's ground at their mapped height: no wall grows off a breakline", () => {
+    let seen = 0;
+    for (const { item } of all) {
+      const b = barrierLayout(item.variant);
+      if (b.kind !== "retaining-wall" || nearBreakline(item.x, item.z)) continue;
+      seen++;
+      // Its height is the map's tag (or the import's default); never the 12.7 m a read off the map gave.
+      expect(b.height, `${item.x},${item.z}`).toBeLessThanOrEqual(6);
+    }
+    expect(seen).toBeGreaterThan(100);
   });
 });

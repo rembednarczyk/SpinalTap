@@ -4,8 +4,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
+- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
+- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
+- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
+- Ważność: S4 · Zasięg: ok. 50 m muru, widoczne z bliska przy licu
+- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
+- Pakiet właściciela: packages/sim (content/lublin)
+
 ### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
-- Status: w naprawie (25.11, gałąź `feat/katedra-taras`, linie nieciągłości `breaklines.ts`, T-351; zgłoszone 24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
+- Status: w naprawie (25.11, gałąź `feat/katedra-taras`, linie nieciągłości `breaklines.ts`, T-351, przegląd kuratora runda 1 NIE PRZYJĘTE: reguła murów zawężona do linii, mur przy biegu schodów; zgłoszone 24.11, przegląd kuratora K5a, audyt `docs/plany/archikatedra-otoczenie.md` §1.3)
 - Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`
 - Dowód: NMT: taras −2,2…−2,8, chodnik −3,7…−5,3 (uskok 1,0–2,8 m); siatka terenu komórki 5 m rozmywa go na ok. 8 m (z −204…−196): taras przy murku do 0,6 m za nisko, przy szczycie schodów 0,8–1,3 m (gra −3,66), chodnik u stopy do 0,36 m za wysoko, schody 15 stopni wznoszą się o 0,39 m, Figura Matki Bożej n6191145919 1,0 m pod tarasem
 - Ważność: S3 · Zasięg: jeden taras (ok. 50 m muru), widoczny z Królewskiej i placu; `wall-step-smeared` w całym mieście ok. 26 kawałków (propozycja kontroli kuratora)
