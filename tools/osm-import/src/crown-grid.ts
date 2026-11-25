@@ -190,13 +190,20 @@ const around = (g: CrownGrid, i: number, reach: number): number[] => {
  * the orthophoto showing crown over `TOP_SHARE` of the ground within `TOP_CONFIRM` of them: the top
  * of a crown is often in its shadow's class, and a shed's green edge beside its higher roof is no top.
  */
+/** The share of the cells within `reach` of i, and i, that are crown cells of the grid. */
+const gridShare = (g: CrownGrid, i: number, reach: number): number => {
+  const cells = [i, ...around(g, i, reach)];
+  return cells.filter((j) => !Number.isNaN(g.h[j]!)).length / cells.length;
+};
+
 export const topsOf = (g: CrownGrid, ctx: CrownContext): number[] => {
   const out: number[] = [];
   for (let i = 0; i < g.raw.length; i++) {
     const h = g.raw[i]!;
     if (Number.isNaN(h)) continue;
     if (around(g, i, TOP_REACH).some((j) => g.raw[j]! > h || (g.raw[j]! === h && j < i))) continue;
-    if (crownShare(ctx.covers, centreOf(g, i), TOP_CONFIRM) >= TOP_SHARE) out.push(i);
+    // Confirmed by the orthophoto's crown round it, or by the crown cells of the grid (the tall ones the leaf-off cover misses, T-354).
+    if (crownShare(ctx.covers, centreOf(g, i), TOP_CONFIRM) >= TOP_SHARE || gridShare(g, i, TOP_CONFIRM) >= TOP_SHARE) out.push(i);
   }
   return out;
 };
