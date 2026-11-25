@@ -24,6 +24,8 @@ export interface Breakline {
   readonly band: number;
   /** How far out from the line that level is read (m): past the old grid's smear, where it meets the NMT. */
   readonly read: number;
+  /** Which ends fade out: a free end, not one that runs into a flight (its start, its end). */
+  readonly fade: readonly [boolean, boolean];
   /** Boxes left out (a flight between two walls, laid by its own ramp). */
   readonly skip?: readonly { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number }[];
 }
@@ -54,6 +56,8 @@ export const BREAKLINES: readonly Breakline[] = [
     ],
     band: 4,
     read: 5.5,
+    // Free at the terrace's south-west corner, into the flight at its east end.
+    fade: [true, false],
     skip: [KATEDRALNY_FLIGHT],
   },
   {
@@ -65,6 +69,8 @@ export const BREAKLINES: readonly Breakline[] = [
     ],
     band: 4,
     read: 5.5,
+    // Into the flight at its west end, free before the cathedral's front.
+    fade: [false, true],
     skip: [KATEDRALNY_FLIGHT],
   },
 ];
@@ -72,7 +78,7 @@ export const BREAKLINES: readonly Breakline[] = [
 /** The nearest point of a polyline to p: the point, the unit normal to the left of its segment, the distance and how far from either end along the line. */
 const nearest = (line: readonly GroundPoint[], p: GroundPoint) => {
   const total = line.slice(1).reduce((a, q, i) => a + Math.hypot(q.x - line[i]!.x, q.z - line[i]!.z), 0);
-  let best = { d: Infinity, foot: p, n: { x: 0, z: 0 }, fromEnd: 0 };
+  let best = { d: Infinity, foot: p, n: { x: 0, z: 0 }, fromStart: 0, fromEnd: 0 };
   let run = 0;
   for (let i = 0; i + 1 < line.length; i++) {
     const a = line[i]!;
@@ -82,13 +88,16 @@ const nearest = (line: readonly GroundPoint[], p: GroundPoint) => {
     const foot = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
     const d = Math.hypot(p.x - foot.x, p.z - foot.z);
     const along = run + t * len;
-    if (d < best.d) best = { d, foot, n: { x: -(b.z - a.z) / len, z: (b.x - a.x) / len }, fromEnd: Math.min(along, total - along) };
+    if (d < best.d) best = { d, foot, n: { x: -(b.z - a.z) / len, z: (b.x - a.x) / len }, fromStart: along, fromEnd: total - along };
     run += len;
   }
   return best;
 };
 
 const smooth = (t: number): number => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+/** How fully a line shapes a point near it: fading out over `FADE` at a free end, whole elsewhere. */
+const weightOf = (l: Breakline, near: { readonly fromStart: number; readonly fromEnd: number }): number =>
+  (l.fade[0] ? smooth(near.fromStart / FADE) : 1) * (l.fade[1] ? smooth(near.fromEnd / FADE) : 1);
 const inBox = (b: NonNullable<Breakline["skip"]>[number], x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
 
 /**
@@ -154,15 +163,17 @@ export const breakGrid = (g: TerrainGrid, lines: readonly Breakline[] = BREAKLIN
     for (const l of lines) {
       if (l.skip?.some((b) => inBox(b, x, z))) continue;
       const near = nearest(l.line, { x, z });
-      // A line whose end the point lies past has no say there (its weight is nought).
-      if (near.d <= l.band && near.fromEnd > 0.05 && (!best || near.d < best.near.d)) best = { l, near };
+      // Only beside a line, not past its ends: there the other wall or the flight's ramp decides
+      // (past an end the side from the last segment's normal may be the wrong one).
+      const beside = near.fromStart > 0.01 && near.fromEnd > 0.01;
+      if (beside && near.d <= l.band && weightOf(l, near) > 0 && (!best || near.d < best.near.d)) best = { l, near };
     }
     if (!best) return h;
     const { l, near } = best;
     // Which side of the line the point is on: the side's level is read `read` out on it.
     const side = (x - near.foot.x) * near.n.x + (z - near.foot.z) * near.n.z >= 0 ? 1 : -1;
     const level = terrainHeightAt(g, near.foot.x + near.n.x * side * l.read, near.foot.z + near.n.z * side * l.read);
-    return h + (level - h) * smooth(near.fromEnd / FADE);
+    return h + (level - h) * weightOf(l, near);
   });
   return shapeGrid({ ...fine, heights }, [], breakRamps(g, flights));
 };
