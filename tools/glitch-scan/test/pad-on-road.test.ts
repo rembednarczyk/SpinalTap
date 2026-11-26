@@ -8,7 +8,7 @@ import { SHAPED_TERRAIN } from "../../../packages/sim/src/content/lublin/terrain
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import type { Line } from "../../osm-import/src/features.ts";
 import { parseExtract } from "../../osm-import/src/osm.ts";
-import { MOST, isStreet, padOnRoadFindings } from "./pad-on-road";
+import { MOST, MOST_REGISTERED, isGroundSteps, isStreet, padOnRoadFindings } from "./pad-on-road";
 
 /** A flat 40 × 40 m chunk at y 0 on a 4 m grid. */
 const flat = (): { bounds: { minX: number; maxX: number; minZ: number; maxZ: number }; terrain: TerrainGrid } => ({
@@ -32,6 +32,20 @@ describe("pad-on-road (T-209)", () => {
     expect(isStreet({ highway: "steps" })).toBe(false);
     expect(isStreet({ highway: "footway", bridge: "yes" })).toBe(false);
     expect(isStreet({ highway: "footway", footway: "sidewalk" })).toBe(true);
+  });
+
+  it("takes a band of changes with its own tolerance and bound, and steps at ground level (way-axis-shift-by-pad)", () => {
+    // A pad 0.25 m up under the street: over the registered tolerance, under pad-on-road's.
+    const low = { name: "pad T-1", pads: [{ rect: { minX: 4, maxX: 36, minZ: 8, maxZ: 32 }, y: 0.25, blend: 2 }], ramps: [] };
+    expect(padOnRoadFindings([low], [flat()], [street])).toEqual([]);
+    expect(padOnRoadFindings([low], [flat()], [street], MOST_REGISTERED, MOST)).toHaveLength(1);
+    // 2 m up is pad-on-road's, so the band leaves it out.
+    const high = { ...low, pads: [{ ...low.pads[0]!, y: 2 }] };
+    expect(padOnRoadFindings([high], [flat()], [street], MOST_REGISTERED, MOST)).toEqual([]);
+    expect(isGroundSteps({ highway: "steps" })).toBe(true);
+    expect(isGroundSteps({ highway: "steps", bridge: "yes" })).toBe(false);
+    expect(isGroundSteps({ highway: "steps", layer: "-1" })).toBe(false);
+    expect(isGroundSteps({ highway: "footway" })).toBe(false);
   });
 
   it("keeps Świętoduska, its sidewalk and its parking lane on the NMT by Alchemia's T1 and T2 (ADR-0042)", () => {
