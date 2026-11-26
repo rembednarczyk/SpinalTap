@@ -54,13 +54,13 @@ const chmOf = (at: (p: Pt) => number): Chm => {
 };
 
 /** The orthophoto's cover of the chunk, crown where `crown` says. */
-const coverOf = (crown: (p: Pt) => boolean): Cover => {
+const coverOf = (crown: (p: Pt) => boolean, ground: number = COVER.green): Cover => {
   const c = emptyCover("test", RECT, {} as Thresholds);
   const h = c.header;
   for (let row = 0; row < h.height; row++)
     for (let col = 0; col < h.width; col++) {
       const p = { x: h.x0 + (col + 0.5) * h.step, z: h.z1 - (row + 0.5) * h.step };
-      c.cls[row * h.width + col] = crown(p) ? COVER.canopy : COVER.green;
+      c.cls[row * h.width + col] = crown(p) ? COVER.canopy : ground;
     }
   return c;
 };
@@ -88,6 +88,23 @@ describe("trees of the crowns (G-797)", () => {
     // A district without its extracts (no surface model, no cover) stands none.
     expect(crownTrees([RECT], new Site([chunk()]), [everywhere], [], []).trees).toEqual([]);
     expect(crownTrees([RECT], new Site([chunk()]), [], [chm], []).trees).toEqual([]);
+  });
+
+  it("takes no tall crown off its height alone where the orthophoto shows paving by a building: a roof or an eave (T-354 review)", () => {
+    // 12 m over paving 4 m off the houses' wall (z = 50): a flat roof past the OSM outline, no tree.
+    const roof = chmOf(highest(crown({ x: 70, z: 46 }, 12, 3)));
+    expect(run(roof, coverOf(() => false, COVER.paving)).trees).toEqual([]);
+    // The same over a lawn is a crown the leaf-off flight missed, and so is one over paving 10 m off any building.
+    expect(run(roof, coverOf(() => false)).trees).toHaveLength(1);
+    expect(run(chmOf(highest(crown({ x: 20, z: 12 }, 12, 3))), coverOf(() => false, COVER.paving)).trees).toHaveLength(1);
+  });
+
+  it("takes no tall crown off its height alone within a metre of a LoD1 building OSM draws short of (T-354 review)", () => {
+    const roof = chmOf(highest(crown({ x: 20, z: 12 }, 12, 3)));
+    const box = { minX: 10, maxX: 30, minZ: 13, maxZ: 22 };
+    const lod1: Structure[] = [{ id: "lod1", kind: "building", ring: [{ x: 10, z: 13 }, { x: 30, z: 13 }, { x: 30, z: 22 }, { x: 10, z: 22 }], holes: [], box }];
+    expect(crownTrees([RECT], new Site([chunk()]), [coverOf(() => false)], [roof], [], [], lod1).trees).toEqual([]);
+    expect(crownTrees([RECT], new Site([chunk()]), [coverOf(() => false)], [roof], [], [], []).trees).toHaveLength(1);
   });
 
   it("leaves a crown with a tree of the game under it, and one lower than a tree (a hedge, a car)", () => {

@@ -94,6 +94,8 @@ export interface CrownContext {
   readonly structures: StructureIndex;
   readonly covers: readonly Cover[];
   readonly chms: readonly Chm[];
+  /** GUGiK's LoD1 outlines: a roof's edge OSM draws short of (the T-354 review's block corner at Czwartek, 30 m). */
+  readonly lod1?: StructureIndex;
 }
 
 export interface CrownGrid {
@@ -131,6 +133,24 @@ const QUARTERS = [
 export const TALL_CROWN = 8;
 const tallAllRound = (chms: readonly Chm[], p: Pt): boolean => QUARTERS.every(([dx, dz]) => chmOf(chms, { x: p.x + dx, z: p.z + dz }) >= TALL_CROWN);
 
+/**
+ * How near a building of the map (m) a cell taken by its height alone must not show paving: there
+ * the surface model's height is a roof or an eave past the OSM outline, not a crown (the curator's
+ * review of T-354: ten of the rule's trees stood on pavements and yards under flat roofs, eaves
+ * and a block's corner 30 m up, at Kapucyńska, Lubartowska, Podwale and Czwartek).
+ */
+export const ROOF_PAVING_REACH = 5;
+/** How near a LoD1 outline (m) a cell taken by its height alone is its roof's edge. */
+export const LOD1_EDGE = 1;
+const AROUND = [[0, 0], [LOD1_EDGE, 0], [-LOD1_EDGE, 0], [0, LOD1_EDGE], [0, -LOD1_EDGE]] as const;
+/**
+ * Is the cell at p, taken by its height alone, rather a roof: paving on the orthophoto at most of
+ * its quarters with a building of the map near, or within `LOD1_EDGE` of a LoD1 building.
+ */
+const roofLike = (ctx: CrownContext, cover: Cover, p: Pt): boolean =>
+  (QUARTERS.filter(([dx, dz]) => coverAt(cover, p.x + dx, p.z + dz) === COVER.paving).length >= 2 && ctx.site.buildingNear(p, ROOF_PAVING_REACH)) ||
+  AROUND.some(([dx, dz]) => (ctx.lod1?.at({ x: p.x + dx, z: p.z + dz }) ?? null) !== null);
+
 /** The height over the ground at p (m), NaN without data. */
 export const chmOf = (chms: readonly Chm[], p: Pt): number => {
   const q = worldToPuwg(p);
@@ -156,7 +176,7 @@ export const crownGrid = (rect: Rect, ctx: CrownContext): CrownGrid => {
     const cover = coverFor(ctx.covers, p);
     // Without the orthophoto's cover no crown: a district needs both extracts (G-797).
     if (!cover) continue;
-    if (QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length < 2 && !tallAllRound(ctx.chms, p)) continue;
+    if (QUARTERS.filter(([dx, dz]) => isCrown(cover, p.x + dx, p.z + dz)).length < 2 && !(tallAllRound(ctx.chms, p) && !roofLike(ctx, cover, p))) continue;
     g.h[i] = h;
     if (trunkGround(ctx.site, ctx.keep, p)) g.stand[i] = 1;
   }

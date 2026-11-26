@@ -4,6 +4,7 @@ krakowskie-0-0 -50,-250
 krakowskie-0-0 -50,-240
 krakowskie-0-1 -80,50
 krakowskie-0-1 -10,100
+krakowskie-1-0 70,-270
 krakowskie-1-0 20,-100
 krakowskie-1-0 70,-90
 krakowskie-1-0 80,-90
