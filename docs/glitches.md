@@ -2206,6 +2206,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
 - Status: zgłoszone (26.11, przegląd kuratora G-972)
 - Pakiet właściciela: packages/engine (renderer/mapcity)
+- Naprawa (26.11, gałąź fix/g975-wierzch): kawałek muru oporowego trzymający uskok leży od najniższej z dolnej strony na końcach i w środku, bez pochylenia (rise 0, jak levelTop fundamentów fary), z wierzchem poziomym na parapecie 0,5 m nad najwyższą górną stroną; rysunek i bryła kolizji mają ten sam poziomy wierzch. Test: barriers.test.ts (G-975), w tym wierzch co najmniej 0,45 m nad górną stroną na obu końcach i w środku każdego kawałka
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
