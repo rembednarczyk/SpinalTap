@@ -17,7 +17,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deserialize } from "node:v8";
@@ -55,32 +55,53 @@ const inputKey = (): string => {
 
 const memory = new Map<string, Buffer>();
 
+/** The cache file of `MAKE[name](arg)` under the current key, and the id its bytes keep in this process. */
+const fileOf = (name: keyof typeof MAKE, arg: string): { id: string; file: string } => {
+  const id = arg === "" ? name : `${name}.${createHash("sha256").update(arg).digest("hex").slice(0, 16)}`;
+  return { id, file: join(DIR, `${name}-${inputKey()}${id.slice(name.length)}.bin`) };
+};
+
+/** Computes `MAKE[name](arg)` in `city-make.ts` into its cache file and returns its bytes. */
+const make = (name: keyof typeof MAKE, arg: string, file: string): Buffer => {
+  mkdirSync(DIR, { recursive: true });
+  // Parallel workers may compute the same key: each writes its own file and renames it over.
+  const tmp = `${file}.${process.pid}-${threadId}.tmp`;
+  const env = { ...process.env };
+  delete env.NODE_V8_COVERAGE;
+  execFileSync(process.execPath, [fileURLToPath(new URL("./city-make.ts", import.meta.url)), name, tmp, arg], { env, stdio: ["ignore", "ignore", "pipe"] });
+  const bytes = readFileSync(tmp);
+  renameSync(tmp, file);
+  // The files of a name under an older key go, with their leftover temporaries.
+  for (const old of readdirSync(DIR)) if (old.startsWith(`${name}-`) && !old.startsWith(`${name}-${inputKey()}.`)) rmSync(join(DIR, old), { force: true });
+  return bytes;
+};
+
 /**
  * The serialised result of `MAKE[name](arg)`: from this process, from the disk, or computed by
  * `city-make.ts` and stored. Every `arg` of the current key keeps a file of its own.
  */
 const cached = <T>(name: keyof typeof MAKE, arg = ""): T => {
-  const id = arg === "" ? name : `${name}.${createHash("sha256").update(arg).digest("hex").slice(0, 16)}`;
+  const { id, file } = fileOf(name, arg);
   let bytes = memory.get(id);
   if (!bytes) {
-    const file = join(DIR, `${name}-${inputKey()}${id.slice(name.length)}.bin`);
     try {
       bytes = readFileSync(file);
     } catch {
-      mkdirSync(DIR, { recursive: true });
-      // Parallel workers may compute the same key: each writes its own file and renames it over.
-      const tmp = `${file}.${process.pid}-${threadId}.tmp`;
-      const env = { ...process.env };
-      delete env.NODE_V8_COVERAGE;
-      execFileSync(process.execPath, [fileURLToPath(new URL("./city-make.ts", import.meta.url)), name, tmp, arg], { env, stdio: ["ignore", "ignore", "pipe"] });
-      bytes = readFileSync(tmp);
-      renameSync(tmp, file);
-      // The files of a name under an older key go, with their leftover temporaries.
-      for (const old of readdirSync(DIR)) if (old.startsWith(`${name}-`) && !old.startsWith(`${name}-${inputKey()}.`)) rmSync(join(DIR, old), { force: true });
+      bytes = make(name, arg, file);
     }
     memory.set(id, bytes);
   }
   return deserialize(bytes) as T;
+};
+
+/**
+ * The whole city's cache file made before the tests (`tools/city-cache/src/warm-city.ts`, Vitest's
+ * `globalSetup`; the user's decision of 26.11): cold, the first test of a shard that asked for the
+ * city paid its 9-19 s to the time gate (#1062, #1071), not its own work.
+ */
+export const warmCity = (): void => {
+  const { file } = fileOf("generate", "");
+  if (!existsSync(file)) make("generate", "", file);
 };
 
 /** The committed tables of every district, as `pnpm osm:props` reads them. */
