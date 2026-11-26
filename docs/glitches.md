@@ -2216,6 +2216,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
 
+### G-975 Wierzch muru oporowego pochylony rysunkiem o spadek stopy, a kolizja płaska: parapet 0,21–0,35 m nad tarasem Placu Katedralnego
+- Ważność: S4 · Zasięg: 4 końce kawałków muru tarasu Placu Katedralnego (x 558,2; 565,3; 597,9; 601,3)
+- Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
+- Status: zgłoszone (26.11, przegląd kuratora G-972)
+- Pakiet właściciela: packages/engine (renderer/mapcity)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
