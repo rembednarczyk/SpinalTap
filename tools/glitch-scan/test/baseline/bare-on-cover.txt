@@ -124,6 +124,7 @@ krakowskie-2-1 450,0
 krakowskie-2-1 450,10
 krakowskie-2-1 240,90
 krakowskie-2-1 250,90
+krakowskie-2-1 260,90
 krakowskie-2-1 240,100
 krakowskie-2-1 250,100
 krakowskie-2-1 260,110
@@ -297,6 +298,7 @@ podzamcze-1-2 810,760
 podzamcze-1-2 820,760
 podzamcze-1-2 830,760
 podzamcze-1-2 850,760
+podzamcze-1-2 740,770
 podzamcze-1-2 760,770
 podzamcze-1-2 780,770
 podzamcze-1-2 800,770

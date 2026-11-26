@@ -10,7 +10,7 @@ import { type Pt } from "./geometry.ts";
  * petrol station's forecourt, a lay-by's setts and a car park's paving lie level with the asphalt
  * (the curator's review, U2). A run that meets a mapped square or pedestrian area (`place`, the
  * map's own `square` and `cobble` pieces) stays a square's: a deptak keeps one paving from front to
- * front (U1, Krakowskie Przedmieście). A run under `MIN_WALK_CELLS` stays a square's too. Not in the districts whose sidewalks are sett and granite
+ * front (U1, Krakowskie Przedmieście). Not in the districts whose sidewalks are sett and granite
  * (`SETT_DISTRICTS`: the Old Town).
  *
  * Pattern: connected-component labelling by flood fill (4-neighbour) from seeds, on the rule's raster.
@@ -32,13 +32,6 @@ export const streetRings = (
   const ids = new Set(lines.filter((l) => WALK_STREETS.has(l.tags.highway ?? "")).map((l) => l.id));
   return bands.filter((b) => b.carriageway && ids.has(b.source)).map((b) => b.ring);
 };
-
-/**
- * The fewest cells a run is a sidewalk of (0.25 m² each, 2 m²): smaller, a wedge left in a junction's
- * corner between the carriageways' pieces, whose traced edges would draw the kerb in a zigzag
- * (`kerb-jag`); it stays a square's, with no kerb.
- */
-export const MIN_WALK_CELLS = 8;
 
 const DI = [-1, 1, 0, 0, -1, -1, 1, 1] as const;
 const DJ = [0, 0, -1, 1, -1, 1, -1, 1] as const;
@@ -74,6 +67,6 @@ export const kerbWalks = (cells: Cells, street: Uint8Array, place: Uint8Array): 
         queue[n++] = m;
       }
     }
-    if (!touchesPlace && n >= MIN_WALK_CELLS) for (let q = 0; q < n; q++) label[queue[q]!] = LABEL.walk;
+    if (!touchesPlace) for (let q = 0; q < n; q++) label[queue[q]!] = LABEL.walk;
   }
 };
