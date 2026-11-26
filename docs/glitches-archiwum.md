@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
+- Status: naprawione (26.11, PR #1049 scalony); wcześniej: zgłoszone (24.11, przegląd kuratora K5a)
+- Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
+- Dowód: NMPT ±0,1 m nad terenem po obu stronach (−5,0…−5,3), bez uskoku NMT; po K5a (T-350) cały mur ma jedną wysokość 1,4 m od osi
+- Ważność: S4 · Zasięg: ok. 7 m muru
+- Poprawka: odcinek jako niski krawężnik (ok. 0,3 m) albo poza importem po potwierdzeniu zdjęciem od Królewskiej
+- Pakiet właściciela: tools/osm-import
+- Przegląd kuratora PR #1049 (26.11) runda 1: NIE PRZYJĘTE. Próg x > 604,9 bez górnej granicy obniżał do 0,3 m cały mur w232362979 na x 605–643 (15 kawałków), także x 627–643, gdzie NMT ma uskok 0,45–1,38 m, a NMPT parapet 0,4–0,8 m. Poprawka: krawężnik tylko do x 611,3, reszta 1,4 m; test na x > 612.
+- Przegląd kuratora PR #1049 runda 2 (26.11, 5db2623b): PRZYJĘTE. Krawężnik 0,3 m tylko na x 605,0–611,25 (5 kawałków, do (611,5; −204,8)), x 613–641 mur 1,4 m jak na main (9 kawałków), linia nieciągłości bez zmian.
+
 ### G-976 Dziura w murze oporowym tarasu Placu Katedralnego przy zaparkowanych autach
 - Ważność: S3 · Zasięg: mur w590597335 przy x 558–561 i 573–576 na main (6 kolejnych miejsc po G-971)
 - Opis: Mur oporowy ustępuje zaparkowanemu autu (barrierBlocked: byParkedCar, 0,35 m od karoserii plus pół grubości muru), a stanowiska parkingu na tarasie dochodzą do linii muru. Na main nie ma muru przy hatchbacku na (559,5; −197,69) ani przy vanie na (574,5; −196,26): krawędź tarasu stoi otwarta nad uskokiem ok. 2 m. Po wyrównaniu terenu przy licu (G-971) stanowiska przy murze przestały odpadać na spadku (LEVEL_DROP) i dziur przybyło do 4 (x 561–566, 569–580). Poprawka: auto trzyma 0,6 m od linii nieciągłości (pół grubości muru, odstęp bariery od auta, zapas), więc mur stoi na całej długości; test breaklines.test.ts sprawdza mur co 0,5 m.
