@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
+- Status: naprawione (26.11, gałąź fix/g972-parapet); wcześniej: zgłoszone 25.11 (przegląd kuratora K5b runda 2, T-351)
+- Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
+- Dowód: wierzch kawałka poziomy na −3,66; od strony schodów parapet maleje z ok. 1,1 m do −0,2 m, na x 587,4…587,8 wierzch pod stopniem; ok. 0,5 m krawędzi biegu bez osłony nad spadkiem ok. 1,3 m na chodnik (sonda kuratora 25.11). Przed zmianą muru przy biegu nie było wcale
+- Ważność: S4 · Zasięg: jeden kawałek muru, ok. 0,5 m
+- Poprawka: dla kawałków przy linii nieciągłości wierzch = maksimum poziomu wyższej strony z końców i środka kawałka + `RETAINED_PARAPET` (`barriers.ts`); kontrola `wall-parapet-under-flight` (kawałek przy linii nieciągłości, którego wierzch schodzi pod poziom biegu po stronie schodów), baza 1
+- Pakiet właściciela: packages/sim (content/lublin)
+- Naprawa (26.11): wierzch kawałka muru przy linii nieciągłości to najwyższy poziom wyższej strony z obu końców i środka + `RETAINED_PARAPET` (`barriers.ts`), więc przy biegu wznoszącym się wzdłuż muru parapet stoi nad stopniami także przy górnym końcu kawałka. Test w `barriers.test.ts` (bieg 0,45 m na metr) pada bez poprawki.
+
 ### G-974 W grupie Hebi sylwetka członka rysuje się podwójnie, a kurtki rzucają kolce do innych postaci
 - Status: naprawione (26.11, gałąź fix/kurtka-kolce); wcześniej: zgłoszone 26.11 (uwagi użytkownika z 25.11: kurtka „dalej się buguje, szczególnie w grupach gangowych”, oraz „dziwne połączenia między postaciami jak szpikulce”, czasem w cieniu)
 - Gdzie: grupy terytoriów (`territory-groups.ts`), sprawdzone pod Grodzką (650; 70), w dzień, z modelami postaci; dotyczy co najmniej jasnowłosego wariantu `ganger.vrm`

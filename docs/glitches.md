@@ -11,14 +11,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
 - Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
 - Pakiet właściciela: tools/osm-import
-### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
-- Status: zgłoszone (25.11, przegląd kuratora K5b runda 2, T-351)
-- Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
-- Dowód: wierzch kawałka poziomy na −3,66; od strony schodów parapet maleje z ok. 1,1 m do −0,2 m, na x 587,4…587,8 wierzch pod stopniem; ok. 0,5 m krawędzi biegu bez osłony nad spadkiem ok. 1,3 m na chodnik (sonda kuratora 25.11). Przed zmianą muru przy biegu nie było wcale
-- Ważność: S4 · Zasięg: jeden kawałek muru, ok. 0,5 m
-- Poprawka: dla kawałków przy linii nieciągłości wierzch = maksimum poziomu wyższej strony z końców i środka kawałka + `RETAINED_PARAPET` (`barriers.ts`); kontrola `wall-parapet-under-flight` (kawałek przy linii nieciągłości, którego wierzch schodzi pod poziom biegu po stronie schodów), baza 1
-- Pakiet właściciela: packages/sim (content/lublin)
-
 ### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
 - Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
 - Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
@@ -2223,6 +2215,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Przegląd kuratora PR #816: dwie donice przy filarach arkad rysowane bez bryły, gracz przez nie przechodzi (zasada rysunek i bryła o tym samym kształcie). Donica przy x 397,22 stoi środkiem na filarze 2; drzwi NIGHT SILK i tak są za filarem, przęsło zwęża się z 2,10 do 1,88 m, wyjście z lokalu zostaje (sprawdzić test alchemia-front-rooms po zmianie).
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
+
+### G-975 Wierzch muru oporowego pochylony rysunkiem o spadek stopy, a kolizja płaska: parapet 0,21–0,35 m nad tarasem Placu Katedralnego
+- Ważność: S4 · Zasięg: 4 końce kawałków muru tarasu Placu Katedralnego (x 558,2; 565,3; 597,9; 601,3)
+- Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
+- Status: zgłoszone (26.11, przegląd kuratora G-972)
+- Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
