@@ -4,6 +4,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
+- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
+- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
+- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
+- Ważność: S3 (przegląd kuratora runda 2: nasyp przed licem widać z chodnika Królewskiej z ok. 8 m, przy x 593 klin ok. 2 m wysokości na ok. 1 m szerokości) · Zasięg: ok. 50 m muru, widoczne z Królewskiej
+- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
+- Pakiet właściciela: packages/sim (content/lublin)
+
 ### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
 - Status: zgłoszone (24.11, przegląd kuratora K5a)
 - Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
