@@ -69,6 +69,8 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: Street
     // A one-way street is drawn the way it is driven (`oneway=-1` turned round).
     const one = oneway(l.tags);
     const closed = closedToVehicles(l.tags);
+    // A one-way street's lanes from the map; untagged, one (OSM's convention for `oneway=yes`, ADR-0105).
+    const lanes = one ? Number.parseInt(l.tags.lanes ?? "", 10) : Number.NaN;
     const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
     for (const piece of clipLineToRect(line, rect)) {
       if (!keepPiece(piece, rect)) continue;
@@ -80,6 +82,7 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: Street
         line: simple.flatMap((p) => [p.x, p.z]),
         ...(half ? { half } : {}),
         ...(one ? { oneway: true as const } : {}),
+        ...(lanes >= 2 ? { lanes } : {}),
         ...(closed ? { noVehicles: true as const } : {}),
         ...(isCarFree(l.id) ? { carFree: true as const } : {}),
       });
