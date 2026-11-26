@@ -230,7 +230,10 @@ export const graphBands = <B extends Band>(
   // The sidewalks mapped on their own in the districts: read for the streets' widths, laid with theirs.
   // A plain footway along a street is its sidewalk too (map matching, `footwaysAlongStreets`), but not one beside a mapped place.
   const places = bands.filter((b) => !b.along && !b.carriageway && (b.surface === "square" || b.surface === "cobble") && inside(b.box)).map((b) => b.ring);
-  const along = footwaysAlongStreets(lines, places);
+  // The map's asphalt areas by the kerbs (car parks along the street, a carriageway's own area): a footway behind one is the sidewalk still.
+  const isLine = new Set(lines.map((l) => l.id));
+  const bays = bands.filter((b) => !isLine.has(b.source) && !b.carriageway && !b.bridge && b.surface === "road" && inside(b.box)).map((b) => b.ring);
+  const along = footwaysAlongStreets(lines, places, bays);
   const mapped = bands.filter((b) => (b.surface === "sidewalk" || b.surface === "footway") && !ways.has(b.source) && (tags.get(b.source)?.footway === "sidewalk" || along.has(b.source)) && inside(b.box));
   const lineOf = new Map(lines.map((l) => [l.id, l.line]));
   const mappedWays: Mapped[] = mapped.flatMap((b) => {
@@ -248,6 +251,11 @@ export const graphBands = <B extends Band>(
   const vergeAt = (axis: readonly Pt[], off: number, side: 1 | -1): boolean => {
     const ps = probes(offsetLine(axis, side * off));
     return ps.filter(green).length * 2 > ps.length;
+  };
+  // Whether the orthophoto shows paving along most of a line `off` m out: the walk itself, not a verge.
+  const pavedAt = (axis: readonly Pt[], off: number, side: 1 | -1): boolean => {
+    const ps = probes(offsetLine(axis, side * off));
+    return ps.filter((p) => cover(p) === COVER.paving).length * 2 > ps.length;
   };
   const vergeOf = (axis: readonly Pt[], kerb: number, side: 1 | -1): number => {
     const ws: number[] = [];
@@ -291,8 +299,11 @@ export const graphBands = <B extends Band>(
     if (m === null && medianAt(b.source, axis, half, side)) return { kerb: half, verge: 0, walk: 0 };
     if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
     if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
-    // A gap wider than `GAP`, or a green one, is a verge (ADR-0080: past `KERB_REACH`, no lane's asphalt).
-    if (m.near > GAP || vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
+    // A green gap is a verge; a wider one than `GAP` too (ADR-0080: past `KERB_REACH`, no lane's
+    // asphalt), but for one the orthophoto shows paved: the sidewalk reaches the kerb across it, or its
+    // paving was laid as a square's a step below the sidewalk's (`sidewalk-step`, Radziwiłłowska).
+    if (vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
+    if (m.near > GAP) return pavedAt(axis, half + m.near / 2, side) ? { kerb: half, verge: 0, walk: m.far } : { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
     return estimated(b.source, side) ? { kerb: half + m.near, verge: 0, walk: Math.max(WALK_MIN, m.far - m.near) } : { kerb: half, verge: 0, walk: m.far };
   };
   if (pieces.length > 0) console.log(report.toString());

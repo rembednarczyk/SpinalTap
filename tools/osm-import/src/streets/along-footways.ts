@@ -33,6 +33,8 @@ const BEYOND = 3;
 const INSIDE = 1;
 /** |cos| of the angle between a footway and the street it runs along. */
 const PARALLEL = 0.9;
+/** How much farther a footway may lie when a mapped bay (a car park along the kerb, an asphalt area) lies between it and the carriageway (m): a perpendicular bay 5 m deep and its kerb. */
+const BAY = 6;
 /** The share of a footway's samples by a street. */
 export const SHARE = 0.6;
 /** The shortest footway laid as a sidewalk (m): a link of a few metres to a crossing is no sidewalk. */
@@ -68,9 +70,15 @@ const byPlace = (p: Pt, places: readonly { readonly ring: readonly Pt[]; readonl
       (pointInRing(p, ring) || ring.some((a, i) => segmentDistance(p.x, p.z, a.x, a.z, ring[(i + 1) % ring.length]!.x, ring[(i + 1) % ring.length]!.z) <= PLACE_NEAR)),
   );
 
-/** The ids of the plain footways laid as a street's sidewalk, none beside a mapped place (`placeRings`). */
-export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = []): Set<string> => {
+/**
+ * The ids of the plain footways laid as a street's sidewalk, none beside a mapped place
+ * (`placeRings`). A footway behind a mapped bay (`bayRings`: `parking=street_side` and the like,
+ * laid as asphalt by the kerb) may lie `BAY` m farther out: the sidewalk runs behind the parked cars.
+ */
+export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = [], bayRings: readonly (readonly Pt[])[] = []): Set<string> => {
   const places = placeRings.map((ring) => ({ ring, box: ringBounds(ring) }));
+  const bays = bayRings.map((ring) => ({ ring, box: ringBounds(ring) }));
+  const inBay = (p: Pt) => bays.some(({ ring, box }) => p.x >= box.minX && p.x <= box.maxX && p.z >= box.minZ && p.z <= box.maxZ && pointInRing(p, ring));
   const CELL = 16;
   const grid = new Map<string, (Sample & { readonly half: number })[]>();
   for (const l of lines) {
@@ -89,7 +97,12 @@ export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonl
           if (Math.abs(q.tx * p.tx + q.tz * p.tz) < PARALLEL) continue;
           const along = (p.x - q.x) * q.tx + (p.z - q.z) * q.tz;
           const across = Math.abs((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
-          if (Math.abs(along) <= STEP && across >= q.half - INSIDE && across <= q.half + BEYOND) return true;
+          if (Math.abs(along) > STEP || across < q.half - INSIDE) continue;
+          if (across <= q.half + BEYOND) return true;
+          // Behind a bay: the point halfway between the kerb and the footway lies in it.
+          const side = Math.sign((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
+          const mid = (q.half + across) / 2;
+          if (across <= q.half + BEYOND + BAY && inBay({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) return true;
         }
     return false;
   };
