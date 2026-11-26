@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
+- Status: naprawione (26.11, PR #1049 scalony); wcześniej: zgłoszone (24.11, przegląd kuratora K5a)
+- Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
+- Dowód: NMPT ±0,1 m nad terenem po obu stronach (−5,0…−5,3), bez uskoku NMT; po K5a (T-350) cały mur ma jedną wysokość 1,4 m od osi
+- Ważność: S4 · Zasięg: ok. 7 m muru
+- Poprawka: odcinek jako niski krawężnik (ok. 0,3 m) albo poza importem po potwierdzeniu zdjęciem od Królewskiej
+- Pakiet właściciela: tools/osm-import
+
 ### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
 - Status: naprawione (26.11, PR #1046); wcześniej: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
 - Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
