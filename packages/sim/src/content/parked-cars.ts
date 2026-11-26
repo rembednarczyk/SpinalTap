@@ -1,6 +1,6 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor, pointInPairRingEvenOdd } from "@seki/core";
 import type { StaticProp } from "./builders";
-import { aisleBays } from "./aisle-bays";
+import { aisleBays, moduleAisles } from "./aisle-bays";
 import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
@@ -402,7 +402,10 @@ const squareCars = (): ParkedCar[] => {
  * Cars in the bays along the aisles of the surface car parks (T-352, `aisle-bays.ts`): as full as
  * Plac Zamkowy's bays (`SQUARE_TAKEN`), each whole on the park's paving where `fits` lets it.
  */
-const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0).map((p) => [p.id, p])).values()];
+const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface").map((p) => [p.id, p])).values()]
+  // The map's aisles, else the modules the park's outline holds (`moduleAisles`, the backlog's item of 25.11, part 2).
+  .map((p) => ({ id: p.id, outline: p.outline, aisles: (p.aisles?.length ?? 0) > 0 ? (p.aisles ?? []) : moduleAisles(p.outline) }))
+  .filter((p) => p.aisles.length > 0);
 /**
  * The models a car park's bay takes: no delivery truck, 5.8 m long against a 5 m bay. It drew the
  * street's model and stood empty when that was a truck: 97 of the 645 bays of the city's 19 car
@@ -412,7 +415,7 @@ const BAY_MODELS: readonly VehicleModel[] = PARKED_MODELS.filter((m) => m !== "d
 const bayModelAt = (x: number, z: number): VehicleModel => BAY_MODELS[hash(x, z, 3) % BAY_MODELS.length]!;
 
 const aisleCars = (): ParkedCar[] =>
-  aisleBays(SURFACE_PARKS.map((p) => ({ id: p.id, outline: p.outline, aisles: p.aisles ?? [] }))).flatMap((b) => {
+  aisleBays(SURFACE_PARKS).flatMap((b) => {
     if (hash(b.x, b.z, 6) / 0x100000000 >= SQUARE_TAKEN) return [];
     const model = bayModelAt(b.x, b.z);
     if (!fits(b.x, b.z, b.yaw, model)) return [];

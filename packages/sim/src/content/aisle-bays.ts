@@ -115,3 +115,52 @@ export const aisleBays = (parks: readonly AislePark[]): AisleBay[] =>
       return out;
     });
   });
+
+/** The width of a double-loaded module (m): a row of 5 m bays either side of a 6 m aisle. */
+export const MODULE = 2 * BAY_OFF + 5;
+/** The least room a park leaves round its modules (m): a module needs 17 m across (the backlog's item of 25.11). */
+const MODULE_SLACK = 1;
+
+/**
+ * Aisles for a surface car park the map draws none in (the backlog's item of 25.11, part 2): as
+ * many double-loaded modules as its outline's minimum-area rectangle holds across (rotating
+ * calipers over the outline's edge directions), their aisles along its long side, the modules
+ * centred across it. Pattern: the double-loaded parking module of perpendicular bays (Neufert;
+ * bays 2.5 × 5 m, a 6 m aisle as in the Polish road regulations). Where we differ: the aisles are
+ * not drawn, only laid out; a bay whose middle falls outside an outline that is no rectangle is
+ * dropped by `aisleBays`, the rest by the parked cars' `fits`. None for a park under 17 m across.
+ */
+export const moduleAisles = (outline: readonly number[]): number[][] => {
+  const pts = pairs(outline);
+  let best: { area: number; c: number; s: number; u: [number, number]; v: [number, number] } | null = null;
+  for (let i = 0; i < pts.length; i++) {
+    const [a, b] = [pts[i]!, pts[(i + 1) % pts.length]!];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len < 1e-6) continue;
+    const [c, s] = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+    const us = pts.map((p) => p[0] * c + p[1] * s);
+    const vs = pts.map((p) => -p[0] * s + p[1] * c);
+    let u: [number, number] = [Math.min(...us), Math.max(...us)];
+    let v: [number, number] = [Math.min(...vs), Math.max(...vs)];
+    const area = (u[1] - u[0]) * (v[1] - v[0]);
+    if (best && area >= best.area) continue;
+    // The aisles run along the long side: u is that side's direction.
+    if (u[1] - u[0] >= v[1] - v[0]) best = { area, c, s, u, v };
+    else {
+      [u, v] = [v, [-u[1], -u[0]]];
+      best = { area, c: -s, s: c, u, v };
+    }
+  }
+  if (!best) return [];
+  const across = best.v[1] - best.v[0];
+  const k = Math.floor((across - MODULE_SLACK) / MODULE);
+  if (k < 1) return [];
+  const start = best.v[0] + (across - k * MODULE) / 2 + MODULE / 2;
+  const { c, s } = best;
+  // Back from (u, v) along the long side and across it to world (x, z).
+  const world = (u: number, v: number): [number, number] => [Math.round((u * c - v * s) * 100) / 100, Math.round((u * s + v * c) * 100) / 100];
+  return Array.from({ length: k }, (_, j) => {
+    const v = start + j * MODULE;
+    return [...world(best.u[0], v), ...world(best.u[1], v)];
+  });
+};
