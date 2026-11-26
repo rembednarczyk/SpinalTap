@@ -95,3 +95,12 @@ Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo za
   - `crowd` (miejsca tłumu);
   - `flee-wall` (trzy przebiegi ucieczki za róg).
 - **Grunt:** `grass-under-paving` (Plac Litewski, 3 Maja przy klinice).
+
+### Runda 5: deptak poza grafem, rampa P−1
+
+- **Deptak (T-324) nie jest ulicą grafu.** Graf obejmuje jezdnie, a deptak jest miejscem dla pieszych z własnymi regułami: proste końce bruku, stoiska, strefa trolejbusu. Zostaje w starym modelu, a chodniki grafu zatrzymują się na jego bruku. Dwie reguły z rundy 4 dla ulic wyłączonych z ruchu usunięte jako zbędne. Na próbnych tablicach przechodzą już `alchemia-deptak`, `deptak-night` i `traffic-ramp`.
+- **Wjazd na rampę P−1** sięga w jezdnię Bajkowskiego (z −14,5). Dotąd kończył się na dawnej krawędzi i przy krawężniku z BDOT10k zostawał pas chodnika ze słupkami w poprzek wylotu. Test rampy znajduje pasy Bajkowskiego po kolejności, nie po współrzędnych.
+- **Zostaje na deptaku:**
+  - `deptak-ends`: linie końców bruku leżą w stałej odległości od węzłów (`trim` 3,7 m od Bajkowskiego, 1,8 m od Olejnej), czyli na połowach jezdni dawnej geometrii. Jezdnie z BDOT10k sięgają 0,3–1 m dalej, więc `trim` trzeba liczyć z połówki jezdni ulicy poprzecznej przy węźle;
+  - zatoka przy Bramie Krakowskiej 01 jest teraz placem (wypełnienie z ortofoto), a nie brukiem;
+  - pierścień Bajkowskiego (`traffic-deptak`).

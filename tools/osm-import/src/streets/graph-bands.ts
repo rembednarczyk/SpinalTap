@@ -265,7 +265,8 @@ export const graphBands = <B extends Band>(
   const inside = (box: Rect) => rects.some((r) => rectsOverlap(r, box));
   const region: Area = join(...rects.map((r) => areaOfRing([{ x: r.minX, z: r.minZ }, { x: r.maxX, z: r.minZ }, { x: r.maxX, z: r.maxZ }, { x: r.minX, z: r.maxZ }])));
   const tags = new Map(lines.map((l) => [l.id, l.tags]));
-  const streets = bands.filter((b) => b.carriageway && b.kerb && !b.bridge && !b.patch && STREETS.has(tags.get(b.source)?.highway ?? "") && inside(b.box));
+  // Not a street the game closes to cars (T-324's deptak): a place for walkers, laid as before with its square ends and stalls.
+  const streets = bands.filter((b) => b.carriageway && b.kerb && !b.bridge && !b.patch && !isCarFree(b.source) && STREETS.has(tags.get(b.source)?.highway ?? "") && inside(b.box));
   const ways = new Set(streets.map((b) => b.source));
   // The sidewalks mapped on their own in the districts: read for the streets' widths, laid with theirs.
   // A plain footway along a street is its sidewalk too (map matching, `footwaysAlongStreets`), but not one beside a mapped place.
@@ -311,8 +312,6 @@ export const graphBands = <B extends Band>(
     if (m === null && medianAt(b.source, axis, half, side)) return { kerb: half, verge: 0, walk: 0 };
     if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
     if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
-    // A street closed to cars is paved out to the mapped sidewalk, its bays too (T-324, Brama Krakowska 01).
-    if (isCarFree(b.source)) return { kerb: half + m.near, verge: 0, walk: Math.max(WALK_MIN, m.far - m.near) };
     // A green gap is a verge; a wider one than `GAP` too (ADR-0080: past `KERB_REACH`, no lane's
     // asphalt), but for one the orthophoto shows paved: the sidewalk reaches the kerb across it, or its
     // paving was laid as a square's a step below the sidewalk's (`sidewalk-step`, Radziwiłłowska).
@@ -329,7 +328,8 @@ export const graphBands = <B extends Band>(
   // The places the map draws as areas: squares and pedestrian areas, a carriageway's own area
   // (`area:highway`) and car parks (`areaSurface`). They keep their own ground: a street's sidewalk
   // stops at their edge (the curator's review of E2: Plac Łokietka cut into strips, a patch on the deptak).
-  const placesOf = bands.filter((b) => !lineOf.has(b.source) && !b.carriageway && !b.bridge && PLACES.has(b.surface) && inside(b.box)).map((b) => b.ring);
+  // So does a street closed to cars (T-324's deptak), laid as before.
+  const placesOf = bands.filter((b) => ((!lineOf.has(b.source) && !b.carriageway) || isCarFree(b.source)) && !b.bridge && PLACES.has(b.surface) && inside(b.box)).map((b) => b.ring);
   const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring), ...placesOf], join(...mapped.map((m) => areaOfRing(m.ring))));
   // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
   const replaced = new Set<Band>(mapped);
@@ -348,8 +348,7 @@ export const graphBands = <B extends Band>(
   for (const o of areas.own) {
     const b = pieces[o.edge]!;
     if (o.surface === "road") add(b, o.area, { graph: true });
-    // A street closed to cars is one paving kerb to kerb (T-324: the deptak's setts reach the pavement).
-    else add({ surface: isCarFree(b.source) ? b.surface : "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, o.area, {});
+    else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, o.area, {});
   }
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});
   // Not to a lawn or water: what lies between the street and the green is the cover's to lay (`bare-cover.ts`).
