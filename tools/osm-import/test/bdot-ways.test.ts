@@ -15,6 +15,11 @@ describe("the ways BDOT10k measures (ADR-0104 pkt 4)", () => {
     expect(ways.get("plain")!.width).toBe(6);
   });
 
+  it("reads the map's own width as mapped, not a correction's: the orthophoto's measure is no map width (Narutowicza)", () => {
+    const corrected = street("narutowicza", { "width:carriageway": "9.2" });
+    expect([...bdotWays([corrected], new Set(["krakowskie"]), new Map([["narutowicza", { highway: "residential" }]])).keys()]).toEqual(["narutowicza"]);
+  });
+
   it("measures no street the game closes to cars: the deptak keeps its setts out to its bays' kerb (T-324)", () => {
     expect(bdotWays([{ ...street("w216497220", {}), id: "w216497220" }], new Set(["krakowskie"])).size).toBe(0);
   });

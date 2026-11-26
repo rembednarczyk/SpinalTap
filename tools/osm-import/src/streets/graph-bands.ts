@@ -350,7 +350,8 @@ export const graphBands = <B extends Band>(
   };
   for (const o of areas.own) {
     const b = pieces[o.edge]!;
-    if (o.surface === "road") add(b, o.area, { graph: true });
+    // Not the old band's widenings (fitted lanes, bays): the graph's carriageway is the sources' width, and the lanes read that.
+    if (o.surface === "road") add(b, o.area, { graph: true, widen: undefined, widenLanes: undefined });
     else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, o.area, {});
   }
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});

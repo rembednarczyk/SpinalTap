@@ -340,7 +340,7 @@ const generateMap = (
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
   const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas(added)];
   // BDOT10k's carriageways measure the streets of the districts on the street graph (ADR-0104 pkt 4), over the orthophoto's.
-  const { lines: mapLines, offsets, sides, bdot } = withBdot(features.lines.map((l) => correctedLine(l)));
+  const { lines: mapLines, offsets, sides, bdot } = withBdot(features.lines.map((l) => correctedLine(l)), features.lines);
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));

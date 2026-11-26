@@ -26,7 +26,7 @@ export interface BdotWay {
 }
 
 /** The streets' ways in the districts on the street graph that a BDOT10k carriageway with a width runs along. */
-export const bdotWays = (lines: readonly Line[], districts = graphDistricts()): Map<string, BdotWay> => {
+export const bdotWays = (lines: readonly Line[], districts = graphDistricts(), osm: ReadonlyMap<string, Line["tags"]> = new Map()): Map<string, BdotWay> => {
   const out = new Map<string, BdotWay>();
   if (districts.size === 0) return out;
   const rects = ALL_CHUNKS.filter((c) => districts.has(c.district.slug) || districts.has(c.district.id)).map((c) => c.rect);
@@ -36,8 +36,10 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts()): 
   };
   for (const l of lines) {
     // The map's own width comes first (ADR-0104 pkt 4: OSM → BDOT10k → the orthophoto): Olejna's `width=3.5`, not BDOT10k's 5 m.
+    // The map's as mapped (`osm`), not as corrected: the orthophoto's measure is written as `width:carriageway` too (Narutowicza's 9.2 m).
+    const own = osm.get(l.id) ?? l.tags;
     // Nor a street the game closes to cars (T-324's deptak): off the street graph, laid as before, its setts out to the kerb of its bays.
-    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || isCarFree(l.id) || parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null) continue;
+    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || isCarFree(l.id) || parseLength(own.width ?? own["width:carriageway"]) !== null) continue;
     const m = bdotMatch(l.line);
     if (m) out.set(l.id, { width: m.width, offset: Math.round(m.offset * 10) / 10 });
   }
@@ -48,8 +50,11 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts()): 
  * The map's ways with BDOT10k's widths written on (`width:carriageway`), the measured offsets with
  * BDOT10k's over the orthophoto's, and each way's measured sides (both for a BDOT10k one).
  */
-export const withBdot = (mapLines: readonly Line[]): { lines: Line[]; offsets: Offsets; sides: (id: string) => readonly [boolean, boolean] | undefined; bdot: ReadonlyMap<string, BdotWay> } => {
-  const bdot = bdotWays(mapLines);
+export const withBdot = (
+  mapLines: readonly Line[],
+  osm: readonly Line[] = mapLines,
+): { lines: Line[]; offsets: Offsets; sides: (id: string) => readonly [boolean, boolean] | undefined; bdot: ReadonlyMap<string, BdotWay> } => {
+  const bdot = bdotWays(mapLines, graphDistricts(), new Map(osm.map((l) => [l.id, l.tags])));
   if (bdot.size === 0) return { lines: [...mapLines], offsets: ORTHO_OFFSETS, sides: orthoSides, bdot };
   const offsets = new Map(ORTHO_OFFSETS);
   for (const [id, b] of bdot) offsets.set(id, b.offset);

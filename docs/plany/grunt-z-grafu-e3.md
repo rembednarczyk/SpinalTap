@@ -145,3 +145,15 @@ Na próbnych tablicach przechodzą wszystkie testy deptaka i rampy (40 z 40): `d
   - zatoka autobusowa przy Narutowicza.
 
 **Parkowanie przy Peowiaków (w471191535), przyczyna:** na main jezdnia Peowiaków ma w kilku miejscach połowę poniżej 2,6 m, więc symulacja daje jej jeden pas ruchu. Z BDOT10k jezdnia ma równe 5,7 m (połowy 2,85 m) i reguła `lanesOf` stawia dwa pasy po ±1,6 m od osi. Prawy pas wchodzi w strefę zmapowanego pasa postojowego (`parking=street_side`), a auta muszą stać z dala od pasów ruchu, więc nie stoi żadne. W rzeczywistości to jeden pas ruchu z parkowaniem: OSM nie podaje `lanes` (jest `lane_markings=no`), a ulica jednokierunkowa bez tego tagu ma według konwencji OSM jeden pas. Do decyzji: liczba pasów z OSM (`lanes`, w domyśle konwencja OSM) zamiast z szerokości, albo szerokość jezdni pomniejszona o zmapowany pas postojowy.
+
+### Runda 9: poprawka reguły „OSM przed BDOT10k” i uczciwy stan listy
+
+- **Błąd z rundy 6:** reguła „szerokość z OSM przed BDOT10k” czytała tagi po poprawkach importu. Pomiar z ortofoto jest zapisany jako `width:carriageway`, więc ulice zmierzone na ortofoto (m.in. Narutowicza, Kołłątaja, 3 Maja, Lubartowska, Bajkowskiego) wyglądały na ulice z szerokością z OSM i BDOT10k je pomijał. Teraz reguła czyta tagi z OSM przed poprawkami. Do tego test.
+- **Kawałki jezdni grafu** nie dziedziczą poszerzeń starego pasma (`widen`, `widenLanes`). Jezdnia grafu ma szerokość ze źródeł, a pasy czytają tę szerokość.
+- **Skutek na próbnych tablicach:** przechodzi `traffic` G-090 (Narutowicza). Wracają porażki, które w rundzie 6 znikały tylko przez ten błąd:
+  - `flee-wall` (3 przebiegi);
+  - `traffic-bodies-shifted` (łuk Kołłątaja);
+  - `traffic-junction-drive` (3 Maja przy Żołnierzy Niepodległej);
+  - `traffic-deptak` (pierścień Bajkowskiego).
+  
+  Zostają też parkowanie (czeka na #1080, pasy z OSM) i `grass-under-paving` (2). Razem 10 testów do rozwiązania przed E3.
