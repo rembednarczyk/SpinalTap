@@ -15,7 +15,10 @@ import { freeze, gameState, step, teleport, newGame, waitForGame, waitForPlay } 
 test("real input: the right mouse button aims and Space jumps in the running loop", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=7&models=off");
+  // Low quality (26.11): the test is of the input path, not the picture. On high, a slow runner drew a frame of
+  // the spot below in seconds and the tick rose 0 of 10 in 60 s (main #1054, #1055; #1064), the first load
+  // past the 90 s too; the phones' perf scenes on low take some 25 s whole.
+  await page.goto("/?seed=7&models=off&quality=low");
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
