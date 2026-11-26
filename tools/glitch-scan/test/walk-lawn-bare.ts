@@ -20,7 +20,7 @@ type Bounds = { readonly minX: number; readonly maxX: number; readonly minZ: num
 export interface WalkLawnChunk {
   readonly id: string;
   readonly bounds: Bounds;
-  readonly ground: readonly { readonly surface: string; readonly outline: readonly number[]; readonly bridge?: true }[];
+  readonly ground: readonly { readonly surface: string; readonly outline: readonly number[]; readonly bridge?: true; readonly cover?: true }[];
   readonly buildings: readonly { readonly x: number; readonly z: number; readonly outline: readonly number[] }[];
 }
 
@@ -88,7 +88,8 @@ export const walkLawnBare = (chunks: readonly WalkLawnChunk[], covers: readonly 
     const grid = new Grid(box);
     for (const { g } of pieces.filter((p) => overlaps(p.box, box))) {
       const ring = flatRing(g.outline);
-      grid.fill(ring, COVERED | (WALKS.has(g.surface) ? WALK : 0) | (g.surface === "grass" ? LAWN : 0));
+      // A sidewalk the bare ground rule laid from the orthophoto's paving (`cover`, 26.11) is the rule's paving, as its squares are: no strip begins at it.
+      grid.fill(ring, COVERED | (WALKS.has(g.surface) && !g.cover ? WALK : 0) | (g.surface === "grass" ? LAWN : 0));
       // The ground is a partition of the plane: a hairline between two pieces is no bare terrain (`landuse-bare`).
       for (const [dx, dz] of HAIRLINE) grid.fill(ring.map((p) => ({ x: p.x + dx, z: p.z + dz })), COVERED);
     }
