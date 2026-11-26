@@ -39,6 +39,8 @@ export interface AirMesh {
 type Item = { readonly view: ViewDescriptor; readonly at: Vec3 };
 
 const BIN = 4;
+/** How far a piece of furniture's drawn geometry may reach from its place (m): a crown's spread, a cable to the next pole. */
+export const PIECE_REACH = 40;
 /** Sign kinds that are light, not a solid. */
 const LIGHT: ReadonlySet<number> = new Set([MAP_SIGN_KIND.beam, MAP_SIGN_KIND.mist, MAP_SIGN_KIND.reflection]);
 
@@ -80,7 +82,15 @@ export const airMesh = (items: readonly Item[], zones: readonly Box2[], props: C
   const poles = new PropPoles("high");
   poles.setProps(props);
   const sinks: { sink: MeshSink; what: string; signs?: boolean }[] = [];
-  for (const [key, block] of blocks) if (inZone(block.bounds)) sinks.push({ sink: nearSink({ quality: "high", poles }, block), what: `furniture block ${key}` });
+  // A block (256 m) baked with only its pieces near the lanes: a whole block baked some 0.6 s and the
+  // lanes' corridors need a few of its pieces (`PIECE_REACH`).
+  const near = zones.map((z) => ({ minX: z.minX - PIECE_REACH, maxX: z.maxX + PIECE_REACH, minZ: z.minZ - PIECE_REACH, maxZ: z.maxZ + PIECE_REACH }));
+  const nearZone = (x: number, z: number) => near.some((b) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+  for (const [key, block] of blocks) {
+    if (!inZone(block.bounds)) continue;
+    const pieces = new Map([...block.pieces].map(([id, ps]) => [id, ps.filter((p) => nearZone(p.x, p.z))] as const).filter(([, ps]) => ps.length > 0));
+    sinks.push({ sink: nearSink({ quality: "high", poles }, { bounds: block.bounds, pieces }), what: `furniture block ${key}` });
+  }
   const obstacles = (x: number, z: number, r: number) => standingObstacles(blocks, poles, x, z, r);
   const ids = [...entries.buildings.keys()].filter((id) => inZone(entries.buildings.get(id)!.bounds)).sort((a, b) => a - b);
   const frames = ids.map((id) => {
