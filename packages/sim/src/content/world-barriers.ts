@@ -75,6 +75,19 @@ export const levelTop = (item: StreetPropItem, top: number): StreetPropItem => {
   return { ...item, y: Math.round(low * 100) / 100, variant: barrierVariant({ ...b, height, rise: 0 }) };
 };
 
+/**
+ * Stretches of a terrace's wall the NMPT sees no wall on (G-969, T-350): ±0.1 m over the ground on
+ * both sides, no step in the NMT, before the cathedral's front past the breakline's end
+ * (`breaklines.ts`). Drawn as the low kerb the orthophoto's line along the paving leaves room for,
+ * not the terrace's parapet 1.4 m over its axis.
+ */
+const KERB_STRETCHES: readonly { readonly id: string; readonly minX: number; readonly height: number }[] = [{ id: "w232362979", minX: 604.9, height: 0.3 }];
+const asKerb = (id: string) => {
+  const stretch = KERB_STRETCHES.find((k) => k.id === id);
+  return (p: StreetPropItem): StreetPropItem =>
+    stretch && p.x > stretch.minX ? { ...p, variant: barrierVariant({ ...barrierLayout(p.variant), height: stretch.height }) } : p;
+};
+
 /** The pieces of one barrier of the map in the game: an opening whole where its posts stand clear, a solid kind in its clear runs. */
 const piecesOf = (b: LublinBarrierData): StreetPropItem[] => {
   const line = pointsOf(b.line);
@@ -83,7 +96,7 @@ const piecesOf = (b: LublinBarrierData): StreetPropItem[] => {
   // A retaining wall on a terrace's breakline (T-351) stands along its flight and from its lower side.
   const edge = BREAKLINE_IDS.has(b.id);
   const pieces = clearRuns(line, BARRIER_THICKNESS[b.kind] / 2, edge).flatMap((run) => barrierPieces(b.kind, b.height, run, groundY, material, (x, z) => edge && nearBreakline(x, z)));
-  return FARA_RUIN_IDS.includes(b.id) ? pieces.map((p) => levelTop(p, FARA_FOUNDATION_TOP)) : pieces;
+  return FARA_RUIN_IDS.includes(b.id) ? pieces.map((p) => levelTop(p, FARA_FOUNDATION_TOP)) : pieces.map(asKerb(b.id));
 };
 
 /** The barriers of the game's Lublin per chunk (ADR-0077), as street pieces of kind `barrier`. */
