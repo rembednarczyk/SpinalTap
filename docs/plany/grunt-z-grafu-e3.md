@@ -71,3 +71,27 @@ Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo za
   - `door-floating` (151; −103);
   - `lawn-strip-on-paving` (336; −230);
   - `lane-dead-end` (Peowiaków: dwa pasy z BDOT10k, skrzyżowanie łączy jeden; ślepy koniec był już na main).
+
+### Runda 4: ulice wyłączone z ruchu i testy na próbnych tablicach
+
+- **Deptak (w216497220, T-324):** na ulicy wyłączonej z ruchu jej własny chodnik w grafie dostaje nawierzchnię ulicy (bruk od krawężnika do krawężnika), a strona ze zmapowanym chodnikiem poszerza bruk do niego. Wcześniej szerokość z BDOT10k liczyła się jako zmierzona, więc w dawnej zatoce Brama Krakowska 01 lądował chodnik 2,5 m i padał test `kerb-fill-places` („zatoka … jako bruk”).
+- **`bus-stop-on-fill` 2 → 1:** zostaje przystanek przy Narutowicza (233,9; −164,2). Szerokość z BDOT10k (7 m wobec 9,2 m z ortofoto) zostawia zatokę jako chodnik. To prawdopodobnie prawdziwy błąd: zatoki autobusowe przy ulicach z BDOT10k potrzebują własnej reguły (przystanek z OSM plus asfalt w ortofoto daje zatokę jezdni).
+
+**Testy, które padają na próbnych tablicach z grafem** (`vitest run packages/sim tools/glitch-scan`, bez skanu; 17 testów w 13 plikach i plik `traffic-ramp.test.ts`, który nie wczytuje się z błędem `undefined.id`). Każdy trzeba rozstrzygnąć przed E3:
+- **Deptak:**
+  - `alchemia-deptak` (bryły na bruku);
+  - `deptak-ends` (dwa testy końców bruku);
+  - `deptak-night` (yatai przy krawędzi);
+  - `traffic-deptak` (pierścień Bajkowskiego).
+- **Ruch:**
+  - `traffic-bodies` (pasy Cichej, dwa testy);
+  - `traffic-bodies-shifted` (łuk Kołłątaja);
+  - `traffic-junction-drive` (3 Maja przy Żołnierzy Niepodległej);
+  - `traffic-ramp` (rampa P−1).
+- **Parkowanie:**
+  - `traffic` (auta w zmapowanych parkingach przy krawężniku);
+  - `kerb-bay-cars` (Lubartowska w471191535).
+- **Piesi:**
+  - `crowd` (miejsca tłumu);
+  - `flee-wall` (trzy przebiegi ucieczki za róg).
+- **Grunt:** `grass-under-paving` (Plac Litewski, 3 Maja przy klinice).
