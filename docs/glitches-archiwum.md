@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
+- Status: naprawione (26.11, PR #1046); wcześniej: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
+- Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
+- Dowód: ortofoto PZGiK: blok ok. 6,5 × 6 m z niebieskim dachem; w OSM i w grze bez budynku, nawierzchnia alejki przechodzi przez jego miejsce (nakładka kuratora `topo-1037/r3-crop.png`)
+- Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
+- Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
+- Pakiet właściciela: tools/osm-import
+
 ### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
 - Status: naprawione (26.11, gałąź fix/g972-parapet); wcześniej: zgłoszone 25.11 (przegląd kuratora K5b runda 2, T-351)
 - Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
