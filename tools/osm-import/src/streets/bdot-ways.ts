@@ -10,6 +10,7 @@
  * Pattern: conflation by source priority, the matched source's attributes written onto the map's
  * feature (as a conflation tool merges a reference dataset's attributes into OSM's).
  */
+import { parseLength } from "../building-tags.ts";
 import { ALL_CHUNKS } from "../config.ts";
 import { type Offsets, ORTHO_OFFSETS, orthoSides } from "../corrections-kerb.ts";
 import { type Line } from "../features.ts";
@@ -33,7 +34,8 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts()): 
     return rects.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ);
   };
   for (const l of lines) {
-    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l)) continue;
+    // The map's own width comes first (ADR-0104 pkt 4: OSM → BDOT10k → the orthophoto): Olejna's `width=3.5`, not BDOT10k's 5 m.
+    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null) continue;
     const m = bdotMatch(l.line);
     if (m) out.set(l.id, { width: m.width, offset: Math.round(m.offset * 10) / 10 });
   }

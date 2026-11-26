@@ -97,6 +97,17 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     expect(holds(areaOf(g.carriageway), { x: 10, z: 4.3 })).toBe(true);
   });
 
+  it("two streets meeting at a corner: no disc of the wider one's half round the corner (Lubartowska into Olejna)", () => {
+    const d = { x: Math.cos((70 * Math.PI) / 180), z: Math.sin((70 * Math.PI) / 180) };
+    const g = streetGround([street("A", [{ x: 0, z: 0 }, { x: 50 * d.x, z: 50 * d.z }], 6), street("B", [{ x: 0, z: 0 }, { x: 50, z: 0 }], 1.75)]);
+    const c = areaOf(g.carriageway);
+    // Behind the corner, where the deptak goes on off the graph: no asphalt 3 m past the node.
+    expect(holds(c, { x: 0, z: -3 })).toBe(false);
+    expect(holds(c, { x: -2, z: -2 })).toBe(false);
+    // The wider street ends square at the node, its corner past the narrower one's kerb: there the
+    // street goes on off the graph (the deptak's setts from Lubartowska's end).
+  });
+
   it("a crossroads and a bend: one smooth kerb", () => {
     const bend = Array.from({ length: 19 }, (_, i) => ({ x: 60 + 30 * Math.sin((i * Math.PI) / 36), z: -30 + 30 * Math.cos((i * Math.PI) / 36) }));
     const g = streetGround([

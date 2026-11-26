@@ -151,6 +151,21 @@ export const cornerReach = (arms: readonly number[], wide: number, r: number): n
   return Math.min(CORNER_REACH_MAX, Math.max(wide + r, touch)) + JUNCTION_MARGIN;
 };
 
+/** How far two arms may bend off a straight line and still be one street going on (rad): a joint, not a corner. */
+const STRAIGHT_ON = Math.PI / 6;
+
+/**
+ * Whether a node's two arms run on in a line (a street's two pieces, a width step ramped between
+ * them); two arms at an angle are a corner, rounded as a junction's: Lubartowska turning into Olejna
+ * where the deptak, off the graph, leaves them two (its 6.35 m disc lapped 3 m over the deptak).
+ */
+const straightOn = (arms: readonly number[]): boolean => {
+  if (arms.length !== 2) return true;
+  // The angle between them, 0..π: π for a street going straight on.
+  const between = Math.abs(((arms[0]! - arms[1]! + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  return Math.PI - between <= STRAIGHT_ON;
+};
+
 /**
  * The carriageways with each junction's concave corners rounded by its streets' kerb radius, and
  * each joint of one street's two pieces closed: their square ends at a slant left a notch outside
@@ -158,13 +173,8 @@ export const cornerReach = (arms: readonly number[], wide: number, r: number): n
  * narrower piece (`RAMP`).
  */
 const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[]): Area => {
-  const corners = at.map((j) => {
-    const [wide, narrow] = halves(edges, j);
-    if (j.arms < 3) {
-      const thin = j.edges.find((i) => Math.max(edges[i]!.left, edges[i]!.right) <= narrow + 1e-9);
-      if (wide - narrow < 0.01 || thin === undefined) return disc(j.at, narrow);
-      return taper(j.at, wide, awayFrom(edges[thin]!.axis, j.at, Math.min((wide - narrow) / RAMP, RAMP_MAX)), narrow);
-    }
+  // A junction's concave corners rounded by its streets' kerb radius.
+  const rounded = (j: Node, wide: number): Area => {
     const r = Math.max(...j.edges.map((i) => edges[i]!.kerbRadius));
     if (r <= 0) return [];
     const reach = cornerReach(armsAt(edges, j), wide, r);
@@ -173,6 +183,15 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
     // is not cornered to it, or its median under 2r wide went under the asphalt.
     const near = within(join(...j.edges.map((i) => carriagewayOf(edges[i]!))), disc(j.at, reach + 2 * r));
     return within(grown(grown(near, r), -r), disc(j.at, reach));
+  };
+  const corners = at.map((j) => {
+    const [wide, narrow] = halves(edges, j);
+    if (j.arms >= 3) return rounded(j, wide);
+    // Two arms at an angle: a corner, rounded inside, the notch outside its bend closed by the narrower half's disc.
+    if (!straightOn(armsAt(edges, j))) return join(disc(j.at, narrow), rounded(j, wide));
+    const thin = j.edges.find((i) => Math.max(edges[i]!.left, edges[i]!.right) <= narrow + 1e-9);
+    if (wide - narrow < 0.01 || thin === undefined) return disc(j.at, narrow);
+    return taper(j.at, wide, awayFrom(edges[thin]!.axis, j.at, Math.min((wide - narrow) / RAMP, RAMP_MAX)), narrow);
   });
   return join(base, ...corners);
 };

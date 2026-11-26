@@ -104,3 +104,19 @@ Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo za
   - `deptak-ends`: linie końców bruku leżą w stałej odległości od węzłów (`trim` 3,7 m od Bajkowskiego, 1,8 m od Olejnej), czyli na połowach jezdni dawnej geometrii. Jezdnie z BDOT10k sięgają 0,3–1 m dalej, więc `trim` trzeba liczyć z połówki jezdni ulicy poprzecznej przy węźle;
   - zatoka przy Bramie Krakowskiej 01 jest teraz placem (wypełnienie z ortofoto), a nie brukiem;
   - pierścień Bajkowskiego (`traffic-deptak`).
+
+### Runda 6: końce deptaka, szerokość z OSM przed BDOT10k, narożnik dwóch ulic
+
+- **Szerokość z OSM przed BDOT10k** (ADR-0104 pkt 4). Potok BDOT10k (`bdot-ways.ts`) nadpisywał szerokością i osią z BDOT10k także ulice, którym OSM podaje `width`: Olejna dostawała 5 m i oś przesuniętą o 1,4 m zamiast `width=3.5`. Teraz takie ulice zostają przy szerokości z mapy. Do tego test.
+- **Narożnik dwóch ulic w węźle bez trzeciego ramienia.** Gdy deptak wypadł z grafu, Lubartowska-północ i Olejna zostały w węźle we dwie i graf traktował je jak jedną ulicę ze zmianą szerokości: dysk o promieniu szerszej (6,35 m) wchodził 3 m w deptak. Dwa ramiona pod kątem (ponad 30° od prostej) to teraz narożnik zaokrąglony jak skrzyżowanie, a karb po zewnętrznej stronie zamyka dysk węższej połowy. Do tego test.
+- **Końce deptaka przy krawężniku z mapy** (`cutsAtKerb`). Linia cięcia przesuwa się w głąb deptaka do najdalszego zasięgu asfaltu ulicy poprzecznej w szerokości bruku (do 3 m). Pas postojowy deptaka nie liczy się jako ta ulica. Na main asfalt kończy się na `trim`, więc tablice bez zmian. Test `deptak-ends` sprawdza teraz to, co mówi jego tytuł: bruk kończy się na jednej prostej, prostopadłej do deptaka, z asfaltem za nią, gdziekolwiek ta prosta leży.
+- **Na próbnych tablicach przechodzą:**
+  - północny koniec deptaka;
+  - pas postojowy;
+  - pierścień Bajkowskiego (`traffic-deptak`);
+  - stoiska;
+  - noc;
+  - rampa P−1.
+- **Zostaje:**
+  - południowy koniec: dwa pomiary trafiają 2,4 m przed linią na dziury w bruku przy węźle dwóch odcinków deptaka (442,9; −9,9). Kawałek bruku w tablicach jest ten sam co na main, więc przyczyny trzeba szukać poza nim;
+  - zatoka przy Bramie Krakowskiej 01 jest placem zamiast brukiem.

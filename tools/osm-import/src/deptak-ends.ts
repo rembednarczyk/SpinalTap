@@ -101,6 +101,50 @@ const split = (g: GroundOut, region: readonly Path64[], into: GroundSurface): Gr
   ];
 };
 
+/** How far into the deptak a cut moves to the kerb of the street it meets (m), and the step it reads that by. */
+const KERB_SEARCH = 3;
+const KERB_STEP = 0.05;
+/** Under this the crossing street's asphalt past the cut is the ground's rounding, not its kerb (m). */
+const KERB_SLACK = 0.2;
+
+/** Whether the ground (off the bridges) lies under `p` as `surface`. */
+const onSurface = (ground: readonly GroundOut[], p: Pt, surface: GroundSurface): boolean =>
+  ground.some((g) => g.surface === surface && !g.bridge && pointInFlat(g.outline, p));
+const onRoad = (ground: readonly GroundOut[], p: Pt): boolean => onSurface(ground, p, "road");
+
+const pointInFlat = (o: readonly number[], p: Pt): boolean => {
+  let inside = false;
+  for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) {
+    const [xi, zi, xj, zj] = [o[i]!, o[i + 1]!, o[j]!, o[j + 1]!];
+    if (zi > p.z !== zj > p.z && p.x < ((xj - xi) * (p.z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+};
+
+/** How far either side of the deptak's axis its width is read for the kerb (m): the setts' 9.5 m. */
+const HALF_WIDTH = 4.5;
+
+/**
+ * The cuts moved into the deptak to the kerb of the street each meets as the ground lays it, where
+ * that street's asphalt reaches past the trim somewhere across the deptak (its width from BDOT10k on
+ * the street graph, ADR-0104 pkt 4: Olejna's carriageway 2 m past the trim of 1.8 m): to the farthest
+ * reach, so past the line it is all asphalt and the setts still end square. The trim where it does not.
+ */
+export const cutsAtKerb = (ground: readonly GroundOut[], cuts: readonly DeptakCut[]): DeptakCut[] =>
+  cuts.map((c) => {
+    const [nx, nz] = [-c.out.z, c.out.x];
+    let d = 0;
+    for (let o = -HALF_WIDTH; o <= HALF_WIDTH + 1e-9; o += 0.5) {
+      const from = { x: c.at.x + nx * o, z: c.at.z + nz * o };
+      // Across the setts only: not its parking lane, asphalt till `deptakLanes` lays it.
+      if (!onSurface(ground, { x: from.x - c.out.x * KERB_SEARCH, z: from.z - c.out.z * KERB_SEARCH }, "cobble")) continue;
+      let e = 0;
+      while (e + KERB_STEP <= KERB_SEARCH && onRoad(ground, { x: from.x - c.out.x * (e + KERB_STEP), z: from.z - c.out.z * (e + KERB_STEP) })) e += KERB_STEP;
+      d = Math.max(d, e);
+    }
+    return d < KERB_SLACK ? c : { at: { x: c.at.x - c.out.x * d, z: c.at.z - c.out.z * d }, out: c.out };
+  });
+
 /**
  * The ground with the setts past each cut laid as asphalt, and the deptak's lanes before the cuts
  * laid as setts (`deptakLanes`). A bridge's piece is left as it is.
