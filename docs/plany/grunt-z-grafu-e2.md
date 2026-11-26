@@ -67,3 +67,50 @@ Zmiany:
 | kerb-strip-bare | 14 | 0 | 0 | 4 |
 
 Wersje 8 i 13 mają lepsze szczeliny, bo chodnik albo asfalt zalewał pasy zieleni i pasy rozdziału, które ortofoto pokazuje jako zieleń (rzut −94; 137). Wersja 18 odtwarza je z ortofoto, za co płaci liczbą szczelin przy krawężniku: tam, gdzie reguła gołego terenu nie kładzie trawy w wąskim pasie, zostaje goły teren. Która wersja jest bliżej Lublina, rozstrzyga przegląd kuratora na ortofoto (w toku).
+
+## Runda 3 (26.11 po południu): dane przed oceną wzrokową
+
+Po przeglądzie kuratora (raport w scratchpadzie sesji, werdykt: jezdnia bliżej Lublina niż main, odchylenie krawężnika 0,55 → 0,40 m; chodnik za szeroki) i decyzji użytkownika o kolejności źródeł (ADR-0104 pkt 4):
+- **Uwagi oparte na danych:**
+  - place, strefy piesze, obszary jezdni i parkingi z OSM zatrzymują chodnik (Plac Łokietka);
+  - wysepka przy zmapowanym placu dostaje nawierzchnię placu (deptak);
+  - graf nie rusza pasm poza dzielnicą.
+- **Szerokość jezdni według kolejności źródeł (`streets/widths.ts`):**
+  - jezdnie BDOT10k (`pnpm gugik:roads`, `data/gugik/jezdnie.json`) dopasowane do osi;
+  - spór BDOT10k i pomiaru z ortofoto ponad 1 m zostawia dzisiejszą szerokość i idzie do raportu.
+
+Wersja 24 (Krakowskie, main → graf):
+
+| Rodzaj | main | v24 |
+|---|---|---|
+| sidewalk-surface-patch | 169 | 99 |
+| ground-strip-gap | 288 | 227 |
+| landuse-bare | 253 | 228 |
+| bare-on-cover | 130 | 109 |
+| kerb-gap-bare | 222 | 214 |
+| sidewalk-gap | 118 | 116 |
+| sidewalk-step | 154 | 152 |
+| crossing-shape-kerb | 17 | 4 |
+| kerb-strip-bare | 14 | 5 |
+| sidewalk-width-jump | 88 | 99 |
+| kerb-jag | 3 | 7 |
+| ground-ring-self-cross | 0 | 3 |
+| bus-stop-on-fill | 0 | 2 |
+| fill-gap | 8 | 10 |
+| furniture-in-car-lane | 0 | 1 (latarnia 24; −112) |
+| car-lane-off-road, lane-off-ground, walk-blocked | 0 | 0 |
+
+**Raport pochodzenia szerokości** (strony jezdni z grafu):
+- BDOT10k 79,6%;
+- pomiar z ortofoto 18,0% (konflikty);
+- dopasowanie do chodników 1,1%;
+- OSM 0,8%;
+- szacunek 0,5%.
+
+**Konflikty BDOT10k i ortofoto ponad 1 m (9, do przeglądu):**
+- Lubartowska: 9 wobec 7,5 m i 10 wobec 12,5 m;
+- Narutowicza: 7 wobec 9,2 m i 7 wobec 8,8 m;
+- Żołnierzy Niepodległej: 7 wobec 5,9 m;
+- 3 Maja: 5 wobec 7,1 m, 5 wobec 3,4 m i 11 wobec 13,5 m;
+- Kapucyńska: 10 wobec 7,6 m.
+
