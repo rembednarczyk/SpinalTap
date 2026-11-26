@@ -39,3 +39,31 @@ Przebieg wersji: v1 bez ścieżek wzdłuż ulic (`kerb-gap-bare` 222 → 268, go
 4. **Zatoki przystanków (`bus-stop-on-fill` 2):** zatoka do asfaltu, jak w G-570.
 5. **Promień narożnika:** 3/4 m zamiast 6 m z ADR-0080. Przy ostrych kątach 6 m zalewało 15–22 m narożnika. Do potwierdzenia przez kuratora na ortofoto.
 6. Przegląd `topography-curator` rzutów wobec ortofoto przed E3.
+
+## Runda 2 (wersje 7–18, 26.11 po południu)
+
+Zmiany:
+- **Wysepki do 400 m²**, zamknięte gruntem wokół ulicy: zieleń albo chodnik według ortofoto. Wcześniej był tam pierścień chodnika z gołą dziurą.
+- **Pas zieleni (`verge` z ADR-0080)** w przekroju: z ortofoto albo zmapowanego trawnika. Chodnik leży za nim, a sam pas zostaje regule gołego terenu.
+- **Szczelina do zmapowanego chodnika:** ponad 3 m albo zielona to pas zieleni. Wcześniej ulica w356402586 dostała krawężnik 10 m od osi.
+- **Narożniki:** domknięcie tylko ulic danego węzła. Druga jezdnia drogi dwujezdniowej obok węzła zalewała pas rozdziału (test na pas 3 m).
+- **Pas rozdziału:** strona bez tagów z inną jezdnią do 6 m za krawężnikiem nie dostaje domyślnego chodnika.
+- **Włosy:** chodnik odcięty od schodów, torów i basenów; pierścienie cieńsze niż 0,2 m odrzucone. Odejmowanie starych prostokątów zebr i jezdni spoza grafu (wersje 9–14) zostawiało dziury i szczeliny, więc z niego zrezygnowałem.
+- **Kontrola `kerb-fill-wide-estimated`** nie próbkuje dzielnic z grafu.
+
+| Rodzaj | main | v8 | v13 | v18 |
+|---|---|---|---|---|
+| sidewalk-surface-patch | 169 | 57 | 57 | 76 |
+| ground-strip-gap | 288 | 175 | 195 | 229 |
+| kerb-gap-bare | 222 | 157 | 170 | 219 |
+| sidewalk-gap | 118 | 84 | 87 | 117 |
+| landuse-bare | 253 | 221 | 229 | 231 |
+| bare-on-cover | 130 | 108 | 111 | 111 |
+| sidewalk-step | 154 | 145 | 144 | 164 |
+| sidewalk-width-jump | 88 | 102 | 100 | 100 |
+| kerb-jag | 3 | 9 | 9 | 7 |
+| ground-ring-self-cross | 0 | 58 | 5 | 3 |
+| crossing-shape-kerb | 17 | 12 | 12 | 9 |
+| kerb-strip-bare | 14 | 0 | 0 | 4 |
+
+Wersje 8 i 13 mają lepsze szczeliny, bo chodnik albo asfalt zalewał pasy zieleni i pasy rozdziału, które ortofoto pokazuje jako zieleń (rzut −94; 137). Wersja 18 odtwarza je z ortofoto, za co płaci liczbą szczelin przy krawężniku: tam, gdzie reguła gołego terenu nie kładzie trawy w wąskim pasie, zostaje goły teren. Która wersja jest bliżej Lublina, rozstrzyga przegląd kuratora na ortofoto (w toku).
