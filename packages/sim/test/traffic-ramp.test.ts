@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
+import { CITY_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
 import { RAMP_DOWN_X, RAMP_UP_X, alchemiaRampLanes, alchemiaRampRoutes, ownWayRoom, streetSegments } from "../src/content/traffic-ramp";
 import { DEPTAK_MOUTH } from "../src/content/traffic-deptak";
 import { P1, P1_CABINS, P1_RAMP, p1DriveFloor, p1RampY } from "../src/content/alchemia/parking";
@@ -156,3 +156,15 @@ describe("the driveway from Bajkowskiego to P-1's ramp (T-241, user's notes of 2
     expect(posts.map((p) => `${p.x},${p.z}`)).toEqual([]);
   });
 });
+
+describe("the ramp's routes keep the city route's arcs (G-510)", () => {
+  it("cuts an arc the way out joins in the middle of to the part it takes, not drops it", () => {
+    // Bajkowskiego's left lane eastwards, its lane change starting half a metre west of where the way out joins it.
+    const join = RAMP_UP_X + 5;
+    const lane: TrafficRoute = { id: "Wacława Bajkowskiego#1:1", street: "Wacława Bajkowskiego", use: "cars", points: [[360, -13.5], [442, -13.5]], length: 82, speed: 8, vehicles: 1, stops: [], arcs: [[join - 0.5 - 360, join + 13.5 - 360]] };
+    const out = alchemiaRampRoutes([lane])[1]!;
+    const city = out.ownWay![out.ownWay!.length - 1]![1];
+    expect(out.arcs!.some(([a, b]) => a <= city + 1e-6 && b >= city + 13.5 - 1e-6)).toBe(true);
+  });
+});
+
