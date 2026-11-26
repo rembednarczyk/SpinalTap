@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
+- Status: naprawione (26.11, gałąź fix/g973-garaze scalony); wcześniej: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
+- Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
+- Dowód: ortofoto PZGiK: blok ok. 6,5 × 6 m z niebieskim dachem; w OSM i w grze bez budynku, nawierzchnia alejki przechodzi przez jego miejsce (nakładka kuratora `topo-1037/r3-crop.png`)
+- Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
+- Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
+- Pakiet właściciela: tools/osm-import
+### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
+- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
+- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
+- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
+- Ważność: S3 (przegląd kuratora runda 2: nasyp przed licem widać z chodnika Królewskiej z ok. 8 m, przy x 593 klin ok. 2 m wysokości na ok. 1 m szerokości) · Zasięg: ok. 50 m muru, widoczne z Królewskiej
+- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
+- Pakiet właściciela: packages/sim (content/lublin)
+
 ### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
 - Status: naprawione (26.11, gałąź fix/g972-parapet); wcześniej: zgłoszone 25.11 (przegląd kuratora K5b runda 2, T-351)
 - Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
