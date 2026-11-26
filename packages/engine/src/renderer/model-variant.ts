@@ -173,6 +173,17 @@ export const variantOf = (id: number, dress?: VariantDress, elders = true): Mode
   };
 };
 
+/**
+ * A background character's look: older looks only for the street's people (ADR-0076 decision 7),
+ * and no backpack on a fighter, who carries a long gun across the back and a jacket over it: the
+ * bag's box stood out behind the Hebi jacket and through the gun (user notes of 25.11, the gangs'
+ * groups).
+ */
+export const backgroundLookOf = (id: number, pool: string | undefined, armed: boolean): ModelVariant => {
+  const look = variantOf(id, undefined, !armed && (pool === "civilian" || pool === "vendor"));
+  return armed ? { ...look, accessories: look.accessories.filter((a) => a.id !== "bag") } : look;
+};
+
 /** The background variant a look seed asks for, 1..BACKGROUND_VARIANTS (independent of the pool's file draw). */
 export const backgroundVariantOf = (look: number): number => 1 + (mix(look ^ 0x1f83d9ab) % BACKGROUND_VARIANTS);
 

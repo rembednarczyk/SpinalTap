@@ -7,7 +7,7 @@ import { type Donors, type WornVariant, dressVariant, lends } from "./model-dres
 import type { CharacterModelManifest, CharacterModelSpec, ModelInstance, ModelLibrary } from "./model-library";
 import { type ModelFilesNow, ModelMemory } from "./model-memory";
 import { HumanoidRetarget } from "./model-rig";
-import { type ModelVariant, VariantBudget, backgroundVariantOf, variantOf } from "./model-variant";
+import { type ModelVariant, VariantBudget, backgroundLookOf, backgroundVariantOf, variantOf } from "./model-variant";
 import { SpringBones, humanoidColliders } from "./spring-bones";
 
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
@@ -252,9 +252,7 @@ export class CharacterModels {
       return { id, look: variantOf(id, spec.dress), budget: null };
     }
     const id = this.budget.take(spec.url, backgroundVariantOf(choice.look));
-    // Older looks only for the street's people (ADR-0076 decision 7), never for a fighter.
-    const elders = !armed && (choice.pool === "civilian" || choice.pool === "vendor");
-    return { id, look: variantOf(id, undefined, elders), budget: spec.url };
+    return { id, look: backgroundLookOf(id, choice.pool, armed), budget: spec.url };
   }
 
   private giveBack(w: { readonly id: number; readonly budget: string | null }): void {
