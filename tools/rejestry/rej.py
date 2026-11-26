@@ -44,7 +44,8 @@ def today():
 
 
 def entry(text, gid):
-    m = re.search(r"^### " + re.escape(gid) + r" [^\n]*\n(?:[^\n]+\n)*\n?", text, re.M)
+    # A record ends at a blank line or at the next heading, so a record without a blank line after it takes nobody else's.
+    m = re.search(r"^### " + re.escape(gid) + r" [^\n]*\n(?:(?!#{2,3} )[^\n]+\n)*\n?", text, re.M)
     if not m:
         sys.exit(f"brak wpisu {gid}")
     return m
