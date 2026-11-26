@@ -81,11 +81,14 @@ export const levelTop = (item: StreetPropItem, top: number): StreetPropItem => {
  * (`breaklines.ts`). Drawn as the low kerb the orthophoto's line along the paving leaves room for,
  * not the terrace's parapet 1.4 m over its axis.
  */
-const KERB_STRETCHES: readonly { readonly id: string; readonly minX: number; readonly height: number }[] = [{ id: "w232362979", minX: 604.9, height: 0.3 }];
+const KERB_STRETCHES: readonly { readonly id: string; readonly minX: number; readonly maxX: number; readonly height: number }[] = [
+  // From the breakline's end (604.8; −199.4) to (611.0; −202.1); on to x 643 along the cathedral's south wall the NMT steps 0.45-1.38 m and the NMPT has a parapet: a wall (the curator's review of #1049).
+  { id: "w232362979", minX: 604.9, maxX: 611.3, height: 0.3 },
+];
 const asKerb = (id: string) => {
   const stretch = KERB_STRETCHES.find((k) => k.id === id);
   return (p: StreetPropItem): StreetPropItem =>
-    stretch && p.x > stretch.minX ? { ...p, variant: barrierVariant({ ...barrierLayout(p.variant), height: stretch.height }) } : p;
+    stretch && p.x > stretch.minX && p.x < stretch.maxX ? { ...p, variant: barrierVariant({ ...barrierLayout(p.variant), height: stretch.height }) } : p;
 };
 
 /** The pieces of one barrier of the map in the game: an opening whole where its posts stand clear, a solid kind in its clear runs. */

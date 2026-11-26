@@ -160,6 +160,13 @@ describe("the terrace's wall before the cathedral's front, where the NMPT sees n
     expect(kerb.length).toBeGreaterThanOrEqual(2);
     for (const { item } of kerb) expect(barrierLayout(item.variant).height, `${item.x},${item.z}`).toBeLessThanOrEqual(0.3);
   });
+
+  it("keeps the wall along the cathedral's south wall, where the NMT steps, as it was", () => {
+    // x 612-643: the NMT steps 0.45-1.38 m on x 627-643, the NMPT a parapet 0.4-0.8 m (the curator's review of #1049).
+    const wall = all.filter(({ item }) => barrierLayout(item.variant).kind === "retaining-wall" && item.x > 612 && item.x < 644 && item.z > -212 && item.z < -195);
+    expect(wall.length).toBeGreaterThanOrEqual(8);
+    for (const { item } of wall) expect(barrierLayout(item.variant).height, `${item.x},${item.z}`).toBeGreaterThanOrEqual(1.3);
+  });
 });
 
 describe("a retaining wall by a stair flight (G-972)", () => {

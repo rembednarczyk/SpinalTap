@@ -19,6 +19,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ok. 7 m muru
 - Poprawka: odcinek jako niski krawężnik (ok. 0,3 m) albo poza importem po potwierdzeniu zdjęciem od Królewskiej
 - Pakiet właściciela: tools/osm-import
+- Przegląd kuratora PR #1049 (26.11) runda 1: NIE PRZYJĘTE. Próg x > 604,9 bez górnej granicy obniżał do 0,3 m cały mur w232362979 na x 605–643 (15 kawałków), także x 627–643, gdzie NMT ma uskok 0,45–1,38 m, a NMPT parapet 0,4–0,8 m. Poprawka: krawężnik tylko do x 611,3, reszta 1,4 m; test na x > 612.
 
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
