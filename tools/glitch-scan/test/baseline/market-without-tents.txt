@@ -1,0 +1,3 @@
+# market-without-tents: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-0-1 660,388
+poza 2270,242
