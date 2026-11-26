@@ -1529,6 +1529,20 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
           );
       }),
     ),
+  /**
+   * A surface car park of the map with no parked car in it, 300 m² or more, its middle in the map's chunks (the curator's
+   * proposal of #1037, T-357): a gap of the cars' layout (no aisle laid, too narrow for a module, every bay rejected).
+   */
+  "surface-park-empty": () => {
+    const parks = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface").map((p) => [p.id, p])).values()];
+    return parks.flatMap((p) => {
+      const ring = Array.from({ length: p.outline.length / 2 }, (_, i): [number, number] => [p.outline[2 * i]!, p.outline[2 * i + 1]!]);
+      const area = Math.abs(ring.reduce((a, [x, z], i) => { const [x2, z2] = ring[(i + 1) % ring.length]!; return a + x * z2 - x2 * z; }, 0)) / 2;
+      const [cx, cz] = [ring.reduce((a, q) => a + q[0], 0) / ring.length, ring.reduce((a, q) => a + q[1], 0) / ring.length];
+      if (area < 300 || !MAP_CHUNKS.some(({ bounds: b }) => cx >= b.minX && cx <= b.maxX && cz >= b.minZ && cz <= b.maxZ)) return [];
+      return PARKED_CARS.some((c) => pointInPairRingEvenOdd(c.x, c.z, ring)) ? [] : [{ at: near(cx, cz), what: `${p.id}: ${area.toFixed(0)} m² with no parked car` }];
+    });
+  },
   /** A parked car's body within 0.6 m of a terrace's wall (G-976): the wall gives way to it and the terrace's edge stands open. */
   "parked-car-on-breakline": () =>
     PARKED_CARS.flatMap((c) => {
