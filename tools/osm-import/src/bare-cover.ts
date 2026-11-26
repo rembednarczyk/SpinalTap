@@ -34,10 +34,11 @@ import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { type Frontage, evenKerbs, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
 import { kerbStrips, lawnStrips } from "./bare-strips.ts";
+import { SETT_DISTRICTS, kerbWalks } from "./bare-walks.ts";
 import { contours } from "./contour.ts";
 import { crossesItself } from "./bare-ring.ts";
 import { type Area, type Line } from "./features.ts";
-import { areaSurface } from "./ground.ts";
+import { ORDER, areaSurface } from "./ground.ts";
 import { type OsmData } from "./osm.ts";
 import { raisedGreen } from "./raised-green.ts";
 import { geoToWorld } from "./project.ts";
@@ -120,13 +121,14 @@ export const FILL_CLEARED: readonly Rect[] = [
 /** The surfaces a kerb's strip between a carriageway and them is laid to (`kerbStrips`): what `kerb-gap-bare` and `kerb-strip-bare` count a strip to. */
 const STRIP_ENDS: ReadonlySet<GroundSurface> = new Set(["sidewalk", "footway", "square", "cobble", "steps", "crossing", "grass"]);
 
-const LAID: readonly [lawn: { readonly label: number; readonly surface: GroundSurface }, paving: { readonly label: number; readonly surface: GroundSurface }] = [
+const LAID: readonly [lawn: { readonly label: number; readonly surface: GroundSurface }, paving: { readonly label: number; readonly surface: GroundSurface }, walk: { readonly label: number; readonly surface: GroundSurface }] = [
   { label: LABEL.grass, surface: "grass" },
   { label: LABEL.square, surface: "square" },
+  { label: LABEL.walk, surface: "sidewalk" },
 ];
 
 /** Each laid label's bit in `drawnCells`, 0 for the rest. */
-const BIT = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.grass ? 1 : l === LABEL.square ? 2 : 0));
+const BIT = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.grass ? 1 : l === LABEL.square ? 2 : l === LABEL.walk ? 4 : 0));
 
 /** The bits of the labels at and beside each cell of row `j` (`BIT`) into row `j % 3` of `beside`. */
 const besideRow = (lab: Uint8Array, nx: number, j: number, beside: Uint8Array): void => {
@@ -143,7 +145,7 @@ const besideRow = (lab: Uint8Array, nx: number, j: number, beside: Uint8Array): 
 };
 
 /** Each label's mask of the laid labels' bits a covered cell takes from the cells round it (`drawnCells`): all of them, none for the rest. */
-const COVERED_TAKES = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.covered ? 3 : 0));
+const COVERED_TAKES = Uint8Array.from({ length: 8 }, (_, l) => (l === LABEL.covered ? 7 : 0));
 
 /** What `drawnRow` works a row with: `beside` holds three rows of `besideRow` and a fourth of none, for the rows off the raster. */
 interface DrawnRows {
@@ -153,12 +155,13 @@ interface DrawnRows {
   readonly has: Uint8Array;
   readonly grass: Uint8Array;
   readonly square: Uint8Array;
+  readonly walk: Uint8Array;
   readonly beside: Uint8Array;
 }
 
 /** Row `j` of `drawnCells` (of `nz` rows), a function of its own (see `bare-clean.ts`); `row` the row of tiles in `has`. */
 const drawnRow = (d: DrawnRows, j: number, nz: number, row: number): void => {
-  const { lab, nx, tile, has, grass, square, beside } = d;
+  const { lab, nx, tile, has, grass, square, walk, beside } = d;
   const o = j * nx;
   const here = (j % 3) * nx;
   const south = j > 0 ? ((j - 1) % 3) * nx : 3 * nx;
@@ -172,7 +175,8 @@ const drawnRow = (d: DrawnRows, j: number, nz: number, row: number): void => {
       held |= own;
       const v = own | (COVERED_TAKES[l]! & (beside[here + i]! | beside[south + i]! | beside[north + i]!));
       grass[o + i] = v & 1;
-      square[o + i] = v >> 1;
+      square[o + i] = (v >> 1) & 1;
+      walk[o + i] = v >> 2;
     }
     has[t]! |= held;
   }
@@ -186,7 +190,7 @@ const drawnRow = (d: DrawnRows, j: number, nz: number, row: number): void => {
  * along the rows kept for three rows; the bits of the labels each tile of `tile` cells holds go to
  * `has`.
  */
-const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8Array, square: Uint8Array] => {
+const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8Array, square: Uint8Array, walk: Uint8Array] => {
   const { nx, nz } = cells;
   const lab = cells.label;
   const d: DrawnRows = {
@@ -196,6 +200,7 @@ const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8A
     has,
     grass: scratch.u8("drawn.grass", nx * nz, null),
     square: scratch.u8("drawn.square", nx * nz, null),
+    walk: scratch.u8("drawn.walk", nx * nz, null),
     beside: scratch.u8("drawn.beside", 4 * nx, null),
   };
   d.beside.fill(0, 3 * nx, 4 * nx);
@@ -205,7 +210,7 @@ const drawnCells = (cells: Cells, tile: number, has: Uint8Array): [grass: Uint8A
     if (j + 1 < nz) besideRow(lab, nx, j + 1, d.beside);
     drawnRow(d, j, nz, Math.floor(j / tile) * tx);
   }
-  return [d.grass, d.square];
+  return [d.grass, d.square, d.walk];
 };
 
 /**
@@ -444,18 +449,22 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   }
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   if (!base) keepKerbs(cells, FILL.kerbBand);
+  if (!SETT_DISTRICTS.has(cover.header.district)) kerbWalks(cells);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
   const drawn = drawnCells(cells, n, has);
-  const [lawn, paving] = LAID;
+  const [lawn, paving, walk] = LAID;
   const lawns: GroundOut[] = [];
   // Paving first, a tile at a time, and the tile's lawns less it: the two simplified apart would
   // overlap and part along their border by up to `FILL.simplify` (`ground-strip-overlap`).
   for (let j0 = 0, t = 0; j0 < cells.nz; j0 += n)
     for (let i0 = 0; i0 < cells.nx; i0 += n, t++) {
       const [i1, j1] = [Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)];
-      const laid = has[t]! & BIT[paving.label]! ? tilePieces(cells, paving.label, drawn[1], paving.surface, i0, j0, i1, j1, true) : [];
+      const laid = [
+        ...(has[t]! & BIT[paving.label]! ? tilePieces(cells, paving.label, drawn[1], paving.surface, i0, j0, i1, j1, true) : []),
+        ...(has[t]! & BIT[walk.label]! ? tilePieces(cells, walk.label, drawn[2], walk.surface, i0, j0, i1, j1, true) : []),
+      ];
       out.push(...laid);
       if (has[t]! & BIT[lawn.label]!) lawns.push(...tilePieces(cells, lawn.label, drawn[0], lawn.surface, i0, j0, i1, j1, true, laid.map((g) => ringOf(g.outline))));
     }
@@ -494,15 +503,14 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
   };
 };
 
-/** Draw order of the surfaces the rule lays: each fill goes first among the pieces of its surface. */
-const ORDER: Readonly<Partial<Record<GroundSurface, number>>> = { water: 0, grass: 1, square: 2 };
 
 /** The chunk's ground with the fills, each at the start of its surface's pieces (the lowest layer), the frontages' first of all. */
 export const withFills = (ground: readonly GroundOut[], fills: readonly GroundOut[]): GroundOut[] => {
   const out = [...ground];
-  for (const s of ["square", "grass"] as const) {
+  // Each fill first among the pieces of its surface, in the ground's draw order.
+  for (const s of ["sidewalk", "square", "grass"] as const) {
     const mine = fills.filter((f) => f.surface === s && !f.front);
-    const at = out.findIndex((g) => (ORDER[g.surface] ?? 99) >= ORDER[s]!);
+    const at = out.findIndex((g) => ORDER[g.surface] >= ORDER[s]);
     out.splice(at < 0 ? out.length : at, 0, ...mine);
   }
   // The frontages' fills under everything (G-853): where one laps over another piece by the

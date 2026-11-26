@@ -16,7 +16,8 @@ const COVER_CELL = 12;
  * Labels of a cell: what the rule lays there (`COVERED`: a piece or a wall is there; `BLOCKED`: by a
  * bridge, left bare; `MIXED` shade and `CROWN` crowns, until the cells round them say what they are).
  */
-export const LABEL = { covered: 0, grass: 1, square: 2, other: 3, mixed: 4, blocked: 5, crown: 6 } as const;
+/** `walk`: the rule's paving that meets a carriageway, laid as a sidewalk (`bare-walks.ts`). */
+export const LABEL = { covered: 0, grass: 1, square: 2, other: 3, mixed: 4, blocked: 5, crown: 6, walk: 7 } as const;
 export const taken = (label: number): boolean => label === LABEL.covered || label === LABEL.blocked;
 
 /**

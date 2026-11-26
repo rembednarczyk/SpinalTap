@@ -429,7 +429,8 @@ export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
-const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, crossing: 5, sidewalk: 6, footway: 7, steps: 8, rail: 9, basin: 10 };
+/** The draw order of the surfaces (`chunkGround`), the fills' too (`withFills`). */
+export const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, crossing: 5, sidewalk: 6, footway: 7, steps: 8, rail: 9, basin: 10 };
 
 /** The least share of a lawn laid `holed` a chunk keeps (m²): a cell of the 0.1 m grid, and not turned over by the rounding. */
 const MIN_SHARE = 0.01;
