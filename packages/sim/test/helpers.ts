@@ -1,5 +1,6 @@
-import { type Contract, EMPTY_INPUT, type InputFrame, type Vec3, contractTag } from "@seki/core";
+import { type Contract, EMPTY_INPUT, type InputFrame, VEHICLE_SIZE, type Vec3, contractTag } from "@seki/core";
 import { type Entity, Simulation, type SimulationOptions, ground } from "../src";
+import { PARKED_CARS } from "../src/content/parked-cars";
 
 export const input = (partial: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...partial });
 
@@ -22,6 +23,25 @@ export const teleportPlayer = (sim: Simulation, position: Vec3, yaw = 0, pitch =
  * Mori's clinic on the deptak; these tests start out here instead.
  */
 export const STREET_START: Vec3 = ground(70, -50);
+
+/**
+ * The parked sedan nearest the street tests' square whose left side is clear, and where she stands
+ * beside it: a car in a car park's bays has its neighbours 2.5 m off, and she would stand in one.
+ */
+export const sedanBeside = (): { index: number; stand: Vec3 } => {
+  const out = VEHICLE_SIZE.sedan.width / 2 + 0.7;
+  // The car's left in the world (left-handed, y up): its heading (sin, cos) turned to (-cos, sin).
+  const standOf = (c: (typeof PARKED_CARS)[number]): Vec3 => ({ x: c.x - Math.cos(c.yaw) * out, y: c.y + 0.05, z: c.z + Math.sin(c.yaw) * out });
+  const d = (c: (typeof PARKED_CARS)[number]) => Math.hypot(c.x - STREET_START.x, c.z - STREET_START.z);
+  const clear = (i: number) => {
+    const s = standOf(PARKED_CARS[i]!);
+    return PARKED_CARS.every((o, k) => k === i || Math.hypot(o.x - s.x, o.z - s.z) > 3.5);
+  };
+  const index = PARKED_CARS.map((c, i) => [c, i] as const)
+    .filter(([c, i]) => c.model === "sedan" && clear(i))
+    .sort(([a], [b]) => d(a) - d(b))[0]![1];
+  return { index, stand: standOf(PARKED_CARS[index]!) };
+};
 
 /**
  * The deptak where it opens onto Plac Łokietka (ADR-0045): in the chunk of the clinic, Neon

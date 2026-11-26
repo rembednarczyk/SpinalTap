@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { VEHICLE_SIZE } from "@seki/core";
-import { AISLE_ROOM, BAY_OFF, BAY_PITCH, aisleBays } from "../src/content/aisle-bays";
+import { VEHICLE_SIZE, pointInPairRingEvenOdd } from "@seki/core";
+import { AISLE_ROOM, BAY_OFF, BAY_PITCH, aisleBays, moduleAisles } from "../src/content/aisle-bays";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
-import { PARKED_CARS } from "../src/content/parked-cars";
+import { PARKED_CARS, SURFACE_PARKS } from "../src/content/parked-cars";
 
 /** The bays of a surface car park along its aisles (T-352): perpendicular rows either side, nose to the aisle. */
 
@@ -69,5 +69,48 @@ describe("the cars of the car parks with aisles (backlog 25.11, cars on the city
     expect(cars.filter((c) => c.model === "delivery")).toEqual([]);
     // 85 while a bay that drew the street's truck (5.8 m against a 5 m bay) stood empty: 97 of 645 bays.
     expect(cars.length).toBeGreaterThanOrEqual(95);
+  });
+});
+
+describe("aisles laid in a car park the map draws none in (the backlog's item of 25.11, part 2)", () => {
+  const rect = (w: number, h: number, a = 0): number[] => {
+    const [c, s] = [Math.cos(a), Math.sin(a)];
+    return [[0, 0], [w, 0], [w, h], [0, h]].flatMap(([u, v]) => [u! * c - v! * s, u! * s + v! * c]);
+  };
+
+  it("lays one double-loaded module along the long side of a park 17-33 m across, centred", () => {
+    const [aisle] = moduleAisles(rect(40, 20));
+    expect(moduleAisles(rect(40, 20))).toHaveLength(1);
+    // Along x at z 10, from end to end of the outline.
+    expect(aisle![1]).toBeCloseTo(10);
+    expect(aisle![3]).toBeCloseTo(10);
+    expect(Math.abs(aisle![2]! - aisle![0]!)).toBeGreaterThan(39);
+  });
+
+  it("lays as many modules as fit across, along the long side whatever the outline's turn", () => {
+    const two = moduleAisles(rect(60, 36));
+    expect(two).toHaveLength(2);
+    // The outer modules flush to the long sides (8 m from the axis to a row's back, half a metre's room): rows at the kerbs.
+    expect(two.map((a) => a[1]!).sort((a, b) => a - b)).toEqual([8.5, 27.5]);
+    const turned = moduleAisles(rect(20, 45, 0.6));
+    expect(turned).toHaveLength(1);
+    const [x0, z0, x1, z1] = turned[0]!;
+    // The long side runs along the turned v axis: (-sin, cos) of 0.6.
+    expect(Math.abs((x1! - x0!) * Math.cos(0.6) + (z1! - z0!) * Math.sin(0.6))).toBeLessThan(0.1);
+  });
+
+  it("lays none in a park under 17 m across, and keeps an aisle to its outline's inside", () => {
+    expect(moduleAisles(rect(50, 16))).toHaveLength(0);
+    // An L: 40 m along x and 20 m deep for its first 20 m, 10 m deep beyond.
+    const l = [0, 0, 40, 0, 40, 10, 20, 10, 20, 20, 0, 20];
+    const aisles = moduleAisles(l);
+    for (const a of aisles) for (let i = 0; i < a.length; i += 2) expect(a[i]! <= 40.01 && a[i + 1]! <= 20.01).toBe(true);
+  });
+
+  it("parks the city's aisle-less car parks wide enough for a module", () => {
+    const laid = SURFACE_PARKS.filter((p) => !MAP_CHUNKS.some((c) => (c.carParks ?? []).some((q) => q.id === p.id && (q.aisles?.length ?? 0) > 0)));
+    expect(laid.length).toBeGreaterThanOrEqual(5);
+    const inLaid = PARKED_CARS.filter((c) => laid.some((p) => pointInPairRingEvenOdd(c.x, c.z, Array.from({ length: p.outline.length / 2 }, (_, i): [number, number] => [p.outline[2 * i]!, p.outline[2 * i + 1]!]))));
+    expect(inLaid.length).toBeGreaterThanOrEqual(80);
   });
 });
