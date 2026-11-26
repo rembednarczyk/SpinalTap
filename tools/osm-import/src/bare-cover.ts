@@ -329,6 +329,8 @@ export interface TownPlaces {
   readonly greens?: readonly (readonly Pt[])[];
   /** The map's building sites (`landuse=construction`, `building=construction`, G-866): no frontage either, a site's ground stays as the rule's first pass leaves it. */
   readonly sites?: readonly (readonly Pt[])[];
+  /** The streets' carriageways (no service way, `WALK_STREETS`): the rule's paving that meets one is a sidewalk (`bare-walks.ts`). */
+  readonly streets?: readonly (readonly Pt[])[];
 }
 
 const NO_PLACES: TownPlaces = { areas: [], stops: [], shops: [] };
@@ -449,7 +451,12 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   }
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   if (!base) keepKerbs(cells, FILL.kerbBand);
-  if (!SETT_DISTRICTS.has(cover.header.district)) kerbWalks(cells);
+  if (!SETT_DISTRICTS.has(cover.header.district) && town.streets?.length) {
+    const [street, place] = [scratch.u8("walks.street", cells.label.length), scratch.u8("walks.place", cells.label.length)];
+    for (const s of town.streets) cells.mark(s, street);
+    for (const g of ground) if (!g.front && (g.surface === "square" || g.surface === "cobble")) cells.mark(ringOf(g.outline), place);
+    kerbWalks(cells, street, place);
+  }
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
@@ -491,7 +498,7 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     }
     return g;
   };
-  const [wallGrid, areaGrid, greenGrid, siteGrid] = [grid(walls), grid(town.areas), grid(town.greens ?? []), grid(town.sites ?? [])];
+  const [wallGrid, areaGrid, greenGrid, siteGrid, streetGrid] = [grid(walls), grid(town.areas), grid(town.greens ?? []), grid(town.sites ?? []), grid(town.streets ?? [])];
   return (rect, ground, shops) => {
     const cover = coverFor(covers, { x: (rect.minX + rect.maxX) / 2, z: (rect.minZ + rect.maxZ) / 2 });
     if (!cover) return [];
@@ -499,7 +506,7 @@ export const coverFiller = (covers: readonly Cover[], walls: readonly (readonly 
     const pick = (g: ReturnType<typeof grid>) => g.query(near.minX, near.minZ, near.maxX, near.maxZ).filter((w) => rectsOverlap(w.box, near)).map((w) => w.ring);
     const stops = town.stops.filter((p) => p.x > rect.minX - FILL.platform && p.x < rect.maxX + FILL.platform && p.z > rect.minZ - FILL.platform && p.z < rect.maxZ + FILL.platform);
     const fronts = (town.fronts ?? []).filter((f) => rectsOverlap(ringBounds(f.line), { minX: rect.minX - f.reach - FILL.zoneMargin, minZ: rect.minZ - f.reach - FILL.zoneMargin, maxX: rect.maxX + f.reach + FILL.zoneMargin, maxZ: rect.maxZ + f.reach + FILL.zoneMargin }));
-    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts, greens: pick(greenGrid), sites: pick(siteGrid) });
+    return coverFills(rect, cover, ground, pick(wallGrid), { areas: pick(areaGrid), stops, shops, fronts, greens: pick(greenGrid), sites: pick(siteGrid), streets: pick(streetGrid) });
   };
 };
 

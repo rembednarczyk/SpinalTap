@@ -33,6 +33,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
+import { streetRings } from "./bare-walks.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
@@ -465,7 +466,7 @@ const generateMap = (
   // Walls, fences and hedges (ADR-0077) clear of the buildings, carriageways, steps and the ways through them.
   const barriers = worldBarriers(data, lines, areas, { buildings, bands, lines, ...ruinTops(lod1) });
   const heights = { ...(lod1 ? { lod1: lod1Index(lod1) } : {}), ...(lod2 ? { lod2: lod2Index(lod2) } : {}), orphans: new Set([...orphans].map((p) => p.id)) };
-  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines), frontages(lines)));
+  const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), { ...townPlaces(data, areas, pathLoops(lines), frontages(lines)), streets: streetRings(lines, bands) });
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
   const results = chunks.map((c, i) => withCanopies(generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill), areas, c.rect, src, terrains[i]!, LUBLIN_ANCHOR.altitude));
