@@ -14,7 +14,7 @@ import { buildingElements, parseLod1, parseLod2 } from "../src/citygml.ts";
 import { decode, encode, loadLod1, loadLod2, tileKey } from "../src/extracts.ts";
 import { puwgToWorld, worldToEn } from "../src/frame.ts";
 import { gameBuildings } from "../src/game.ts";
-import { readGpkgLines } from "../src/gpkg.ts";
+import { readGpkgColumns, readGpkgLines } from "../src/gpkg.ts";
 import { matchFootprints } from "../src/match.ts";
 import { footprint, iou } from "../src/overlap.ts";
 import { barrierStats } from "../src/analysis.ts";
@@ -121,6 +121,8 @@ describe("GeoPackage lines", () => {
     db.prepare("INSERT INTO OT_X_L VALUES (?, ?, ?)").run("a1", "ściana oporowa", new Uint8Array(wkb.buffer));
     db.close();
     expect(readGpkgLines(file)).toEqual([{ id: "a1", kind: "ściana oporowa", lines: [[[748000, 381000], [748010, 381000]]] }]);
+    // Any columns, by name; an empty one is null.
+    expect(readGpkgColumns(file, ["RODZAJ", "LOKALNYID"])).toEqual([{ id: "a1", values: { RODZAJ: "ściana oporowa", LOKALNYID: "a1" }, lines: [[[748000, 381000], [748010, 381000]]] }]);
   });
 });
 
