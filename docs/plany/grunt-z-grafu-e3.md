@@ -53,3 +53,21 @@ To lista do przejrzenia przed przyjęciem baz.
 Kontrole jednolitości chodnika w dzielnicach z grafem uznają za skrzyżowanie dysk węzła o zasięgu `cornerReach`, tak jak graf (`corner-zones.ts`). Poza grafem zostaje stałe 4 m, więc bazy na main się nie zmieniają. Wynik na Krakowskim (main → E3-1 → E3-2): `sidewalk-width-jump` 88 → 109 → 91, `sidewalk-step` 154 → 147 → 135, `sidewalk-gap` 118 → 98 → 89, `sidewalk-surface-patch` 169 → 84 → 82.
 
 Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo zatokę (Plac Wolności, Radziwiłłowska, Bernardyńska) i zwężenia przy budynkach. Przejrzę je przy przyjmowaniu baz.
+
+### Runda 3: pozostałe rodzaje wyższe niż na main
+
+- **`kerb-fit-sparse` 0 → 5 → 0.** Kontrola szuka ulic zwężonych do zmapowanych chodników. Szerokość z BDOT10k nie pochodzi z dopasowania, tak jak pomiar z ortofoto, który kontrola już pomija, więc teraz pomija też ulice z BDOT10k w dzielnicach z grafem.
+- **Lubartowska: spór BDOT10k z wyposażeniem z OSM (do decyzji).** BDOT10k daje 9 m (w40050981) i 10 m (w742414722), a ortofoto 7,5 m i 12,5 m. Na szerszej jezdni z BDOT10k lądują zmapowane w OSM rzeczy, które leżą przy krawężniku:
+  - linie słupków w1514057822, w1514057825 i w1514057828 (`osm-bollard-line-missing`: 3 z 18, 3 z 6 i 0 z 7 słupków);
+  - trzy ławki n6681995509–11 przy (424; −30) (`osm-furniture-missing`).
+  
+  To dane OSM, które wskazują krawężnik węższy niż BDOT10k. Reguła „BDOT10k wygrywa zawsze” zostaje, a spór idzie do przeglądu.
+- **Do przejrzenia przy przyjmowaniu baz:**
+  - `bus-stop-on-fill` (233,9; −164,2 i 454,1; 16,2);
+  - `ground-ring-self-cross` (173; 44 i 211; 16, małe kawałki chodnika);
+  - `kerb-jag` (100,2; 97,9 0,62 m: chodnik obiegający koniec pasa zieleni; 280,8; −170,7 0,51 m);
+  - `bollard-blocks-mouth` (−98; −99 i −97; −94);
+  - `bay-strip-sparse` (w471191535);
+  - `door-floating` (151; −103);
+  - `lawn-strip-on-paving` (336; −230);
+  - `lane-dead-end` (Peowiaków: dwa pasy z BDOT10k, skrzyżowanie łączy jeden; ślepy koniec był już na main).
