@@ -33,6 +33,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
+// The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one, after `cutSidewalk`.
 import { graphBands } from "./streets/graph-bands.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
@@ -266,6 +267,14 @@ const estimatedSide =
   (source: string, side: 1 | -1): boolean =>
     !measured.has(source) || orthoSides(source)?.[side > 0 ? 0 : 1] === false;
 
+/** The orthophoto's cover class at a point, `COVER.none` off the covers or without them. */
+const coverReader =
+  (covers: readonly Cover[] | undefined) =>
+  (p: Pt): number => {
+    const c = covers && coverFor(covers, p);
+    return c ? coverAt(c, p.x, p.z) : COVER.none;
+  };
+
 /** A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760); a slit is laid edge to edge (G-777). */
 const patchBand = (of: Band, ring: Pt[], slit?: true): Band => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true, patch: true, ...(slit ? { slit } : {}) });
 
@@ -402,9 +411,9 @@ const generateMap = (
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
-  // The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one.
-  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
-  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimatedSide(measured)));
+  const estimated = estimatedSide(new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id)));
+  const coverOf = coverReader(covers);
+  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimated, coverOf));
   // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
   const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
   const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);
@@ -418,12 +427,8 @@ const generateMap = (
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
   // A moved carriageway's strip to a lawn wider than a kerb is the lawn's where the orthophoto is green (G-825 r3).
-  const coverOf = (p: Pt) => {
-    const c = covers && coverFor(covers, p);
-    return c ? coverAt(c, p.x, p.z) : COVER.none;
-  };
   // The zebras are fitted to the kerbs after (`laidZebras`, G-836): a strip is laid whatever zebra the map draws over it.
-  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
+  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimated, walks, moved, coverOf);
   for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));

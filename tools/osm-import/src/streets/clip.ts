@@ -59,6 +59,9 @@ export const rings = (a: Area): Pt[][] => {
   });
 };
 
+/** The holes of an area, each as a ring (counter-clockwise). */
+export const holesOf = (a: Area): Pt[][] => a.filter((p) => !isPositive(p)).map((p) => ccw(toPts(p)));
+
 /** Whether a point lies in the area (NonZero, holes out). */
 export const holds = (a: Area, p: Pt): boolean => {
   let wind = 0;

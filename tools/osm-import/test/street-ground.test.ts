@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type Pt } from "../src/geometry.ts";
 import { type Area, areaOfRing, holds, join, sizeOf, within } from "../src/streets/clip.ts";
-import { type StreetEdge, streetGround } from "../src/streets/street-ground.ts";
+import { type StreetEdge, streetAreas, streetGround } from "../src/streets/street-ground.ts";
 
 /** ADR-0104 E1: the streets' ground from the street graph, on made-up junctions. */
 
@@ -120,6 +120,17 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     ]);
     const c = areaOf(g.carriageway);
     for (const x of [-30, -15, 15, 30]) expect(holds(c, { x, z: 0 })).toBe(false);
+  });
+
+  it("a verge keeps the sidewalk off the kerb and is left bare for the cover", () => {
+    const a = streetAreas([{ ...street("A", [{ x: -50, z: 0 }, { x: 50, z: 0 }], 4), vergeLeft: 1.5, vergeRight: 1.5 }]);
+    for (const side of [1, -1]) {
+      expect(holds(a.verges, { x: 0, z: side * 4.75 })).toBe(true);
+      expect(holds(a.sidewalks, { x: 0, z: side * 4.75 })).toBe(false);
+      expect(holds(a.sidewalks, { x: 0, z: side * 6.75 })).toBe(true);
+      expect(holds(a.sidewalks, { x: 0, z: side * 8.1 })).toBe(false);
+    }
+    expect(overlap(a.verges, join(a.c, a.sidewalks))).toBeLessThan(0.01);
   });
 
   it("a zebra spans its carriageway kerb to kerb and no further", () => {

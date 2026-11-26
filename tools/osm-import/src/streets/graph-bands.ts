@@ -20,7 +20,8 @@ import { ALL_CHUNKS } from "../config.ts";
 import { type Line } from "../features.ts";
 import { type Pt, type Rect, lineLength, offsetLine, pointInRing, rectsOverlap, ringBounds, signedArea } from "../geometry.ts";
 import { type Tags } from "../osm.ts";
-import { type Area, areaOfRing, grown, join, less, rings, within } from "./clip.ts";
+import { COVER } from "../../../orto/src/classify.ts";
+import { type Area, areaOfRing, grown, holesOf, join, less, rings, within } from "./clip.ts";
 import { STREETS, footwaysAlongStreets } from "./along-footways.ts";
 import { type StreetEdge, streetAreas } from "./street-ground.ts";
 
@@ -39,6 +40,10 @@ const kerbRadius = (highway: string): number => (highway.startsWith("primary") |
 
 /** How far out from the kerb a mapped sidewalk beside a street is read as its sidewalk (m, as `sidewalkIndex`). */
 const MAPPED_REACH = 7;
+/** The narrowest verge read off the orthophoto (m): narrower, a kerb's shadow or a tree's crown. */
+const VERGE_MIN = 0.75;
+/** The widest verge read (m), and the step it is read at. */
+const [VERGE_MAX, VERGE_STEP] = [4, 0.25];
 /** The narrowest gap to a mapped sidewalk that is asphalt by a street of estimated width (m, `kerbFills`' `ROAD_GAP`). */
 const ROAD_GAP = 1;
 /** The narrowest and widest sidewalk read off a mapped one (m). */
@@ -133,8 +138,44 @@ const taggedWalk = (t: Tags, side: 1 | -1): number | null => {
 
 type Boxed<B> = B & { box: Rect };
 
+/** The largest bare island within the streets' ground laid whole (m²): a traffic island, a corner's triangle between three streets. */
+const ISLAND_MAX = 400;
+/** The step of the orthophoto's samples over an island (m). */
+const ISLAND_STEP = 1;
+
+/**
+ * The islands the ground closes round by a street, up to `ISLAND_MAX`: laid whole, as lawn where the orthophoto shows green over most of them, else as
+ * sidewalk. Left bare, the sidewalks round a corner's triangle and their gaps closed made a ring of
+ * sidewalk round a bare hole (ADR-0104 E2, 185; 85).
+ */
+const islands = (street: Area, beside: readonly (Band & { readonly box: Rect })[], buildings: readonly (readonly Pt[])[], cover: (p: Pt) => number): { surface: "grass" | "sidewalk"; area: Area }[] => {
+  // The holes of all the ground round the streets: a corner's triangle is bounded by a footway or a lawn as often as by the street.
+  const near = beside.filter((b) => !b.bridge && !b.patch);
+  const ground = join(street, ...near.map((b) => areaOfRing(b.ring)), ...buildings.map(areaOfRing));
+  const touches = grown(street, 0.5);
+  return holesOf(ground).flatMap((hole) => {
+    if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(areaOfRing(hole), touches).length === 0) return [];
+    const box = ringBounds(hole);
+    let [green, all] = [0, 0];
+    for (let x = box.minX + ISLAND_STEP / 2; x < box.maxX; x += ISLAND_STEP)
+      for (let z = box.minZ + ISLAND_STEP / 2; z < box.maxZ; z += ISLAND_STEP)
+        if (pointInRing({ x, z }, hole)) {
+          all++;
+          if (cover({ x, z }) === COVER.green) green++;
+        }
+    // Opened by `THIN`, as the gaps: a hole between many bands has seams the rounding to 0.1 m crosses over.
+    return [{ surface: green * 2 > all ? ("grass" as const) : ("sidewalk" as const), area: grown(grown(areaOfRing(hole), -THIN), THIN) }];
+  });
+};
+
 /** The widest gap between a street and the ground beside it closed (m): as `kerbFills`' `KERB_REACH`. */
 const GAP = 3;
+/**
+ * The surfaces that rank over a sidewalk where they meet (`partitionGround`, besides the
+ * carriageways). Not the zebras: they are fitted to the kerbs after (`laidZebras`), and their
+ * rectangles as the map lays them reach past the kerb, a hole in the sidewalk left bare once fitted.
+ */
+const OVER_WALKS: ReadonlySet<string> = new Set(["steps", "rail", "basin"]);
 /** Half the narrowest gap laid (m): narrower, the chunks' rounding to 0.1 m crosses it over. */
 const THIN = 0.1;
 /** How far out from the kerb the gaps are closed (m): a wide sidewalk and the gap past it. */
@@ -159,6 +200,7 @@ export const graphBands = <B extends Band>(
   lines: readonly Line[],
   buildings: readonly (readonly Pt[])[],
   estimated: (source: string, side: 1 | -1) => boolean,
+  cover: (p: Pt) => number = () => COVER.none,
   districts = graphDistricts(),
 ): Boxed<B>[] => {
   if (districts.size === 0) return [...bands];
@@ -185,30 +227,62 @@ export const graphBands = <B extends Band>(
   // else the sidewalk by type.
   // The mapped lawns and water in the districts: no sidewalk over them, and one between a kerb and a mapped sidewalk is a verge.
   const greens = bands.filter((b) => (b.surface === "grass" || b.surface === "water") && !b.bridge && inside(b.box));
+  // The orthophoto's green counts too: many verges are no lawn of the map (G-825, `kerbFills`' strips to the lawn).
+  const green = (p: Pt) => cover(p) === COVER.green || greens.some((g) => p.x >= g.box.minX && p.x <= g.box.maxX && p.z >= g.box.minZ && p.z <= g.box.maxZ && pointInRing(p, g.ring));
   const vergeAt = (axis: readonly Pt[], off: number, side: 1 | -1): boolean => {
     const ps = probes(offsetLine(axis, side * off));
-    return ps.filter((p) => greens.some((g) => p.x >= g.box.minX && p.x <= g.box.maxX && p.z >= g.box.minZ && p.z <= g.box.maxZ && pointInRing(p, g.ring))).length * 2 > ps.length;
+    return ps.filter(green).length * 2 > ps.length;
   };
-  const sideOf = (b: Boxed<B>, side: 1 | -1): { kerb: number; walk: number } => {
-    const half = b.kerb!.half;
+  const vergeOf = (axis: readonly Pt[], kerb: number, side: 1 | -1): number => {
+    const ws: number[] = [];
+    for (let i = 0; i + 1 < axis.length; i++) {
+      const [a, b] = [axis[i]!, axis[i + 1]!];
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      if (len < 1e-9) continue;
+      // `offsetLine`'s left: the normal (-dz, dx).
+      const [nx, nz] = [(-(b.z - a.z) / len) * side, ((b.x - a.x) / len) * side];
+      for (let u = PROBE / 2; u < len; u += PROBE) {
+        const [px, pz] = [a.x + ((b.x - a.x) * u) / len, a.z + ((b.z - a.z) * u) / len];
+        let t = 0;
+        while (t < VERGE_MAX && green({ x: px + nx * (kerb + t + VERGE_STEP / 2), z: pz + nz * (kerb + t + VERGE_STEP / 2) })) t += VERGE_STEP;
+        ws.push(t);
+      }
+    }
+    const w = median(ws) ?? 0;
+    return w < VERGE_MIN ? 0 : w;
+  };
+  // A side's kerb, verge and sidewalk: by the tags; else to the mapped sidewalk, past a verge where
+  // the gap is green, its asphalt out to it where the street's width is the estimate and the gap a
+  // lane's (G-570, T-247: a parking lane or a bay); else the sidewalk by type.
+  const sideOf = (b: Boxed<B>, side: 1 | -1): { kerb: number; verge: number; walk: number } => {
+    const [axis, half] = [b.kerb!.line, b.kerb!.half];
     const tagged = taggedWalk(tags.get(b.source)!, side);
-    if (tagged !== null) return { kerb: half, walk: tagged };
-    const m = mappedWalk(b.kerb!.line, half, side, mappedWays);
-    if (m === null) return { kerb: half, walk: 2.5 };
-    if (m.near < ROAD_GAP) return { kerb: half, walk: m.far };
-    // A lawn in the gap is a verge: the mapped sidewalk stays past it, the kerb where it is.
-    if (vergeAt(b.kerb!.line, half + m.near / 2, side)) return { kerb: half, walk: 0 };
-    return estimated(b.source, side) ? { kerb: half + m.near, walk: Math.max(WALK_MIN, m.far - m.near) } : { kerb: half, walk: m.far };
+    if (tagged !== null) return { kerb: half, verge: tagged > 0 ? vergeOf(axis, half, side) : 0, walk: tagged };
+    const m = mappedWalk(axis, half, side, mappedWays);
+    if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
+    if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
+    if (vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
+    return estimated(b.source, side) ? { kerb: half + m.near, verge: 0, walk: Math.max(WALK_MIN, m.far - m.near) } : { kerb: half, verge: 0, walk: m.far };
   };
   const edges: StreetEdge[] = pieces.map((b) => {
     const [l, r] = [sideOf(b, 1), sideOf(b, -1)];
-    return { way: b.source, axis: b.kerb!.line, left: l.kerb, right: r.kerb, walkLeft: l.walk, walkRight: r.walk, kerbRadius: kerbRadius(tags.get(b.source)!.highway!) };
+    return { way: b.source, axis: b.kerb!.line, left: l.kerb, right: r.kerb, walkLeft: l.walk, walkRight: r.walk, vergeLeft: l.verge, vergeRight: r.verge, kerbRadius: kerbRadius(tags.get(b.source)!.highway!) };
   });
   const near = buildings.filter((r) => inside(ringBounds(r)));
   const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring)], join(...mapped.map((m) => areaOfRing(m.ring))));
+  // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
+  const replaced = new Set<Band>(mapped);
+  const kept = bands.filter((b) => !replaced.has(b) && !(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !b.bridge && inside(b.box));
+  // What ranks over a sidewalk in the partition (`partitionGround`) and is not a street's: its pieces less it, or it cut them to hairs the rounding crosses over.
+  const over = join(...kept.filter((b) => OVER_WALKS.has(b.surface)).map((b) => areaOfRing(b.ring)));
   const laid: Boxed<B>[] = [];
   const add = (from: B, area: Area, more: Partial<Band>) => {
-    for (const ring of rings(within(area, region))) laid.push({ ...from, ...more, ring, holed: true, box: ringBounds(ring) } as Boxed<B>);
+    const own = from.surface === "road" ? area : less(area, over);
+    for (const ring of rings(within(own, region))) {
+      // A hair of sidewalk (narrower than `THIN` twice on average) the rounding to 0.1 m would cross over: dropped.
+      if (from.surface !== "road" && (2 * Math.abs(signedArea(ring))) / perimeter(ring) < 2 * THIN) continue;
+      laid.push({ ...from, ...more, ring, holed: true, box: ringBounds(ring) } as Boxed<B>);
+    }
   };
   for (const o of areas.own) {
     const b = pieces[o.edge]!;
@@ -216,11 +290,11 @@ export const graphBands = <B extends Band>(
     else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, o.area, {});
   }
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});
-  // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
-  const replaced = new Set<Band>(mapped);
-  const kept = bands.filter((b) => !replaced.has(b) && !(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !b.bridge && inside(b.box));
   // Not to a lawn or water: what lies between the street and the green is the cover's to lay (`bare-cover.ts`).
-  if (edges.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, kerbGaps(areas.c, areas.sidewalks, kept.filter((b) => b.surface !== "grass" && b.surface !== "water"), near), {});
+  // The verges are no gaps: left bare, for the cover's lawn.
+  const gaps = less(kerbGaps(join(areas.c, areas.verges), areas.sidewalks, kept.filter((b) => b.surface !== "grass" && b.surface !== "water"), near), areas.verges);
+  if (edges.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, gaps, {});
+  for (const island of islands(join(areas.c, areas.sidewalks, gaps, areas.verges), kept, near, cover)) add({ surface: island.surface, ring: [], bridge: false, source: edges[0]!.way } as unknown as B, island.area, {});
   const out: Boxed<B>[] = [];
   for (const b of bands) {
     if (!(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !replaced.has(b)) {

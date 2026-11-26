@@ -34,6 +34,9 @@ export interface StreetEdge {
   /** m of sidewalk past the kerb on each side; 0, none. */
   readonly walkLeft: number;
   readonly walkRight: number;
+  /** m of verge between the kerb and the sidewalk on each side (ADR-0080's `verge`); 0 or none, the sidewalk at the kerb. */
+  readonly vergeLeft?: number;
+  readonly vergeRight?: number;
   /** The radius of its kerb's corners at its junctions (m). */
   readonly kerbRadius: number;
 }
@@ -147,9 +150,13 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
 };
 
 /** A side's corridor: the strip of the side from its axis out past its sidewalk, square ends (a dead end's sidewalk stops square; a junction's corners are in its disc). */
+/** A side's kerb, verge and sidewalk (m). */
+const sideOf = (e: StreetEdge, side: 1 | -1): { kerb: number; verge: number; walk: number } =>
+  side > 0 ? { kerb: e.left, verge: e.vergeLeft ?? 0, walk: e.walkLeft } : { kerb: e.right, verge: e.vergeRight ?? 0, walk: e.walkRight };
+
 const corridor = (e: StreetEdge, side: 1 | -1): Area => {
-  const [kerb, walk] = side > 0 ? [e.left, e.walkLeft] : [e.right, e.walkRight];
-  const outer = kerb + walk + CORRIDOR_MARGIN;
+  const { kerb, verge, walk } = sideOf(e, side);
+  const outer = kerb + verge + walk + CORRIDOR_MARGIN;
   return band(offsetLine(e.axis, (side * outer) / 2), outer / 2);
 };
 
@@ -162,6 +169,8 @@ export interface StreetAreas {
   readonly own: readonly { readonly edge: number; readonly surface: "road" | "sidewalk"; readonly area: Area }[];
   /** The sidewalks no street's sides reach: of `walks` given beyond theirs. */
   readonly rest: Area;
+  /** The verges between the kerbs and the sidewalks: left bare, for the orthophoto's cover to lay (`bare-cover.ts`). */
+  readonly verges: Area;
 }
 
 /** A node's disc: as far as its widest street's kerb, the corner and `extra` past it. */
@@ -182,16 +191,19 @@ export const streetAreas = (edges: readonly StreetEdge[], buildings: readonly (r
   const corners = all.map((j) => {
     const r = Math.max(...j.edges.map((k) => edges[k]!.kerbRadius));
     const at = sides.filter((x) => j.edges.includes(x.edge));
-    return at.length === 0 ? [] : within(nodeDisc(edges, j, Math.max(...at.map((x) => (x.side > 0 ? edges[x.edge]!.walkLeft : edges[x.edge]!.walkRight)))), grown(join(...at.map((x) => x.corridor)), r));
+    return at.length === 0 ? [] : within(nodeDisc(edges, j, Math.max(...at.map((x) => sideOf(edges[x.edge]!, x.side).walk + sideOf(edges[x.edge]!, x.side).verge))), grown(join(...at.map((x) => x.corridor)), r));
   });
+  const verges: Area[] = [];
   edges.forEach((e, i) => {
     for (const side of [1, -1] as const) {
-      const w = side > 0 ? e.walkLeft : e.walkRight;
-      if (w <= 0) continue;
-      const kerb = side > 0 ? e.left : e.right;
+      const { kerb, verge, walk } = sideOf(e, side);
+      if (walk <= 0) continue;
       const zone = join(corridor(e, side), ...all.flatMap((j, k) => (j.edges.includes(i) ? [corners[k]!] : [])));
       zones.push({ edge: i, zone });
-      grownWalks.push(within(grown(within(c, grown(zone, w + kerb)), w), zone));
+      const local = within(c, grown(zone, verge + walk + kerb));
+      const inner = verge > 0 ? grown(local, verge) : local;
+      grownWalks.push(within(less(grown(local, verge + walk), inner), zone));
+      if (verge > 0) verges.push(within(less(inner, local), zone));
     }
   });
   const built = join(...buildings.map(areaOfRing));
@@ -202,7 +214,7 @@ export const streetAreas = (edges: readonly StreetEdge[], buildings: readonly (r
     ...edges.map((e, i) => ({ edge: i, surface: "road" as const, area: within(c, join(grown(carriagewayOf(e), SLIVER), ...all.filter((j) => j.edges.includes(i)).map((j) => nodeDisc(edges, j, 0)))) })),
     ...zones.map((z) => ({ edge: z.edge, surface: "sidewalk" as const, area: within(sidewalks, z.zone) })),
   ];
-  return { c, sidewalks, nodes: all, own, rest: less(sidewalks, join(...zones.map((z) => z.zone))) };
+  return { c, sidewalks, nodes: all, own, rest: less(sidewalks, join(...zones.map((z) => z.zone))), verges: less(join(...verges), join(c, sidewalks, built)) };
 };
 
 /** The streets' ground: carriageways with their corners, sidewalks, zebras. */
