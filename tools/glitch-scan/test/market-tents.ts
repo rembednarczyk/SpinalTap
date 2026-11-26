@@ -69,3 +69,13 @@ export const tentsOnBuildings = (markets: readonly TentMarket[], inBuilding: (x:
       return area > ON_BUILDING ? [{ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${m.id}: the tent at ${x.toFixed(1)},${z.toFixed(1)} lies ${area.toFixed(1)} m² over a building` }] : [];
     }),
   );
+
+/**
+ * `market-without-tents`: a market of the props plan with no tents mapped from the orthophoto, its
+ * stalls laid in rows of the generator's own rather than under its real roofs (a tracking kind: the
+ * markets left to map, G-964).
+ */
+export const marketsWithoutTents = (markets: readonly (Omit<TentMarket, "tents"> & { readonly tents?: readonly Tent[] })[]): Finding[] =>
+  markets
+    .filter((m) => (m.tents?.length ?? 0) === 0 && m.polygon.length >= 6)
+    .map((m) => ({ at: `${m.polygon[0]!.toFixed(0)},${m.polygon[1]!.toFixed(0)}`, what: `${m.id}: no tents mapped` }));
