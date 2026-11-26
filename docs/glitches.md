@@ -12,6 +12,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
 - Pakiet właściciela: packages/sim (content/lublin)
 
+### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
+- Status: zgłoszone (24.11, przegląd kuratora K5a)
+- Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
+- Dowód: NMPT ±0,1 m nad terenem po obu stronach (−5,0…−5,3), bez uskoku NMT; po K5a (T-350) cały mur ma jedną wysokość 1,4 m od osi
+- Ważność: S4 · Zasięg: ok. 7 m muru
+- Poprawka: odcinek jako niski krawężnik (ok. 0,3 m) albo poza importem po potwierdzeniu zdjęciem od Królewskiej
+- Pakiet właściciela: tools/osm-import
+
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
