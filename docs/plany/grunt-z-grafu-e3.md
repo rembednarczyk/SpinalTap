@@ -129,3 +129,17 @@ Zatoka przy Bramie Krakowskiej 01 jest znowu brukiem deptaka. Trzy miejsca, w kt
 - **Wysepki grafu:** dziura, która dotyka jezdni ulicy wyłączonej z ruchu, należy do tej ulicy. Wcześniej graf kładł tam plac i marsz wypełnień deptaka zatrzymywał się na nim.
 
 Na próbnych tablicach przechodzą wszystkie testy deptaka i rampy (40 z 40): `deptak-ends`, `deptak-night`, `alchemia-deptak`, `traffic-deptak`, `traffic-ramp`, `kerb-fill-places`. Tablice main bez zmian.
+
+### Runda 8: ruch i stan listy testów (próbne tablice)
+
+- **`traffic-bodies` (Cicha).** Test brał długość pierwszego odcinka trasy za odległość do zakrętu. Z rampą osi na środek jezdni z BDOT10k pierwszy odcinek ma 2,2 m. Teraz test szuka zakrętu po zmianie kierunku o ponad 20°. Zielony na main i na próbnych tablicach.
+- **Przechodzą już na próbnych tablicach** (po zmianach rund 5–7):
+  - `traffic-bodies-shifted` (łuk Kołłątaja);
+  - `traffic-junction-drive` (3 Maja przy Żołnierzy Niepodległej);
+  - `crowd`;
+  - `flee-wall`.
+- **Zostają:**
+  - parkowanie: `traffic` (auta w parkingach przy krawężniku, w471191535 przy Peowiaków bez aut) i `kerb-bay-cars` (ten sam pas). Pas jest asfaltem na obu zestawach tablic, więc przyczyna leży gdzie indziej, prawdopodobnie pasy ruchu Peowiaków przesunięte osią z BDOT10k nad pas postojowy;
+  - `traffic` G-090: pas ulicy dwukierunkowej zjeżdża z asfaltu przy (−98,6; −19,05). Nowe;
+  - `grass-under-paving`: Plac Litewski (pas gołej ziemi na krawędzi chunku) i trawa na chodniku 3 Maja przy klinice (G-667);
+  - zatoka autobusowa przy Narutowicza.
