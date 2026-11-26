@@ -58,6 +58,8 @@ export interface StreetGround {
 
 /** How far past the widest street's kerb and its corner a junction's disc reaches (m). */
 const JUNCTION_MARGIN = 1;
+/** The farthest a junction's corner may round off (m): two streets meeting at a few degrees would close for a hundred metres. */
+const CORNER_REACH_MAX = 40;
 /** How fast a street's kerb narrows from a wider piece to a narrower one (m a metre, ADR-0080 decision 1). */
 const RAMP = 0.1;
 /** The longest such ramp (m). */
@@ -125,6 +127,30 @@ const awayFrom = (axis: readonly Pt[], p: Pt, len: number): Pt => {
   return line[line.length - 1]!;
 };
 
+/** The directions the node's streets leave it in: one an axis ending there, two an axis through it. */
+const armsAt = (edges: readonly StreetEdge[], j: Node): number[] =>
+  j.edges.flatMap((i) => {
+    const axis = edges[i]!.axis;
+    const k = axis.findIndex((p) => key(p) === key(j.at));
+    const toward = (q: Pt | undefined) => (q ? [Math.atan2(q.z - j.at.z, q.x - j.at.x)] : []);
+    return k < 0 ? [] : [...toward(axis[k - 1]), ...toward(axis[k + 1])];
+  });
+
+/**
+ * How far a junction's disc reaches: past where the rounding of its sharpest corner meets the two
+ * kerbs. Two kerbs `wide` off axes at an angle θ meet `wide / sin(θ/2)` from the node, and an arc of
+ * radius `r` touches them `r / tan(θ/2)` on from there (a fillet, the corner of two lines rounded);
+ * a disc short of the touching points cut the arc and left a step in the kerb at an acute corner.
+ */
+export const cornerReach = (arms: readonly number[], wide: number, r: number): number => {
+  const sorted = [...arms].sort((a, b) => a - b);
+  const gaps = sorted.map((a, i) => (i + 1 < sorted.length ? sorted[i + 1]! - a : sorted[0]! + 2 * Math.PI - a));
+  const sharp = Math.min(Math.PI, ...gaps.filter((g) => g > 1e-3));
+  const t = Math.tan(sharp / 2);
+  const touch = t > 1e-6 ? Math.hypot((wide + r) / t, wide) : Infinity;
+  return Math.min(CORNER_REACH_MAX, Math.max(wide + r, touch)) + JUNCTION_MARGIN;
+};
+
 /**
  * The carriageways with each junction's concave corners rounded by its streets' kerb radius, and
  * each joint of one street's two pieces closed: their square ends at a slant left a notch outside
@@ -141,7 +167,7 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
     }
     const r = Math.max(...j.edges.map((i) => edges[i]!.kerbRadius));
     if (r <= 0) return [];
-    const reach = wide + r + JUNCTION_MARGIN;
+    const reach = cornerReach(armsAt(edges, j), wide, r);
     // Closed within a wider disc than kept, so the closing's own edge is out of the kept one; of the
     // node's own streets only: a carriageway near it that does not meet it (a dual road's other half)
     // is not cornered to it, or its median under 2r wide went under the asphalt.
@@ -175,8 +201,8 @@ export interface StreetAreas {
   readonly verges: Area;
 }
 
-/** A node's disc: as far as its widest street's kerb, the corner and `extra` past it. */
-const nodeDisc = (edges: readonly StreetEdge[], j: Node, extra: number): Area => disc(j.at, halves(edges, j)[0] + Math.max(...j.edges.map((k) => edges[k]!.kerbRadius)) + extra + JUNCTION_MARGIN);
+/** A node's disc: as far as its sharpest corner's rounding (`cornerReach`) and `extra` past it. */
+const nodeDisc = (edges: readonly StreetEdge[], j: Node, extra: number): Area => disc(j.at, cornerReach(armsAt(edges, j), halves(edges, j)[0], Math.max(...j.edges.map((k) => edges[k]!.kerbRadius))) + extra);
 
 /**
  * The streets' carriageways with their corners and their sidewalks, and each street's share.

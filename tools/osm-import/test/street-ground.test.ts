@@ -89,6 +89,14 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     for (let x = -45; x <= -10; x += 0.5) expect(holds(s, { x, z: 4.05 })).toBe(true);
   });
 
+  it("a street meeting another at 60°: the acute corner's arc of 4 m reaches both kerbs, no step where the junction's disc ends", () => {
+    const d = { x: Math.cos(Math.PI / 3), z: Math.sin(Math.PI / 3) };
+    const g = streetGround([street("A", [{ x: -50, z: 0 }, { x: 0, z: 0 }, { x: 50, z: 0 }], 4, 2.5, 4), street("B", [{ x: 0, z: 0 }, { x: 50 * d.x, z: 50 * d.z }], 4, 2.5, 4)]);
+    for (const r of [...g.carriageway, ...g.sidewalks]) expect(jags(r)).toEqual([]);
+    // The arc touches A's kerb (8 + 4) / tan 30° ≈ 13.9 m east of the node, past a disc of 4 + 4 + 1 m.
+    expect(holds(areaOf(g.carriageway), { x: 10, z: 4.3 })).toBe(true);
+  });
+
   it("a crossroads and a bend: one smooth kerb", () => {
     const bend = Array.from({ length: 19 }, (_, i) => ({ x: 60 + 30 * Math.sin((i * Math.PI) / 36), z: -30 + 30 * Math.cos((i * Math.PI) / 36) }));
     const g = streetGround([
