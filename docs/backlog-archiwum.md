@@ -2,6 +2,12 @@
 
 Zamknięte pozycje [backlogu](backlog.md) (zrobione, w main albo zastąpione nowszą kolejnością) i migawki stanu dla dawnych sesji. Plik czyta się tylko w razie potrzeby, np. przy pytaniu, skąd wzięła się decyzja albo kiedy coś weszło do main. Nowe wpisy dopisujemy na górze.
 
+## Przeniesione 26.11
+
+Przegląd backlogu w trybie nocnym 26.11: pozycje zrobione w main.
+
+- **[24.11 ok. 12:00, prośba użytkownika] Holo-fara V2 według zdjęć.** Wzór: litografia fary z XIX w. (wieża zachodnia z hełmem cebulastym i latarnią, stromy dach nawy, niższe prezbiterium z oknami ostrołukowymi, kaplice z daszkami pulpitowymi, przypory) i model z brązu na Placu po Farze. Hologram ma pokrywać obecne fundamenty 1:1: bryła dopasowana do ich obrysu, nie odwrotnie. Osobny PR po girlandach. **Zrobione: #1021 (holo-fara V2 na fundamentach 1:1, z detalem z litografii i modelu z brązu).**
+
 ## Przeniesione 20.11
 
 Przegląd backlogu 20.11 (prośba użytkownika): pozycje zrobione w main albo z wykonaną decyzją; stałe decyzje z nich (tryb nieobecności, bramka czasu testów, liczba agentów, przegląd antywzorców) w [decyzje.md](decyzje.md).

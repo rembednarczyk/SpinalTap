@@ -58,12 +58,15 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       // On the ground at its middle; a piece of the parish church's foundations raised to their level (`levelTop`) on its low end.
       const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
       const lowEnd = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z));
-      // A retaining wall on a terrace's breakline from its lower side: the lowest ground at its faces and a metre to either side (T-351, G-971).
+      // A retaining wall on a terrace's breakline from its lower side: the lowest ground at its faces and a metre to
+      // either side (T-351, G-971), at its ends and middle, its top level (G-975).
       const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
       const stepped = b.kind === "retaining-wall" && nearBreakline(item.x, item.z);
-      const sides = [RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(item.x + across.x * d, item.z + across.z * d));
-      const ground = stepped ? Math.min(...sides) : groundY(item.x, item.z);
-      expect(Math.min(Math.abs(item.y - ground), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
+      const sides = (x: number, z: number) => Math.min(...[RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(x + across.x * d, z + across.z * d)));
+      const ground = stepped ? sides(item.x, item.z) : groundY(item.x, item.z);
+      // Holding a step, from the lowest of its ends and middle (G-975).
+      const levelled = stepped && b.rise === 0 ? Math.abs(item.y - Math.min(ground, sides(item.x - half.x, item.z - half.z), sides(item.x + half.x, item.z + half.z))) : Infinity;
+      expect(Math.min(Math.abs(item.y - ground), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity, levelled), `${item.x},${item.z}`).toBeLessThan(0.05);
     }
     expect(kinds.get("wall")).toBeGreaterThan(1500);
     expect(kinds.get("fence")).toBeGreaterThan(4000);
@@ -186,5 +189,43 @@ describe("a retaining wall by a stair flight (G-972)", () => {
       // The variant keeps the height in tenths, rounded: the top may fall half a tenth short.
       expect(top, `piece at ${item.x}`).toBeGreaterThanOrEqual(upper(end) + 0.5 - 0.06);
     }
+  });
+
+  it("draws its top level, as its solid stands, from under its low end (G-975)", () => {
+    // Both sides rising along the wall: the drawn top followed the foot's rise and fell 0.21-0.35 m
+    // under the solid's level top at a piece's low end (the curator's review of G-972).
+    const lower = (x: number) => -4.7 + 0.2 * x;
+    const upper = (x: number) => -2.5 + 0.3 * x;
+    const ground = (x: number, z: number) => (z > 0.2 ? lower(x) : upper(x));
+    const pieces = barrierPieces("retaining-wall", 1.2, [{ x: 0, z: 0 }, { x: 8, z: 0 }], ground, "plain", () => true);
+    expect(pieces.length).toBeGreaterThan(1);
+    for (const item of pieces) {
+      const b = barrierLayout(item.variant);
+      expect(b.rise, `piece at ${item.x}`).toBe(0);
+      const [a, e] = [item.x - b.length / 2, item.x + b.length / 2];
+      // Its foot at the lower side's low end, never over it; its top the parapet over the upper side's high end.
+      expect(item.y, `piece at ${item.x}`).toBeLessThanOrEqual(lower(a) + 0.01);
+      expect(item.y + b.height, `piece at ${item.x}`).toBeGreaterThanOrEqual(upper(e) + 0.5 - 0.01);
+    }
+  });
+
+  it("keeps every terrace wall's drawn top 0.45 m over its upper side at its ends and middle (G-975)", () => {
+    let seen = 0;
+    for (const item of Object.values(WORLD_BARRIERS).flat()) {
+      const b = barrierLayout(item.variant);
+      if (b.kind !== "retaining-wall" || !nearBreakline(item.x, item.z) || b.rise !== 0) continue;
+      const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
+      const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
+      // Only a wall holding a step (its sides over 0.5 m apart): not the kerb past the breakline's end (G-969).
+      const mid = [RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(item.x + across.x * d, item.z + across.z * d));
+      if (Math.max(...mid) - Math.min(...mid) <= 0.5) continue;
+      for (const t of [-1, 0, 1]) {
+        const [x, z] = [item.x + half.x * t, item.z + half.z * t];
+        const high = Math.max(...[RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(x + across.x * d, z + across.z * d)));
+        expect(item.y + b.height - high, `${item.x},${item.z} end ${t}`).toBeGreaterThanOrEqual(0.45);
+      }
+      seen++;
+    }
+    expect(seen).toBeGreaterThan(10);
   });
 });
