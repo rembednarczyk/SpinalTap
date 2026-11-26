@@ -109,8 +109,9 @@ export const crownTrees = (
   chms: readonly Chm[],
   trees: readonly GameTree[],
   structures: readonly Structure[] = [],
+  lod1: readonly Structure[] = [],
 ): { trees: CrownTree[]; stats: CrownStats } => {
-  const ctx: CrownContext = { site, keep: new KeepOut(site), structures: new StructureIndex(structures), covers, chms };
+  const ctx: CrownContext = { site, keep: new KeepOut(site), structures: new StructureIndex(structures), covers, chms, lod1: new StructureIndex(lod1) };
   const grids = rects.map((r) => crownGrid(r, ctx));
   const tops = grids.flatMap((g) => topsOf(g, ctx).map((i) => ({ g, i, p: centreOf(g, i), top: g.raw[i]! })));
   tops.sort((a, b) => b.top - a.top || a.p.z - b.p.z || a.p.x - b.p.x);

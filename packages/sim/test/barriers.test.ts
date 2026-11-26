@@ -158,6 +158,21 @@ describe("retaining walls off the terrace's breaklines (the curator's review of 
   });
 });
 
+describe("the terrace's wall before the cathedral's front, where the NMPT sees none (G-969)", () => {
+  it("stands as a kerb of 0.3 m past the breakline's end, not 1.4 m", () => {
+    const kerb = all.filter(({ item }) => barrierLayout(item.variant).kind === "retaining-wall" && item.x > 604.9 && item.x < 612 && item.z > -204 && item.z < -198);
+    expect(kerb.length).toBeGreaterThanOrEqual(2);
+    for (const { item } of kerb) expect(barrierLayout(item.variant).height, `${item.x},${item.z}`).toBeLessThanOrEqual(0.3);
+  });
+
+  it("keeps the wall along the cathedral's south wall, where the NMT steps, as it was", () => {
+    // x 612-643: the NMT steps 0.45-1.38 m on x 627-643, the NMPT a parapet 0.4-0.8 m (the curator's review of #1049).
+    const wall = all.filter(({ item }) => barrierLayout(item.variant).kind === "retaining-wall" && item.x > 612 && item.x < 644 && item.z > -212 && item.z < -195);
+    expect(wall.length).toBeGreaterThanOrEqual(8);
+    for (const { item } of wall) expect(barrierLayout(item.variant).height, `${item.x},${item.z}`).toBeGreaterThanOrEqual(1.3);
+  });
+});
+
 describe("a retaining wall by a stair flight (G-972)", () => {
   it("keeps its parapet over the upper side at both ends of a piece, the flight rising along it", () => {
     // A wall along x, its lower side north (z > 0) at -4.7, its upper side south rising 0.45 m a metre
