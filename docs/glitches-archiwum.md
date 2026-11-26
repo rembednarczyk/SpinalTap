@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-977 Rząd aut przy parapecie tarasu Placu Katedralnego: 1 auto z 11 stanowisk, na ortofoto ok. 13
+- Ważność: S4 · Zasięg: parking w179262652, rząd południowy x 552–590, z −199…−195
+- Opis: Rząd biegnie 5,5 m od alejki i zbiega się z murem w590597335 na zachód: tył hatchbacka 0,29–0,56 m od osi muru przy x 554–570 (vana 0,01–0,30), więc stanowiska odpadają na BREAK_ROOM 0,6 m (G-976). Ortofoto 2025-04: auta prostopadle z tyłami 0,5–0,9 m od osi. Propozycja: stanowisko przy linii nieciągłości cofa auto do 0,6 m od linii zamiast je odrzucać. T-352.
+- Status: naprawione (26.11, PR #1051 scalony); wcześniej: zgłoszone (26.11, przegląd kuratora PR #1048)
+- Pakiet właściciela: packages/sim (parked-cars.ts, aisle-bays.ts)
+- Naprawa (26.11, gałąź fix/g977-rzad-parapet): stanowisko dochodzące do linii nieciągłości odsuwa auto wzdłuż jego osi od muru (najwyżej 1 m) do 0,6 m od linii zamiast je odrzucać; w rzędzie przy parapecie 9 aut zamiast 1 (stanowiska wolne według SQUARE_TAKEN), w mieście 191 zamiast 183; baza skanu bez zmian
+
 ### G-976 Dziura w murze oporowym tarasu Placu Katedralnego przy zaparkowanych autach
 - Ważność: S3 · Zasięg: mur w590597335 przy x 558–561 i 573–576 na main (6 kolejnych miejsc po G-971)
 - Opis: Mur oporowy ustępuje zaparkowanemu autu (barrierBlocked: byParkedCar, 0,35 m od karoserii plus pół grubości muru), a stanowiska parkingu na tarasie dochodzą do linii muru. Na main nie ma muru przy hatchbacku na (559,5; −197,69) ani przy vanie na (574,5; −196,26): krawędź tarasu stoi otwarta nad uskokiem ok. 2 m. Po wyrównaniu terenu przy licu (G-971) stanowiska przy murze przestały odpadać na spadku (LEVEL_DROP) i dziur przybyło do 4 (x 561–566, 569–580). Poprawka: auto trzyma 0,6 m od linii nieciągłości (pół grubości muru, odstęp bariery od auta, zapas), więc mur stoi na całej długości; test breaklines.test.ts sprawdza mur co 0,5 m.

@@ -2207,13 +2207,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (26.11, przegląd kuratora G-972)
 - Pakiet właściciela: packages/engine (renderer/mapcity)
 
-### G-977 Rząd aut przy parapecie tarasu Placu Katedralnego: 1 auto z 11 stanowisk, na ortofoto ok. 13
-- Ważność: S4 · Zasięg: parking w179262652, rząd południowy x 552–590, z −199…−195
-- Opis: Rząd biegnie 5,5 m od alejki i zbiega się z murem w590597335 na zachód: tył hatchbacka 0,29–0,56 m od osi muru przy x 554–570 (vana 0,01–0,30), więc stanowiska odpadają na BREAK_ROOM 0,6 m (G-976). Ortofoto 2025-04: auta prostopadle z tyłami 0,5–0,9 m od osi. Propozycja: stanowisko przy linii nieciągłości cofa auto do 0,6 m od linii zamiast je odrzucać. T-352.
-- Status: zgłoszone (26.11, przegląd kuratora PR #1048)
-- Pakiet właściciela: packages/sim (parked-cars.ts, aisle-bays.ts)
-- Naprawa (26.11, gałąź fix/g977-rzad-parapet): stanowisko dochodzące do linii nieciągłości odsuwa auto wzdłuż jego osi od muru (najwyżej 1 m) do 0,6 m od linii zamiast je odrzucać; w rzędzie przy parapecie 9 aut zamiast 1 (stanowiska wolne według SQUARE_TAKEN), w mieście 191 zamiast 183; baza skanu bez zmian
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
