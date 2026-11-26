@@ -19,7 +19,7 @@ import { PLAC_LITEWSKI_DETAIL } from "./plac-litewski-detail";
 import { RYNEK_DETAIL, RYNEK_FURNITURE } from "./rynek-detail";
 import { GRODZKA_DETAIL, GRODZKA_SOLIDS } from "./grodzka-detail";
 import { DEPTAK_DETAIL, DEPTAK_SOLIDS } from "./deptak-detail";
-import { PLAC_ZAMKOWY_DETAIL } from "./plac-zamkowy-detail";
+import { PLAC_ZAMKOWY_DETAIL, PLAC_ZAMKOWY_SIGNS } from "./plac-zamkowy-detail";
 import { DWORZEC_DETAIL } from "./dworzec-detail";
 import { FARA_BENCHES, PO_FARZE_DETAIL } from "./po-farze-detail";
 import { LUBARTOWSKA_DETAIL, LUBARTOWSKA_FURNITURE } from "./lubartowska-detail";
@@ -221,6 +221,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
         ...furnitureProps(LUBARTOWSKA_FURNITURE.filter((p) => mapChunkOf(p.x, p.z) === c.id)),
         // The map's roofs on posts (G-063), last, so the ids before them stay.
         ...chunkCanopies(c),
+        // Plac Zamkowy's neon on the metro pavilion (its card, §13), last, so the ids before it stay.
+        ...PLAC_ZAMKOWY_SIGNS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id),
       ],
       ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
       ...(c.id === ALCHEMIA_CHUNK ? { cuts: ALCHEMIA_CUTS, vaults: ALCHEMIA_VAULTS } : {}),
