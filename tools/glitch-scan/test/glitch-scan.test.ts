@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type GroundSurface, type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -39,6 +39,7 @@ import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
 import { MOST, MOST_REGISTERED, isGroundSteps, isStreet, padOnRoadFindings } from "./pad-on-road";
+import { gaps as sidewalkGaps, junctionTest, steps as sidewalkSteps, stretches as sidewalkStretches, surfacePatches as sidewalkPatches, widthJumps as sidewalkWidthJumps } from "./sidewalk-kinds";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -96,11 +97,13 @@ import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { canopyWithoutTree } from "./canopy-trees";
+import { stallsOnPosts } from "./canopy-posts";
 import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
+import { type TentMarket, stallsOffTents, tentsOnBuildings } from "./market-tents";
 import { lampsBesideDeck } from "./lamp-deck";
 import { litStreetDark } from "./lit-dark";
 import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
@@ -150,7 +153,7 @@ import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./de
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
-import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
+import { areaSurface, pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
@@ -168,7 +171,7 @@ import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interio
 import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/capsule-room";
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
-import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { CANOPY_POST, LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, canopyPosts, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { LUBLIN_CONSTRUCTION_SITES } from "../../../packages/sim/src/content/lublin/construction";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
@@ -638,6 +641,30 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
   return true;
 };
 
+/**
+ * The sidewalks of every street with a carriageway (cars and the morning's deliveries), profiled
+ * station by station and cut at junctions and the map's edge (`sidewalk-kinds.ts`), once for the
+ * four kinds of their uniformity (the user's decision of 26.11).
+ */
+const SIDEWALKS = (() => {
+  let memo: ReturnType<typeof sidewalkStretches> | null = null;
+  return () => {
+    if (memo) return memo;
+    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
+    const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
+    const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
+    // The squares and pedestrian areas of the map (`areaSurface`: square, cobble): their paving meets the kerb as mapped.
+    const places = extractFeatures(SOURCE_OSM)
+      .areas.flatMap((a) => {
+        const surface = areaSurface(a.tags);
+        return surface === "square" || surface === "cobble" ? [{ surface, ring: a.ring, box: { minX: Math.min(...a.ring.map((q) => q.x)), maxX: Math.max(...a.ring.map((q) => q.x)), minZ: Math.min(...a.ring.map((q) => q.z)), maxZ: Math.max(...a.ring.map((q) => q.z)) } }] : [];
+      });
+    const mapped = (x: number, z: number, surface: GroundSurface) =>
+      places.some((p) => p.surface === surface && x >= p.box.minX && x <= p.box.maxX && z >= p.box.minZ && z <= p.box.maxZ && pointInRing({ x, z }, p.ring));
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets), mapped }, streets));
+  };
+})();
+
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
   let memo: readonly PatrolLane[] | null = null;
@@ -816,6 +843,15 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       .flat()
       .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column", "atm", "bike-rack", "food-cart", "container"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /** A market stall's canvas within 0.125 m of a canopy's post (G-966, T-346, `canopy-posts.ts`). */
+  "prop-on-canopy-post": () =>
+    stallsOnPosts(
+      LUBLIN_CHUNKS.flatMap((c) => (c.canopies ?? []).flatMap((k) => canopyPosts(k).map((p) => ({ id: k.id, x: p.x + k.x, z: p.z + k.z })))),
+      Object.values(WORLD_STREET_PROPS)
+        .flat()
+        .filter((i) => i.prop === "market-stall"),
+      CANOPY_POST,
+    ),
   /**
    * A market stall whose canvas (2.4 x 1.8 m at 2.35 m) reaches over a container or a food cart
    * (ADR-0058 stage 2): the cart's roof and the container's wall stand higher than the canvas.
@@ -2159,6 +2195,23 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
    * 150 m² of its open ground (sampled every metre, the chunks' rectangles in, its buildings out):
    * a market square left as bare paving.
    */
+  /**
+   * A market stall in a marketplace whose tents the props plan maps from the orthophoto (G-964,
+   * T-341: Targ na Ruskiej) standing under none of them, each tent grown by 0.3 m (`market-tents.ts`).
+   */
+  "market-stall-off-tent": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: (TentMarket & { kind: string })[] };
+    const markets = plan.items.filter((g) => g.kind === "market" && (g.tents?.length ?? 0) > 0 && g.polygon);
+    const stalls = Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "market-stall");
+    return stallsOffTents(markets, stalls);
+  },
+  /** A tent of the props plan's markets lying over a building by more than 2 m² (G-964, `market-tents.ts`). */
+  "market-tent-on-building": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: (TentMarket & { kind: string })[] };
+    return tentsOnBuildings(plan.items.filter((g) => g.kind === "market" && (g.tents?.length ?? 0) > 0), inBuilding);
+  },
   "marketplace-empty": () => {
     const stalls = Object.values(WORLD_STREET_PROPS)
       .flat()
@@ -2451,6 +2504,16 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   "lane-place-on-green": () =>
     lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's paving or asphalt under grass no lawn of the map holds nor the bare ground rule laid, 0.6-3.3 m from a carriageway: a strip to a lawn laid as the lawn's over the kerb's pavement (G-825, `lawn-strip-on-paving.ts`). */
+  /**
+   * The sidewalks' uniformity (the user's decision of 26.11, `sidewalk-kinds.ts`): along a street with
+   * a carriageway, stretch by stretch from junction to junction, the strip by the kerb paved as its
+   * district's rule has it (`sidewalk-rules.ts`), no gap of bare ground in the walk, no step between its
+   * pieces, no jump of its width with room beside it.
+   */
+  "sidewalk-surface-patch": () => sidewalkPatches(SIDEWALKS()),
+  "sidewalk-gap": () => sidewalkGaps(SIDEWALKS()),
+  "sidewalk-step": () => sidewalkSteps(SIDEWALKS()),
+  "sidewalk-width-jump": () => sidewalkWidthJumps(SIDEWALKS()),
   "lawn-strip-on-paving": () =>
     lawnStripOnPaving(
       MAP_CHUNKS,
