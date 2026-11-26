@@ -159,8 +159,25 @@ export const moduleAisles = (outline: readonly number[]): number[][] => {
   const { c, s } = best;
   // Back from (u, v) along the long side and across it to world (x, z).
   const world = (u: number, v: number): [number, number] => [Math.round((u * c - v * s) * 100) / 100, Math.round((u * s + v * c) * 100) / 100];
-  return Array.from({ length: k }, (_, j) => {
-    const v = start + j * MODULE;
-    return [...world(best.u[0], v), ...world(best.u[1], v)];
-  });
+  return Array.from({ length: k }, (_, j) => inside(pts, start + j * MODULE, best.u, world)).filter((l): l is number[] => l !== null);
+};
+
+/** Step of the walk along a laid aisle that keeps the longest run of it inside the outline (m). */
+const INSIDE_STEP = 0.5;
+
+/** The longest run inside the outline of the aisle at `v` from `u[0]` to `u[1]`: an outline that is no rectangle ends it early; null under 10 m. */
+const inside = (ring: readonly Pt[], v: number, u: readonly [number, number], world: (u: number, v: number) => [number, number]): number[] | null => {
+  let best: [number, number] | null = null;
+  let from: number | null = null;
+  for (let t = u[0]; t <= u[1] + 1e-9; t += INSIDE_STEP) {
+    const [x, z] = world(t, v);
+    const inRing = pointInPairRingEvenOdd(x, z, ring);
+    if (inRing && from === null) from = t;
+    if ((!inRing || t + INSIDE_STEP > u[1] + 1e-9) && from !== null) {
+      const to = inRing ? t : t - INSIDE_STEP;
+      if (!best || to - from > best[1] - best[0]) best = [from, to];
+      from = null;
+    }
+  }
+  return best && best[1] - best[0] >= 10 ? [...world(best[0], v), ...world(best[1], v)] : null;
 };

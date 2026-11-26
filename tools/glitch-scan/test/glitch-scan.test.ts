@@ -186,7 +186,7 @@ import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight, makeDec
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
-import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
+import { PARKED_CARS, SURFACE_PARKS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS, clearOfGame } from "../../../packages/sim/src/content/street-props";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -656,7 +656,7 @@ const DECK_PAINT = (() => {
 })();
 
 /** Is (x, z) in a surface car park with aisles (`carParks`, T-352)? Its cars stand in bays off the streets. */
-const SURFACE_PARKS = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0);
+// The surface car parks with their aisles, the map's or laid from the outline (`moduleAisles`), as the parked cars line them.
 const inSurfacePark = (x: number, z: number): boolean => SURFACE_PARKS.some((p) => pointInPairRingEvenOdd(x, z, Array.from({ length: p.outline.length / 2 }, (_, i): [number, number] => [p.outline[2 * i]!, p.outline[2 * i + 1]!])));
 
 const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {

@@ -78,7 +78,8 @@ describe("street furniture in the game (ADR-0050)", () => {
 
   it("stream in with their chunk as solids with ids of their own, out with it", () => {
     const sim = Simulation.create({ seed: 1 });
-    const pieces = [...sim.world].filter((e) => e.id >= STREET_ID_BASE && e.id < STREET_ID_BASE + 1_000_000);
+    // The furniture: the parked cars share its ids (`stream-catalog.ts`) but are vehicles with views of their own.
+    const pieces = [...sim.world].filter((e) => e.id >= STREET_ID_BASE && e.id < STREET_ID_BASE + 1_000_000 && !e.parkedCar);
     expect(pieces.length).toBeGreaterThan(100);
     expect(pieces.every((e) => e.solid && e.prisms && !e.view && e.seeThrough)).toBe(true);
     const chunks = new Set(pieces.map((e) => e.chunk));

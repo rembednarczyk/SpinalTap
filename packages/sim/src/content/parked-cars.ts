@@ -402,9 +402,17 @@ const squareCars = (): ParkedCar[] => {
  * Cars in the bays along the aisles of the surface car parks (T-352, `aisle-bays.ts`): as full as
  * Plac Zamkowy's bays (`SQUARE_TAKEN`), each whole on the park's paving where `fits` lets it.
  */
-const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface").map((p) => [p.id, p])).values()]
+/** A park with no rows of its own: not Plac Zamkowy, whose bays `squareCars` lays at its own step. */
+const laidHere = (outline: readonly number[]): boolean => {
+  const n = outline.length / 2;
+  const [cx, cz] = [0, 1].map((k) => Array.from({ length: n }, (_, i) => outline[2 * i + k]!).reduce((a, v) => a + v, 0) / n) as [number, number];
+  return !(cx >= PLAC_ZAMKOWY.minX && cx <= PLAC_ZAMKOWY.maxX && cz >= PLAC_ZAMKOWY.minZ && cz <= PLAC_ZAMKOWY.maxZ);
+};
+
+/** The surface car parks with the aisles their bays line: the map's, else laid from the outline. The glitch scan reads them too. */
+export const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface").map((p) => [p.id, p])).values()]
   // The map's aisles, else the modules the park's outline holds (`moduleAisles`, the backlog's item of 25.11, part 2).
-  .map((p) => ({ id: p.id, outline: p.outline, aisles: (p.aisles?.length ?? 0) > 0 ? (p.aisles ?? []) : moduleAisles(p.outline) }))
+  .map((p) => ({ id: p.id, outline: p.outline, aisles: (p.aisles?.length ?? 0) > 0 ? (p.aisles ?? []) : laidHere(p.outline) ? moduleAisles(p.outline) : [] }))
   .filter((p) => p.aisles.length > 0);
 /**
  * The models a car park's bay takes: no delivery truck, 5.8 m long against a 5 m bay. It drew the
