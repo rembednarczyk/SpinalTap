@@ -11,14 +11,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
 - Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
 - Pakiet właściciela: tools/osm-import
-### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
-- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
-- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
-- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
-- Ważność: S3 (przegląd kuratora runda 2: nasyp przed licem widać z chodnika Królewskiej z ok. 8 m, przy x 593 klin ok. 2 m wysokości na ok. 1 m szerokości) · Zasięg: ok. 50 m muru, widoczne z Królewskiej
-- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
-- Pakiet właściciela: packages/sim (content/lublin)
-
 ### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
 - Status: zgłoszone (24.11, przegląd kuratora K5a)
 - Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
@@ -2221,12 +2213,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
 - Status: zgłoszone (26.11, przegląd kuratora G-972)
 - Pakiet właściciela: packages/engine (renderer/mapcity)
-
-### G-976 Dziura w murze oporowym tarasu Placu Katedralnego przy zaparkowanych autach
-- Ważność: S3 · Zasięg: mur w590597335 przy x 558–561 i 573–576 na main (6 kolejnych miejsc po G-971)
-- Opis: Mur oporowy ustępuje zaparkowanemu autu (barrierBlocked: byParkedCar, 0,35 m od karoserii plus pół grubości muru), a stanowiska parkingu na tarasie dochodzą do linii muru. Na main nie ma muru przy hatchbacku na (559,5; −197,69) ani przy vanie na (574,5; −196,26): krawędź tarasu stoi otwarta nad uskokiem ok. 2 m. Po wyrównaniu terenu przy licu (G-971) stanowiska przy murze przestały odpadać na spadku (LEVEL_DROP) i dziur przybyło do 4 (x 561–566, 569–580). Poprawka: auto trzyma 0,6 m od linii nieciągłości (pół grubości muru, odstęp bariery od auta, zapas), więc mur stoi na całej długości; test breaklines.test.ts sprawdza mur co 0,5 m.
-- Status: naprawione na gałęzi fix/g971-lico (26.11), znalezione przy G-971
-- Pakiet właściciela: packages/sim (content)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
