@@ -39,3 +39,11 @@ Rodzaje wyższe niż na main (Krakowskie):
 - `lawn-strip-on-paving` 0 → 1.
 
 To lista do przejrzenia przed przyjęciem baz.
+
+## Skoki szerokości chodnika (`sidewalk-width-jump`, 109 wobec 88 na main)
+
+67 nowych miejsc na Krakowskim:
+- **49 szerszych od mediany odcinka.** 22 z nich to 8,25 m, czyli pas sięga do granicy pomiaru kontroli. Leżą przy narożnikach węzłów i przy placach: chodnik grafu obiega łuk narożnika, a ostry narożnik sięga dalej niż strefa skrzyżowania kontroli (`JUNCTION` = 4 m poza jezdnią drugiej ulicy). W rzeczywistości chodnik w narożniku jest szerszy, więc to pomiar starego modelu.
+- **18 węższych.** To miejsca, gdzie chodnik zwęża się między krawężnikiem a budynkiem albo zatoką. Do sprawdzenia po kolei.
+
+**Do decyzji (ADR przed E3):** czy kontrola jednolitości ma pomijać zasięg narożnika liczony jak w grafie (`cornerReach`) zamiast stałych 4 m. Bez tej zmiany trzeba przyjąć te miejsca do bazy z uzasadnieniem.
