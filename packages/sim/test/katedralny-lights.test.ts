@@ -3,7 +3,7 @@ import { KATEDRALNY_BEACON, KATEDRALNY_LAMPS, SCENE_LAMP_GROUPS, WORLD_STREET_PR
 import { LUBLIN_CHUNKS } from "../src/content/lublin";
 
 /*
- * Plac Katedralny by night (24.11): the washes of the square's four floodlights on the Trinitarian Tower and the
+ * Plac Katedralny by night (24.11): the washes of the square's five floodlights on the Trinitarian Tower and the
  * cathedral's front, each with its floodlight in the frame, and the red obstruction light at the tip of the tower's spire.
  */
 const floodlights = Object.values(WORLD_STREET_PROPS)
@@ -11,9 +11,9 @@ const floodlights = Object.values(WORLD_STREET_PROPS)
   .filter((i) => i.prop === "floodlight" && i.x > 570 && i.x < 630 && i.z > -205 && i.z < -130);
 
 describe("Plac Katedralny's lights (24.11)", () => {
-  it("washes the tower and the cathedral's front from its four floodlights, each near its floodlight", () => {
-    expect(floodlights).toHaveLength(4);
-    expect(KATEDRALNY_LAMPS.lamps).toHaveLength(4);
+  it("washes the tower and the cathedral's front from its five floodlights, each near its floodlight (the fifth 26.11, T-355)", () => {
+    expect(floodlights).toHaveLength(5);
+    expect(KATEDRALNY_LAMPS.lamps).toHaveLength(5);
     for (const l of KATEDRALNY_LAMPS.lamps) {
       expect(Math.min(...floodlights.map((f) => Math.hypot(f.x - l.at.x, f.z - l.at.z))), l.key).toBeLessThan(7);
       expect(inBuilding(l.at.x, l.at.z), l.key).toBe(false);

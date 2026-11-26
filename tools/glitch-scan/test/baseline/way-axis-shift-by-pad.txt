@@ -1,0 +1,4 @@
+# way-axis-shift-by-pad: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 400,-41
+krakowskie-2-0 400,-40
+stare-miasto-0-0 571,-69

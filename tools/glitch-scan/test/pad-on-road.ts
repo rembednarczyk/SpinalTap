@@ -16,6 +16,8 @@ type Chunk = { readonly bounds: GroundRect; readonly terrain: TerrainGrid };
 
 /** The most a pad may move the terrain on a street's axis (m): the curator's tolerance, under a kerb. */
 export const MOST = 0.3;
+/** The most a pad written down in `docs/topografia.md` may move a way's axis (m): the curator's 0.2 m of T-347 (`way-axis-shift-by-pad`). */
+export const MOST_REGISTERED = 0.2;
 /** Samples along a way (m). */
 const STEP = 0.5;
 
@@ -48,9 +50,10 @@ const reach = (p: Piece, cell: number): GroundRect[] => [
 
 /**
  * One finding per piece and way it moves: the way's id, the worst change and the length of it
- * moved by more than `MOST`.
+ * moved by more than `most` (`MOST` unless given). A worst change over `upTo` is left out: another
+ * kind reports it (`way-axis-shift-by-pad` takes the streets' 0.2..0.3 m, `pad-on-road` the rest).
  */
-export const padOnRoadFindings = (pieces: readonly Piece[], chunks: readonly Chunk[], ways: readonly Line[]): Finding[] => {
+export const padOnRoadFindings = (pieces: readonly Piece[], chunks: readonly Chunk[], ways: readonly Line[], most = MOST, upTo = Infinity): Finding[] => {
   const out: Finding[] = [];
   for (const p of pieces) {
     const cell = Math.max(...chunks.map((c) => c.terrain.cell));
@@ -75,15 +78,18 @@ export const padOnRoadFindings = (pieces: readonly Piece[], chunks: readonly Chu
           const z = a.z + ((b.z - a.z) * k) / n;
           if (!zones.some((r) => inside(r, x, z))) continue;
           const d = moved(x, z);
-          if (Math.abs(d) > MOST && k < n) length += len / n;
+          if (Math.abs(d) > most && k < n) length += len / n;
           if (Math.abs(d) > Math.abs(worst)) {
             worst = d;
             at = `${x.toFixed(0)},${z.toFixed(0)}`;
           }
         }
       }
-      if (Math.abs(worst) > MOST) out.push({ at, what: `${p.name} moves ${w.id} (${w.tags.highway}${w.tags.name ? ` ${w.tags.name}` : ""}) by ${worst.toFixed(2)} m over ${length.toFixed(0)} m` });
+      if (Math.abs(worst) > most && Math.abs(worst) <= upTo) out.push({ at, what: `${p.name} moves ${w.id} (${w.tags.highway}${w.tags.name ? ` ${w.tags.name}` : ""}) by ${worst.toFixed(2)} m over ${length.toFixed(0)} m` });
     }
   }
   return out;
 };
+
+/** Flights of steps at ground level: a pad must not lift or lower them either, though `isStreet` leaves them out (their own ramps). */
+export const isGroundSteps = (t: Tags): boolean => t.highway === "steps" && t.area !== "yes" && !t.bridge && !t.tunnel && Number(t.layer ?? 0) === 0;
