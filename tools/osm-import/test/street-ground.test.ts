@@ -122,6 +122,28 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     for (const x of [-30, -15, 15, 30]) expect(holds(c, { x, z: 0 })).toBe(false);
   });
 
+  it("a dual road's median stays open at a junction: corners only between arms not running side by side", () => {
+    const g = streetGround([
+      street("N", [{ x: -60, z: 6 }, { x: 0, z: 6 }, { x: 60, z: 6 }], 3.5, 0),
+      street("S", [{ x: -60, z: -6 }, { x: 0, z: -6 }, { x: 60, z: -6 }], 3.5, 0),
+      street("X", [{ x: 0, z: -40 }, { x: 0, z: -6 }, { x: 0, z: 6 }, { x: 0, z: 40 }], 3.5, 2.5),
+    ]);
+    const c = areaOf(g.carriageway);
+    // The median (2.5..-2.5) open from 4 m off the side street's kerb on; the corners round between the side street and each carriageway.
+    for (const x of [-8, -6, 6, 8]) expect(holds(c, { x, z: 0 })).toBe(false);
+    expect(holds(c, { x: 3.8, z: 9.8 })).toBe(true);
+  });
+
+  it("a dual road's other half near a junction it does not meet is not cornered to it (median 3 m)", () => {
+    const g = streetGround([
+      street("W", [{ x: -3.5, z: -60 }, { x: -3.5, z: 0 }, { x: -3.5, z: 60 }], 2, 0),
+      street("E", [{ x: 3.5, z: -60 }, { x: 3.5, z: 60 }], 2, 0),
+      street("X", [{ x: -60, z: 0 }, { x: -3.5, z: 0 }], 3.5, 2.5),
+    ]);
+    const c = areaOf(g.carriageway);
+    for (const z of [-6, -3, 3, 6]) expect(holds(c, { x: 0, z })).toBe(false);
+  });
+
   it("a verge keeps the sidewalk off the kerb and is left bare for the cover", () => {
     const a = streetAreas([{ ...street("A", [{ x: -50, z: 0 }, { x: 50, z: 0 }], 4), vergeLeft: 1.5, vergeRight: 1.5 }]);
     for (const side of [1, -1]) {

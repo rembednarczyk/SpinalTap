@@ -40,6 +40,8 @@ const kerbRadius = (highway: string): number => (highway.startsWith("primary") |
 
 /** How far out from the kerb a mapped sidewalk beside a street is read as its sidewalk (m, as `sidewalkIndex`). */
 const MAPPED_REACH = 7;
+/** How far past a kerb another carriageway makes the side a median (m): a dual road's split of up to some 6 m. */
+const MEDIAN = 6;
 /** The narrowest verge read off the orthophoto (m): narrower, a kerb's shadow or a tree's crown. */
 const VERGE_MIN = 0.75;
 /** The widest verge read (m), and the step it is read at. */
@@ -251,6 +253,15 @@ export const graphBands = <B extends Band>(
     const w = median(ws) ?? 0;
     return w < VERGE_MIN ? 0 : w;
   };
+  // Whether along most of a side another street's carriageway lies within `MEDIAN` m past the kerb (probed 1, 2.5, 4 and 6 m out).
+  const medianAt = (way: string, axis: readonly Pt[], kerb: number, side: 1 | -1): boolean => {
+    const other = (p: Pt) => streets.some((o) => o.source !== way && p.x >= o.box.minX && p.x <= o.box.maxX && p.z >= o.box.minZ && p.z <= o.box.maxZ && pointInRing(p, o.ring));
+    const rows = [1, 2.5, 4, MEDIAN].map((d) => probes(offsetLine(axis, side * (kerb + d))));
+    const n = Math.min(...rows.map((r) => r.length));
+    let hits = 0;
+    for (let k = 0; k < n; k++) if (rows.some((r) => other(r[k]!))) hits++;
+    return n > 0 && hits * 2 > n;
+  };
   // A side's kerb, verge and sidewalk: by the tags; else to the mapped sidewalk, past a verge where
   // the gap is green, its asphalt out to it where the street's width is the estimate and the gap a
   // lane's (G-570, T-247: a parking lane or a bay); else the sidewalk by type.
@@ -259,9 +270,12 @@ export const graphBands = <B extends Band>(
     const tagged = taggedWalk(tags.get(b.source)!, side);
     if (tagged !== null) return { kerb: half, verge: tagged > 0 ? vergeOf(axis, half, side) : 0, walk: tagged };
     const m = mappedWalk(axis, half, side, mappedWays);
+    // A median: another carriageway close past the kerb (a dual road's other half), no sidewalk by type there.
+    if (m === null && medianAt(b.source, axis, half, side)) return { kerb: half, verge: 0, walk: 0 };
     if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
     if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
-    if (vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
+    // A gap wider than `GAP`, or a green one, is a verge (ADR-0080: past `KERB_REACH`, no lane's asphalt).
+    if (m.near > GAP || vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
     return estimated(b.source, side) ? { kerb: half + m.near, verge: 0, walk: Math.max(WALK_MIN, m.far - m.near) } : { kerb: half, verge: 0, walk: m.far };
   };
   const edges: StreetEdge[] = pieces.map((b) => {

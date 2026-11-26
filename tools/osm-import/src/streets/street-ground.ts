@@ -142,8 +142,10 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
     const r = Math.max(...j.edges.map((i) => edges[i]!.kerbRadius));
     if (r <= 0) return [];
     const reach = wide + r + JUNCTION_MARGIN;
-    // Closed within a wider disc than kept, so the closing's own edge is out of the kept one.
-    const near = within(base, disc(j.at, reach + 2 * r));
+    // Closed within a wider disc than kept, so the closing's own edge is out of the kept one; of the
+    // node's own streets only: a carriageway near it that does not meet it (a dual road's other half)
+    // is not cornered to it, or its median under 2r wide went under the asphalt.
+    const near = within(join(...j.edges.map((i) => carriagewayOf(edges[i]!))), disc(j.at, reach + 2 * r));
     return within(grown(grown(near, r), -r), disc(j.at, reach));
   });
   return join(base, ...corners);
