@@ -34,6 +34,7 @@ import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines }
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
 import { streetRings } from "./bare-walks.ts";
+import { asStreetSidewalk } from "./street-walks.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
@@ -377,7 +378,8 @@ const generateMap = (
   }
   // A band's end is round where its way meets another on the ground, as far as nothing else covers it: the corner square ends left bare (ADR-0078, G-658).
   const joined = groundJoints(laidLines);
-  for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(piece, mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
+  const pavedPlaces = areaBands.filter((b) => b.surface === "square" || b.surface === "cobble").map((b) => b.ring);
+  for (const { piece, mapped, atStreet: at } of laidLines) for (const b of lineBands(asStreetSidewalk(piece, lines, pavedPlaces), mapped, water, at, joined)) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...roundJoints(bands, patchBand).map((b) => ({ ...b, box: ringBounds(b.ring) })));
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.flatMap(carriageway).filter((l) => l.tags.highway !== undefined && near(l.line));
