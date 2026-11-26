@@ -88,7 +88,10 @@ describe("aisles laid in a car park the map draws none in (the backlog's item of
   });
 
   it("lays as many modules as fit across, along the long side whatever the outline's turn", () => {
-    expect(moduleAisles(rect(60, 36))).toHaveLength(2);
+    const two = moduleAisles(rect(60, 36));
+    expect(two).toHaveLength(2);
+    // The outer modules flush to the long sides (8 m from the axis to a row's back, half a metre's room): rows at the kerbs.
+    expect(two.map((a) => a[1]!).sort((a, b) => a - b)).toEqual([8.5, 27.5]);
     const turned = moduleAisles(rect(20, 45, 0.6));
     expect(turned).toHaveLength(1);
     const [x0, z0, x1, z1] = turned[0]!;

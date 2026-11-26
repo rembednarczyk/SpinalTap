@@ -124,8 +124,8 @@ const MODULE_SLACK = 1;
 /**
  * Aisles for a surface car park the map draws none in (the backlog's item of 25.11, part 2): as
  * many double-loaded modules as its outline's minimum-area rectangle holds across (rotating
- * calipers over the outline's edge directions), their aisles along its long side, the modules
- * centred across it. Pattern: the double-loaded parking module of perpendicular bays (Neufert;
+ * calipers over the outline's edge directions), their aisles along its long side, the outer
+ * modules flush to its long sides. Pattern: the double-loaded parking module of perpendicular bays (Neufert;
  * bays 2.5 × 5 m, a 6 m aisle as in the Polish road regulations). Where we differ: the aisles are
  * not drawn, only laid out; a bay whose middle falls outside an outline that is no rectangle is
  * dropped by `aisleBays`, the rest by the parked cars' `fits`. None for a park under 17 m across.
@@ -155,11 +155,15 @@ export const moduleAisles = (outline: readonly number[]): number[][] => {
   const across = best.v[1] - best.v[0];
   const k = Math.floor((across - MODULE_SLACK) / MODULE);
   if (k < 1) return [];
-  const start = best.v[0] + (across - k * MODULE) / 2 + MODULE / 2;
+  // The outer modules flush to the long sides, their rows of bays at the kerbs (the orthophoto's rows, the curator's
+  // review of #1054), the room left between the modules; a single module in the middle.
+  const first = best.v[0] + MODULE_SLACK / 2 + MODULE / 2;
+  const last = best.v[1] - MODULE_SLACK / 2 - MODULE / 2;
+  const at = (j: number) => (k === 1 ? (best.v[0] + best.v[1]) / 2 : first + ((last - first) * j) / (k - 1));
   const { c, s } = best;
   // Back from (u, v) along the long side and across it to world (x, z).
   const world = (u: number, v: number): [number, number] => [Math.round((u * c - v * s) * 100) / 100, Math.round((u * s + v * c) * 100) / 100];
-  return Array.from({ length: k }, (_, j) => inside(pts, start + j * MODULE, best.u, world)).filter((l): l is number[] => l !== null);
+  return Array.from({ length: k }, (_, j) => inside(pts, at(j), best.u, world)).filter((l): l is number[] => l !== null);
 };
 
 /** Step of the walk along a laid aisle that keeps the longest run of it inside the outline (m). */
