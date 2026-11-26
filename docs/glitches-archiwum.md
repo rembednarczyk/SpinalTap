@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-978 Flaga zajętego auta zaparkowanego trzyma jego indeks w PARKED_CARS: po zmianie aut w mieście zapis opróżnia cudze stanowisko
+- Ważność: S3 · Zasięg: każdy zapis z autem ukradzionym z parkingu albo krawężnika (ADR-0097), po każdej zmianie zbioru aut (26.11: #1044, #1048, #1051, #1054)
+- Opis: parkedTakenFlag(index) zapisywał parked-taken:<indeks>, a indeks auta w PARKED_CARS przesuwa się, gdy przybywa albo ubywa aut (moduły parkingów T-357: +112). Po aktualizacji gra wczytana z zapisu chowała inne auto, a ukradzione stało znowu na swoim miejscu. Poprawka: flaga nazywa auto miejscem na siatce 0,1 m (parked-taken:x,z), takenParked czyta je przez mapę miejsc; flaga starego zapisu z indeksem czytana jak dotąd.
+- Status: naprawione (26.11, PR #1058 scalony); wcześniej: naprawione na gałęzi fix/g978-zajete-auto (26.11)
+- Pakiet właściciela: packages/sim (content/parked-taken.ts)
+- Test przyjęcia: packages/sim/test/parked-taken.test.ts
+
 ### G-977 Rząd aut przy parapecie tarasu Placu Katedralnego: 1 auto z 11 stanowisk, na ortofoto ok. 13
 - Ważność: S4 · Zasięg: parking w179262652, rząd południowy x 552–590, z −199…−195
 - Opis: Rząd biegnie 5,5 m od alejki i zbiega się z murem w590597335 na zachód: tył hatchbacka 0,29–0,56 m od osi muru przy x 554–570 (vana 0,01–0,30), więc stanowiska odpadają na BREAK_ROOM 0,6 m (G-976). Ortofoto 2025-04: auta prostopadle z tyłami 0,5–0,9 m od osi. Propozycja: stanowisko przy linii nieciągłości cofa auto do 0,6 m od linii zamiast je odrzucać. T-352.
