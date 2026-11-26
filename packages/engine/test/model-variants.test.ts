@@ -12,7 +12,7 @@ import { Loadouts } from "../src/renderer/loadout";
 import { BONE_OF } from "../src/renderer/model-accessories";
 import { skinMultiplier } from "../src/renderer/model-dress";
 import { type CharacterModelManifest, ModelLibrary, toonSourceOf } from "../src/renderer/model-library";
-import { BACKGROUND_VARIANTS, OWN_LOOK, VARIANTS_PER_FILE, VariantBudget, backgroundVariantOf, variantOf, variantText } from "../src/renderer/model-variant";
+import { BACKGROUND_VARIANTS, OWN_LOOK, VARIANTS_PER_FILE, VariantBudget, backgroundLookOf, backgroundVariantOf, variantOf, variantText } from "../src/renderer/model-variant";
 import { WeaponMounts } from "../src/renderer/weapon-mount";
 import { readModelFile, serveModels } from "./game-models";
 
@@ -246,5 +246,29 @@ describe("variants on the game's models (ADR-0076 stage 2)", () => {
     // Shino has no top to borrow (Seki's jacket is hers), but Seki's trousers.
     expect(textures(3, "torso").drawn).toContain(textures(3, "torso").own);
     expect(textures(4, "legs").drawn).not.toContain(textures(4, "legs").own);
+  });
+});
+
+describe("background looks of fighters (user notes of 25.11, the gangs' groups)", () => {
+  const ids = Array.from({ length: BACKGROUND_VARIANTS }, (_, i) => i + 1);
+
+  it("gives no fighter a backpack: the long gun is across the back, the jacket over it", () => {
+    const bags = (armed: boolean) => ids.filter((id) => backgroundLookOf(id, "ganger", armed).accessories.some((a) => a.id === "bag"));
+    expect(bags(false).length).toBeGreaterThan(0);
+    expect(bags(true)).toEqual([]);
+  });
+
+  it("keeps a fighter's other accessories, colours and figure as the variant's", () => {
+    for (const id of ids) {
+      const armed = backgroundLookOf(id, "ganger", true);
+      const own = variantOf(id, undefined, false);
+      expect({ ...armed, accessories: [] }).toEqual({ ...own, accessories: [] });
+      expect(armed.accessories).toEqual(own.accessories.filter((a) => a.id !== "bag"));
+    }
+  });
+
+  it("ages only the street's people, never a fighter", () => {
+    expect(ids.some((id) => backgroundLookOf(id, "civilian", false).figure.stoop > 0)).toBe(true);
+    for (const id of ids) expect(backgroundLookOf(id, "civilian", true).figure.stoop).toBe(0);
   });
 });
