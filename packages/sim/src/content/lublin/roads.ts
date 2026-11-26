@@ -28,6 +28,11 @@ export interface RoadChain {
   readonly half: readonly Reach[];
   /** Mapped one-way: driven only the way `points` run. */
   readonly oneway: boolean;
+  /**
+   * A one-way chain's lanes as the map tags them, of most of its length; 1 untagged (OSM's convention
+   * for `oneway=yes`, ADR-0105). The traffic lays that many where the carriageway is wide enough.
+   */
+  readonly lanes: number;
 }
 
 /** Roads for cars, by OSM `highway`. */
@@ -70,7 +75,7 @@ const carriesOn = (a: readonly Pt[], b: readonly Pt[]): boolean => {
 };
 
 /** A piece of a street: its points and its carriageway's reach at each. */
-type Piece = { pts: Pt[]; half: Reach[]; directed: boolean };
+type Piece = { pts: Pt[]; half: Reach[]; directed: boolean; lanes: number };
 
 const piecesOf = (c: LublinChunkData): ({ key: string; name: string; kind: string; use: StreetUse; oneway: boolean } & Piece)[] =>
   c.streets.flatMap((st) => {
@@ -88,15 +93,17 @@ const piecesOf = (c: LublinChunkData): ({ key: string; name: string; kind: strin
     const oneway = st.oneway === true;
     const directed = oneway || DIRECTED_KINDS.has(st.kind) || st.name.startsWith("Rondo");
     // One-way pieces join only each other, end to start, never turned round.
-    return [{ key: `${st.name}|${use}|${c.district === "kanal" ? "kanal" : "city"}|${oneway ? "oneway" : "both"}`, name: st.name, kind: st.kind, use, directed, oneway, pts, half }];
+    return [{ key: `${st.name}|${use}|${c.district === "kanal" ? "kanal" : "city"}|${oneway ? "oneway" : "both"}`, name: st.name, kind: st.kind, use, directed, oneway, pts, half, lanes: st.lanes ?? 1 }];
   });
 
 /**
  * Joins pieces of one street end to start (and, for minor two-way streets, end to end turned
  * round) until nothing joins any more. Deterministic: pieces in table order, first match wins.
  */
-const joinPieces = (pieces: readonly Piece[]): { pts: Pt[]; half: Reach[] }[] => {
-  const lines = pieces.map((p) => ({ pts: [...p.pts], half: [...p.half], directed: p.directed }));
+const joinPieces = (pieces: readonly Piece[]): { pts: Pt[]; half: Reach[]; lanes: number }[] => {
+  // Each line's length by its pieces' lanes: the chain takes the lanes of most of it.
+  const lengthOf = (pts: readonly Pt[]) => pts.slice(1).reduce((s, q, i) => s + Math.hypot(q[0] - pts[i]![0], q[1] - pts[i]![1]), 0);
+  const lines = pieces.map((p) => ({ pts: [...p.pts], half: [...p.half], directed: p.directed, by: new Map([[p.lanes, lengthOf(p.pts)]]) }));
   for (let merged = true; merged; ) {
     merged = false;
     outer: for (let i = 0; i < lines.length; i++) {
@@ -112,13 +119,16 @@ const joinPieces = (pieces: readonly Piece[]): { pts: Pt[]; half: Reach[] }[] =>
           a.pts.push(...[...b.pts].reverse().slice(1));
           a.half.push(...[...b.half].reverse().slice(1).map(([l, r]): Reach => [r, l]));
         } else continue;
+        for (const [n, len] of b.by) a.by.set(n, (a.by.get(n) ?? 0) + len);
         lines.splice(j, 1);
         merged = true;
         break outer;
       }
     }
   }
-  return lines.map((l) => ({ pts: l.pts, half: l.half }));
+  // Ties to the fewer lanes.
+  const most = (by: ReadonlyMap<number, number>) => [...by].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]![0];
+  return lines.map((l) => ({ pts: l.pts, half: l.half, lanes: most(l.by) }));
 };
 
 /** Every street of the map that carries traffic, as whole polylines, longest first within a name. */
@@ -126,14 +136,14 @@ export const ROAD_CHAINS: readonly RoadChain[] = (() => {
   const groups = new Map<string, { name: string; kind: string; use: StreetUse; district: LublinChunkData["district"]; oneway: boolean; pieces: Piece[] }>();
   for (const c of MAP_CHUNKS) {
     for (const p of piecesOf(c)) {
-      const piece = { pts: p.pts, half: p.half, directed: p.directed };
+      const piece = { pts: p.pts, half: p.half, directed: p.directed, lanes: p.lanes };
       const g = groups.get(p.key);
       if (g) g.pieces.push(piece);
       else groups.set(p.key, { name: p.name, kind: p.kind, use: p.use, district: c.district, oneway: p.oneway, pieces: [piece] });
     }
   }
   const out: RoadChain[] = [];
-  for (const g of groups.values()) for (const { pts, half } of joinPieces(g.pieces)) out.push({ name: g.name, kind: g.kind, use: g.use, district: g.district, points: pts, half, oneway: g.oneway });
+  for (const g of groups.values()) for (const { pts, half, lanes } of joinPieces(g.pieces)) out.push({ name: g.name, kind: g.kind, use: g.use, district: g.district, points: pts, half, oneway: g.oneway, lanes });
   return out;
 })();
 
