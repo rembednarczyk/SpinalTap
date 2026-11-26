@@ -33,7 +33,7 @@ head=$(git rev-parse --short HEAD)
 mkdir -p "$out"
 heavy() { bash "$(git rev-parse --show-toplevel)/tools/heavy.sh" "$@"; }
 
-map_re='^(tools/osm-import/|tools/orto/|tools/gugik/|data/|packages/sim/src/content/lublin/|packages/engine/src/renderer/mapcity/|packages/sim/src/content/.*(scene|site)|packages/sim/src/content/district-|packages/sim/src/content/schedules\.ts|tools/glitch-scan/test/baseline/)'
+map_re='^(tools/osm-import/|tools/orto/|tools/gugik/|data/|packages/sim/src/content/lublin/|packages/engine/src/renderer/mapcity/|packages/sim/src/content/.*(scene|site)|packages/sim/src/content/district-|packages/sim/src/content/schedules\.ts|packages/sim/src/content/(world-barriers|barrier-room|parked-cars|katedralny-lights)\.ts|tools/glitch-scan/test/baseline/)'
 git diff --name-only "$base"...HEAD > "$out/changed-all.txt"
 grep -E "$map_re" "$out/changed-all.txt" > "$out/changed-map.txt" || true
 if [ -s "$out/changed-map.txt" ]; then
