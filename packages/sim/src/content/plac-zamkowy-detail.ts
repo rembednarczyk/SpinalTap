@@ -36,15 +36,16 @@ export const PLAC_ZAMKOWY_DETAIL: readonly StreetPropItem[] = [
 /** The pavilion's roof slab over its walls (`metro-pavilion.ts`): the sign stands on it. */
 const ROOF_SLAB = 0.2;
 /**
- * The market's neon over the way down (§13 of the card: the accent of the square, the backlog's „neon targu przy
- * pawilonie”): TARG ZAMKOWY on the pavilion's roof, at its front over the opening and the green lamp, facing the square
- * (north). Its own fitting: the roof it stands on, no light from nowhere. In the pink of the neon strips over the market
- * (`festoon-signs.ts`). Lublin's signs are Polish, as the map's names (ADR-0056 counts no sign: no Polish letter here).
+ * The market's neon on the metro pavilion (§13 of the card: the accent of the square, the backlog's „neon targu przy
+ * pawilonie”): TARG ZAMKOWY on the pavilion's roof, two-sided as the roofs' signs are, one at the roof's south edge
+ * facing the market (all its stalls stand south of the pavilion) and one at its north edge over the opening and the
+ * green lamp, facing the pavement (the curator's review of #1059). Their own fitting, the roof they stand on: no light
+ * from nowhere. In the pink of the neon strips over the market (`festoon-signs.ts`). Lublin's signs are Polish, as the
+ * map's names (ADR-0056 counts no sign: no Polish letter here).
  */
-export const PLAC_ZAMKOWY_SIGNS: readonly StaticProp[] = [
-  {
-    center: v(PLAC_ZAMKOWY_METRO.at.x, groundY(PLAC_ZAMKOWY_METRO.at.x, PLAC_ZAMKOWY_METRO.at.z) + PAVILION_SIZE.height + ROOF_SLAB + 0.35, PAVILION.maxZ - 0.25),
-    view: { kind: "neon", size: v(2.8, 0.6, 0.15), color: "#ff3fa4", label: "TARG ZAMKOWY", facing: "z+" },
-    solid: false,
-  },
-];
+const sign = (z: number, facing: "z+" | "z-"): StaticProp => ({
+  center: v(PLAC_ZAMKOWY_METRO.at.x, groundY(PLAC_ZAMKOWY_METRO.at.x, PLAC_ZAMKOWY_METRO.at.z) + PAVILION_SIZE.height + ROOF_SLAB + 0.35, z),
+  view: { kind: "neon", size: v(2.8, 0.6, 0.15), color: "#ff3fa4", label: "TARG ZAMKOWY", facing },
+  solid: false,
+});
+export const PLAC_ZAMKOWY_SIGNS: readonly StaticProp[] = [sign(PAVILION.minZ + 0.25, "z-"), sign(PAVILION.maxZ - 0.25, "z+")];
