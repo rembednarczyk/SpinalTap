@@ -103,7 +103,7 @@ import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCap
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { type PlanGroup, lampsOffBand, pavedAt } from "./lamp-band";
-import { type TentMarket, stallsOffTents } from "./market-tents";
+import { type TentMarket, stallsOffTents, tentsOnBuildings } from "./market-tents";
 import { lampsBesideDeck } from "./lamp-deck";
 import { litStreetDark } from "./lit-dark";
 import { lampsFreestandingInCourtyard, squareStyleLeak } from "./lamp-squares";
@@ -2206,6 +2206,11 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       .flat()
       .filter((i) => i.prop === "market-stall");
     return stallsOffTents(markets, stalls);
+  },
+  /** A tent of the props plan's markets lying over a building by more than 2 m² (G-964, `market-tents.ts`). */
+  "market-tent-on-building": () => {
+    const plan = JSON.parse(readFileSync(join(__dirname, "../../../docs/world/lublin-props.todo.json"), "utf8")) as { items: (TentMarket & { kind: string })[] };
+    return tentsOnBuildings(plan.items.filter((g) => g.kind === "market" && (g.tents?.length ?? 0) > 0), inBuilding);
   },
   "marketplace-empty": () => {
     const stalls = Object.values(WORLD_STREET_PROPS)
