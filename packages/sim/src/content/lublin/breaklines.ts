@@ -11,8 +11,9 @@ import { type Ramp, refineGrid, shapeGrid } from "./shape";
  * coarse grid `read` metres out from the line, where the game's ground meets the NMT within 0.1 m
  * (the probe of 25.11, `docs/plany/archikatedra-otoczenie.md` §1.3); the shaping fades out over
  * `FADE` metres at the line's ends, so the terrain past them is left as it is. Where we differ
- * from a TIN: the grid stays a regular lattice, so the step is a cell (1.25 m) wide; the wall's
- * face, 0.5 m thick, covers most of it.
+ * from a TIN: the grid stays a regular lattice; the lines go with it (`TerrainGrid.breaks`), so
+ * its interpolation leaves out the corners across a line and the ground steps at the line itself
+ * (G-971), under the wall.
  */
 
 /** A wall the terrain steps under: its axis, which side is the upper one, and the regions left to other shaping. */
@@ -175,5 +176,6 @@ export const breakGrid = (g: TerrainGrid, lines: readonly Breakline[] = BREAKLIN
     const level = terrainHeightAt(g, near.foot.x + near.n.x * side * l.read, near.foot.z + near.n.z * side * l.read);
     return h + (level - h) * weightOf(l, near);
   });
-  return shapeGrid({ ...fine, heights }, [], breakRamps(g, flights));
+  // The lines go with the grid, so the ground steps at them, not over the cell they cross (G-971).
+  return { ...shapeGrid({ ...fine, heights }, [], breakRamps(g, flights)), breaks: lines.map((l) => l.line) };
 };

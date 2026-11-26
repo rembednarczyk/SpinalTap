@@ -3,6 +3,7 @@ import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mes
 import { type GroundCover, cellsUnder, cutCovers } from "./ground-cut";
 import { type Box2, type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
+import { type DrapeBreaks, cutAtWall, planCutCell, terrainBreaks } from "./terrain-breaks";
 
 /**
  * Terrain and the surfaces laid on it (ADR-0044). The terrain of a chunk is one mesh sampled
@@ -80,7 +81,11 @@ export const DRAPE_STEP = 5;
  * over the terrain), `surfaceAt` gives the one under a point, carried on past its outline: `drape`
  * reads the grid's corners round a point on it, which may lie on the other surface (G-301).
  */
-export type HeightAt = ((x: number, z: number) => number) & { readonly surfaceAt?: (x: number, z: number) => (x: number, z: number) => number };
+export type HeightAt = ((x: number, z: number) => number) & {
+  readonly surfaceAt?: (x: number, z: number) => (x: number, z: number) => number;
+  /** The terrains' breaklines (G-971): the drape is cut at their walls and laid on the ground's own height in the cells they cross. */
+  readonly breaks?: DrapeBreaks | null;
+};
 
 /** Normal of the ground under (x, z), from central differences. */
 const groundNormal = (h: HeightAt, x: number, z: number): Vec => {
@@ -108,17 +113,27 @@ export const planTerrain = (sink: MeshSink, grid: TerrainGrid, open?: TerrainOpe
   if (nx < 2 || nz < 2) return;
   const h: HeightAt = (x, z) => terrainHeightAt(grid, x, z);
   const meta = [SURFACE_CODE.terrain, 0] as const;
+  // The grid's breaklines (G-971): the cells they cross are cut at the walls' faces, the normals read on their own side.
+  const breaks = terrainBreaks(grid);
+  const normalAt = (x: number, z: number): Vec => groundNormal(h, x, z);
+  const normal = breaks ? (x: number, z: number) => breaks.normal(normalAt, x, z) : normalAt;
   const idx: number[] = [];
   for (let j = 0; j < nz; j++) {
     for (let i = 0; i < nx; i++) {
       const x = grid.originX + i * step;
       const z = grid.originZ + j * step;
-      idx.push(vertex(sink, { x, y: h(x, z), z }, groundNormal(h, x, z), TERRAIN, [x, z], meta));
+      idx.push(vertex(sink, { x, y: h(x, z), z }, normal(x, z), TERRAIN, [x, z], meta));
     }
   }
   const up = { x: 0, y: 1, z: 0 };
   for (let j = 0; j + 1 < nz; j++) {
     for (let i = 0; i + 1 < nx; i++) {
+      const cut = breaks?.at(Math.floor(i / sub), Math.floor(j / sub));
+      if (cut) {
+        const p = (di: number, dj: number) => ({ x: grid.originX + (i + di) * step, z: grid.originZ + (j + dj) * step });
+        planCutCell(sink, [p(0, 0), p(1, 0), p(1, 1), p(0, 1)], cut, h, normal, TERRAIN, meta);
+        continue;
+      }
       const a = idx[j * nx + i] as number;
       const b = idx[j * nx + i + 1] as number;
       const c = idx[(j + 1) * nx + i + 1] as number;
@@ -238,7 +253,7 @@ const anyCell = (within: DrapeCells, i: number, from: number, to: number, grid: 
  * The triangles of `drapeTriangles`, one by one: the drape lays each as it comes, with no list of
  * thousands kept for a large square (G-444).
  */
-const eachDrapeTriangle = (ring: readonly P2[], grid: number, within: DrapeCells | undefined, emit: (a: P2, b: P2, c: P2) => void): void => {
+const eachDrapeTriangle = (ring: readonly P2[], grid: number, within: DrapeCells | undefined, emit: (a: P2, b: P2, c: P2) => void, breaks?: DrapeBreaks | null): void => {
   const tris = triangulate(ring);
   const keep = (poly: readonly P2[]) => {
     if (poly.length < 3 || area2(poly) < 1e-9) return;
@@ -266,9 +281,11 @@ const eachDrapeTriangle = (ring: readonly P2[], grid: number, within: DrapeCells
         const south = s.minZ >= z0 ? strip : clipConvex(strip, (p) => p.z - z0, (p) => ({ x: p.x, z: z0 }));
         const cell = s.maxZ <= z1 ? south : clipConvex(south, (p) => z1 - p.z, (p) => ({ x: p.x, z: z1 }));
         if (cell.length < 3) continue;
-        // The cell's diagonal from (x0, z0) to (x1, z1), as `drapeY` and the terrain cut it.
-        keep(clipConvex(cell, (p) => p.x - x0 - (p.z - z0)));
-        keep(clipConvex(cell, (p) => p.z - z0 - (p.x - x0)));
+        // The cell's diagonal from (x0, z0) to (x1, z1), as `drapeY` and the terrain cut it; at a breakline's wall too (G-971).
+        const cut = breaks?.at(i, k);
+        const put = cut ? (poly: P2[]) => cutAtWall(poly, cut).forEach(keep) : keep;
+        put(clipConvex(cell, (p) => p.x - x0 - (p.z - z0)));
+        put(clipConvex(cell, (p) => p.z - z0 - (p.x - x0)));
       }
     }
   }
@@ -300,7 +317,7 @@ export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: H
     const u = ((x - a.x) * (c.z - a.z) - (c.x - a.x) * (z - a.z)) / det;
     const v = ((b.x - a.x) * (z - a.z) - (x - a.x) * (b.z - a.z)) / det;
     if (u < -1e-9 || v < -1e-9 || u + v > 1 + 1e-9) continue;
-    return drapeY(h.surfaceAt?.(x, z) ?? h, x, z) + lift;
+    return layY(h, h.surfaceAt?.(x, z) ?? h, x, z) + lift;
   }
   return null;
 };
@@ -324,8 +341,16 @@ const drapeHeights = (h: HeightAt, lift: number): ((p: P2) => number) => {
     read.set(surface, at);
     return at;
   };
-  return (p) => drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift;
+  return (p) => {
+    const surface = h.surfaceAt?.(p.x, p.z) ?? h;
+    return (cutAt(h, p.x, p.z) ? surface(p.x, p.z) : drapeY(corners(surface), p.x, p.z)) + lift;
+  };
 };
+
+/** Is (x, z) in a cell of the drape a breakline crosses (G-971)? */
+const cutAt = (h: HeightAt, x: number, z: number): boolean => !!h.breaks?.at(Math.floor(x / DRAPE_GRID), Math.floor(z / DRAPE_GRID));
+/** The drape's height of `surface` at (x, z): the ground's own in a cell a breakline crosses, else `drapeY`. */
+const layY = (h: HeightAt, surface: HeightAt, x: number, z: number): number => (cutAt(h, x, z) ? surface(x, z) : drapeY(surface, x, z));
 
 /**
  * Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut
@@ -343,11 +368,12 @@ export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: nu
     if (!row) seen.set(kx, (row = new Map()));
     const known = row.get(kz);
     if (known !== undefined) return known;
-    const i = vertex(sink, { x: p.x, y: y(p), z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
+    const n = h.breaks ? h.breaks.normal((x, z) => groundNormal(h, x, z), p.x, p.z) : groundNormal(h, p.x, p.z);
+    const i = vertex(sink, { x: p.x, y: y(p), z: p.z }, n, color, uvOf(p), meta);
     row.set(kz, i);
     return i;
   };
-  eachDrapeTriangle(ring, DRAPE_GRID, within, (a, b, c) => face(sink, at(a), at(b), at(c), up));
+  eachDrapeTriangle(ring, DRAPE_GRID, within, (a, b, c) => face(sink, at(a), at(b), at(c), up), h.breaks);
 };
 
 /** The triangles `drape` lays `ring` as, in the cells `within` takes, without building a mesh. */
@@ -355,7 +381,7 @@ export const drapedTriangles = (ring: readonly P2[], h: HeightAt, lift: number, 
   const y = drapeHeights(h, lift);
   const v = (p: P2): Vec => ({ x: p.x, y: y(p), z: p.z });
   const out: [Vec, Vec, Vec][] = [];
-  eachDrapeTriangle(ring, DRAPE_GRID, within, (a, b, c) => out.push([v(a), v(b), v(c)]));
+  eachDrapeTriangle(ring, DRAPE_GRID, within, (a, b, c) => out.push([v(a), v(b), v(c)]), h.breaks);
   return out;
 };
 

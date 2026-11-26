@@ -48,8 +48,9 @@ const CUT_BEFORE: Readonly<Record<string, string>> = {
   // the fence by the basin's ends (review round 2): the same cuts, other heights.
   "nabrzeze-1-1": "16 2745de5e",
   // Plac Katedralny's terrace (K5b, G-968, T-351): the chunk's grid refined to 1.25 m with the
-  // breaklines under the walls by Królewska; no shaft in it, still no cut, its own triangles.
-  "stare-miasto-0-0": "0 85e7324a",
+  // breaklines under the walls by Królewska; no shaft in it, still no cut, its own triangles; the
+  // cells the lines cross cut at the walls' faces (G-971).
+  "stare-miasto-0-0": "0 af5b306b",
   "krakowskie-0-0": "0 0825c6ea",
   // The same cuts; the paving's colour from the orthophoto (G-721, after the curator's review).
   square: "13 c2c46b0d",

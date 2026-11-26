@@ -1,6 +1,7 @@
 import { type EntityId, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import type { Mesh } from "../../babylon";
 import type { Box2, P2 } from "./polygon";
+import { type DrapeBreaks, drapeBreaks } from "./terrain-breaks";
 
 export interface TerrainEntry {
   readonly grid: TerrainGrid;
@@ -33,20 +34,30 @@ const key = (i: number, k: number): number => (i + 1.5e4) * 3e4 + k + 1.5e4;
  */
 export class TerrainEntries extends Map<EntityId, TerrainEntry> {
   private bins: Map<number, TerrainEntry[]> | null = null;
+  private cuts: DrapeBreaks | null | undefined = undefined;
 
   override set(id: EntityId, t: TerrainEntry): this {
     this.bins = null;
+    this.cuts = undefined;
     return super.set(id, t);
   }
 
   override delete(id: EntityId): boolean {
     this.bins = null;
+    this.cuts = undefined;
     return super.delete(id);
   }
 
   override clear(): void {
     this.bins = null;
+    this.cuts = undefined;
     super.clear();
+  }
+
+  /** The terrains' breaklines on the drape's grid of `cell` (G-971), null where none has any. */
+  breaksOn(cell: number): DrapeBreaks | null {
+    if (this.cuts === undefined || (this.cuts && this.cuts.cell !== cell)) this.cuts = drapeBreaks([...this.values()].map((t) => t.grid), cell);
+    return this.cuts;
   }
 
   /** Ground height at (x, z) from the first terrain there, or null outside every terrain. */
