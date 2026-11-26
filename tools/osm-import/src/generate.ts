@@ -403,7 +403,8 @@ const generateMap = (
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
   // The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one.
-  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring)));
+  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
+  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimatedSide(measured)));
   // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
   const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
   const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);
@@ -415,7 +416,6 @@ const generateMap = (
   // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
   // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
-  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
   // A moved carriageway's strip to a lawn wider than a kerb is the lawn's where the orthophoto is green (G-825 r3).
   const coverOf = (p: Pt) => {
