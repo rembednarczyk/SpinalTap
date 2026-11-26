@@ -38,7 +38,7 @@ import { readMedians } from "../../orto/src/albedo-medians.ts";
 import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
-import { isStreet, padOnRoadFindings } from "./pad-on-road";
+import { MOST, MOST_REGISTERED, isGroundSteps, isStreet, padOnRoadFindings } from "./pad-on-road";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -1644,6 +1644,21 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       MAP_CHUNKS.map((c) => ({ bounds: c.bounds, terrain: w3Grid(c.terrain) })),
       extractFeatures(SOURCE_OSM).lines.filter((l) => isStreet(l.tags)),
     ),
+  /**
+   * A pad written down in `docs/topografia.md` (its `row`) moving an OSM street's or footway's axis by
+   * 0.2..0.3 m, or a flight of steps' by over 0.2 m (the curator's review of #1015, T-347: the ring of
+   * Fara's pad held back so the walk and the steps round it stay within 0.2 m of the NMT). Over 0.3 m
+   * on a street is `pad-on-road`'s.
+   */
+  "way-axis-shift-by-pad": () => {
+    const pieces = PADS.filter((p) => p.row).map((p) => ({ name: `pad ${p.row}`, pads: [p], ramps: [] }));
+    const chunks = MAP_CHUNKS.map((c) => ({ bounds: c.bounds, terrain: w3Grid(c.terrain) }));
+    const lines = extractFeatures(SOURCE_OSM).lines;
+    return [
+      ...padOnRoadFindings(pieces, chunks, lines.filter((l) => isStreet(l.tags)), MOST_REGISTERED, MOST),
+      ...padOnRoadFindings(pieces, chunks, lines.filter((l) => isGroundSteps(l.tags)), MOST_REGISTERED),
+    ];
+  },
   /** A pad, with its blend, over the map's water off W-3's basin mouth (ADR-0082, audit before stage 1). */
   "pad-in-water": () =>
     padsInWater(
