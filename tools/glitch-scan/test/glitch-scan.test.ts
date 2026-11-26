@@ -97,6 +97,7 @@ import { kerbStripBare } from "./kerb-strip-bare";
 import { markingSteps } from "./marking-step";
 import { busStopOnFill, cityFillWorld, kerbFillWideEstimated } from "./kerb-fill";
 import { canopyWithoutTree } from "./canopy-trees";
+import { stallsOnPosts } from "./canopy-posts";
 import { deckRings, treesByDeck, treesInStructure } from "./tree-structures";
 import { cityMeasuredPieces, cityMeasuredTrees, treesBelowMeasured, treesRoofCaptured, treesUnmeasured } from "./tree-heights";
 import { cityNamedTrees, treesOfOtherSpecies } from "./tree-species";
@@ -170,7 +171,7 @@ import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interio
 import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/capsule-room";
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
-import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { CANOPY_POST, LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, canopyPosts, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { LUBLIN_CONSTRUCTION_SITES } from "../../../packages/sim/src/content/lublin/construction";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
@@ -842,6 +843,15 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
       .flat()
       .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column", "atm", "bike-rack", "food-cart", "container"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /** A market stall's canvas within 0.125 m of a canopy's post (G-966, T-346, `canopy-posts.ts`). */
+  "prop-on-canopy-post": () =>
+    stallsOnPosts(
+      LUBLIN_CHUNKS.flatMap((c) => (c.canopies ?? []).flatMap((k) => canopyPosts(k).map((p) => ({ id: k.id, x: p.x + k.x, z: p.z + k.z })))),
+      Object.values(WORLD_STREET_PROPS)
+        .flat()
+        .filter((i) => i.prop === "market-stall"),
+      CANOPY_POST,
+    ),
   /**
    * A market stall whose canvas (2.4 x 1.8 m at 2.35 m) reaches over a container or a food cart
    * (ADR-0058 stage 2): the cart's roof and the container's wall stand higher than the canvas.
