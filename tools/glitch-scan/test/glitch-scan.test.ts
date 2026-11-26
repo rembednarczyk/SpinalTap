@@ -39,6 +39,7 @@ import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
 import { isStreet, padOnRoadFindings } from "./pad-on-road";
+import { gaps as sidewalkGaps, junctionTest, steps as sidewalkSteps, stretches as sidewalkStretches, surfacePatches as sidewalkPatches, widthJumps as sidewalkWidthJumps } from "./sidewalk-kinds";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -637,6 +638,22 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
   if (shape === "abstract") return !kozio && t.artwork_type === "sculpture";
   return true;
 };
+
+/**
+ * The sidewalks of every street with a carriageway (cars and the morning's deliveries), profiled
+ * station by station and cut at junctions and the map's edge (`sidewalk-kinds.ts`), once for the
+ * four kinds of their uniformity (the user's decision of 26.11).
+ */
+const SIDEWALKS = (() => {
+  let memo: ReturnType<typeof sidewalkStretches> | null = null;
+  return () => {
+    if (memo) return memo;
+    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
+    const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
+    const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets) }, streets));
+  };
+})();
 
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
@@ -2436,6 +2453,16 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   "lane-place-on-green": () =>
     lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's paving or asphalt under grass no lawn of the map holds nor the bare ground rule laid, 0.6-3.3 m from a carriageway: a strip to a lawn laid as the lawn's over the kerb's pavement (G-825, `lawn-strip-on-paving.ts`). */
+  /**
+   * The sidewalks' uniformity (the user's decision of 26.11, `sidewalk-kinds.ts`): along a street with
+   * a carriageway, stretch by stretch from junction to junction, the strip by the kerb paved as its
+   * district's rule has it (`sidewalk-rules.ts`), no gap of bare ground in the walk, no step between its
+   * pieces, no jump of its width with room beside it.
+   */
+  "sidewalk-surface-patch": () => sidewalkPatches(SIDEWALKS()),
+  "sidewalk-gap": () => sidewalkGaps(SIDEWALKS()),
+  "sidewalk-step": () => sidewalkSteps(SIDEWALKS()),
+  "sidewalk-width-jump": () => sidewalkWidthJumps(SIDEWALKS()),
   "lawn-strip-on-paving": () =>
     lawnStripOnPaving(
       MAP_CHUNKS,
