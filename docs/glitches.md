@@ -4,14 +4,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
-- Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
-- Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
-- Dowód: próbki co 0,5 m wzdłuż obu linii (sonda kuratora 25.11): w 79 z 80 przy jednym licu pochyłość ponad 0,5 m; przed licem nasyp do 1,85 m wysokości, szeroki zwykle 0,4 m (p90 0,9 m), za parapetem rów do 2,16 m głębokości, zwykle 0,55 m (p90 0,9 m)
-- Ważność: S3 (przegląd kuratora runda 2: nasyp przed licem widać z chodnika Królewskiej z ok. 8 m, przy x 593 klin ok. 2 m wysokości na ok. 1 m szerokości) · Zasięg: ok. 50 m muru, widoczne z Królewskiej
-- Poprawka: dociąganie węzłów siatki do linii nieciągłości (siatka zgodna z krawędzią, jak w TIN) albo mur oporowy z odsadzką na pełną komórkę; kontrola `wall-face-bank` (próbka co 0,5 m wzdłuż `BREAKLINES`, różnica gruntu przy licu ponad 0,5 m względem poziomu strony), baza 79
-- Pakiet właściciela: packages/sim (content/lublin)
-
 ### G-969 Murek 1,4 m na odcinku x 605–612 przed fasadą katedry, gdzie NMPT nie widzi muru
 - Status: zgłoszone (24.11, przegląd kuratora K5a)
 - Gdzie: w232362979, odcinek (604,8; −199,4) → (605,2; −202,7) → (610,0; −202,2) → (611,0; −202,1)
@@ -2214,6 +2206,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
 - Status: zgłoszone (26.11, przegląd kuratora G-972)
 - Pakiet właściciela: packages/engine (renderer/mapcity)
+
+### G-977 Rząd aut przy parapecie tarasu Placu Katedralnego: 1 auto z 11 stanowisk, na ortofoto ok. 13
+- Ważność: S4 · Zasięg: parking w179262652, rząd południowy x 552–590, z −199…−195
+- Opis: Rząd biegnie 5,5 m od alejki i zbiega się z murem w590597335 na zachód: tył hatchbacka 0,29–0,56 m od osi muru przy x 554–570 (vana 0,01–0,30), więc stanowiska odpadają na BREAK_ROOM 0,6 m (G-976). Ortofoto 2025-04: auta prostopadle z tyłami 0,5–0,9 m od osi. Propozycja: stanowisko przy linii nieciągłości cofa auto do 0,6 m od linii zamiast je odrzucać. T-352.
+- Status: zgłoszone (26.11, przegląd kuratora PR #1048)
+- Pakiet właściciela: packages/sim (parked-cars.ts, aisle-bays.ts)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

@@ -2,7 +2,7 @@ import { nearBreakline } from "../src/content/lublin/breaklines";
 import { describe, expect, it } from "vitest";
 import { BARRIER_PIECE, BARRIER_THICKNESS, type StreetPropItem, barrierLayout } from "@seki/core";
 import { Simulation, W3_BARRIERS, WORLD_BARRIERS, WORLD_CHUNKS, WORLD_SCENERY, ground, groundY } from "../src";
-import { barrierPieces, barrierPrism, distanceToBarrier } from "../src/content/lublin/barriers";
+import { RETAINED_FACE, barrierPieces, barrierPrism, distanceToBarrier } from "../src/content/lublin/barriers";
 import { barrierBlocked } from "../src/content/world-barriers";
 import { clearSight, lineOfSight } from "../src/world/hitscan";
 import { inPlayerView } from "../src/systems/crime-system";
@@ -58,10 +58,11 @@ describe("the map's barriers in the game (ADR-0077 point 4)", () => {
       // On the ground at its middle; a piece of the parish church's foundations raised to their level (`levelTop`) on its low end.
       const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
       const lowEnd = Math.min(groundY(item.x - half.x, item.z - half.z), groundY(item.x + half.x, item.z + half.z));
-      // A retaining wall on a terrace's breakline from its lower side: the lowest ground of its axis and a metre to either side (T-351).
+      // A retaining wall on a terrace's breakline from its lower side: the lowest ground at its faces and a metre to either side (T-351, G-971).
       const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
       const stepped = b.kind === "retaining-wall" && nearBreakline(item.x, item.z);
-      const ground = stepped ? Math.min(groundY(item.x, item.z), groundY(item.x + across.x, item.z + across.z), groundY(item.x - across.x, item.z - across.z)) : groundY(item.x, item.z);
+      const sides = [RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(item.x + across.x * d, item.z + across.z * d));
+      const ground = stepped ? Math.min(...sides) : groundY(item.x, item.z);
       expect(Math.min(Math.abs(item.y - ground), b.rise === 0 ? Math.abs(item.y - lowEnd) : Infinity), `${item.x},${item.z}`).toBeLessThan(0.05);
     }
     expect(kinds.get("wall")).toBeGreaterThan(1500);

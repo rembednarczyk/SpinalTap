@@ -2,7 +2,7 @@ import type { EntityId, GroundSurface, RoadMarkingKind, Vec3, ViewDescriptor } f
 import type { AcrossAt } from "./canyon-plan";
 import { type DeckAxis, Decks, deckHeight } from "./deck-plan";
 import type { MapBuilding } from "./facade-frame";
-import type { HeightAt } from "./ground-plan";
+import { DRAPE_GRID, type HeightAt } from "./ground-plan";
 import type { LandmarkPart } from "./landmarks";
 import { mapBuilding } from "./map-building";
 import { BinIndex } from "./map-index";
@@ -104,7 +104,7 @@ export class MapEntries {
 
   /** The terrain under a ground entry: the chunk's, or the entry's own height outside every terrain. */
   terrainOf(g: GroundEntry): HeightAt {
-    return (x, z) => this.heightAt(x, z) ?? g.y;
+    return Object.assign((x: number, z: number) => this.heightAt(x, z) ?? g.y, { breaks: this.terrains.breaksOn(DRAPE_GRID) });
   }
 
   /**
@@ -123,7 +123,7 @@ export class MapEntries {
       // the line (G-330). A line lies on the surface under its middle.
       const mid = middleOf(g.ring);
       const surface = this.decks.surfaceAt(mid.x, mid.z) ?? terrain;
-      return Object.assign((x: number, z: number) => surface(x, z), { surfaceAt: () => surface });
+      return Object.assign((x: number, z: number) => surface(x, z), { surfaceAt: () => surface, breaks: terrain.breaks });
     }
     // The drape reads millions of points: the terrain under each once, and only for a deck there (G-444).
     return Object.assign(
@@ -131,7 +131,7 @@ export class MapEntries {
         const under = terrain(x, z);
         return this.decks.heightAt(x, z, under) ?? under;
       },
-      { surfaceAt: (x: number, z: number) => (this.decks.near(x, z) ? this.decks.surfaceAt(x, z, terrain(x, z)) : null) ?? terrain },
+      { surfaceAt: (x: number, z: number) => (this.decks.near(x, z) ? this.decks.surfaceAt(x, z, terrain(x, z)) : null) ?? terrain, breaks: terrain.breaks },
     );
   }
 
