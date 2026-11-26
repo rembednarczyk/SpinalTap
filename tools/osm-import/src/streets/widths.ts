@@ -12,7 +12,7 @@
  */
 import { type Carriageway, loadCarriageways } from "../../../gugik/src/extracts.ts";
 import { parseLength } from "../building-tags.ts";
-import { orthoSides } from "../corrections-kerb.ts";
+import { orthoWidth } from "../corrections-kerb.ts";
 import { type Pt, lineLength } from "../geometry.ts";
 import { type Tags } from "../osm.ts";
 
@@ -46,30 +46,42 @@ const samples = (line: readonly Pt[]): { p: Pt; d: Pt }[] => {
   return out;
 };
 
-/** The width BDOT10k gives the carriageway along `axis`: the median of the matched samples' widths; null where it runs beside too little of it. */
-export const bdotWidth = (axis: readonly Pt[], from: readonly Carriageway[] = carriageways()): number | null => {
+/**
+ * BDOT10k's carriageway along `axis`: its width (the median of the matched samples') and how far its
+ * line runs off the axis (m, left positive as `offsetLine`, the median); null where it runs beside
+ * too little of the axis.
+ */
+export const bdotMatch = (axis: readonly Pt[], from: readonly Carriageway[] = carriageways()): { width: number; offset: number } | null => {
   const ss = samples(axis);
   if (ss.length === 0) return null;
   const box = axis.reduce((b, p) => ({ minX: Math.min(b.minX, p.x), maxX: Math.max(b.maxX, p.x), minZ: Math.min(b.minZ, p.z), maxZ: Math.max(b.maxZ, p.z) }), { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity });
   const near = from.filter((c) => c.width !== null && c.line.some((q) => q.x > box.minX - NEAR - 50 && q.x < box.maxX + NEAR + 50 && q.z > box.minZ - NEAR - 50 && q.z < box.maxZ + NEAR + 50));
-  const widths: number[] = [];
+  const [widths, offsets]: [number[], number[]] = [[], []];
   for (const { p, d } of ss) {
-    let best: { dist: number; width: number } | null = null;
+    let best: { dist: number; width: number; off: number } | null = null;
     for (const c of near)
       for (let i = 0; i + 1 < c.line.length; i++) {
         const [a, b] = [c.line[i]!, c.line[i + 1]!];
         const len = Math.hypot(b.x - a.x, b.z - a.z);
         if (len < 1e-6 || Math.abs(((b.x - a.x) * d.x + (b.z - a.z) * d.z) / len) < PARALLEL) continue;
         const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.z - a.z) * (b.z - a.z)) / (len * len)));
-        const dist = Math.hypot(a.x + (b.x - a.x) * t - p.x, a.z + (b.z - a.z) * t - p.z);
-        if (dist <= NEAR && (!best || dist < best.dist)) best = { dist, width: c.width! };
+        const [qx, qz] = [a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t];
+        const dist = Math.hypot(qx - p.x, qz - p.z);
+        // Left of the axis positive: on the normal (-dz, dx), as `offsetLine`.
+        if (dist <= NEAR && (!best || dist < best.dist)) best = { dist, width: c.width!, off: (qx - p.x) * -d.z + (qz - p.z) * d.x };
       }
-    if (best) widths.push(best.width);
+    if (best) {
+      widths.push(best.width);
+      offsets.push(best.off);
+    }
   }
   if (widths.length < ss.length * SHARE) return null;
-  const s = [...widths].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)]!;
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+  return { width: median(widths), offset: median(offsets) };
 };
+
+/** The width BDOT10k gives the carriageway along `axis` (`bdotMatch`), or null. */
+export const bdotWidth = (axis: readonly Pt[], from: readonly Carriageway[] = carriageways()): number | null => bdotMatch(axis, from)?.width ?? null;
 
 /** A side's half width of the carriageway and where it comes from. */
 export interface SideWidth {
@@ -83,13 +95,12 @@ export interface SideWidth {
  */
 export const streetWidth = (tags: Tags, half: number, ortho: boolean, estimated: (side: 1 | -1) => boolean, bdot: number | null): [SideWidth, SideWidth] => {
   const osm = parseLength(tags.width);
-  // BDOT10k and the orthophoto's measure further apart than `CONFLICT`: the measure the street is laid
-  // with now stays, the traffic's lanes with it, and the conflict goes to the review (`WidthReport`).
-  const disputed = bdot !== null && ortho && Math.abs(bdot - 2 * half) > CONFLICT;
+  // BDOT10k wins over the orthophoto's measure however far apart (the user's decision of 26.11); a
+  // difference over `CONFLICT` is still reported (`WidthReport`).
   const side = (s: 1 | -1): SideWidth =>
     osm !== null
       ? { half: osm / 2, source: "osm" }
-      : bdot !== null && !disputed
+      : bdot !== null
         ? { half: bdot / 2, source: "bdot10k" }
         : ortho
           ? { half, source: "ortho" }
@@ -99,12 +110,24 @@ export const streetWidth = (tags: Tags, half: number, ortho: boolean, estimated:
   return [side(1), side(-1)];
 };
 
-/** A street's sides' widths by the order of the sources, added to `report`: `half` and `estimated` the import's own (`kerb.half`, `estimatedSide`). */
-export const sourcedWidth = (way: string, tags: Tags, axis: readonly Pt[], half: number, estimated: (source: string, side: 1 | -1) => boolean, report: WidthReport): [SideWidth, SideWidth] => {
-  const ortho = orthoSides(way) !== undefined;
+/**
+ * A street's sides' widths by the order of the sources, added to `report`. `half` and `estimated`
+ * are the import's own (`kerb.half`, `estimatedSide`); in the districts on the street graph the
+ * import has already taken BDOT10k's width and line (`bdot-ways.ts`), so the axis is BDOT10k's and
+ * its match here names the source. The orthophoto's measure is set beside it for the report.
+ */
+export const sourcedWidth = (
+  way: string,
+  tags: Tags,
+  axis: readonly Pt[],
+  half: number,
+  estimated: (source: string, side: 1 | -1) => boolean,
+  report: WidthReport,
+): [SideWidth, SideWidth] => {
+  const ortho = orthoWidth(way);
   const bdot = bdotWidth(axis);
-  const sides = streetWidth(tags, half, ortho, (side) => estimated(way, side), bdot);
-  report.add(way, tags.name ?? "", axis, sides, half, bdot, ortho);
+  const sides = streetWidth(tags, half, ortho !== null, (side) => estimated(way, side), bdot);
+  report.add(way, tags.name ?? "", axis, sides, bdot, ortho);
   return sides;
 };
 
@@ -113,11 +136,11 @@ export class WidthReport {
   private readonly length = new Map<WidthSource, number>();
   private readonly conflicts: string[] = [];
 
-  /** A street's two sides, its length, and the import's own width beside BDOT10k's where both are. */
-  add(way: string, name: string, axis: readonly Pt[], sides: readonly [SideWidth, SideWidth], own: number, bdot: number | null, ortho: boolean): void {
+  /** A street's two sides, its length, and BDOT10k's width beside the orthophoto's where both are. */
+  add(way: string, name: string, axis: readonly Pt[], sides: readonly [SideWidth, SideWidth], bdot: number | null, ortho: number | null): void {
     const len = lineLength(axis) / 2;
     for (const s of sides) this.length.set(s.source, (this.length.get(s.source) ?? 0) + len);
-    if (bdot !== null && ortho && Math.abs(bdot - 2 * own) > CONFLICT) this.conflicts.push(`${way} ${name}: BDOT10k ${bdot} m, orthophoto ${(2 * own).toFixed(1)} m`);
+    if (bdot !== null && ortho !== null && Math.abs(bdot - ortho) > CONFLICT) this.conflicts.push(`${way} ${name}: BDOT10k ${bdot} m, orthophoto ${ortho.toFixed(1)} m`);
   }
 
   toString(): string {

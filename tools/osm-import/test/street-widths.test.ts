@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Carriageway } from "../../gugik/src/extracts.ts";
-import { WidthReport, bdotWidth, streetWidth } from "../src/streets/widths.ts";
+import { WidthReport, bdotMatch, bdotWidth, streetWidth } from "../src/streets/widths.ts";
 
 /** ADR-0104 pkt 4: the carriageway's width by the order of the sources, BDOT10k's matched to the axis. */
 
@@ -22,13 +22,18 @@ describe("the carriageway's width from its sources (ADR-0104 pkt 4)", () => {
     expect(bdotWidth(axis, [cw("g", null, [[-5, 1], [105, 1]])])).toBeNull();
   });
 
+  it("reads how far BDOT10k's line runs left of the axis", () => {
+    expect(bdotMatch(axis, [cw("a", 7, [[-5, 1.2], [105, 1.2]])])).toEqual({ width: 7, offset: 1.2 });
+    expect(bdotMatch(axis, [cw("a", 7, [[-5, -0.8], [105, -0.8]])])?.offset).toBeCloseTo(-0.8, 6);
+  });
+
   it("orders the sources: the map's width, BDOT10k, the orthophoto, fitted, the estimate", () => {
     const est = () => true;
     expect(streetWidth({ width: "8" }, 3, true, est, 7)).toEqual([{ half: 4, source: "osm" }, { half: 4, source: "osm" }]);
     expect(streetWidth({}, 3, true, est, 7)).toEqual([{ half: 3.5, source: "bdot10k" }, { half: 3.5, source: "bdot10k" }]);
     expect(streetWidth({}, 3, true, est, null)).toEqual([{ half: 3, source: "ortho" }, { half: 3, source: "ortho" }]);
-    // BDOT10k 1.4 m off the orthophoto's measure: disputed, the measure the street has stays until the review.
-    expect(streetWidth({}, 4.6, true, est, 7.8)).toEqual([{ half: 4.6, source: "ortho" }, { half: 4.6, source: "ortho" }]);
+    // BDOT10k 1.4 m off the orthophoto's measure: BDOT10k's all the same (the user's decision of 26.11).
+    expect(streetWidth({}, 4.6, true, est, 7.8)).toEqual([{ half: 3.9, source: "bdot10k" }, { half: 3.9, source: "bdot10k" }]);
     // Off an estimate by any amount: BDOT10k's.
     expect(streetWidth({}, 3.25, false, est, 10)).toEqual([{ half: 5, source: "bdot10k" }, { half: 5, source: "bdot10k" }]);
     expect(streetWidth({}, 3, false, (side) => side < 0, null)).toEqual([{ half: 3, source: "fitted" }, { half: 3, source: "default" }]);
@@ -36,12 +41,11 @@ describe("the carriageway's width from its sources (ADR-0104 pkt 4)", () => {
 
   it("reports the length by source and the conflicts over 1 m", () => {
     const r = new WidthReport();
-    r.add("w1", "Narutowicza", axis, streetWidth({}, 4.6, true, () => true, 7), 4.6, 7, true);
-    r.add("w3", "Kozia", axis, streetWidth({}, 2.25, false, () => true, 5), 2.25, 5, false);
-    r.add("w2", "Kozia", axis, streetWidth({}, 2.5, false, () => true, null), 2.5, null, false);
+    r.add("w1", "Narutowicza", axis, streetWidth({}, 3.5, true, () => true, 7), 7, 9.2);
+    r.add("w3", "Kozia", axis, streetWidth({}, 2.5, false, () => true, 5), 5, null);
+    r.add("w2", "Kozia", axis, streetWidth({}, 2.5, false, () => true, null), null, null);
     const text = r.toString();
-    expect(text).toContain("bdot10k 0.10 km (33.3%)");
-    expect(text).toContain("ortho 0.10 km (33.3%)");
+    expect(text).toContain("bdot10k 0.20 km (66.7%)");
     expect(text).toContain("default 0.10 km (33.3%)");
     expect(text).toContain("conflicts over 1 m: 1 (w1 Narutowicza: BDOT10k 7 m, orthophoto 9.2 m)");
   });

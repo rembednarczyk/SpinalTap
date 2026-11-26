@@ -52,8 +52,15 @@ const keepPiece = (piece: readonly Pt[], rect: Rect): boolean => {
 const closedToVehicles = (t: Tags): boolean =>
   (t.tunnel === "building_passage" || t.tunnel === "yes" || t.covered === "yes") && [t.motor_vehicle, t.motorcar, t.vehicle].some((v) => v === "no");
 
-/** The named streets' pieces in the chunk, simplified, with their carriageway's reach each side when `halves` gives it (ADR-0080). */
-export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: StreetHalves): StreetOut[] => {
+/**
+ * The named streets' pieces in the chunk, simplified, with their carriageway's reach each side when
+ * `halves` gives it (ADR-0080). The `exact` ways keep their line to `EXACT` m: a way moved onto its
+ * carriageway's middle (ADR-0104 pkt 4) keeps the ramps off its ends, or its lanes read a narrower side.
+ */
+/** How far a moved way's simplified line may stray from it (m). */
+const EXACT = 0.1;
+
+export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: StreetHalves, exact: ReadonlySet<string> = new Set()): StreetOut[] => {
   const out: StreetOut[] = [];
   for (const l of lines) {
     const name = l.tags.name && (NAME_FIXES[l.tags.name] ?? l.tags.name);
@@ -65,7 +72,7 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect, halves?: Street
     const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
     for (const piece of clipLineToRect(line, rect)) {
       if (!keepPiece(piece, rect)) continue;
-      const simple = simplifyLine(piece, 1).map((p) => ({ x: r1(p.x), z: r1(p.z) }));
+      const simple = simplifyLine(piece, exact.has(l.id) ? EXACT : 1).map((p) => ({ x: r1(p.x), z: r1(p.z) }));
       const half = halves?.(l.id, simple);
       out.push({
         name,

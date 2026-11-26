@@ -114,3 +114,39 @@ Wersja 24 (Krakowskie, main → graf):
 - 3 Maja: 5 wobec 7,1 m, 5 wobec 3,4 m i 11 wobec 13,5 m;
 - Kapucyńska: 10 wobec 7,6 m.
 
+## Runda 4 (26.11 wieczorem): BDOT10k wygrywa zawsze
+
+Decyzja użytkownika: w dzielnicach z grafem szerokość i oś jezdni daje BDOT10k, także wbrew pomiarowi z ortofoto. Zmiany:
+- **BDOT10k w potoku importu (`streets/bdot-ways.ts`):**
+  - każda ulica w dzielnicy z grafem, wzdłuż której biegnie jezdnia BDOT10k, dostaje jej szerokość jako `width:carriageway`;
+  - przesunięcie linii BDOT10k od osi OSM idzie tą samą drogą co przesunięcie z ortofoto (`orthoPieces` z rampą 0,1 m/m od końców), więc pasma, pasy, oznakowanie i połówki jezdni czytają jedną miarę;
+  - obie strony jezdni są zmierzone;
+  - dopasowanie pasów do zmapowanych chodników nie rusza ulic z BDOT10k.
+- **Oś ulicy w treści gry:** ulica z BDOT10k wychodzi na środku swojej jezdni, uproszczona do 0,1 m (`labels.ts`). Inaczej połówki są niesymetryczne i reguła dwóch pasów (`min(L, R) ≥ 2,6 m`) daje Bajkowskiego jeden pas na 6 m jezdni BDOT10k, a `osm:props` pada w `traffic-deptak.ts`.
+- **Raport sporów** porównuje BDOT10k z tablicą ortofoto.
+
+Wersja 25 (Krakowskie, main → v24 → v25):
+
+| Rodzaj | main | v24 | v25 |
+|---|---|---|---|
+| sidewalk-surface-patch | 169 | 99 | 100 |
+| ground-strip-gap | 288 | 227 | 232 |
+| landuse-bare | 253 | 228 | 235 |
+| bare-on-cover | 130 | 109 | 117 |
+| kerb-gap-bare | 222 | 214 | 221 |
+| sidewalk-gap | 118 | 116 | 127 |
+| sidewalk-step | 154 | 152 | 170 |
+| crossing-shape-kerb | 17 | 4 | 6 |
+| kerb-strip-bare | 14 | 5 | 1 |
+| sidewalk-width-jump | 88 | 99 | 112 |
+| kerb-jag | 3 | 7 | 7 |
+| ground-ring-self-cross | 0 | 3 | 0 |
+| bus-stop-on-fill | 0 | 2 | 1 |
+| fill-gap | 8 | 10 | 8 |
+| furniture-in-car-lane | 0 | 1 | 0 |
+| ramp-car-off-lane | 0 | 0 | 12 (fałszywy alarm, niżej) |
+| car-lane-off-road, lane-off-ground, walk-blocked | 0 | 0 | 0 |
+
+- **Pochodzenie szerokości:** BDOT10k 97,6%, dopasowanie do chodników 1,1%, OSM 0,8%, szacunek 0,5%. Spory ponad 1 m te same 9 co w rundzie 3.
+- **Gorzej:** `sidewalk-step` (+18), `sidewalk-width-jump` (+13) i `sidewalk-gap` (+11). BDOT10k podaje szerokości w pełnych metrach i często węższe niż ortofoto, więc chodnik dostaje uskoki na granicach odcinków. To skutek decyzji o źródle; do sprawdzenia w E3, czy uskoki leżą na granicach odcinków BDOT10k.
+- **`ramp-car-off-lane` (12 punktów przy 423–430; −17):** wyjazd z rampy P−1 Alchemii dołącza do lewego pasa Bajkowskiego 0,1 m za początkiem zmiany pasa przed Lubartowską. `join` w `packages/sim/src/content/traffic-ramp.ts` przenosi tylko łuki leżące w całości w przejętej części trasy, więc gubi łuk zmiany pasa i skan widzi samochód między pasami. Poprawka (przyciąć łuk do przejętej części) idzie osobnym PR-em symulacji przed E3.
