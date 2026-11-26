@@ -143,3 +143,5 @@ Na próbnych tablicach przechodzą wszystkie testy deptaka i rampy (40 z 40): `d
   - `traffic` G-090: pas ulicy dwukierunkowej zjeżdża z asfaltu przy (−98,6; −19,05). Nowe;
   - `grass-under-paving`: Plac Litewski (pas gołej ziemi na krawędzi chunku) i trawa na chodniku 3 Maja przy klinice (G-667);
   - zatoka autobusowa przy Narutowicza.
+
+**Parkowanie przy Peowiaków (w471191535), przyczyna:** na main jezdnia Peowiaków ma w kilku miejscach połowę poniżej 2,6 m, więc symulacja daje jej jeden pas ruchu. Z BDOT10k jezdnia ma równe 5,7 m (połowy 2,85 m) i reguła `lanesOf` stawia dwa pasy po ±1,6 m od osi. Prawy pas wchodzi w strefę zmapowanego pasa postojowego (`parking=street_side`), a auta muszą stać z dala od pasów ruchu, więc nie stoi żadne. W rzeczywistości to jeden pas ruchu z parkowaniem: OSM nie podaje `lanes` (jest `lane_markings=no`), a ulica jednokierunkowa bez tego tagu ma według konwencji OSM jeden pas. Do decyzji: liczba pasów z OSM (`lanes`, w domyśle konwencja OSM) zamiast z szerokości, albo szerokość jezdni pomniejszona o zmapowany pas postojowy.
