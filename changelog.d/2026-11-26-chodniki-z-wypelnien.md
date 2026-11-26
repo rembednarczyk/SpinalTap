@@ -1,0 +1,1 @@
+Brukowane przedpola przy ulicach Krakowskiego, Podzamcza i Nabrzeża są płytami chodnika z krawężnikiem od jezdni, bez progu przy pasie przy krawężniku; place, deptaki i Stare Miasto bez zmian (jednolitość chodników, krok 1, T-358).

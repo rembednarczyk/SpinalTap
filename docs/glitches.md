@@ -2193,6 +2193,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
 
+### G-980 Karby w obrysach jezdni na stykach kawałków widoczne jako zygzak krawężnika przy chodnikach z wypełnień
+- Ważność: S4 · Zasięg: 15 miejsc kerb-jag po kroku 1 jednolitości chodników, np. (2523,9; 359,1), (590,6; 644,1), (2332,0; 437,3), (1118,5; 507,7)
+- Opis: Obrys jezdni na styku dwóch jej kawałków (np. kawałki 138 i 129 w nabrzeze-1-1) ma karb 0,2–0,8 m; dopóki obok leżało wypełnienie square bez krawężnika, karbu nie było widać, a chodnik z wypełnienia (bare-walks.ts) rysuje krawężnik po jego krawędzi. Ta sama klasa co 17 znanych miejsc bazy kerb-jag; poprawka w kształcie jezdni, nie w wypełnieniach (przyciąganie wierzchołków wypełnienia do krawędzi jezdni i rozszerzenie go pod asfalt sprawdzone 26.11, bez zysku)
+- Status: nowe
+- Pakiet właściciela: tools/osm-import
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
