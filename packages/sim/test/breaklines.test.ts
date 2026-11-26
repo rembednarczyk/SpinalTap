@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { BREAKLINES, BREAK_FLIGHTS } from "../src/content/lublin/breaklines";
+import { VEHICLE_SIZE, barrierLayout } from "@seki/core";
+import { BREAKLINES, BREAK_FLIGHTS, breaklineDistance } from "../src/content/lublin/breaklines";
+import { distanceToBarrier } from "../src/content/lublin/barriers";
+import { PARKED_CARS } from "../src/content/parked-cars";
+import { WORLD_BARRIERS } from "../src";
 import { groundY } from "../src/content/lublin/terrain";
 
 /**
@@ -32,6 +36,30 @@ describe("the terrace's step under the walls along Królewska (T-351)", () => {
         expect(at(1.5) - at(-1.5), `${l.id} ${p.x.toFixed(1)} step`).toBeGreaterThan(0.9);
       }
     }
+  });
+
+  it("steps at the wall itself: no bank before its face, no ditch behind its parapet (G-971)", () => {
+    let samples = 0;
+    for (const l of BREAKLINES) {
+      // Every 0.5 m beside the line, off its fading ends and the flight's box.
+      const pts = along(l.line, 0.5).filter((p) => !l.skip?.some((b) => p.x >= b.minX - 1 && p.x <= b.maxX + 1 && p.z >= b.minZ - 1 && p.z <= b.maxZ + 1) && Math.hypot(p.x - l.line[0]!.x, p.z - l.line[0]!.z) > 4 && Math.hypot(p.x - l.line[l.line.length - 1]!.x, p.z - l.line[l.line.length - 1]!.z) > 4);
+      for (const p of pts) {
+        const at = (d: number) => groundY(p.x + p.n.x * d, p.z + p.n.z * d);
+        // At either face (0.25 m from the axis, the wall 0.4 m thick) the ground of its side, as 1.5 m out.
+        for (const side of [1, -1]) expect(Math.abs(at(side * 0.25) - at(side * 1.5)), `${l.id} ${p.x.toFixed(1)},${p.z.toFixed(1)} side ${side}`).toBeLessThan(0.15);
+        samples++;
+      }
+    }
+    expect(samples).toBeGreaterThan(60);
+  });
+
+  it("keeps the wall whole along the terrace's edge, the parked cars clear of it (G-971)", () => {
+    const walls = Object.values(WORLD_BARRIERS).flat().filter((i) => barrierLayout(i.variant).kind === "retaining-wall");
+    for (const l of BREAKLINES) {
+      const pts = along(l.line, 0.5).filter((p) => !l.skip?.some((b) => p.x >= b.minX - 1 && p.x <= b.maxX + 1 && p.z >= b.minZ - 1 && p.z <= b.maxZ + 1) && Math.hypot(p.x - l.line[0]!.x, p.z - l.line[0]!.z) > 4 && Math.hypot(p.x - l.line[l.line.length - 1]!.x, p.z - l.line[l.line.length - 1]!.z) > 4);
+      for (const p of pts) expect(walls.some((w) => distanceToBarrier(w, p.x, p.z) < 0.05), `${l.id} ${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBe(true);
+    }
+    for (const c of PARKED_CARS) expect(breaklineDistance(c.x, c.z), `${c.x},${c.z}`).toBeGreaterThan(VEHICLE_SIZE[c.model].width / 2);
   });
 
   it("lays the flight between the walls' ends from the pavement to the terrace", () => {

@@ -7,6 +7,7 @@ import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from
 import { MAP_CHUNKS } from "./lublin/sites";
 import { footprint, pairSegmentDistance, segmentsGap } from "./parked-geometry";
 import { type KerbStrip, clearOfFurniture, clearOfKeptWays } from "./parked-room";
+import { breaklineDistance } from "./lublin/breaklines";
 import { groundY, restingY, surfaceY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
 import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth, turnedRound } from "./traffic";
@@ -76,6 +77,15 @@ const level = (x: number, z: number, yaw: number, model: VehicleModel): boolean 
   const ys = underBody(x, z, yaw, model).map((p) => surfaceY(p.x, p.z));
   return Math.max(...ys) - Math.min(...ys) <= LEVEL_DROP;
 };
+
+/**
+ * Room a parked car keeps from a terrace's retaining wall (`breaklines.ts`, m): the wall's half
+ * thickness (0.2 m), the room a barrier keeps from a parked car (`barrier-room.ts`, 0.35 m) and a
+ * margin. Nearer, the wall gives way to the car (`barrierBlocked`) and the terrace's edge stands
+ * open over the step (G-971).
+ */
+const BREAK_ROOM = 0.6;
+const clearOfBreaklines = (x: number, z: number, yaw: number, model: VehicleModel): boolean => underBody(x, z, yaw, model).every((p) => breaklineDistance(p.x, p.z) > BREAK_ROOM);
 
 /** Surfaces a car may stand on: the carriageway and the cobbled squares (never a zebra, see `clearOfZebras`). */
 const PARKABLE: ReadonlySet<GroundSurface> = new Set<GroundSurface>(["road", "cobble", "square"]);
@@ -212,7 +222,7 @@ const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain, strip?: KerbStrip): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
+  if (!level(x, z, yaw, model) || !clearOfBreaklines(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
   if (!clearOfFurniture(x, z, yaw, model, strip)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);

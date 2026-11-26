@@ -37,17 +37,20 @@ export const RETAINED_PARAPET = 0.5;
 /** The step between a retaining wall's sides from which it is read as holding a terrace (m). */
 const RETAINED_STEP = 0.5;
 
+/** Where a retaining wall's sides are read at its faces (m): just past its half thickness, off its axis, where the ground steps (G-971). */
+export const RETAINED_FACE = 0.25;
+
 /**
- * The ground of a retaining wall's two sides at (x, z): the lowest and highest of its axis and a
+ * The ground of a retaining wall's two sides at (x, z): the lowest and highest at its faces and a
  * metre to either side. Its face reaches down to the lower side and its top over the upper one
  * where the terrain steps under it (`breaklines.ts`, T-351), instead of leaving the step's slope
- * bare under it or the terrace's edge over it.
+ * bare under it or the terrace's edge over it. Not on its axis: the ground steps there.
  */
 const retainedSides = (a: GroundPoint, b: GroundPoint, groundY: (x: number, z: number) => number) => {
   const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
   const [nx, nz] = [-(b.z - a.z) / len, (b.x - a.x) / len];
   return (x: number, z: number): { low: number; high: number } => {
-    const ys = [groundY(x, z), groundY(x + nx * RETAINED_SIDE, z + nz * RETAINED_SIDE), groundY(x - nx * RETAINED_SIDE, z - nz * RETAINED_SIDE)];
+    const ys = [RETAINED_FACE, -RETAINED_FACE, RETAINED_SIDE, -RETAINED_SIDE].map((d) => groundY(x + nx * d, z + nz * d));
     return { low: Math.min(...ys), high: Math.max(...ys) };
   };
 };
