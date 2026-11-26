@@ -259,6 +259,14 @@ const GARAGE_VIVO: AddedArea = {
  */
 const SHED_NADSTAWNA = area("szopa-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.5, 484.13, 742.01, 508.93, 748.5, 507.6, 742.9, 484.75], "szopa albo rząd garaży ok. 5,5 × 24,5 m w parkingu w73976159 na ortofoto PZGiK (dach dwukolorowy, cień), w OSM i w grze bez budynku", "T-356");
 
+/**
+ * The row of garages south of the shed (G-973, the curator's review of #1037 round 3): a blue roof
+ * of about 6 x 5 m and a grey one west of it to the yard's corner, none in OSM or the game, the
+ * car park's asphalt drawn through them. Corners read off the PZGiK orthophoto of 2025-04 (0.25 m
+ * a pixel, the fetch tool's `--bbox`), north edge on the shed's south end; height assumed as the shed's.
+ */
+const GARAGES_NADSTAWNA = area("garaze-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.1, 480.6, 749.3, 480.0, 749.5, 484.6, 738.5, 484.1], "rząd garaży ok. 11 × 4,5 m na południe od szopy w parkingu w73976159 na ortofoto PZGiK 2025-04 (dach niebieski i szary), w OSM i w grze bez budynku", "T-356");
+
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
 export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   ...DWORZEC_EAST_AREAS,
@@ -291,4 +299,5 @@ export const PODZAMCZE_AREAS: readonly AddedArea[] = [
   RUSKA_B,
   GARAGE_VIVO,
   SHED_NADSTAWNA,
+  GARAGES_NADSTAWNA,
 ];
