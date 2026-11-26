@@ -265,7 +265,7 @@ const SHED_NADSTAWNA = area("szopa-parking-nadstawna", { building: "garages", he
  * car park's asphalt drawn through them. Corners read off the PZGiK orthophoto of 2025-04 (0.25 m
  * a pixel, the fetch tool's `--bbox`), north edge on the shed's south end; height assumed as the shed's.
  */
-const GARAGES_NADSTAWNA = area("garaze-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.1, 480.6, 749.3, 480.0, 749.5, 484.6, 738.5, 484.1], "rząd garaży ok. 11 × 4,5 m na południe od szopy w parkingu w73976159 na ortofoto PZGiK 2025-04 (dach niebieski i szary), w OSM i w grze bez budynku", "T-356");
+const GARAGES_NADSTAWNA = area("garaze-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.1, 479.2, 749.0, 479.1, 749.5, 484.6, 738.5, 484.1], "blok garaży z niebieskim dachem ok. 6 × 6 m (743,2…749,3; 479,1…485,3) i przedłużenie szopy do z ≈ 480,7 na ortofoto PZGiK 2025-04, w OSM i w grze bez budynku; południowa krawędź na budynku w73833903, bez szczeliny", "T-356");
 
 /** The added areas east of the Dworzec Autobusowy, then those of this file. */
 export const PODZAMCZE_AREAS: readonly AddedArea[] = [
