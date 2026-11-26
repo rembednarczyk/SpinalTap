@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ON_BUILDING, PAD, stallsOffTents, tentsOnBuildings, underTent } from "./market-tents";
+import { ON_BUILDING, PAD, marketsWithoutTents, stallsOffTents, tentsOnBuildings, underTent } from "./market-tents";
 
 describe("market-stall-off-tent (G-964)", () => {
   // A tent 10 x 4 m turned 90 degrees (its axis along +z), its middle at (5, 5).
@@ -25,5 +25,13 @@ describe("market-stall-off-tent (G-964)", () => {
     expect(found).toHaveLength(1);
     expect(found[0]!.what).toBe(`m: the tent at 10.0,10.0 lies 3.0 m² over a building`);
     expect(ON_BUILDING).toBe(2);
+  });
+
+  it("tracks a market with no tents mapped, and not one with them", () => {
+    const polygon = [0, 0, 20, 0, 20, 20, 0, 20];
+    expect(marketsWithoutTents([{ id: "a", polygon }, { id: "b", polygon, tents: [] }, { id: "c", polygon, tents: [[5, 5, 0, 4, 2]] }])).toEqual([
+      { at: "0,0", what: "a: no tents mapped" },
+      { at: "0,0", what: "b: no tents mapped" },
+    ]);
   });
 });
