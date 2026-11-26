@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-975 Wierzch muru oporowego pochylony rysunkiem o spadek stopy, a kolizja płaska: parapet 0,21–0,35 m nad tarasem Placu Katedralnego
+- Ważność: S4 · Zasięg: 4 końce kawałków muru tarasu Placu Katedralnego (x 558,2; 565,3; 597,9; 601,3)
+- Opis: Rysunek muru (shearedBox w packages/engine/src/renderer/mapcity/barrier-models.ts) pochyla wierzch kawałka o spadek stopy (rise), a bryła kolizji ma płaski wierzch na poziomie wyższego końca. Przy murach oporowych na liniach nieciągłości (T-351) rysowany parapet ma na czterech końcach kawałków 0,21–0,35 m nad wyższą stroną (na main −0,49…0,25 m), a przy x 601,3 niewidoczna kolizja stoi do 0,62 m nad rysowanym wierzchem (przegląd kuratora G-972, 26.11). Poprawka: wierzch rysowany tak jak kolizja (poziomy) dla murów oporowych przy linii nieciągłości; kontrola skanu: rysowany wierzch muru oporowego przy linii nieciągłości mniej niż 0,45 m nad wyższą stroną, baza 4. Odsyłacz T-351.
+- Status: naprawione (26.11, PR #1050 scalony); wcześniej: zgłoszone (26.11, przegląd kuratora G-972)
+- Pakiet właściciela: packages/engine (renderer/mapcity)
+- Naprawa (26.11, gałąź fix/g975-wierzch): kawałek muru oporowego trzymający uskok leży od najniższej z dolnej strony na końcach i w środku, bez pochylenia (rise 0, jak levelTop fundamentów fary), z wierzchem poziomym na parapecie 0,5 m nad najwyższą górną stroną; rysunek i bryła kolizji mają ten sam poziomy wierzch. Test: barriers.test.ts (G-975), w tym wierzch co najmniej 0,45 m nad górną stroną na obu końcach i w środku każdego kawałka
+
 ### G-976 Dziura w murze oporowym tarasu Placu Katedralnego przy zaparkowanych autach
 - Ważność: S3 · Zasięg: mur w590597335 przy x 558–561 i 573–576 na main (6 kolejnych miejsc po G-971)
 - Opis: Mur oporowy ustępuje zaparkowanemu autu (barrierBlocked: byParkedCar, 0,35 m od karoserii plus pół grubości muru), a stanowiska parkingu na tarasie dochodzą do linii muru. Na main nie ma muru przy hatchbacku na (559,5; −197,69) ani przy vanie na (574,5; −196,26): krawędź tarasu stoi otwarta nad uskokiem ok. 2 m. Po wyrównaniu terenu przy licu (G-971) stanowiska przy murze przestały odpadać na spadku (LEVEL_DROP) i dziur przybyło do 4 (x 561–566, 569–580). Poprawka: auto trzyma 0,6 m od linii nieciągłości (pół grubości muru, odstęp bariery od auta, zapas), więc mur stoi na całej długości; test breaklines.test.ts sprawdza mur co 0,5 m.
