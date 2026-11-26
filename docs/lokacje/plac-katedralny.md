@@ -60,4 +60,4 @@ Zrobione 23.11 (znicze LED z kwiatami i intencjami pod pomnikiem, terminal legen
 - Budka ochrony parafii z ochroniarzem (plan dnia: obchód placu po 22:00) i kamera nad portykiem: rekwizyt i postać w `packages/sim/src/content/district-kanal.ts`, plan w `packages/sim/src/content/schedules.ts`, kamera w `packages/sim/src/content/devices.ts`.
 - Holo-kasa w bramie wieży: model w `tools/blender/rooms/plac_katedralny.py`, rekwizyt w `packages/sim/src/content/katedralny-detail.ts`, klucz na końcu `ROOM_DETAIL_SHAPES`.
 - Emitery dzwonów (o pełnych godzinach) i organów przy drzwiach katedry: `packages/engine/src/audio/spatial.ts` i `packages/engine/src/audio/soundscape-clock.ts`.
-- Drugi reflektor fasady w południowej połowie portyku (ok. 603; −195), T-355. Kontrole skanu z przeglądu kuratora PR #1032 (`beacon-off-tip`, `scene-lamp-in-solid`, baza 0) są w skanie od 25.11.
+- Drugi reflektor fasady w południowej połowie portyku: od 26.11 (604,2; −194,9) z lampą sceny `kat-wash-front-south`, T-355. Kontrole skanu z przeglądu kuratora PR #1032 (`beacon-off-tip`, `scene-lamp-in-solid`, baza 0) są w skanie od 25.11.

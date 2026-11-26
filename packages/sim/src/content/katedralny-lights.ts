@@ -3,7 +3,7 @@ import type { SceneLamp, SceneLampGroup } from "./scene-lamp";
 
 /*
  * Plac Katedralny by night (the 60-30-10 measure of 24.11: base 83%, light 15%, accents 1.3%, the square too dark; the
- * backlog's „reflektory fasady przepisu”). The four floodlights of the map stand on the square (585; −140), (597.8;
+ * backlog's „reflektory fasady przepisu”). The five floodlights (the fifth, the front's southern half, 26.11) of the map stand on the square (585; −140), (597.8;
  * −153.8), (602.1; −175.6) and (620; −198.5) (since K4 (581.5; −139.8) and (591; −154.5) by the tower's faces), but drew only
  * their own glow: their washes are lights of the scene now,
  * each a few metres off the face it lights, on the side of its floodlight (motivated lighting: the source in the frame).
@@ -17,7 +17,7 @@ const WASH = { color: "#ffe3b8", range: 14, intensity: 1.15 } as const;
 
 const lamp = (key: string, x: number, z: number, over: number): SceneLamp => ({ key, at: { x, y: groundY(x, z) + over, z }, ...WASH });
 
-/** The washes: off the tower's north face and its south face, off the cathedral's west front and its south wall. */
+/** The washes: off the tower's north face and its south face, off the cathedral's west front (its two halves) and its south wall. */
 export const KATEDRALNY_LAMPS: SceneLampGroup = {
   id: "kanal-plac-katedralny",
   centre: { x: 600, z: -175 },
@@ -26,6 +26,8 @@ export const KATEDRALNY_LAMPS: SceneLampGroup = {
     lamp("kat-wash-tower-north", 581.5, -138.6, 9),
     lamp("kat-wash-tower-south", 591.0, -156.5, 12),
     lamp("kat-wash-front", 599.5, -179.5, 8),
+    // The front's southern half, from the second floodlight under the portico (604.2; −194.9), T-355.
+    lamp("kat-wash-front-south", 601.5, -193.0, 8),
     lamp("kat-wash-south-wall", 620.0, -201.0, 10),
   ],
 };
