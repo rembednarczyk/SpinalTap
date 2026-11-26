@@ -8,6 +8,7 @@ import { extractFeatures } from "../../osm-import/src/features.ts";
 import { sidewalkIndex } from "../../osm-import/src/generate.ts";
 import { areaBand, fitToKerb, lineBands, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
+import { graphDistricts } from "../../osm-import/src/streets/graph-bands.ts";
 import type { OsmData } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 
@@ -70,6 +71,8 @@ class Bins<T extends Boxed> {
 export interface FillWorld {
   /** The drawn sidewalks of the map's ground (off the bridges). */
   readonly sidewalks: readonly Ring[];
+  /** Those `kerb-fill-wide-estimated` samples: off the districts on the street graph (ADR-0104); all of them if not given. */
+  readonly sampled?: readonly Ring[];
   /** The paving the map's lines and areas explain. */
   readonly explained: readonly Ring[];
   /** The map's carriageways' axes, and whether the map gives each a width. */
@@ -110,7 +113,7 @@ const ringMask = (ring: Ring, i0: number, ni: number, k0: number, nk: number): U
 const fillSamples = (w: FillWorld, fill: (p: Pt) => boolean): Pt[] => {
   const out: Pt[] = [];
   const seen = new Set<string>();
-  for (const ring of w.sidewalks) {
+  for (const ring of w.sampled ?? w.sidewalks) {
     const b = boxed(ring).box;
     const [i0, k0] = [Math.floor(b.minX / FILL_GRID), Math.floor(b.minZ / FILL_GRID)];
     let [ni, nk] = [0, 0];
@@ -216,16 +219,25 @@ export const cityFillWorld = (osm: OsmData): FillWorld => {
   const roads = lines
     .filter((l) => CARRIAGEWAY.has(l.tags.highway ?? "") && l.tags.area !== "yes" && roadWidth(l.tags) > 0)
     .map((l) => ({ line: l.line, half: roadWidth(fit(l)) / 2, measured: parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || fitted(l) }));
-  const sidewalks = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "sidewalk" && !g.bridge)).map((g) => {
+  // `kerb-fill-wide-estimated` samples none in the districts on the street graph (ADR-0104): their
+  // sidewalks wrap the corners and reach the mapped ones, past what the map's bands explain, and the
+  // asphalt a lane's gap left out is laid there by the graph's own rule (`graph-bands.ts`, G-570).
+  // Their bus stops still count (`bus-stop-on-fill`), by all the sidewalks.
+  const graph = graphDistricts();
+  const onGraph = (c: (typeof MAP_CHUNKS)[number]) => graph.has(c.id.replace(/-\d+-\d+$/, ""));
+  const ringOf = (g: { readonly outline: readonly number[] }) => {
     const ring: Pt[] = [];
     for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
     return ring;
-  });
+  };
+  const drawn = (c: (typeof MAP_CHUNKS)[number]) => c.ground.filter((g) => g.surface === "sidewalk" && !g.bridge).map(ringOf);
+  const sidewalks = MAP_CHUNKS.flatMap(drawn);
+  const sampled = MAP_CHUNKS.filter((c) => !onGraph(c)).flatMap(drawn);
   const inChunks = (p: Pt) => MAP_CHUNKS.some(({ bounds: b }) => p.x >= b.minX && p.x < b.maxX && p.z >= b.minZ && p.z < b.maxZ);
   const stops = [...osm.nodes.values()]
     .filter((n) => n.tags?.highway === "bus_stop")
     .sort((a, b) => a.id - b.id)
     .map((n) => geoToWorld(n.lat, n.lon))
     .filter(inChunks);
-  return { sidewalks, explained, roads, stops };
+  return { sidewalks, sampled, explained, roads, stops };
 };

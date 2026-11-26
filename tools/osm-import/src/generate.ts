@@ -22,7 +22,8 @@ import { type CoverFill, coverFiller, pathLoops, townPlaces, withFills } from ".
 import { frontages } from "./bare-fronts.ts";
 import { type AddedArea, addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { withoutReplaced } from "./corrections-alchemia.ts";
-import { ORTHO_OFFSETS, orthoOffsetAt, orthoPieces, orthoSides } from "./corrections-kerb.ts";
+import { ORTHO_OFFSETS, type Offsets, orthoOffsetAt, orthoPieces, orthoSides } from "./corrections-kerb.ts";
+import { withBdot } from "./streets/bdot-ways.ts";
 import { ALL_CHUNKS, type ChunkSpec, DISTRICTS } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -33,6 +34,8 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
+// The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one, after `cutSidewalk`.
+import { graphBands } from "./streets/graph-bands.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
@@ -136,7 +139,7 @@ const generateChunk = (
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[]; readonly aisles: readonly Line[] },
   barriers: readonly WorldBarrier[],
   heights: { readonly lod1?: ReturnType<typeof lod1Index>; readonly lod2?: ReturnType<typeof lod2Index>; readonly orphans: ReadonlySet<string> },
-  halves: StreetHalves,
+  streets: { readonly halves: StreetHalves; readonly axis: (l: Line) => Line; readonly exact: ReadonlySet<string> },
   steep: readonly SteepWayOut[],
   fill?: CoverFill,
 ) => {
@@ -208,7 +211,7 @@ const generateChunk = (
     terrain: t.grid,
     buildings: out,
     ground,
-    streets: chunkStreets(lines, spec.rect, halves),
+    streets: chunkStreets(lines.map(streets.axis), spec.rect, streets.halves, streets.exact),
     markings: chunkMarkings(markings, spec.rect),
     pois: chunkPois(pois, spec.rect),
     ...(through.length > 0 ? { passages: through } : {}),
@@ -261,9 +264,17 @@ const shopOutlines = (out: readonly BuildingOut[], buildings: readonly Area[]): 
  * the table has no other width: the measure skips those the map or a correction by hand gives one.
  */
 const estimatedSide =
-  (measured: ReadonlySet<string>) =>
+  (measured: ReadonlySet<string>, sides: (id: string) => readonly [boolean, boolean] | undefined = orthoSides) =>
   (source: string, side: 1 | -1): boolean =>
-    !measured.has(source) || orthoSides(source)?.[side > 0 ? 0 : 1] === false;
+    !measured.has(source) || sides(source)?.[side > 0 ? 0 : 1] === false;
+
+/** The orthophoto's cover class at a point, `COVER.none` off the covers or without them. */
+const coverReader =
+  (covers: readonly Cover[] | undefined) =>
+  (p: Pt): number => {
+    const c = covers && coverFor(covers, p);
+    return c ? coverAt(c, p.x, p.z) : COVER.none;
+  };
 
 /** A gap's patch is no carriageway, sidewalk or kerb: only the ground of its band (G-760); a slit is laid edge to edge (G-777). */
 const patchBand = (of: Band, ring: Pt[], slit?: true): Band => ({ surface: of.surface, ring, bridge: false, source: of.source, holed: true, patch: true, ...(slit ? { slit } : {}) });
@@ -282,21 +293,22 @@ const slitsOffWidened = <B extends Band & { box: Rect }>(bands: readonly B[], wi
  * the asphalt (ADR-0080 PR 10). And one whose lanes lie off its line, by `placement` or where it
  * splits off or joins another (G-825); a measured one keeps its measured axis (`lane-place.ts`).
  */
-const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof sidewalkIndex>) => {
-  const own = (l: Line) => (ORTHO_OFFSETS.has(l.id) ? 0 : placementOffset(l.tags));
+const carriagewayPieces = (lines: readonly Line[], sidewalks: ReturnType<typeof sidewalkIndex>, offsets: Offsets = ORTHO_OFFSETS, bdot: ReadonlyMap<string, unknown> = new Map()) => {
+  const own = (l: Line) => (offsets.has(l.id) ? 0 : placementOffset(l.tags));
   // A measured way's lanes at a node lie where its carriageway is there, off its line (Lwowska's 0.9 m by Ruska's link).
-  const places = lanePlaces(lines.filter((l) => l.tags.highway), (l, i) => (ORTHO_OFFSETS.has(l.id) ? orthoOffsetAt(l, i) : placementOffset(l.tags)));
+  const places = lanePlaces(lines.filter((l) => l.tags.highway), (l, i) => (offsets.has(l.id) ? orthoOffsetAt(l, i, offsets) : placementOffset(l.tags)));
   const fittedLanes = new Map<string, readonly Line[]>();
   const aside = new Map<string, number>();
   const moved = new Set<string>();
   for (const l of lines) {
     if (!l.tags.highway) continue;
-    const fitted = sidewalks.lanes(l) ?? orthoPieces(l);
+    // BDOT10k's measure over the fit of mapped lanes to the mapped sidewalks (ADR-0104 pkt 4).
+    const fitted = (bdot.has(l.id) ? null : sidewalks.lanes(l)) ?? orthoPieces(l, offsets);
     const place = places.get(l.id);
     const pieces = placedPieces(l, fitted ?? [l], fitted ? 0 : own(l), place, own(l));
     if (fitted || pieces[0] !== l) fittedLanes.set(l.id, pieces);
     if (pieces[0] !== (fitted ?? [l])[0]) moved.add(l.id);
-    const most = Math.max(Math.abs(ORTHO_OFFSETS.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
+    const most = Math.max(Math.abs(offsets.get(l.id) ?? 0), Math.abs(own(l)), ...[place?.start, place?.end].map((e) => Math.abs(e?.centre ?? 0)));
     if (most > 0) aside.set(l.id, most);
   }
   return { fittedLanes, aside, moved };
@@ -326,11 +338,12 @@ const generateMap = (
   const features = withoutReplaced(extractFeatures(data));
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
   const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas(added)];
-  const mapLines = features.lines.map((l) => correctedLine(l));
+  // BDOT10k's carriageways measure the streets of the districts on the street graph (ADR-0104 pkt 4), over the orthophoto's.
+  const { lines: mapLines, offsets, sides, bdot } = withBdot(features.lines.map((l) => correctedLine(l)));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
-  const { fittedLanes, aside, moved } = carriagewayPieces(lines, sidewalks);
+  const { fittedLanes, aside, moved } = carriagewayPieces(lines, sidewalks, offsets, bdot);
   const carriageway = (l: Line): readonly Line[] => fittedLanes.get(l.id) ?? [l];
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
@@ -370,7 +383,7 @@ const generateMap = (
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     const mapped = l.tags.highway ? sidewalks.along(mapLines[k]!) : false;
     for (const c of carriageway(l)) {
-      const width = carriagewaySource(features.lines[k]!.tags, mapLines[k]!.tags, c.tags, orthoSides(l.id));
+      const width = carriagewaySource(features.lines[k]!.tags, mapLines[k]!.tags, c.tags, sides(l.id));
       for (const piece of overTunnels(c, tunnelWays, src)) laidLines.push({ piece, mapped, atStreet: atStreet.has(l.osmId), width });
     }
   }
@@ -401,6 +414,9 @@ const generateMap = (
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  const estimated = estimatedSide(new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id)), sides);
+  const coverOf = coverReader(covers);
+  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimated, coverOf));
   // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
   const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
   const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);
@@ -412,20 +428,16 @@ const generateMap = (
   // A pavement reaches the kerb (G-522): the bare strip between a carriageway and its paving is
   // closed, by the carriageway itself where the map gives it no width (G-570), its zebras with it.
   // A street fitted to its mapped sidewalks (T-046) has its width from them, as a measured one.
-  const measured = new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id));
   // A joint's patch laps over the next street: the kerbs are read off the bands without it, as its lap is no kerb's (G-760).
   // A moved carriageway's strip to a lawn wider than a kerb is the lawn's where the orthophoto is green (G-825 r3).
-  const coverOf = (p: Pt) => {
-    const c = covers && coverFor(covers, p);
-    return c ? coverAt(c, p.x, p.z) : COVER.none;
-  };
   // The zebras are fitted to the kerbs after (`laidZebras`, G-836): a strip is laid whatever zebra the map draws over it.
-  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimatedSide(measured), walks, moved, coverOf);
+  const kerbs = kerbFills(bands.filter((b) => !b.patch && b.surface !== "crossing"), buildings.filter((a) => nearGround(a.ring)).map((a) => a.ring), estimated, walks, moved, coverOf);
   for (const [b, { ring, runs, lanes }] of kerbs.widened) bands.splice(bands.indexOf(b as (typeof bands)[number]), 1, { ...b, widen: runs, widenLanes: lanes, box: ringBounds([...b.ring, ...ring]) });
   for (const b of kerbs.fills) bands.push({ ...b, box: ringBounds(b.ring) });
   bands.splice(0, bands.length, ...slitsOffWidened(bands, [...kerbs.widened.values()].map((w) => w.ring)));
   // The carriageways' reach each side of their axes, fitted and widened, for the traffic's lanes (ADR-0080).
-  const halves = streetHalves(bands);
+  // A street BDOT10k measures runs on its carriageway's middle, so its lanes lie about it (ADR-0104 pkt 4).
+  const streets = { halves: streetHalves(bands), axis: (l: Line): Line => (bdot.has(l.id) ? (orthoPieces(l, offsets)?.[0] ?? l) : l), exact: new Set(bdot.keys()) };
   const widths = streetWidths(laidLines, (w) => isCarriageway(w.piece.tags) || w.atStreet, [...kerbs.widened].map(([b, w]) => [b, { runs: w.lanes }] as const));
   // Each zebra across its carriageway from kerb to kerb as laid, square to the axis (G-836).
   bands.splice(0, bands.length, ...laidZebras(bands, kerbs, zebraSpots(data.nodes, crossingWays, roads, lines), roads, asideOf, areas));
@@ -468,7 +480,7 @@ const generateMap = (
   const fill = covers && coverFiller(covers, placed.map((b) => ("edge" in b ? b.edge.ring : b.ring)), townPlaces(data, areas, pathLoops(lines), frontages(lines)));
   // On the ways as laid: a stretch on a deck over a tunnel is no bank (G-088).
   const steep = steepWays(laidLines.map((l) => l.piece), gridsHeight(terrains));
-  const results = chunks.map((c, i) => withCanopies(generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, halves, steep, fill), areas, c.rect, src, terrains[i]!, LUBLIN_ANCHOR.altitude));
+  const results = chunks.map((c, i) => withCanopies(generateChunk(c, src, terrains[i]!, placed, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb, barriers, heights, streets, steep, fill), areas, c.rect, src, terrains[i]!, LUBLIN_ANCHOR.altitude));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStatsOf(mapped, results.reduce((n, r) => n + r.stats.venues, 0)), widths };
 };
 

@@ -34,7 +34,7 @@ import { type PropsOut, type PropsPlan, generateProps } from "../src/props-gen.t
 import { loadPropsPlan } from "../src/props-osm.ts";
 
 /** What the generators read: the raw data, the plan, and the sources they import (theirs, core, sim, engine). */
-const INPUTS = ["data/osm", "data/terrain", "data/orto", "tools/orto/src","docs/world/lublin-props.todo.json", "tools/osm-import/src", "packages/core/src", "packages/sim/src", "packages/engine/src"];
+const INPUTS = ["data/osm", "data/terrain", "data/orto", "data/gugik", "tools/orto/src", "tools/gugik/src", "docs/world/lublin-props.todo.json", "tools/osm-import/src", "packages/core/src", "packages/sim/src", "packages/engine/src"];
 const DIR = join(REPO, "node_modules/.cache/seki-city");
 
 const filesOf = (path: string): string[] =>

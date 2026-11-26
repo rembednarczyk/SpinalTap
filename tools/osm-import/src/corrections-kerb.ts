@@ -107,8 +107,14 @@ export const orthoSides = (id: string): readonly [boolean, boolean] | undefined 
   return row && [row[4].includes("l"), row[4].includes("r")];
 };
 
+/** The carriageway's width the orthophoto measures for a way (m), or null for a way not in the table. */
+export const orthoWidth = (id: string): number | null => ORTHO_BY_ID.get(id)?.[1] ?? null;
+
 /** How fast a measured carriageway moves aside from its ends (m aside per m along), as the ADR's ramp between stations. */
 const ORTHO_RAMP = 0.1;
+
+/** Metres a measured way's carriageway lies left of its line, by way id: the orthophoto's (`ORTHO_OFFSETS`), or BDOT10k's over them (`bdot-ways.ts`). */
+export type Offsets = ReadonlyMap<string, number>;
 
 /** The way's length, the ramps of a measured way's offset `off` at its ends (m) and its points' distances along it. */
 const orthoRamp = (l: Line, off: number) => {
@@ -119,8 +125,8 @@ const orthoRamp = (l: Line, off: number) => {
 };
 
 /** Metres a way's carriageway lies left of its line at its point `i` as `orthoPieces` lays it: 0 at its ends, the whole `ORTHO_OFFSETS` past its ramps. */
-export const orthoOffsetAt = (l: Line, i: number): number => {
-  const off = ORTHO_OFFSETS.get(l.id);
+export const orthoOffsetAt = (l: Line, i: number, offsets: Offsets = ORTHO_OFFSETS): number => {
+  const off = offsets.get(l.id);
   if (!off) return 0;
   const { length, ramp, at } = orthoRamp(l, off);
   return ramp > 0 ? off * Math.min(1, at[i]! / ramp, (length - at[i]!) / ramp) : 0;
@@ -131,15 +137,15 @@ export const orthoOffsetAt = (l: Line, i: number): number => {
  * a fitted piece, but from its ends on a ramp of `ORTHO_RAMP`: its ends stay on the nodes it shares
  * with the next ways, so their bands meet and join there (`joinedPoints`). Null on its axis.
  */
-export const orthoPieces = (l: Line): Line[] | null => {
-  const off = ORTHO_OFFSETS.get(l.id);
+export const orthoPieces = (l: Line, offsets: Offsets = ORTHO_OFFSETS): Line[] | null => {
+  const off = offsets.get(l.id);
   if (!off) return null;
   const { length, ramp, at } = orthoRamp(l, off);
   // The ramps' ends as points of the line, so the offset runs straight between them.
   const cuts = [...new Set([ramp, length - ramp])].filter((s) => !at.some((a) => Math.abs(a - s) < 0.01));
   const pts = [...l.line.map((p, i) => ({ p, s: at[i]! })), ...cuts.map((s) => ({ p: pointAlong(l.line, s), s }))].sort((a, b) => a.s - b.s);
-  const offsets = pts.map(({ s }) => (ramp > 0 ? off * Math.min(1, s / ramp, (length - s) / ramp) : 0));
-  return [{ ...l, line: offsetPoints(pts.map((x) => x.p), offsets) }];
+  const along = pts.map(({ s }) => (ramp > 0 ? off * Math.min(1, s / ramp, (length - s) / ramp) : 0));
+  return [{ ...l, line: offsetPoints(pts.map((x) => x.p), along) }];
 };
 
 /** The corrections by id: those by hand (`manual`), each over the width measured for the same way. */

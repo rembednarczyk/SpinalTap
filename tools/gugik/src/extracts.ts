@@ -53,6 +53,17 @@ export interface Lod2Building {
   readonly ring: Pt[];
 }
 
+/** A BDOT10k carriageway (`OT_SKJZ_L`): `[LOKALNYID, SZEROKOSCNAWIERZCHNI | null, KLASADROGI, line]`. */
+export type CarriagewayRow = [id: string, width: number | null, roadClass: string, line: number[]];
+
+export interface Carriageway {
+  readonly id: string;
+  /** The carriageway's surface width (m, BDOT10k's `SZEROKOSCNAWIERZCHNI`); null where it gives none. */
+  readonly width: number | null;
+  readonly roadClass: string;
+  readonly line: Pt[];
+}
+
 export interface BdotLine {
   readonly id: string;
   readonly kind: string;
@@ -139,3 +150,7 @@ export const loadLod2 = (tiles?: readonly string[], dir = DATA_DIR): Lod2Buildin
   });
 
 export const loadBdot = (dir = DATA_DIR): BdotLine[] => rows<BdotRow>(join(dir, "bdot.json"), "lines").map(([id, kind, l]) => ({ id, kind, line: decode(l) }));
+
+/** The BDOT10k carriageways of the map (`pnpm gugik:roads`), for the widths of the streets' graph (ADR-0104 pkt 4). */
+export const loadCarriageways = (dir = DATA_DIR): Carriageway[] =>
+  rows<CarriagewayRow>(join(dir, "jezdnie.json"), "carriageways").map(([id, width, roadClass, l]) => ({ id, width, roadClass, line: decode(l) }));

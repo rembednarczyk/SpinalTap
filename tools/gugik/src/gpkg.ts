@@ -49,20 +49,34 @@ export const decodeLines = (blob: Uint8Array): Line2[] => {
   return out;
 };
 
-/** The features of a single-table BDOT10k line file, with their `RODZAJ` (kind) and `LOKALNYID`. */
-export const readGpkgLines = (file: string): GpkgLine[] => {
+/** A feature of a line file with the columns asked for (`null` where empty). */
+export interface GpkgRow {
+  readonly id: string;
+  readonly values: Readonly<Record<string, string | number | null>>;
+  readonly lines: readonly Line2[];
+}
+
+/** The features of a single-table BDOT10k line file, with their `LOKALNYID` and the given columns. */
+export const readGpkgColumns = (file: string, columns: readonly string[]): GpkgRow[] => {
   const db = new DatabaseSync(file, { readOnly: true });
   try {
     const geo = db.prepare("SELECT table_name AS t, column_name AS c, srs_id AS s FROM gpkg_geometry_columns").get() as { t: string; c: string; s: number } | undefined;
     if (!geo) return [];
     if (geo.s !== 2180) throw new Error(`${file}: SRS ${geo.s}, expected 2180`);
-    const rows = db.prepare(`SELECT "LOKALNYID" AS id, "RODZAJ" AS kind, "${geo.c.replace(/"/g, "")}" AS g FROM "${geo.t.replace(/"/g, "")}"`).all() as {
-      id: string;
-      kind: string | null;
-      g: Uint8Array | null;
-    }[];
-    return rows.filter((r) => r.g).map((r) => ({ id: String(r.id), kind: r.kind ?? "", lines: decodeLines(r.g!) }));
+    const quote = (name: string) => `"${name.replace(/"/g, "")}"`;
+    const picked = columns.map((c, i) => `${quote(c)} AS v${i}`).join(", ");
+    const rows = db.prepare(`SELECT "LOKALNYID" AS id, ${picked ? `${picked}, ` : ""}${quote(geo.c)} AS g FROM ${quote(geo.t)}`).all() as Record<string, unknown>[];
+    return rows
+      .filter((r) => r.g)
+      .map((r) => ({
+        id: String(r.id),
+        values: Object.fromEntries(columns.map((c, i) => [c, (r[`v${i}`] ?? null) as string | number | null])),
+        lines: decodeLines(r.g as Uint8Array),
+      }));
   } finally {
     db.close();
   }
 };
+
+/** The features of a single-table BDOT10k line file, with their `RODZAJ` (kind) and `LOKALNYID`. */
+export const readGpkgLines = (file: string): GpkgLine[] => readGpkgColumns(file, ["RODZAJ"]).map((r) => ({ id: r.id, kind: String(r.values.RODZAJ ?? ""), lines: r.lines }));

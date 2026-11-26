@@ -34,6 +34,9 @@ export interface StreetEdge {
   /** m of sidewalk past the kerb on each side; 0, none. */
   readonly walkLeft: number;
   readonly walkRight: number;
+  /** m of verge between the kerb and the sidewalk on each side (ADR-0080's `verge`); 0 or none, the sidewalk at the kerb. */
+  readonly vergeLeft?: number;
+  readonly vergeRight?: number;
   /** The radius of its kerb's corners at its junctions (m). */
   readonly kerbRadius: number;
 }
@@ -55,6 +58,8 @@ export interface StreetGround {
 
 /** How far past the widest street's kerb and its corner a junction's disc reaches (m). */
 const JUNCTION_MARGIN = 1;
+/** The farthest a junction's corner may round off (m): two streets meeting at a few degrees would close for a hundred metres. */
+const CORNER_REACH_MAX = 40;
 /** How fast a street's kerb narrows from a wider piece to a narrower one (m a metre, ADR-0080 decision 1). */
 const RAMP = 0.1;
 /** The longest such ramp (m). */
@@ -122,6 +127,30 @@ const awayFrom = (axis: readonly Pt[], p: Pt, len: number): Pt => {
   return line[line.length - 1]!;
 };
 
+/** The directions the node's streets leave it in: one an axis ending there, two an axis through it. */
+const armsAt = (edges: readonly StreetEdge[], j: Node): number[] =>
+  j.edges.flatMap((i) => {
+    const axis = edges[i]!.axis;
+    const k = axis.findIndex((p) => key(p) === key(j.at));
+    const toward = (q: Pt | undefined) => (q ? [Math.atan2(q.z - j.at.z, q.x - j.at.x)] : []);
+    return k < 0 ? [] : [...toward(axis[k - 1]), ...toward(axis[k + 1])];
+  });
+
+/**
+ * How far a junction's disc reaches: past where the rounding of its sharpest corner meets the two
+ * kerbs. Two kerbs `wide` off axes at an angle θ meet `wide / sin(θ/2)` from the node, and an arc of
+ * radius `r` touches them `r / tan(θ/2)` on from there (a fillet, the corner of two lines rounded);
+ * a disc short of the touching points cut the arc and left a step in the kerb at an acute corner.
+ */
+export const cornerReach = (arms: readonly number[], wide: number, r: number): number => {
+  const sorted = [...arms].sort((a, b) => a - b);
+  const gaps = sorted.map((a, i) => (i + 1 < sorted.length ? sorted[i + 1]! - a : sorted[0]! + 2 * Math.PI - a));
+  const sharp = Math.min(Math.PI, ...gaps.filter((g) => g > 1e-3));
+  const t = Math.tan(sharp / 2);
+  const touch = t > 1e-6 ? Math.hypot((wide + r) / t, wide) : Infinity;
+  return Math.min(CORNER_REACH_MAX, Math.max(wide + r, touch)) + JUNCTION_MARGIN;
+};
+
 /**
  * The carriageways with each junction's concave corners rounded by its streets' kerb radius, and
  * each joint of one street's two pieces closed: their square ends at a slant left a notch outside
@@ -138,41 +167,87 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
     }
     const r = Math.max(...j.edges.map((i) => edges[i]!.kerbRadius));
     if (r <= 0) return [];
-    const reach = wide + r + JUNCTION_MARGIN;
-    // Closed within a wider disc than kept, so the closing's own edge is out of the kept one.
-    const near = within(base, disc(j.at, reach + 2 * r));
+    const reach = cornerReach(armsAt(edges, j), wide, r);
+    // Closed within a wider disc than kept, so the closing's own edge is out of the kept one; of the
+    // node's own streets only: a carriageway near it that does not meet it (a dual road's other half)
+    // is not cornered to it, or its median under 2r wide went under the asphalt.
+    const near = within(join(...j.edges.map((i) => carriagewayOf(edges[i]!))), disc(j.at, reach + 2 * r));
     return within(grown(grown(near, r), -r), disc(j.at, reach));
   });
   return join(base, ...corners);
 };
 
 /** A side's corridor: the strip of the side from its axis out past its sidewalk, square ends (a dead end's sidewalk stops square; a junction's corners are in its disc). */
+/** A side's kerb, verge and sidewalk (m). */
+const sideOf = (e: StreetEdge, side: 1 | -1): { kerb: number; verge: number; walk: number } =>
+  side > 0 ? { kerb: e.left, verge: e.vergeLeft ?? 0, walk: e.walkLeft } : { kerb: e.right, verge: e.vergeRight ?? 0, walk: e.walkRight };
+
 const corridor = (e: StreetEdge, side: 1 | -1): Area => {
-  const [kerb, walk] = side > 0 ? [e.left, e.walkLeft] : [e.right, e.walkRight];
-  const outer = kerb + walk + CORRIDOR_MARGIN;
+  const { kerb, verge, walk } = sideOf(e, side);
+  const outer = kerb + verge + walk + CORRIDOR_MARGIN;
   return band(offsetLine(e.axis, (side * outer) / 2), outer / 2);
 };
 
-/** The streets' ground: carriageways with their corners, sidewalks, zebras. */
-export const streetGround = (edges: readonly StreetEdge[], crossings: readonly StreetCrossing[] = [], buildings: readonly (readonly Pt[])[] = []): StreetGround => {
+/** The streets' areas: the carriageways `c`, the sidewalks, and each street's own share of both (overlapping at the junctions). */
+export interface StreetAreas {
+  readonly c: Area;
+  readonly sidewalks: Area;
+  readonly nodes: readonly Node[];
+  /** Each street's carriageway (its band and its junctions' discs, within `c`) and each of its sides' sidewalk. */
+  readonly own: readonly { readonly edge: number; readonly surface: "road" | "sidewalk"; readonly area: Area }[];
+  /** The sidewalks no street's sides reach: of `walks` given beyond theirs. */
+  readonly rest: Area;
+  /** The verges between the kerbs and the sidewalks: left bare, for the orthophoto's cover to lay (`bare-cover.ts`). */
+  readonly verges: Area;
+}
+
+/** A node's disc: as far as its sharpest corner's rounding (`cornerReach`) and `extra` past it. */
+const nodeDisc = (edges: readonly StreetEdge[], j: Node, extra: number): Area => disc(j.at, cornerReach(armsAt(edges, j), halves(edges, j)[0], Math.max(...j.edges.map((k) => edges[k]!.kerbRadius))) + extra);
+
+/**
+ * The streets' carriageways with their corners and their sidewalks, and each street's share.
+ * `walks`: more sidewalk, mapped on its own (`footway=sidewalk`), laid with the streets' as one.
+ */
+export const streetAreas = (edges: readonly StreetEdge[], buildings: readonly (readonly Pt[])[] = [], walks: Area = []): StreetAreas => {
   const all = nodes(edges);
   const c = cornered(join(...edges.map(carriagewayOf)), edges, all);
-  const walks: Area[] = [];
+  const zones: { edge: number; zone: Area }[] = [];
+  const grownWalks: Area[] = [walks];
+  // The corridors of the sides with a sidewalk, and round each node the corners between them: the
+  // node's disc within a corner's radius of them (no sidewalk wraps round a side that has none).
+  const sides = edges.flatMap((e, i) => ([1, -1] as const).filter((side) => (side > 0 ? e.walkLeft : e.walkRight) > 0).map((side) => ({ edge: i, side, corridor: corridor(e, side) })));
+  const corners = all.map((j) => {
+    const r = Math.max(...j.edges.map((k) => edges[k]!.kerbRadius));
+    const at = sides.filter((x) => j.edges.includes(x.edge));
+    return at.length === 0 ? [] : within(nodeDisc(edges, j, Math.max(...at.map((x) => sideOf(edges[x.edge]!, x.side).walk + sideOf(edges[x.edge]!, x.side).verge))), grown(join(...at.map((x) => x.corridor)), r));
+  });
+  const verges: Area[] = [];
   edges.forEach((e, i) => {
     for (const side of [1, -1] as const) {
-      const w = side > 0 ? e.walkLeft : e.walkRight;
-      if (w <= 0) continue;
-      const kerb = side > 0 ? e.left : e.right;
-      // Round its junctions' corners too: the disc of the corner's reach past the kerb.
-      const at = all.filter((j) => j.edges.includes(i)).map((j) => disc(j.at, halves(edges, j)[0] + e.kerbRadius + w + JUNCTION_MARGIN));
-      const zone = join(corridor(e, side), ...at);
-      walks.push(within(grown(within(c, grown(zone, w + kerb)), w), zone));
+      const { kerb, verge, walk } = sideOf(e, side);
+      if (walk <= 0) continue;
+      const zone = join(corridor(e, side), ...all.flatMap((j, k) => (j.edges.includes(i) ? [corners[k]!] : [])));
+      zones.push({ edge: i, zone });
+      const local = within(c, grown(zone, verge + walk + kerb));
+      const inner = verge > 0 ? grown(local, verge) : local;
+      grownWalks.push(within(less(grown(local, verge + walk), inner), zone));
+      if (verge > 0) verges.push(within(less(inner, local), zone));
     }
   });
   const built = join(...buildings.map(areaOfRing));
   // Opened by `SLIVER` (the sidewalk's end and the carriageway's, a millimetre apart, left a spike of
   // no width), then cut again: grown back round a corner it laps over the kerb by a hair.
-  const sidewalks = less(grown(grown(less(less(join(...walks), c), built), -SLIVER), SLIVER), join(c, built));
+  const sidewalks = less(grown(grown(less(less(join(...grownWalks), c), built), -SLIVER), SLIVER), join(c, built));
+  const own = [
+    ...edges.map((e, i) => ({ edge: i, surface: "road" as const, area: within(c, join(grown(carriagewayOf(e), SLIVER), ...all.filter((j) => j.edges.includes(i)).map((j) => nodeDisc(edges, j, 0)))) })),
+    ...zones.map((z) => ({ edge: z.edge, surface: "sidewalk" as const, area: within(sidewalks, z.zone) })),
+  ];
+  return { c, sidewalks, nodes: all, own, rest: less(sidewalks, join(...zones.map((z) => z.zone))), verges: less(join(...verges), join(c, sidewalks, built)) };
+};
+
+/** The streets' ground: carriageways with their corners, sidewalks, zebras. */
+export const streetGround = (edges: readonly StreetEdge[], crossings: readonly StreetCrossing[] = [], buildings: readonly (readonly Pt[])[] = []): StreetGround => {
+  const { c, sidewalks, nodes: all } = streetAreas(edges, buildings);
   const zebras = crossings.map((x) => zebraOf(x, edges, c));
   return { carriageway: rings(c), sidewalks: rings(sidewalks), crossings: zebras.flatMap(rings), junctions: all.filter((j) => j.arms >= 3).map((j) => j.at) };
 };

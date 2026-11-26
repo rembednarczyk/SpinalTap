@@ -44,7 +44,10 @@ export const disc = (c: Pt, r: number): Area => capsule([c], r);
 /** The area's size (m²). */
 export const sizeOf = (a: Area): number => a.reduce((s, p) => s + signedArea(toPts(p)), 0);
 
-/** An area as rings: each outline with the holes inside it cut in (`cutHoles`), specks dropped. */
+/**
+ * An area as rings: each outline with the holes inside it cut in (`cutHoles`), specks dropped.
+ * Not simplified: two areas sharing an edge, simplified each on its own, would lap and part along it.
+ */
 export const rings = (a: Area): Pt[][] => {
   const outers = a.filter((p) => isPositive(p)).map(toPts).filter((r) => Math.abs(signedArea(r)) >= SPECK);
   const holes = a.filter((p) => !isPositive(p)).map(toPts).filter((r) => Math.abs(signedArea(r)) >= SPECK);
@@ -55,6 +58,9 @@ export const rings = (a: Area): Pt[][] => {
     return inside.length > 0 ? cutHoles(o, inside) : ccw(o);
   });
 };
+
+/** The holes of an area, each as a ring (counter-clockwise). */
+export const holesOf = (a: Area): Pt[][] => a.filter((p) => !isPositive(p)).map((p) => ccw(toPts(p)));
 
 /** Whether a point lies in the area (NonZero, holes out). */
 export const holds = (a: Area, p: Pt): boolean => {
