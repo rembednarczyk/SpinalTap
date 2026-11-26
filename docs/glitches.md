@@ -4,13 +4,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
-### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
-- Status: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
-- Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
-- Dowód: ortofoto PZGiK: blok ok. 6,5 × 6 m z niebieskim dachem; w OSM i w grze bez budynku, nawierzchnia alejki przechodzi przez jego miejsce (nakładka kuratora `topo-1037/r3-crop.png`)
-- Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
-- Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
-- Pakiet właściciela: tools/osm-import
 ### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
 - Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
 - Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska
