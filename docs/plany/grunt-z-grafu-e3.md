@@ -120,3 +120,12 @@ Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo za
 - **Zostaje:**
   - południowy koniec: dwa pomiary trafiały 2,4 m przed linią na „dziury” w bruku przy węźle dwóch odcinków deptaka (442,9; −9,9). To szczeliny do 1 cm między kawałkiem deptaka a kawałkiem jego wylotu, z zaokrąglenia podziału do 0,1 m, a nie dziury. Test przeskakuje szczeliny węższe niż 0,1 m i przechodzi na main i na próbnych tablicach;
   - zatoka przy Bramie Krakowskiej 01 jest placem zamiast brukiem.
+
+### Runda 7: deptak i jego zatoka
+
+Zatoka przy Bramie Krakowskiej 01 jest znowu brukiem deptaka. Trzy miejsca, w których graf sięgał do deptaka spoza grafu:
+- **BDOT10k** nie mierzy ulicy wyłączonej z ruchu, więc jej strony pozostają szacowane i stary model poszerza bruk do krawężnika zatoki jak na main (T-324).
+- **Dopasowanie ścieżek do ulic** bierze tylko ulice grafu. Ścieżka wzdłuż deptaka zostaje jego krawędzią.
+- **Wysepki grafu:** dziura, która dotyka jezdni ulicy wyłączonej z ruchu, należy do tej ulicy. Wcześniej graf kładł tam plac i marsz wypełnień deptaka zatrzymywał się na nim.
+
+Na próbnych tablicach przechodzą wszystkie testy deptaka i rampy (40 z 40): `deptak-ends`, `deptak-night`, `alchemia-deptak`, `traffic-deptak`, `traffic-ramp`, `kerb-fill-places`. Tablice main bez zmian.

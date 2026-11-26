@@ -15,6 +15,10 @@ describe("the ways BDOT10k measures (ADR-0104 pkt 4)", () => {
     expect(ways.get("plain")!.width).toBe(6);
   });
 
+  it("measures no street the game closes to cars: the deptak keeps its setts out to its bays' kerb (T-324)", () => {
+    expect(bdotWays([{ ...street("w216497220", {}), id: "w216497220" }], new Set(["krakowskie"])).size).toBe(0);
+  });
+
   it("measures none while the street graph is off", () => {
     expect(bdotWays([street("plain", {})], new Set()).size).toBe(0);
   });

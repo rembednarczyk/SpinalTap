@@ -12,6 +12,7 @@
  */
 import { parseLength } from "../building-tags.ts";
 import { ALL_CHUNKS } from "../config.ts";
+import { isCarFree } from "../corrections-car-free.ts";
 import { type Offsets, ORTHO_OFFSETS, orthoSides } from "../corrections-kerb.ts";
 import { type Line } from "../features.ts";
 import { STREETS } from "./along-footways.ts";
@@ -35,7 +36,8 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts()): 
   };
   for (const l of lines) {
     // The map's own width comes first (ADR-0104 pkt 4: OSM → BDOT10k → the orthophoto): Olejna's `width=3.5`, not BDOT10k's 5 m.
-    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null) continue;
+    // Nor a street the game closes to cars (T-324's deptak): off the street graph, laid as before, its setts out to the kerb of its bays.
+    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || isCarFree(l.id) || parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null) continue;
     const m = bdotMatch(l.line);
     if (m) out.set(l.id, { width: m.width, offset: Math.round(m.offset * 10) / 10 });
   }

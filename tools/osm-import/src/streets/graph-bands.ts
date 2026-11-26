@@ -174,9 +174,11 @@ const islands = (street: Area, beside: readonly (Band & { readonly box: Rect })[
   const touches = grown(street, 0.5);
   // A square's or a pedestrian area's paving: an island by one is its paving, level with it (as step 1 of the sidewalks' uniformity kept a fill by a place).
   const squares = grown(join(...near.filter((b) => b.surface === "square" || b.surface === "cobble").map((b) => areaOfRing(b.ring))), 0.5);
+  // A hole by a street the game closes to cars (T-324's deptak, off the graph) is its own: its setts reach the kerb of its bays as before.
+  const carFree = grown(join(...near.filter((b) => b.carriageway && isCarFree(b.source)).map((b) => areaOfRing(b.ring))), 0.5);
   return holesOf(ground).flatMap((hole) => {
     const area = areaOfRing(hole);
-    if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(area, touches).length === 0) return [];
+    if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(area, touches).length === 0 || within(area, carFree).length > 0) return [];
     const paved = within(area, squares).length > 0 ? ("square" as const) : ("sidewalk" as const);
     // Opened by `THIN`, as the gaps: a hole between many bands has seams the rounding to 0.1 m crosses over.
     return [{ surface: greenShare(hole, cover) > 0.5 ? ("grass" as const) : paved, area: grown(grown(area, -THIN), THIN) }];
@@ -275,7 +277,8 @@ export const graphBands = <B extends Band>(
   const isLine = new Set(lines.map((l) => l.id));
   const bays = bands.filter((b) => !isLine.has(b.source) && !b.carriageway && !b.bridge && b.surface === "road" && inside(b.box)).map((b) => b.ring);
   const walksAlong = (along: ReadonlySet<string>) => bands.filter((b) => (b.surface === "sidewalk" || b.surface === "footway") && !ways.has(b.source) && (tags.get(b.source)?.footway === "sidewalk" || along.has(b.source)) && inside(b.box));
-  const mapped = walksAlong(footwaysAlongStreets(lines, places, bays));
+  // Along the graph's streets only: a footway by the deptak (off the graph) is its kerb as before, its setts reach it.
+  const mapped = walksAlong(footwaysAlongStreets(lines.filter((l) => !isCarFree(l.id)), places, bays));
   const lineOf = new Map(lines.map((l) => [l.id, l.line]));
   const waysOf = (bs: readonly Boxed<B>[]): Mapped[] =>
     bs.flatMap((b) => {
