@@ -37,7 +37,7 @@ export const graphDistricts = (): ReadonlySet<string> => new Set([...STREET_GRAP
  * rest. ADR-0080 had 6 m by the main streets; a fillet reaches r / tan(θ / 2) along each kerb, and at
  * the city's acute corners (30-45°) 6 m flooded 15-22 m of the corner with asphalt (ADR-0104 E2).
  */
-const kerbRadius = (highway: string): number => (highway.startsWith("primary") || highway.startsWith("secondary") ? 4 : 3);
+export const kerbRadius = (highway: string): number => (highway.startsWith("primary") || highway.startsWith("secondary") ? 4 : 3);
 
 /** How far out from the kerb a mapped sidewalk beside a street is read as its sidewalk (m, as `sidewalkIndex`). */
 const MAPPED_REACH = 7;

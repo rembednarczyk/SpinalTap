@@ -153,6 +153,8 @@ import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./de
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
+import { graphDistricts } from "../../osm-import/src/streets/graph-bands.ts";
+import { cornerZones } from "./corner-zones";
 import { areaSurface, pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
@@ -650,8 +652,11 @@ const SIDEWALKS = (() => {
   let memo: ReturnType<typeof sidewalkStretches> | null = null;
   return () => {
     if (memo) return memo;
-    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
+    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, kind: c.kind, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
     const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
+    // In the districts on the street graph a junction's corner reaches as the graph rounds it (ADR-0104, the user's decision of 26.11).
+    const graph = graphDistricts();
+    const corners = graph.size === 0 ? [] : cornerZones(streets).filter((c) => graph.has(district(c.x, c.z) ?? ""));
     const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
     // The squares and pedestrian areas of the map (`areaSurface`: square, cobble): their paving meets the kerb as mapped.
     const places = extractFeatures(SOURCE_OSM)
@@ -661,7 +666,7 @@ const SIDEWALKS = (() => {
       });
     const mapped = (x: number, z: number, surface: GroundSurface) =>
       places.some((p) => p.surface === surface && x >= p.box.minX && x <= p.box.maxX && z >= p.box.minZ && z <= p.box.maxZ && pointInRing({ x, z }, p.ring));
-    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets), mapped }, streets));
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets, corners), mapped }, streets));
   };
 })();
 

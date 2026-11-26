@@ -47,3 +47,9 @@ To lista do przejrzenia przed przyjęciem baz.
 - **18 węższych.** To miejsca, gdzie chodnik zwęża się między krawężnikiem a budynkiem albo zatoką. Do sprawdzenia po kolei.
 
 **Do decyzji (ADR przed E3):** czy kontrola jednolitości ma pomijać zasięg narożnika liczony jak w grafie (`cornerReach`) zamiast stałych 4 m. Bez tej zmiany trzeba przyjąć te miejsca do bazy z uzasadnieniem.
+
+### Runda 2: narożnik w kontroli jak w grafie (decyzja użytkownika)
+
+Kontrole jednolitości chodnika w dzielnicach z grafem uznają za skrzyżowanie dysk węzła o zasięgu `cornerReach`, tak jak graf (`corner-zones.ts`). Poza grafem zostaje stałe 4 m, więc bazy na main się nie zmieniają. Wynik na Krakowskim (main → E3-1 → E3-2): `sidewalk-width-jump` 88 → 109 → 91, `sidewalk-step` 154 → 147 → 135, `sidewalk-gap` 118 → 98 → 89, `sidewalk-surface-patch` 169 → 84 → 82.
+
+Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo zatokę (Plac Wolności, Radziwiłłowska, Bernardyńska) i zwężenia przy budynkach. Przejrzę je przy przyjmowaniu baz.
