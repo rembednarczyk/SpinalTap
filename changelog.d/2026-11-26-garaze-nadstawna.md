@@ -1,2 +1,1 @@
-### Mapa
-- Na parkingu przy Nadstawnej stoi rząd garaży na południe od szopy, jak na ortofoto, zamiast pustego placu (G-973).
+Na parkingu przy Nadstawnej stoi rząd garaży na południe od szopy, tak jak na ortofoto, w miejscu pustego asfaltu.
