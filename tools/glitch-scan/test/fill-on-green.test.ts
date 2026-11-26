@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
@@ -24,6 +24,8 @@ const COVER_2M: Cover = {
 const square = (x0: number, z0: number, x1: number, z1: number) => [x0, z0, x1, z0, x1, z1, x0, z1];
 
 describe("paving the bare ground rule lays on the orthophoto's green (fill-on-green)", () => {
+  // The generated city once, before the tests (as the scan, #998): its build is the first caller's, and the time gate counts it in the test that asked first.
+  beforeAll(() => void generatedCity());
   it("names each green sample under laid paving, and none under a lawn or off the raster", () => {
     const found = fillOnGreen(
       [{ id: "c", fills: [{ surface: "square", outline: square(0, 0, 1, 0.5) }, { surface: "grass", outline: square(0, 1, 1, 2) }, { surface: "square", outline: square(5, 5, 6, 6) }] }],

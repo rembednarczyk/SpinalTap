@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { defaultCache } from "../../orto/src/config.ts";
 import { pointInRing } from "../../osm-import/src/geometry.ts";
@@ -38,6 +38,8 @@ const grassIn = ([x0, x1, z0, z1]: readonly number[]): number => {
 };
 
 describe("lawns on paving the leaf-off flight shows green by a colour no lawn has (grass-on-light-paving, G-775)", () => {
+  // The generated city once, before the tests (as the scan, #998): its build is the first caller's, and the time gate counts it in the test that asked first.
+  beforeAll(() => void generatedCity());
   it("takes patina the summer flight shows grey and beige setts in its shade for paving, not a lawn", () => {
     expect(hueOf([0, 255, 0])).toBe(120);
     // Measured on the cached tiles, 2025-04 first: the monument's patina on Królewska over the setts of 2024-06, and the corner of Lubartowska in 2023-09's shade.

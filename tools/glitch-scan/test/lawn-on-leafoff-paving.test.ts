@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverFor, readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
@@ -46,6 +46,8 @@ const laidIn = (chunks: readonly ChunkFills[], covers: readonly Cover[], surface
 };
 
 describe("lawns the bare ground rule lays on paving under crowns (lawn-on-leafoff-paving, G-764)", () => {
+  // The generated city once, before the tests (as the scan, #998): its build is the first caller's, and the time gate counts it in the test that asked first.
+  beforeAll(() => void generatedCity());
   it("names each sample of paving under crowns under a laid lawn, and none under laid paving", () => {
     const cover: Cover = {
       header: { district: "t", x0: 0, z1: 1, step: 0.5, width: 4, height: 2, classes: [], source: "", tiles: [], thresholds: THRESHOLDS },
