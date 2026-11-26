@@ -210,6 +210,22 @@ describe("street props in the scene (ADR-0047)", () => {
     expect([...a.getVerticesData("position")!]).toEqual([...b.getVerticesData("position")!]);
   });
 
+  it("bakes a slow frame's share of its length: a block of a second-long frame in a frame or two, not over dozens", () => {
+    // A millisecond a reading, and a second between frames (a software renderer).
+    let t = 0;
+    const slow = make("low", () => t++);
+    const pieces = Array.from({ length: 120 }, (_, i) => item(i % 2 ? "bollard" : "bench", 10 + (i % 12) * 3, 10 + Math.floor(i / 12) * 3, i % 2 ? chainVariant(3, 0, 0) : 0));
+    slow.spawn(1, pieces, { x: 0, y: 0, z: 0 });
+    slow.flush();
+    let frames = 0;
+    while (!nearMesh(slow) && frames < 100) {
+      t += 1000;
+      slow.update({ x: -100, y: 2, z: 0 });
+      frames++;
+    }
+    expect(frames).toBeLessThanOrEqual(3);
+  });
+
   it("bakes a near cell's pieces into one mesh, far cells into one, and forgets despawned pieces", () => {
     const props = make();
     props.spawn(1, [item("bench", 10, 10), item("bench", 12, 10), item("lamp-pastoral", 14, 10), item("bollard", 16, 10), item("tree", 300, 300, 0)], { x: 0, y: 0, z: 0 });

@@ -42,6 +42,15 @@ export interface StreetPropsStats {
  * thousand vertices is baked over frames, not in one that stalls (some hundred ms on a phone).
  */
 const BAKE_MS = 8;
+/**
+ * A slow frame bakes this share of its own length, up to `BAKE_MAX_MS`: time slicing with a budget
+ * in proportion to the frame (as engines amortise streaming by a fraction of the frame time). Under
+ * a software renderer a frame takes a second and more, and 8 ms of it baked W-3's blocks over some
+ * hundred frames: its perf scenes waited on them past their limit (backlog, CI times). At 60 or 30
+ * frames a second the share is under `BAKE_MS` and nothing changes.
+ */
+const BAKE_SHARE = 0.1;
+const BAKE_MAX_MS = 200;
 
 /** A block starts baking this far before it comes near (m), so its detail is ready when it does. */
 const PREFETCH = 40;
@@ -70,6 +79,8 @@ export class StreetProps {
   private drawn: Record<string, number> = {};
   private waitingBlocks = 0;
   private readonly now: () => number;
+  /** When the last frame updated the blocks (ms, `now`): the frame's length sets its bake's budget. */
+  private lastUpdate: number | null = null;
 
   constructor(private readonly deps: StreetPropsDeps) {
     this.now = deps.now ?? (() => performance.now());
@@ -171,6 +182,9 @@ export class StreetProps {
 
   /** Bands of the blocks from the camera, the detailed meshes they need, the halos' look. */
   update(eye: Vec3): void {
+    const now = this.now();
+    const frame = this.lastUpdate === null ? 0 : now - this.lastUpdate;
+    this.lastUpdate = now;
     this.halos.setFog(this.deps.materials.currentRig.fogDensity);
     const due: { block: PropBlock; d: number; near: boolean }[] = [];
     for (const block of this.blocks.values()) {
@@ -178,7 +192,7 @@ export class StreetProps {
       block.band = blockBand(d, this.lod, block.band);
       if (!block.baked && (block.band === "near" || d < this.lod.medium + PREFETCH)) due.push({ block, d, near: block.band === "near" });
     }
-    this.bakeDue(due);
+    this.bakeDue(due, Math.min(BAKE_MAX_MS, Math.max(BAKE_MS, BAKE_SHARE * frame)));
     let waiting = 0;
     const drawn: Record<string, number> = {};
     for (const block of this.blocks.values()) {
@@ -202,13 +216,13 @@ export class StreetProps {
 
   /**
    * Bakes on the blocks due for their detail, the near ones first and the nearest first, for
-   * `BAKE_MS` of the frame: at least a part of the first (or its mesh), so a slow frame still gets on.
+   * `budget` ms of the frame: at least a part of the first (or its mesh), so a slow frame still gets on.
    */
-  private bakeDue(due: { block: PropBlock; d: number; near: boolean }[]): void {
+  private bakeDue(due: { block: PropBlock; d: number; near: boolean }[], budget: number): void {
     if (due.length === 0) return;
     due.sort((a, b) => (a.near === b.near ? a.d - b.d : a.near ? -1 : 1));
     const start = this.now();
-    const stop = () => this.now() - start >= BAKE_MS;
+    const stop = () => this.now() - start >= budget;
     for (const [i, { block }] of due.entries()) {
       if (i > 0 && stop()) return;
       if (!continueNear(this.bake, block, stop)) return;
