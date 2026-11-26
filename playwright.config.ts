@@ -29,8 +29,13 @@ const PORT = Number(process.env.E2E_PORT ?? 4173);
  * wait-window 3.2, touch 3.1, dialogue-fit 2.2, hud-layout 1.1), groups 1, 2 and 4 some 8-10.
  * graphics-toggles and touch go with group 1 (their phone tests, by title, to group 4: all of touch),
  * wait-window to group 2: about 12, 12, 12.5 and 14 min on that runner.
+ * On 26.11 group 2 took 20.4 min on a green run of main (smoke 9.8, ui-scale 7.0, wait-window 3.4), groups 1, 3
+ * and 4 about 12, 16 and 12 (touch-layout 11.3 of group 3), and on slow runners group 2 ran past the 25 min
+ * (#1051, #1054, #1052). The user's decision: split the heaviest files. smoke's real input and its two touch
+ * layout tests (about 3 min) are `smoke-play.spec.ts`, in group 1 (no "phone" in their titles): about 15, 17,
+ * 16 and 12 min.
  */
-const GROUP_ONE = /(npr-perf|gpu-queue|models|fpp-hands|graphics-toggles|touch)\.spec\.ts$/;
+const GROUP_ONE = /(npr-perf|gpu-queue|models|fpp-hands|graphics-toggles|touch|smoke-play)\.spec\.ts$/;
 const GROUP_TWO = /(smoke|ui-scale|wait-window)\.spec\.ts$/;
 /** The npr-perf scenes, gpu-queue, fpp-hands, graphics-toggles and touch tests of group 4, by title. */
 const GROUP_FOUR = /P-2|Zielona|W-3|phone|GPU|WebGL/;

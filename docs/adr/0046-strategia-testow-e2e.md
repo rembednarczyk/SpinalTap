@@ -155,7 +155,7 @@ Skróty: `A` = `packages/app/test`, `U` = `packages/ui/test`, `E` = `packages/en
 ### ads-melee
 | Asercja | Teraz |
 |---|---|
-| Prawy przycisk myszy to celowanie | `E/keymap.test.ts` › aims while the right mouse button…; `E/browser-input.test.ts` › falls back to plain mouse look and fire…; prawdziwa mysz: `e2e/smoke.spec.ts` › real input… |
+| Prawy przycisk myszy to celowanie | `E/keymap.test.ts` › aims while the right mouse button…; `E/browser-input.test.ts` › falls back to plain mouse look and fire…; prawdziwa mysz: `e2e/smoke-play.spec.ts` › real input… |
 | Celowanie: `crosshair--aiming`, rozrzut < 0,7 biodra, `posture.aim` = 1 | `A/posture-ui.test.tsx` › holding the aim button…; `A/ads-melee.test.ts` › reports aiming and the zoom…; `U/ui.test.tsx` › pulls the ticks in while aiming… |
 | Puszczenie: bez klasy, rozrzut wraca do biodra | `A/posture-ui.test.tsx` › holding the aim button… |
 | Digit3 wybiera pałkę, pasek „Pałka” | `E/keymap.test.ts` › reloads on R and picks weapon slots…; `A/posture-ui.test.tsx` › with the baton… |
@@ -168,7 +168,7 @@ Skróty: `A` = `packages/app/test`, `U` = `packages/ui/test`, `E` = `packages/en
 | Schodami na wiadukt, wysokość 9,9 m | `A/levels-ui.test.tsx` › stairs up to the overpass…; `S/levels.test.ts` › climbs the stairs… |
 | Przy bramce windy podpowiedź „Winda”, winda w dół, pod pomostem na ziemi | `A/levels-ui.test.tsx` › stairs up…; `S/levels.test.ts` › the freight lift carries… |
 | Skok w górę o ponad 0,3 m i lądowanie | `A/levels-ui.test.tsx` › jump onto a stall counter…; `S/jump-ladder.test.ts` › has no double jump… |
-| Prawdziwa spacja w działającej pętli | `e2e/smoke.spec.ts` › real input…; `E/keymap.test.ts` › jumps on the Space edge |
+| Prawdziwa spacja w działającej pętli | `e2e/smoke-play.spec.ts` › real input…; `E/keymap.test.ts` › jumps on the Space edge |
 | Skok na ladę 1 m | `A/levels-ui.test.tsx` › jump onto…; `S/jump-ladder.test.ts` › cannot walk onto a 1 m counter… |
 | Drabina `targ-escape-1`, podpowiedź „Wspinaj się”, `targ-escape-2`, dach > 8 m | `A/levels-ui.test.tsx` › jump onto…; `S/jump-ladder.test.ts` › walks into the ladder… |
 | Minimapa pokazuje poziom („m”) | `A/levels-ui.test.tsx` › jump onto…; `U/journal-map-settings.test.tsx` › shows stairs, lifts and ladders… |
@@ -225,7 +225,7 @@ Bramka wzrostu z ADR-0083 (test ponad 30% i 1 s wolniejszy od mediany main) prze
 
 ## Dług: nadpisane limity testów jednostkowych ponad 20 s (16.11)
 Decyzja użytkownika z 16.11 po przeglądzie antywzorców: wolny test dostaje szybszą konstrukcję, nie wyższy limit. Bramka czasu liczy od 16.11 udział każdego testu w globalnych 20 s, nie w jego własnym `timeout` (`tools/test-time/src/reporter.ts`). Testy logiki pościgu za barierą (G-610, G-625, G-643, G-644, G-694) przeszły na podłogę z barier mapy (`packages/sim/test/fixtures/barrier-floor.ts`), a nadpisania testów poniżej 10 s na CI zniknęły: z 71 miejsc (ok. 77 testów) zostało 11. Każde z powodem:
-- `traffic-junction-drive.test.ts` (3 miejsca, 11 testów, 120–240 s): minuta porannego szczytu z pełnym ruchem i tłumem przy skrzyżowaniach i zakrętach Lublina (G-006, G-075, G-744), 15–62 s na CI. Tematem jest geometria tych skrzyżowań, więc bez podłogi. Wyjątek bramki w `exceptions.ts`. Do zrobienia: ruch tylko w chunkach wokół skrzyżowania albo mniej ziaren w jednym teście.
+- `traffic-junction-drive.test.ts` (3 miejsca, 11 testów, 120–240 s): minuta porannego szczytu z pełnym ruchem i tłumem przy skrzyżowaniach i zakrętach Lublina (G-006, G-075, G-744), 15–62 s na CI. Tematem jest geometria tych skrzyżowań, więc bez podłogi. Wyjątek bramki w `exceptions.ts`. Od 26.11 w trzech plikach według miejsc (`traffic-junction-drive`, `-east`, `-bend`, decyzja użytkownika o podziale najcięższych plików), żeby shardy jednostkowe nie dostawały 142 s w jednym pliku. Do zrobienia: ruch tylko w chunkach wokół skrzyżowania albo mniej ziaren w jednym teście.
 - `props-build.test.ts` (240 s): dwa pełne przebiegi `pnpm osm:props` (G-745), 58 s na CI. Wyjątek bramki.
 - `bridge-edges-ai.test.ts`, pierwszy test (120 s): 19 s na CI, buduje rastry wokół dolnego mostu Mełgiewskiej dla siedmiu następnych. Wyjątek bramki.
 - `w5-street-life.test.ts` (60 s): Hideo na Grodzkiej, 13 s na CI, w 75% z 20 s.
