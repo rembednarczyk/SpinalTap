@@ -111,6 +111,8 @@ export interface StreetOut {
   readonly half?: readonly number[];
   /** Driven one way only, the way the line runs. */
   readonly oneway?: true;
+  /** A one-way street's lanes as the map tags them (`lanes`), when over one; none tagged is one (OSM's convention, ADR-0105). */
+  readonly lanes?: number;
   /** A passage under a building closed to motor vehicles: no lane, not even for deliveries (G-002). */
   readonly noVehicles?: true;
   /** A street the game closes to cars (a deptak of 2077, `CAR_FREE_WAYS`): deliveries only. */

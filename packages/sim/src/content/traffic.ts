@@ -254,9 +254,11 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const out: TrafficRoute[] = [];
   // A one-way street or one carriageway of a dual road: its lanes all go the way it is drawn.
   if (c.oneway || isCarriageway(c, all)) {
-    // Two lanes side by side only if the carriageway reaches past both of them nearly all the way.
+    // Two lanes side by side only where the map tags them (a one-way street untagged has one, OSM's
+    // convention, ADR-0105: Peowiaków's parking strip by its 5.7 m) and the carriageway reaches past
+    // both nearly all the way; a dual road's carriageway mapped two-way is read by its width as before.
     const half = Math.min(roadHalfWidth(c, 1, NARROW_Q), roadHalfWidth(c, -1, NARROW_Q));
-    const offsets = half >= 2.6 ? [1.6, -1.6] : [0];
+    const offsets = (c.oneway ? c.lanes >= 2 : true) && half >= 2.6 ? [1.6, -1.6] : [0];
     offsets.forEach((off, n) => out.push(routeOf(`${id}:${n}`, c.name, "cars", offsetLine(c.points, off), road.speed, cars(len))));
     if (trolley) out.push(routeOf(`${id}:t`, c.name, "trolley", offsetLine(c.points, offsets[0]!), TROLLEY_SPEED, Math.max(1, Math.round(len / TROLLEY_SPACING))));
     return out;

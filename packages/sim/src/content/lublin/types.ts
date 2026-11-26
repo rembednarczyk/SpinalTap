@@ -104,6 +104,8 @@ export interface LublinStreetData {
   readonly half?: FlatPoints;
   /** Driven one way only, the way the line runs (`oneway=-1` already turned round). */
   readonly oneway?: true;
+  /** A one-way street's lanes as the map tags them (`lanes`), when over one; none tagged is one (OSM's convention, ADR-0105). */
+  readonly lanes?: number;
   /** A passage under a building closed to motor vehicles in OSM: no lane, not even for deliveries (G-002). */
   readonly noVehicles?: true;
   /** A street the game closes to cars (a deptak of 2077, T-324): deliveries only, as a pedestrian street. */
