@@ -1,9 +1,8 @@
-import { EMPTY_INPUT, type InputFrame, VEHICLE_SIZE } from "@seki/core";
+import { EMPTY_INPUT, type InputFrame } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { Simulation } from "../src";
-import { PARKED_CARS } from "../src/content/parked-cars";
 import { BREAK_IN_PROMPT } from "../src/world/vehicle/break-in";
-import { STREET_START, collect, teleportPlayer } from "./helpers";
+import { collect, sedanBeside, teleportPlayer } from "./helpers";
 
 /**
  * Out of the car the camera is the one she had on foot (user's notes of 21.11 and 22.11): its mode, first or third
@@ -13,10 +12,7 @@ const press = (over: Partial<InputFrame>): InputFrame => ({ ...EMPTY_INPUT, ...o
 
 const atTheWheel = (mode: "FPP" | "TPP"): Simulation => {
   const sim = Simulation.create({ seed: 3, crowd: "off", traffic: "off" });
-  const d = (c: (typeof PARKED_CARS)[number]) => Math.hypot(c.x - STREET_START.x, c.z - STREET_START.z);
-  const c = PARKED_CARS.filter((p) => p.model === "sedan").sort((a, b) => d(a) - d(b))[0]!;
-  const out = VEHICLE_SIZE.sedan.width / 2 + 0.7;
-  teleportPlayer(sim, { x: c.x - Math.cos(c.yaw) * out, y: c.y + 0.05, z: c.z + Math.sin(c.yaw) * out }, 0, 0.3);
+  teleportPlayer(sim, sedanBeside().stand, 0, 0.3);
   if (sim.domain.preferences.cameraMode !== mode) sim.step(press({ toggleCamera: true }));
   for (let i = 0; i < 120 && sim.session.focusPrompt !== BREAK_IN_PROMPT; i++) sim.step();
   sim.step(press({ interact: true }));

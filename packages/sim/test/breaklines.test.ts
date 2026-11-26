@@ -62,6 +62,14 @@ describe("the terrace's step under the walls along Królewska (T-351)", () => {
     for (const c of PARKED_CARS) expect(breaklineDistance(c.x, c.z), `${c.x},${c.z}`).toBeGreaterThan(VEHICLE_SIZE[c.model].width / 2);
   });
 
+  it("parks the row by the parapet pulled off the wall, as on the orthophoto (G-977)", () => {
+    // About 13 cars nose to the terrace's inside, their tails 0.5-0.9 m off the wall's axis (PZGiK 2025-04);
+    // the bays run up to the wall and stood empty but one, rejected at the wall's room (G-976).
+    const row = PARKED_CARS.filter((c) => c.x > 552 && c.x < 590 && breaklineDistance(c.x, c.z) < 4);
+    expect(row.length).toBeGreaterThanOrEqual(8);
+    for (const c of row) expect(breaklineDistance(c.x, c.z), `${c.x},${c.z}`).toBeLessThan(VEHICLE_SIZE[c.model].length / 2 + 1.2);
+  });
+
   it("lays the flight between the walls' ends from the pavement to the terrace", () => {
     for (const f of BREAK_FLIGHTS) {
       const rise = groundY(f.top.x, f.top.z) - groundY(f.foot.x, f.foot.z);

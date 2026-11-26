@@ -186,7 +186,8 @@ import { DECK_DEPTH, DECK_HEADROOM, type GroundDeck, deckAt, deckHeight, makeDec
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
-import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
+import { PARKED_CARS, SURFACE_PARKS } from "../../../packages/sim/src/content/parked-cars";
+import { BREAKLINES, breaklineDistance } from "../../../packages/sim/src/content/lublin/breaklines";
 import { GAME_PROPS, WORLD_STREET_PROPS, clearOfGame } from "../../../packages/sim/src/content/street-props";
 import { WORLD_BARRIERS } from "../../../packages/sim/src/content/world-barriers";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -656,7 +657,7 @@ const DECK_PAINT = (() => {
 })();
 
 /** Is (x, z) in a surface car park with aisles (`carParks`, T-352)? Its cars stand in bays off the streets. */
-const SURFACE_PARKS = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0);
+// The surface car parks with their aisles, the map's or laid from the outline (`moduleAisles`), as the parked cars line them.
 const inSurfacePark = (x: number, z: number): boolean => SURFACE_PARKS.some((p) => pointInPairRingEvenOdd(x, z, Array.from({ length: p.outline.length / 2 }, (_, i): [number, number] => [p.outline[2 * i]!, p.outline[2 * i + 1]!])));
 
 const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
@@ -1506,6 +1507,37 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
     const tower = MAP_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === "w66286371");
     return tower ? beaconOffTip([{ id: "kat-beacon", at: KATEDRALNY_BEACON, top: { x: tower.x, z: tower.z, y: tower.y + tower.height + (tower.roof ?? 0) } }]) : [];
   },
+  /**
+   * A bank before a terrace wall's face or a ditch behind its parapet (G-971, T-351): every 0.5 m
+   * beside a breakline, off its fading ends and its flight's box, the ground at either face (0.25 m
+   * from the axis) more than 0.5 m off its side's ground 1.5 m out.
+   */
+  "wall-face-bank": () =>
+    BREAKLINES.flatMap((l) =>
+      l.line.slice(1).flatMap((b, i) => {
+        const a = l.line[i]!;
+        const len = Math.hypot(b.x - a.x, b.z - a.z);
+        const [nx, nz] = [-(b.z - a.z) / len, (b.x - a.x) / len];
+        const ends = [l.line[0]!, l.line[l.line.length - 1]!];
+        return Array.from({ length: Math.floor(len / 0.5) }, (_, k) => ({ x: a.x + ((b.x - a.x) * (k + 0.5) * 0.5) / len, z: a.z + ((b.z - a.z) * (k + 0.5) * 0.5) / len }))
+          .filter((p) => ends.every((e) => Math.hypot(p.x - e.x, p.z - e.z) > 4) && !(l.skip ?? []).some((q) => p.x >= q.minX - 1 && p.x <= q.maxX + 1 && p.z >= q.minZ - 1 && p.z <= q.maxZ + 1))
+          .flatMap((p) =>
+            [1, -1].flatMap((side) => {
+              const off = Math.abs(groundY(p.x + nx * side * 0.25, p.z + nz * side * 0.25) - groundY(p.x + nx * side * 1.5, p.z + nz * side * 1.5));
+              return off > 0.5 ? [{ at: near(p.x, p.z), what: `${off.toFixed(2)} m ${side > 0 ? "ditch behind" : "bank before"} ${l.id}` }] : [];
+            }),
+          );
+      }),
+    ),
+  /** A parked car's body within 0.6 m of a terrace's wall (G-976): the wall gives way to it and the terrace's edge stands open. */
+  "parked-car-on-breakline": () =>
+    PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const body = [-0.5, 0, 0.5].flatMap((a) => [-0.5, 0, 0.5].map((b) => ({ x: c.x + fz * width * a + fx * length * b, z: c.z - fx * width * a + fz * length * b })));
+      const d = Math.min(...body.map((p) => breaklineDistance(p.x, p.z)));
+      return d <= 0.6 ? [{ at: near(c.x, c.z), what: `${c.model} ${d.toFixed(2)} m from a terrace's wall` }] : [];
+    }),
   /** A lamp on the orthophoto's asphalt further than 0.5 m from its edge: in a carriageway the import draws narrower than it is (G-821, `lamp-on-orto-carriageway.ts`). */
   "lamp-on-orto-carriageway": () => lampOnOrtoCarriageway(Object.values(LUBLIN_STREET_PROPS).flat(), MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A lamp on a post inside a courtyard, a pedestrian square whose outline runs along the game's buildings for 70% (`lamp-squares.ts`, Dziedziniec Zamkowy). */

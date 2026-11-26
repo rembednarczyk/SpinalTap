@@ -1,6 +1,6 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor, pointInPairRingEvenOdd } from "@seki/core";
 import type { StaticProp } from "./builders";
-import { aisleBays } from "./aisle-bays";
+import { aisleBays, moduleAisles } from "./aisle-bays";
 import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
@@ -402,7 +402,18 @@ const squareCars = (): ParkedCar[] => {
  * Cars in the bays along the aisles of the surface car parks (T-352, `aisle-bays.ts`): as full as
  * Plac Zamkowy's bays (`SQUARE_TAKEN`), each whole on the park's paving where `fits` lets it.
  */
-const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0).map((p) => [p.id, p])).values()];
+/** A park with no rows of its own: not Plac Zamkowy, whose bays `squareCars` lays at its own step. */
+const laidHere = (outline: readonly number[]): boolean => {
+  const n = outline.length / 2;
+  const [cx, cz] = [0, 1].map((k) => Array.from({ length: n }, (_, i) => outline[2 * i + k]!).reduce((a, v) => a + v, 0) / n) as [number, number];
+  return !(cx >= PLAC_ZAMKOWY.minX && cx <= PLAC_ZAMKOWY.maxX && cz >= PLAC_ZAMKOWY.minZ && cz <= PLAC_ZAMKOWY.maxZ);
+};
+
+/** The surface car parks with the aisles their bays line: the map's, else laid from the outline. The glitch scan reads them too. */
+export const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface").map((p) => [p.id, p])).values()]
+  // The map's aisles, else the modules the park's outline holds (`moduleAisles`, the backlog's item of 25.11, part 2).
+  .map((p) => ({ id: p.id, outline: p.outline, aisles: (p.aisles?.length ?? 0) > 0 ? (p.aisles ?? []) : laidHere(p.outline) ? moduleAisles(p.outline) : [] }))
+  .filter((p) => p.aisles.length > 0);
 /**
  * The models a car park's bay takes: no delivery truck, 5.8 m long against a 5 m bay. It drew the
  * street's model and stood empty when that was a truck: 97 of the 645 bays of the city's 19 car
@@ -411,12 +422,34 @@ const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).fi
 const BAY_MODELS: readonly VehicleModel[] = PARKED_MODELS.filter((m) => m !== "delivery");
 const bayModelAt = (x: number, z: number): VehicleModel => BAY_MODELS[hash(x, z, 3) % BAY_MODELS.length]!;
 
+/** Most a car is pulled along its bay off a terrace's wall (m): the bay's slack, 5 m deep for cars of 3.9-5 m. */
+const BREAK_PULL = 1;
+/**
+ * Where a car stands in a bay running up to a terrace's wall (G-977): pulled along its axis, away
+ * from the wall, until its body keeps `BREAK_ROOM` from the line, as the cars stand with their
+ * tails 0.5-0.9 m off the parapet on the orthophoto; the bay as it is elsewhere, none if it fits nowhere.
+ */
+const inBay = (b: { x: number; z: number; yaw: number }, model: VehicleModel): { x: number; z: number } | null => {
+  if (fits(b.x, b.z, b.yaw, model)) return b;
+  if (clearOfBreaklines(b.x, b.z, b.yaw, model)) return null;
+  const [fx, fz] = [Math.sin(b.yaw), Math.cos(b.yaw)];
+  const half = VEHICLE_SIZE[model].length / 2;
+  // Away from the wall: towards the end of the body farther from the line.
+  const away = breaklineDistance(b.x + fx * half, b.z + fz * half) >= breaklineDistance(b.x - fx * half, b.z - fz * half) ? 1 : -1;
+  for (let s = 0.1; s <= BREAK_PULL + 1e-9; s += 0.1) {
+    const at = { x: Math.round((b.x + fx * away * s) * 100) / 100, z: Math.round((b.z + fz * away * s) * 100) / 100 };
+    if (clearOfBreaklines(at.x, at.z, b.yaw, model)) return fits(at.x, at.z, b.yaw, model) ? at : null;
+  }
+  return null;
+};
+
 const aisleCars = (): ParkedCar[] =>
-  aisleBays(SURFACE_PARKS.map((p) => ({ id: p.id, outline: p.outline, aisles: p.aisles ?? [] }))).flatMap((b) => {
+  aisleBays(SURFACE_PARKS).flatMap((b) => {
     if (hash(b.x, b.z, 6) / 0x100000000 >= SQUARE_TAKEN) return [];
     const model = bayModelAt(b.x, b.z);
-    if (!fits(b.x, b.z, b.yaw, model)) return [];
-    return [{ chunk: chunkOf(b.x, b.z), x: b.x, y: 0, z: b.z, yaw: b.yaw, model, tint: hash(b.x, b.z, 7) }];
+    const at = inBay(b, model);
+    if (!at) return [];
+    return [{ chunk: chunkOf(at.x, at.z), x: at.x, y: 0, z: at.z, yaw: b.yaw, model, tint: hash(b.x, b.z, 7) }];
   });
 
 /** Do two footprints overlap (separating axes of two rectangles)? */

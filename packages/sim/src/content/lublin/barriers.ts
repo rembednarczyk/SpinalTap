@@ -91,7 +91,17 @@ export const barrierPieces = (
       // The top is level along the piece: over the upper side's highest of its ends and middle, so by
       // a flight rising along the wall the parapet stays over the steps at the upper end (G-972).
       const high = sides && side ? Math.max(side.high, sides(p.x, p.z).high, sides(q.x, q.z).high) : 0;
-      const top = side && side.high - side.low > RETAINED_STEP ? high + RETAINED_PARAPET : groundY(x, z) + height;
+      if (side && side.high - side.low > RETAINED_STEP) {
+        // Holding a step, its top is level (the parapet over the upper side's highest), and so drawn:
+        // from under its low end, no rise, as its solid stands (G-975, as `levelTop`), its height
+        // rounded up to the variant's tenth so the parapet never falls short.
+        const low = Math.min(foot(p.x, p.z), foot(q.x, q.z), y);
+        const tall = Math.ceil((high + RETAINED_PARAPET - round2(low)) * 10 - 1e-6) / 10;
+        const variant = barrierVariant({ kind, length: len / n, height: tall, rise: 0, material });
+        out.push({ prop: "barrier", x: round2(x), y: round2(low), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
+        continue;
+      }
+      const top = groundY(x, z) + height;
       const variant = barrierVariant({ kind, length: len / n, height: top - y, rise, material });
       out.push({ prop: "barrier", x: round2(x), y: round2(y), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
     }

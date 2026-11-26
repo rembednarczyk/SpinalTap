@@ -1,4 +1,4 @@
-import { EMPTY_INPUT, type EntityId, type InputFrame, type RenderPort, VEHICLE_SIZE } from "@seki/core";
+import { EMPTY_INPUT, type EntityId, type InputFrame, type RenderPort } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { RenderSync, SCENERY_ID_BASE, Simulation, type Entity } from "../src";
 import { PARKED_CARS } from "../src/content/parked-cars";
@@ -6,7 +6,7 @@ import { WORLD_SCENERY } from "../src/content/world-map";
 import { parkedTakenFlag } from "../src/content/parked-taken";
 import { BREAK_IN_PROMPT, BREAK_IN_WAIT } from "../src/world/vehicle/break-in";
 import { SIM_DT } from "../src/step-rate";
-import { STREET_START, teleportPlayer } from "./helpers";
+import { sedanBeside, teleportPlayer } from "./helpers";
 
 /**
  * Breaking into a parked car (ADR-0097 §3): beside a parked car the prompt offers it, the key has
@@ -15,17 +15,7 @@ import { STREET_START, teleportPlayer } from "./helpers";
  */
 const press = (over: Partial<InputFrame>): InputFrame => ({ ...EMPTY_INPUT, ...over });
 
-/** The parked sedan nearest the street tests' square, and where she stands beside its left side. */
-const nearestSedan = (): { index: number; stand: { x: number; y: number; z: number } } => {
-  const d = (c: (typeof PARKED_CARS)[number]) => Math.hypot(c.x - STREET_START.x, c.z - STREET_START.z);
-  const index = PARKED_CARS.map((c, i) => [c, i] as const)
-    .filter(([c]) => c.model === "sedan")
-    .sort(([a], [b]) => d(a) - d(b))[0]![1];
-  const c = PARKED_CARS[index]!;
-  const out = VEHICLE_SIZE.sedan.width / 2 + 0.7;
-  // The car's left in the world (left-handed, y up): its heading (sin, cos) turned to (-cos, sin).
-  return { index, stand: { x: c.x - Math.cos(c.yaw) * out, y: c.y + 0.05, z: c.z + Math.sin(c.yaw) * out } };
-};
+const nearestSedan = sedanBeside;
 
 const parkedSolid = (sim: Simulation, index: number): Entity | undefined => [...sim.world].find((e) => e.parkedCar?.index === index);
 
