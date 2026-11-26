@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "@seki/core";
-import { type Entity, SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, ground, w3 } from "../src";
+import { type Entity, SIM_HZ, Simulation, W3_CORE_BLIND_SPOT, ground, makePrism, w3 } from "../src";
 import { FLEE_FAR_WINDOW, FLEE_WINDOW, memoOf } from "../src/systems/ai/nav-field";
 import { detourStep, fleeDetourStep, straightWalk } from "../src/systems/ai/steering";
 import { teleportPlayer } from "./helpers";
@@ -72,6 +72,23 @@ describe("runners round a way out of the flee window (G-928, round 2)", () => {
       const run = runFrom(sim, c, ground(x, z), k);
       expect.soft({ at: [x, z, k], far: run.gone >= 10, stood: run.stood <= 2, swings: run.swings < 5 }, JSON.stringify(run)).toEqual({ at: [x, z, k], far: true, stood: true, swings: true });
     }
+  });
+
+  it("by the Bystrzyca's fence with a tree 2.5 m off it, the runner pressed to the fence runs on, not swing (G-928 round 3)", () => {
+    // The tree of the crowns' rule (T-354) at (2366.5, 459.5), a trunk 0.7 m round as the plan's:
+    // the runner closes on the fence at 0.24 rad past it and grazed its posts 8 times in 5 s.
+    const sim = Simulation.create({ seed: 3, crowd: "low" });
+    teleportPlayer(sim, ground(2382, 485), 0);
+    for (let i = 0; i < 3 * SIM_HZ; i++) sim.step();
+    // The crowns' rule moved the tree at (2368.5, 464.5) away: its place is clear on the branch.
+    for (const e of [...sim.world.with("solid")]) if (Math.hypot(e.position!.x - 2368.5, e.position!.z - 464.5) < 0.3) sim.world.remove(e);
+    const at = ground(2366.5, 459.5);
+    const ring = Array.from({ length: 8 }, (_, i) => ({ x: at.x + 0.7 * Math.cos(((i + 0.5) * Math.PI) / 4), z: at.z + 0.7 * Math.sin(((i + 0.5) * Math.PI) / 4) }));
+    const trunk = makePrism(ring, at.y - 0.3, at.y + 3);
+    sim.world.add({ id: 9300, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, chunk: sim.player()!.chunk ?? "", seeThrough: true, solid: trunk.box, prisms: [trunk] });
+    const c = alone(sim, (e) => !e.vehicle);
+    const run = runFrom(sim, c, ground(2362, 449), 2);
+    expect({ far: run.gone >= 10, stood: run.stood <= 2, swings: run.swings < 5 }, JSON.stringify(run)).toEqual({ far: true, stood: true, swings: true });
   });
 
   it("by the west wall of W-3's hall they do not stand", () => {
