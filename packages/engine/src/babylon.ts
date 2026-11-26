@@ -41,6 +41,7 @@ export { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 export { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 export { Bone } from "@babylonjs/core/Bones/bone";
 export { Skeleton } from "@babylonjs/core/Bones/skeleton";
+export { BindBonesParameters } from "@babylonjs/core/Materials/materialHelper.functions";
 export { Quaternion } from "@babylonjs/core/Maths/math.vector";
 export { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 export type { AssetContainer } from "@babylonjs/core/assetContainer";

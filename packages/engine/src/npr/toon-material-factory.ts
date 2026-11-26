@@ -1,4 +1,4 @@
-import { type BaseTexture, Color3, type Scene, ShaderMaterial, type Texture } from "../babylon";
+import { type BaseTexture, BindBonesParameters, Color3, type Scene, ShaderMaterial, type Texture } from "../babylon";
 import type { ToonPreset } from "./presets";
 import { ditherOf } from "./body-dither";
 import type { DetailBinding } from "./detail-textures";
@@ -89,8 +89,18 @@ export const createToonMaterial = (scene: Scene, name: string, p: ToonPreset, sp
       needAlphaBlending: alpha === "ALPHABLEND",
     },
   );
-  // Per mesh, after the shared uniforms: only the player's figure is ever faded.
-  m.onBindObservable.add((mesh) => m.getEffect()?.setFloat("dither", ditherOf(mesh)));
+  // Per mesh, after the shared uniforms: only the player's figure is ever faded. The bones too:
+  // ShaderMaterial binds them only when the material or effect changes (`mustRebind`), so the cut
+  // garments and cloth of several characters, drawn one after another in the alpha-test list with
+  // one material, took the first one's skeleton: a jacket on kaito.vrm's 117 bones read the
+  // ganger's 67 and threw spikes across to the others, and a ganger's jacket and the skin left
+  // under it took another's pose, a second figure beside its own (user notes of 25.11, G-974).
+  m.onBindObservable.add((mesh) => {
+    const effect = m.getEffect();
+    if (!effect) return;
+    effect.setFloat("dither", ditherOf(mesh));
+    if (mesh.skeleton && mesh.useBones && mesh.computeBonesUsingShaders) BindBonesParameters(mesh, effect);
+  });
   if (texture) m.setTexture("baseSampler", texture);
   m.setColor3("baseColor", hex(p.base));
   m.setColor3("emissiveColor", hex(p.emissive ?? "#000000"));
