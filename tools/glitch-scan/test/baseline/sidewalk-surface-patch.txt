@@ -1,0 +1,466 @@
+# sidewalk-surface-patch: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-0-0 -97,-268
+krakowskie-0-0 -81,-211
+krakowskie-0-0 5,-191 *2
+krakowskie-0-0 14,-185 *2
+krakowskie-0-0 -92,-181
+krakowskie-0-0 -53,-175
+krakowskie-0-0 -76,-169
+krakowskie-0-0 -87,-167
+krakowskie-0-0 -103,-161
+krakowskie-0-0 -108,-146
+krakowskie-0-0 -108,-137
+krakowskie-0-0 -55,-63 *2
+krakowskie-0-0 -31,-62 *2
+krakowskie-0-0 -1,-61
+krakowskie-0-0 1,-60
+krakowskie-0-0 10,-60
+krakowskie-0-0 12,-60
+krakowskie-0-0 -128,-59
+krakowskie-0-0 -117,-59
+krakowskie-0-0 -106,-47 *2
+krakowskie-0-0 -106,-42
+krakowskie-0-1 -110,-16
+krakowskie-0-1 -110,34
+krakowskie-0-1 -171,54
+krakowskie-0-1 -110,106 *2
+krakowskie-0-1 -1,113
+krakowskie-0-1 18,113
+krakowskie-0-1 19,113
+krakowskie-0-1 -54,114
+krakowskie-0-1 -46,114
+krakowskie-0-1 -92,115
+krakowskie-0-1 -89,115
+krakowskie-0-1 -82,115
+krakowskie-0-1 -68,115
+krakowskie-0-1 -67,115
+krakowskie-0-1 -109,127
+krakowskie-0-1 -109,134
+krakowskie-0-1 -118,143
+krakowskie-0-1 -107,153
+krakowskie-1-0 102,-250
+krakowskie-1-0 119,-239
+krakowskie-1-0 103,-231
+krakowskie-1-0 138,-227
+krakowskie-1-0 150,-220
+krakowskie-1-0 86,-218
+krakowskie-1-0 171,-207
+krakowskie-1-0 30,-199
+krakowskie-1-0 197,-193
+krakowskie-1-0 220,-181
+krakowskie-1-0 236,-173
+krakowskie-1-0 153,-168 *2
+krakowskie-1-0 150,-151
+krakowskie-1-0 21,-147 *2
+krakowskie-1-0 148,-140
+krakowskie-1-0 148,-136
+krakowskie-1-0 145,-111
+krakowskie-1-0 26,-107
+krakowskie-1-0 239,-66 *2
+krakowskie-1-0 139,-60
+krakowskie-1-0 24,-59
+krakowskie-1-0 36,-59 *2
+krakowskie-1-0 138,-59
+krakowskie-1-0 57,-58 *2
+krakowskie-1-0 103,-56 *2
+krakowskie-1-0 178,-52 *2
+krakowskie-1-0 151,-47 *2
+krakowskie-1-0 85,-39 *2
+krakowskie-1-0 190,-21 *2
+krakowskie-1-1 194,1 *2
+krakowskie-1-1 238,5
+krakowskie-1-1 99,51 *2
+krakowskie-1-1 186,78
+krakowskie-1-1 181,88 *2
+krakowskie-1-1 173,89
+krakowskie-1-1 151,93
+krakowskie-1-1 130,96
+krakowskie-1-1 194,97
+krakowskie-1-1 95,104
+krakowskie-1-1 99,104
+krakowskie-1-1 33,112 *2
+krakowskie-1-1 203,119
+krakowskie-1-1 44,121 *2
+krakowskie-1-1 210,134
+krakowskie-1-1 50,142
+krakowskie-1-1 219,155
+krakowskie-1-1 53,158
+krakowskie-2-0 330,-268
+krakowskie-2-0 330,-255
+krakowskie-2-0 330,-248
+krakowskie-2-0 394,-227
+krakowskie-2-0 392,-224
+krakowskie-2-0 383,-214
+krakowskie-2-0 381,-212
+krakowskie-2-0 334,-188 *2
+krakowskie-2-0 243,-170
+krakowskie-2-0 257,-163
+krakowskie-2-0 272,-146 *2
+krakowskie-2-0 455,-146 *2
+krakowskie-2-0 363,-142 *2
+krakowskie-2-0 274,-139
+krakowskie-2-0 450,-139
+krakowskie-2-0 281,-104
+krakowskie-2-0 404,-98 *2
+krakowskie-2-0 413,-97
+krakowskie-2-0 417,-97
+krakowskie-2-0 422,-96
+krakowskie-2-0 455,-95
+krakowskie-2-0 341,-93 *2
+krakowskie-2-0 362,-93 *2
+krakowskie-2-0 337,-88 *2
+krakowskie-2-0 443,-82 *2
+krakowskie-2-0 279,-77 *2
+krakowskie-2-0 443,-76
+krakowskie-2-0 349,-57 *2
+krakowskie-2-0 340,-46 *2
+krakowskie-2-0 442,-43
+krakowskie-2-0 307,-37
+krakowskie-2-0 297,-33
+krakowskie-2-0 442,-32
+krakowskie-2-0 442,-28
+krakowskie-2-0 360,-21
+krakowskie-2-1 273,-19 *2
+krakowskie-2-1 378,-16
+krakowskie-2-1 418,-16
+krakowskie-2-1 429,-16
+krakowskie-2-1 375,-14
+krakowskie-2-1 443,-7 *2
+krakowskie-2-1 407,98
+krakowskie-2-1 409,101
+krakowskie-2-1 305,110
+krakowskie-2-1 299,116
+krakowskie-2-1 434,151
+krakowskie-2-1 438,157
+krakowskie-2-1 438,158
+nabrzeze-0-0 2426,62
+nabrzeze-0-0 2432,76
+nabrzeze-0-0 2439,90
+nabrzeze-0-0 2448,111
+nabrzeze-0-0 2457,132
+nabrzeze-0-0 2427,138
+nabrzeze-0-0 2462,144
+nabrzeze-0-0 2463,147
+nabrzeze-0-0 2471,161
+nabrzeze-0-0 2474,168
+nabrzeze-0-0 2476,172
+nabrzeze-0-0 2480,178
+nabrzeze-0-0 2484,186
+nabrzeze-0-0 2447,194
+nabrzeze-0-0 2496,205
+nabrzeze-0-0 2488,229
+nabrzeze-0-0 2459,230 *2
+nabrzeze-0-0 2474,237
+nabrzeze-0-0 2437,259
+nabrzeze-0-0 2472,268
+nabrzeze-0-0 2421,269
+nabrzeze-0-1 2414,273
+nabrzeze-0-1 2304,279
+nabrzeze-0-1 2389,281
+nabrzeze-0-1 2478,281
+nabrzeze-0-1 2317,282
+nabrzeze-0-1 2321,282
+nabrzeze-0-1 2374,283
+nabrzeze-0-1 2479,283
+nabrzeze-0-1 2330,284
+nabrzeze-0-1 2348,284
+nabrzeze-0-1 2349,284
+nabrzeze-0-1 2360,284
+nabrzeze-0-1 2371,284
+nabrzeze-0-1 2498,286 *2
+nabrzeze-0-1 2389,293
+nabrzeze-0-1 2387,295
+nabrzeze-0-1 2471,298 *2
+nabrzeze-0-1 2383,299
+nabrzeze-0-1 2463,301
+nabrzeze-0-1 2458,303
+nabrzeze-0-1 2303,304
+nabrzeze-0-1 2449,306
+nabrzeze-0-1 2493,308
+nabrzeze-0-1 2374,309
+nabrzeze-0-1 2321,311
+nabrzeze-0-1 2496,313
+nabrzeze-0-1 2333,315
+nabrzeze-0-1 2497,316
+nabrzeze-0-1 2349,318
+nabrzeze-0-1 2353,318
+nabrzeze-0-1 2402,318
+nabrzeze-0-1 2360,319 *2
+nabrzeze-0-1 2402,328
+nabrzeze-0-1 2365,333
+nabrzeze-0-1 2388,343
+nabrzeze-0-1 2302,346
+nabrzeze-0-1 2362,350
+nabrzeze-0-1 2363,363
+nabrzeze-0-1 2365,376
+nabrzeze-0-1 2369,393
+nabrzeze-0-1 2370,399
+nabrzeze-0-1 2302,422
+nabrzeze-0-1 2309,423
+nabrzeze-0-1 2323,425
+nabrzeze-0-1 2333,427
+nabrzeze-0-1 2389,429 *2
+nabrzeze-0-1 2390,433
+nabrzeze-0-1 2380,448
+nabrzeze-0-1 2380,450
+nabrzeze-0-1 2381,454
+nabrzeze-0-1 2394,454
+nabrzeze-0-1 2386,478
+nabrzeze-1-0 2540,61
+nabrzeze-1-0 2643,80
+nabrzeze-1-0 2649,86
+nabrzeze-1-0 2665,102
+nabrzeze-1-0 2688,107
+nabrzeze-1-0 2660,108
+nabrzeze-1-0 2660,113
+nabrzeze-1-0 2671,118
+nabrzeze-1-0 2666,121
+nabrzeze-1-0 2698,124
+nabrzeze-1-0 2652,130
+nabrzeze-1-0 2629,143
+nabrzeze-1-0 2666,143
+nabrzeze-1-0 2664,144
+nabrzeze-1-0 2661,146
+nabrzeze-1-0 2656,149
+nabrzeze-1-0 2609,156
+nabrzeze-1-0 2637,161 *2
+nabrzeze-1-0 2598,162
+nabrzeze-1-0 2632,165
+nabrzeze-1-0 2587,169
+nabrzeze-1-0 2626,169
+nabrzeze-1-0 2622,171
+nabrzeze-1-0 2578,174
+nabrzeze-1-0 2616,176
+nabrzeze-1-0 2571,178
+nabrzeze-1-0 2600,190
+nabrzeze-1-0 2599,192
+nabrzeze-1-0 2586,205
+nabrzeze-1-0 2525,206
+nabrzeze-1-0 2518,211
+nabrzeze-1-0 2581,211
+nabrzeze-1-0 2516,212 *2
+nabrzeze-1-0 2570,224
+nabrzeze-1-0 2512,232
+nabrzeze-1-0 2563,232
+nabrzeze-1-0 2546,249
+nabrzeze-1-0 2523,250
+nabrzeze-1-0 2545,250
+nabrzeze-1-1 2522,273 *2
+nabrzeze-1-1 2538,276 *2
+nabrzeze-1-1 2514,278
+nabrzeze-1-1 2544,288
+nabrzeze-1-1 2557,305
+nabrzeze-1-1 2569,311
+nabrzeze-1-1 2588,313
+nabrzeze-1-1 2503,324
+nabrzeze-1-1 2505,329
+nabrzeze-1-1 2594,333
+nabrzeze-1-1 2612,335
+nabrzeze-1-1 2582,336
+nabrzeze-1-1 2511,337
+nabrzeze-1-1 2619,338 *2
+nabrzeze-1-1 2523,354
+nabrzeze-1-1 2547,358 *2
+nabrzeze-1-1 2541,359
+podzamcze-0-0 678,163
+podzamcze-0-0 684,165
+podzamcze-0-0 540,175
+podzamcze-0-0 701,176
+podzamcze-0-0 712,184
+podzamcze-0-0 522,185
+podzamcze-0-0 625,255
+podzamcze-0-0 553,288
+podzamcze-0-0 579,352 *2
+podzamcze-0-0 691,352
+podzamcze-0-0 719,360
+podzamcze-0-0 598,365
+podzamcze-0-0 599,365
+podzamcze-0-0 571,368
+podzamcze-0-0 567,369
+podzamcze-0-1 638,371
+podzamcze-0-1 536,374
+podzamcze-0-1 618,374
+podzamcze-0-1 522,376
+podzamcze-0-1 603,377
+podzamcze-0-1 579,381
+podzamcze-0-1 549,388
+podzamcze-0-1 594,391 *2
+podzamcze-0-1 537,392
+podzamcze-0-1 528,394
+podzamcze-0-1 599,404
+podzamcze-0-1 536,412
+podzamcze-0-1 537,413
+podzamcze-0-1 539,421
+podzamcze-0-1 708,449
+podzamcze-0-1 675,454
+podzamcze-0-1 668,455
+podzamcze-0-1 542,456
+podzamcze-0-1 697,460 *2
+podzamcze-0-1 633,463 *2
+podzamcze-0-1 599,467
+podzamcze-0-1 543,471
+podzamcze-0-1 700,474
+podzamcze-0-1 626,475
+podzamcze-0-1 560,478
+podzamcze-0-1 628,481
+podzamcze-0-1 522,482 *2
+podzamcze-0-1 654,548
+podzamcze-0-1 657,555
+podzamcze-0-1 675,570
+podzamcze-0-2 651,582
+podzamcze-0-2 668,584
+podzamcze-0-2 612,611
+podzamcze-0-2 599,624
+podzamcze-0-2 589,634
+podzamcze-0-2 578,645 *2
+podzamcze-0-2 588,648
+podzamcze-0-2 594,661
+podzamcze-0-2 601,675
+podzamcze-0-2 546,677
+podzamcze-0-2 537,687
+podzamcze-0-2 529,694
+podzamcze-0-2 526,697
+podzamcze-0-2 625,782
+podzamcze-1-0 746,167 *2
+podzamcze-1-0 734,179 *2
+podzamcze-1-0 738,296 *2
+podzamcze-1-0 848,330
+podzamcze-1-0 835,332
+podzamcze-1-0 887,336
+podzamcze-1-0 843,342
+podzamcze-1-0 753,344
+podzamcze-1-0 722,348 *2
+podzamcze-1-0 735,357
+podzamcze-1-0 916,368 *2
+podzamcze-1-1 919,406
+podzamcze-1-1 776,438
+podzamcze-1-1 755,440
+podzamcze-1-1 793,454
+podzamcze-1-1 803,476
+podzamcze-1-1 916,483
+podzamcze-1-1 882,496
+podzamcze-1-1 864,502
+podzamcze-1-1 818,506 *2
+podzamcze-1-1 847,508
+podzamcze-1-1 845,509
+podzamcze-1-1 829,514 *2
+podzamcze-1-1 812,520
+podzamcze-1-1 750,542
+podzamcze-1-1 724,551
+podzamcze-1-2 892,627
+podzamcze-1-2 878,643
+podzamcze-1-2 721,722
+podzamcze-1-2 800,725
+podzamcze-1-2 811,726
+podzamcze-1-2 775,728
+podzamcze-1-2 755,732
+podzamcze-1-2 739,735
+podzamcze-1-2 738,736
+podzamcze-1-2 915,740
+podzamcze-1-2 874,749
+podzamcze-1-2 733,753
+podzamcze-1-2 874,759
+podzamcze-1-2 736,760
+podzamcze-1-2 875,771
+podzamcze-1-2 740,772
+podzamcze-1-2 743,778
+podzamcze-2-0 1061,162
+podzamcze-2-0 1040,164
+podzamcze-2-0 1075,218
+podzamcze-2-0 1088,251
+podzamcze-2-0 1052,266
+podzamcze-2-0 1052,270 *2
+podzamcze-2-0 1112,271 *2
+podzamcze-2-0 1076,277
+podzamcze-2-0 1062,280 *2
+podzamcze-2-0 1104,284 *2
+podzamcze-2-0 1035,288
+podzamcze-2-0 1028,290
+podzamcze-2-0 1022,292
+podzamcze-2-0 999,299
+podzamcze-2-0 1052,299
+podzamcze-2-0 935,315
+podzamcze-2-0 925,317
+podzamcze-2-0 921,318
+podzamcze-2-0 1055,320 *2
+podzamcze-2-0 1016,328
+podzamcze-2-0 1026,328
+podzamcze-2-0 992,329
+podzamcze-2-0 1033,329
+podzamcze-2-0 1041,329
+podzamcze-2-0 959,330
+podzamcze-2-0 968,330
+podzamcze-2-0 1046,330 *2
+podzamcze-2-0 1102,331
+podzamcze-2-0 1104,331
+podzamcze-2-0 1076,334
+podzamcze-2-0 1116,341
+podzamcze-2-0 1067,353
+podzamcze-2-0 1117,355
+podzamcze-2-0 1070,368
+podzamcze-2-1 1072,383
+podzamcze-2-1 1079,435
+podzamcze-2-1 1104,444
+podzamcze-2-1 1092,447 *2
+podzamcze-2-1 1067,453
+podzamcze-2-1 1063,454 *2
+podzamcze-2-1 1059,455
+podzamcze-2-1 1054,456
+podzamcze-2-1 1049,457
+podzamcze-2-1 924,462
+podzamcze-2-1 986,464
+podzamcze-2-1 989,464
+podzamcze-2-1 1059,467
+podzamcze-2-1 1083,468 *2
+podzamcze-2-1 959,469
+podzamcze-2-1 1065,470
+podzamcze-2-1 1072,473 *2
+podzamcze-2-1 941,475
+podzamcze-2-1 938,476
+podzamcze-2-1 921,481
+podzamcze-2-1 922,481
+podzamcze-2-1 1107,488
+podzamcze-2-1 1083,491
+podzamcze-2-1 1083,496
+podzamcze-2-1 1112,503
+podzamcze-2-1 1103,529
+podzamcze-2-1 1100,536
+podzamcze-2-1 1082,557
+podzamcze-2-1 1081,578
+podzamcze-2-2 1081,583
+podzamcze-2-2 977,598
+podzamcze-2-2 956,605
+podzamcze-2-2 935,612
+podzamcze-2-2 922,617
+podzamcze-2-2 1082,627 *2
+podzamcze-2-2 1095,651
+podzamcze-2-2 1105,652
+podzamcze-2-2 1110,652
+podzamcze-2-2 1081,730
+podzamcze-2-2 1083,785
+stare-miasto-0-0 562,-209
+stare-miasto-0-0 584,-209
+stare-miasto-0-0 591,-186
+stare-miasto-0-0 552,-66
+stare-miasto-0-1 577,-33
+stare-miasto-0-1 464,66 *2
+stare-miasto-0-1 560,69
+stare-miasto-0-1 554,86
+stare-miasto-0-1 475,92 *2
+stare-miasto-0-1 557,98 *2
+stare-miasto-0-1 574,157
+stare-miasto-0-1 576,157
+stare-miasto-1-0 616,-230 *2
+stare-miasto-1-0 625,-215
+stare-miasto-1-0 626,-214
+stare-miasto-1-0 672,-204
+stare-miasto-1-0 740,-182 *2
+stare-miasto-1-0 757,-172
+stare-miasto-1-1 759,-2
+stare-miasto-1-1 758,0
+stare-miasto-1-1 682,9
+stare-miasto-1-1 749,15
+stare-miasto-1-1 735,40
+stare-miasto-1-1 649,64
+stare-miasto-1-1 611,145
+stare-miasto-1-1 633,149 *2
