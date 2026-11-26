@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { WORLD_CHUNKS } from "../src";
 import { canopyPosts, canopyProp, CANOPY_POST } from "../src/content/lublin/canopies";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
+import { PLAC_ZAMKOWY_SIGNS } from "../src/content/plac-zamkowy-detail";
 
 /** The roofs on posts of the map (G-063) in the game: solids one walks under between the posts. */
 const ROOFS = MAP_CHUNKS.flatMap((c) => (c.canopies ?? []).map((r) => ({ chunk: c.id, r })));
@@ -10,7 +11,8 @@ describe("the map's roofs on posts in the game (G-063)", () => {
   it("are the last solids of their chunks' streets, so the ids before them stay", () => {
     expect(ROOFS.length).toBe(8);
     for (const { chunk, r } of ROOFS) {
-      const street = WORLD_CHUNKS.find((c) => c.id === chunk)!.street ?? [];
+      // The scenes' signs appended after them (Plac Zamkowy's neon) move no id of theirs.
+      const street = (WORLD_CHUNKS.find((c) => c.id === chunk)!.street ?? []).filter((p) => !PLAC_ZAMKOWY_SIGNS.includes(p));
       const own = street.filter((p) => p.center.x === r.x && p.center.z === r.z);
       expect(own, r.id).toHaveLength(1);
       expect(street.slice(-(MAP_CHUNKS.find((c) => c.id === chunk)!.canopies ?? []).length)).toContain(own[0]);
