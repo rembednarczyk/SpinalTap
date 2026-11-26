@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-979 Neon z napisem rysowany z obu stron: lustrzany tył widać zza drugiego napisu albo ściany z wyższych punktów
+- Ważność: S4 · Zasięg: wszystkie neony z napisem w mieście (buildNeon, backFaceCulling = false); np. dwustronny neon TARG ZAMKOWY widziany z wiaduktu Alei Tysiąclecia ok. 45 m na północ
+- Opis: Renderer rysuje płytę neonu z obu stron, więc tył napisu czyta się lustrzanie. Na poziomie placu tyły zasłania dach albo drugi napis, z wyższych punktów widać je (przegląd kuratora #1059). Poprawka w rendererze: napis tylko od przodu (litery na przedniej ścianie płyty, tył płyty ciemny), osobnym PR.
+- Status: naprawione (26.11, PR #1060 scalony); wcześniej: zgłoszone (26.11, przegląd kuratora #1059)
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-978 Flaga zajętego auta zaparkowanego trzyma jego indeks w PARKED_CARS: po zmianie aut w mieście zapis opróżnia cudze stanowisko
 - Ważność: S3 · Zasięg: każdy zapis z autem ukradzionym z parkingu albo krawężnika (ADR-0097), po każdej zmianie zbioru aut (26.11: #1044, #1048, #1051, #1054)
 - Opis: parkedTakenFlag(index) zapisywał parked-taken:<indeks>, a indeks auta w PARKED_CARS przesuwa się, gdy przybywa albo ubywa aut (moduły parkingów T-357: +112). Po aktualizacji gra wczytana z zapisu chowała inne auto, a ukradzione stało znowu na swoim miejscu. Poprawka: flaga nazywa auto miejscem na siatce 0,1 m (parked-taken:x,z), takenParked czyta je przez mapę miejsc; flaga starego zapisu z indeksem czytana jak dotąd.
