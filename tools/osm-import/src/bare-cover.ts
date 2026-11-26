@@ -470,7 +470,7 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
       const [i1, j1] = [Math.min(cells.nx, i0 + n), Math.min(cells.nz, j0 + n)];
       const laid = [
         ...(has[t]! & BIT[paving.label]! ? tilePieces(cells, paving.label, drawn[1], paving.surface, i0, j0, i1, j1, true) : []),
-        ...(has[t]! & BIT[walk.label]! ? tilePieces(cells, walk.label, drawn[2], walk.surface, i0, j0, i1, j1, true) : []),
+        ...(has[t]! & BIT[walk.label]! ? tilePieces(cells, walk.label, drawn[2], walk.surface, i0, j0, i1, j1, true).map((g) => ({ ...g, cover: true as const })) : []),
       ];
       out.push(...laid);
       if (has[t]! & BIT[lawn.label]!) lawns.push(...tilePieces(cells, lawn.label, drawn[0], lawn.surface, i0, j0, i1, j1, true, laid.map((g) => ringOf(g.outline))));

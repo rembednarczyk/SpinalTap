@@ -89,6 +89,8 @@ export interface LublinGroundData {
   readonly deck?: FlatPoints;
   /** Laid by the import in a pedestrian street's frontage (G-853): drawn as any piece, not read by the furniture's placing. */
   readonly front?: true;
+  /** A sidewalk the import's bare ground rule laid from the orthophoto's paving by a street (26.11): no paving of the map explains it. */
+  readonly cover?: true;
 }
 
 export interface LublinStreetData {

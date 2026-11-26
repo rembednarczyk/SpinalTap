@@ -34,11 +34,11 @@ export const streetRings = (
 };
 
 /**
- * The fewest cells a run is a sidewalk of (0.25 m² each): smaller, a wedge left in a junction's
+ * The fewest cells a run is a sidewalk of (0.25 m² each, 2 m²): smaller, a wedge left in a junction's
  * corner between the carriageways' pieces, whose traced edges would draw the kerb in a zigzag
  * (`kerb-jag`); it stays a square's, with no kerb.
  */
-export const MIN_WALK_CELLS = 24;
+export const MIN_WALK_CELLS = 8;
 
 const DI = [-1, 1, 0, 0, -1, -1, 1, 1] as const;
 const DJ = [0, 0, -1, 1, -1, 1, -1, 1] as const;

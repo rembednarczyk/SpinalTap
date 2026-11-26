@@ -216,7 +216,8 @@ export const cityFillWorld = (osm: OsmData): FillWorld => {
   const roads = lines
     .filter((l) => CARRIAGEWAY.has(l.tags.highway ?? "") && l.tags.area !== "yes" && roadWidth(l.tags) > 0)
     .map((l) => ({ line: l.line, half: roadWidth(fit(l)) / 2, measured: parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || fitted(l) }));
-  const sidewalks = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "sidewalk" && !g.bridge)).map((g) => {
+  // A sidewalk the bare ground rule laid from the orthophoto's paving (`cover`, 26.11) is explained by the orthophoto, not a carriageway's asphalt laid as one.
+  const sidewalks = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "sidewalk" && !g.bridge && !g.cover)).map((g) => {
     const ring: Pt[] = [];
     for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
     return ring;

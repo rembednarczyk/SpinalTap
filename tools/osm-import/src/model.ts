@@ -91,6 +91,8 @@ export interface GroundOut {
   readonly deck?: readonly number[];
   /** Laid in a pedestrian street's frontage (`bare-fronts.ts`, G-853): no paving's edge the furniture reads. */
   readonly front?: true;
+  /** A sidewalk the bare ground rule laid from the orthophoto's paving by a street (`bare-walks.ts`, 26.11): no paving of the map explains it. */
+  readonly cover?: true;
 }
 
 /** A square's or a footway's piece as laid over the others, before the partition cut it (`ChunkOut.walkAreas`). */
