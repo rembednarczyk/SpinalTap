@@ -2,6 +2,25 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
+- Status: naprawione (26.11, gałąź fix/g972-parapet); wcześniej: zgłoszone 25.11 (przegląd kuratora K5b runda 2, T-351)
+- Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
+- Dowód: wierzch kawałka poziomy na −3,66; od strony schodów parapet maleje z ok. 1,1 m do −0,2 m, na x 587,4…587,8 wierzch pod stopniem; ok. 0,5 m krawędzi biegu bez osłony nad spadkiem ok. 1,3 m na chodnik (sonda kuratora 25.11). Przed zmianą muru przy biegu nie było wcale
+- Ważność: S4 · Zasięg: jeden kawałek muru, ok. 0,5 m
+- Poprawka: dla kawałków przy linii nieciągłości wierzch = maksimum poziomu wyższej strony z końców i środka kawałka + `RETAINED_PARAPET` (`barriers.ts`); kontrola `wall-parapet-under-flight` (kawałek przy linii nieciągłości, którego wierzch schodzi pod poziom biegu po stronie schodów), baza 1
+- Pakiet właściciela: packages/sim (content/lublin)
+- Naprawa (26.11): wierzch kawałka muru przy linii nieciągłości to najwyższy poziom wyższej strony z obu końców i środka + `RETAINED_PARAPET` (`barriers.ts`), więc przy biegu wznoszącym się wzdłuż muru parapet stoi nad stopniami także przy górnym końcu kawałka. Test w `barriers.test.ts` (bieg 0,45 m na metr) pada bez poprawki.
+
+### G-974 W grupie Hebi sylwetka członka rysuje się podwójnie, a kurtki rzucają kolce do innych postaci
+- Status: naprawione (26.11, gałąź fix/kurtka-kolce); wcześniej: zgłoszone 26.11 (uwagi użytkownika z 25.11: kurtka „dalej się buguje, szczególnie w grupach gangowych”, oraz „dziwne połączenia między postaciami jak szpikulce”, czasem w cieniu)
+- Gdzie: grupy terytoriów (`territory-groups.ts`), sprawdzone pod Grodzką (650; 70), w dzień, z modelami postaci; dotyczy co najmniej jasnowłosego wariantu `ganger.vrm`
+- Dowód: zrzuty z bliska z kurtką i bez kurtki (build z kurtką wyłączoną w `catalog.ts`) pokazują to samo: gołe nogi w skarpetach i butach w jednym miejscu, czarne spodnie i kontury rąk przesunięte obok, druga para butów. Kurtka nie jest przyczyną. Wykluczone: pożyczanie spodni (`bottomFrom` wyłączone, bez zmiany), przycięcie tekstury spodni (alfa poniżej 128 na 0,4% tekstury), przebicie skóry przez spodnie (skinning na CPU w pozach idle, talk, phone, smoke: 0 z 526 wierzchołków skóry nóg poza spodniami), wygaszanie `body-dither` (tylko gracz). Ta sama postać wyizolowana (pozostałe siatki ukryte) stoi czysto, ale z pistoletem maszynowym obok opuszczonej dłoni. Hipotezy do sprawdzenia: dwa byty albo dwie instancje modelu w jednym miejscu w trakcie czynności grupy; broń na dłoni szkieletu proceduralnego w innej pozie niż model.
+- Ważność: S3 · Zasięg: grupy gangu w całym mieście, widoczne z kilku metrów
+- Poprawka: najpierw odtworzenie w teście sesji z fałszywym `RenderPort` albo w teście silnika (instancje modeli i ich pozy w czynnościach grupy); zrzuty w tym kontenerze wymagają ok. 90 s na start gry z modelami (limit `waitForGame` 60 s), skrypt diagnostyczny poza testami
+- Pakiet właściciela: packages/engine (renderer)
+- Przyczyna: `ShaderMaterial` Babylona 9.32 wiąże kości (`BindBonesParameters`) tylko przy zmianie materiału albo efektu (`mustRebind`). Kurtki i resztki ubrania i skóry pod nimi (`-rest`) mają materiał przycinany (`cut`), więc idą jedne po drugich w liście alpha-test z jednym materiałem i jednym efektem (macierze kości w teksturze, liczba kości poza definicjami): każda siatka po pierwszej brała szkielet poprzedniej postaci. Kurtka na `kaito.vrm` (117 kości) czytała szkielet `ganger.vrm` (67) i rzucała kolce do innych postaci (pomiar: ukrycie tej jednej kurtki, e683 10 m dalej, zdejmuje pas), a kurtki i skóra gangerów brały pozę innego członka grupy (druga sylwetka obok).
+- Naprawa (26.11): toon materiał wiąże kości każdej siatki przy każdym rysowaniu (`onBindObservable`, `toon-material-factory.ts`). Test `toon-bones.test.ts`: dwie siatki ze szkieletami tego samego rozmiaru i jednym materiałem, druga dostaje swój szkielet (bez poprawki pada). Zrzuty grupy pod Grodzką przed i po: bez kolców, bez drugiej sylwetki.
+
 ### G-968 Uskok tarasu Placu Katedralnego pod murkami rozmyty na 8 m: schody na taras wznoszą się 0,39 m zamiast 2,3 m
 - Status: naprawione (25.11, PR #1038, T-351, przegląd kuratora runda 2 PRZYJĘTE); wcześniej: w naprawie (gałąź `feat/katedra-taras`), zgłoszone 24.11 (przegląd kuratora K5a)
 - Gdzie: murki w590597335 i w232362979 (zachodni odcinek), Królewska (554…605; −205…−195), schody w565845673 (584,5; −199,0) → (589,9; −198,5); klucz skanu `steps-count-osm stare-miasto-0-0 584,-199`

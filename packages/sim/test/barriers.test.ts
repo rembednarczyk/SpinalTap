@@ -153,3 +153,22 @@ describe("retaining walls off the terrace's breaklines (the curator's review of 
     expect(seen).toBeGreaterThan(100);
   });
 });
+
+describe("a retaining wall by a stair flight (G-972)", () => {
+  it("keeps its parapet over the upper side at both ends of a piece, the flight rising along it", () => {
+    // A wall along x, its lower side north (z > 0) at -4.7, its upper side south rising 0.45 m a metre
+    // along it, as a flight's ramp beside the wall: a piece's top read at its middle alone fell under the
+    // steps at its upper end (the curator's review of #1038: x 587.4-587.8, the edge unguarded over 1.3 m).
+    const upper = (x: number) => -4.7 + 0.45 * x;
+    const ground = (x: number, z: number) => (z > 0.3 ? -4.7 : upper(x));
+    const pieces = barrierPieces("retaining-wall", 1.2, [{ x: 0, z: 0 }, { x: 5.4, z: 0 }], ground, "plain", () => true);
+    expect(pieces.length).toBeGreaterThan(1);
+    for (const item of pieces) {
+      const b = barrierLayout(item.variant);
+      const top = item.y + b.height + Math.abs(b.rise) / 2;
+      const end = item.x + b.length / 2;
+      // The variant keeps the height in tenths, rounded: the top may fall half a tenth short.
+      expect(top, `piece at ${item.x}`).toBeGreaterThanOrEqual(upper(end) + 0.5 - 0.06);
+    }
+  });
+});

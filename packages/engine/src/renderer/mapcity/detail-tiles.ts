@@ -3,7 +3,7 @@ import type { RenderQuality } from "../../npr/quality";
 import type { MeshSink } from "../mesh-sink";
 import { type WorldProp, bake } from "./prop-batch";
 import { tree } from "./prop-green";
-import { chainModel, nearModel } from "./prop-models";
+import { chainModel, farModel, nearModel } from "./prop-models";
 import type { BakePart, SlicedBake } from "./sliced-bake";
 import { FULL_LEAVES, type LeafDensity } from "./tree-plan";
 
@@ -21,7 +21,10 @@ import { FULL_LEAVES, type LeafDensity } from "./tree-plan";
  * Both levels of every tile are baked into the block's one mesh, and the level is picked by the
  * index buffer (as terrain LODs switch index buffers over shared vertices): the block's triangles
  * are its own pieces' and, per tile, the full or the coarse range. So the block stays one draw
- * call (ADR-0050). The phones (quality `low`) keep their coarse pieces as they were.
+ * call (ADR-0050). The phones (quality `low`) keep their coarse bollards as they were; their trees
+ * tile too, the phone tree in full and the far tree (a trunk and one crown, 30 triangles) coarse:
+ * whole, each of the phone's 226 to 438 triangles stood up to the block's far edge, and the crown
+ * rule's trees round W-3 (T-354) took its hall past the phone's budget.
  */
 export const DETAIL_TILE = 64;
 export const DETAIL_REACH = 110;
@@ -32,7 +35,7 @@ const HYSTERESIS = 10;
 export const MID_LEAVES: LeafDensity = { perCluster: Math.round(FULL_LEAVES.perCluster / 4), leaf: FULL_LEAVES.leaf * 2 };
 
 /** A near block's piece baked in a detail tile. */
-export const inDetailTile = (p: WorldProp, quality: RenderQuality): boolean => quality !== "low" && (p.prop === "tree" || p.prop === "bollard");
+export const inDetailTile = (p: WorldProp, quality: RenderQuality): boolean => p.prop === "tree" || (quality !== "low" && p.prop === "bollard");
 
 const mids = new Map<number, MeshSink>();
 /** The tree of `shape` at the tiles' coarser detail (the game's original trees are cheap as they are). */
@@ -44,7 +47,7 @@ export const midTree = (shape: number): MeshSink => {
 
 /** A piece into `sink` in full (`coarse` false) or at the tiles' coarser detail. */
 const bakeTilePiece = (sink: MeshSink, p: WorldProp, quality: RenderQuality, coarse: boolean): void => {
-  if (p.prop === "tree") return bake(sink, coarse ? midTree(p.shape) : nearModel(p.prop, p.shape, quality), p);
+  if (p.prop === "tree") return bake(sink, coarse ? (quality === "low" ? farModel("tree", p.shape)! : midTree(p.shape)) : nearModel(p.prop, p.shape, quality), p);
   const q = coarse ? "low" : quality;
   bake(sink, nearModel(p.prop, p.shape, q), p);
   for (const c of p.chains ?? []) bake(sink, chainModel(c.end, q), { ...p, yaw: c.yaw });

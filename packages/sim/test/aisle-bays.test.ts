@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { VEHICLE_SIZE } from "@seki/core";
 import { AISLE_ROOM, BAY_OFF, BAY_PITCH, aisleBays } from "../src/content/aisle-bays";
+import { MAP_CHUNKS } from "../src/content/lublin/sites";
+import { PARKED_CARS } from "../src/content/parked-cars";
 
 /** The bays of a surface car park along its aisles (T-352): perpendicular rows either side, nose to the aisle. */
 
@@ -54,5 +56,18 @@ describe("bays between two aisles (the curator's review of #1037)", () => {
     const tight = { id: "t", outline: [0, 0, 40, 0, 40, 30, 0, 30], aisles: [[0, 10, 40, 10], [0, 17.9, 40, 17.9]] };
     const reach = VEHICLE_SIZE.van.length / 2 + AISLE_ROOM;
     for (const b of aisleBays([tight])) for (const z of [10, 17.9]) expect(Math.abs(b.z - z)).toBeGreaterThanOrEqual(reach - 1e-6);
+  });
+});
+
+describe("the cars of the car parks with aisles (backlog 25.11, cars on the city's car parks)", () => {
+  const parks = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0).map((p) => [p.id, p])).values()];
+  const bays = aisleBays(parks.map((p) => ({ id: p.id, outline: p.outline, aisles: p.aisles ?? [] })));
+  const onBay = (c: { x: number; z: number }) => bays.some((b) => Math.abs(b.x - c.x) < 0.01 && Math.abs(b.z - c.z) < 0.01);
+
+  it("puts no delivery truck in a bay, and leaves no bay empty for having drawn one", () => {
+    const cars = PARKED_CARS.filter(onBay);
+    expect(cars.filter((c) => c.model === "delivery")).toEqual([]);
+    // 85 while a bay that drew the street's truck (5.8 m against a 5 m bay) stood empty: 97 of 645 bays.
+    expect(cars.length).toBeGreaterThanOrEqual(95);
   });
 });

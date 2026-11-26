@@ -393,11 +393,19 @@ const squareCars = (): ParkedCar[] => {
  * Plac Zamkowy's bays (`SQUARE_TAKEN`), each whole on the park's paving where `fits` lets it.
  */
 const SURFACE_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "surface" && (p.aisles?.length ?? 0) > 0).map((p) => [p.id, p])).values()];
+/**
+ * The models a car park's bay takes: no delivery truck, 5.8 m long against a 5 m bay. It drew the
+ * street's model and stood empty when that was a truck: 97 of the 645 bays of the city's 19 car
+ * parks with aisles (the curator's review of #1037, the backlog's item of 25.11).
+ */
+const BAY_MODELS: readonly VehicleModel[] = PARKED_MODELS.filter((m) => m !== "delivery");
+const bayModelAt = (x: number, z: number): VehicleModel => BAY_MODELS[hash(x, z, 3) % BAY_MODELS.length]!;
+
 const aisleCars = (): ParkedCar[] =>
   aisleBays(SURFACE_PARKS.map((p) => ({ id: p.id, outline: p.outline, aisles: p.aisles ?? [] }))).flatMap((b) => {
     if (hash(b.x, b.z, 6) / 0x100000000 >= SQUARE_TAKEN) return [];
-    const model = modelAt(b.x, b.z);
-    if (model === "delivery" || !fits(b.x, b.z, b.yaw, model)) return [];
+    const model = bayModelAt(b.x, b.z);
+    if (!fits(b.x, b.z, b.yaw, model)) return [];
     return [{ chunk: chunkOf(b.x, b.z), x: b.x, y: 0, z: b.z, yaw: b.yaw, model, tint: hash(b.x, b.z, 7) }];
   });
 
