@@ -138,7 +138,7 @@ const DRIVEWAY_REASON =
 
 /**
  * The driveway from Bajkowskiego's carriageway to the top of P-1's ramp (T-241), between the ramp's
- * walls (x 409.7–418.3): asphalt from the ramp's top (z −5.5) to the carriageway's edge, across the
+ * walls (x 409.7–418.3): asphalt from the ramp's top (z −5.5) into the carriageway, across the
  * footway along the street (w232464426's band), which the carriageway's asphalt cuts as at a
  * junction (user's notes of 22.11: the footway's strip carried the kerb's row of bollards across
  * the mouth, which barred the cars). Walkers cross it as a street's mouth. The edges are the bands'
@@ -150,8 +150,10 @@ const DRIVEWAY: readonly AddedArea[] = [
     ring: [
       { x: 409.7, z: -5.5 },
       { x: 418.3, z: -5.5 },
-      { x: 418.3, z: -13.05 },
-      { x: 409.7, z: -13.25 },
+      // Into the carriageway, past its edge wherever its source lays it (the orthophoto's −13.05..−13.25,
+      // BDOT10k's −13.9 on the street graph, ADR-0104): no strip of footway with the kerb's bollards between.
+      { x: 418.3, z: -14.5 },
+      { x: 409.7, z: -14.5 },
     ],
   },
 ].map((d): AddedArea => ({ ...d, tags: { "area:highway": "service", surface: "asphalt" }, nodesOf: d.ring.map(() => null), reason: DRIVEWAY_REASON, ref: "T-241" }));
