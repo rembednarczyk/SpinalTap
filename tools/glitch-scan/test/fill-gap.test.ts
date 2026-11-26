@@ -1,12 +1,10 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { fillGap } from "./fill-gap";
 
 const box = (x0: number, z0: number, x1: number, z1: number) => [x0, z0, x1, z0, x1, z1, x0, z1];
 
 describe("bare terrain in a small hole between the bare ground rule's pieces (fill-gap, G-769)", () => {
-  // The generated city once, before the tests (as the scan, #998): its build is the first caller's, and the time gate counts it in the test that asked first.
-  beforeAll(() => void generatedCity());
   // Two pavings and a lawn round a 0.5 m triangle, as a split's edge left it at Krakowskie.
   const lower = { surface: "square", outline: [0, 0, 2, 0, 2, 1, 1.5, 1, 1, 0.5, 0, 0.5] };
   const upper = { surface: "square", outline: [0, 1, 2, 1, 2, 2, 0, 2] };

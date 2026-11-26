@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { generatedCity } from "../../osm-import/test/city.ts";
 import { fillAreaMismatch } from "./fill-area";
 
@@ -6,8 +6,6 @@ import { fillAreaMismatch } from "./fill-area";
 const EIGHT = [0, 0, 2, 0, 2, 2, 4, 2, 4, 4, 2, 4, 2, 2, 0, 2];
 
 describe("pieces of the bare ground rule laid as triangles of their own area (fill-area-mismatch, G-764)", () => {
-  // The generated city once, before the tests (as the scan, #998): its build is the first caller's, and the time gate counts it in the test that asked first.
-  beforeAll(() => void generatedCity());
   it("names a ring touching itself, and no simple ring", () => {
     const found = fillAreaMismatch([{ id: "c", fills: [{ surface: "square", outline: EIGHT }, { surface: "grass", outline: [0, 0, 2, 0, 2, 2, 0, 2] }] }]);
     expect(found.map((f) => f.at)).toEqual(["0.00,0.00"]);
