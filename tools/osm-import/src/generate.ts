@@ -33,6 +33,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
+import { graphBands } from "./streets/graph-bands.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
@@ -401,6 +402,8 @@ const generateMap = (
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  // The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one.
+  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring)));
   // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
   const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
   const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);

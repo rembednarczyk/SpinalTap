@@ -394,7 +394,7 @@ export const kerbFills = (
   const widened = new Map<Band, { ring: readonly Pt[]; runs: readonly WidenRun[]; lanes: readonly WidenRun[] }>();
   const pastKerb = pastKerbOf(cover);
   for (const road of bands) {
-    if (!road.kerb || road.bridge || lineLength(road.kerb.line) < ALONG) continue;
+    if (!road.kerb || road.bridge || road.graph || lineLength(road.kerb.line) < ALONG) continue;
     const { line, half } = road.kerb;
     const lawns = moved.has(road.source);
     const [r, l] = [edgeSamples(line, -half, -1, world, lawns), edgeSamples(line, half, 1, world, lawns)];

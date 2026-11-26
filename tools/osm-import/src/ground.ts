@@ -124,6 +124,8 @@ export interface Band {
   readonly slit?: true;
   /** A kerb stone a widened carriageway's asphalt reaches under (`kerbFills`, G-803): its pieces rank over the asphalt (`KERB_STONES`). */
   readonly kerbStone?: true;
+  /** A carriageway laid from the street graph (ADR-0104): its kerb is the sidewalk's, `kerbFills` neither widens it nor lays strips by it. */
+  readonly graph?: true;
 }
 
 /** Which of a line's ends meet another way. */

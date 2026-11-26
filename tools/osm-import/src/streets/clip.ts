@@ -44,7 +44,10 @@ export const disc = (c: Pt, r: number): Area => capsule([c], r);
 /** The area's size (m²). */
 export const sizeOf = (a: Area): number => a.reduce((s, p) => s + signedArea(toPts(p)), 0);
 
-/** An area as rings: each outline with the holes inside it cut in (`cutHoles`), specks dropped. */
+/**
+ * An area as rings: each outline with the holes inside it cut in (`cutHoles`), specks dropped.
+ * Not simplified: two areas sharing an edge, simplified each on its own, would lap and part along it.
+ */
 export const rings = (a: Area): Pt[][] => {
   const outers = a.filter((p) => isPositive(p)).map(toPts).filter((r) => Math.abs(signedArea(r)) >= SPECK);
   const holes = a.filter((p) => !isPositive(p)).map(toPts).filter((r) => Math.abs(signedArea(r)) >= SPECK);

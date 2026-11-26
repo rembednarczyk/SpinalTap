@@ -153,26 +153,61 @@ const corridor = (e: StreetEdge, side: 1 | -1): Area => {
   return band(offsetLine(e.axis, (side * outer) / 2), outer / 2);
 };
 
-/** The streets' ground: carriageways with their corners, sidewalks, zebras. */
-export const streetGround = (edges: readonly StreetEdge[], crossings: readonly StreetCrossing[] = [], buildings: readonly (readonly Pt[])[] = []): StreetGround => {
+/** The streets' areas: the carriageways `c`, the sidewalks, and each street's own share of both (overlapping at the junctions). */
+export interface StreetAreas {
+  readonly c: Area;
+  readonly sidewalks: Area;
+  readonly nodes: readonly Node[];
+  /** Each street's carriageway (its band and its junctions' discs, within `c`) and each of its sides' sidewalk. */
+  readonly own: readonly { readonly edge: number; readonly surface: "road" | "sidewalk"; readonly area: Area }[];
+  /** The sidewalks no street's sides reach: of `walks` given beyond theirs. */
+  readonly rest: Area;
+}
+
+/** A node's disc: as far as its widest street's kerb, the corner and `extra` past it. */
+const nodeDisc = (edges: readonly StreetEdge[], j: Node, extra: number): Area => disc(j.at, halves(edges, j)[0] + Math.max(...j.edges.map((k) => edges[k]!.kerbRadius)) + extra + JUNCTION_MARGIN);
+
+/**
+ * The streets' carriageways with their corners and their sidewalks, and each street's share.
+ * `walks`: more sidewalk, mapped on its own (`footway=sidewalk`), laid with the streets' as one.
+ */
+export const streetAreas = (edges: readonly StreetEdge[], buildings: readonly (readonly Pt[])[] = [], walks: Area = []): StreetAreas => {
   const all = nodes(edges);
   const c = cornered(join(...edges.map(carriagewayOf)), edges, all);
-  const walks: Area[] = [];
+  const zones: { edge: number; zone: Area }[] = [];
+  const grownWalks: Area[] = [walks];
+  // The corridors of the sides with a sidewalk, and round each node the corners between them: the
+  // node's disc within a corner's radius of them (no sidewalk wraps round a side that has none).
+  const sides = edges.flatMap((e, i) => ([1, -1] as const).filter((side) => (side > 0 ? e.walkLeft : e.walkRight) > 0).map((side) => ({ edge: i, side, corridor: corridor(e, side) })));
+  const corners = all.map((j) => {
+    const r = Math.max(...j.edges.map((k) => edges[k]!.kerbRadius));
+    const at = sides.filter((x) => j.edges.includes(x.edge));
+    return at.length === 0 ? [] : within(nodeDisc(edges, j, Math.max(...at.map((x) => (x.side > 0 ? edges[x.edge]!.walkLeft : edges[x.edge]!.walkRight)))), grown(join(...at.map((x) => x.corridor)), r));
+  });
   edges.forEach((e, i) => {
     for (const side of [1, -1] as const) {
       const w = side > 0 ? e.walkLeft : e.walkRight;
       if (w <= 0) continue;
       const kerb = side > 0 ? e.left : e.right;
-      // Round its junctions' corners too: the disc of the corner's reach past the kerb.
-      const at = all.filter((j) => j.edges.includes(i)).map((j) => disc(j.at, halves(edges, j)[0] + e.kerbRadius + w + JUNCTION_MARGIN));
-      const zone = join(corridor(e, side), ...at);
-      walks.push(within(grown(within(c, grown(zone, w + kerb)), w), zone));
+      const zone = join(corridor(e, side), ...all.flatMap((j, k) => (j.edges.includes(i) ? [corners[k]!] : [])));
+      zones.push({ edge: i, zone });
+      grownWalks.push(within(grown(within(c, grown(zone, w + kerb)), w), zone));
     }
   });
   const built = join(...buildings.map(areaOfRing));
   // Opened by `SLIVER` (the sidewalk's end and the carriageway's, a millimetre apart, left a spike of
   // no width), then cut again: grown back round a corner it laps over the kerb by a hair.
-  const sidewalks = less(grown(grown(less(less(join(...walks), c), built), -SLIVER), SLIVER), join(c, built));
+  const sidewalks = less(grown(grown(less(less(join(...grownWalks), c), built), -SLIVER), SLIVER), join(c, built));
+  const own = [
+    ...edges.map((e, i) => ({ edge: i, surface: "road" as const, area: within(c, join(grown(carriagewayOf(e), SLIVER), ...all.filter((j) => j.edges.includes(i)).map((j) => nodeDisc(edges, j, 0)))) })),
+    ...zones.map((z) => ({ edge: z.edge, surface: "sidewalk" as const, area: within(sidewalks, z.zone) })),
+  ];
+  return { c, sidewalks, nodes: all, own, rest: less(sidewalks, join(...zones.map((z) => z.zone))) };
+};
+
+/** The streets' ground: carriageways with their corners, sidewalks, zebras. */
+export const streetGround = (edges: readonly StreetEdge[], crossings: readonly StreetCrossing[] = [], buildings: readonly (readonly Pt[])[] = []): StreetGround => {
+  const { c, sidewalks, nodes: all } = streetAreas(edges, buildings);
   const zebras = crossings.map((x) => zebraOf(x, edges, c));
   return { carriageway: rings(c), sidewalks: rings(sidewalks), crossings: zebras.flatMap(rings), junctions: all.filter((j) => j.arms >= 3).map((j) => j.at) };
 };
