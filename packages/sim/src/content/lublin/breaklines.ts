@@ -110,6 +110,9 @@ export const nearBreakline = (x: number, z: number, lines: readonly Breakline[] 
   return lines.some((l) => nearest(l.line, { x, z }).d <= l.band + m || (l.skip ?? []).some((b) => x >= b.minX - m - 1.5 && x <= b.maxX + m + 1.5 && z >= b.minZ - m - 1.5 && z <= b.maxZ + m + 1.5));
 };
 
+/** Distance from (x, z) to the nearest of the lines (m): what keeps a parked car off a terrace's wall (G-971). */
+export const breaklineDistance = (x: number, z: number, lines: readonly Breakline[] = BREAKLINES): number => Math.min(...lines.map((l) => nearest(l.line, { x, z }).d));
+
 /** Does the grid reach within a band of one of the lines? */
 const reaches = (g: TerrainGrid, lines: readonly Breakline[]): boolean => {
   const [maxX, maxZ] = [g.originX + (g.cols - 1) * g.cell, g.originZ + (g.rows - 1) * g.cell];

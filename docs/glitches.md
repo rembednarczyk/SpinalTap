@@ -2222,6 +2222,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (26.11, przegląd kuratora G-972)
 - Pakiet właściciela: packages/engine (renderer/mapcity)
 
+### G-976 Dziura w murze oporowym tarasu Placu Katedralnego przy zaparkowanych autach
+- Ważność: S3 · Zasięg: mur w590597335 przy x 558–561 i 573–576 na main (6 kolejnych miejsc po G-971)
+- Opis: Mur oporowy ustępuje zaparkowanemu autu (barrierBlocked: byParkedCar, 0,35 m od karoserii plus pół grubości muru), a stanowiska parkingu na tarasie dochodzą do linii muru. Na main nie ma muru przy hatchbacku na (559,5; −197,69) ani przy vanie na (574,5; −196,26): krawędź tarasu stoi otwarta nad uskokiem ok. 2 m. Po wyrównaniu terenu przy licu (G-971) stanowiska przy murze przestały odpadać na spadku (LEVEL_DROP) i dziur przybyło do 4 (x 561–566, 569–580). Poprawka: auto trzyma 0,6 m od linii nieciągłości (pół grubości muru, odstęp bariery od auta, zapas), więc mur stoi na całej długości; test breaklines.test.ts sprawdza mur co 0,5 m.
+- Status: naprawione na gałęzi fix/g971-lico (26.11), znalezione przy G-971
+- Pakiet właściciela: packages/sim (content)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl

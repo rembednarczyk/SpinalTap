@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { BREAKLINES, BREAK_FLIGHTS } from "../src/content/lublin/breaklines";
+import { VEHICLE_SIZE, barrierLayout } from "@seki/core";
+import { BREAKLINES, BREAK_FLIGHTS, breaklineDistance } from "../src/content/lublin/breaklines";
+import { distanceToBarrier } from "../src/content/lublin/barriers";
+import { PARKED_CARS } from "../src/content/parked-cars";
+import { WORLD_BARRIERS } from "../src";
 import { groundY } from "../src/content/lublin/terrain";
 
 /**
@@ -47,6 +51,15 @@ describe("the terrace's step under the walls along Królewska (T-351)", () => {
       }
     }
     expect(samples).toBeGreaterThan(60);
+  });
+
+  it("keeps the wall whole along the terrace's edge, the parked cars clear of it (G-971)", () => {
+    const walls = Object.values(WORLD_BARRIERS).flat().filter((i) => barrierLayout(i.variant).kind === "retaining-wall");
+    for (const l of BREAKLINES) {
+      const pts = along(l.line, 0.5).filter((p) => !l.skip?.some((b) => p.x >= b.minX - 1 && p.x <= b.maxX + 1 && p.z >= b.minZ - 1 && p.z <= b.maxZ + 1) && Math.hypot(p.x - l.line[0]!.x, p.z - l.line[0]!.z) > 4 && Math.hypot(p.x - l.line[l.line.length - 1]!.x, p.z - l.line[l.line.length - 1]!.z) > 4);
+      for (const p of pts) expect(walls.some((w) => distanceToBarrier(w, p.x, p.z) < 0.05), `${l.id} ${p.x.toFixed(1)},${p.z.toFixed(1)}`).toBe(true);
+    }
+    for (const c of PARKED_CARS) expect(breaklineDistance(c.x, c.z), `${c.x},${c.z}`).toBeGreaterThan(VEHICLE_SIZE[c.model].width / 2);
   });
 
   it("lays the flight between the walls' ends from the pavement to the terrace", () => {
