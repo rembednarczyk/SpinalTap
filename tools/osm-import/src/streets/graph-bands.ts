@@ -160,20 +160,24 @@ const greenShare = (ring: readonly Pt[], cover: (p: Pt) => number): number => {
 };
 
 /**
- * The islands the ground closes round by a street, up to `ISLAND_MAX`: laid whole, as lawn where the orthophoto shows green over most of them, else as
- * sidewalk. Left bare, the sidewalks round a corner's triangle and their gaps closed made a ring of
+ * The islands the ground closes round by a street, up to `ISLAND_MAX`: laid whole, as lawn where
+ * the orthophoto shows green over most of them, else as a square's paving by a mapped square or
+ * pedestrian area, else as sidewalk. Left bare, the sidewalks round a corner's triangle and their gaps closed made a ring of
  * sidewalk round a bare hole (ADR-0104 E2, 185; 85).
  */
-const islands = (street: Area, beside: readonly (Band & { readonly box: Rect })[], buildings: readonly (readonly Pt[])[], cover: (p: Pt) => number): { surface: "grass" | "sidewalk"; area: Area }[] => {
+const islands = (street: Area, beside: readonly (Band & { readonly box: Rect })[], buildings: readonly (readonly Pt[])[], cover: (p: Pt) => number): { surface: "grass" | "sidewalk" | "square"; area: Area }[] => {
   // The holes of all the ground round the streets: a corner's triangle is bounded by a footway or a lawn as often as by the street.
   const near = beside.filter((b) => !b.bridge && !b.patch);
   const ground = join(street, ...near.map((b) => areaOfRing(b.ring)), ...buildings.map(areaOfRing));
   const touches = grown(street, 0.5);
+  // A square's or a pedestrian area's paving: an island by one is its paving, level with it (as step 1 of the sidewalks' uniformity kept a fill by a place).
+  const squares = grown(join(...near.filter((b) => b.surface === "square" || b.surface === "cobble").map((b) => areaOfRing(b.ring))), 0.5);
   return holesOf(ground).flatMap((hole) => {
-    if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(areaOfRing(hole), touches).length === 0) return [];
-    const share = greenShare(hole, cover);
+    const area = areaOfRing(hole);
+    if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(area, touches).length === 0) return [];
+    const paved = within(area, squares).length > 0 ? ("square" as const) : ("sidewalk" as const);
     // Opened by `THIN`, as the gaps: a hole between many bands has seams the rounding to 0.1 m crosses over.
-    return [{ surface: share > 0.5 ? ("grass" as const) : ("sidewalk" as const), area: grown(grown(areaOfRing(hole), -THIN), THIN) }];
+    return [{ surface: greenShare(hole, cover) > 0.5 ? ("grass" as const) : paved, area: grown(grown(area, -THIN), THIN) }];
   });
 };
 
@@ -185,6 +189,8 @@ const GAP = 3;
  * rectangles as the map lays them reach past the kerb, a hole in the sidewalk left bare once fitted.
  */
 const OVER_WALKS: ReadonlySet<string> = new Set(["steps", "rail", "basin"]);
+/** The surfaces of the map's areas a street's sidewalk stops at: squares, pedestrian areas, carriageways' areas and car parks. */
+const PLACES: ReadonlySet<string> = new Set(["square", "cobble", "road"]);
 /** Half the narrowest gap laid (m): narrower, the chunks' rounding to 0.1 m crosses it over. */
 const THIN = 0.1;
 /** How far out from the kerb the gaps are closed (m): a wide sidewalk and the gap past it. */
@@ -290,7 +296,11 @@ export const graphBands = <B extends Band>(
     return { way: b.source, axis: b.kerb!.line, left: l.kerb, right: r.kerb, walkLeft: l.walk, walkRight: r.walk, vergeLeft: l.verge, vergeRight: r.verge, kerbRadius: kerbRadius(tags.get(b.source)!.highway!) };
   });
   const near = buildings.filter((r) => inside(ringBounds(r)));
-  const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring)], join(...mapped.map((m) => areaOfRing(m.ring))));
+  // The places the map draws as areas: squares and pedestrian areas, a carriageway's own area
+  // (`area:highway`) and car parks (`areaSurface`). They keep their own ground: a street's sidewalk
+  // stops at their edge (the curator's review of E2: Plac Łokietka cut into strips, a patch on the deptak).
+  const placesOf = bands.filter((b) => !lineOf.has(b.source) && !b.carriageway && !b.bridge && PLACES.has(b.surface) && inside(b.box)).map((b) => b.ring);
+  const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring), ...placesOf], join(...mapped.map((m) => areaOfRing(m.ring))));
   // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
   const replaced = new Set<Band>(mapped);
   const kept = bands.filter((b) => !replaced.has(b) && !(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !b.bridge && inside(b.box));
@@ -320,13 +330,16 @@ export const graphBands = <B extends Band>(
   for (const island of islands(join(areas.c, areas.sidewalks, gaps, areas.verges), kept, near, cover)) add({ surface: island.surface, ring: [], bridge: false, source: edges[0]!.way } as unknown as B, island.area, {});
   const out: Boxed<B>[] = [];
   for (const b of bands) {
-    if (!(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !replaced.has(b)) {
+    // A band of theirs wholly outside the districts stays as it was: the next district's ground is not touched.
+    const theirs = (ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) || replaced.has(b);
+    const own = theirs && inside(b.box) ? areaOfRing(b.ring) : [];
+    if (!theirs || within(own, region).length === 0) {
       out.push(b);
       continue;
     }
-    for (const ring of rings(less(areaOfRing(b.ring), region))) {
+    for (const ring of rings(less(own, region))) {
       const { along: _along, ...rest } = b;
-      out.push({ ...rest, ring, holed: true, box: ringBounds(ring) } as unknown as Boxed<B>);
+      out.push({ ...rest, ring, box: ringBounds(ring) } as unknown as Boxed<B>);
     }
   }
   return [...out, ...laid];
