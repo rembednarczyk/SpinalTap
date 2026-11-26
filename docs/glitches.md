@@ -2193,7 +2193,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
 
-### G-978 Neon z napisem rysowany z obu stron: lustrzany tył widać zza drugiego napisu albo ściany z wyższych punktów
+### G-979 Neon z napisem rysowany z obu stron: lustrzany tył widać zza drugiego napisu albo ściany z wyższych punktów
 - Ważność: S4 · Zasięg: wszystkie neony z napisem w mieście (buildNeon, backFaceCulling = false); np. dwustronny neon TARG ZAMKOWY widziany z wiaduktu Alei Tysiąclecia ok. 45 m na północ
 - Opis: Renderer rysuje płytę neonu z obu stron, więc tył napisu czyta się lustrzanie. Na poziomie placu tyły zasłania dach albo drugi napis, z wyższych punktów widać je (przegląd kuratora #1059). Poprawka w rendererze: napis tylko od przodu (litery na przedniej ścianie płyty, tył płyty ciemny), osobnym PR.
 - Status: zgłoszone (26.11, przegląd kuratora #1059)
