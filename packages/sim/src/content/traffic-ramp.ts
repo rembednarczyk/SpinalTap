@@ -124,8 +124,10 @@ const join = (id: string, from: TrafficRoute, pieces: readonly Piece[]): Traffic
     else if (p.own) own.push([start, len]);
     const kept = p.city;
     if (!kept) continue;
+    // An arc or a turn the part cuts through is cut to it: the way out joins Bajkowskiego's left lane
+    // where its change onto the right one may already have begun, and a dropped arc reads as a car between the lanes.
     const moved = (rs: readonly (readonly [number, number])[] | undefined): Range[] =>
-      (rs ?? []).filter(([a, b]) => a >= kept[0] && b <= kept[1]).map(([a, b]) => [a - kept[0] + start, b - kept[0] + start]);
+      (rs ?? []).filter(([a, b]) => b > kept[0] && a < kept[1]).map(([a, b]) => [Math.max(a, kept[0]) - kept[0] + start, Math.min(b, kept[1]) - kept[0] + start]);
     arcs.push(...moved(from.arcs));
     turns.push(...moved(from.turns));
   }
