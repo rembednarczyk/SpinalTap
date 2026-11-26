@@ -1,0 +1,1 @@
+Drzewa, których korony ortofoto czyta jako trawnik albo bruk pod gołymi gałęziami, stoją teraz w całym mieście tam, gdzie model pokrycia terenu pokazuje koronę wyższą niż 8 m. Na trawniku między parkingiem Placu Katedralnego a plebanią pojawiły się drzewa z prawdziwych koron.

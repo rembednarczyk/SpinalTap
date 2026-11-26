@@ -6,11 +6,12 @@
  */
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { treeHeight } from "../../../packages/core/src/world/trees.ts";
+import { loadLod1 } from "../../gugik/src/extracts.ts";
 import { type Chm, loadChms } from "../../gugik/src/nmpt.ts";
 import { type Cover, readCover } from "../../orto/src/cover.ts";
 import { DISTRICTS } from "./config.ts";
 import { type CrownStats, crownReach, crownTreeItem, crownTrees } from "./crown-trees.ts";
-import type { Rect } from "./geometry.ts";
+import { type Rect, ringBounds } from "./geometry.ts";
 import type { PropsPlan } from "./props-gen.ts";
 import { loadStructures } from "./props-osm.ts";
 import type { Structure } from "./structures.ts";
@@ -23,6 +24,8 @@ export interface CrownData {
   readonly covers: readonly Cover[];
   readonly chms: readonly Chm[];
   readonly structures: readonly Structure[];
+  /** GUGiK's LoD1 buildings, as structures. */
+  readonly lod1: readonly Structure[];
 }
 
 /** The committed data of every district (`data/orto`, `data/gugik/nmpt`, `data/osm`). */
@@ -31,6 +34,7 @@ export const loadCrownData = (): CrownData => ({
   covers: DISTRICTS.flatMap((d) => readCover(d.slug) ?? []),
   chms: loadChms(),
   structures: loadStructures(),
+  lod1: loadLod1().map((b): Structure => ({ id: b.id, kind: "building", ring: b.ring, holes: [], box: ringBounds(b.ring) })),
 });
 
 /**
@@ -56,7 +60,7 @@ export const placeWithCrowns = <T extends { readonly byChunk: ReadonlyMap<string
     streets,
   );
   const trees = [...lamped.byChunk.values()].flat().flatMap((i) => (i.prop === "tree" ? [{ p: { x: i.x, z: i.z }, reach: crownReach(treeHeight(i.variant)) }] : []));
-  const found = crownTrees(data.rects, site, data.covers, data.chms, trees, data.structures);
+  const found = crownTrees(data.rects, site, data.covers, data.chms, trees, data.structures, data.lod1);
   if (found.trees.length === 0) return { ...lamped.finish(), crowns: { ...found.stats, placed: 0 } };
   const out = place({ ...last, items: [...last.items, crownTreeItem(found.trees)] }).finish();
   const placed = [...out.byChunk.values()].flat().filter((i) => i.prop === "tree").length - trees.length;
