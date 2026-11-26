@@ -4,6 +4,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-974 W grupie Hebi sylwetka członka rysuje się podwójnie: gołe uda i druga para butów obok czarnych spodni, linie tuszu obok dłoni
+- Status: zgłoszone (26.11, uwagi użytkownika z 25.11: „kurtka dalej się buguje, szczególnie w grupach gangowych”)
+- Gdzie: grupy terytoriów (`territory-groups.ts`), sprawdzone pod Grodzką (650; 70), w dzień, z modelami postaci; dotyczy co najmniej jasnowłosego wariantu `ganger.vrm`
+- Dowód: zrzuty z bliska z kurtką i bez kurtki (build z kurtką wyłączoną w `catalog.ts`) pokazują to samo: gołe nogi w skarpetach i butach w jednym miejscu, czarne spodnie i kontury rąk przesunięte obok, druga para butów. Kurtka nie jest przyczyną. Wykluczone: pożyczanie spodni (`bottomFrom` wyłączone, bez zmiany), przycięcie tekstury spodni (alfa poniżej 128 na 0,4% tekstury), przebicie skóry przez spodnie (skinning na CPU w pozach idle, talk, phone, smoke: 0 z 526 wierzchołków skóry nóg poza spodniami), wygaszanie `body-dither` (tylko gracz). Ta sama postać wyizolowana (pozostałe siatki ukryte) stoi czysto, ale z pistoletem maszynowym obok opuszczonej dłoni. Hipotezy do sprawdzenia: dwa byty albo dwie instancje modelu w jednym miejscu w trakcie czynności grupy; broń na dłoni szkieletu proceduralnego w innej pozie niż model.
+- Ważność: S3 · Zasięg: grupy gangu w całym mieście, widoczne z kilku metrów
+- Poprawka: najpierw odtworzenie w teście sesji z fałszywym `RenderPort` albo w teście silnika (instancje modeli i ich pozy w czynnościach grupy); zrzuty w tym kontenerze wymagają ok. 90 s na start gry z modelami (limit `waitForGame` 60 s), skrypt diagnostyczny poza testami
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-973 Blok dwóch garaży z niebieskim dachem w parkingu przy Nadstawnej: brak w OSM i w grze, asfalt alejki przez jego miejsce
 - Status: zgłoszone (25.11, przegląd kuratora #1037 runda 3, T-356)
 - Gdzie: parking w73976159 przy Nadstawnej, ok. (743…749,5; 479…485), przy południowym końcu szopy T-356
