@@ -118,5 +118,5 @@ Pozostałe nowe skoki szerokości to głównie chodnik wchodzący w plac albo za
   - noc;
   - rampa P−1.
 - **Zostaje:**
-  - południowy koniec: dwa pomiary trafiają 2,4 m przed linią na dziury w bruku przy węźle dwóch odcinków deptaka (442,9; −9,9). Kawałek bruku w tablicach jest ten sam co na main, więc przyczyny trzeba szukać poza nim;
+  - południowy koniec: dwa pomiary trafiały 2,4 m przed linią na „dziury” w bruku przy węźle dwóch odcinków deptaka (442,9; −9,9). To szczeliny do 1 cm między kawałkiem deptaka a kawałkiem jego wylotu, z zaokrąglenia podziału do 0,1 m, a nie dziury. Test przeskakuje szczeliny węższe niż 0,1 m i przechodzi na main i na próbnych tablicach;
   - zatoka przy Bramie Krakowskiej 01 jest placem zamiast brukiem.

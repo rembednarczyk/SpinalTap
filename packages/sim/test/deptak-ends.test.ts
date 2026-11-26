@@ -36,6 +36,8 @@ const OFF = 0.3;
 
 /** How far the setts' end may stray from one straight line across the deptak (m): the ground's 0.1 m and the sampling step. */
 const STRAIGHT = 0.15;
+/** A gap between two pieces of setts narrower than this is the ground's rounding, not the setts' end (m). */
+const SEAM = 0.1;
 /** How far out of the deptak each end is searched for (m): the cut moves up to 3 m in to the crossing kerb (`deptak-ends.ts`). */
 const SEARCH = 6;
 
@@ -51,8 +53,10 @@ describe("the deptak's setts end square across it", () => {
       // From 4 m inside, out to where the setts stop: one distance for the whole width, asphalt right past it.
       const ends = ts.map((t) => {
         const from = { x: end.a.x + ux * t - nx * 4, z: end.a.z + uz * t - nz * 4 };
+        // Over a seam of the partition's 0.1 m rounding between two pieces of setts (the deptak's and its mouth's), not a hole.
+        const setts = (e: number) => [0, SEAM / 2, SEAM].some((k) => onSetts({ x: from.x + nx * (e + k), z: from.z + nz * (e + k) }));
         let d = 0;
-        while (d < 4 + SEARCH && onSetts({ x: from.x + nx * (d + 0.05), z: from.z + nz * (d + 0.05) })) d += 0.05;
+        while (d < 4 + SEARCH && setts(d + 0.05)) d += 0.05;
         return d;
       });
       expect(Math.max(...ends) - Math.min(...ends), ends.map((e) => e.toFixed(2)).join(" ")).toBeLessThanOrEqual(STRAIGHT);
