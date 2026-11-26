@@ -2193,13 +2193,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
 
-### G-978 Flaga zajętego auta zaparkowanego trzyma jego indeks w PARKED_CARS: po zmianie aut w mieście zapis opróżnia cudze stanowisko
-- Ważność: S3 · Zasięg: każdy zapis z autem ukradzionym z parkingu albo krawężnika (ADR-0097), po każdej zmianie zbioru aut (26.11: #1044, #1048, #1051, #1054)
-- Opis: parkedTakenFlag(index) zapisywał parked-taken:<indeks>, a indeks auta w PARKED_CARS przesuwa się, gdy przybywa albo ubywa aut (moduły parkingów T-357: +112). Po aktualizacji gra wczytana z zapisu chowała inne auto, a ukradzione stało znowu na swoim miejscu. Poprawka: flaga nazywa auto miejscem na siatce 0,1 m (parked-taken:x,z), takenParked czyta je przez mapę miejsc; flaga starego zapisu z indeksem czytana jak dotąd.
-- Status: naprawione na gałęzi fix/g978-zajete-auto (26.11)
-- Pakiet właściciela: packages/sim (content/parked-taken.ts)
-- Test przyjęcia: packages/sim/test/parked-taken.test.ts
-
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
