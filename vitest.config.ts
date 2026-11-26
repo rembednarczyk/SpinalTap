@@ -20,7 +20,8 @@ export default defineConfig({
       // simulations (`tools/city-cache`); the same results without it (`SEKI_CITY_CACHE=off`). Only
       // here: an isolated file would load the simulation for it alone (ui), and keep it to itself.
       // A shared worker also keeps what a file leaves in Babylon's EngineStore: freed after each file (G-865).
-      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false, setupFiles: ["tools/city-cache/src/setup.ts", "packages/engine/test/free-engines.ts"] } },
+      // The generated city's cache made before the tests (`warm-city.ts`, 26.11): no test pays its cold build to the time gate.
+      { extends: true, test: { name: "shared", include: [...SHARED, "tools/*/test/**/*.test.ts"], isolate: false, setupFiles: ["tools/city-cache/src/setup.ts", "packages/engine/test/free-engines.ts"], globalSetup: ["tools/city-cache/src/warm-city.ts"] } },
       { extends: true, test: { name: "isolated", include: ["packages/*/test/**/*.test.{ts,tsx}"], exclude: [...configDefaults.exclude, ...SHARED] } },
     ],
     environment: "node",
