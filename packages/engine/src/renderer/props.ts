@@ -1,4 +1,4 @@
-import { Color3, DynamicTexture, type Mesh, MeshBuilder, MeshClass, type Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer, VertexData } from "../babylon";
+import { Color3, DynamicTexture, type Mesh, MeshBuilder, MeshClass, type Scene, StandardMaterial, TransformNode, Vector3, Vector4, VertexBuffer, VertexData } from "../babylon";
 import type { BlockFront, ViewDescriptor } from "@seki/core";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { PresetName } from "../npr/presets";
@@ -271,6 +271,9 @@ const neonTexture = (scene: Scene, name: string, label: string, color: string, v
   return tex;
 };
 
+/** The back of a labelled sign: a corner of its texture, inside the stroke, the plate's dark background (`neonTexture`). */
+export const NEON_BACK_UVS = new Vector4(0, 0, 0.004, 0.02);
+
 /** Rotation of a sign's plane facing each way (a plane faces south unrotated). */
 const FACING_YAW: Readonly<Record<BlockFront, number>> = { "z-": 0, "z+": Math.PI, "x-": Math.PI / 2, "x+": -Math.PI / 2 };
 const FACING_DIR: Readonly<Record<BlockFront, { readonly x: number; readonly z: number }>> = { "z-": { x: 0, z: -1 }, "z+": { x: 0, z: 1 }, "x-": { x: -1, z: 0 }, "x+": { x: 1, z: 0 } };
@@ -281,7 +284,13 @@ export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): Pro
   const thinX = v.size.x <= v.size.z && v.size.x <= v.size.y;
   const width = thinX ? v.size.z : v.size.x;
   const height = v.size.y;
-  const plane = MeshBuilder.CreatePlane(`${name}-mesh`, { width, height }, scene);
+  // A sign with a label reads from its front only (G-979): its back takes the plate's dark background from the
+  // texture's corner, not the letters mirrored; one mesh still, both sides in it (`DOUBLESIDE`).
+  const plane = MeshBuilder.CreatePlane(
+    `${name}-mesh`,
+    v.label ? { width, height, sideOrientation: MeshClass.DOUBLESIDE, frontUVs: new Vector4(0, 0, 1, 1), backUVs: NEON_BACK_UVS } : { width, height },
+    scene,
+  );
   plane.parent = root;
   // Face the street: east-side signs look west, west-side signs look east, the rest look south.
   // A sign that says where it faces (ADR-0045) does so wherever it stands.
@@ -297,7 +306,8 @@ export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): Pro
     mat.diffuseTexture = tex;
   }
   mat.emissiveColor = v.label ? Color3.White() : color;
-  mat.backFaceCulling = false;
+  // The labelled sign carries both its sides in its mesh; a plain glow shows the same from either.
+  mat.backFaceCulling = !!v.label;
   plane.material = mat;
   plane.freezeWorldMatrix();
   const out = FACING_DIR[facing];
