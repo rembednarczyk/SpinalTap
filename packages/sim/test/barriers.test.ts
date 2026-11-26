@@ -216,6 +216,9 @@ describe("a retaining wall by a stair flight (G-972)", () => {
       if (b.kind !== "retaining-wall" || !nearBreakline(item.x, item.z) || b.rise !== 0) continue;
       const across = { x: Math.cos(item.yaw), z: -Math.sin(item.yaw) };
       const half = { x: (Math.sin(item.yaw) * b.length) / 2, z: (Math.cos(item.yaw) * b.length) / 2 };
+      // Only a wall holding a step (its sides over 0.5 m apart): not the kerb past the breakline's end (G-969).
+      const mid = [RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(item.x + across.x * d, item.z + across.z * d));
+      if (Math.max(...mid) - Math.min(...mid) <= 0.5) continue;
       for (const t of [-1, 0, 1]) {
         const [x, z] = [item.x + half.x * t, item.z + half.z * t];
         const high = Math.max(...[RETAINED_FACE, -RETAINED_FACE, 1, -1].map((d) => groundY(x + across.x * d, z + across.z * d)));
