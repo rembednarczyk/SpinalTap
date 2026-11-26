@@ -24,6 +24,7 @@ import { COVER } from "../../../orto/src/classify.ts";
 import { type Area, areaOfRing, grown, holesOf, join, less, rings, within } from "./clip.ts";
 import { STREETS, footwaysAlongStreets } from "./along-footways.ts";
 import { type StreetEdge, streetAreas } from "./street-ground.ts";
+import { WidthReport, sourcedWidth } from "./widths.ts";
 
 /** The districts whose streets are laid from the street graph (ADR-0104 E3 on), by slug. */
 export const STREET_GRAPH_DISTRICTS: ReadonlySet<string> = new Set<string>([]);
@@ -278,8 +279,11 @@ export const graphBands = <B extends Band>(
   // A side's kerb, verge and sidewalk: by the tags; else to the mapped sidewalk, past a verge where
   // the gap is green, its asphalt out to it where the street's width is the estimate and the gap a
   // lane's (G-570, T-247: a parking lane or a bay); else the sidewalk by type.
+  // The carriageway's half width each side by the order of the sources (`widths.ts`), and the report of where they come from.
+  const report = new WidthReport();
+  const widthOf = new Map(pieces.map((b) => [b, sourcedWidth(b.source, tags.get(b.source)!, b.kerb!.line, b.kerb!.half, estimated, report)] as const));
   const sideOf = (b: Boxed<B>, side: 1 | -1): { kerb: number; verge: number; walk: number } => {
-    const [axis, half] = [b.kerb!.line, b.kerb!.half];
+    const [axis, half] = [b.kerb!.line, widthOf.get(b)![side > 0 ? 0 : 1].half];
     const tagged = taggedWalk(tags.get(b.source)!, side);
     if (tagged !== null) return { kerb: half, verge: tagged > 0 ? vergeOf(axis, half, side) : 0, walk: tagged };
     const m = mappedWalk(axis, half, side, mappedWays);
@@ -291,6 +295,7 @@ export const graphBands = <B extends Band>(
     if (m.near > GAP || vergeAt(axis, half + m.near / 2, side)) return { kerb: half, verge: m.near, walk: Math.max(WALK_MIN, m.far - m.near) };
     return estimated(b.source, side) ? { kerb: half + m.near, verge: 0, walk: Math.max(WALK_MIN, m.far - m.near) } : { kerb: half, verge: 0, walk: m.far };
   };
+  if (pieces.length > 0) console.log(report.toString());
   const edges: StreetEdge[] = pieces.map((b) => {
     const [l, r] = [sideOf(b, 1), sideOf(b, -1)];
     return { way: b.source, axis: b.kerb!.line, left: l.kerb, right: r.kerb, walkLeft: l.walk, walkRight: r.walk, vergeLeft: l.verge, vergeRight: r.verge, kerbRadius: kerbRadius(tags.get(b.source)!.highway!) };
