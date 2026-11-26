@@ -11,14 +11,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: jeden blok, widoczny z parkingu
 - Poprawka: korekta budynku w `corrections-podzamcze.ts` z ortofoto, jak szopa T-356; razem z pozycją backlogu o autach na parkingach
 - Pakiet właściciela: tools/osm-import
-### G-972 Parapet muru przy biegu schodów tarasu Placu Katedralnego schodzi pod stopnie
-- Status: zgłoszone (25.11, przegląd kuratora K5b runda 2, T-351)
-- Gdzie: kawałek muru w232362979 na (586,2; −200,65) wzdłuż biegu w565845673, Królewska
-- Dowód: wierzch kawałka poziomy na −3,66; od strony schodów parapet maleje z ok. 1,1 m do −0,2 m, na x 587,4…587,8 wierzch pod stopniem; ok. 0,5 m krawędzi biegu bez osłony nad spadkiem ok. 1,3 m na chodnik (sonda kuratora 25.11). Przed zmianą muru przy biegu nie było wcale
-- Ważność: S4 · Zasięg: jeden kawałek muru, ok. 0,5 m
-- Poprawka: dla kawałków przy linii nieciągłości wierzch = maksimum poziomu wyższej strony z końców i środka kawałka + `RETAINED_PARAPET` (`barriers.ts`); kontrola `wall-parapet-under-flight` (kawałek przy linii nieciągłości, którego wierzch schodzi pod poziom biegu po stronie schodów), baza 1
-- Pakiet właściciela: packages/sim (content/lublin)
-
 ### G-971 Nasyp przed licem i rów za parapetem murków tarasu Placu Katedralnego: uskok terenu zajmuje komórkę 1,25 m
 - Status: zgłoszone (25.11, przegląd kuratora K5b, T-351)
 - Gdzie: linie nieciągłości `breaklines.ts` pod w590597335 (x 554,7…589,1) i w232362979 (x 584,6…604,8), Królewska

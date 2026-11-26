@@ -85,7 +85,10 @@ export const barrierPieces = (
       // parapet over the upper side, else its height over the axis (T-351).
       const y = foot(x, z);
       const side = sides?.(x, z);
-      const top = side && side.high - side.low > RETAINED_STEP ? side.high + RETAINED_PARAPET : groundY(x, z) + height;
+      // The top is level along the piece: over the upper side's highest of its ends and middle, so by
+      // a flight rising along the wall the parapet stays over the steps at the upper end (G-972).
+      const high = sides && side ? Math.max(side.high, sides(p.x, p.z).high, sides(q.x, q.z).high) : 0;
+      const top = side && side.high - side.low > RETAINED_STEP ? high + RETAINED_PARAPET : groundY(x, z) + height;
       const variant = barrierVariant({ kind, length: len / n, height: top - y, rise, material });
       out.push({ prop: "barrier", x: round2(x), y: round2(y), z: round2(z), yaw: Math.atan2(b.x - a.x, b.z - a.z), variant });
     }
