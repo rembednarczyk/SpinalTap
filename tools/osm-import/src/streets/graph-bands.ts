@@ -142,8 +142,22 @@ type Boxed<B> = B & { box: Rect };
 
 /** The largest bare island within the streets' ground laid whole (m²): a traffic island, a corner's triangle between three streets. */
 const ISLAND_MAX = 400;
-/** The step of the orthophoto's samples over an island (m). */
-const ISLAND_STEP = 1;
+/** The step of the orthophoto's samples over an island or a verge (m): the cover's cell. */
+const ISLAND_STEP = 0.5;
+
+/** The share of a ring's samples (`ISLAND_STEP` apart: the orthophoto cover's own cells) the orthophoto shows green. */
+const greenShare = (ring: readonly Pt[], cover: (p: Pt) => number): number => {
+  const box = ringBounds(ring);
+  const step = ISLAND_STEP;
+  let [green, all] = [0, 0];
+  for (let x = box.minX + step / 2; x < box.maxX; x += step)
+    for (let z = box.minZ + step / 2; z < box.maxZ; z += step)
+      if (pointInRing({ x, z }, ring)) {
+        all++;
+        if (cover({ x, z }) === COVER.green) green++;
+      }
+  return all === 0 ? 0 : green / all;
+};
 
 /**
  * The islands the ground closes round by a street, up to `ISLAND_MAX`: laid whole, as lawn where the orthophoto shows green over most of them, else as
@@ -157,16 +171,9 @@ const islands = (street: Area, beside: readonly (Band & { readonly box: Rect })[
   const touches = grown(street, 0.5);
   return holesOf(ground).flatMap((hole) => {
     if (Math.abs(signedArea(hole)) > ISLAND_MAX || within(areaOfRing(hole), touches).length === 0) return [];
-    const box = ringBounds(hole);
-    let [green, all] = [0, 0];
-    for (let x = box.minX + ISLAND_STEP / 2; x < box.maxX; x += ISLAND_STEP)
-      for (let z = box.minZ + ISLAND_STEP / 2; z < box.maxZ; z += ISLAND_STEP)
-        if (pointInRing({ x, z }, hole)) {
-          all++;
-          if (cover({ x, z }) === COVER.green) green++;
-        }
+    const share = greenShare(hole, cover);
     // Opened by `THIN`, as the gaps: a hole between many bands has seams the rounding to 0.1 m crosses over.
-    return [{ surface: green * 2 > all ? ("grass" as const) : ("sidewalk" as const), area: grown(grown(areaOfRing(hole), -THIN), THIN) }];
+    return [{ surface: share > 0.5 ? ("grass" as const) : ("sidewalk" as const), area: grown(grown(areaOfRing(hole), -THIN), THIN) }];
   });
 };
 
@@ -308,6 +315,8 @@ export const graphBands = <B extends Band>(
   // The verges are no gaps: left bare, for the cover's lawn.
   const gaps = less(kerbGaps(join(areas.c, areas.verges), areas.sidewalks, kept.filter((b) => b.surface !== "grass" && b.surface !== "water"), near), areas.verges);
   if (edges.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, gaps, {});
+  // The verges the orthophoto shows green over most of their piece laid as lawn: narrow, the bare ground rule drops them (`dropLoose`).
+  for (const ring of rings(areas.verges)) if (greenShare(ring, cover) > 0.5) add({ surface: "grass", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, areaOfRing(ring), {});
   for (const island of islands(join(areas.c, areas.sidewalks, gaps, areas.verges), kept, near, cover)) add({ surface: island.surface, ring: [], bridge: false, source: edges[0]!.way } as unknown as B, island.area, {});
   const out: Boxed<B>[] = [];
   for (const b of bands) {
