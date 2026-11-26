@@ -63,6 +63,14 @@ describe("the sidewalks' kinds (sidewalk-kinds.ts)", () => {
     expect(surfacePatches(one(street((_, z) => (z < 6 ? "sidewalk" : null))))).toEqual([]);
   });
 
+  it("takes a mapped square's paving to the kerb as no patch", () => {
+    const square = street((x, z) => (z < 6 ? (x > 20 && x < 30 ? "square" : "sidewalk") : null));
+    const ctx = (mapped?: (x: number, z: number) => boolean) => ({ district: () => "krakowskie", junction: () => false, ...(mapped ? { mapped } : {}) });
+    const left = (mapped?: (x: number, z: number) => boolean) => stretches(square, ctx(mapped), [{ id: "w1", points: axis, reach: 3 }]).filter((s) => s.side === "left");
+    expect(surfacePatches(left())).toHaveLength(1);
+    expect(surfacePatches(left((x) => x > 20 && x < 30))).toEqual([]);
+  });
+
   it("finds bare ground between walks, inside the band and as a hole by the kerb", () => {
     const hole = street((x, z) => (z < 6 && !(x > 20 && x < 25) ? "sidewalk" : null));
     expect(gaps(one(hole)).map((f) => f.what)).toEqual(["w1 left: no walk by the kerb over 4 m between walks"]);

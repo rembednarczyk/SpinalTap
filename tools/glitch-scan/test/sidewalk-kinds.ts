@@ -1,3 +1,4 @@
+import type { GroundSurface } from "../../../packages/core/src";
 import { type GroundLookup, type Pt, type SideProfile, sideProfile, stations } from "./sidewalk-profile";
 import { ruleOf } from "./sidewalk-rules";
 
@@ -5,7 +6,7 @@ import { ruleOf } from "./sidewalk-rules";
  * The four kinds of the sidewalks' uniformity (the user's decision of 26.11), read from the profiles
  * of `sidewalk-profile.ts` side by side, stretch by stretch (from junction to junction):
  * - `sidewalk-surface-patch`: the strip by the kerb paved with another surface than its district's
- *   rule (`sidewalk-rules.ts`), over at least `PATCH_MIN` stations;
+ *   rule (`sidewalk-rules.ts`), over at least `PATCH_MIN` stations, but for a mapped square's own;
  * - `sidewalk-gap`: bare ground, grass or a road inside the band, or a stretch's side with no walk
  *   for up to `HOLE_MAX` m between stations that have one;
  * - `sidewalk-step`: the band's pieces drawn at lifts `STEP_MIN` apart (a sidewalk's slabs by a
@@ -29,9 +30,16 @@ export interface Street {
 export interface Context {
   readonly district: (x: number, z: number) => string | undefined;
   readonly junction: (street: string, x: number, z: number) => boolean;
+  /**
+   * Is the surface at (x, z) a mapped place's own (a square, a pedestrian area of the map)? A square
+   * that meets the street keeps its paving to the kerb (Plac Litewski, Plac Łokietka): no patch.
+   */
+  readonly mapped?: (x: number, z: number, surface: GroundSurface) => boolean;
 }
 
 export const PATCH_MIN = 2;
+/** Where the strip by the kerb is read for its place (m past the kerb). */
+const KERB_SIDE = 0.5;
 export const GAP_MIN = 0.5;
 export const HOLE_MAX = 12;
 export const STEP_MIN = 0.04;
@@ -42,8 +50,12 @@ export const WIDE_SHARE = 0.35;
 /** A station of one side: where, its district, and its profile (null: no walk by the kerb). */
 interface Mark {
   readonly at: Pt;
+  /** The unit normal out to this side. */
+  readonly out: Pt;
   readonly district: string;
   readonly p: SideProfile | null;
+  /** Its strip by the kerb is a mapped place's own paving (`Context.mapped`). */
+  readonly place: boolean;
 }
 
 /** A stretch's side: its street, which side, and its stations in order, none at a junction. */
@@ -71,7 +83,11 @@ export const stretches = (g: GroundLookup, ctx: Context, streets: readonly Stree
           close();
           continue;
         }
-        run.push({ at: st.at, district, p: sideProfile(g, st.at, { x: st.left.x * k, z: st.left.z * k }, s.reach) });
+        const out = { x: st.left.x * k, z: st.left.z * k };
+        const p = sideProfile(g, st.at, out, s.reach);
+        const d = p ? p.kerb + KERB_SIDE : 0;
+        const place = !!p && !!ctx.mapped?.(st.at.x + out.x * d, st.at.z + out.z * d, p.strip.surface);
+        run.push({ at: st.at, out, district, p, place });
       }
       close();
     }
@@ -100,7 +116,7 @@ const label = (s: Stretch) => `${s.street} ${s.side}`;
 
 export const surfacePatches = (all: readonly Stretch[]): Finding[] =>
   all.flatMap((s) =>
-    runs(s.marks, (m) => !!m.p && !(ruleOf(m.district)?.expected ?? [m.p.strip.surface]).includes(m.p.strip.surface), PATCH_MIN).map((r) => ({
+    runs(s.marks, (m) => !!m.p && !m.place && !(ruleOf(m.district)?.expected ?? [m.p.strip.surface]).includes(m.p.strip.surface), PATCH_MIN).map((r) => ({
       at: key(r.first.at),
       what: `${label(s)}: ${r.first.p!.strip.surface} by the kerb over ${r.n} m, ${r.first.district} has ${ruleOf(r.first.district)!.expected.join(" or ")}`,
     })),

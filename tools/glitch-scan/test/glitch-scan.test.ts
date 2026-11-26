@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type GroundSurface, type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -151,7 +151,7 @@ import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./de
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
-import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
+import { areaSurface, pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
@@ -651,7 +651,15 @@ const SIDEWALKS = (() => {
     const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
     const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
     const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
-    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets) }, streets));
+    // The squares and pedestrian areas of the map (`areaSurface`: square, cobble): their paving meets the kerb as mapped.
+    const places = extractFeatures(SOURCE_OSM)
+      .areas.flatMap((a) => {
+        const surface = areaSurface(a.tags);
+        return surface === "square" || surface === "cobble" ? [{ surface, ring: a.ring, box: { minX: Math.min(...a.ring.map((q) => q.x)), maxX: Math.max(...a.ring.map((q) => q.x)), minZ: Math.min(...a.ring.map((q) => q.z)), maxZ: Math.max(...a.ring.map((q) => q.z)) } }] : [];
+      });
+    const mapped = (x: number, z: number, surface: GroundSurface) =>
+      places.some((p) => p.surface === surface && x >= p.box.minX && x <= p.box.maxX && z >= p.box.minZ && z <= p.box.maxZ && pointInRing({ x, z }, p.ring));
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets), mapped }, streets));
   };
 })();
 
