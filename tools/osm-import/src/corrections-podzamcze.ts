@@ -260,10 +260,12 @@ const GARAGE_VIVO: AddedArea = {
 const SHED_NADSTAWNA = area("szopa-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.5, 484.13, 742.01, 508.93, 748.5, 507.6, 742.9, 484.75], "szopa albo rząd garaży ok. 5,5 × 24,5 m w parkingu w73976159 na ortofoto PZGiK (dach dwukolorowy, cień), w OSM i w grze bez budynku", "T-356");
 
 /**
- * The row of garages south of the shed (G-973, the curator's review of #1037 round 3): a blue roof
- * of about 6 x 5 m and a grey one west of it to the yard's corner, none in OSM or the game, the
- * car park's asphalt drawn through them. Corners read off the PZGiK orthophoto of 2025-04 (0.25 m
- * a pixel, the fetch tool's `--bbox`), north edge on the shed's south end; height assumed as the shed's.
+ * The garages south of the shed (G-973, the curator's review of #1037 round 3): a block of about
+ * 6 x 6 m under a blue roof and the shed's own roof running on west of it to z 480.7, none in OSM
+ * or the game, the car park's asphalt drawn through them. Corners read off the PZGiK orthophoto of
+ * 2025-04 (0.25 m a pixel, the fetch tool's `--bbox`): the south edge on the building w73833903,
+ * leaving no gap; the north edge 0.3-0.6 m short of the roof, where OSM's aisle runs; 3 m, as the
+ * shadow gives.
  */
 const GARAGES_NADSTAWNA = area("garaze-parking-nadstawna", { building: "garages", height: "3", "roof:shape": "flat" }, [738.1, 479.2, 749.0, 479.1, 749.5, 484.6, 738.5, 484.1], "blok garaży z niebieskim dachem ok. 6 × 6 m (743,2…749,3; 479,1…485,3) i przedłużenie szopy do z ≈ 480,7 na ortofoto PZGiK 2025-04, w OSM i w grze bez budynku; południowa krawędź na budynku w73833903, bez szczeliny", "T-356");
 
