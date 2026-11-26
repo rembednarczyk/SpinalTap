@@ -156,3 +156,11 @@ Wersja 25 (Krakowskie, main → v24 → v25):
 Dysk węzła sięgał na szerokość najszerszej jezdni plus promień krawężnika, jak przy kącie prostym. Przy ostrym kącie łuk o promieniu krawężnika dotyka obu krawężników dalej (zaokrąglenie dwóch prostych, fillet: kerby spotykają się `h / sin(θ/2)` od węzła, a łuk dotyka ich `r / tan(θ/2)` dalej). Dysk przecinał więc łuk w połowie i zostawiał uskok krawężnika (Peowiaków, −90; −170, 0,73 m). Teraz dysk sięga do punktów styku łuku, najwyżej 40 m, a strefa chodnika przy węźle ma ten sam zasięg. Test na 60° pada przy starym zasięgu.
 
 Wersja 26 (Krakowskie, main → v25 → v26): `kerb-jag` 3 → 7 → 3, `crossing-shape-kerb` 17 → 6 → 8, `sidewalk-step` 154 → 170 → 165, `sidewalk-width-jump` 88 → 112 → 115, `ground-strip-gap` 288 → 232 → 238, `kerb-gap-bare` 222 → 221 → 228, `sidewalk-gap` 118 → 127 → 133, `ground-ring-self-cross` 0 → 0 → 1 (chodnik, 211; 16), `footway-on-carriageway` 44 → 26, `sidewalk-under-carriageway` 17 → 6. `lane-dead-end` +1: Peowiaków ma teraz dwa pasy z szerokości BDOT10k, a skrzyżowanie łączy dalej tylko jeden.
+
+## Stan na koniec E2 i lista przed E3
+
+Kod E2 jest w repozytorium, a graf jest wyłączony (`STREET_GRAPH_DISTRICTS` puste), więc tablice i bazy skanu są takie jak na main. Przed włączeniem Krakowskiego (E3):
+1. **Kontrole jednolitości chodnika według modelu przekroju.** `sidewalk-step` liczy styk chodnika z grafu ze zmapowaną ścieżką (7–8 cm różnicy wysokości), a `sidewalk-width-jump` liczy chodnik poszerzony do placu albo w narożniku węzła (8,25 m). Do ustalenia (ADR): czy ścieżka wzdłuż ulicy ma tę samą wysokość co chodnik i czy skok szerokości liczyć tylko poza narożnikami.
+2. **Peowiaków:** dwa pasy z szerokości BDOT10k, a skrzyżowanie przy −90; −169 łączy jeden (`lane-dead-end`).
+3. **Spory BDOT10k i ortofoto (9):** przegląd danych przez kuratora, bez oceny wzrokowej.
+4. **Bazy:** przyjąć z uzasadnieniem po rodzaju, wiersze T w `docs/topografia.md`.
