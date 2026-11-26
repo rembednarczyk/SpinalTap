@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
+import { type GroundSurface, type StreetPropItem, VEHICLE_SIZE, pointInPairRingEvenOdd, siteCabinStacked, terrainHeightAt, segmentDistance } from "../../../packages/core/src";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -39,6 +39,7 @@ import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { cityRaisedGreenWorld, raisedGreenOnGround } from "./raised-green";
 import { MOST, MOST_REGISTERED, isGroundSteps, isStreet, padOnRoadFindings } from "./pad-on-road";
+import { gaps as sidewalkGaps, junctionTest, steps as sidewalkSteps, stretches as sidewalkStretches, surfacePatches as sidewalkPatches, widthJumps as sidewalkWidthJumps } from "./sidewalk-kinds";
 import { pavingCoplanar } from "./paving-coplanar";
 import { drawnPaving, poolSunk } from "./pool-paving";
 import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
@@ -151,7 +152,7 @@ import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./de
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
-import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
+import { areaSurface, pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { lublinDoorWalls } from "../../osm-import/src/door-walls.ts";
@@ -638,6 +639,30 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
   if (shape === "abstract") return !kozio && t.artwork_type === "sculpture";
   return true;
 };
+
+/**
+ * The sidewalks of every street with a carriageway (cars and the morning's deliveries), profiled
+ * station by station and cut at junctions and the map's edge (`sidewalk-kinds.ts`), once for the
+ * four kinds of their uniformity (the user's decision of 26.11).
+ */
+const SIDEWALKS = (() => {
+  let memo: ReturnType<typeof sidewalkStretches> | null = null;
+  return () => {
+    if (memo) return memo;
+    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
+    const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
+    const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
+    // The squares and pedestrian areas of the map (`areaSurface`: square, cobble): their paving meets the kerb as mapped.
+    const places = extractFeatures(SOURCE_OSM)
+      .areas.flatMap((a) => {
+        const surface = areaSurface(a.tags);
+        return surface === "square" || surface === "cobble" ? [{ surface, ring: a.ring, box: { minX: Math.min(...a.ring.map((q) => q.x)), maxX: Math.max(...a.ring.map((q) => q.x)), minZ: Math.min(...a.ring.map((q) => q.z)), maxZ: Math.max(...a.ring.map((q) => q.z)) } }] : [];
+      });
+    const mapped = (x: number, z: number, surface: GroundSurface) =>
+      places.some((p) => p.surface === surface && x >= p.box.minX && x <= p.box.maxX && z >= p.box.minZ && z <= p.box.maxZ && pointInRing({ x, z }, p.ring));
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets), mapped }, streets));
+  };
+})();
 
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
@@ -2474,6 +2499,16 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   "lane-place-on-green": () =>
     lanePlaceOnGreen(withoutReplaced(extractFeatures(SOURCE_OSM)).lines.map((l) => correctedLine(l)), MAP_CHUNKS, MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined)),
   /** A 0.5 m sample of the orthophoto's paving or asphalt under grass no lawn of the map holds nor the bare ground rule laid, 0.6-3.3 m from a carriageway: a strip to a lawn laid as the lawn's over the kerb's pavement (G-825, `lawn-strip-on-paving.ts`). */
+  /**
+   * The sidewalks' uniformity (the user's decision of 26.11, `sidewalk-kinds.ts`): along a street with
+   * a carriageway, stretch by stretch from junction to junction, the strip by the kerb paved as its
+   * district's rule has it (`sidewalk-rules.ts`), no gap of bare ground in the walk, no step between its
+   * pieces, no jump of its width with room beside it.
+   */
+  "sidewalk-surface-patch": () => sidewalkPatches(SIDEWALKS()),
+  "sidewalk-gap": () => sidewalkGaps(SIDEWALKS()),
+  "sidewalk-step": () => sidewalkSteps(SIDEWALKS()),
+  "sidewalk-width-jump": () => sidewalkWidthJumps(SIDEWALKS()),
   "lawn-strip-on-paving": () =>
     lawnStripOnPaving(
       MAP_CHUNKS,
