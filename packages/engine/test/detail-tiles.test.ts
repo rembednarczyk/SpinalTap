@@ -6,6 +6,7 @@ import { type Mesh, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { DETAIL_REACH, DETAIL_TILE, MID_LEAVES } from "../src/renderer/mapcity/detail-tiles";
 import { tree } from "../src/renderer/mapcity/prop-green";
+import { nearModel } from "../src/renderer/mapcity/prop-models";
 import { StreetProps } from "../src/renderer/mapcity/street-props";
 import { FULL_LEAVES } from "../src/renderer/mapcity/tree-plan";
 
@@ -57,14 +58,27 @@ describe("the near blocks' trees and bollards in tiles of two levels of detail",
     expect(blockMesh(props).getTotalIndices()).toBeLessThan(full);
   });
 
-  it("keeps the phones' coarse trees and bollards as they were", () => {
+  it("keeps the phones' coarse bollards as they were, and draws their trees far beyond the reach (T-354)", () => {
     const props = make("low");
-    props.spawn(1, pieces, { x: 0, y: 0, z: 0 });
+    props.spawn(1, [item("bollard", 30, 20, chainVariant(2, 0, 0)), item("bench", 40, 40)], { x: 0, y: 0, z: 0 });
     props.flush();
     props.update({ x: 64, y: 2, z: 32 });
     const near = blockMesh(props).getTotalIndices();
-    props.update({ x: 64 + DETAIL_REACH, y: 2, z: 32 });
+    props.update({ x: 64 + DETAIL_REACH + 40, y: 2, z: 32 });
     expect(blockMesh(props).getTotalIndices()).toBe(near);
+    // A phone tree (226-438 triangles) is the far tree (30) past the reach, whole again within it.
+    const trees = make("low");
+    trees.spawn(1, [item("tree", 10, 10, 0), item("tree", 20, 12, 3)], { x: 0, y: 0, z: 0 });
+    trees.flush();
+    trees.update({ x: 32, y: 2, z: 32 });
+    const full = blockMesh(trees).getTotalIndices();
+    trees.update({ x: 32 + DETAIL_REACH + 20, y: 2, z: 32 });
+    const far = blockMesh(trees).getTotalIndices();
+    // The block's own parts stay; of the two trees' indices, over 60% go.
+    const phoneTrees = nearModel("tree", 0, "low").indices.length + nearModel("tree", 3, "low").indices.length;
+    expect(full - far).toBeGreaterThan(0.6 * phoneTrees);
+    trees.update({ x: 32, y: 2, z: 32 });
+    expect(blockMesh(trees).getTotalIndices()).toBe(full);
   });
 
   it("thins a leafy tree to fewer, bigger leaves, the game's original trees as they are", () => {
