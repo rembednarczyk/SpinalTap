@@ -114,6 +114,27 @@ Dla dzielnicy przełączanej na graf, wobec main w tej samej dzielnicy:
   - Promień narożnika co najmniej r − 0,1 m.
   - Dwie jezdnie drogi dwujezdniowej rozdzielone.
 
+### 4. Kolejność źródeł i rola kuratora (decyzja użytkownika 26.11 po przeglądzie E2)
+
+Geometria ulicy wynika z tego, jak ulicę opisują źródła, a nie z oceny wzrokowej ortofoto. Wzorzec: łączenie źródeł z jawnym pierwszeństwem i zapisem pochodzenia (conflation, source priority, data provenance; jak w OSM2World i w konflacji danych GIS, np. Hootenanny). Zwiad i liczby dla Krakowskiego: `docs/plany/zrodla-przekroju-ulic.md`.
+
+| Cecha | Kolejność źródeł |
+|---|---|
+| Topologia: jezdnie, kierunki, pasy ruchu, przejścia, chodniki osobne, place, strefy piesze, parkingi | OSM |
+| Szerokość jezdni | OSM `width` → BDOT10k `OT_SKJZ_L.SZEROKOSCNAWIERZCHNI` → tabela pomiaru z ortofoto (ADR-0080 PR 10) → szacunek z typu |
+| Położenie i szerokość chodnika | OSM `sidewalk:*:width` → obrys zmapowanej drogi (`footway=sidewalk`, ścieżka wzdłuż ulicy) → szacunek |
+| Pas zieleni, pas postojowy, wysepka | OSM (`verge`, `parking:*`, obszary) → reguła z klas pokrycia ortofoto → szacunek |
+| Nawierzchnia ścieżek i placów | OSM `surface` → BDOT10k `MATERIALNAWIERZCHNI` |
+
+- **Pochodzenie:** każda wartość przekroju niesie źródło (`osm`, `bdot10k`, `ortho`, `mapped-way`, `default`). Raport pochodzenia mówi, ile długości ulic opiera się na szacunku. Miarą przyjęcia dzielnicy w E3 jest też spadek udziału szacunków.
+- **Konflikt źródeł:** dwa źródła różniące się o więcej niż 1 m to wpis do przeglądu, a nie wybór „co wygląda lepiej”. Przykład: BDOT10k i tabela ortofoto na Narutowicza mają 7 i 9,2 m.
+- **Kurator topografii** sprawdza zgodność geometrii z danymi (tag, wartość zbioru, zmierzona liczba) i zgłasza konflikty źródeł jako wiersze T albo glitche. Ortofoto służy mu do stawiania pytań, a werdykt bez wskazania danej nie wiąże.
+- **Źródła niedostępne dziś:**
+  - BDOT500 (krawężniki): wektor płatny u starosty;
+  - otwarte dane Lublina (`otwartedane.lublin.eu`, `gis.lublin.eu/opendata/wfs`): z tego środowiska niesprawdzone.
+
+  Gdy któreś z nich wejdzie, staje przed BDOT10k dla położenia krawężnika.
+
 ## Plan (osobne PR-y)
 
 | Etap | Zakres | Wynik mierzalny |
