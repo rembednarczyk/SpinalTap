@@ -397,22 +397,65 @@ export const openPavings = <B extends Band & { readonly box: Rect }>(bands: read
 /** Stretches of a laid sidewalk shorter than this are dropped, metres. */
 const MIN_SIDEWALK = 1.5;
 
+/** How far past its end a sidewalk may run on under the asphalt it meets (m). */
+const UNDER_REACH = 3;
+/** How far short of the asphalt a sidewalk's end may stop and still run on to it (m): a cut's sample step, and a mapped way's end node a little short of the kerb. */
+const UNDER_APPROACH = 1;
+/** The step of that run on (m). */
+const UNDER_STEP = 0.1;
+
+/** `line` with its ends drawn on straight by `d` (m). */
+const drawnOn = (line: readonly Pt[], d: number): Pt[] => {
+  const n = line.length;
+  const dir = (a: Pt, b: Pt) => {
+    const l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    return { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
+  };
+  const [u, v] = [dir(line[1]!, line[0]!), dir(line[n - 2]!, line[n - 1]!)];
+  return [{ x: line[0]!.x + u.x * d, z: line[0]!.z + u.z * d }, ...line, { x: line[n - 1]!.x + v.x * d, z: line[n - 1]!.z + v.z * d }];
+};
+
 /**
  * A sidewalk, laid along a road or mapped on its own, cut where its middle runs over another
  * carriageway: it stops at the kerb of the street it meets instead of running across its asphalt.
  * `onRoad(p)` says whether a point lies on another carriageway. Sampled every half metre.
+ *
+ * An end that meets the asphalt, cut there or a sidewalk's own end up to `UNDER_APPROACH` short of
+ * it, runs on under it until its two edges and its middle are all on it (up to `UNDER_REACH`): the
+ * asphalt ranks over the sidewalk (`partitionGround`), so its end follows the kerb of the street it
+ * meets. Ended square across its own axis, a sidewalk meeting a street at a slant left a wedge of
+ * bare ground or of the carriageway's widened asphalt between its corner and the kerb, a notch of
+ * 0.5 m and more in the kerb (G-845, the sidewalks' uniformity of 26.11). Pattern: overshoot and
+ * clip, as a CAD trim extends a line to the boundary it meets.
  */
 export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
-  if (!b.along) return [b];
-  const { line, from, width } = b.along;
-  const mid = offsetLine(line, from + width / 2);
-  const total = lineLength(line);
+  if (!b.along || b.along.line.length < 2) return [b];
+  const { from, width } = b.along;
+  const R = UNDER_REACH;
+  const line = drawnOn(b.along.line, R);
+  const total = lineLength(b.along.line);
+  const [mid, inner, outer] = [offsetLine(line, from + width / 2), offsetLine(line, from), offsetLine(line, from + width)];
+  const whole = total + 2 * R;
+  // Stations along `line`, its drawn-on ends included: the way's own from `R` to `R + total`.
+  const at = (l: readonly Pt[], s: number) => pointAlong(l, (Math.min(Math.max(s, 0), whole) / whole) * lineLength(l));
+  const under = (s: number) => onRoad(at(mid, s)) && onRoad(at(inner, s)) && onRoad(at(outer, s));
+  // The station an end at `s` runs on to, `dir` the way out of the sidewalk: the first all on the asphalt, or `s` itself.
+  const runOn = (s: number, dir: 1 | -1): number => {
+    let entered = false;
+    for (let e = UNDER_STEP; e <= UNDER_APPROACH + UNDER_REACH + 1e-9; e += UNDER_STEP) {
+      const t = s + dir * e;
+      if (t < 0 || t > whole) return s;
+      if (onRoad(at(mid, t))) entered = true;
+      else if (entered || e > UNDER_APPROACH) return s;
+      if (entered && under(t)) return t;
+    }
+    return s;
+  };
   const step = 0.5;
   const runs: [number, number][] = [];
   let start: number | null = null;
   for (let s = 0; s <= total + 1e-6; s += step) {
-    const p = pointAlong(mid, (s / (total || 1)) * lineLength(mid));
-    const free = !onRoad(p);
+    const free = !onRoad(at(mid, R + s));
     if (free && start === null) start = s;
     if (!free && start !== null) {
       runs.push([start, s - step]);
@@ -420,10 +463,15 @@ export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
     }
   }
   if (start !== null) runs.push([start, total]);
-  if (runs.length === 1 && runs[0]![0] === 0 && runs[0]![1] >= total - 1e-6) return [b];
-  return runs
+  // A mapped or laid sidewalk's own ends run on too; a path's stay where the map ends them.
+  const own = b.surface === "sidewalk";
+  const ends = runs
     .filter(([a, c]) => c - a >= MIN_SIDEWALK)
-    .flatMap(([a, c]) => laidStrip(b.bridge, sliceLine(line, a, c), from, width))
+    .map(([a, c]): [number, number] => [a > 0 || own ? runOn(R + a, -1) : R + a, c < total - 1e-6 || own ? runOn(R + c, 1) : R + c]);
+  if (ends.length === 1 && ends[0]![0] === R && ends[0]![1] >= R + total - 1e-6) return [b];
+  return ends
+    // A slice ending at a vertex repeats it: a strip along a zero-length step comes out empty.
+    .flatMap(([a, c]) => laidStrip(b.bridge, sliceLine(line, a, c).filter((p, i, l) => i === 0 || Math.hypot(p.x - l[i - 1]!.x, p.z - l[i - 1]!.z) > 1e-9), from, width))
     .map((ring) => ({ surface: b.surface, ring, bridge: b.bridge, ...(b.deck ? { deck: b.deck } : {}), source: b.source, ...(b.bridge ? {} : { holed: true as const }) }))
     .filter((r) => r.ring.length >= 3);
 };
