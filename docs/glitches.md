@@ -2258,7 +2258,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-989 Pas dwupasowej jednokierunkowej ulicy kończy się przy skrzyżowaniu, gdy pas obok jedzie dalej
 - Ważność: S3 · Zasięg: ruch uliczny: Ruska przy Lwowskiej (1000; 461), Lubartowska przy Ruskiej (581; 361), Podzamcze na południu (1085; 603); na E4 także Podzamcze przy Ruskiej (1081; 448)
 - Opis: Skrzyżowanie łączy każdy koniec i każdy początek pasa raz, więc z dwóch pasów jednej ulicy, które wjeżdżają w jeden pas dalej, łączy się tylko jeden. Drugi kończy się przed skrzyżowaniem i jego auta stoją na końcu w widoku gracza (skan lane-dead-end; w OSM np. turn:lanes=merge_to_right|through na Podzamczu w233334279). Poprawka: zwężenie pasa (lane reduction transition, MUTCD 2009 §6C.08, stożek L = W·S²/155): trasa kończącego się pasa zmienia pas na sąsiedni przed końcem i jedzie dalej jego trasą (traffic-drops.ts). Wychodzi na wierzch przy E4 (graf ulic): Podzamcze przy Ruskiej dostało drugi pas z szerokości BDOT10k i zatrzymania w traffic-junction-drive wzrosły z 113 do 200.
-- Status: w naprawie (gałąź feat/zwezenie-pasa)
+- Status: w PR #1093; wcześniej: w naprawie (gałąź feat/zwezenie-pasa)
 - Pakiet właściciela: packages/sim (content/traffic-drops.ts)
 - Test przyjęcia: packages/sim/test/traffic-drops.test.ts
 - Klucze skanu: lane-dead-end podzamcze-2-1 1000,461; lane-dead-end podzamcze-0-0 581,361; lane-dead-end podzamcze-2-2 1085,603
