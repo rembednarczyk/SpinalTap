@@ -4,6 +4,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-980 Przechodzień uciekający w ukośną fasadę przerzuca stronę skrętu
+- Status: zgłoszone (S3 proponowana; blokuje włączenie grafu ulic E3, bo tam trafiają w to sceny `flee-wall` G-326)
+- Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, np. Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: średni do dużego
+- Gdzie: przechodzień przeniesiony do (275,4; −123,9), gracz 2 m na wschód (ziarna 3, 17, 29, ta sama scena na main i na próbie E3)
+- Dowód: ucieczka na zachód trafia w fasadę pod kątem. Kolejność `FLEE_TURNS` bierze najpierw +π/4 (NW, prosto w fasadę), po kilku krokach ten skos się zamyka i przechodzień przerzuca się na −π/4 (SW, 1,56 rad), a potem na +π/2 (N, 2,35 rad). W 5 s 5 skoków kursu. Na main sceny `flee-wall` z ziarnem i numerem przechodnia stoją już w otwartym miejscu i tego nie sprawdzają; na próbie E3 przechodzień 1002005 (ziarno 17) rodzi się przy tej fasadzie.
+- Próby (27.11, noc, wycofane): „trzymaj stronę skrętu” (algorytm bug) psuje testy ślepego zaułka; „najbardziej otwarty skos” (jak VFH) prowadzi wzdłuż fasady w narożnik przy (272,4; −128,8), gdzie przechodzień drga w miejscu o 3 rad. Wybór kierunku z lokalnych sond ma tu minima lokalne.
+- Poprawka (proponowana): mapa ucieczki z pola odległości od gracza (wzorzec „safety map” z Brogue: pole Dijkstry od gracza pomnożone przez −1,2 i ponownie wygładzone), na istniejących oknach `nav-field.ts` (`FLEE_WINDOW`), z ADR-em i pomiarem budżetu W-3.
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: przechodzień przeniesiony do (275,4; −123,9), gracz 2 m na wschód: najwyżej 2 skoki kursu w 5 s i odległość od gracza co najmniej `FLEE_RADIUS`, na ziarnach 3, 17, 29; testy `flee-wall` zielone.
+
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`
