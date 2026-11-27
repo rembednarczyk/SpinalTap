@@ -174,9 +174,9 @@ const straightOn = (arms: readonly number[]): boolean => {
  * `RAMP` and over `RAMP_MAX` at most, the wider side kept to the node and the narrower one reached
  * past it. Both pieces' sides are read the way of a walk from the first piece into the second.
  */
-const sideRamps = (edges: readonly StreetEdge[], j: Node): Area[] => {
-  if (j.edges.length !== 2) return [];
-  const ends = j.edges.map((i) => {
+const sideRamps = (edges: readonly StreetEdge[], j: Node, pair: readonly number[] = j.edges): Area[] => {
+  if (pair.length !== 2) return [];
+  const ends = pair.map((i) => {
     const e = edges[i]!;
     const last = key(e.axis.at(-1)!) === key(j.at);
     if (!last && key(e.axis[0]!) !== key(j.at)) return null;
@@ -204,6 +204,27 @@ const sideRamps = (edges: readonly StreetEdge[], j: Node): Area[] => {
   });
 };
 
+/** An edge's arm at a node it ends at: the direction it leaves the node in, or null when it runs through it. */
+const endArm = (e: StreetEdge, j: Node): number | null => {
+  const [first, last] = [key(e.axis[0]!) === key(j.at), key(e.axis.at(-1)!) === key(j.at)];
+  if (first === last) return null;
+  const q = first ? e.axis[1]! : e.axis.at(-2)!;
+  return Math.atan2(q.z - j.at.z, q.x - j.at.x);
+};
+
+/**
+ * The ramps of a junction's pairs of pieces running straight on through it, each as one street's two
+ * pieces in a row (`sideRamps`): a piece BDOT10k moves off its way through a junction kept its kerbs
+ * across from the next piece's past the junction's disc, and the kerb stepped where the disc ended (G-982).
+ */
+const throughRamps = (edges: readonly StreetEdge[], j: Node): Area[] => {
+  const ends = j.edges.flatMap((i) => {
+    const arm = endArm(edges[i]!, j);
+    return arm === null ? [] : [{ i, arm }];
+  });
+  return ends.flatMap((a, n) => ends.slice(n + 1).flatMap((b) => (straightOn([a.arm, b.arm]) ? sideRamps(edges, j, [a.i, b.i]) : [])));
+};
+
 /**
  * The carriageways with each junction's concave corners rounded by its streets' kerb radius, and
  * each joint of one street's two pieces closed: their square ends at a slant left a notch outside
@@ -224,7 +245,7 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
   };
   const corners = at.map((j) => {
     const [wide, narrow] = halves(edges, j);
-    if (j.arms >= 3) return rounded(j, wide);
+    if (j.arms >= 3) return join(rounded(j, wide), ...throughRamps(edges, j));
     // Two arms at an angle: a corner, rounded inside, the notch outside its bend closed by the narrower half's disc.
     if (!straightOn(armsAt(edges, j))) return join(disc(j.at, narrow), rounded(j, wide));
     const thin = j.edges.find((i) => Math.max(edges[i]!.left, edges[i]!.right) <= narrow + 1e-9);

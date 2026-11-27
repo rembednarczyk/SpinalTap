@@ -122,6 +122,13 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     expect(holds(c, { x: -12, z: -0.5 })).toBe(false);
   });
 
+  it("one street's two pieces through a junction, one moved off its axis: each kerb ramps past the junction, no step (G-982, Bernardyńska at Plac Wolności)", () => {
+    // As above, with a third street leaving the joint north: the junction's disc ended the kerbs' rounding, and past it the moved piece's kerb stepped.
+    const moved: StreetEdge = { ...street("A", [{ x: -40, z: 0 }, { x: 0, z: 0 }], 2.5), left: 4.7, right: 0.3 };
+    const g = streetGround([moved, street("B", [{ x: 0, z: 0 }, { x: 40, z: 0 }], 2.5), street("C", [{ x: 0, z: 0 }, { x: 0, z: 40 }], 2.5)]);
+    for (const r of [...g.carriageway, ...g.sidewalks]) expect(jags(r)).toEqual([]);
+  });
+
   it("a crossroads and a bend: one smooth kerb", () => {
     const bend = Array.from({ length: 19 }, (_, i) => ({ x: 60 + 30 * Math.sin((i * Math.PI) / 36), z: -30 + 30 * Math.cos((i * Math.PI) / 36) }));
     const g = streetGround([
