@@ -319,7 +319,7 @@ podzamcze-2-0 1117,348
 podzamcze-2-0 1066,349
 podzamcze-2-0 1067,354
 podzamcze-2-1 1059,455
-podzamcze-2-1 1054,456
+podzamcze-2-1 1051,457
 podzamcze-2-1 986,464
 podzamcze-2-1 980,465
 podzamcze-2-1 974,466

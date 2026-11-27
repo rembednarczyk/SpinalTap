@@ -392,7 +392,6 @@ podzamcze-0-1 660,390
 podzamcze-0-1 660,400
 podzamcze-0-1 660,410
 podzamcze-0-1 520,430
-podzamcze-0-1 530,430
 podzamcze-0-1 660,430
 podzamcze-0-1 530,440
 podzamcze-0-1 660,440
@@ -597,7 +596,6 @@ podzamcze-2-1 1100,560
 podzamcze-2-2 1110,600
 podzamcze-2-2 980,630
 podzamcze-2-2 990,640
-podzamcze-2-2 1000,640
 podzamcze-2-2 950,660
 podzamcze-2-2 980,660
 podzamcze-2-2 990,660
