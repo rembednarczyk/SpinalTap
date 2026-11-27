@@ -25,6 +25,7 @@ import { isCarFree } from "../corrections-car-free.ts";
 import { type Area, areaOfRing, grown, holesOf, join, less, rings, within } from "./clip.ts";
 import { STREETS, footwaysAlongStreets } from "./along-footways.ts";
 import { type StreetEdge, streetAreas } from "./street-ground.ts";
+import { weldTJunctions } from "./t-junctions.ts";
 import { WidthReport, sourcedWidth } from "./widths.ts";
 
 /** The districts whose streets are laid from the street graph (ADR-0104 E3 on), by slug. */
@@ -410,5 +411,7 @@ export const graphBands = <B extends Band>(
       out.push({ ...rest, ring, box: ringBounds(ring) } as unknown as Boxed<B>);
     }
   }
-  return [...out, ...laid];
+  // The pieces the graph laid share their edges' vertices: none rounds apart from its neighbour (`weldTJunctions`).
+  const welded = weldTJunctions(laid.map((l) => l.ring));
+  return [...out, ...laid.map((l, i) => ({ ...l, ring: welded[i]! }))];
 };
