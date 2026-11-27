@@ -207,10 +207,13 @@ export const partitionGround = (ground: readonly GroundOut[], rank: Rank = "draw
     const near = laid.query(r.box.minX, r.box.minZ, r.box.maxX, r.box.maxZ).filter((o) => overlaps(o.box, r.box));
     const left = near.length > 0 ? difference([r.path], near.map((o) => o.path), FillRule.NonZero) : [];
     if (near.length === 0 || r.area - areaOf(left) < SPECK) {
-      lay(r.box, r.path);
-      continue;
+      // Uncut, but crossing itself (a spike of the 0.1 m grid, a lap of a band's end): opened of its spikes and necks as a cut part is.
+      if (!selfIntersects(ringOf(r.g.outline))) {
+        lay(r.box, r.path);
+        continue;
+      }
     }
-    const parts = outlines(left);
+    const parts = outlines(near.length > 0 && r.area - areaOf(left) >= SPECK ? left : [r.path]);
     cut.set(r.i, parts);
     for (const o of parts) lay(ringBounds(ringOf(o)), toPath(ringOf(o)));
   }
