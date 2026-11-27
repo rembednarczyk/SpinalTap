@@ -1,6 +1,5 @@
 # lawn-on-leafoff-paving: grid 10 m (x,z = the square's corner at its least x and z)
 krakowskie-0-0 -90,-170
-krakowskie-0-1 0,80
 krakowskie-0-1 0,100
 krakowskie-1-0 230,-200
 krakowskie-1-0 230,-190
@@ -8,7 +7,6 @@ krakowskie-2-0 250,-270
 krakowskie-2-0 340,-270
 krakowskie-2-0 410,-240
 krakowskie-2-0 450,-230
-krakowskie-2-0 350,-200
 krakowskie-2-0 290,-190
 krakowskie-2-0 390,-140
 krakowskie-2-0 350,-90

@@ -89,6 +89,8 @@ export const FILL = {
   kerbStrip: 5,
   /** The widest strip between a pavement and a lawn whose paving is laid (m, G-902, `lawnStrips`): as wide as a kerb's. */
   lawnStrip: 5,
+  /** The widest gap between a walk and a lawn of the map the lawn is snapped across (m, `lawnStrips`). */
+  lawnSnap: 1,
   /**
    * Which of its regions are laid (`zoneStrips`): nine tenths in the strip; paving under the loose
    * regions' least area (a larger one is a strip by a walk the rule leaves on purpose) and a metre
@@ -440,7 +442,7 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
     evenKerbs(cells, cover, grass, square);
   } else {
     kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
-    lawnStrips(cells, cover, ground, FILL.lawnStrip, FILL.lawnRegions);
+    lawnStrips(cells, cover, ground, FILL.lawnStrip, FILL.lawnRegions, FILL.lawnSnap);
   }
   dropLoose(cells, FILL.looseWidth, FILL.looseArea);
   if (!base) keepKerbs(cells, FILL.kerbBand);

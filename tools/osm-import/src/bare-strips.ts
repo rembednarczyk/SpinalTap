@@ -7,7 +7,7 @@
  */
 import { COVER } from "../../orto/src/classify.ts";
 import { type Cover, coverAt } from "../../orto/src/cover.ts";
-import { type Cells, LABEL as CELL_LABEL, STEP, scratch } from "./bare-cells.ts";
+import { type Cells, LABEL as CELL_LABEL, STEP, scratch, taken } from "./bare-cells.ts";
 import { type StripRegions, zoneStrips } from "./bare-clean.ts";
 import { type GroundOut } from "./model.ts";
 
@@ -102,7 +102,7 @@ const ringOf = (flat: readonly number[]) => Array.from({ length: flat.length >> 
  * to the strip's width and one; what of it is laid, region by region, `zoneStrips` says, with the
  * cells `cover` itself shows green.
  */
-export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOut[], band: number, regions: StripRegions): void => {
+export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOut[], band: number, regions: StripRegions, snap = 0): void => {
   const { nx, nz, label } = cells;
   const size = nx * nz;
   const reach = Math.round(band / STEP);
@@ -118,6 +118,22 @@ export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOu
   const fromLawn = scratch.i16("strips.side", size, null);
   steps(w, walk, reach, fromWalk);
   steps(w, lawn, reach, fromLawn);
+  // A gap up to `snap` across between a walk and a lawn, green on the cover, is the lawn's: snapped
+  // to the walk's edge (gap closing, as GIS topology's `ST_Snap`). Narrower than a piece the
+  // tracing lays (`FILL.minArea`), it stayed bare between the two (147 samples of the new row of
+  // Podzamcze, the backlog's diagnosis of 24.11). The strip to the lawn is read again with it: a
+  // strip of paving between another walk and the lawn snapped is the strip's too.
+  const close = Math.round(snap / STEP);
+  let snapped = 0;
+  for (let k = 0; k < size; k++) {
+    if (green[k] && fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= close + 1 && !taken(label[k]!)) {
+      label[k] = LABEL.grass;
+      cells.zone[k] = 1;
+      lawn[k] = 1;
+      snapped++;
+    }
+  }
+  if (snapped > 0) steps(w, lawn, reach, fromLawn);
   const strip = scratch.u8("strips.mark", size, null);
   for (let k = 0; k < size; k++) strip[k] = fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= reach + 1 ? 1 : 0;
   zoneStrips(cells, strip, green, regions);
