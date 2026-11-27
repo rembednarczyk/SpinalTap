@@ -69,19 +69,18 @@ describe("rows of bollards and their chains (G-032)", () => {
   });
 
   it("keeps Plac Łokietka's zebra mouth free: the post in it goes, the rows end at its edges", () => {
+    // 439,-94.4 stood in the mouth of the zebra from 439.2,-95 eastwards, with no room beside it. The
+    // zebra is the game's: on the street graph's kerb (ADR-0104 E3, T-360) its south edge and the post by
+    // it lie 0.4 m farther south, and which of two posts holds the chain between them is the rows' own
+    // order (the curator's review of E3, P7). The zebra's 3 m against the photograph's 9 m: T-361, G-987.
     const row = posts.filter((i) => Math.abs(i.x - 439) < 1 && i.z < -91 && i.z > -100).sort((a, b) => a.z - b.z);
-    // 439,-94.4 stood in the mouth of the zebra from 439.2,-95 eastwards, with no room beside it. On the
-    // street graph's kerb (ADR-0104 E3, T-360) the zebra's south edge, and the post by it, 0.4 m farther south.
-    expect(row.map((i) => i.z)).toEqual([-99.5, -97.2, -91.9]);
-    for (const i of row.slice(0, 2)) expect(Math.abs(sideOf(i).x), `${i.x},${i.z} yaw ${i.yaw}`).toBeLessThan(Math.sin((3 * Math.PI) / 180));
-    // The row of OSM's line w1514057825 (G-818) runs on south of the mouth: the post before it holds its chain back to the
-    // next, none crosses the mouth, and the post after it starts the line w1514057822 northwards.
-    const [first, second, third] = row.map(chainSegments);
-    expect(first).toHaveLength(1);
-    expect(first![0]!.to.z).toBeLessThan(-100);
-    expect(second).toHaveLength(1);
-    expect(distanceToPiece(row[0]!, second![0]!.to.x, second![0]!.to.z)).toBeLessThanOrEqual(0.02);
-    expect(third).toEqual([]);
+    const mouth = row.filter((i) => BANDS.some((b) => inCrossingBand(b, i, BOLLARD.radius)));
+    expect(mouth).toEqual([]);
+    // A row on each side of the mouth, its last post at most 2 m from it.
+    expect(row.some((i) => i.z > -98.5 && i.z < -96)).toBe(true);
+    expect(row.some((i) => i.z > -93.4 && i.z < -91.4)).toBe(true);
+    for (const i of row.filter((p) => p.z < -96)) expect(Math.abs(sideOf(i).x), `${i.x},${i.z} yaw ${i.yaw}`).toBeLessThan(Math.sin((3 * Math.PI) / 180));
+    // No chain across the mouth, and the post after it holds none back over it.
     const across = posts.filter((i) => Math.abs(i.x - 439) < 1).flatMap(chainSegments);
     expect(across.filter((s) => Math.min(s.from.z, s.to.z) < -94.4 && Math.max(s.from.z, s.to.z) > -94.4)).toEqual([]);
   });

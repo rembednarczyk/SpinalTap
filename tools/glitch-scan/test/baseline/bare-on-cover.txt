@@ -100,6 +100,7 @@ krakowskie-2-0 290,-130
 krakowskie-2-0 300,-130
 krakowskie-2-0 310,-130
 krakowskie-2-0 390,-90
+krakowskie-2-0 430,-90
 krakowskie-2-0 360,-70
 krakowskie-2-0 410,-70
 krakowskie-2-0 350,-60

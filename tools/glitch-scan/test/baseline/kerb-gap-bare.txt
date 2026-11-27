@@ -155,7 +155,6 @@ krakowskie-2-0 380,-220
 krakowskie-2-0 320,-210
 krakowskie-2-0 370,-210
 krakowskie-2-0 270,-200
-krakowskie-2-0 320,-200
 krakowskie-2-0 370,-200
 krakowskie-2-0 270,-190
 krakowskie-2-0 280,-190
@@ -171,12 +170,12 @@ krakowskie-2-0 240,-170
 krakowskie-2-0 270,-170
 krakowskie-2-0 450,-170
 krakowskie-2-0 430,-160
-krakowskie-2-0 440,-160
 krakowskie-2-0 260,-150
 krakowskie-2-0 270,-150
 krakowskie-2-0 360,-150
+krakowskie-2-0 430,-150
 krakowskie-2-0 440,-150
-krakowskie-2-0 450,-140
+krakowskie-2-0 440,-130
 krakowskie-2-0 270,-110
 krakowskie-2-0 280,-110
 krakowskie-2-0 400,-70
@@ -189,7 +188,9 @@ krakowskie-2-0 380,-30
 krakowskie-2-0 390,-30
 krakowskie-2-0 400,-30
 krakowskie-2-0 410,-30
+krakowskie-2-0 430,-30
 krakowskie-2-1 400,-20
+krakowskie-2-1 410,-20
 krakowskie-2-1 430,-20
 krakowskie-2-1 440,-20
 krakowskie-2-1 370,0
@@ -660,8 +661,7 @@ stare-miasto-0-0 600,-220
 stare-miasto-0-0 520,-210
 stare-miasto-0-0 530,-210
 stare-miasto-0-0 600,-210
-stare-miasto-0-0 490,-190
-stare-miasto-0-0 460,-170
+stare-miasto-0-0 460,-160
 stare-miasto-0-0 460,-150
 stare-miasto-0-1 460,40
 stare-miasto-0-1 470,80

@@ -67,11 +67,11 @@ krakowskie-2-0 369,-182
 krakowskie-2-0 310,-171
 krakowskie-2-0 244,-169
 krakowskie-2-0 454,-146
-krakowskie-2-0 453,-145
 krakowskie-2-0 273,-144
-krakowskie-2-0 451,-142
+krakowskie-2-0 453,-144
+krakowskie-2-0 452,-142
 krakowskie-2-0 402,-137
-krakowskie-2-0 444,-118
+krakowskie-2-0 444,-119
 krakowskie-2-0 280,-111
 krakowskie-2-0 281,-105 *2
 krakowskie-2-0 282,-102
@@ -82,7 +82,6 @@ krakowskie-2-0 349,-59
 krakowskie-2-0 308,-38
 krakowskie-2-0 301,-36
 krakowskie-2-1 410,-17
-krakowskie-2-1 428,-17
 krakowskie-2-1 445,4
 krakowskie-2-1 396,77
 krakowskie-2-1 379,85
@@ -368,13 +367,15 @@ stare-miasto-0-0 571,-209
 stare-miasto-0-0 584,-209
 stare-miasto-0-0 587,-209
 stare-miasto-0-0 505,-194
-stare-miasto-0-0 498,-191
-stare-miasto-0-0 487,-184
-stare-miasto-0-0 484,-181
-stare-miasto-0-0 481,-179
-stare-miasto-0-0 477,-175
-stare-miasto-0-0 476,-174
+stare-miasto-0-0 497,-190
+stare-miasto-0-0 495,-189
+stare-miasto-0-0 486,-183
+stare-miasto-0-0 483,-180
+stare-miasto-0-0 482,-179
+stare-miasto-0-0 478,-175
+stare-miasto-0-0 476,-173
 stare-miasto-0-0 469,-166
+stare-miasto-0-0 465,-162
 stare-miasto-0-0 545,-122
 stare-miasto-0-1 567,-16 *2
 stare-miasto-0-1 552,66
