@@ -108,6 +108,20 @@ describe("the streets' ground from the street graph (ADR-0104)", () => {
     // street goes on off the graph (the deptak's setts from Lubartowska's end).
   });
 
+  it("one street's two pieces in a row, one moved off its axis: each kerb ramps to the other's, no step (Bernardyńska by Plac Wolności)", () => {
+    // BDOT10k moves one piece's carriageway 2.2 m left of its way (left 4.7 m, right 0.3 m); the next piece, unmatched, keeps 2.5 m a side.
+    const moved: StreetEdge = { ...street("A", [{ x: -40, z: 0 }, { x: 0, z: 0 }], 2.5), left: 4.7, right: 0.3 };
+    const g = streetGround([moved, street("B", [{ x: 0, z: 0 }, { x: 40, z: 0 }], 2.5)]);
+    for (const r of [...g.carriageway, ...g.sidewalks]) expect(jags(r)).toEqual([]);
+    const c = areaOf(g.carriageway);
+    // Each kerb ramps over the piece narrower on its side, over 10 m at most: the left one from 4.7 m
+    // to 2.5 m over B, the right one from 2.5 m to 0.3 m over A.
+    expect(holds(c, { x: 5, z: 3.4 })).toBe(true);
+    expect(holds(c, { x: 12, z: 2.7 })).toBe(false);
+    expect(holds(c, { x: -5, z: -1.2 })).toBe(true);
+    expect(holds(c, { x: -12, z: -0.5 })).toBe(false);
+  });
+
   it("a crossroads and a bend: one smooth kerb", () => {
     const bend = Array.from({ length: 19 }, (_, i) => ({ x: 60 + 30 * Math.sin((i * Math.PI) / 36), z: -30 + 30 * Math.cos((i * Math.PI) / 36) }));
     const g = streetGround([
