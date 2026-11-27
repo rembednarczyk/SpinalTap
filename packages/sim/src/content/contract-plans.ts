@@ -63,9 +63,10 @@ export const BAR_SPOT: Vec3 = koiPoint(5.6, 0, 3);
 const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...Vec3[]]>>> = {
   east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), BAR_SPOT],
   koi_back: [back(3, 12), ground(296, -112), ground(283, -108), ground(282, -88), ground(300, -89), BAR_SPOT],
-  // Out of the yard by Lubartowska through the gap between its container and its barrier (`car-wash-detail.ts`) and the
-  // car park's fence south of the bench, as before the container stood, down to Plac Łokietka and west along the deptak.
-  car_wash: [wash(COURIER_SPOT.x, COURIER_SPOT.z), wash(2.2, 40.2), gapAt(), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
+  // Out of the yard by Lubartowska through the gap between its container and its barrier (`car-wash-detail.ts`), round
+  // the north of OSM's three benches at (424…426; −29.8…−31.5), 2 m off them and more (G-983: straight on to Lubartowska it
+  // passed them 0.1–0.9 m off and the furniture kept off its way went), down to Plac Łokietka and west along the deptak.
+  car_wash: [wash(COURIER_SPOT.x, COURIER_SPOT.z), wash(2.2, 40.2), gapAt(), ground(424, -27.8), ground(428, -27.5), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
   south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), BAR_SPOT],
 };
 
