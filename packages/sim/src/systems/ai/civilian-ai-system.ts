@@ -12,6 +12,7 @@ import { CIVILIAN_TREE } from "./civilian-tree";
 import { type Walker, holdLanePlace, laneSpot } from "./crowd-walk";
 import { walkRoutine } from "./passerby-walk";
 import { fleeDetourStep, steerPoint, straightWalk } from "./steering";
+import { safestTurn } from "./flee-map";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 
@@ -143,9 +144,9 @@ const bendsBack = (ctx: SimContext, from: Vec3, away: number, turn: number): boo
  * way), the way it runs on is also one whose walk round a corner its course follows (G-343): read
  * only from the turn, it was lost on the first step round, and the walker turned back.
  */
-const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, course: number | null, radius: number): number | null => {
+const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, course: number | null, radius: number, threat?: Vec3): number | null => {
   const open = (turn: number, reach: number): boolean => bodyWalk(ctx, from, away + turn, reach, radius);
-  const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
+  const best = safestTurn(ctx.world, from, away, FLEE_TURNS.filter((t) => open(t, FLEE_PROBE)), FLEE_PROBE, threat);
   if (best === undefined || course === null) return best ?? null;
   const faces = turnBetween(yaw, course) <= FLEE_HELD_TURN;
   const walksOn = (t: number): boolean => faces && open(t, FLEE_PROBE) && turnBetween(walkHeading(ctx, from, away + t), course) <= FLEE_HELD_TURN;
@@ -402,7 +403,7 @@ class CivilianAgent {
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
     const running = Math.hypot(self.velocity.x, self.velocity.z) > 0.9 * speed;
     const course = running ? Math.atan2(self.velocity.x, self.velocity.z) : null;
-    const turn = fleeTurn(ctx, self.position, away, self.yaw, course, self.body?.radius ?? 0);
+    const turn = fleeTurn(ctx, self.position, away, self.yaw, course, self.body?.radius ?? 0, from);
     if (turn === null) {
       // Cornered: it stands with its back to the wall and faces what it runs from.
       self.velocity = { x: 0, y: 0, z: 0 };
