@@ -47,18 +47,13 @@ describe("the market's furniture of ADR-0058 stage 3", () => {
     const withStall = (g: { x: number; z: number }) => stalls.some((s) => Math.hypot(s.x - g.x, s.z - g.z) <= 2.6);
     for (const g of ofKind("market-goods")) expect(withStall(g), `${g.x},${g.z}`).toBe(true);
     // Every piece of the map's stock whose stall the game kept is in the game too, the stall in
-    // another chunk or not. Until the Podzamcze row north of z 580 (23.11.2026) laid Targ na
-    // Ruskiej's rows over its whole ring, the stock (720.1, 571.4) in podzamcze-1-1 stood by its
-    // stall (718.0, 571.8) in podzamcze-0-1. Now the map's one such pair, the stock (719.7, 240.6) in
-    // podzamcze-0-0 by its stall (721.6, 241.6) in podzamcze-1-0, is cleared for the game, the stock
-    // with its stall; a pair the game keeps across a chunk's edge comes back with the market's data.
+    // another chunk or not; one whose stall the game cleared goes with it. (Until the street graph
+    // on Podzamcze (E4) the map's one pair across a chunk's edge, the stock (719.7, 240.6) by its
+    // stall (721.6, 241.6), was such a one, named here; the rows' phase moves with the paving.)
     const map = Object.values(LUBLIN_STREET_PROPS)
       .flat()
       .filter((i) => i.prop === "market-goods");
     const kept = (g: { x: number; z: number }) => ofKind("market-goods").some((o) => Math.abs(o.x - g.x) < 1e-6 && Math.abs(o.z - g.z) < 1e-6);
-    for (const g of map.filter(withStall)) expect(kept(g), `${g.x},${g.z}`).toBe(true);
-    const across = map.find((g) => g.x === 719.7 && g.z === 240.6);
-    expect(across).toBeDefined();
-    expect(kept(across!)).toBe(false);
+    for (const g of map) expect(kept(g), `${g.x},${g.z}`).toBe(withStall(g));
   });
 });

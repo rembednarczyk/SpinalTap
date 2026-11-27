@@ -48,7 +48,7 @@ export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
   // Podzamcze without its market (ADR-0063): Plac Zamkowy and the squares along Aleja Tysiąclecia, the two by the bus
   // station moved off its gang's core (ADR-0091, decision 9). Then Furmańska, the west end of Plac Zamkowy, Nadstawna
   // and Ruska east of the ghetto's trace.
-  targ: [spotNear(740, 306), spotNear(760, 330), spotNear(845, 360), spotNear(624, 192), spotNear(702, 234), spotNear(786, 438), spotNear(792, 540)],
+  targ: [spotNear(740, 306), spotNear(760, 330), spotNear(845, 360), spotNear(624, 192), spotNear(702, 234), spotNear(786, 437), spotNear(792, 540)],
   // The public strip by W-3's fence (ADR-0082): past the metro, east of it, by the bridge's path. Then the streets
   // north of it: Montażowa, Towarowa, Kresowa and Kalinowszczyzna.
   doki: [ground(2540, 387), ground(2570, 386.5), ground(2478, 390.5), spotNear(2682, 78), spotNear(2316, 342), spotNear(2520, 78), spotNear(2358, 444)],
