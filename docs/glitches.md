@@ -2266,7 +2266,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-990 Wyrzucony z porwanego auta kierowca biega tam i z powrotem w zaułku przy chodniku
 - Ważność: S4 · Zasięg: porywanie aut (ADR-0097), m.in. Lubartowska przy (643; 506): zaułek między dwoma domami przy chodniku
 - Opis: Kierowca wybiera kierunek ucieczki co sekundę od nowa: pierwszy z pięciu (liczonych od osi auta) z 8 m wolnego. W zaułku ściana 8–11 m przed nim wchodziła w okno 8 m i z niego wychodziła, więc zawracał co sekundę i stał 10–12 m od auta (test vehicle-carjack na próbie E4: 12,9 m zamiast ponad 25). Wyszło przy E4, bo inny rozkład pasów daje testowi inne auto. Poprawka: kierunek trzymany, póki 1,5 m przed nim jest wolne; bez zawracania o ponad 120°, póki jest inne wyjście; gdy żaden z pięciu nie ma 8 m, 16 kierunków ocenianych wolnym miejscem i oddalaniem od auta (context steering, Reynolds flee).
-- Status: w naprawie (gałąź fix/g990-kierowca-z-zaulka)
+- Status: w PR #1095; wcześniej: w naprawie (gałąź fix/g990-kierowca-z-zaulka)
 - Pakiet właściciela: packages/sim (world/vehicle/ejected-driver.ts)
 - Test przyjęcia: packages/sim/test/ejected-driver-pocket.test.ts
 
