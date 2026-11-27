@@ -14,6 +14,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (streets)
 - Test przyjęcia: skrzyżowanie trzech ulic, jedna z osią jezdni przesuniętą o 2,2 m: krawężnik bez zygzaka ponad 0,1 m (jak `jags` w `street-ground.test.ts`); miejsca znikają z bazy `kerb-jag`.
 - Kurator 27.11: T-360 usuwa miejsce Lubartowska z Bajkowskiego (kerb-jag krakowskie-2-0 430..440,-30..-20).
+- Próba 27.11 noc (gałąź fix/g982-rampa-w-skrzyzowaniu, 6bf7b502, bez PR): rampa stron także dla par odcinków idących prosto przez skrzyżowanie zdejmuje jedno miejsce (krakowskie-1-1 190,80), ale dodaje 3 kerb-gap-bare (krakowskie-1-1 200..210,20..30 i 190..200,90..100, krakowskie-2-1 390..400,40..50); miejsca z wpisu zostają. Plac Wolności z Bernardyńską to inny układ: krótki łącznik w1054482135 (6,2 m, prawa strona 4,84 m z BDOT10k) skręca w Bernardyńską o ok. 30°, na progu STRAIGHT_ON, więc idzie gałęzią narożnika bez rampy stron; dodanie tam rampy psuje test Lubartowskiej z Olejną i nie usuwa zygzaka w teście syntetycznym. Kandydat: rampa stron przed zaokrągleniem narożnika (najpierw ramp, potem domknięcie w dysku), z testem narożnika Olejnej jako ograniczeniem.
 ### G-981 Przechodzień z trasy tłumu przy ukośnej fasadzie nadal przerzuca stronę skrętu (pozostałość G-980)
 - Status: zgłoszone (27.11)
 - Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, gdy przechodzień startuje kilka dziesiątych metra od punktu testu G-980; Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: duży
