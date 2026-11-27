@@ -13,6 +13,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka (proponowana): rampa przesunięcia każdej strony także na ramionach skrzyżowania, przed zaokrągleniem narożnika, albo dysk węzła sięgający końca rampy.
 - Pakiet właściciela: tools/osm-import (streets)
 - Test przyjęcia: skrzyżowanie trzech ulic, jedna z osią jezdni przesuniętą o 2,2 m: krawężnik bez zygzaka ponad 0,1 m (jak `jags` w `street-ground.test.ts`); miejsca znikają z bazy `kerb-jag`.
+### G-981 Przechodzień z trasy tłumu przy ukośnej fasadzie nadal przerzuca stronę skrętu (pozostałość G-980)
+- Status: zgłoszone (27.11)
+- Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, gdy przechodzień startuje kilka dziesiątych metra od punktu testu G-980; Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: duży
+- Gdzie: przechodzień postawiony na trasie tłumu (kurs 0,22 rad, NNE) w punkcie tej trasy 0,39 m od (275,4; −123,9), gracz 2 m na wschód; ziarna 3, 17 i 29. Na próbie grafu ulic E3 ten sam przechodzień (1002005, ziarno 17) rodzi się tam sam z siebie.
+- Dowód: 5 skoków kursu w 5 s, jak przed poprawką G-980 (#1084), która działa tylko w punkcie (275,4; −123,9). Na próbie E3 sceny `flee-wall` trafiały w to miejsce: 4 skoki z graczem 1 m (ziarno 17) i 3 skoki (ziarno 29), po 0,5 do 0,8 rad. Od 27.11 sceny `flee-wall` są przypięte miejscem (`setWalkerDown` w `packages/sim/test/helpers.ts`), więc tego miejsca już nie sprawdzają.
+- Próby (27.11, wycofane): ograniczenie szybkości obrotu uciekającego (steering behaviours, C. Reynolds 1999), także z obrotem w miejscu, pamięcią zamierzonego kierunku i obrotem plecami do gracza. Przy 8 rad/s przechodzień przy zachodniej ścianie hali W-3 skręca w narożnik i stoi 3 s, a w pościgu w zaułku przy (316; −95) skręca w narożnik zamiast uciec w górę; przy 20 rad/s pada już tylko W-3. Logika ucieczki w ciasnych miejscach polega na natychmiastowych zwrotach.
+- Poprawka (proponowana): wybór całego kierunku ucieczki z mapy bezpieczeństwa (Brogue), nie tylko remisu skosów, z ADR-em i pomiarem budżetu W-3.
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: przechodzień na trasie tłumu w punkcie 0,39 m od (275,4; −123,9), gracz 2 m i 1 m na wschód: najwyżej 2 skoki kursu w 5 s i odległość od gracza co najmniej `FLEE_RADIUS`, na ziarnach 3, 17, 29; testy ucieczki zielone.
 
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)

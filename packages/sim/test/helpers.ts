@@ -1,5 +1,6 @@
 import { type Contract, EMPTY_INPUT, type InputFrame, VEHICLE_SIZE, type Vec3, contractTag } from "@seki/core";
-import { type Entity, Simulation, type SimulationOptions, ground } from "../src";
+import { type Entity, type LaneWalk, Simulation, type SimulationOptions, ground, laneGeom, laneTarget, nearestArc, realSeconds } from "../src";
+import { CROWD_LANES } from "../src/content/crowd";
 import { PARKED_CARS } from "../src/content/parked-cars";
 
 export const input = (partial: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...partial });
@@ -101,6 +102,50 @@ export const passerbyOnDeptak = (sim: Simulation, gap = 2, pick: (e: Passer) => 
   if (!walker) throw new Error("no passer-by on the deptak");
   teleportPlayer(sim, { x: walker.position.x + gap, y: walker.position.y, z: walker.position.z });
   return walker;
+};
+
+/** A walker of a crowd route (ADR-0041): its pace (m/s) and the heading it walked it on (rad). */
+export interface RouteWalk {
+  readonly speed: number;
+  readonly heading: number;
+}
+
+/** How far a route may have moved off a walker's place with the map (m): the street graph's pavements moved one by 1.2 m. */
+const ROUTE_MOVED = 2;
+
+/**
+ * The route walk of a walker at `x`, `z` heading `heading`: the route nearest the place (the crowd's
+ * routes are numbered anew with the map), and the phase that has the walker there on the clock.
+ */
+const walkThrough = (sim: Simulation, x: number, z: number, { speed, heading }: RouteWalk): LaneWalk => {
+  let best: { walk: LaneWalk; off: number } | null = null;
+  for (const lane of CROWD_LANES) {
+    const arc = nearestArc(laneGeom(lane), x, z);
+    for (const dir of [1, -1] as const) {
+      const walk: LaneWalk = { lane: lane.id, phase: arc - dir * speed * realSeconds(sim.clock), speed, dir, shift: 0, avoid: 0, rejoin: null };
+      const t = laneTarget(lane, walk, sim.clock);
+      const off = Math.hypot(t.x - x, t.z - z);
+      if (Math.cos(Math.atan2(t.tx, t.tz) - heading) > 0.9 && off < (best?.off ?? ROUTE_MOVED)) best = { walk, off };
+    }
+  }
+  if (!best) throw new Error(`no crowd route by (${x}; ${z})`);
+  return best.walk;
+};
+
+/**
+ * Sets a passer-by down at `x`, `z` as if the crowd had put it there: standing at its spot, or with
+ * `walk` on the route by the place, which it walks on from there. New objects, not the walker's own: its position, home and
+ * goal are one object (`residentEntity`), so moving one in place moves all three, and a walker of
+ * a route left on its own route walks back to it.
+ */
+export const setWalkerDown = (sim: Simulation, walker: Entity, x: number, z: number, walk?: RouteWalk): void => {
+  const route = walk && walkThrough(sim, x, z, walk);
+  const at = ground(x, z);
+  walker.position = { ...at };
+  walker.prevPosition = { ...at };
+  walker.civilian = { ...walker.civilian!, home: { ...at } };
+  const { lane: _, ...spot } = walker.passerby!;
+  walker.passerby = { ...spot, goal: { ...at }, waypoint: null, ...(route ? { lane: route } : {}) };
 };
 
 /**
