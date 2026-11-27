@@ -156,8 +156,11 @@ export const widthJumps = (all: readonly Stretch[]): Finding[] =>
 /** How far past another street's carriageway a station counts as at its junction (m): the crossing's corners and kerb radii. */
 export const JUNCTION = 4;
 
-/** Is (x, z) of `street` within another street's half width plus `JUNCTION` of its axis? On a grid of the axes' points every metre. */
-export const junctionTest = (streets: readonly Street[]): ((street: string, x: number, z: number) => boolean) => {
+/**
+ * Is (x, z) of `street` within another street's half width plus `JUNCTION` of its axis, or in one of
+ * the `zones` (the street graph's corners, `corner-zones.ts`)? On a grid of the axes' points every metre.
+ */
+export const junctionTest = (streets: readonly Street[], zones: readonly { readonly x: number; readonly z: number; readonly r: number }[] = []): ((street: string, x: number, z: number) => boolean) => {
   const CELL = 16;
   const grid = new Map<string, { id: string; x: number; z: number; r: number }[]>();
   for (const s of streets)
@@ -168,6 +171,7 @@ export const junctionTest = (streets: readonly Street[]): ((street: string, x: n
       grid.set(k, cell);
     }
   return (street, x, z) => {
+    if (zones.some((c) => Math.hypot(c.x - x, c.z - z) < c.r)) return true;
     const [cx, cz] = [Math.floor(x / CELL), Math.floor(z / CELL)];
     for (let i = cx - 1; i <= cx + 1; i++)
       for (let j = cz - 1; j <= cz + 1; j++)

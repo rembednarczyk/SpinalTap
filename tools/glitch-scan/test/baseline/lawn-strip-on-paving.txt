@@ -1,0 +1,2 @@
+# lawn-strip-on-paving: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-2-0 330,-230

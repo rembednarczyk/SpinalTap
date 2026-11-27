@@ -129,11 +129,14 @@ describe("the pavement along the façades of Peowiaków by the corners with Koś
   });
 
   it("leaves the footways, the streets and the driveway on top, and the façades where they are", () => {
-    expect(surfaceAt(-5, -184.5)).toBe("footway");
-    expect(surfaceAt(45, -200.5)).toBe("footway");
+    // The street graph (ADR-0104 E3) lays a footway along its street as the street's sidewalk.
+    expect(["footway", "sidewalk"]).toContain(surfaceAt(-5, -184.5));
+    expect(["footway", "sidewalk"]).toContain(surfaceAt(45, -200.5));
     // The footway w288178957's band over the driveway's asphalt: the asphalt wins at a carriageway's
     // edge (ADR-0078 step 3, the user's decision of 14.11), as the picture drew it on top before (SURFACE_LIFT).
-    expect(surfaceAt(29.2, -107)).toBe("road");
+    // On the street graph (ADR-0104 E3, the user's decision of 27.11) the driveway w536680784's asphalt
+    // crosses Kościuszki's sidewalk square, without the old model's rounded corner a metre north of it.
+    expect(surfaceAt(29.2, -109)).toBe("road");
     expect(surfaceAt(-5, -188)).toBe("road");
     expect(surfaceAt(45, -203)).toBe("road");
     expect(surfaceAt(30.9, -109.5)).toBe("road");

@@ -14,13 +14,16 @@ import { Site } from "../src/props-site.ts";
  * 255.4 stands on its station since ADR-0094 stage 1: the café's garden it slid 2.5 m away from
  * (to 253) stood in a door's clear zone and is gone. The one at 243.2 stands since stage 2: a garden of
  * the deptak's line (no venue behind it) took its place in the row; the gardens stand by their venues now.
+ * Lubartowska's, its east end's at 437.4 among them, stand by its kerbs checked against OSM's bollard
+ * lines (T-360), 0.3-1 m off where the orthophoto's and BDOT10k's kerbs put them. The one at 168.2 stands 0.54 m on from 168, -44.9 since the street graph (ADR-0104 E3): the deptak's
+ * setts lost their outline's vertex at (162; -43.89) by the graph's sidewalk, and the lamp's edge with it.
  */
 const DEPTAK_LAMPS: readonly (readonly [number, number])[] = [
   [-80.1, -59.7], [-67.1, -69.1], [-55.1, -58.5], [-42.2, -67.8], [-30.2, -57.2], [-17.2, -66.5], [-5.2, -55.8], [7.8, -65.1], [32.2, -53.8],
   [45.2, -63.2], [57.2, -52.5], [70.2, -61.9], [92.4, -61], [104.6, -50.6], [117.4, -60.3], [133.8, -58.4], [140.2, -43.7], [155.1, -50.9],
-  [168, -44.9], [178.3, -55.9], [192.5, -50.1], [202.6, -61.6], [216.8, -55.9], [226.9, -67.7], [243.2, -62.9], [255.4, -74.9], [269.7, -70.1], [279.5, -81.8],
+  [168.2, -44.4], [178.3, -55.9], [192.5, -50.1], [202.6, -61.6], [216.8, -55.9], [226.9, -67.7], [243.2, -62.9], [255.4, -74.9], [269.7, -70.1], [279.5, -81.8],
   [293.8, -76.7], [304.5, -88.2], [320.1, -80.8], [328.8, -90.2], [352.5, -95.7], [367.2, -99.4], [380.4, -91.6], [389.6, -101.2], [415.9, -101.7],
-  [436.4, -32.1], [438.5, -82.1], [438.7, -57], [439.2, -96.1], [447.4, -108.4], [447.4, -44.4], [447.7, -72.7],
+  [437.4, -32.1], [437.5, -82.1], [437.7, -57.1], [438.2, -96.2], [446.9, -44.5], [447.2, -72.7], [447.9, -108.4],
 ];
 
 const deptakLamps = (): [number, number][] =>

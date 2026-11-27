@@ -28,7 +28,21 @@ const at = (id: number, route: number, s: number, v: number, model: VehicleModel
 describe("bodies along their lanes (G-744)", () => {
   const north = routeOf("Cicha#32:f");
   const south = routeOf("Cicha#32:b");
-  const bend = TRAFFIC_ROUTES[north]!.points.slice(0, 2).reduce((s, p, i, a) => (i === 0 ? 0 : s + Math.hypot(p[0] - a[i - 1]![0], p[1] - a[i - 1]![1])), 0);
+  // Where the northbound lane bends: its first point turned over 20 degrees off its heading 10 m in (past
+  // a ramp of its line onto the carriageway's middle, ADR-0104 pkt 4), not its second point.
+  const bend = ((): number => {
+    const pts = TRAFFIC_ROUTES[north]?.points ?? [];
+    const seg = (i: number) => Math.atan2(pts[i + 1]![1] - pts[i]![1], pts[i + 1]![0] - pts[i]![0]);
+    let [s, at, head] = [0, 0, Number.NaN];
+    for (let i = 0; i + 1 < pts.length; i++) {
+      if (Number.isNaN(head) && s + Math.hypot(pts[i + 1]![0] - pts[i]![0], pts[i + 1]![1] - pts[i]![1]) >= 10) head = seg(i);
+      const off = Math.abs(((seg(i) - head + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+      if (!Number.isNaN(head) && off > Math.PI / 9) return at;
+      s += Math.hypot(pts[i + 1]![0] - pts[i]![0], pts[i + 1]![1] - pts[i]![1]);
+      at = s;
+    }
+    return 0;
+  })();
 
   it("finds Cicha's lanes, the northbound one bending", () => {
     expect(north).toBeGreaterThanOrEqual(0);

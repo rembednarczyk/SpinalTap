@@ -1,5 +1,5 @@
+import { OFF_GRAPH } from "./off-graph.ts";
 import { describe, expect, it } from "vitest";
-import { DISTRICTS } from "../src/config.ts";
 import { generate } from "../src/generate.ts";
 import { type Pt, pointInRing } from "../src/geometry.ts";
 import { parseOsmXml } from "../src/osm.ts";
@@ -27,7 +27,7 @@ const map = (ways: readonly Way[]) => {
   });
   return parseOsmXml(["<osm>", ...nodes, ...out, "</osm>"].join("\n"));
 };
-const chunk = [{ id: "test-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
+const chunk = [{ id: "test-0-0", district: OFF_GRAPH, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
 /** Two lanes of 3.25 m, no width in the map: the import's estimate, widened to a footway mapped further out. */
 const street: Way = { tags: { highway: "residential", lanes: "2", sidewalk: "separate" }, pts: [[0, 0], [100, 0]] };
 const measured: Way = { ...street, tags: { ...street.tags, width: "6.5" } };

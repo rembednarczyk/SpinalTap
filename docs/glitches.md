@@ -4,6 +4,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-982 Zygzak krawężnika na narożnikach skrzyżowań ulic z osią przesuniętą przez BDOT10k (Krakowskie, graf ulic)
+- Status: później (S4: uskoki 0,11–0,57 m na 1,5–3 m krawężnika, przyjęte do bazy skanu przy włączeniu E3)
+- Ważność: S4 · Zasięg: 5 miejsc `kerb-jag` w krakowskie-2-0 · Koszt: średni
+- Gdzie: Plac Wolności z Bernardyńską (371,5; −196,7) 0,11 m i (379,5; −198,2) 0,57 m; Świętoduska z Zieloną (354,0; −48,2) 0,26 m i (353,2; −48,3) 0,44 m; Kozia z Bernardyńską (360,4; −148,3) 0,22 m; Lubartowska z Bajkowskiego (437,0; −22,7) 0,20 m i (436,7; −21,3) 0,28 m; Plac Wolności przy wjeździe w177528401 (280,8; −170,7) 0,51 m
+- Dowód: skan `kerb-jag` na tablicach z grafem (27.11). Ulice spotykają się tam z różną szerokością albo z osią jezdni przesuniętą przez BDOT10k (Bernardyńska w173565900 o 2,2 m, Zielona o 0,9 m, Lubartowska o 0,7 m). Zaokrąglenie narożnika (`cornered` w `street-ground.ts`: domknięcie o promień krawężnika w dysku węzła) kończy się na brzegu dysku, a krawężnik za nim robi uskok.
+- Próba (27.11): rampa każdego krawężnika na złączu dwóch odcinków w linii (commit na gałęzi E3) poprawia złącza z przesunięciem, ale tych narożników nie dotyka.
+- Poprawka (proponowana): rampa przesunięcia każdej strony także na ramionach skrzyżowania, przed zaokrągleniem narożnika, albo dysk węzła sięgający końca rampy.
+- Pakiet właściciela: tools/osm-import (streets)
+- Test przyjęcia: skrzyżowanie trzech ulic, jedna z osią jezdni przesuniętą o 2,2 m: krawężnik bez zygzaka ponad 0,1 m (jak `jags` w `street-ground.test.ts`); miejsca znikają z bazy `kerb-jag`.
+- Kurator 27.11: T-360 usuwa miejsce Lubartowska z Bajkowskiego (kerb-jag krakowskie-2-0 430..440,-30..-20).
 ### G-981 Przechodzień z trasy tłumu przy ukośnej fasadzie nadal przerzuca stronę skrętu (pozostałość G-980)
 - Status: zgłoszone (27.11)
 - Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, gdy przechodzień startuje kilka dziesiątych metra od punktu testu G-980; Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: duży
@@ -2202,6 +2212,48 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Przegląd kuratora PR #816: dwie donice przy filarach arkad rysowane bez bryły, gracz przez nie przechodzi (zasada rysunek i bryła o tym samym kształcie). Donica przy x 397,22 stoi środkiem na filarze 2; drzwi NIGHT SILK i tak są za filarem, przęsło zwęża się z 2,10 do 1,88 m, wyjście z lokalu zostaje (sprawdzić test alchemia-front-rooms po zmianie).
 - Status: zgłoszone
 - Pakiet właściciela: packages/sim (content/alchemia front-plaza)
+
+### G-983 Ławki OSM n6681995509–11 przy Lubartowskiej zdjęte przez drogę pijaka car_wash
+- Ważność: S4 · Zasięg: 3 ławki OSM przy (424; −30), krakowskie-2-0
+- Opis: Import stawia ławki na węzłach OSM, a clearOfGame zdejmuje je, bo odcinek drogi car_wash (contract-plans.ts) z (421; −29,8) do (441; −40) mija je w 0,10–0,93 m (KEEP_CLEAR). Na main jedna ławka stała 1,3 m od węzła i przeżyła. Poprawka: przeprowadzić drogę co najmniej 1,5 m od grupy (np. punkt ok. (427; −28,5)) albo nie zdejmować mebli z węzłem OSM. Przegląd kuratora E3, P6.
+- Status: w PR #1091 (droga pijaka przez (424; −27,8) i (428; −27,5), test lubartowska-benches); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/contract-plans, street-props)
+- Test przyjęcia: WORLD_STREET_PROPS ma ławkę do 0,5 m od każdego z węzłów n6681995509–11
+- Klucze skanu: osm-furniture-missing krakowskie-2-0 424,-31; osm-furniture-missing krakowskie-2-0 425,-31; osm-furniture-missing krakowskie-2-0 424,-30
+
+### G-984 Goły pas przed fasadami na południu Placu Łokietka po zwężeniu Królewskiej (T-360)
+- Ważność: S3 · Zasięg: ok. 44 m², x 427–437, z −136…−148, krakowskie-2-0
+- Opis: Między ścieżką w232362953 a fasadami w66335319 i w66335268 pas 5–6 m bez gruntu; E3 kładło tu plac, T-360 i main nie. Ortofoto: kostka placu w cieniu budynku, dlatego bare-on-cover go nie zgłasza. Prawdopodobnie wypełnienie wysp grafu (ISLAND_MAX) albo kerbGaps po zmianie krawężnika. Przegląd kuratora E3, P2.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets/graph-bands)
+- Test przyjęcia: punkty (432; −142), (431; −139), (434; −145) mają grunt square albo sidewalk
+
+### G-985 Kawałek trawy na płytach chodnika przy (336; −230)
+- Ważność: S4 · Zasięg: ok. 9 m², krakowskie-2-0
+- Opis: Graf kładzie trawnik x 335–338, z −230…−233 przy narożniku budynku; ortofoto 2025-04 pokazuje tam płyty chodnika. Przegląd kuratora E3, P11.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets)
+
+### G-986 Rząd słupków z łańcuchem przerwany na łuku narożnika Placu Wolności z Dolną Panny Marii
+- Ważność: S4 · Zasięg: (324–331; −178…−186), krakowskie-2-0
+- Opis: Ortofoto 2025-04: jeden rząd z łańcuchem po łuku krawężnika (r ok. 5–6 m), ok. 7 słupków co 1,2 m od (324,9; −178,9) do (329,8; −185,6). Gra (main i graf) przerywa rząd na narożniku przerwami 2,8–3,8 m. Przegląd kuratora E3, P8.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props kerb rows)
+
+### G-987 Zebra na Placu Łokietka 3 m zamiast 9 m
+- Ważność: S4 · Zasięg: Plac Łokietka (443; −94,5)
+- Opis: Przejście n481931007 w grze ma 3 m i jest skręcone o ok. 7°; ortofoto 2025-04: 9 m (z −89,6…−98,6), krawędzie prostopadłe do jezdni. Szerokość z domyślnej, OSM nie ma width. Przegląd kuratora E3, P7.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (zebra-fit)
+
+### G-988 Plac z reguły gołej ziemi o 8 cm niżej od chodnika grafu przy zachodnim chodniku Lubartowskiej
+- Ważność: S4 · Zasięg: x 421–431, z −57…−25, krakowskie-2-0 (ok. 168 m²); ta sama klasa co sidewalk-step na main
+- Opis: Po zwężeniu Lubartowskiej (T-360) chodnik grafu kończy się na dalszej krawędzi zmapowanego chodnika w1054482102, a resztę do fasad kładzie reguła gołej ziemi z ortofoto jako square (0,08 m) obok sidewalk (0,16 m): uskok wzdłuż x ≈ 430,5. Ortofoto 2025-04: jedna płaska nawierzchnia od krawężnika do fasad, plac w kratę dopiero od z ok. −33. Poprawka: wypełnienie, które styka się z chodnikiem grafu, kładzione jako sidewalk (square tylko przy placu z mapy); wymaga oznaczenia chodników grafu w tablicach. Szew 0,05 m z tego samego miejsca naprawiony (łączenie stykających się kawałków chodnika). Przegląd kuratora E3, P1.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (bare-cover, streets/graph-bands)
+- Klucze skanu: sidewalk-step krakowskie-2-0 442,-54
+- 27.11: szew 0,05 m z tego samego miejsca (dwa kawałki chodnika grafu ze wspólną ukośną granicą opisaną różnymi wierzchołkami, zaokrąglane osobno do 0,1 m) zostaje. Trzy próby wycofane: łączenie stykających się kawałków przed zaokrągleniem (+23 kerb-gap-bare w dzielnicy przez otwarcie o THIN), łączenie tylko czystych po zaokrągleniu (szew wraca), zakładka 0,06 m (+4 ground-ring-self-cross, +14 kerb-gap-bare). Poprawka u źródła: wspólna granica kawałków z jednego podziału (te same wierzchołki). Miejsca: landuse-bare, bare-on-cover i ground-strip-gap przy (430–432; −82…−57).
+- 27.11 (później): szew 0,05 m naprawiony u źródła: wspólne wierzchołki T-połączeń kawałków grafu (weldTJunctions, wzorzec tjunc.c z qbsp), test t-junctions; przy okazji kerb-gap-bare w dzielnicy 702 -> 642. Zostaje uskok 8 cm placu z reguły gołej ziemi.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

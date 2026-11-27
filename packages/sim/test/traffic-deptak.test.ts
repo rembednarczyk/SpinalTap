@@ -81,7 +81,12 @@ describe("the cars at the deptak's south mouth (T-324)", () => {
     sim.step();
     // Seki 8 m off the seam, looking at it: a vehicle held at a lane's end in view stands there.
     const seam = pointAt(ring.points, 0);
-    const eye = { x: seam.x - seam.tz * 8, z: seam.z + seam.tx * 8 };
+    // Off the carriageway to the seam's left, 8 m on at least: a player standing on it is a body in
+    // the ring's way, and the ring's vehicles slow for it (8 m flat fell on the asphalt, 3.4 m off
+    // the ring's lane once BDOT10k set the carriageway, ADR-0104).
+    let off = 8;
+    while (onRoad(seam.x - seam.tz * off, seam.z + seam.tx * off)) off += 0.5;
+    const eye = { x: seam.x - seam.tz * off, z: seam.z + seam.tx * off };
     teleportPlayer(sim, ground(eye.x, eye.z), Math.atan2(seam.x - eye.x, seam.z - eye.z));
     const last = new Map<number, { s: number; x: number; z: number }>();
     const rounds: string[] = [];
@@ -113,7 +118,12 @@ describe("the cars at the deptak's south mouth (T-324)", () => {
     sim.enqueue({ type: "wait", minutes: (hm(8) - now + 1440) % 1440 });
     sim.step();
     const seam = pointAt(ring.points, 0);
-    const eye = { x: seam.x - seam.tz * 8, z: seam.z + seam.tx * 8 };
+    // Off the carriageway to the seam's left, 8 m on at least: a player standing on it is a body in
+    // the ring's way, and the ring's vehicles slow for it (8 m flat fell on the asphalt, 3.4 m off
+    // the ring's lane once BDOT10k set the carriageway, ADR-0104).
+    let off = 8;
+    while (onRoad(seam.x - seam.tz * off, seam.z + seam.tx * off)) off += 0.5;
+    const eye = { x: seam.x - seam.tz * off, z: seam.z + seam.tx * off };
     teleportPlayer(sim, ground(eye.x, eye.z), Math.atan2(seam.x - eye.x, seam.z - eye.z));
     let arrived: number | null = null;
     let at = 0;

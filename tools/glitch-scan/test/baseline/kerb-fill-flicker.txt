@@ -1,11 +1,9 @@
 # kerb-fill-flicker: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-0-1 -110,60
+krakowskie-0-0 -190,-60
+krakowskie-0-0 -180,-60
 krakowskie-0-1 -90,80
 krakowskie-0-1 -90,90
-krakowskie-0-1 -50,120
 krakowskie-0-1 -50,140
-krakowskie-2-0 440,-80
-krakowskie-2-0 440,-70
 krakowskie-2-1 310,50
 krakowskie-2-1 320,50
 krakowskie-2-1 300,100
