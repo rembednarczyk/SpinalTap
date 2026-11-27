@@ -11,6 +11,9 @@ import { oneway } from "../../osm-import/src/markings.ts";
 import { graphDistricts } from "../../osm-import/src/streets/graph-bands.ts";
 import type { OsmData } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { COVER } from "../../orto/src/classify.ts";
+import { coverAt, coverFor, readCover } from "../../orto/src/cover.ts";
+import { MAP_REGIONS } from "../../orto/src/region.ts";
 
 /**
  * The import's kerb fills (G-522, G-570) seen from the map data alone, not from the import's own
@@ -79,6 +82,13 @@ export interface FillWorld {
   readonly roads: readonly { readonly line: readonly Pt[]; readonly half: number; readonly measured: boolean }[];
   /** The map's bus stops. */
   readonly stops: readonly Pt[];
+  /**
+   * Is a fill at `p` over a bay's asphalt? In the districts on the street graph every sidewalk the
+   * graph lays reads as a fill (the map's lines explain none of it), so a stop by it is a bay laid
+   * as a pavement only where the orthophoto shows asphalt under it (ADR-0104; Narutowicza's stop by
+   * (233.9; −164.2) stands on the pavement a metre from the kerb). Every fill elsewhere, if not given.
+   */
+  readonly bayAt?: (p: Pt) => boolean;
 }
 
 /** A fill: drawn sidewalk at `p` that no paving of the map explains. */
@@ -197,7 +207,7 @@ export const busStopOnFill = (w: FillWorld): Finding[] => {
   return w.stops.flatMap((s) => {
     for (let x = -STOP_NEAR; x <= STOP_NEAR; x += FILL_GRID)
       for (let z = -STOP_NEAR; z <= STOP_NEAR; z += FILL_GRID)
-        if (Math.hypot(x, z) <= STOP_NEAR && fill({ x: s.x + x, z: s.z + z }) && (fillWidth(w, fill, { x: s.x + x, z: s.z + z })?.width ?? 0) >= STOP_FILL) return [{ at: `${s.x.toFixed(0)},${s.z.toFixed(0)}`, what: `bus stop at ${s.x.toFixed(1)},${s.z.toFixed(1)} by a fill` }];
+        if (Math.hypot(x, z) <= STOP_NEAR && fill({ x: s.x + x, z: s.z + z }) && (w.bayAt?.({ x: s.x + x, z: s.z + z }) ?? true) && (fillWidth(w, fill, { x: s.x + x, z: s.z + z })?.width ?? 0) >= STOP_FILL) return [{ at: `${s.x.toFixed(0)},${s.z.toFixed(0)}`, what: `bus stop at ${s.x.toFixed(1)},${s.z.toFixed(1)} by a fill` }];
     return [];
   });
 };
@@ -239,5 +249,13 @@ export const cityFillWorld = (osm: OsmData): FillWorld => {
     .sort((a, b) => a.id - b.id)
     .map((n) => geoToWorld(n.lat, n.lon))
     .filter(inChunks);
-  return { sidewalks, sampled, explained, roads, stops };
+  // A bay is asphalt: in the districts on the street graph, a fill only where the orthophoto shows it.
+  const covers = MAP_REGIONS.map((r) => readCover(r.slug)).filter((c) => c !== undefined);
+  const graphRects = MAP_CHUNKS.filter(onGraph).map((c) => c.bounds);
+  const bayAt = (p: Pt) => {
+    if (!graphRects.some((b) => p.x >= b.minX && p.x < b.maxX && p.z >= b.minZ && p.z < b.maxZ)) return true;
+    const c = coverFor(covers, p);
+    return c !== undefined && coverAt(c, p.x, p.z) === COVER.asphalt;
+  };
+  return { sidewalks, sampled, explained, roads, stops, bayAt };
 };
