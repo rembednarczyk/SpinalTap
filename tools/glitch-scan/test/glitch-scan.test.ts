@@ -153,6 +153,9 @@ import { deptakCarLanes, deptakStallClear, deptaksOf, roadRetagRows } from "./de
 import { orthoSides } from "../../osm-import/src/corrections-kerb.ts";
 import { LANDMARK_BUILDINGS } from "../../osm-import/src/landmark-ids.ts";
 import { type Line, extractFeatures } from "../../osm-import/src/features.ts";
+import { bdotWays } from "../../osm-import/src/streets/bdot-ways.ts";
+import { graphDistricts } from "../../osm-import/src/streets/graph-bands.ts";
+import { cornerZones } from "./corner-zones";
 import { areaSurface, pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
@@ -650,8 +653,11 @@ const SIDEWALKS = (() => {
   let memo: ReturnType<typeof sidewalkStretches> | null = null;
   return () => {
     if (memo) return memo;
-    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
+    const streets = ROAD_CHAINS.map((c, i) => ({ id: `${c.name || c.kind}#${i}`, kind: c.kind, points: c.points.map(([x, z]) => ({ x, z })), reach: Math.max(...c.half.map((h) => Math.max(h[0], h[1]))) }));
     const district = (x: number, z: number) => MAP_CHUNKS.find((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1)?.id.replace(/-\d+-\d+$/, "");
+    // In the districts on the street graph a junction's corner reaches as the graph rounds it (ADR-0104, the user's decision of 26.11).
+    const graph = graphDistricts();
+    const corners = graph.size === 0 ? [] : cornerZones(streets).filter((c) => graph.has(district(c.x, c.z) ?? ""));
     const ground = { surfaces: surfacesAt, lift: (x: number, z: number) => surfaceLiftAt(x, z, false), building: inBuilding };
     // The squares and pedestrian areas of the map (`areaSurface`: square, cobble): their paving meets the kerb as mapped.
     const places = extractFeatures(SOURCE_OSM)
@@ -661,7 +667,7 @@ const SIDEWALKS = (() => {
       });
     const mapped = (x: number, z: number, surface: GroundSurface) =>
       places.some((p) => p.surface === surface && x >= p.box.minX && x <= p.box.maxX && z >= p.box.minZ && z <= p.box.maxZ && pointInRing({ x, z }, p.ring));
-    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets), mapped }, streets));
+    return (memo = sidewalkStretches(ground, { district, junction: junctionTest(streets, corners), mapped }, streets));
   };
 })();
 
@@ -2455,9 +2461,10 @@ const CHECKS: Readonly<Record<string, () => Finding[] | Promise<Finding[]>>> = {
   /**
    * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
    * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
-   * A width measured on the orthophoto (ADR-0080 PR 10) is no fit to the sidewalks.
+   * A width measured on the orthophoto (ADR-0080 PR 10) is no fit to the sidewalks, nor BDOT10k's
+   * in the districts on the street graph (ADR-0104 pkt 4, `bdot-ways.ts`).
    */
-  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 && !orthoSides(r.id) ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
+  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 && !orthoSides(r.id) && !BDOT_WAYS().has(r.id) ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
   /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
@@ -2769,6 +2776,12 @@ const footwaysOnCarriageway = (): Finding[] => {
  * `cover`, the larger share of the street's samples that a mapped sidewalk runs along on one side
  * (parallel, beside it, its axis on the carriageway by type).
  */
+/** The streets' ways BDOT10k measures in the districts on the street graph (none while the graph is off). */
+const BDOT_WAYS = (() => {
+  let memo: ReadonlyMap<string, unknown> | null = null;
+  return () => (memo ??= bdotWays(extractFeatures(SOURCE_OSM).lines));
+})();
+
 const FITTED = (() => {
   let memo: { id: string; name: string; at: string; width: number; cover: number; oneway: boolean }[] | null = null;
   return () => {

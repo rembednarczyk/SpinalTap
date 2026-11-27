@@ -1,5 +1,5 @@
+import { OFF_GRAPH } from "./off-graph.ts";
 import { describe, expect, it } from "vitest";
-import { DISTRICTS } from "../src/config.ts";
 import { withoutReplaced } from "../src/corrections-alchemia.ts";
 import { correctedLine } from "../src/corrections.ts";
 import { extractFeatures } from "../src/features.ts";
@@ -52,7 +52,7 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
   };
   const way = (id: number, a: number, b: number, tags: Record<string, string>) =>
     ` <way id="${id}"><nd ref="${a}"/><nd ref="${b}"/>${Object.entries(tags).map(([k, v]) => `<tag k="${k}" v="${v}"/>`).join("")}</way>`;
-  const tinyChunk = [{ id: "test-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
+  const tinyChunk = [{ id: "test-0-0", district: OFF_GRAPH, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
   /**
    * Radziwiłłowska by Plac Litewski: three lanes (9.75 m by `lanes`) along +x, a footway 4 m off
    * the axis on its left (+z) and its right from x 0 to `right`; the asphalt's reach left and right at x.
@@ -126,7 +126,7 @@ describe("a street of mapped lanes fitted to its sidewalks (G-655)", () => {
 describe("Radziwiłłowska by Plac Litewski on the map (G-655)", () => {
   const inputs = loadInputs();
   const lines = withoutReplaced(extractFeatures(inputs.osm)).lines.map((l) => correctedLine(l));
-  const ground = generate(inputs.osm, () => 190, [{ id: "t-0-0", district: DISTRICTS[0]!, rect: { minX: -100, minZ: 95, maxX: 0, maxZ: 135 } }]).chunks[0]!.ground;
+  const ground = generate(inputs.osm, () => 190, [{ id: "t-0-0", district: OFF_GRAPH, rect: { minX: -100, minZ: 95, maxX: 0, maxZ: 135 } }]).chunks[0]!.ground;
   const at = surfaces(ground);
   // w331453920 and w914787972, x -18.6 to -87.5: the stretch along the footway w232805936 and the one past where it turns off south.
   const ways = ["w331453920", "w914787972"].map((id) => lines.find((l) => l.id === id)!);
@@ -163,7 +163,7 @@ describe("Radziwiłłowska by Plac Litewski on the map (G-655)", () => {
   });
 
   it("runs its centre and lane lines on where its fitted pieces meet, at x -19 and -66 (G-675)", () => {
-    const markings = generate(inputs.osm, () => 190, [{ id: "t-0-0", district: DISTRICTS[0]!, rect: { minX: -100, minZ: 95, maxX: 0, maxZ: 135 } }]).chunks[0]!.markings;
+    const markings = generate(inputs.osm, () => 190, [{ id: "t-0-0", district: OFF_GRAPH, rect: { minX: -100, minZ: 95, maxX: 0, maxZ: 135 } }]).chunks[0]!.markings;
     const lines = markings.filter((m) => m.kind === "centre-dash" || m.kind === "lane-dash").map((m) => ring(m.line));
     expect(lines.filter((l) => l.some((p) => p.x < -60) && l.some((p) => p.x > -70)).length).toBeGreaterThan(0);
     expect(markingSteps(lines)).toEqual([]);

@@ -151,6 +151,59 @@ export const cornerReach = (arms: readonly number[], wide: number, r: number): n
   return Math.min(CORNER_REACH_MAX, Math.max(wide + r, touch)) + JUNCTION_MARGIN;
 };
 
+/** How far two arms may bend off a straight line and still be one street going on (rad): a joint, not a corner. */
+const STRAIGHT_ON = Math.PI / 6;
+
+/**
+ * Whether a node's two arms run on in a line (a street's two pieces, a width step ramped between
+ * them); two arms at an angle are a corner, rounded as a junction's: Lubartowska turning into Olejna
+ * where the deptak, off the graph, leaves them two (its 6.35 m disc lapped 3 m over the deptak).
+ */
+const straightOn = (arms: readonly number[]): boolean => {
+  if (arms.length !== 2) return true;
+  // The angle between them, 0..π: π for a street going straight on.
+  const between = Math.abs(((arms[0]! - arms[1]! + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  return Math.PI - between <= STRAIGHT_ON;
+};
+
+/**
+ * The ramps of each kerb of one street's two pieces in a row where the pieces' sides differ, each
+ * over the piece narrower on that side: a piece BDOT10k moves off its way (Bernardyńska's 2.2 m)
+ * next to one it does not keeps its two kerbs 2.2 m across from the other's, and the joint's disc of
+ * the narrowest half left a step in each. As a road design's taper: each edge moves linearly, at
+ * `RAMP` and over `RAMP_MAX` at most, the wider side kept to the node and the narrower one reached
+ * past it. Both pieces' sides are read the way of a walk from the first piece into the second.
+ */
+const sideRamps = (edges: readonly StreetEdge[], j: Node): Area[] => {
+  if (j.edges.length !== 2) return [];
+  const ends = j.edges.map((i) => {
+    const e = edges[i]!;
+    const last = key(e.axis.at(-1)!) === key(j.at);
+    if (!last && key(e.axis[0]!) !== key(j.at)) return null;
+    return { e, last };
+  });
+  const [a, b] = ends;
+  if (!a || !b) return [];
+  // Left and right the way of a walk from `a` into `b`: `a` towards the node, `b` away from it.
+  const sides = (x: { e: StreetEdge; last: boolean }, into: boolean) => (x.last === into ? [x.e.left, x.e.right] : [x.e.right, x.e.left]);
+  const [la, ra] = sides(a, true);
+  const [lb, rb] = sides(b, false);
+  return ([[la!, lb!, 1], [ra!, rb!, -1]] as const).flatMap(([ka, kb, side]) => {
+    if (Math.abs(ka - kb) < 0.01) return [];
+    // Over the narrower side's piece, from the wider kerb at the node to its own past it.
+    const [over, wide, narrow] = ka < kb ? [a, kb, ka] : [b, ka, kb];
+    const q = awayFrom(over.e.axis, j.at, Math.min((wide - narrow) / RAMP, RAMP_MAX));
+    const d = Math.hypot(q.x - j.at.x, q.z - j.at.z);
+    if (d < 1e-6) return [];
+    // The walk's direction along that piece: into the node over `a`, out of it over `b`.
+    const sign = over === a ? -1 : 1;
+    const u = { x: (sign * (q.x - j.at.x)) / d, z: (sign * (q.z - j.at.z)) / d };
+    // `offsetLine`'s left: the normal (-dz, dx).
+    const n = { x: -u.z * side, z: u.x * side };
+    return [areaOfRing([j.at, { x: j.at.x + n.x * wide, z: j.at.z + n.z * wide }, { x: q.x + n.x * narrow, z: q.z + n.z * narrow }, q])];
+  });
+};
+
 /**
  * The carriageways with each junction's concave corners rounded by its streets' kerb radius, and
  * each joint of one street's two pieces closed: their square ends at a slant left a notch outside
@@ -158,13 +211,8 @@ export const cornerReach = (arms: readonly number[], wide: number, r: number): n
  * narrower piece (`RAMP`).
  */
 const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[]): Area => {
-  const corners = at.map((j) => {
-    const [wide, narrow] = halves(edges, j);
-    if (j.arms < 3) {
-      const thin = j.edges.find((i) => Math.max(edges[i]!.left, edges[i]!.right) <= narrow + 1e-9);
-      if (wide - narrow < 0.01 || thin === undefined) return disc(j.at, narrow);
-      return taper(j.at, wide, awayFrom(edges[thin]!.axis, j.at, Math.min((wide - narrow) / RAMP, RAMP_MAX)), narrow);
-    }
+  // A junction's concave corners rounded by its streets' kerb radius.
+  const rounded = (j: Node, wide: number): Area => {
     const r = Math.max(...j.edges.map((i) => edges[i]!.kerbRadius));
     if (r <= 0) return [];
     const reach = cornerReach(armsAt(edges, j), wide, r);
@@ -173,6 +221,15 @@ const cornered = (base: Area, edges: readonly StreetEdge[], at: readonly Node[])
     // is not cornered to it, or its median under 2r wide went under the asphalt.
     const near = within(join(...j.edges.map((i) => carriagewayOf(edges[i]!))), disc(j.at, reach + 2 * r));
     return within(grown(grown(near, r), -r), disc(j.at, reach));
+  };
+  const corners = at.map((j) => {
+    const [wide, narrow] = halves(edges, j);
+    if (j.arms >= 3) return rounded(j, wide);
+    // Two arms at an angle: a corner, rounded inside, the notch outside its bend closed by the narrower half's disc.
+    if (!straightOn(armsAt(edges, j))) return join(disc(j.at, narrow), rounded(j, wide));
+    const thin = j.edges.find((i) => Math.max(edges[i]!.left, edges[i]!.right) <= narrow + 1e-9);
+    if (wide - narrow < 0.01 || thin === undefined) return join(disc(j.at, narrow), ...sideRamps(edges, j));
+    return taper(j.at, wide, awayFrom(edges[thin]!.axis, j.at, Math.min((wide - narrow) / RAMP, RAMP_MAX)), narrow);
   });
   return join(base, ...corners);
 };

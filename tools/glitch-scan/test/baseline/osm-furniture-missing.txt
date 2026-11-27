@@ -13,6 +13,9 @@ krakowskie-2-0 312,-89
 krakowskie-2-0 299,-88
 krakowskie-2-0 296,-87
 krakowskie-2-0 329,-77
+krakowskie-2-0 424,-31
+krakowskie-2-0 425,-31
+krakowskie-2-0 424,-30
 krakowskie-2-1 384,80
 podzamcze-0-0 719,289
 podzamcze-0-2 685,637

@@ -13,8 +13,11 @@ const [IN, OUT] = TRAFFIC_ROUTES.slice(CITY_ROUTES.length);
 const inside = (c: (typeof P1_CABINS)[number], p: { x: number; z: number }) => p.x > c.minX && p.x < c.maxX && p.z > c.minZ && p.z < c.maxZ;
 const ofStreet = (id: string) => TRAFFIC_LANES.find((l) => l.id === id)!;
 /** Bajkowskiego's lanes eastwards: the left (north) one and the right one; the city's route of the left one (`traffic-deptak.ts`). */
-const bajkowskiegoLeft = TRAFFIC_LANES.find((l) => l.street === "Wacława Bajkowskiego" && projectOn(l.points, 414, -14.8).d < 0.5)!;
-const bajkowskiegoRight = TRAFFIC_LANES.find((l) => l.street === "Wacława Bajkowskiego" && projectOn(l.points, 414, -18).d < 0.5)!;
+// By the driveway (x 414), north to south: found by their order, not their place, which moves with the carriageway's axis (ADR-0104 pkt 4).
+const [bajkowskiegoLeft, bajkowskiegoRight] = TRAFFIC_LANES.filter((l) => l.street === "Wacława Bajkowskiego" && projectOn(l.points, 414, -16.4).d < 3 && pointAt(l.points, projectOn(l.points, 414, -16.4).s).tx > 0.9)
+  .map((l) => ({ l, z: pointAt(l.points, projectOn(l.points, 414, -16.4).s).z }))
+  .sort((a, b) => b.z - a.z)
+  .map((x) => x.l) as [(typeof TRAFFIC_LANES)[number], (typeof TRAFFIC_LANES)[number]];
 const cityLeft = CITY_ROUTES.find((c) => c.id.startsWith(`${bajkowskiegoLeft.id}~`))!;
 /** On Lubartowska w40050981 south of the junction. */
 const SOUTH = { x: 440.5, z: -40 };
