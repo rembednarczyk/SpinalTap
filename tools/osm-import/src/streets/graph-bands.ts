@@ -357,7 +357,10 @@ export const graphBands = <B extends Band>(
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});
   // Not to a lawn or water: what lies between the street and the green is the cover's to lay (`bare-cover.ts`).
   // The verges are no gaps: left bare, for the cover's lawn.
-  const gaps = less(kerbGaps(join(areas.c, areas.verges), areas.sidewalks, kept.filter((b) => b.surface !== "grass" && b.surface !== "water"), near), areas.verges);
+  // Nor over one: a lawn the map draws inside a square (Plac Litewski's, a hole in its paving) is no
+  // gap, though the closing fills it as one; the sidewalk laid over it hid the lawn (`grass-under-paving`).
+  const mappedGreen = join(...kept.filter((b) => b.surface === "grass" || b.surface === "water").map((b) => areaOfRing(b.ring)));
+  const gaps = less(kerbGaps(join(areas.c, areas.verges), areas.sidewalks, kept.filter((b) => b.surface !== "grass" && b.surface !== "water"), near), join(areas.verges, mappedGreen));
   if (edges.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, gaps, {});
   // The verges the orthophoto shows green over most of their piece laid as lawn: narrow, the bare ground rule drops them (`dropLoose`).
   for (const ring of rings(areas.verges)) if (greenShare(ring, cover) > 0.5) add({ surface: "grass", ring: [], bridge: false, source: edges[0]!.way } as unknown as B, areaOfRing(ring), {});

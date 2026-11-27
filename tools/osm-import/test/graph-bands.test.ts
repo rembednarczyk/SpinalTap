@@ -34,3 +34,21 @@ describe("the gap between a kerb and a mapped sidewalk (ADR-0104)", () => {
     expect(surfaceAt(green, gap)).not.toContain("sidewalk");
   });
 });
+
+describe("a lawn the map draws in a square beside a street (ADR-0104, grass-under-paving)", () => {
+  // A square from 2 m past the kerb, a lawn 4 by 2 m in it (a hole in its paving, as Plac Litewski's):
+  // the gaps' closing fills the lawn as one, and the sidewalk laid over it hid the lawn.
+  const square = (ring: Pt[], k: number) => boxed({ surface: "square", ring, bridge: false, source: `r${k}` });
+  const placed = [
+    bands[0]!,
+    square(rect(X0, X1, Z + 5, Z + 8), 1),
+    square(rect(X0, X1, Z + 10, Z + 14), 2),
+    square(rect(X0, 8, Z + 8, Z + 10), 3),
+    square(rect(12, X1, Z + 8, Z + 10), 4),
+    boxed({ surface: "grass", ring: rect(8, 12, Z + 8, Z + 10), bridge: false, source: "w9" }),
+  ];
+  it("lays no sidewalk over it", () => {
+    const out = graphBands(placed, lines.slice(0, 1), [], () => false, () => COVER.paving, new Set(["krakowskie"]));
+    expect(surfaceAt(out, { x: 10, z: Z + 9 })).toEqual(["grass"]);
+  });
+});
