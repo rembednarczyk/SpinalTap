@@ -2,6 +2,13 @@
 
 Zamknięte pozycje [backlogu](backlog.md) (zrobione, w main albo zastąpione nowszą kolejnością) i migawki stanu dla dawnych sesji. Plik czyta się tylko w razie potrzeby, np. przy pytaniu, skąd wzięła się decyzja albo kiedy coś weszło do main. Nowe wpisy dopisujemy na górze.
 
+## Przeniesione 27.11
+
+Przegląd backlogu w nocy 27.11: kontrole skanu zaproponowane przez kuratora są już w skanie (26.11).
+
+- **[24.11 ok. 10:00, przegląd kuratora #1015 (holo-fara, płyta T-347): kontrole proponowane; 26.11 obie są w skanie]** skan `street-prop-off-ground` (meble z |y − groundY| 0,15–1,5 m, baza 29; G-967; w skanie od poprawki G-967, baza 0), skan `way-axis-shift-by-pad` (26.11: płyty z `row`, ulice 0,2–0,3 m, bo wyżej liczy `pad-on-road`, i schody na gruncie ponad 0,2 m; płyta fary 0, baza 3 przyjęta: T-051 myjnia −0,30 i −0,25 m, T-055 schody w293370649 −0,34 m) (oś drogi lub chodnika przesunięta przez płytę z `row` o >0,2 m, po poprawce baza 0); testy otworów hologramu fary (drzwi w przerwach fundamentów, okna ponad dachami kaplic) są w `fara-holo.test.ts`.
+- **[24.11 ok. 9:00, G-964 w #1014: kontrole skanu proponowane przez kuratora, do zrobienia]** `market-stall-off-tent` (stragan w obrysie targu z `tents` poza prostokątami +0,3 m, baza 0; na main 61; 26.11 w skanie, `market-tents.ts`, baza 0 po G-964), `market-tent-on-building` (prostokąt namiotu na budynku ponad 2 m², baza 0; 26.11 w skanie, baza 0), `prop-on-canopy-post` (płótno straganu bliżej niż 0,125 m od słupa daszka G-063, baza 2; G-966, T-346; 26.11 w skanie, baza 0 po poprawce G-966, najbliższe płótno 0,163 m od lica słupa), `market-without-tents` (śledzenie: Giełda na Kresowej w231445090 i Bazar w67502759 bez domapowanych namiotów; 26.11 w skanie, baza 2, Giełda poza chunkami mapy).
+
 ## Przeniesione 26.11
 
 Przegląd backlogu w trybie nocnym 26.11: pozycje zrobione w main.
