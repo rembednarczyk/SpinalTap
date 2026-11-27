@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-983 Ławki OSM n6681995509–11 przy Lubartowskiej zdjęte przez drogę pijaka car_wash
+- Ważność: S4 · Zasięg: 3 ławki OSM przy (424; −30), krakowskie-2-0
+- Opis: Import stawia ławki na węzłach OSM, a clearOfGame zdejmuje je, bo odcinek drogi car_wash (contract-plans.ts) z (421; −29,8) do (441; −40) mija je w 0,10–0,93 m (KEEP_CLEAR). Na main jedna ławka stała 1,3 m od węzła i przeżyła. Poprawka: przeprowadzić drogę co najmniej 1,5 m od grupy (np. punkt ok. (427; −28,5)) albo nie zdejmować mebli z węzłem OSM. Przegląd kuratora E3, P6.
+- Status: naprawione (27.11, #1091 scalony); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/contract-plans, street-props)
+- Test przyjęcia: WORLD_STREET_PROPS ma ławkę do 0,5 m od każdego z węzłów n6681995509–11
+- Klucze skanu: osm-furniture-missing krakowskie-2-0 424,-31; osm-furniture-missing krakowskie-2-0 425,-31; osm-furniture-missing krakowskie-2-0 424,-30
+
 ### G-980 Przechodzień uciekający w ukośną fasadę przerzuca stronę skrętu
 - Status: naprawione (27.11, PR #1084: mapa bezpieczeństwa rozstrzyga remis skosów); wcześniej: zgłoszone (27.11, noc; blokowało włączenie grafu ulic E3, bo tam trafiają w to sceny `flee-wall` G-326)
 - Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, np. Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: średni do dużego
