@@ -180,3 +180,54 @@ export const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
   }
   return out;
 };
+
+type Range = readonly [number, number];
+
+/** A piece of a route: a part of a city route (its turns and arcs come with it), or a way of its own. */
+export type RoutePiece = { readonly of: TrafficRoute; readonly from: number; readonly to: number } | { readonly points: readonly Pt[]; readonly speed: number; readonly turn?: true };
+
+/** The pieces one after another as one route of the first's street and use, its turns and arcs by arc length. */
+export const stitch = (id: string, pieces: readonly RoutePiece[], vehicles: number, ring = false): TrafficRoute => {
+  const points: Pt[] = [];
+  const turns: Range[] = [];
+  const arcs: Range[] = [];
+  let len = 0;
+  let time = 0;
+  const push = (q: Pt) => {
+    const last = points[points.length - 1];
+    if (last && Math.hypot(q[0] - last[0], q[1] - last[1]) < 1e-6) return;
+    if (last) len += Math.hypot(q[0] - last[0], q[1] - last[1]);
+    points.push(q);
+  };
+  for (const p of pieces) {
+    const start = len;
+    if ("of" in p) {
+      for (const q of slice(p.of.points, p.from, p.to)) push(q);
+      const moved = (rs: readonly Range[] | undefined): Range[] => (rs ?? []).filter(([a, b]) => a >= p.from && b <= p.to).map(([a, b]) => [a - p.from + start, b - p.from + start]);
+      turns.push(...moved(p.of.turns));
+      arcs.push(...moved(p.of.arcs));
+      time += (len - start) / p.of.speed;
+      continue;
+    }
+    for (const q of p.points) push(q);
+    arcs.push([start, len]);
+    if (p.turn) turns.push([start, len]);
+    time += (len - start) / (p.turn ? TURN_SPEED : p.speed);
+  }
+  const first = pieces[0]!;
+  const base = "of" in first ? first.of : null;
+  const byStart = (a: Range, b: Range) => a[0] - b[0];
+  return {
+    id,
+    street: base?.street ?? "",
+    use: "cars",
+    points,
+    length: len,
+    speed: Math.round((len / time) * 100) / 100,
+    vehicles,
+    stops: [],
+    ...(turns.length > 0 ? { turns: turns.sort(byStart) } : {}),
+    ...(arcs.length > 0 ? { arcs: arcs.sort(byStart) } : {}),
+    ...(ring ? { ring: true as const } : {}),
+  };
+};
