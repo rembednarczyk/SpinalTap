@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FLEE_RADIUS, Simulation } from "../src";
-import { passerbyOnDeptak, run, teleportPlayer } from "./helpers";
+import { type RouteWalk, passerbyOnDeptak, run, setWalkerDown, teleportPlayer } from "./helpers";
 
 /** A fresh game with the deptak's crowd out (ADR-0041), on a street hostile to the player (ADR-0070). */
 const hostileCrowd = (seed: number): Simulation => {
@@ -10,6 +10,42 @@ const hostileCrowd = (seed: number): Simulation => {
 };
 
 const byId = (sim: Simulation, id: number) => [...sim.world].find((e) => e.id === id)!;
+
+/** A scene's walker as the tables of 27.11 dealt it out: where it set off and how it walked its route, if it had one. */
+interface Scene {
+  readonly at: readonly [number, number];
+  readonly walk?: RouteWalk;
+}
+
+/**
+ * Each scene's walker by its seed and number. A scene is the place, not the walker: when the map's
+ * content deals the crowd out anew (the street graph's pavements of ADR-0104 E3 do), the walker is
+ * set down there with the walk it had there, and the escape it runs is the one of that place still.
+ */
+const SCENES: Readonly<Record<string, Scene>> = {
+  "3:1002001": { at: [425, -29.86] },
+  "3:1002002": { at: [338.99829068355734, -106.33622015033131], walk: { speed: 1.2710543111432344, heading: -2.9070202309434245 } },
+  "3:1002003": { at: [425.52, -29.33] },
+  "3:1002004": { at: [339.1737328197229, -46.04243604409879], walk: { speed: 1.2157225218135863, heading: 1.768437165030821 } },
+  "3:1002009": { at: [396.56962067276055, -98.83277925811167], walk: { speed: 1.1587881255196408, heading: -1.4819721419837466 } },
+  "7:1002001": { at: [310.9, -99.89] },
+  "11:1002001": { at: [312.8, -99.89] },
+  "17:1002004": { at: [297.32890726131046, -34.039079819391], walk: { speed: 1.247004289040342, heading: -1.0739588842004129 } },
+  "17:1002005": { at: [269.62444087781273, -148.2461684885348], walk: { speed: 1.255298160435632, heading: 0.2179987046873962 } },
+  "17:1002008": { at: [242.82, -107.18] },
+  "23:1002006": { at: [253.25, -151.68] },
+  "29:1002002": { at: [337.74852663993227, -100.56881248805628], walk: { speed: 1.2055629728827626, heading: 0.23475252681056222 } },
+  "29:1002006": { at: [427.06, -90.52] },
+  "43:1002008": { at: [362.35, -89.37] },
+};
+
+/** The walker `id` of the game `seed`, set down in its scene if the crowd put it elsewhere. */
+const sceneWalker = (sim: Simulation, seed: number, id: number) => {
+  const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
+  const { at: [x, z], walk } = SCENES[`${seed}:${id}`]!;
+  if (Math.hypot(walker.position.x - x, walker.position.z - z) > 1e-6) setWalkerDown(sim, walker, x, z, walk);
+  return walker;
+};
 
 /** A turn of the heading between two steps this sharp (radians) is a jump, not a curve. */
 const JUMP = 0.4;
@@ -28,7 +64,7 @@ type Chase = { speed: number; stop: number };
  */
 const watchEscape = (seed: number, id: number, dx: number, dz = 0, chase?: Chase, steps = 300) => {
   const sim = hostileCrowd(seed);
-  const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
+  const walker = sceneWalker(sim, seed, id);
   const at = { ...byId(sim, walker.id).position };
   teleportPlayer(sim, { x: at.x + dx, y: at.y, z: at.z + dz });
   let p = sim.player()!.position;
