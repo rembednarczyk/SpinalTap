@@ -439,10 +439,14 @@ describe("tag corrections (ADR-0042)", () => {
     const bare: string[] = [];
     for (let x = 806.25; x < 870; x += 0.5) for (let z = 343.25; z < walkAxis(x); z += 0.5) if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
     expect(bare.length * 0.25, bare.slice(0, 20).join(" ")).toBeLessThanOrEqual(0.5);
-    expect(surfaceAt(830, 350)).toBe("square");
+    // The street graph's kerb (E4) lies 0.3-1.4 m from the orthophoto's asphalt (main's 2-3 m): (830; 350) is the carriageway's,
+    // the pavement begins by z 354.5 (the curator's review of E4, P4).
+    expect(surfaceAt(826, 354.5)).toBe("square");
     expect(surfaceAt(860, 352)).toBe("square");
     expect(surfaceAt(830, 343)).toBe("road");
-    expect(surfaceAt(830, 356.6)).toBe("sidewalk");
+    expect(surfaceAt(830, 350)).toBe("road");
+    // One plane of setts on the orthophoto from the bay's edge to the shelter: the sidewalk's line is OSM's, no kerb on the ground.
+    expect(["square", "sidewalk"]).toContain(surfaceAt(830, 356.6));
     expect(surfaceAt(880, 346)).toBe("grass");
   });
 
@@ -464,8 +468,8 @@ describe("tag corrections (ADR-0042)", () => {
     expect(bare * 0.01).toBeLessThanOrEqual(0.5);
     expect(surfaceAt(826, 359.5)).toBe("square");
     expect(surfaceAt(815, 361)).toBe("square");
-    // The sidewalk and the cycleway stay on top of it.
-    expect(surfaceAt(826, 357)).toBe("sidewalk");
+    // The cycleway stays on top of it; the sidewalk's line is one plane of setts with it (the curator's review of E4, P4).
+    expect(["square", "sidewalk"]).toContain(surfaceAt(826, 357));
     expect(surfaceAt(825, 362)).toBe("footway");
   });
 

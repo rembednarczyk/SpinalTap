@@ -41,12 +41,14 @@ describe("the carriageway's width from its sources (ADR-0104 pkt 4)", () => {
 
   it("reports the length by source and the conflicts over 1 m", () => {
     const r = new WidthReport();
-    r.add("w1", "Narutowicza", axis, streetWidth({}, 3.5, true, () => true, 7), 7, 9.2);
+    // w143716181 measured on both sides on the orthophoto: a conflict; w40051033 on one side: the other half is the import's guess, not compared.
+    r.add("w143716181", "Narutowicza", axis, streetWidth({}, 3.5, true, () => true, 7), 7, 9.2);
+    r.add("w40051033", "Narutowicza", axis, streetWidth({}, 3.5, true, () => true, 7), 7, 9.2);
     r.add("w3", "Kozia", axis, streetWidth({}, 2.5, false, () => true, 5), 5, null);
     r.add("w2", "Kozia", axis, streetWidth({}, 2.5, false, () => true, null), null, null);
     const text = r.toString();
-    expect(text).toContain("bdot10k 0.20 km (66.7%)");
-    expect(text).toContain("default 0.10 km (33.3%)");
-    expect(text).toContain("conflicts over 1 m: 1 (w1 Narutowicza: BDOT10k 7 m, orthophoto 9.2 m)");
+    expect(text).toContain("bdot10k 0.30 km (75.0%)");
+    expect(text).toContain("default 0.10 km (25.0%)");
+    expect(text).toContain("conflicts over 1 m: 1 (w143716181 Narutowicza: BDOT10k 7 m, orthophoto 9.2 m); against a one-sided measurement, not compared: 1");
   });
 });

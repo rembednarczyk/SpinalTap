@@ -48,6 +48,9 @@ export const builtGraphDistricts = (chunks: readonly { readonly district: { read
  * rest. ADR-0080 had 6 m by the main streets; a fillet reaches r / tan(θ / 2) along each kerb, and at
  * the city's acute corners (30-45°) 6 m flooded 15-22 m of the corner with asphalt (ADR-0104 E2).
  */
+/** A hole between the places smaller than this is theirs, kept off the sidewalks (m²): a bed between two pavements, not a block. */
+const PLACE_HOLE_MAX = 500;
+
 export const kerbRadius = (highway: string): number => (highway.startsWith("primary") || highway.startsWith("secondary") ? 4 : 3);
 
 /** How far out from the kerb a mapped sidewalk beside a street is read as its sidewalk (m, as `sidewalkIndex`). */
@@ -298,7 +301,7 @@ export const graphBands = <B extends Band>(
   // Not on a bridge: its deck's sidewalk stays the deck's piece; laid by the graph on the ground under it, the deck had a slot (`deck-slot`, Mełgiewska's bridges).
   const walksAlong = (along: ReadonlySet<string>) => bands.filter((b) => (b.surface === "sidewalk" || b.surface === "footway") && !b.bridge && !ways.has(b.source) && (tags.get(b.source)?.footway === "sidewalk" || along.has(b.source)) && inside(b.box));
   // Along the graph's streets only: a footway by the deptak (off the graph) is its kerb as before, its setts reach it.
-  const mapped = walksAlong(footwaysAlongStreets(lines.filter((l) => !isCarFree(l.id)), places, bays));
+  const mapped = walksAlong(footwaysAlongStreets(lines.filter((l) => !isCarFree(l.id)), places, bays, (p) => cover(p) === COVER.green));
   const lineOf = new Map(lines.map((l) => [l.id, l.line]));
   const waysOf = (bs: readonly Boxed<B>[]): Mapped[] =>
     bs.flatMap((b) => {
@@ -353,7 +356,11 @@ export const graphBands = <B extends Band>(
   // stops at their edge (the curator's review of E2: Plac Łokietka cut into strips, a patch on the deptak).
   // So does a street closed to cars (T-324's deptak), laid as before.
   const placesOf = bands.filter((b) => ((!lineOf.has(b.source) && !b.carriageway) || isCarFree(b.source)) && !b.bridge && PLACES.has(b.surface) && inside(b.box)).map((b) => b.ring);
-  const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring), ...placesOf], join(...mapped.map((m) => areaOfRing(m.ring))));
+  // The small holes the places leave between them, left out of their ground on purpose: the beds of shrubs between
+  // T-165's pavement of al. Tysiąclecia and the strip under the Bazar's eaves, which the bare ground rule lays as
+  // lawns. A sidewalk stops at them as at the places (the curator's review of E4, P4): it laid its slabs over the beds.
+  const beds = holesOf(join(...placesOf.map((r) => areaOfRing(r)))).filter((h) => Math.abs(signedArea(h)) < PLACE_HOLE_MAX);
+  const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring), ...placesOf, ...beds], join(...mapped.map((m) => areaOfRing(m.ring))));
   // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
   const replaced = new Set<Band>(mapped);
   const kept = bands.filter((b) => !replaced.has(b) && !(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !b.bridge && inside(b.box));

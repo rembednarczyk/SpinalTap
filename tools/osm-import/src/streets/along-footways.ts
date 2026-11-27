@@ -35,6 +35,8 @@ const INSIDE = 1;
 const PARALLEL = 0.9;
 /** How much farther a footway may lie when a mapped bay (a car park along the kerb, an asphalt area) lies between it and the carriageway (m): a perpendicular bay 5 m deep and its kerb. */
 const BAY = 6;
+/** A footway farther than this past the kerb with a lawn between them is a path of its own (m). */
+const LAWN_GAP = 1.5;
 /** The share of a footway's samples by a street. */
 export const SHARE = 0.6;
 /** The shortest footway laid as a sidewalk (m): a link of a few metres to a crossing is no sidewalk. */
@@ -75,7 +77,7 @@ const byPlace = (p: Pt, places: readonly { readonly ring: readonly Pt[]; readonl
  * (`placeRings`). A footway behind a mapped bay (`bayRings`: `parking=street_side` and the like,
  * laid as asphalt by the kerb) may lie `BAY` m farther out: the sidewalk runs behind the parked cars.
  */
-export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = [], bayRings: readonly (readonly Pt[])[] = []): Set<string> => {
+export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = [], bayRings: readonly (readonly Pt[])[] = [], green: (p: Pt) => boolean = () => false): Set<string> => {
   const places = placeRings.map((ring) => ({ ring, box: ringBounds(ring) }));
   const bays = bayRings.map((ring) => ({ ring, box: ringBounds(ring) }));
   const inBay = (p: Pt) => bays.some(({ ring, box }) => p.x >= box.minX && p.x <= box.maxX && p.z >= box.minZ && p.z <= box.maxZ && pointInRing(p, ring));
@@ -98,10 +100,13 @@ export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonl
           const along = (p.x - q.x) * q.tx + (p.z - q.z) * q.tz;
           const across = Math.abs((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
           if (Math.abs(along) > STEP || across < q.half - INSIDE) continue;
-          if (across <= q.half + BEYOND) return true;
           // Behind a bay: the point halfway between the kerb and the footway lies in it.
           const side = Math.sign((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
           const mid = (q.half + across) / 2;
+          // Behind a lawn more than `LAWN_GAP` wide it is a path of its own, not the street's sidewalk (the curator's review of E4, P5:
+          // Andersa's link, a winding path 2 m past its kerb, laid as the street's sidewalk over the lawn).
+          if (across - q.half > LAWN_GAP && green({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) continue;
+          if (across <= q.half + BEYOND) return true;
           if (across <= q.half + BEYOND + BAY && inBay({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) return true;
         }
     return false;
