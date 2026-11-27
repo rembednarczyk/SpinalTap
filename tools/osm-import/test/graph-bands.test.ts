@@ -3,7 +3,7 @@ import { COVER } from "../../orto/src/classify.ts";
 import { type Line } from "../src/features.ts";
 import { type Pt, pointInRing, ringBounds } from "../src/geometry.ts";
 import { type Band } from "../src/ground.ts";
-import { graphBands } from "../src/streets/graph-bands.ts";
+import { graphBands, roundable } from "../src/streets/graph-bands.ts";
 import { bdotMatch } from "../src/streets/widths.ts";
 
 /** ADR-0104 E2/E3: a side's section between the kerb and a mapped sidewalk past a gap. */
@@ -50,5 +50,20 @@ describe("a lawn the map draws in a square beside a street (ADR-0104, grass-unde
   it("lays no sidewalk over it", () => {
     const out = graphBands(placed, lines.slice(0, 1), [], () => false, () => COVER.paving, new Set(["krakowskie"]));
     expect(surfaceAt(out, { x: 10, z: Z + 9 })).toEqual(["grass"]);
+  });
+});
+
+describe("a piece of the graph's ground the rounding to 0.1 m would make cross itself (ground-ring-self-cross)", () => {
+  it("is opened at its neck, and a piece that rounds well stays as it is", () => {
+    // Two 2 m squares joined by a slanting neck 0.02-0.03 m wide: rounded to 0.1 m, its two sides cross.
+    const necked: Pt[] = [
+      { x: 0, z: 0 }, { x: 2, z: 0 }, { x: 2.04, z: 0.9 }, { x: 2.96, z: 0.95 }, { x: 3, z: 0 }, { x: 5, z: 0 },
+      { x: 5, z: 2 }, { x: 3, z: 2 }, { x: 2.96, z: 0.97 }, { x: 2.09, z: 0.93 }, { x: 2, z: 2 }, { x: 0, z: 2 },
+    ];
+    const opened = roundable(necked);
+    expect(opened).toHaveLength(2);
+    for (const r of opened) expect(Math.abs(r.reduce((a, p, i) => a + p.x * r[(i + 1) % r.length]!.z - r[(i + 1) % r.length]!.x * p.z, 0)) / 2).toBeGreaterThan(3.5);
+    const square = rect(0, 2, 0, 2);
+    expect(roundable(square)).toEqual([square]);
   });
 });

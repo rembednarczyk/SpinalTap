@@ -18,7 +18,7 @@ import { parseLength } from "../building-tags.ts";
 import { type Band } from "../ground.ts";
 import { ALL_CHUNKS } from "../config.ts";
 import { type Line } from "../features.ts";
-import { type Pt, type Rect, lineLength, offsetLine, pointInRing, rectsOverlap, ringBounds, signedArea } from "../geometry.ts";
+import { type Pt, type Rect, lineLength, offsetLine, pointInRing, r1, rectsOverlap, ringBounds, selfIntersects, signedArea } from "../geometry.ts";
 import { type Tags } from "../osm.ts";
 import { COVER } from "../../../orto/src/classify.ts";
 import { isCarFree } from "../corrections-car-free.ts";
@@ -197,6 +197,13 @@ const OVER_WALKS: ReadonlySet<string> = new Set(["steps", "rail", "basin"]);
 const PLACES: ReadonlySet<string> = new Set(["square", "cobble", "road"]);
 /** Half the narrowest gap laid (m): narrower, the chunks' rounding to 0.1 m crosses it over. */
 const THIN = 0.1;
+/**
+ * A piece as the rounding to 0.1 m leaves it whole: one whose neck the rounding closes crosses
+ * itself (`ground-ring-self-cross`), so it is opened by `THIN` (eroded, then dilated) and its necks
+ * narrower than twice that are dropped; a piece that rounds well stays as it is.
+ */
+export const roundable = (ring: readonly Pt[]): Pt[][] =>
+  selfIntersects(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) }))) ? rings(grown(grown(areaOfRing(ring), -THIN), THIN)) : [[...ring]];
 /** How far out from the kerb the gaps are closed (m): a wide sidewalk and the gap past it. */
 const GAP_REACH = 6 + GAP;
 
@@ -342,10 +349,11 @@ export const graphBands = <B extends Band>(
   const laid: Boxed<B>[] = [];
   const add = (from: B, area: Area, more: Partial<Band>) => {
     const own = from.surface === "road" ? area : less(area, over);
-    for (const ring of rings(within(own, region))) {
+    for (const whole of rings(within(own, region))) {
       // A hair of sidewalk (narrower than `THIN` twice on average) the rounding to 0.1 m would cross over: dropped.
-      if (from.surface !== "road" && (2 * Math.abs(signedArea(ring))) / perimeter(ring) < 2 * THIN) continue;
-      laid.push({ ...from, ...more, ring, holed: true, box: ringBounds(ring) } as Boxed<B>);
+      if (from.surface !== "road" && (2 * Math.abs(signedArea(whole))) / perimeter(whole) < 2 * THIN) continue;
+      const pieces = from.surface !== "road" ? roundable(whole) : [whole];
+      for (const ring of pieces) laid.push({ ...from, ...more, ring, holed: true, box: ringBounds(ring) } as Boxed<B>);
     }
   };
   for (const o of areas.own) {
