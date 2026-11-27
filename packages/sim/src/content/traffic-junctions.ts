@@ -53,7 +53,7 @@ export interface Join {
 }
 
 const onChunk = (x: number, z: number): boolean => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
-const deepInMap = (x: number, z: number): boolean => [-EDGE, 0, EDGE].every((a) => [-EDGE, 0, EDGE].every((b) => onChunk(x + a, z + b)));
+export const deepInMap = (x: number, z: number): boolean => [-EDGE, 0, EDGE].every((a) => [-EDGE, 0, EDGE].every((b) => onChunk(x + a, z + b)));
 
 type Heading = { readonly tx: number; readonly tz: number };
 

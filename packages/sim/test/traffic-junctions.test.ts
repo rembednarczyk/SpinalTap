@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, offsetLine, pointAt } from "../src/content/traffic";
 import { deptakMouthRoutes, ontoRings } from "../src/content/traffic-deptak";
+import { laneDrops } from "../src/content/traffic-drops";
 import { alchemiaRampRoutes } from "../src/content/traffic-ramp";
 import { JUNCTION_REACH, joinAtJunctions, junctionJoins } from "../src/content/traffic-junctions";
 import { type Pt, polylineLength, surfacesAt } from "../src/content/lublin/roads";
@@ -131,7 +132,7 @@ describe("turns at junctions (ADR-0055)", () => {
   it("is a pure function of the lanes: the same routes every time, in the same order", () => {
     const again = joinAtJunctions(TRAFFIC_LANES);
     expect(again).toEqual(JUNCTION_ROUTES);
-    expect(deptakMouthRoutes(again, TRAFFIC_LANES)).toEqual(CITY_ROUTES);
+    expect(laneDrops(deptakMouthRoutes(again, TRAFFIC_LANES))).toEqual(CITY_ROUTES);
     // The routes driven are the city's and Alchemia's, as they are but for the links on into the deptak's ring (G-966).
     expect(TRAFFIC_ROUTES).toEqual(ontoRings([...CITY_ROUTES, ...alchemiaRampRoutes(CITY_ROUTES)]));
     expect(TRAFFIC_ROUTES.slice(0, CITY_ROUTES.length).map(withoutLink)).toEqual(CITY_ROUTES);

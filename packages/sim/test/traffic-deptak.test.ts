@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, pointAt, projectOn } from "../src/content/traffic";
 import { DEPTAK_MOUTH, deptakMouthRoutes } from "../src/content/traffic-deptak";
+import { laneDrops } from "../src/content/traffic-drops";
 import { onRoad } from "../src/content/lublin/roads";
 import { hm } from "@seki/core";
 import { Simulation, ground } from "../src";
@@ -64,10 +65,12 @@ describe("the cars at the deptak's south mouth (T-324)", () => {
   });
 
   it("keep the city's other routes in their places, the ring last, the same every time", () => {
-    expect(deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES)).toEqual(CITY_ROUTES);
-    expect(CITY_ROUTES).toHaveLength(JUNCTION_ROUTES.length + 1);
-    expect(CITY_ROUTES[CITY_ROUTES.length - 1]!.ring).toBe(true);
-    const changed = JUNCTION_ROUTES.flatMap((r, i) => (CITY_ROUTES[i] === r ? [] : [r.id]));
+    // The city's routes are these with the lane drops (G-989) in place.
+    const mouth = deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES);
+    expect(laneDrops(mouth)).toEqual(CITY_ROUTES);
+    expect(mouth).toHaveLength(JUNCTION_ROUTES.length + 1);
+    expect(mouth[mouth.length - 1]!.ring).toBe(true);
+    const changed = JUNCTION_ROUTES.flatMap((r, i) => (mouth[i] === r ? [] : [r.id]));
     expect(changed).toHaveLength(2);
     expect(changed.every((id) => id.split(">")[0]!.includes("Bajkowskiego#"))).toBe(true);
   });

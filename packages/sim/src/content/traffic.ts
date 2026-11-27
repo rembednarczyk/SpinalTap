@@ -9,6 +9,7 @@ import { type RouteUse, type TrafficRoute, pointAt, projectOn, slice, uTurn } fr
 import { joinAtJunctions } from "./traffic-junctions";
 import { alchemiaRampRoutes } from "./traffic-ramp";
 import { deptakMouthRoutes, ontoRings } from "./traffic-deptak";
+import { laneDrops } from "./traffic-drops";
 import { type Street, reachAt, roadHalfWidth, turnedRound } from "./traffic-reach";
 import { parkingShift } from "./traffic-parking";
 
@@ -444,8 +445,11 @@ export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flat
 /** The lanes joined at the junctions (ADR-0055): each lane on one route. */
 export const JUNCTION_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
 
-/** The city's routes: the junctions' routes, Bajkowskiego's turned south at the deptak's mouth with the ring past it (T-324, `traffic-deptak.ts`). */
-export const CITY_ROUTES: readonly TrafficRoute[] = deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES);
+/**
+ * The city's routes: the junctions' routes, Bajkowskiego's turned south at the deptak's mouth with the ring past it
+ * (T-324, `traffic-deptak.ts`), and the lanes ending at a junction beside a lane going on changed onto it (G-989, `traffic-drops.ts`).
+ */
+export const CITY_ROUTES: readonly TrafficRoute[] = laneDrops(deptakMouthRoutes(JUNCTION_ROUTES, TRAFFIC_LANES));
 
 /**
  * The routes the vehicles drive: the city's, then the two in and out of Alchemia's P-1 off Bajkowskiego (ADR-0074 §4,
