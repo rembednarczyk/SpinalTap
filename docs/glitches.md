@@ -332,6 +332,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: punkty pasów co 0,1 m bez nawierzchni → 0 poza zawracaniem na Alei Tysiąclecia; `lane-off-ground` 9 → 8
 - Uwaga weryfikatora G-138: `lane-off-ground` próbkuje co 1 m, więc wynik zależy od przesunięcia próbek (7–12 przy tej samej geometrii); Mełgiewska 2370,285 i Turystyczna 2606,332 wypadły z bazy tylko przez przesunięcie. Przy poprawce próbkować co 0,1 m i liczyć skupiska; co 0,1 m jest 29 skupisk, ok. 21 poza Aleją Tysiąclecia
 - Poboczne: `groundY` daje 0 poza mapą, a `GroundField` grunt najbliższego chunka; pasy już tam nie wychodzą, inni użytkownicy obu funkcji mogą trafić na rozbieżność
+- Kurator E4 27.11: na grafie E4 gołe próbki co 0,2 m: Mełgiewska (2370; 285) 3 → 0, Turystyczna (2606; 332) 1 → 0, (2526; 357) 0; resztę przesiać g-sieve po scaleniu.
 
 ### G-147 Stopy bliskich megawież po impostorze bliżej niż płaszczyzna panoramy
 - Status: zgłoszone (1.11, weryfikator ADR-0067); dziś niewidoczne
@@ -796,12 +797,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: x 620–810 i dalej, ok. 250 m²; w grze 1,25–1,5 m, w rzeczywistości ok. 3 m z barierą · Koszt: średni (szerokość z geometrii jezdni)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: pas dzielący z nawierzchnią na całej długości, szerokość ok. 3 m
+- Kurator E4 27.11: na grafie E4 pas dzielący al. Tysiąclecia x 625–735 ma nawierzchnię 2,5–2,7 m, ortofoto 2,5 m płyt między krawężnikami: do zamknięcia po włączeniu E4 (bariera osobno).
 
 ### G-353 Plac `square` przy jezdni bez krawężnika i kratek (T-176)
 - Status: zgłoszone (5.11, kurator, przegląd G-337)
 - Ważność: S4 · Zasięg: północna krawędź al. Tysiąclecia 164,5 m (x 640–806), także T-162, T-164, T-169; renderer rysuje krawężnik tylko przy `sidewalk`, `grateAt` nie stawia kratek przy placu · Koszt: średni
 - Pakiet właściciela: packages/engine (`ground-plan.ts`), tools/osm-import (`grateAt`), tools/glitch-scan
 - Test przyjęcia: nowa kontrola skanu `square-road-no-kerb` (długość krawędzi jezdni, przy której z zewnątrz leży `square`/pedestrian, bez przejść) = 0
+- Kurator E4 27.11: na grafie E4 x 625–735 chodnik z krawężnikiem przy jezdni; zostaje x 806–872 (T-173, przystanek).
 
 ### G-354 Schowana pałka przenika brzeg spódnicy modelu VRM
 - Status: zgłoszone (5.11, weryfikator PR #297)
@@ -1863,6 +1866,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/orto
 - Runda 3 (054a446): kerb-gap-bare +127 → +70 nowych (suma 810 → 671), kerb-fill-wide-estimated +12, lawn-on-leafoff-paving +17 bez zmian (to drobiny canopyHard przy krawężniku, nie pas po węższej jezdni). Skan nadal czerwony; decyzja o bazie u użytkownika.
 - PR 10 scalony w #565 (15.11) z bazą przyjętą decyzją użytkownika; zostaje kerb-gap-bare +70 i kerb-fill-wide-estimated +12 do poprawy.
+- Kurator E4 27.11: na Podzamczu i Nabrzeżu z grafem E4 kerbFills nie działa (kerb-fill-wide-estimated 62 → 26, kerb-fill-flicker 70 → 31); po włączeniu E4 zostaje tylko poza grafem.
 
 ### G-816 Odcinek reguły lit bez stacji liczy się jako oświetlony; przebieg uzupełniający powtarza stację, która właśnie odpadła
 - Ważność: S4 · Zasięg: SW róg Krakowskiego (-160..-130; -270..-260), rząd drzew w1550442735
@@ -1963,6 +1967,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Kontur komórek 0,5 m reguły gołej ziemi nie dochodzi do krawędzi jezdni przesuniętej przez G-825 (placement). Znalezione w rundzie 2 G-825
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
+- Kurator E4 27.11: klucz kerb-gap-bare podzamcze-2-1 1110,440 znika na próbie grafu E4; obok nowy ground-strip-gap 1110..1120,450..460.
 
 ### G-839 Wyspa między łącznicą Ruskiej w216655518 a Lwowską to goła ziemia, na ortofoto kostka
 - Ważność: S4 · Zasięg: Podzamcze (1069–1078; 437–447)
@@ -1993,6 +1998,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 15.11 (przegląd G-836): kliny V między drogą przejścia a chodnikiem na końcach zebr: kerb-gap-bare (−100,−70), (180,70), (2390,330), (2670,100), (650,550), (1060,460); kerb-jag (−125,45), (225,155), (2655,115)
 - G-836 r2: ząbki i szczeliny przy końcach zebr (kerb-jag -112,154; 2363,435; kerb-gap-bare 920,473) przyjęte do bazy
 - 20.11 (przesiew): kerb-gap-bare krakowskie-0-1 -130,40 i nabrzeze-0-1 2360,430 zniknęły z bazy (#597); zostają 3 z 5.
+- Kurator E4 27.11: na grafie E4 klucze 2650,110 i 920,470 znikają, w tych samych narożnikach kerb-jag 2660,100 i 910–930,460–480, kerb-gap-bare 910,460; nie zamykać.
 
 ### G-847 Schody bez policzków: stopnice normy do 0,40 m nad terenem z boku pasa
 - Ważność: S4 · Zasięg: biegi z mapy, najwięcej strome i ściśnięte (Plac Zamkowy)
@@ -2024,6 +2030,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Przyjęte w r3 G-825 (7bfd370); szczelina między końcem pasu square a krawędzią przesuniętej jezdni
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
+- Kurator E4 27.11: na grafie E4 znika 1110,330; przy 530,390 zamiast kerb-gap-bare kerb-jag 530,380 i ground-strip-gap 520–540,390–410.
 
 ### G-856 Dołek między końcem muru nabrzeża W-3 a pokładem mostu Lutosławskiego
 - Ważność: S4 · Zasięg: Nabrzeże, W-3, x 2477,5..2480, z 416,6..418,5
@@ -2057,18 +2064,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
 - kurator 15.11: wcięcie 0,33 m w krawędzi chodnika przy zebrze (1060,3–1060,8; 447,4–447,7) i odłamki sidewalk od G-825 r3 7bfd370; na main krawędź prosta; ortofoto 2025-04: krawężnik prosty
+- Kurator E4 27.11: przy łącznicy Ruskiej na grafie E4 nowe kerb-gap-bare 1050,450 i 1070,440; obejrzeć przed zamknięciem.
 
 ### G-861 Kalinowszczyzna przy wylocie łącznicy w175886780 (2361,432): jezdnia gry ok. 3 m węższa niż na ortofoto
 - Ważność: S4 · Zasięg: nabrzeze-0-1, (2355..2368, 426..438)
 - Opis: Jezdnia w1551268848 i w139586650 na osi ścieżki w406693442 ma w grze ok. 6,8 m, a na ortofoto 2025-04 i 2024-06 ok. 9,5–10 m. Zebra n4087364975 kończy się na krawężniku gry: 6,8 m wobec ok. 9 m pasów (przegląd G-836 r2).
 - Status: nowy
 - Pakiet właściciela: tools/osm-import
+- Kurator E4 27.11: na grafie E4 Kalinowszczyzna w1551268848 9,4 m (BDOT10k 9,5), ortofoto 9,5–10 m: szerokość zgodna; zebra n4087364975 do sprawdzenia (kerb-jag i kerb-gap-bare 2360,420).
 
 ### G-862 Resztki G-825: square przy zebrze łącznicy Ruskiej na zieleni, trawa zamiast square przy Andersie
 - Ważność: S4 · Zasięg: podzamcze-2-1 (1062–1066,4; 443,3–447,3); nabrzeze-0-1 (2355,6–2356,6; 357–358)
 - Opis: Po G-825 r5: pas square przy zebrze ma 8,6 m², z czego 5,2 m² na zieleni ortofoto 2025-04 (zieleń do z 446,5 przy x 1062,5–1065, kostka tylko ok. 1 m przy krawędzi jezdni, możliwe G-826); na main granica szła po zieleni. Andersa: trawa zamiast square 0,3–0,8 m (kurator r4). Proponowana kontrola kerb-strip-square-on-green: pas square kerbFills z >50% i >2 m² zieleni ortofoto, baza 1 (podzamcze-2-1 1060,440).
 - Status: nowy
 - Pakiet właściciela: tools/osm-import (kerb-fill.ts)
+- Kurator E4 27.11: na grafie E4 (1064; 445) sidewalk zamiast square, nadal na zieleni; (2356; 357,5) road zamiast trawy (obszar łącznicy Andersa, P5); zostaje otwarte.
 
 ### G-869 crossing-shape-kerb przeczy kerb-jag przy skośnym krawężniku: zebra-prostokąt kończy się przed krawężnikiem albo wcina róg w chodnik
 - Ważność: S4 · Zasięg: 6 miejsc, np. (158,-198), (676,570)
@@ -2247,6 +2257,34 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Klucze skanu: sidewalk-step krakowskie-2-0 442,-54
 - 27.11: szew 0,05 m z tego samego miejsca (dwa kawałki chodnika grafu ze wspólną ukośną granicą opisaną różnymi wierzchołkami, zaokrąglane osobno do 0,1 m) zostaje. Trzy próby wycofane: łączenie stykających się kawałków przed zaokrągleniem (+23 kerb-gap-bare w dzielnicy przez otwarcie o THIN), łączenie tylko czystych po zaokrągleniu (szew wraca), zakładka 0,06 m (+4 ground-ring-self-cross, +14 kerb-gap-bare). Poprawka u źródła: wspólna granica kawałków z jednego podziału (te same wierzchołki). Miejsca: landuse-bare, bare-on-cover i ground-strip-gap przy (430–432; −82…−57).
 - 27.11 (później): szew 0,05 m naprawiony u źródła: wspólne wierzchołki T-połączeń kawałków grafu (weldTJunctions, wzorzec tjunc.c z qbsp), test t-junctions; przy okazji kerb-gap-bare w dzielnicy 702 -> 642. Zostaje uskok 8 cm placu z reguły gołej ziemi.
+
+### G-991 Uskok terenu za końcami pomostów mostów na Mełgiewskiej i Andersa (graf E4)
+- Ważność: S3 · Zasięg: 4 miejsca deck-abutment-step: (2443,6–2444,5; 241,5–242), (2413,3–2415,8; 310,8–311,6), (2416,8–2418,8; 328,4–329,1), (2440,3–2441,6; 429–429,8)
+- Opis: Na próbie E4 grunt 0,3 m za końcem pomostu leży 0,3–2,0 m niżej niż pomost; złącze jezdni grafu z końcem pomostu (streets/abutment-joints.ts) kładzie asfalt 10 m dalej, ale nie podnosi terenu. Na main tych miejsc nie ma. Przegląd kuratora E4, P7.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets/abutment-joints, teren pomostów)
+- Test przyjęcia: deck-abutment-step bez kluczy w nabrzeze-0-0 i nabrzeze-0-1
+- Klucze skanu: deck-abutment-step nabrzeze-0-0 2444,242; deck-abutment-step nabrzeze-0-1 2415,311; deck-abutment-step nabrzeze-0-1 2418,329; deck-abutment-step nabrzeze-0-1 2441,429
+
+### G-992 Przystanek przy Lubartowskiej (702; 692) na kawałku jezdni wypełnienia zamiast na chodniku
+- Ważność: S4 · Zasięg: podzamcze-0-2 (701,9; 691,9)
+- Opis: Na próbie E4 pod przystankiem leży road (wypełnienie), na main sidewalk; ortofoto 2025-04: chodnik z kostki z wiatą i czekającymi. Przegląd kuratora E4, P7.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets)
+- Klucze skanu: bus-stop-on-fill podzamcze-0-2 702,692
+
+### G-993 Sygnalizatory reguły G-825 r3 przeskakują między narożnikami węzła, ok. 10 m od słupa
+- Ważność: S4 · Zasięg: 6 węzłów: n304514596, n2348421821, n1838236176, n646753017, n2328762095, n481919937
+- Opis: Reguła najbliższego chodnika daje na main i na grafie E4 pozycje po przeciwnych stronach węzła, 4–10 m od niego; ortofoto 2025-04 przy Rondzie Cybulskiego: słup na wysepce przy węźle (2464,7; 242,1), pozycja E4 na asfalcie za łukiem narożnika. Poprawka: słup przy krawężniku na prostopadłej z węzła po stronie ruchu, do półszerokości jezdni + 2 m od węzła, na wysepce, jeśli jest. Przegląd kuratora E4, P8.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (props-place)
+- Test przyjęcia: każdy sygnalizator do półszerokości jezdni + 3 m od swojego węzła OSM
+
+### G-994 Wyspa malowana Ronda Dmowskiego jako chodnik z krawężnikiem
+- Ważność: S4 · Zasięg: (1056–1060; 297–326), ok. 120 m²
+- Opis: Pas ukośnych linii za prawą linią krawędziową w184191188 to na ortofoto 2025-04 asfalt w poziomie jezdni; E4 kładzie sidewalk (krawężnik 0,16 m), main square. Przegląd kuratora E4, P10.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
