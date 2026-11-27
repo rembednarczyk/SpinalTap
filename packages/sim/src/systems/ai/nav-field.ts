@@ -175,7 +175,7 @@ function* growSteps(raster: Raster, source: number): Slices<Field> {
  * far window (G-928) asked `passable` for the same cells over and over, one field per goal.
  */
 const inMasks = new WeakMap<Raster, Uint16Array>();
-const inMask = (raster: Raster, c: number): number => {
+export const inMask = (raster: Raster, c: number): number => {
   let m = inMasks.get(raster);
   if (!m) {
     m = new Uint16Array(raster.cells * raster.cells);
