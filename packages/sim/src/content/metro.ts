@@ -107,7 +107,7 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
   // Plac Zamkowy: the node on Aleja Tysiąclecia. A on the square's car park by the west houses, open north to
   // their pavement; B between the Dworzec Autobusowy and the avenue, open south to the avenue's path.
   station("targ", "Plac Zamkowy", "targ", { x: 740, z: 335 }, [
-    entrance("A", "Plac Zamkowy", { x: 722, z: 286, along: "z", opens: 1 }, SPAN),
+    entrance("A", "Plac Zamkowy", { x: 721.8, z: 286, along: "z", opens: 1 }, SPAN),
     entrance("B", "Dworzec Autobusowy", { x: 754, z: 379, along: "z", opens: -1 }),
   ]),
   // Nabrzeże Bystrzycy: outside the Tessen yard, its back to the yard's south wall (the old kiosk stood in the

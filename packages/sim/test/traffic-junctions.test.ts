@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, offsetLine, pointAt } from "../src/content/traffic";
+import { CITY_ROUTES, JUNCTION_ROUTES, TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt } from "../src/content/traffic";
 import { deptakMouthRoutes, ontoRings } from "../src/content/traffic-deptak";
 import { laneDrops } from "../src/content/traffic-drops";
 import { alchemiaRampRoutes } from "../src/content/traffic-ramp";
 import { JUNCTION_REACH, joinAtJunctions, junctionJoins } from "../src/content/traffic-junctions";
-import { type Pt, polylineLength, surfacesAt } from "../src/content/lublin/roads";
+import { surfacesAt } from "../src/content/lublin/roads";
 import { inBuilding } from "../src/content/lublin/places";
 import { VEHICLE_IDS_PER_ROUTE } from "../src/world/traffic";
 
@@ -57,23 +57,17 @@ describe("turns at junctions (ADR-0055)", () => {
     expect(TURN_SPEED).toBeLessThan(route.speed);
   });
 
-  it("turns side by side do not cross: a two-lane carriageway into a two-lane one-way street", () => {
-    // Furmańska's two carriageways and Cyrulicza as they met when all three had two lanes (before ADR-0105).
-    const lane = (id: string, street: string, line: readonly Pt[], off: number): TrafficRoute => {
-      const points = offsetLine(line, off);
-      return { id, street, use: "cars", points, length: polylineLength(points), speed: 8, vehicles: 1, stops: [] };
-    };
-    const north: Pt[] = [[625.7, 160], [633.1, 243.1], [632.3, 252]];
-    const south: Pt[] = [[652.9, 321.2], [632.3, 252]];
-    const cyrulicza: Pt[] = [[632.3, 252], [550, 280.9]];
-    const lanes = [
-      ...[1.6, -1.6].map((o, i) => lane(`Furmańska#78:${i}`, "Furmańska", north, o)),
-      ...[1.6, -1.6].map((o, i) => lane(`Furmańska#79:${i}`, "Furmańska", south, o)),
-      ...[1.6, -1.6].map((o, i) => lane(`Cyrulicza#80:${i}`, "Cyrulicza", cyrulicza, o)),
-    ];
-    const into = junctionJoins(lanes).filter((j) => lanes[j.from]!.street === "Furmańska" && lanes[j.to]!.street === "Cyrulicza");
-    // The southern carriageway's two lanes turn right side by side, each into its own lane of Cyrulicza.
-    expect(into.map((j) => `${lanes[j.from]!.id}>${lanes[j.to]!.id} ${j.way}`).sort()).toEqual(["Furmańska#79:0>Cyrulicza#80:0 right", "Furmańska#79:1>Cyrulicza#80:1 right"]);
+  it("turns side by side do not cross: Aleja Tysiąclecia's two lanes into Aleja Unii Lubelskiej's two", () => {
+    // Once Furmańska's two carriageways into Cyrulicza, all three with two lanes; since ADR-0105 and the street graph's
+    // widths (BDOT10k, E4) they have one, so the case is the city's own: the avenue's carriageway turning right at (1051; 281).
+    const joins = junctionJoins(TRAFFIC_LANES);
+    const into = joins.filter((j) => {
+      const e = end(TRAFFIC_LANES[j.from]!);
+      return j.way === "right" && Math.hypot(e.x - 1051, e.z - 281) < 8 && TRAFFIC_LANES[j.from]!.street === "Aleja Tysiąclecia" && TRAFFIC_LANES[j.to]!.street === "Aleja Unii Lubelskiej";
+    });
+    // Both lanes turn right side by side, each into its own lane.
+    expect(into).toHaveLength(2);
+    expect(new Set(into.map((j) => j.to)).size).toBe(2);
     const [outer, inner] = [into[0]!.arc, into[1]!.arc];
     // Nowhere closer than a lane's width apart, from their ends on.
     for (const p of outer.slice(2, -2)) expect(Math.min(...inner.map((q) => Math.hypot(q[0] - p[0], q[1] - p[1]))), `${p}`).toBeGreaterThan(1);
