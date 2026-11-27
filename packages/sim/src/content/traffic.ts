@@ -10,6 +10,7 @@ import { joinAtJunctions } from "./traffic-junctions";
 import { alchemiaRampRoutes } from "./traffic-ramp";
 import { deptakMouthRoutes, ontoRings } from "./traffic-deptak";
 import { type Street, reachAt, roadHalfWidth, turnedRound } from "./traffic-reach";
+import { parkingShift } from "./traffic-parking";
 
 export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt, projectOn } from "./traffic-lane";
 export { type Street, roadHalfWidth, turnedRound } from "./traffic-reach";
@@ -258,7 +259,8 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
     // convention, ADR-0105: Peowiaków's parking strip by its 5.7 m) and the carriageway reaches past
     // both nearly all the way; a dual road's carriageway mapped two-way is read by its width as before.
     const half = Math.min(roadHalfWidth(c, 1, NARROW_Q), roadHalfWidth(c, -1, NARROW_Q));
-    const offsets = (c.oneway ? c.lanes >= 2 : true) && half >= 2.6 ? [1.6, -1.6] : [0];
+    // One lane keeps off a parking strip the carriageway's width takes in (traffic-parking.ts).
+    const offsets = (c.oneway ? c.lanes >= 2 : true) && half >= 2.6 ? [1.6, -1.6] : [parkingShift(c.points, roadHalfWidth(c, 1, NARROW_Q), roadHalfWidth(c, -1, NARROW_Q))];
     offsets.forEach((off, n) => out.push(routeOf(`${id}:${n}`, c.name, "cars", offsetLine(c.points, off), road.speed, cars(len))));
     if (trolley) out.push(routeOf(`${id}:t`, c.name, "trolley", offsetLine(c.points, offsets[0]!), TROLLEY_SPEED, Math.max(1, Math.round(len / TROLLEY_SPACING))));
     return out;
