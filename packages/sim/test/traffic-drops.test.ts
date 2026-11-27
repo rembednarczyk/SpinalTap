@@ -35,11 +35,10 @@ describe("lane drops (G-989)", () => {
     const changed = cars.filter((r) => r.id.includes("~") && !r.id.includes("Bajkowskiego#"));
     expect(changed.map((r) => r.id.split("~")[0]!.split("+").pop()!.split(">").pop())).toEqual(expect.arrayContaining(["Ruska#113:1", "Lubartowska#41:1", "Podzamcze#110:1"]));
     for (const r of changed) {
-      // The change: an arc between headings side by side, one lane across.
+      // The change: an arc of a taper's length (14 m at least) between headings nearly the same, unlike a junction's turns.
       const arc = r.arcs!.find(([a, b]) => {
         const [p, q] = [pointAt(r.points, a), pointAt(r.points, b)];
-        const across = Math.abs((q.x - p.x) * p.tz - (q.z - p.z) * p.tx);
-        return p.tx * q.tx + p.tz * q.tz > 0.95 && across > 2.2 && across < 4.4;
+        return b - a >= 14 && p.tx * q.tx + p.tz * q.tz > 0.9;
       });
       expect(arc, r.id).toBeDefined();
       expect(tightest(slice(r.points, arc![0], arc![1]))).toBeGreaterThanOrEqual(8);
