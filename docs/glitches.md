@@ -4,6 +4,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ## Otwarte
 
+### G-982 Zygzak krawężnika na narożnikach skrzyżowań ulic z osią przesuniętą przez BDOT10k (Krakowskie, graf ulic)
+- Status: później (S4: uskoki 0,11–0,57 m na 1,5–3 m krawężnika, przyjęte do bazy skanu przy włączeniu E3)
+- Ważność: S4 · Zasięg: 5 miejsc `kerb-jag` w krakowskie-2-0 · Koszt: średni
+- Gdzie: Plac Wolności z Bernardyńską (371,5; −196,7) 0,11 m i (379,5; −198,2) 0,57 m; Świętoduska z Zieloną (354,0; −48,2) 0,26 m i (353,2; −48,3) 0,44 m; Kozia z Bernardyńską (360,4; −148,3) 0,22 m; Lubartowska z Bajkowskiego (437,0; −22,7) 0,20 m i (436,7; −21,3) 0,28 m; Plac Wolności przy wjeździe w177528401 (280,8; −170,7) 0,51 m
+- Dowód: skan `kerb-jag` na tablicach z grafem (27.11). Ulice spotykają się tam z różną szerokością albo z osią jezdni przesuniętą przez BDOT10k (Bernardyńska w173565900 o 2,2 m, Zielona o 0,9 m, Lubartowska o 0,7 m). Zaokrąglenie narożnika (`cornered` w `street-ground.ts`: domknięcie o promień krawężnika w dysku węzła) kończy się na brzegu dysku, a krawężnik za nim robi uskok.
+- Próba (27.11): rampa każdego krawężnika na złączu dwóch odcinków w linii (commit na gałęzi E3) poprawia złącza z przesunięciem, ale tych narożników nie dotyka.
+- Poprawka (proponowana): rampa przesunięcia każdej strony także na ramionach skrzyżowania, przed zaokrągleniem narożnika, albo dysk węzła sięgający końca rampy.
+- Pakiet właściciela: tools/osm-import (streets)
+- Test przyjęcia: skrzyżowanie trzech ulic, jedna z osią jezdni przesuniętą o 2,2 m: krawężnik bez zygzaka ponad 0,1 m (jak `jags` w `street-ground.test.ts`); miejsca znikają z bazy `kerb-jag`.
+
 ### G-965 Przycięty bieg schodów przy Szkolnej z za długim stopniem na skarpie
 - Status: później (S4: jeden stopień ok. 0,6 m zamiast normy ok. 0,33 m w dolnej części biegu)
 - Gdzie: bieg w66258183 (865,7–882,7, 593,8–603,4) w podzamcze-1-2, klucz skanu `steps-riser-norm podzamcze-1-2 883,597`

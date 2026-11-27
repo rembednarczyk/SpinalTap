@@ -1,0 +1,4 @@
+# osm-bollard-line-missing: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+krakowskie-2-0 452,-150
+krakowskie-2-0 439,-99
+krakowskie-2-0 438,-66

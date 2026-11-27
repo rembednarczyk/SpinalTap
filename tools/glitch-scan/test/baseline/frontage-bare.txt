@@ -1,6 +1,4 @@
 # frontage-bare: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-2-0 370,-170
-krakowskie-2-0 380,-160
 stare-miasto-0-1 600,50
 stare-miasto-0-1 590,60
 stare-miasto-1-1 610,50

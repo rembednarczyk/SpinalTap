@@ -1,10 +1,8 @@
 # fill-on-green: grid 10 m (x,z = the square's corner at its least x and z)
-krakowskie-1-0 120,-230
 krakowskie-1-0 130,-160
-krakowskie-1-0 160,-50
 krakowskie-1-1 200,40
+krakowskie-2-0 330,-270
 krakowskie-2-0 260,-180
-krakowskie-2-0 280,-120
 krakowskie-2-0 280,-110
 krakowskie-2-0 260,-90
 krakowskie-2-0 350,-90
@@ -12,10 +10,10 @@ krakowskie-2-0 280,-80
 krakowskie-2-0 350,-80
 krakowskie-2-0 290,-30
 krakowskie-2-1 290,-20
-krakowskie-2-1 440,40
 krakowskie-2-1 330,50
 krakowskie-2-1 320,90
 krakowskie-2-1 350,100
+krakowskie-2-1 280,110
 nabrzeze-0-1 2370,360
 nabrzeze-0-1 2380,420
 nabrzeze-0-1 2390,430

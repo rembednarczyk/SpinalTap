@@ -28,7 +28,7 @@ import { type StreetEdge, streetAreas } from "./street-ground.ts";
 import { WidthReport, sourcedWidth } from "./widths.ts";
 
 /** The districts whose streets are laid from the street graph (ADR-0104 E3 on), by slug. */
-export const STREET_GRAPH_DISTRICTS: ReadonlySet<string> = new Set<string>([]);
+export const STREET_GRAPH_DISTRICTS: ReadonlySet<string> = new Set<string>(["krakowskie"]);
 
 /** The districts of this build: the constant's, and the trial's from `SEKI_STREET_GRAPH`. */
 export const graphDistricts = (): ReadonlySet<string> => new Set([...STREET_GRAPH_DISTRICTS, ...(process.env.SEKI_STREET_GRAPH ?? "").split(",").filter((s) => s !== "")]);

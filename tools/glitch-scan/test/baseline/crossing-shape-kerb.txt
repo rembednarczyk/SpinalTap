@@ -1,21 +1,12 @@
 # crossing-shape-kerb: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-0-0 -101,-269
+krakowskie-0-0 -94,-177
 krakowskie-0-0 -108,-138
-krakowskie-0-0 -100,-72
-krakowskie-0-1 -122,50
+krakowskie-0-0 -101,-72
 krakowskie-0-1 -86,106
-krakowskie-0-1 -118,144
-krakowskie-0-1 -108,151
-krakowskie-1-0 105,-234
-krakowskie-1-0 158,-198
-krakowskie-1-1 185,75
-krakowskie-1-1 44,122
-krakowskie-1-1 225,159
-krakowskie-2-0 333,-190
 krakowskie-2-0 443,-94
 krakowskie-2-1 385,-17
-krakowskie-2-1 433,-15
-krakowskie-2-1 295,125
+krakowskie-2-1 437,156
 nabrzeze-0-0 2497,208
 nabrzeze-0-0 2457,229
 nabrzeze-0-1 2364,336

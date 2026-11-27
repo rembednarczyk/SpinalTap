@@ -1,138 +1,64 @@
 # sidewalk-surface-patch: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-krakowskie-0-0 -97,-268
-krakowskie-0-0 -81,-211
-krakowskie-0-0 5,-191 *2
-krakowskie-0-0 14,-185 *2
-krakowskie-0-0 -92,-181
-krakowskie-0-0 -53,-175
-krakowskie-0-0 -76,-169
-krakowskie-0-0 -87,-167
-krakowskie-0-0 -103,-161
-krakowskie-0-0 -108,-146
-krakowskie-0-0 -108,-137
+krakowskie-0-0 -80,-217
+krakowskie-0-0 14,-178
+krakowskie-0-0 -108,-138
+krakowskie-0-0 -103,-95
+krakowskie-0-0 -188,-63
 krakowskie-0-0 -55,-63 *2
+krakowskie-0-0 -180,-62
 krakowskie-0-0 -31,-62 *2
+krakowskie-0-0 -170,-61
 krakowskie-0-0 -1,-61
+krakowskie-0-0 -148,-60
 krakowskie-0-0 1,-60
 krakowskie-0-0 10,-60
 krakowskie-0-0 12,-60
 krakowskie-0-0 -128,-59
-krakowskie-0-0 -117,-59
-krakowskie-0-0 -106,-47 *2
-krakowskie-0-0 -106,-42
-krakowskie-0-1 -110,-16
-krakowskie-0-1 -110,34
+krakowskie-0-0 -119,-58
+krakowskie-0-0 -108,-43
+krakowskie-0-1 -111,-18
+krakowskie-0-1 -111,-15
 krakowskie-0-1 -171,54
-krakowskie-0-1 -110,106 *2
-krakowskie-0-1 -1,113
-krakowskie-0-1 18,113
-krakowskie-0-1 19,113
-krakowskie-0-1 -54,114
-krakowskie-0-1 -46,114
-krakowskie-0-1 -92,115
-krakowskie-0-1 -89,115
-krakowskie-0-1 -82,115
-krakowskie-0-1 -68,115
-krakowskie-0-1 -67,115
-krakowskie-0-1 -109,127
-krakowskie-0-1 -109,134
-krakowskie-0-1 -118,143
-krakowskie-0-1 -107,153
-krakowskie-1-0 102,-250
-krakowskie-1-0 119,-239
-krakowskie-1-0 103,-231
-krakowskie-1-0 138,-227
-krakowskie-1-0 150,-220
-krakowskie-1-0 86,-218
-krakowskie-1-0 171,-207
-krakowskie-1-0 30,-199
-krakowskie-1-0 197,-193
-krakowskie-1-0 220,-181
-krakowskie-1-0 236,-173
-krakowskie-1-0 153,-168 *2
-krakowskie-1-0 150,-151
-krakowskie-1-0 21,-147 *2
+krakowskie-0-1 -161,54
+krakowskie-0-1 -110,104
+krakowskie-0-1 -109,132
+krakowskie-0-1 -147,147
+krakowskie-0-1 -188,152
+krakowskie-0-1 -106,153
+krakowskie-1-0 139,-227
+krakowskie-1-0 149,-144
 krakowskie-1-0 148,-140
-krakowskie-1-0 148,-136
-krakowskie-1-0 145,-111
-krakowskie-1-0 26,-107
+krakowskie-1-0 21,-136
+krakowskie-1-0 26,-112
+krakowskie-1-0 26,-104 *2
 krakowskie-1-0 239,-66 *2
-krakowskie-1-0 139,-60
+krakowskie-1-0 139,-60 *2
 krakowskie-1-0 24,-59
 krakowskie-1-0 36,-59 *2
-krakowskie-1-0 138,-59
 krakowskie-1-0 57,-58 *2
 krakowskie-1-0 103,-56 *2
 krakowskie-1-0 178,-52 *2
 krakowskie-1-0 151,-47 *2
 krakowskie-1-0 85,-39 *2
-krakowskie-1-0 190,-21 *2
-krakowskie-1-1 194,1 *2
-krakowskie-1-1 238,5
+krakowskie-1-0 190,-22 *2
+krakowskie-1-1 194,2 *2
 krakowskie-1-1 99,51 *2
-krakowskie-1-1 186,78
-krakowskie-1-1 181,88 *2
-krakowskie-1-1 173,89
-krakowskie-1-1 151,93
-krakowskie-1-1 130,96
-krakowskie-1-1 194,97
-krakowskie-1-1 95,104
-krakowskie-1-1 99,104
-krakowskie-1-1 33,112 *2
-krakowskie-1-1 203,119
-krakowskie-1-1 44,121 *2
-krakowskie-1-1 210,134
-krakowskie-1-1 50,142
-krakowskie-1-1 219,155
-krakowskie-1-1 53,158
-krakowskie-2-0 330,-268
-krakowskie-2-0 330,-255
-krakowskie-2-0 330,-248
-krakowskie-2-0 394,-227
-krakowskie-2-0 392,-224
-krakowskie-2-0 383,-214
-krakowskie-2-0 381,-212
-krakowskie-2-0 334,-188 *2
-krakowskie-2-0 243,-170
-krakowskie-2-0 257,-163
-krakowskie-2-0 272,-146 *2
-krakowskie-2-0 455,-146 *2
-krakowskie-2-0 363,-142 *2
-krakowskie-2-0 274,-139
-krakowskie-2-0 450,-139
-krakowskie-2-0 281,-104
+krakowskie-2-0 363,-140 *2
+krakowskie-2-0 281,-104 *2
 krakowskie-2-0 404,-98 *2
 krakowskie-2-0 413,-97
 krakowskie-2-0 417,-97
 krakowskie-2-0 422,-96
 krakowskie-2-0 455,-95
-krakowskie-2-0 341,-93 *2
+krakowskie-2-0 341,-94 *2
 krakowskie-2-0 362,-93 *2
 krakowskie-2-0 337,-88 *2
-krakowskie-2-0 443,-82 *2
 krakowskie-2-0 279,-77 *2
-krakowskie-2-0 443,-76
 krakowskie-2-0 349,-57 *2
-krakowskie-2-0 340,-46 *2
-krakowskie-2-0 442,-43
-krakowskie-2-0 307,-37
-krakowskie-2-0 297,-33
-krakowskie-2-0 442,-32
-krakowskie-2-0 442,-28
-krakowskie-2-0 360,-21
-krakowskie-2-1 273,-19 *2
-krakowskie-2-1 378,-16
-krakowskie-2-1 418,-16
-krakowskie-2-1 429,-16
-krakowskie-2-1 375,-14
-krakowskie-2-1 443,-7 *2
-krakowskie-2-1 407,98
-krakowskie-2-1 409,101
+krakowskie-2-1 444,-3 *2
 krakowskie-2-1 305,110
 krakowskie-2-1 299,116
-krakowskie-2-1 434,151
-krakowskie-2-1 438,157
-krakowskie-2-1 438,158
+krakowskie-2-1 431,145
 nabrzeze-0-0 2426,62
 nabrzeze-0-0 2432,76
 nabrzeze-0-0 2439,90
