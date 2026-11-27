@@ -26,6 +26,7 @@ import { type Area, areaOfRing, grown, holesOf, join, less, rings, within } from
 import { STREETS, footwaysAlongStreets } from "./along-footways.ts";
 import { type StreetEdge, streetAreas } from "./street-ground.ts";
 import { weldTJunctions } from "./t-junctions.ts";
+import { abutmentJoints } from "./abutment-joints.ts";
 import { WidthReport, sourcedWidth } from "./widths.ts";
 
 /** The districts whose streets are laid from the street graph (ADR-0104 E3 on), by slug. */
@@ -388,6 +389,9 @@ export const graphBands = <B extends Band>(
     else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, intoNiches(o.area), {});
   }
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});
+  // The streets' joints with the bridges' decks at their abutments (`abutmentJoints`): asphalt from the deck's end to the graph's kerbs.
+  const decks = bands.filter((b) => b.bridge && b.carriageway && b.kerb && inside(b.box)).map((b) => ({ ring: b.ring, line: b.kerb!.line, half: b.kerb!.half }));
+  for (const j of abutmentJoints(edges, decks)) add(pieces[j.edge]!, j.area, { graph: true, widen: undefined, widenLanes: undefined });
   // Not to a lawn or water: what lies between the street and the green is the cover's to lay (`bare-cover.ts`).
   // The verges are no gaps: left bare, for the cover's lawn.
   // Nor over one: a lawn the map draws inside a square (Plac Litewski's, a hole in its paving) is no
