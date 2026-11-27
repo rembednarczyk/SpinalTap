@@ -1,0 +1,76 @@
+kerb-jag: sum 19 -> 18, +0 new key(s), 0 grown, -1 gone or fewer
+  - kerb-jag krakowskie-2-0 430..440,-30..-20
+landuse-bare: sum 689 -> 693, +4 new key(s), 0 grown, -0 gone or fewer
+  + landuse-bare krakowskie-2-0 430..440,-90..-80: bare 432.25,-81.75
+  + landuse-bare krakowskie-2-0 430..440,-80..-70: bare 431.75,-73.25
+  + landuse-bare krakowskie-2-0 430..440,-70..-60: bare 431.25,-64.75
+  + landuse-bare krakowskie-2-0 430..440,-60..-50: bare 430.75,-56.75
+bare-on-cover: sum 354 -> 355, +1 new key(s), 0 grown, -0 gone or fewer
+  + bare-on-cover krakowskie-2-0 430..440,-90..-80: bare 432.25,-81.75 paving
+sidewalk-gap: sum 401 -> 402, +11 new key(s), 0 grown, -10 gone or fewer
+  + sidewalk-gap krakowskie-2-0 453,-144: Królewska#18 left: 1.00 m of no walk inside the band, over 2 m
+  + sidewalk-gap krakowskie-2-0 452,-142: Królewska#18 left: no walk by the kerb over 4 m between walks
+  + sidewalk-gap krakowskie-2-0 444,-119: Królewska#18 left: no walk by the kerb over 3 m between walks
+  + sidewalk-gap stare-miasto-0-0 486,-183: Królewska#42 left: 1.25 m of no walk inside the band, over 1 m
+  + sidewalk-gap stare-miasto-0-0 478,-175: Królewska#42 left: 0.50 m of no walk inside the band, over 3 m
+  + sidewalk-gap stare-miasto-0-0 483,-180: Królewska#42 left: no walk by the kerb over 5 m between walks
+  + sidewalk-gap stare-miasto-0-0 495,-189: Królewska#42 right: 0.50 m of no walk inside the band, over 1 m
+  + sidewalk-gap stare-miasto-0-0 465,-162: Królewska#42 right: 0.50 m of no walk inside the band, over 1 m
+  + sidewalk-gap stare-miasto-0-0 497,-190: Królewska#42 right: no walk by the kerb over 1 m between walks
+  + sidewalk-gap stare-miasto-0-0 482,-179: Królewska#42 right: no walk by the kerb over 5 m between walks
+  + sidewalk-gap stare-miasto-0-0 476,-173: Królewska#42 right: no walk by the kerb over 4 m between walks
+  - sidewalk-gap krakowskie-2-0 453,-145
+  - sidewalk-gap krakowskie-2-0 451,-142
+  - sidewalk-gap krakowskie-2-0 444,-118
+  - sidewalk-gap krakowskie-2-1 428,-17
+  - sidewalk-gap stare-miasto-0-0 498,-191
+  - sidewalk-gap stare-miasto-0-0 487,-184
+  - sidewalk-gap stare-miasto-0-0 484,-181
+  - sidewalk-gap stare-miasto-0-0 481,-179
+  - sidewalk-gap stare-miasto-0-0 477,-175
+  - sidewalk-gap stare-miasto-0-0 476,-174
+sidewalk-step: sum 382 -> 385, +8 new key(s), 0 grown, -5 gone or fewer
+  + sidewalk-step krakowskie-2-0 442,-54: Lubartowska#13 left: pieces of the walk 0.08 m apart in lift, over 10 m
+  + sidewalk-step krakowskie-2-0 454,-146 *2: Królewska#18 left: pieces of the walk 0.07 m apart in lift, over 3 m
+  + sidewalk-step krakowskie-2-0 450,-139: Królewska#18 left: pieces of the walk 0.07 m apart in lift, over 5 m
+  + sidewalk-step krakowskie-2-0 453,-144: Królewska#18 right: pieces of the walk 0.07 m apart in lift, over 12 m
+  + sidewalk-step krakowskie-2-0 447,-132: Królewska#18 right: pieces of the walk 0.07 m apart in lift, over 3 m
+  + sidewalk-step stare-miasto-0-0 490,-185: Królewska#42 left: pieces of the walk 0.08 m apart in lift, over 4 m
+  + sidewalk-step stare-miasto-0-0 477,-175: Królewska#42 left: pieces of the walk 0.08 m apart in lift, over 1 m
+  + sidewalk-step stare-miasto-0-0 465,-162: Królewska#42 left: pieces of the walk 0.08 m apart in lift, over 1 m
+  - sidewalk-step krakowskie-2-0 454,-147
+  - sidewalk-step krakowskie-2-0 452,-144
+  - sidewalk-step krakowskie-2-0 449,-138
+  - sidewalk-step krakowskie-2-0 449,-137
+  - sidewalk-step stare-miasto-0-0 490,-186
+sidewalk-width-jump: sum 230 -> 233, +6 new key(s), 0 grown, -3 gone or fewer
+  + sidewalk-width-jump krakowskie-2-0 448,-133: Królewska#18 right: the strip 2.50 m wide against the stretch's 4.00 m, over 4 m
+  + sidewalk-width-jump krakowskie-2-1 427,-17 *2: Wacława Bajkowskiego#36 left: the strip 5.75 m wide against the stretch's 2.50 m, over 3 m
+  + sidewalk-width-jump stare-miasto-0-0 490,-185: Królewska#42 left: the strip 5.00 m wide against the stretch's 3.25 m, over 4 m
+  + sidewalk-width-jump stare-miasto-0-0 475,-173: Królewska#42 left: the strip 1.50 m wide against the stretch's 3.25 m, over 7 m
+  + sidewalk-width-jump stare-miasto-0-0 500,-192: Królewska#42 right: the strip 1.50 m wide against the stretch's 3.00 m, over 4 m
+  + sidewalk-width-jump stare-miasto-0-0 496,-190: Królewska#42 right: the strip 0.25 m wide against the stretch's 3.00 m, over 18 m
+  - sidewalk-width-jump krakowskie-2-0 453,-145
+  - sidewalk-width-jump krakowskie-2-1 426,-17
+  - sidewalk-width-jump stare-miasto-0-0 476,-174
+kerb-gap-bare: sum 702 -> 702, +5 new key(s), 0 grown, -5 gone or fewer
+  + kerb-gap-bare krakowskie-2-0 430..440,-150..-140: kerb gap 438.13,-145.38, 0.21 m off the road
+  + kerb-gap-bare krakowskie-2-0 440..450,-130..-120: kerb gap 442.38,-129.38, 0.00 m off the road
+  + kerb-gap-bare krakowskie-2-0 430..440,-30..-20: kerb gap 431.88,-25.88, 0.01 m off the road
+  + kerb-gap-bare krakowskie-2-1 410..420,-20..-10: kerb gap 418.38,-13.88, 0.00 m off the road
+  + kerb-gap-bare stare-miasto-0-0 460..470,-160..-150: kerb gap 468.38,-159.13, 0.00 m off the road
+  - kerb-gap-bare krakowskie-2-0 320..330,-200..-190
+  - kerb-gap-bare krakowskie-2-0 440..450,-160..-150
+  - kerb-gap-bare krakowskie-2-0 450..460,-140..-130
+  - kerb-gap-bare stare-miasto-0-0 490..500,-190..-180
+  - kerb-gap-bare stare-miasto-0-0 460..470,-170..-160
+osm-bollard-line-missing: sum 3 -> 0, +0 new key(s), 0 grown, -3 gone or fewer
+  - osm-bollard-line-missing krakowskie-2-0 452,-150
+  - osm-bollard-line-missing krakowskie-2-0 439,-99
+  - osm-bollard-line-missing krakowskie-2-0 438,-66
+ground-strip-gap: sum 1236 -> 1237, +3 new key(s), 0 grown, -2 gone or fewer
+  + ground-strip-gap krakowskie-2-0 430..440,-140..-130: gap 434.13,-134.38
+  + ground-strip-gap krakowskie-2-0 430..440,-80..-70: gap 431.88,-74.88
+  + ground-strip-gap stare-miasto-0-0 490..500,-200..-190: gap 493.38,-192.88
+  - ground-strip-gap krakowskie-2-0 420..430,-30..-20
+  - ground-strip-gap stare-miasto-0-0 470..480,-180..-170
