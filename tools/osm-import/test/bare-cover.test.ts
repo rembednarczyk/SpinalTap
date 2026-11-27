@@ -125,6 +125,16 @@ describe("bare ground laid from the orthophoto's cover (ADR-0077 step 1.1)", () 
     expect(surfaceAt(coverFills(RECT, cover((x) => (x > 18.5 ? COVER.asphalt : COVER.paving)), [pavement, lawn], [wall]), { x: 16.25, z: 9.25 })).toEqual([]);
   });
 
+  it("snaps a lawn of the map to a pavement across a green gap up to a metre wide (the backlog's diagnosis of 24.11)", () => {
+    // A gap 0.75 m across between a pavement (south) and a lawn (north): under the least piece's
+    // width, it stayed bare. Green on the cover, it is the lawn's; paving on it, the strip's rules.
+    const [pavement, lawn] = [piece("sidewalk", box(0, 0, 20, 8)), piece("grass", box(0, 8.75, 20, 20))];
+    const green = coverFills(RECT, cover((_, z) => (z > 8 ? COVER.green : COVER.paving)), [pavement, lawn], []);
+    expect(surfaceAt(green, { x: 15.25, z: 8.25 })).toEqual(["grass"]);
+    const paved = coverFills(RECT, cover(() => COVER.paving), [pavement, lawn], []);
+    expect(surfaceAt(paved, { x: 15.25, z: 8.25 })).not.toContain("grass");
+  });
+
   it("lays a pedestrian street's frontage up to the walls, paved where the cover shows no lawn or paving, and not a yard behind them (G-853)", () => {
     // A pedestrian street along x at z = 10, its paving 4 m wide; tenements north of z = 15 and a
     // row south of z = 5 with a yard behind it. Asphalt-dark setts north of the paving, a lawn at
