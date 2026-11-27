@@ -2255,6 +2255,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - 27.11: szew 0,05 m z tego samego miejsca (dwa kawałki chodnika grafu ze wspólną ukośną granicą opisaną różnymi wierzchołkami, zaokrąglane osobno do 0,1 m) zostaje. Trzy próby wycofane: łączenie stykających się kawałków przed zaokrągleniem (+23 kerb-gap-bare w dzielnicy przez otwarcie o THIN), łączenie tylko czystych po zaokrągleniu (szew wraca), zakładka 0,06 m (+4 ground-ring-self-cross, +14 kerb-gap-bare). Poprawka u źródła: wspólna granica kawałków z jednego podziału (te same wierzchołki). Miejsca: landuse-bare, bare-on-cover i ground-strip-gap przy (430–432; −82…−57).
 - 27.11 (później): szew 0,05 m naprawiony u źródła: wspólne wierzchołki T-połączeń kawałków grafu (weldTJunctions, wzorzec tjunc.c z qbsp), test t-junctions; przy okazji kerb-gap-bare w dzielnicy 702 -> 642. Zostaje uskok 8 cm placu z reguły gołej ziemi.
 
+### G-989 Pas dwupasowej jednokierunkowej ulicy kończy się przy skrzyżowaniu, gdy pas obok jedzie dalej
+- Ważność: S3 · Zasięg: ruch uliczny: Ruska przy Lwowskiej (1000; 461), Lubartowska przy Ruskiej (581; 361), Podzamcze na południu (1085; 603); na E4 także Podzamcze przy Ruskiej (1081; 448)
+- Opis: Skrzyżowanie łączy każdy koniec i każdy początek pasa raz, więc z dwóch pasów jednej ulicy, które wjeżdżają w jeden pas dalej, łączy się tylko jeden. Drugi kończy się przed skrzyżowaniem i jego auta stoją na końcu w widoku gracza (skan lane-dead-end; w OSM np. turn:lanes=merge_to_right|through na Podzamczu w233334279). Poprawka: zwężenie pasa (lane reduction transition, MUTCD 2009 §6C.08, stożek L = W·S²/155): trasa kończącego się pasa zmienia pas na sąsiedni przed końcem i jedzie dalej jego trasą (traffic-drops.ts). Wychodzi na wierzch przy E4 (graf ulic): Podzamcze przy Ruskiej dostało drugi pas z szerokości BDOT10k i zatrzymania w traffic-junction-drive wzrosły z 113 do 200.
+- Status: w naprawie (gałąź feat/zwezenie-pasa)
+- Pakiet właściciela: packages/sim (content/traffic-drops.ts)
+- Test przyjęcia: packages/sim/test/traffic-drops.test.ts
+- Klucze skanu: lane-dead-end podzamcze-2-1 1000,461; lane-dead-end podzamcze-0-0 581,361; lane-dead-end podzamcze-2-2 1085,603
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
