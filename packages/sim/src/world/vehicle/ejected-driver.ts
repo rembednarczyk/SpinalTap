@@ -24,6 +24,9 @@ const RUN = { speed: 5.5, seconds: 8 } as const;
 /** Where the pull carries the hips (the clip table, leg lengths of 0.86 m): out to the car's left by 0.9 leg. */
 const PULLED_OUT = 0.77;
 const RADIUS = 0.38;
+/** He keeps to the way he runs while this much of it ahead is clear (m), and picks a way with this much clear (m). */
+const KEEP_CLEAR = 1.5;
+const LOOK_AHEAD = 8;
 
 /** The car's left (the driver's door) in the world, for heading `yaw`. */
 const leftOf = (yaw: number): { x: number; z: number } => ({ x: -Math.cos(yaw), z: Math.sin(yaw) });
@@ -65,8 +68,9 @@ const stepDriver = (ctx: SimContext, e: Entity & { ejected: EjectedDriver }, dt:
     if (!stepStruck(ctx.world, e, dt)) return false;
     [d.phase, d.t] = ["run", 0];
   }
-  // A way clear of walls, picked when he sets off and once a second after.
-  if (d.t === 0 || Math.floor(d.t) !== Math.floor(d.t + dt)) d.away = wayOut(ctx, e.position, d.yaw);
+  // A way clear of walls, picked when he sets off and again only once it is blocked just ahead: picked anew
+  // each second, a wall 8 m off came into the look ahead and left it again, and he ran to and fro (G-990).
+  if (!d.away || !clearAhead(ctx, e.position, d.away, KEEP_CLEAR)) d.away = wayOut(ctx, e.position, d);
   d.t += dt;
   run(ctx, e, d.away ?? left, dt);
   return d.t >= RUN.seconds;
@@ -86,16 +90,46 @@ const clearAhead = (ctx: SimContext, from: Vec3, dir: { x: number; z: number }, 
   return true;
 };
 
+/** How far along `dir` from `from` is clear, in whole metres up to `dist`. */
+const clearFor = (ctx: SimContext, from: Vec3, dir: { x: number; z: number }, dist: number): number => {
+  let k = 0;
+  while (k < dist && clearAhead(ctx, from, dir, k + 1)) k++;
+  return k;
+};
+
+/** Headings tried when none of the first ways is clear: every 22.5 degrees. */
+const AROUND = Array.from({ length: 16 }, (_, k) => ({ x: Math.sin((k * Math.PI) / 8), z: Math.cos((k * Math.PI) / 8) }));
+/** Metres of clear way one unit of running away from the car is worth, when he picks a way round what blocks him. */
+const AWAY_WEIGHT = 4;
+/** He turns back on the way he ran (more than about 120 degrees) only when no other way is clear just ahead. */
+const BACK_COS = -0.5;
+
 /**
  * The way he runs off: back along the road the car came and away from its side, else straight
- * back, out to the side, ahead and away, or ahead; the first with 8 m clear.
+ * back, out to the side, ahead and away, or ahead; the first with `LOOK_AHEAD` clear that does not
+ * turn him back on the way he ran. Else, as
+ * context steering picks a heading (Reynolds' flee scored over sampled directions), the heading
+ * of `AROUND` with the most clear way and the most away from the car, not back on the way he ran
+ * while another is clear just ahead: with the five ways only, a walled pocket off the pavement
+ * sent him to and fro between its ends (G-990).
  */
-const wayOut = (ctx: SimContext, from: Vec3, yaw: number): { x: number; z: number } => {
-  const f = { x: Math.sin(yaw), z: Math.cos(yaw) };
-  const l = leftOf(yaw);
+const wayOut = (ctx: SimContext, from: Vec3, d: EjectedDriver): { x: number; z: number } => {
+  const f = { x: Math.sin(d.yaw), z: Math.cos(d.yaw) };
+  const l = leftOf(d.yaw);
   const unit = (x: number, z: number) => ({ x: x / Math.hypot(x, z), z: z / Math.hypot(x, z) });
   const ways = [unit(l.x * 0.5 - f.x, l.z * 0.5 - f.z), { x: -f.x, z: -f.z }, l, unit(l.x * 0.5 + f.x, l.z * 0.5 + f.z), f];
-  return ways.find((w) => clearAhead(ctx, from, w, 8)) ?? ways[0]!;
+  const back = (w: { x: number; z: number }) => d.away !== undefined && w.x * d.away.x + w.z * d.away.z < BACK_COS;
+  const first = ways.find((w) => !back(w) && clearAhead(ctx, from, w, LOOK_AHEAD));
+  if (first) return first;
+  const off = Math.hypot(from.x - d.spot.x, from.z - d.spot.z);
+  const away = off > 1e-6 ? { x: (from.x - d.spot.x) / off, z: (from.z - d.spot.z) / off } : l;
+  const scored = AROUND.map((w) => {
+    const clear = clearFor(ctx, from, w, LOOK_AHEAD);
+    return { w, clear, back: back(w), score: clear + AWAY_WEIGHT * (w.x * away.x + w.z * away.z) };
+  });
+  const open = scored.filter((c) => c.clear >= KEEP_CLEAR && !c.back);
+  const pick = (open.length > 0 ? open : scored).reduce((a, b) => (b.score > a.score ? b : a));
+  return pick.w;
 };
 
 /** Runs away from the car's side, sliding along what stands in the way. */
