@@ -213,9 +213,10 @@ const onItsWay = (self: Vehicle, o: Vehicle, wayOf: () => readonly { x: number; 
 const reachOf = (v: Vehicle): number => v.vehicle.half.l + 4 + (v.vehicle.v * v.vehicle.v) / (2 * BRAKE);
 
 /**
- * Gives way to an oncoming vehicle whose body would meet its own (G-744): at a bend, where a body
- * turns at once with its lane and swings across the other, or down a narrow street. The one
- * `goesFirst` does not choose waits short of where they meet.
+ * Gives way to a vehicle whose body would meet its own (G-744): an oncoming one at a bend, where a
+ * body turns at once with its lane and swings across the other, or down a narrow street; one going
+ * its way in the lane beside, where one of the two turns out across the other. The one `goesFirst`
+ * does not choose waits short of where they meet.
  */
 const giveWayToBody = (self: Vehicle, o: Vehicle, reach: number, out: Ahead): void => {
   const met = bodiesMeet(self, reach, o, reachOf(o));
@@ -279,6 +280,8 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
       }
       continue;
     }
+    // Beside it in another lane going its way: their bodies meet where one turns out across the other.
+    if (o.vehicle.route !== st.route) giveWayToBody(self, o, reach, out);
     const dx = o.position.x - pose.x;
     const dz = o.position.z - pose.z;
     const fwd = dx * pose.tx + dz * pose.tz;
