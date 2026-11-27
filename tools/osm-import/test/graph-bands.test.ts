@@ -82,3 +82,18 @@ describe("a street's sidewalk at a facade with a doorway's niche (door-floating)
     expect(surfaceAt(out, { x: 10, z: f + 0.12 })).toContain("sidewalk");
   });
 });
+
+describe("a sidewalk mapped on its own past a lawn (`sidewalk:*=separate`, the curator's review of E4, P5)", () => {
+  // Andersa's link w40051729: `sidewalk:right=separate`, its path winding 2 m and more past the kerb beyond a lawn.
+  const sep: Line[] = [
+    { id: "w1", osmId: 1, tags: { highway: "residential", "sidewalk:left": "separate", "sidewalk:right": "no" }, line: axis },
+    { id: "w2", osmId: 2, tags: { highway: "footway" }, line: [{ x: X0, z: Z + 9 }, { x: X1, z: Z + 9 }] },
+  ];
+  const own = [bands[0]!, boxed({ surface: "footway", ring: rect(X0, X1, Z + 8, Z + 10), bridge: false, source: "w2" })];
+  it("lays no sidewalk by type at the kerb over the lawn, and leaves the path its own", () => {
+    const out = graphBands(own, sep, [], () => false, () => COVER.green, new Set(["krakowskie"]));
+    // Before, a sidewalk by type past the lawn's verge lay 6.5-9 m off the axis, over the path.
+    for (const d of [3.5, 4.5, 5.5, 6.5, 7.5, 9]) expect(surfaceAt(out, { x: 10, z: Z + d }), `${d} m`).not.toContain("sidewalk");
+    expect(surfaceAt(out, { x: 10, z: Z + 9 })).toEqual(["footway"]);
+  });
+});

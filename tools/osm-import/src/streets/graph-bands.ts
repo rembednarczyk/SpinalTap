@@ -336,6 +336,13 @@ export const graphBands = <B extends Band>(
     const m = mappedWalk(axis, half, side, mappedWays);
     // A median: another carriageway close past the kerb (a dual road's other half), no sidewalk by type there.
     if (m === null && medianAt(b.source, axis, half, side)) return { kerb: half, verge: 0, walk: 0 };
+    // OSM's `sidewalk:*=separate` with no way of it by the kerb: the sidewalk is a path of its own past a lawn, laid as one
+    // (`footwaysAlongStreets`), not one by type at the kerb over the lawn (Andersa's link, the curator's review of E4, P5).
+    // Where the orthophoto shows paving at the kerb, the sidewalk by type stays: the path's own paving reaches it.
+    if (m === null && sideTag(tags.get(b.source)!, side) === "separate") {
+      const verge = vergeOf(axis, half, side);
+      if (verge > 0) return { kerb: half, verge, walk: 0 };
+    }
     if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
     if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
     // A green gap is a verge; a wider one than `GAP` too (ADR-0080: past `KERB_REACH`, no lane's
