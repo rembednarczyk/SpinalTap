@@ -120,6 +120,10 @@ export const aisleBays = (parks: readonly AislePark[]): AisleBay[] =>
 export const MODULE = 2 * BAY_OFF + 5;
 /** The least room a park leaves round its modules (m): a module needs 17 m across (the backlog's item of 25.11). */
 const MODULE_SLACK = 1;
+/** An aisle's width (m), as the Polish road regulations' for perpendicular bays. */
+const AISLE = 2 * (BAY_OFF - 2.5);
+/** The width of a single-loaded module (m): one row of 5 m bays beside a 6 m aisle; it needs 12 m across. */
+export const SINGLE = AISLE + 5;
 
 /**
  * Aisles for a surface car park the map draws none in (the backlog's item of 25.11, part 2): as
@@ -128,7 +132,8 @@ const MODULE_SLACK = 1;
  * modules flush to its long sides. Pattern: the double-loaded parking module of perpendicular bays (Neufert;
  * bays 2.5 × 5 m, a 6 m aisle as in the Polish road regulations). Where we differ: the aisles are
  * not drawn, only laid out; a bay whose middle falls outside an outline that is no rectangle is
- * dropped by `aisleBays`, the rest by the parked cars' `fits`. None for a park under 17 m across.
+ * dropped by `aisleBays`, the rest by the parked cars' `fits`. A park 12-17 m across gets a
+ * single-loaded module (one row of bays, Neufert's too); none under 12 m.
  */
 export const moduleAisles = (outline: readonly number[]): number[][] => {
   const pts = pairs(outline);
@@ -154,15 +159,21 @@ export const moduleAisles = (outline: readonly number[]): number[][] => {
   if (!best) return [];
   const across = best.v[1] - best.v[0];
   const k = Math.floor((across - MODULE_SLACK) / MODULE);
-  if (k < 1) return [];
+  const { c, s } = best;
+  // Back from (u, v) along the long side and across it to world (x, z).
+  const world = (u: number, v: number): [number, number] => [Math.round((u * c - v * s) * 100) / 100, Math.round((u * s + v * c) * 100) / 100];
+  if (k < 1) {
+    // Too narrow for two rows: a single-loaded module, its aisle flush to one long side and its row
+    // of bays at the other; the bays past the aisle fall outside and `aisleBays` drops them.
+    if (across < SINGLE + MODULE_SLACK) return [];
+    const one = inside(pts, best.v[1] - MODULE_SLACK / 2 - AISLE / 2, best.u, world);
+    return one ? [one] : [];
+  }
   // The outer modules flush to the long sides, their rows of bays at the kerbs (the orthophoto's rows, the curator's
   // review of #1054), the room left between the modules; a single module in the middle.
   const first = best.v[0] + MODULE_SLACK / 2 + MODULE / 2;
   const last = best.v[1] - MODULE_SLACK / 2 - MODULE / 2;
   const at = (j: number) => (k === 1 ? (best.v[0] + best.v[1]) / 2 : first + ((last - first) * j) / (k - 1));
-  const { c, s } = best;
-  // Back from (u, v) along the long side and across it to world (x, z).
-  const world = (u: number, v: number): [number, number] => [Math.round((u * c - v * s) * 100) / 100, Math.round((u * s + v * c) * 100) / 100];
   return Array.from({ length: k }, (_, j) => inside(pts, at(j), best.u, world)).filter((l): l is number[] => l !== null);
 };
 
