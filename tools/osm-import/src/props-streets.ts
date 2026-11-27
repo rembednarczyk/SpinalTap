@@ -120,12 +120,13 @@ const manholes = (site: Site, item: PlanItem): Placed[] =>
     return site.surfaceAt(q) === "road" ? [{ prop: "manhole" as const, p: q, yaw: yawOf(n.z, -n.x), key }] : [];
   });
 
-/** Things at the kerb along the roads, facing the road (cabinets). */
+/** Things at the kerb along the roads, facing the road (cabinets): on the ground their cables run in, not on a bridge's deck. */
 const atKerb = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] =>
   roadStations(site, item.count ?? 0, item.id).flatMap(({ p, n, key }) => {
     const d = sideOffset(site, p, n, "kerb", 3);
     if (d === null) return [];
-    return [{ prop, p: { x: p.x + n.x * (d + 0.5), z: p.z + n.z * (d + 0.5) }, yaw: yawOf(-n.x, -n.z), key }];
+    const q = { x: p.x + n.x * (d + 0.5), z: p.z + n.z * (d + 0.5) };
+    return site.deckAt(q) === null ? [{ prop, p: q, yaw: yawOf(-n.x, -n.z), key }] : [];
   });
 
 /** A bin beside every bus stop and then every bench with no bin within 30 m. */
