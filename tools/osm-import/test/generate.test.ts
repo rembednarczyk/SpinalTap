@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { OFF_GRAPH } from "./off-graph.ts";
 import { describe, expect, it } from "vitest";
 import { ALL_CHUNKS, DISTRICTS, chunksOf } from "../src/config.ts";
 import { generate } from "../src/generate.ts";
@@ -30,7 +31,7 @@ const tinyMap = () => {
   );
 };
 
-const tinyChunk = [{ id: "test-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
+const tinyChunk = [{ id: "test-0-0", district: OFF_GRAPH, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }];
 const slope = (p: { x: number; z: number }) => 190 + p.x * 0.05;
 
 describe("generator", () => {

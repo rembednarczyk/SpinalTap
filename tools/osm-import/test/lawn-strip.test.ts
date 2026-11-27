@@ -20,13 +20,16 @@ describe("the paving of a strip between a pavement and a lawn far from the aspha
   });
 });
 
+const PAVED: ReadonlySet<string> = new Set(["square", "sidewalk", "footway"]);
+
 describe("the lawns snapped to the walks a pass of their own (the curator's review of #1087)", () => {
   // Snapped in the rule's first pass, a lawn at a walk's edge cut the frontages' zones off their
   // walks in the second, and their paving went: 135 m² on the castle's slope between Plac Zamkowy
   // and Al. Tysiąclecia, 15 m² round the lawn by Plac Wolności. As much paving there as before.
   const pavingIn = (chunks: ReturnType<typeof generatedAround>["chunks"], id: string, x0: number, x1: number, z0: number, z1: number) => {
     const c = chunks.find((k) => k.id === id)!;
-    const rings = c.ground.filter((g) => g.surface === "square").map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })));
+    // Paving of any kind: the street graph (ADR-0104 E3) lays Plac Wolności's as the sidewalk and footway it is.
+    const rings = c.ground.filter((g) => PAVED.has(g.surface)).map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]!, z: g.outline[2 * i + 1]! })));
     let n = 0;
     for (let x = x0 + 0.125; x < x1; x += 0.25) for (let z = z0 + 0.125; z < z1; z += 0.25) if (rings.some((r) => pointInRing({ x, z }, r))) n++;
     return n * 0.0625;

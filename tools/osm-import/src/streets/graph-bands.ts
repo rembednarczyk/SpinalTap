@@ -34,6 +34,14 @@ export const STREET_GRAPH_DISTRICTS: ReadonlySet<string> = new Set<string>(["kra
 export const graphDistricts = (): ReadonlySet<string> => new Set([...STREET_GRAPH_DISTRICTS, ...(process.env.SEKI_STREET_GRAPH ?? "").split(",").filter((s) => s !== "")]);
 
 /**
+ * The districts on the street graph that a build lays: those of its chunks. A build of chunks in
+ * other districts (a test's chunk somewhere on the map's ground) lays its streets the old way,
+ * wherever its rect lies; a build of some of a graph district's chunks lays the whole district's graph.
+ */
+export const builtGraphDistricts = (chunks: readonly { readonly district: { readonly slug: string; readonly id: string } }[]): ReadonlySet<string> =>
+  new Set([...graphDistricts()].filter((d) => chunks.some((c) => c.district.slug === d || c.district.id === d)));
+
+/**
  * The kerb's corner radius by the street's type: 4 m by a primary or secondary street, 3 m by the
  * rest. ADR-0080 had 6 m by the main streets; a fillet reaches r / tan(θ / 2) along each kerb, and at
  * the city's acute corners (30-45°) 6 m flooded 15-22 m of the corner with asphalt (ADR-0104 E2).

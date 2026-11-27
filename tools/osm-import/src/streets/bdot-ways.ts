@@ -53,8 +53,9 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts(), o
 export const withBdot = (
   mapLines: readonly Line[],
   osm: readonly Line[] = mapLines,
+  districts = graphDistricts(),
 ): { lines: Line[]; offsets: Offsets; sides: (id: string) => readonly [boolean, boolean] | undefined; bdot: ReadonlyMap<string, BdotWay> } => {
-  const bdot = bdotWays(mapLines, graphDistricts(), new Map(osm.map((l) => [l.id, l.tags])));
+  const bdot = bdotWays(mapLines, districts, new Map(osm.map((l) => [l.id, l.tags])));
   if (bdot.size === 0) return { lines: [...mapLines], offsets: ORTHO_OFFSETS, sides: orthoSides, bdot };
   const offsets = new Map(ORTHO_OFFSETS);
   for (const [id, b] of bdot) offsets.set(id, b.offset);

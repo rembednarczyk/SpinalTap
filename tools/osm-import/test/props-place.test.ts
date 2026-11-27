@@ -136,9 +136,11 @@ describe("the traffic lights a node on the road stands for (G-825 r3)", () => {
   it("stand where they stood before G-825: by the nearest pavement, whichever side the traffic arrives on", () => {
     // A rule of round 2 took the right of the one-way streets driven up to the node when that pavement
     // lay at most 2 m farther: it moved these onto a lane before the stop line or into the junction.
+    // Krakowskie's two by the pavements of the street graph (ADR-0104 E3): (-104.3; 121) 1.2 m on to
+    // the graph's kerb, (-104.1; 49.7) 2.1 m off the asphalt BDOT10k's width lays there now.
     const before: [string, number, number][] = [
-      ["krakowskie-0-1", -104.3, 121],
-      ["krakowskie-0-1", -104.1, 49.7],
+      ["krakowskie-0-1", -105.1, 120.1],
+      ["krakowskie-0-1", -104, 51.8],
       ["podzamcze-2-0", 1058.8, 288.1],
       ["nabrzeze-1-0", 2523.5, 261.4],
       ["nabrzeze-0-1", 2485.3, 284.5],

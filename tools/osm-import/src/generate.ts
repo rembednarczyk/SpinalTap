@@ -35,7 +35,7 @@ import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines }
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { FILL_MARGIN, kerbFills } from "./kerb-fill.ts";
 // The districts' streets from the street graph (ADR-0104): carriageways, corners and sidewalks as one, after `cutSidewalk`.
-import { graphBands } from "./streets/graph-bands.ts";
+import { builtGraphDistricts, graphBands } from "./streets/graph-bands.ts";
 import { laidZebras, zebraSpots } from "./zebra-fit.ts";
 import { taperedJoins } from "./lane-fit.ts";
 import { lanePlaces, placedPieces, placementOffset } from "./lane-place.ts";
@@ -340,7 +340,8 @@ const generateMap = (
   // The explicit corrections of estimated tags and the areas OSM lacks (corrections.ts), before anything reads them.
   const areas = [...features.areas.map((a) => corrected(a)), ...addedAreas(added)];
   // BDOT10k's carriageways measure the streets of the districts on the street graph (ADR-0104 pkt 4), over the orthophoto's.
-  const { lines: mapLines, offsets, sides, bdot } = withBdot(features.lines.map((l) => correctedLine(l)), features.lines);
+  const onGraph = builtGraphDistricts(chunks);
+  const { lines: mapLines, offsets, sides, bdot } = withBdot(features.lines.map((l) => correctedLine(l)), features.lines, onGraph);
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(mapLines);
   const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
@@ -417,7 +418,7 @@ const generateMap = (
   }
   const estimated = estimatedSide(new Set(mapLines.filter((l, k) => parseLength(l.tags.width ?? l.tags["width:carriageway"]) !== null || lines[k]!.tags !== l.tags).map((l) => l.id)), sides);
   const coverOf = coverReader(covers);
-  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimated, coverOf));
+  bands.splice(0, bands.length, ...graphBands(bands, lines, buildings.map((a) => a.ring), estimated, coverOf, onGraph));
   // A lawn mapped above the ground lies on the roof of a structure under it, off the buildings and carriageways (G-647).
   const raised = new Set(areas.filter((a) => raisedGreen(a.tags)).map((a) => a.id));
   const decks = areas.filter((a) => a.tags.building !== undefined && a.tags.building !== "no" && belowGround(a.tags)).map((a) => a.ring);
