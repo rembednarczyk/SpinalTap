@@ -99,8 +99,19 @@ describe("aisles laid in a car park the map draws none in (the backlog's item of
     expect(Math.abs((x1! - x0!) * Math.cos(0.6) + (z1! - z0!) * Math.sin(0.6))).toBeLessThan(0.1);
   });
 
-  it("lays none in a park under 17 m across, and keeps an aisle to its outline's inside", () => {
-    expect(moduleAisles(rect(50, 16))).toHaveLength(0);
+  it("lays a single-loaded module in a park 12-17 m across: its aisle by one long side, one row of bays", () => {
+    const [aisle, more] = moduleAisles(rect(50, 16));
+    expect(more).toBeUndefined();
+    // Half a metre's room and half the 6 m aisle off the long side at z 16.
+    expect(aisle![1]).toBeCloseTo(12.5);
+    const bays = aisleBays([{ id: "p", outline: rect(50, 16), aisles: [aisle!] }]);
+    expect(bays.length).toBeGreaterThan(10);
+    // One row, at the other long side: 5.5 m off the aisle, its back half a metre in.
+    expect(new Set(bays.map((b) => b.z))).toEqual(new Set([7]));
+  });
+
+  it("lays none in a park under 12 m across, and keeps an aisle to its outline's inside", () => {
+    expect(moduleAisles(rect(50, 11.5))).toHaveLength(0);
     // An L: 40 m along x and 20 m deep for its first 20 m, 10 m deep beyond.
     const l = [0, 0, 40, 0, 40, 10, 20, 10, 20, 20, 0, 20];
     const aisles = moduleAisles(l);
