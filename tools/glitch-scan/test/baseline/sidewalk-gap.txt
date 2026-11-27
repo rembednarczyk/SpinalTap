@@ -69,7 +69,7 @@ krakowskie-2-0 400,-236
 krakowskie-2-0 390,-222
 krakowskie-2-0 333,-191
 krakowskie-2-0 334,-188
-krakowskie-2-0 349,-186
+krakowskie-2-0 350,-186
 krakowskie-2-0 371,-186
 krakowskie-2-0 370,-181
 krakowskie-2-0 312,-171
@@ -153,6 +153,7 @@ nabrzeze-0-1 2333,427
 nabrzeze-0-1 2340,429
 nabrzeze-0-1 2346,430
 nabrzeze-0-1 2389,430
+nabrzeze-0-1 2352,431
 nabrzeze-0-1 2392,443
 nabrzeze-0-1 2379,445
 nabrzeze-0-1 2380,450
@@ -228,7 +229,6 @@ podzamcze-0-1 537,413
 podzamcze-0-1 539,420
 podzamcze-0-1 539,425
 podzamcze-0-1 539,428
-podzamcze-0-1 539,431
 podzamcze-0-1 540,436
 podzamcze-0-1 664,455
 podzamcze-0-1 542,456
@@ -355,7 +355,7 @@ podzamcze-2-1 976,466
 podzamcze-2-1 977,466
 podzamcze-2-1 964,468
 podzamcze-2-1 1060,468
-podzamcze-2-1 1065,470
+podzamcze-2-1 1067,471
 podzamcze-2-1 1083,495
 podzamcze-2-1 1102,531
 podzamcze-2-1 1101,535

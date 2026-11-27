@@ -102,7 +102,7 @@ const ringOf = (flat: readonly number[]) => Array.from({ length: flat.length >> 
  * to the strip's width and one; what of it is laid, region by region, `zoneStrips` says, with the
  * cells `cover` itself shows green.
  */
-export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOut[], band: number, regions: StripRegions, snap = 0): void => {
+export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOut[], band: number, regions: StripRegions): void => {
   const { nx, nz, label } = cells;
   const size = nx * nz;
   const reach = Math.round(band / STEP);
@@ -118,23 +118,46 @@ export const lawnStrips = (cells: Cells, cover: Cover, ground: readonly GroundOu
   const fromLawn = scratch.i16("strips.side", size, null);
   steps(w, walk, reach, fromWalk);
   steps(w, lawn, reach, fromLawn);
-  // A gap up to `snap` across between a walk and a lawn, green on the cover, is the lawn's: snapped
-  // to the walk's edge (gap closing, as GIS topology's `ST_Snap`). Narrower than a piece the
-  // tracing lays (`FILL.minArea`), it stayed bare between the two (147 samples of the new row of
-  // Podzamcze, the backlog's diagnosis of 24.11). The strip to the lawn is read again with it: a
-  // strip of paving between another walk and the lawn snapped is the strip's too.
-  const close = Math.round(snap / STEP);
-  let snapped = 0;
-  for (let k = 0; k < size; k++) {
-    if (green[k] && fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= close + 1 && !taken(label[k]!)) {
-      label[k] = LABEL.grass;
-      cells.zone[k] = 1;
-      lawn[k] = 1;
-      snapped++;
-    }
-  }
-  if (snapped > 0) steps(w, lawn, reach, fromLawn);
   const strip = scratch.u8("strips.mark", size, null);
   for (let k = 0; k < size; k++) strip[k] = fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= reach + 1 ? 1 : 0;
   zoneStrips(cells, strip, green, regions);
+};
+
+/**
+ * A gap up to `snap` metres across between a walk and a lawn of the chunk's `ground`, left bare, is
+ * closed as the cover reads it (gap closing, as GIS topology's `ST_Snap`): its green the lawn's,
+ * snapped to the walk's edge, its light paving beside that green the walk's; the rest stays bare. Narrower than a piece the tracing lays (`FILL.minArea`), it stayed bare between the
+ * two (147 samples of the new row of Podzamcze, the backlog's diagnosis of 24.11). A pass of its
+ * own, last (`coverFills`), on the cells the other passes left bare: snapped in the first pass, a
+ * lawn at the walk's edge cut the frontages' zones off their walks in the second, and their paving
+ * went (the curator's review of #1087: 135 m² on the castle's slope and by Plac Wolności).
+ */
+export const snapLawns = (cells: Cells, cover: Cover, ground: readonly GroundOut[], snap: number): void => {
+  const { nx, nz, label } = cells;
+  const size = nx * nz;
+  const reach = Math.round(snap / STEP);
+  const [walk, lawn] = [scratch.u8("snap.walk", size), scratch.u8("snap.lawn", size)];
+  for (const g of ground) if (WALKS.has(g.surface) || g.surface === "grass") cells.mark(ringOf(g.outline), g.surface === "grass" ? lawn : walk);
+  const w: Walk = { nx, size, label, dk: Int32Array.from(DI, (di, r) => (r < 3 ? -nx : r < 5 ? 0 : nx) + di), queue: scratch.i32("snap.queue", size, null) };
+  const [fromWalk, fromLawn] = [scratch.i16("snap.walkSteps", size, null), scratch.i16("snap.lawnSteps", size, null)];
+  steps(w, walk, reach, fromWalk);
+  steps(w, lawn, reach, fromLawn);
+  // The pass lays these alone: every other free cell is left bare. The gap's green first, the
+  // lawn's; then its light paving beside that green, the walk's: left bare, it lay between the walk
+  // and the lawn snapped, a strip of paving between them (`walk-lawn-bare`). Paving elsewhere in a
+  // gap stays as the other passes left it: laid there, a strip a step below the sidewalk.
+  const cls = scratch.u8("snap.cls", size);
+  for (let j = 0, k = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++, k++) {
+      const gap = !taken(label[k]!) && fromWalk[k]! > 0 && fromLawn[k]! > 0 && fromWalk[k]! + fromLawn[k]! <= reach + 1;
+      const p = cells.at(i, j);
+      cls[k] = gap ? coverAt(cover, p.x, p.z) : COVER.none;
+    }
+  const green = (k: number) => k >= 0 && k < size && cls[k] === COVER.green;
+  for (let k = 0; k < size; k++) {
+    if (taken(label[k]!)) continue;
+    const besideGreen = (k % nx > 0 && green(k - 1)) || (k % nx < nx - 1 && green(k + 1)) || green(k - nx) || green(k + nx);
+    label[k] = cls[k] === COVER.green ? LABEL.grass : cls[k] === COVER.paving && besideGreen ? LABEL.square : LABEL.other;
+    cells.zone[k] = label[k] === LABEL.other ? 0 : 1;
+  }
 };

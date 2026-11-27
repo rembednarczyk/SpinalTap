@@ -33,7 +33,7 @@ import { Cells, LABEL as CELL_LABEL, STEP as CELL_STEP, scratch } from "./bare-c
 import { dropLoose, joinSpecks, readCover } from "./bare-clean.ts";
 import { type Frontage, evenKerbs, offFronts, paveSpecks, zoneFronts } from "./bare-fronts.ts";
 import { keepKerbs } from "./bare-kerbs.ts";
-import { kerbStrips, lawnStrips } from "./bare-strips.ts";
+import { kerbStrips, lawnStrips, snapLawns } from "./bare-strips.ts";
 import { contours } from "./contour.ts";
 import { crossesItself } from "./bare-ring.ts";
 import { type Area, type Line } from "./features.ts";
@@ -376,7 +376,9 @@ export const townPlaces = (data: OsmData, areas: readonly Area[], loops: readonl
  */
 export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces = NO_PLACES): GroundOut[] => {
   const base = layFills(rect, cover, ground, walls, { ...town, fronts: [] }, null);
-  if (!town.fronts?.length) return base;
+  // The lawns snapped to the walks (`snapLawns`) a pass of their own, last, over what the others laid.
+  const snapped = (laid: readonly GroundOut[]) => layFills(rect, cover, [...ground, ...laid], walls, NO_PLACES, null, true);
+  if (!town.fronts?.length) return [...base, ...snapped(base)];
   // The frontages a pass of their own over what the first left bare (G-853): the fills of the rule
   // stay as they were, and the furniture set by the paving's edges reads the ground without them.
   // Read past the chunk's edges and cut on them: traced on the chunk's cells alone, a fill crossing
@@ -395,14 +397,15 @@ export const coverFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[
       .filter((r) => r.length >= 3 && signedArea(r) >= FILL.minArea)
       .map((r) => ({ ...g, outline: r.flatMap((q) => [q.x, q.z]) })),
   );
-  return [...base, ...within.map((g) => ({ ...g, front: true as const }))];
+  const front = within.map((g) => ({ ...g, front: true as const }));
+  return [...base, ...front, ...snapped([...base, ...front])];
 };
 
 /**
  * One pass of the rule (`coverFills`): with `base` (the first pass's fills) the frontages' alone,
  * on the ground the first left bare, the first's lawns next to theirs.
  */
-const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces, base: readonly GroundOut[] | null): GroundOut[] => {
+const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls: readonly (readonly Pt[])[], town: TownPlaces, base: readonly GroundOut[] | null, snapOnly = false): GroundOut[] => {
   const cells = new Cells(rect);
   const ringOf = (flat: readonly number[]) => {
     const ring: Pt[] = [];
@@ -431,7 +434,8 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
   zoneFronts(cells, town.fronts ?? [], off, FILL.zoneMargin, FILL.looseArea);
   readCover(cells, cover, FILL.around);
   joinSpecks(cells, FILL.speck);
-  if (base) {
+  if (snapOnly) snapLawns(cells, cover, ground, FILL.lawnSnap);
+  else if (base) {
     const lawns = scratch.u8("fronts.lawns", cells.label.length);
     for (const g of base) if (g.surface === "grass") cells.mark(ringOf(g.outline), lawns);
     for (const g of town.greens ?? []) cells.mark(g, lawns);
@@ -442,10 +446,10 @@ const layFills = (rect: Rect, cover: Cover, ground: readonly GroundOut[], walls:
     evenKerbs(cells, cover, grass, square);
   } else {
     kerbStrips(cells, FILL.kerbStrip, FILL.zoneMargin);
-    lawnStrips(cells, cover, ground, FILL.lawnStrip, FILL.lawnRegions, FILL.lawnSnap);
+    lawnStrips(cells, cover, ground, FILL.lawnStrip, FILL.lawnRegions);
   }
-  dropLoose(cells, FILL.looseWidth, FILL.looseArea);
-  if (!base) keepKerbs(cells, FILL.kerbBand);
+  if (!snapOnly) dropLoose(cells, FILL.looseWidth, FILL.looseArea);
+  if (!base && !snapOnly) keepKerbs(cells, FILL.kerbBand);
   const n = Math.round(FILL.tile / STEP);
   const out: GroundOut[] = [];
   const has = new Uint8Array(Math.ceil(cells.nx / n) * Math.ceil(cells.nz / n));
