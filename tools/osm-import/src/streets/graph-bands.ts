@@ -294,7 +294,8 @@ export const graphBands = <B extends Band>(
   // The map's asphalt areas by the kerbs (car parks along the street, a carriageway's own area): a footway behind one is the sidewalk still.
   const isLine = new Set(lines.map((l) => l.id));
   const bays = bands.filter((b) => !isLine.has(b.source) && !b.carriageway && !b.bridge && b.surface === "road" && inside(b.box)).map((b) => b.ring);
-  const walksAlong = (along: ReadonlySet<string>) => bands.filter((b) => (b.surface === "sidewalk" || b.surface === "footway") && !ways.has(b.source) && (tags.get(b.source)?.footway === "sidewalk" || along.has(b.source)) && inside(b.box));
+  // Not on a bridge: its deck's sidewalk stays the deck's piece; laid by the graph on the ground under it, the deck had a slot (`deck-slot`, Mełgiewska's bridges).
+  const walksAlong = (along: ReadonlySet<string>) => bands.filter((b) => (b.surface === "sidewalk" || b.surface === "footway") && !b.bridge && !ways.has(b.source) && (tags.get(b.source)?.footway === "sidewalk" || along.has(b.source)) && inside(b.box));
   // Along the graph's streets only: a footway by the deptak (off the graph) is its kerb as before, its setts reach it.
   const mapped = walksAlong(footwaysAlongStreets(lines.filter((l) => !isCarFree(l.id)), places, bays));
   const lineOf = new Map(lines.map((l) => [l.id, l.line]));
