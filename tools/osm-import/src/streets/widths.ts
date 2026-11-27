@@ -15,6 +15,7 @@ import { parseLength } from "../building-tags.ts";
 import { orthoWidth } from "../corrections-kerb.ts";
 import { type Pt, lineLength } from "../geometry.ts";
 import { type Tags } from "../osm.ts";
+import { KERBS_CHECKED } from "./kerbs-checked.ts";
 
 export type WidthSource = "osm" | "bdot10k" | "ortho" | "fitted" | "default";
 
@@ -125,7 +126,8 @@ export const sourcedWidth = (
   report: WidthReport,
 ): [SideWidth, SideWidth] => {
   const ortho = orthoWidth(way);
-  const bdot = bdotWidth(axis);
+  // A way checked on the ground (T-360) over BDOT10k's class width.
+  const bdot = KERBS_CHECKED.get(way)?.width ?? bdotWidth(axis);
   const sides = streetWidth(tags, half, ortho !== null, (side) => estimated(way, side), bdot);
   report.add(way, tags.name ?? "", axis, sides, bdot, ortho);
   return sides;

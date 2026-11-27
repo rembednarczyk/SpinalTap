@@ -24,6 +24,12 @@ describe("the ways BDOT10k measures (ADR-0104 pkt 4)", () => {
     expect(bdotWays([{ ...street("w216497220", {}), id: "w216497220" }], new Set(["krakowskie"])).size).toBe(0);
   });
 
+  it("measures Lubartowska by its kerbs checked against OSM's bollard lines, not by BDOT10k's 9 m (T-360)", () => {
+    const lubartowska = { ...street("w40050981", {}), line: [{ x: 441.6, z: -30 }, { x: 441.8, z: -75 }] };
+    expect(bdotWays([lubartowska], new Set(["krakowskie"])).get("w40050981")).toEqual({ width: 7.9, offset: 0.25 });
+    expect(bdotWays([{ ...lubartowska, id: "other" }], new Set(["krakowskie"])).get("other")?.width).toBe(9);
+  });
+
   it("measures none while the street graph is off", () => {
     expect(bdotWays([street("plain", {})], new Set()).size).toBe(0);
   });

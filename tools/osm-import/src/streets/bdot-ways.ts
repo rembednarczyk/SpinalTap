@@ -17,6 +17,7 @@ import { type Offsets, ORTHO_OFFSETS, orthoSides } from "../corrections-kerb.ts"
 import { type Line } from "../features.ts";
 import { STREETS } from "./along-footways.ts";
 import { graphDistricts } from "./graph-bands.ts";
+import { KERBS_CHECKED } from "./kerbs-checked.ts";
 import { bdotMatch } from "./widths.ts";
 
 /** A way's BDOT10k measure: the carriageway's width and how far left of the way's line it lies (m, to 0.1 m as the orthophoto's). */
@@ -24,6 +25,7 @@ export interface BdotWay {
   readonly width: number;
   readonly offset: number;
 }
+
 
 /** The streets' ways in the districts on the street graph that a BDOT10k carriageway with a width runs along. */
 export const bdotWays = (lines: readonly Line[], districts = graphDistricts(), osm: ReadonlyMap<string, Line["tags"]> = new Map()): Map<string, BdotWay> => {
@@ -40,6 +42,11 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts(), o
     const own = osm.get(l.id) ?? l.tags;
     // Nor a street the game closes to cars (T-324's deptak): off the street graph, laid as before, its setts out to the kerb of its bays.
     if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || isCarFree(l.id) || parseLength(own.width ?? own["width:carriageway"]) !== null) continue;
+    const checked = KERBS_CHECKED.get(l.id);
+    if (checked) {
+      out.set(l.id, { width: checked.width, offset: checked.offset });
+      continue;
+    }
     const m = bdotMatch(l.line);
     if (m) out.set(l.id, { width: m.width, offset: Math.round(m.offset * 10) / 10 });
   }

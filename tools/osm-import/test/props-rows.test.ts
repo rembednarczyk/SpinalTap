@@ -70,8 +70,9 @@ describe("rows of bollards and their chains (G-032)", () => {
 
   it("keeps Plac Łokietka's zebra mouth free: the post in it goes, the rows end at its edges", () => {
     const row = posts.filter((i) => Math.abs(i.x - 439) < 1 && i.z < -91 && i.z > -100).sort((a, b) => a.z - b.z);
-    // 439,-94.4 stood in the mouth of the zebra from 439.2,-95 eastwards, with no room beside it.
-    expect(row.map((i) => i.z)).toEqual([-99.5, -96.8, -91.9]);
+    // 439,-94.4 stood in the mouth of the zebra from 439.2,-95 eastwards, with no room beside it. On the
+    // street graph's kerb (ADR-0104 E3, T-360) the zebra's south edge, and the post by it, 0.4 m farther south.
+    expect(row.map((i) => i.z)).toEqual([-99.5, -97.2, -91.9]);
     for (const i of row.slice(0, 2)) expect(Math.abs(sideOf(i).x), `${i.x},${i.z} yaw ${i.yaw}`).toBeLessThan(Math.sin((3 * Math.PI) / 180));
     // The row of OSM's line w1514057825 (G-818) runs on south of the mouth: the post before it holds its chain back to the
     // next, none crosses the mouth, and the post after it starts the line w1514057822 northwards.
