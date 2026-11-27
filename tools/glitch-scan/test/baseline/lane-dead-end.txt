@@ -20,7 +20,6 @@ nabrzeze-1-0 2539,259
 podzamcze-0-0 568,160
 podzamcze-0-0 633,248
 podzamcze-0-0 556,279
-podzamcze-0-0 581,361
 podzamcze-0-1 598,379
 podzamcze-0-1 591,387
 podzamcze-0-1 690,452
@@ -38,6 +37,4 @@ podzamcze-1-2 872,741
 podzamcze-2-0 1098,266
 podzamcze-2-0 1095,268
 podzamcze-2-0 1041,284
-podzamcze-2-1 1000,461
 podzamcze-2-1 930,472
-podzamcze-2-2 1085,603
