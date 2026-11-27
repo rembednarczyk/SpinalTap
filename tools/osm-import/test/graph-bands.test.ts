@@ -67,3 +67,18 @@ describe("a piece of the graph's ground the rounding to 0.1 m would make cross i
     expect(roundable(square)).toEqual([square]);
   });
 });
+
+describe("a street's sidewalk at a facade with a doorway's niche (door-floating)", () => {
+  it("reaches into the niche, 0.25 m deep", () => {
+    // A tenement 5.5 m past the axis (2.5 m past the kerb), a doorway's niche 0.8 m wide, 0.25 m deep in its front:
+    // the gap closed to the facade took the niche for a hair and the chunks dropped it.
+    const f = Z + 5.5;
+    const building: Pt[] = [
+      { x: X0, z: f }, { x: 9.6, z: f }, { x: 9.6, z: f + 0.25 }, { x: 10.4, z: f + 0.25 }, { x: 10.4, z: f },
+      { x: X1, z: f }, { x: X1, z: Z + 20 }, { x: X0, z: Z + 20 },
+    ];
+    const out = graphBands([bands[0]!], lines.slice(0, 1), [building], () => false, () => COVER.paving, new Set(["krakowskie"]));
+    expect(surfaceAt(out, { x: 5, z: f - 0.2 })).toContain("sidewalk");
+    expect(surfaceAt(out, { x: 10, z: f + 0.12 })).toContain("sidewalk");
+  });
+});

@@ -204,6 +204,8 @@ const THIN = 0.1;
  */
 export const roundable = (ring: readonly Pt[]): Pt[][] =>
   selfIntersects(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) }))) ? rings(grown(grown(areaOfRing(ring), -THIN), THIN)) : [[...ring]];
+/** Half the widest niche of a facade a street's sidewalk reaches into (m, `graphBands`): a doorway's. */
+const NICHE = 0.3;
 /** How far out from the kerb the gaps are closed (m): a wide sidewalk and the gap past it. */
 const GAP_REACH = 6 + GAP;
 
@@ -356,11 +358,24 @@ export const graphBands = <B extends Band>(
       for (const ring of pieces) laid.push({ ...from, ...more, ring, holed: true, box: ringBounds(ring) } as Boxed<B>);
     }
   };
+  // A street's sidewalk reaches into the niches of the facades by it (morphological closing with the
+  // buildings by `NICHE`, the buildings and the asphalt less): a doorway's niche 0.25 m deep by
+  // Krakowskie Przedmieście (151; −103) was a hair the rounding drops, left bare, and its door's
+  // jamb stood 0.17 m over the ground (`door-floating`).
+  const builtArea = join(...near.map(areaOfRing));
+  const intoNiches = (walk: Area): Area => {
+    const local = within(builtArea, grown(walk, 2 * NICHE));
+    if (local.length === 0) return walk;
+    const closed = grown(grown(join(walk, local), NICHE), -NICHE);
+    // Only what the closing adds against a facade: not between the walk and the asphalt or other ground.
+    const niches = within(within(less(closed, join(local, areas.c, walk)), grown(walk, 2 * NICHE)), grown(local, NICHE));
+    return join(walk, niches);
+  };
   for (const o of areas.own) {
     const b = pieces[o.edge]!;
     // Not the old band's widenings (fitted lanes, bays): the graph's carriageway is the sources' width, and the lanes read that.
     if (o.surface === "road") add(b, o.area, { graph: true, widen: undefined, widenLanes: undefined });
-    else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, o.area, {});
+    else add({ surface: "sidewalk", ring: [], bridge: false, source: b.source } as unknown as B, intoNiches(o.area), {});
   }
   if (mapped.length > 0) add({ surface: "sidewalk", ring: [], bridge: false, source: mapped[0]!.source } as unknown as B, areas.rest, {});
   // Not to a lawn or water: what lies between the street and the green is the cover's to lay (`bare-cover.ts`).
