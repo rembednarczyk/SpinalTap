@@ -2253,6 +2253,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (bare-cover, streets/graph-bands)
 - Klucze skanu: sidewalk-step krakowskie-2-0 442,-54
 - 27.11: szew 0,05 m z tego samego miejsca (dwa kawałki chodnika grafu ze wspólną ukośną granicą opisaną różnymi wierzchołkami, zaokrąglane osobno do 0,1 m) zostaje. Trzy próby wycofane: łączenie stykających się kawałków przed zaokrągleniem (+23 kerb-gap-bare w dzielnicy przez otwarcie o THIN), łączenie tylko czystych po zaokrągleniu (szew wraca), zakładka 0,06 m (+4 ground-ring-self-cross, +14 kerb-gap-bare). Poprawka u źródła: wspólna granica kawałków z jednego podziału (te same wierzchołki). Miejsca: landuse-bare, bare-on-cover i ground-strip-gap przy (430–432; −82…−57).
+- 27.11 (później): szew 0,05 m naprawiony u źródła: wspólne wierzchołki T-połączeń kawałków grafu (weldTJunctions, wzorzec tjunc.c z qbsp), test t-junctions; przy okazji kerb-gap-bare w dzielnicy 702 -> 642. Zostaje uskok 8 cm placu z reguły gołej ziemi.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

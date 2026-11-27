@@ -1,8 +1,10 @@
 # kerb-jag: grid 10 m (x,z = the square's corner at its least x and z)
+krakowskie-1-1 190,80
 krakowskie-2-0 370,-200
 krakowskie-2-0 280,-180
 krakowskie-2-0 360,-150
 krakowskie-2-0 350,-50
+krakowskie-2-1 430,150
 nabrzeze-0-1 2350,330
 nabrzeze-1-0 2670,100
 nabrzeze-1-0 2650,110

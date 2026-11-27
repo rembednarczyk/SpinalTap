@@ -19,9 +19,11 @@ krakowskie-0-0 7,-60
 krakowskie-0-0 11,-60
 krakowskie-0-0 17,-60
 krakowskie-0-0 -119,-58 *2
+krakowskie-0-1 -70,113
 krakowskie-0-1 -56,113
 krakowskie-0-1 -55,113
 krakowskie-0-1 -9,113
+krakowskie-0-1 5,113
 krakowskie-0-1 19,113
 krakowskie-0-1 -92,115
 krakowskie-0-1 -89,115
@@ -41,9 +43,8 @@ krakowskie-1-1 90,-2
 krakowskie-1-1 92,7
 krakowskie-1-1 93,16
 krakowskie-1-1 94,25
-krakowskie-1-1 187,37
+krakowskie-1-1 185,39
 krakowskie-1-1 97,46
-krakowskie-1-1 177,51
 krakowskie-1-1 100,53
 krakowskie-1-1 102,56
 krakowskie-1-1 176,88
@@ -81,7 +82,7 @@ krakowskie-2-1 328,103
 krakowskie-2-1 305,110
 krakowskie-2-1 303,112
 krakowskie-2-1 282,128
-krakowskie-2-1 266,137
+krakowskie-2-1 275,132
 krakowskie-2-1 436,155
 nabrzeze-0-0 2481,182
 nabrzeze-0-0 2497,206 *2

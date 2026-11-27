@@ -1,6 +1,7 @@
 # sidewalk-step: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-0-0 -97,-268
 krakowskie-0-0 -97,-267
+krakowskie-0-0 -80,-219
 krakowskie-0-0 -80,-214
 krakowskie-0-0 -80,-213
 krakowskie-0-0 19,-196
@@ -15,14 +16,15 @@ krakowskie-0-0 -80,-169
 krakowskie-0-0 -105,-158
 krakowskie-0-0 -105,-157
 krakowskie-0-0 -108,-138
-krakowskie-0-0 -103,-96
 krakowskie-0-0 -128,-59
 krakowskie-0-0 -123,-58
 krakowskie-0-0 -119,-58
 krakowskie-0-0 -108,-43
 krakowskie-0-1 -111,-18
 krakowskie-0-1 -111,-11
+krakowskie-0-1 -111,-4
 krakowskie-0-1 -158,53
+krakowskie-0-1 -161,54
 krakowskie-0-1 -191,56
 krakowskie-0-1 -198,57 *2
 krakowskie-0-1 -103,84
@@ -31,7 +33,7 @@ krakowskie-0-1 -7,113
 krakowskie-0-1 3,113
 krakowskie-0-1 19,113
 krakowskie-0-1 -18,114
-krakowskie-0-1 -10,114
+krakowskie-0-1 -11,114
 krakowskie-0-1 -91,115
 krakowskie-0-1 -89,115
 krakowskie-0-1 -101,127
@@ -42,14 +44,12 @@ krakowskie-1-0 104,-233
 krakowskie-1-0 72,-214
 krakowskie-1-0 176,-204
 krakowskie-1-0 30,-200
-krakowskie-1-0 191,-196
 krakowskie-1-0 197,-192
 krakowskie-1-0 221,-181
 krakowskie-1-0 229,-177
 krakowskie-1-0 152,-170
 krakowskie-1-0 150,-150 *2
 krakowskie-1-0 21,-136 *2
-krakowskie-1-0 145,-122
 krakowskie-1-0 24,-118
 krakowskie-1-0 26,-107
 krakowskie-1-0 144,-105
@@ -67,7 +67,6 @@ krakowskie-1-1 80,108
 krakowskie-1-1 68,109
 krakowskie-1-1 24,112
 krakowskie-1-1 30,112
-krakowskie-1-1 199,112
 krakowskie-1-1 45,124 *2
 krakowskie-1-1 50,142
 krakowskie-2-0 330,-267
@@ -118,7 +117,7 @@ krakowskie-2-1 411,108
 krakowskie-2-1 299,116
 krakowskie-2-1 289,124
 krakowskie-2-1 419,124
-krakowskie-2-1 425,134
+krakowskie-2-1 424,133
 krakowskie-2-1 438,157
 nabrzeze-0-0 2447,110
 nabrzeze-0-0 2450,117

@@ -92,7 +92,6 @@ krakowskie-2-1 326,104
 krakowskie-2-1 299,116
 krakowskie-2-1 289,124
 krakowskie-2-1 421,127
-krakowskie-2-1 422,128
 krakowskie-2-1 278,130
 krakowskie-2-1 275,132
 krakowskie-2-1 425,134
