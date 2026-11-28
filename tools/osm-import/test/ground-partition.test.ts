@@ -78,6 +78,17 @@ describe("the ground as a partition of the plane (ADR-0078 step 3)", () => {
     expect(overlap(out)).toBeLessThan(1e-3);
   });
 
+  it("opens a piece nothing lies over whose outline crosses itself: the spike of a band's end on the 0.1 m grid (nabrzeze-1-0, 2694.7; 65.4)", () => {
+    // The graph's sidewalk by (2690; 64) as the tables had it: its end turns back on itself 0.1 m across.
+    const spiked: GroundOut = { surface: "sidewalk", outline: [2691.7, 64.8, 2694.1, 65.2, 2694.6, 65.2, 2694.7, 65.5, 2694.7, 65.4, 2684.6, 63.6, 2681.6, 62.1, 2685.7, 63.3, 2689.3, 64.2, 2690, 64.4] };
+    expect(selfIntersects(ringOf(spiked))).toBe(true);
+    const out = partitionGround([spiked]);
+    expect(out.length).toBeGreaterThan(0);
+    for (const g of out) expect(selfIntersects(ringOf(g))).toBe(false);
+    // Nothing but the spike's crumbs lost.
+    expect(m2(out.map((g) => path(ringOf(g))))).toBeGreaterThan(0.9 * Math.abs(m2([path(ringOf(spiked))])));
+  });
+
   it("leaves a bridge's deck out: it neither cuts the ground under it nor is cut", () => {
     const deck = box("road", 5, -2, 15, 10, { bridge: true, deck: [5, 4, 15, 4] });
     const out = partitionGround([lawn, road, deck]);
@@ -113,8 +124,8 @@ describe("the ground as a partition of the plane (ADR-0078 step 3)", () => {
         }
     }
     expect(lapped).toBeLessThan(1);
-    // One piece the map lays crossing itself, uncut (Stare Miasto's square at 758.4, -101.3; four before the partition).
-    expect(crossed).toBeLessThanOrEqual(1);
+    // None: the one the map laid crossing itself uncut (Stare Miasto's square at 758.4, -101.3) is opened as a cut part is.
+    expect(crossed).toBe(0);
   });
 
   it("gives the same pieces twice, in the order they came", () => {

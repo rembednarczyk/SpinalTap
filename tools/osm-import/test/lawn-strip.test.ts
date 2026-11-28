@@ -3,7 +3,7 @@ import { readCover } from "../../orto/src/cover.ts";
 import { MAP_REGIONS } from "../../orto/src/region.ts";
 import { walkLawnBare } from "../../glitch-scan/test/walk-lawn-bare.ts";
 import { pointInRing } from "../src/geometry.ts";
-import { generatedAround } from "./city.ts";
+import { generatedAround, generatedCity } from "./city.ts";
 
 describe("the paving of a strip between a pavement and a lawn far from the asphalt (G-902)", () => {
   it("leaves no bare paving between the sidewalk w793299545 and the lawn w804709930 by Ruska in Podzamcze", () => {
@@ -35,7 +35,10 @@ describe("the lawns snapped to the walks a pass of their own (the curator's revi
     return n * 0.0625;
   };
   it("leaves the paving of the castle's slope and of Plac Wolności's lawn as it was", () => {
-    expect(pavingIn(generatedAround([{ x: 810, z: 307 }]).chunks, "podzamcze-1-0", 750, 870, 300, 315)).toBeGreaterThan(135);
-    expect(pavingIn(generatedAround([{ x: 345, z: -195 }]).chunks, "krakowskie-2-0", 337, 354, -198, -193)).toBeGreaterThan(13);
+    // The whole city's chunks, as the tables have them: the city's cache is made before the tests (`warm-city.ts`), a
+    // neighbourhood's of its own was made in the test, cold in CI after any change of the generators (10.9 s of 20).
+    const { chunks } = generatedCity();
+    expect(pavingIn(chunks, "podzamcze-1-0", 750, 870, 300, 315)).toBeGreaterThan(135);
+    expect(pavingIn(chunks, "krakowskie-2-0", 337, 354, -198, -193)).toBeGreaterThan(13);
   });
 });
