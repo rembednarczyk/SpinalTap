@@ -65,8 +65,9 @@ describe("the market's stock (ADR-0058 stage 3, generator)", () => {
     // 59 until the Podzamcze row north of z 580 gave Targ na Ruskiej its whole ring and its rows a new phase;
     // 58 until its stalls stood under the orthophoto's tents (G-964): a tent's row is continuous, room
     // for stock beside a stall is left at the rows' ends only (Targ na Ruskiej 22 -> 19); 55 until the stalls kept clear of
-    // the canopies' posts (G-966): the rows under the roof w1547216433 shifted, stock found room by three fewer (Ruska 16).
-    expect(goods.length).toBe(52);
+    // the canopies' posts (G-966): the rows under the roof w1547216433 shifted, stock found room by three fewer (Ruska 16);
+    // 52 until the street graph on Podzamcze (E4) left more paving by the stalls: the flea market of Plac Zamkowy 4 -> 7, Ruska 16 -> 17.
+    expect(goods.length).toBe(56);
     for (const m of ["ruska.targ-na-ruskiej", "nowy-plac-targowy.bazar", "nabrzeze.gielda-kresowa", "plac-zamkowy.flea-market"]) {
       const ring = markets.find((x) => x.id === m)!.ring;
       expect(goods.filter((g) => pointInRing(g, ring)).length, m).toBeGreaterThan(3);

@@ -62,3 +62,16 @@ Ciąg dalszy `grunt-z-grafu-e3.md` (E3 scalone 27.11, #1090). Próba jak w E3: `
 - **Kawałek chodnika przecinający własny obrys** (`ground-partition`, `ground-ring-self-cross` 1 → 2, nabrzeze-1-0 (2694,7; 65,4)): podział przepuszczał kawałki, nad którymi nic nie leży, bez otwarcia ostróg. Osobny PR (`fix/podzial-kawalki-bez-przeciec`), naprawia też znany plac Starego Miasta (758,4; −101,3).
 - **Do kuratora** (przegląd w toku, raport w `docs/plany/e4-przeglad/`): 20 konfliktów szerokości BDOT10k z ortofoto ponad 1 m na terenie E4 (m.in. Kowalska 3,6 wobec 6,2 m, Lubartowska w216655514 8,7 wobec 11,3 m, Aleja Tysiąclecia w179654711 10,7 wobec 9,1 m), Ciasna 3,0 m w grafie wobec 6,2–6,4 m na main (`two-way-fit-narrow`, meble na pasie aut, zatoka przy Ciasnej, słup `ccby-street`), korekty północnego chodnika Alei Tysiąclecia (testy G-337, G-350, G-382), `lane-place-on-green` przy Andersie, `kerb-jag` 20 → 39.
 - **Zostaje w kodzie:** meble (rynek, tablica przestępstw, `props-food`, `props-place`), `zebra-fit-city` (Cerkiewna), zawracanie Alei Tysiąclecia przy Mełgiewskiej (`traffic.test.ts`).
+
+## Runda 5: poprawki kuratora, włączenie (28.11)
+
+- **Przegląd kuratora** (`docs/plany/e4-przeglad/raport-kuratora.md`): runda 1 NIEZGODNE w próbie, ZGODNE Z UWAGAMI po P1–P5; runda 2 ZGODNE Z UWAGAMI po czterech poprawkach. Wprowadzone:
+  - 12 wyjątków `KERBS_CHECKED` z pomiaru na ortofoto (T-362..T-370, T-372..T-374); Ciasna 6,4 m zamiast 6 m (pas postojowy w227679486, T-363);
+  - grafowe kawałki poza jezdnią omijają dziury między placami (grządki T-165 przed Bazarem), po domknięciu szwów o 0,3 m;
+  - jedna reguła trawnika przy krawężniku: ścieżka nie jest chodnikiem ulicy, gdy pas do niej jest w większości zielony na ortofoto, a bez zmapowanej drogi nie ma chodnika z szacunku, gdy jego pas jest w większości zielony;
+  - raport konfliktów szerokości tylko z pomiarem obu stron, z pełną listą;
+  - szafki przy krawężniku z dala od brzegu pomostu o pół szafki.
+- **Osobne PR-y na main:** #1093 (zwężenie pasa, G-989), #1094 (podział gruntu bez przecięć), #1095 (wyrzucony kierowca z zaułka, G-990).
+- **Testy przepisane na intencję:** skręty obok siebie (Aleja Tysiąclecia w Unii Lubelskiej), trolejbus G-020 na pasie aut, towar przy straganie wtedy i tylko wtedy, gdy stragan jest w grze, G-350 i G-382 (jedna płaszczyzna kostki), lampa przy Ciasnej (0,6 m z krawężnikiem), pas postojowy Ciasnej według T-087 (decyzja użytkownika 28.11). Złote wartości: towar targów 52 → 56, trzy sygnalizatory (G-993).
+- **Przyjęte do bazy skanu z uzasadnieniem** (runda 2 kuratora): `kerb-jag` 34 klucze klasy G-982; `lane-place-on-green` pojedyncze rzędy komórek na krawędzi asfaltu (kontrola nie zna szerokości z BDOT10k) i wysepka Al. Solidarności (G-996); `lawn-strip-on-paving` (opaski betonowe, G-995, i pojedyncze komórki); `lane-dead-end` przesunięte o 1–2 m; `deck-abutment-step` (G-991), `bus-stop-on-fill` (G-992), wyspa Ronda Dmowskiego (G-994); `two-way-fit-narrow` Zamkowa (wierne).
+- **Po scaleniu (kurator):** 18 konfliktów szerokości z pomiarem obu stron do przejrzenia, Szkolna w335644107 (drzewo (860; 603)), kontrola `lane-place-on-green` z szerokościami z grafu, Stare Miasto z brukiem jako ostatnia dzielnica E4.

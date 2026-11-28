@@ -141,9 +141,12 @@ describe("the traffic lights a node on the road stands for (G-825 r3)", () => {
     const before: [string, number, number][] = [
       ["krakowskie-0-1", -105.1, 120.1],
       ["krakowskie-0-1", -104, 51.8],
-      ["podzamcze-2-0", 1058.8, 288.1],
-      ["nabrzeze-1-0", 2523.5, 261.4],
-      ["nabrzeze-0-1", 2485.3, 284.5],
+      // The street graph of Podzamcze and Nabrzeże (E4): 0.5 m on at Rondo Dmowskiego, and two by Rondo Cybulskiego and
+      // Turystyczna onto their nodes' other corners, as far from the poles on the orthophoto as before (the curator's
+      // review of E4, P8: the rule picks a corner by 0.1 m of pavement, G-993).
+      ["podzamcze-2-0", 1058.4, 287.8],
+      ["nabrzeze-1-0", 2541.8, 266.8],
+      ["nabrzeze-0-1", 2481.7, 302.3],
     ];
     const moved = before.filter(([chunk, x, z]) => {
       const rows = LUBLIN_PROP_TABLE[chunk]?.["traffic-signal"] ?? [];
