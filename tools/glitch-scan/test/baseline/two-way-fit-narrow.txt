@@ -1,2 +1,2 @@
 # two-way-fit-narrow: grid 1 m (x,z rounded); a count after the place is how many findings hold it
-podzamcze-1-2 728,740
+podzamcze-2-0 990,289

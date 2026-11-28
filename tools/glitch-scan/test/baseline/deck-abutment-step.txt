@@ -1,3 +1,6 @@
 # deck-abutment-step: grid 10 m (x,z = the square's corner at its least x and z)
+nabrzeze-0-1 2410,310
+nabrzeze-0-1 2410,320
+nabrzeze-0-1 2440,420
 podzamcze-2-0 1070,160
 stare-miasto-1-1 720,150
