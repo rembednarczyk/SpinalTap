@@ -1,3 +1,4 @@
 # bay-strip-sparse: grid 1 m (x,z rounded); a count after the place is how many findings hold it
 krakowskie-2-1 361,-7
 podzamcze-2-1 988,470
+stare-miasto-1-1 644,148

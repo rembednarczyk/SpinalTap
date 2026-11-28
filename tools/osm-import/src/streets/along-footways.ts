@@ -35,6 +35,18 @@ const INSIDE = 1;
 const PARALLEL = 0.9;
 /** How much farther a footway may lie when a mapped bay (a car park along the kerb, an asphalt area) lies between it and the carriageway (m): a perpendicular bay 5 m deep and its kerb. */
 const BAY = 6;
+/** The strip between a kerb and a footway is sampled across this often (m). */
+const ACROSS_STEP = 0.5;
+
+/** The share of the strip across from `from` to `to` m off a street's sample, on `side`, that is green. */
+const greenShare = (q: Sample, side: number, from: number, to: number, green: (p: Pt) => boolean): number => {
+  let [n, g] = [0, 0];
+  for (let d = from + ACROSS_STEP / 2; d < to; d += ACROSS_STEP) {
+    n++;
+    if (green({ x: q.x - side * q.tz * d, z: q.z + side * q.tx * d })) g++;
+  }
+  return n === 0 ? 0 : g / n;
+};
 /** The share of a footway's samples by a street. */
 export const SHARE = 0.6;
 /** The shortest footway laid as a sidewalk (m): a link of a few metres to a crossing is no sidewalk. */
@@ -75,7 +87,7 @@ const byPlace = (p: Pt, places: readonly { readonly ring: readonly Pt[]; readonl
  * (`placeRings`). A footway behind a mapped bay (`bayRings`: `parking=street_side` and the like,
  * laid as asphalt by the kerb) may lie `BAY` m farther out: the sidewalk runs behind the parked cars.
  */
-export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = [], bayRings: readonly (readonly Pt[])[] = []): Set<string> => {
+export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonly (readonly Pt[])[] = [], bayRings: readonly (readonly Pt[])[] = [], green: (p: Pt) => boolean = () => false): Set<string> => {
   const places = placeRings.map((ring) => ({ ring, box: ringBounds(ring) }));
   const bays = bayRings.map((ring) => ({ ring, box: ringBounds(ring) }));
   const inBay = (p: Pt) => bays.some(({ ring, box }) => p.x >= box.minX && p.x <= box.maxX && p.z >= box.minZ && p.z <= box.maxZ && pointInRing(p, ring));
@@ -98,9 +110,12 @@ export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonl
           const along = (p.x - q.x) * q.tx + (p.z - q.z) * q.tz;
           const across = Math.abs((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
           if (Math.abs(along) > STEP || across < q.half - INSIDE) continue;
-          if (across <= q.half + BEYOND) return true;
           // Behind a bay: the point halfway between the kerb and the footway lies in it.
           const side = Math.sign((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
+          // Behind a lawn it is a path of its own, not the street's sidewalk: most of the strip from the kerb to it green on the
+          // orthophoto (the curator's review of E4, P5 and round 2: Andersa's link, its path past a lawn; OSM's line lies 2-3 m off it).
+          if (greenShare(q, side, q.half, across, green) > 0.5) continue;
+          if (across <= q.half + BEYOND) return true;
           const mid = (q.half + across) / 2;
           if (across <= q.half + BEYOND + BAY && inBay({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) return true;
         }

@@ -12,7 +12,7 @@
  */
 import { type Carriageway, loadCarriageways } from "../../../gugik/src/extracts.ts";
 import { parseLength } from "../building-tags.ts";
-import { orthoWidth } from "../corrections-kerb.ts";
+import { orthoSides, orthoWidth } from "../corrections-kerb.ts";
 import { type Pt, lineLength } from "../geometry.ts";
 import { type Tags } from "../osm.ts";
 import { KERBS_CHECKED } from "./kerbs-checked.ts";
@@ -137,17 +137,21 @@ export const sourcedWidth = (
 export class WidthReport {
   private readonly length = new Map<WidthSource, number>();
   private readonly conflicts: string[] = [];
+  private readonly oneSide: string[] = [];
 
   /** A street's two sides, its length, and BDOT10k's width beside the orthophoto's where both are. */
   add(way: string, name: string, axis: readonly Pt[], sides: readonly [SideWidth, SideWidth], bdot: number | null, ortho: number | null): void {
     const len = lineLength(axis) / 2;
     for (const s of sides) this.length.set(s.source, (this.length.get(s.source) ?? 0) + len);
-    if (bdot !== null && ortho !== null && Math.abs(bdot - ortho) > CONFLICT) this.conflicts.push(`${way} ${name}: BDOT10k ${bdot} m, orthophoto ${ortho.toFixed(1)} m`);
+    // Only where the orthophoto measured both sides: a row of one side holds the import's estimate for the other, and 12 of
+    // the 20 conflicts on Podzamcze and Nabrzeże were BDOT10k against that half guess (the curator's review of E4, P6).
+    const both = orthoSides(way)?.every(Boolean) ?? false;
+    if (bdot !== null && ortho !== null && Math.abs(bdot - ortho) > CONFLICT) (both ? this.conflicts : this.oneSide).push(`${way} ${name}: BDOT10k ${bdot} m, orthophoto ${ortho.toFixed(1)} m`);
   }
 
   toString(): string {
     const total = [...this.length.values()].reduce((a, b) => a + b, 0) || 1;
     const by = (["osm", "bdot10k", "ortho", "fitted", "default"] as const).map((s) => `${s} ${((this.length.get(s) ?? 0) / 1000).toFixed(2)} km (${((100 * (this.length.get(s) ?? 0)) / total).toFixed(1)}%)`).join(", ");
-    return `street graph widths (ADR-0104 pkt 4), carriageway sides: ${by}; conflicts over ${CONFLICT} m: ${this.conflicts.length}${this.conflicts.length ? ` (${this.conflicts.slice(0, 20).join("; ")})` : ""}`;
+    return `street graph widths (ADR-0104 pkt 4), carriageway sides: ${by}; conflicts over ${CONFLICT} m: ${this.conflicts.length}${this.conflicts.length ? ` (${this.conflicts.join("; ")})` : ""}; against a one-sided measurement, not compared: ${this.oneSide.length}`;
   }
 }

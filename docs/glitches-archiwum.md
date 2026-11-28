@@ -2,6 +2,37 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-990 Wyrzucony z porwanego auta kierowca biega tam i z powrotem w zaułku przy chodniku
+- Ważność: S4 · Zasięg: porywanie aut (ADR-0097), m.in. Lubartowska przy (643; 506): zaułek między dwoma domami przy chodniku
+- Opis: Kierowca wybiera kierunek ucieczki co sekundę od nowa: pierwszy z pięciu (liczonych od osi auta) z 8 m wolnego. W zaułku ściana 8–11 m przed nim wchodziła w okno 8 m i z niego wychodziła, więc zawracał co sekundę i stał 10–12 m od auta (test vehicle-carjack na próbie E4: 12,9 m zamiast ponad 25). Wyszło przy E4, bo inny rozkład pasów daje testowi inne auto. Poprawka: kierunek trzymany, póki 1,5 m przed nim jest wolne; bez zawracania o ponad 120°, póki jest inne wyjście; gdy żaden z pięciu nie ma 8 m, 16 kierunków ocenianych wolnym miejscem i oddalaniem od auta (context steering, Reynolds flee).
+- Status: naprawione (27.11, #1095 scalony); wcześniej: w PR #1095; wcześniej: w naprawie (gałąź fix/g990-kierowca-z-zaulka)
+- Pakiet właściciela: packages/sim (world/vehicle/ejected-driver.ts)
+- Test przyjęcia: packages/sim/test/ejected-driver-pocket.test.ts
+
+### G-989 Pas dwupasowej jednokierunkowej ulicy kończy się przy skrzyżowaniu, gdy pas obok jedzie dalej
+- Ważność: S3 · Zasięg: ruch uliczny: Ruska przy Lwowskiej (1000; 461), Lubartowska przy Ruskiej (581; 361), Podzamcze na południu (1085; 603); na E4 także Podzamcze przy Ruskiej (1081; 448)
+- Opis: Skrzyżowanie łączy każdy koniec i każdy początek pasa raz, więc z dwóch pasów jednej ulicy, które wjeżdżają w jeden pas dalej, łączy się tylko jeden. Drugi kończy się przed skrzyżowaniem i jego auta stoją na końcu w widoku gracza (skan lane-dead-end; w OSM np. turn:lanes=merge_to_right|through na Podzamczu w233334279). Poprawka: zwężenie pasa (lane reduction transition, MUTCD 2009 §6C.08, stożek L = W·S²/155): trasa kończącego się pasa zmienia pas na sąsiedni przed końcem i jedzie dalej jego trasą (traffic-drops.ts). Wychodzi na wierzch przy E4 (graf ulic): Podzamcze przy Ruskiej dostało drugi pas z szerokości BDOT10k i zatrzymania w traffic-junction-drive wzrosły z 113 do 200.
+- Status: naprawione (27.11, #1093 scalony); wcześniej: w PR #1093; wcześniej: w naprawie (gałąź feat/zwezenie-pasa)
+- Pakiet właściciela: packages/sim (content/traffic-drops.ts)
+- Test przyjęcia: packages/sim/test/traffic-drops.test.ts
+- Klucze skanu: lane-dead-end podzamcze-2-1 1000,461; lane-dead-end podzamcze-0-0 581,361; lane-dead-end podzamcze-2-2 1085,603
+
+### G-983 Ławki OSM n6681995509–11 przy Lubartowskiej zdjęte przez drogę pijaka car_wash
+- Ważność: S4 · Zasięg: 3 ławki OSM przy (424; −30), krakowskie-2-0
+- Opis: Import stawia ławki na węzłach OSM, a clearOfGame zdejmuje je, bo odcinek drogi car_wash (contract-plans.ts) z (421; −29,8) do (441; −40) mija je w 0,10–0,93 m (KEEP_CLEAR). Na main jedna ławka stała 1,3 m od węzła i przeżyła. Poprawka: przeprowadzić drogę co najmniej 1,5 m od grupy (np. punkt ok. (427; −28,5)) albo nie zdejmować mebli z węzłem OSM. Przegląd kuratora E3, P6.
+- Status: naprawione (27.11, #1091 scalony); wcześniej: w PR #1091 (droga pijaka przez (424; −27,8) i (428; −27,5), test lubartowska-benches); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/contract-plans, street-props)
+- Test przyjęcia: WORLD_STREET_PROPS ma ławkę do 0,5 m od każdego z węzłów n6681995509–11
+- Klucze skanu: osm-furniture-missing krakowskie-2-0 424,-31; osm-furniture-missing krakowskie-2-0 425,-31; osm-furniture-missing krakowskie-2-0 424,-30
+
+### G-983 Ławki OSM n6681995509–11 przy Lubartowskiej zdjęte przez drogę pijaka car_wash
+- Ważność: S4 · Zasięg: 3 ławki OSM przy (424; −30), krakowskie-2-0
+- Opis: Import stawia ławki na węzłach OSM, a clearOfGame zdejmuje je, bo odcinek drogi car_wash (contract-plans.ts) z (421; −29,8) do (441; −40) mija je w 0,10–0,93 m (KEEP_CLEAR). Na main jedna ławka stała 1,3 m od węzła i przeżyła. Poprawka: przeprowadzić drogę co najmniej 1,5 m od grupy (np. punkt ok. (427; −28,5)) albo nie zdejmować mebli z węzłem OSM. Przegląd kuratora E3, P6.
+- Status: naprawione (27.11, #1091 scalony); wcześniej: zgłoszone
+- Pakiet właściciela: packages/sim (content/contract-plans, street-props)
+- Test przyjęcia: WORLD_STREET_PROPS ma ławkę do 0,5 m od każdego z węzłów n6681995509–11
+- Klucze skanu: osm-furniture-missing krakowskie-2-0 424,-31; osm-furniture-missing krakowskie-2-0 425,-31; osm-furniture-missing krakowskie-2-0 424,-30
+
 ### G-980 Przechodzień uciekający w ukośną fasadę przerzuca stronę skrętu
 - Status: naprawione (27.11, PR #1084: mapa bezpieczeństwa rozstrzyga remis skosów); wcześniej: zgłoszone (27.11, noc; blokowało włączenie grafu ulic E3, bo tam trafiają w to sceny `flee-wall` G-326)
 - Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, np. Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: średni do dużego

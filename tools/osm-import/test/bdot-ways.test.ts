@@ -30,6 +30,10 @@ describe("the ways BDOT10k measures (ADR-0104 pkt 4)", () => {
     expect(bdotWays([{ ...lubartowska, id: "other" }], new Set(["krakowskie"])).get("other")?.width).toBe(9);
   });
 
+  it("measures no bridge: its deck keeps its own width and the sidewalks mapped on it (Mełgiewska, ADR-0104 E4)", () => {
+    expect([...bdotWays([street("deck", { bridge: "yes" }), street("plain", {})], new Set(["krakowskie"])).keys()]).toEqual(["plain"]);
+  });
+
   it("measures none while the street graph is off", () => {
     expect(bdotWays([street("plain", {})], new Set()).size).toBe(0);
   });

@@ -121,12 +121,18 @@ const manholes = (site: Site, item: PlanItem): Placed[] =>
   });
 
 /** Things at the kerb along the roads, facing the road (cabinets): on the ground their cables run in, not on a bridge's deck. */
+/** A piece at the kerb keeps this far off a bridge's deck (m): half a cabinet. */
+const DECK_CLEAR = 0.5;
+
 const atKerb = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] =>
   roadStations(site, item.count ?? 0, item.id).flatMap(({ p, n, key }) => {
     const d = sideOffset(site, p, n, "kerb", 3);
     if (d === null) return [];
     const q = { x: p.x + n.x * (d + 0.5), z: p.z + n.z * (d + 0.5) };
-    return site.deckAt(q) === null ? [{ prop, p: q, yaw: yawOf(-n.x, -n.z), key }] : [];
+    // Clear of a deck by its footprint, not its middle only: at a bridge's end (2413.7; 311.5) a cabinet's middle 0.1 m off the
+    // deck, rounded onto it, stood on the deck's edge (E4).
+    const offDeck = [[0, 0], [DECK_CLEAR, 0], [-DECK_CLEAR, 0], [0, DECK_CLEAR], [0, -DECK_CLEAR]].every(([dx, dz]) => site.deckAt({ x: q.x + dx!, z: q.z + dz! }) === null);
+    return offDeck ? [{ prop, p: q, yaw: yawOf(-n.x, -n.z), key }] : [];
   });
 
 /** A bin beside every bus stop and then every bench with no bin within 30 m. */

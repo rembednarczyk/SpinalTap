@@ -110,10 +110,18 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     const west = ROAD_CHAINS.filter((c) => c.name === "Aleja Tysiąclecia" && projectOn(c.points, 912, 333).d < 3);
     expect(west).toHaveLength(1);
     expect(polylineLength(west[0]!.points)).toBeCloseTo(472, -1);
-    const near = (use: string, x: number, z: number) => TRAFFIC_ROUTES.some((r) => r.use === use && drives(r, "Aleja Tysiąclecia") && projectOn(r.points, x, z).d < 2);
-    expect(near("cars", 912, 333)).toBe(true);
-    expect(near("trolley", 912, 333)).toBe(true);
-    expect(near("trolley", 1000, 331)).toBe(true);
+    // On its carriageway, wherever its lanes lie across it: the street graph lays it by BDOT10k's width and axis
+    // (E4: 10.6 m, 2.1 m right of the OSM line), so its right lane, the trolleybus's, runs 3.8 m off the line.
+    const reach = Math.max(...west[0]!.half.flat());
+    const on = (use: string, x: number, z: number) => TRAFFIC_ROUTES.filter((r) => r.use === use && drives(r, "Aleja Tysiąclecia") && projectOn(r.points, x, z).d < reach);
+    expect(on("cars", 912, 333).length).toBeGreaterThan(0);
+    for (const [x, z] of [[912, 333], [1000, 331]] as const) {
+      const [trolley] = on("trolley", x, z);
+      expect(trolley, `${x},${z}`).toBeDefined();
+      // It drives a car lane of the carriageway, not a line of its own.
+      const q = pointAt(trolley!.points, projectOn(trolley!.points, x, z).s);
+      expect(on("cars", x, z).some((r) => projectOn(r.points, q.x, q.z).d < 0.3), `${x},${z}`).toBe(true);
+    }
   });
 
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {

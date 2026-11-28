@@ -108,11 +108,14 @@ describe("cars of a kerb car park by the furniture and the footway past its kerb
     }
   });
 
-  // Ciasna w227679486: 8 m deep on a slope by a bend, mapped without `orientation`: no car aslant the kerb is level there; the layout across it (`bayLayouts`) keeps one.
-  it("keep a car in Ciasna's deep strip, where only the layout across the kerb fits", () => {
+  // Ciasna w227679486: 8 m deep on a slope by a bend, mapped without `orientation`: no car aslant the kerb is level there. The
+  // ground falls 0.4-0.5 m across a bay, and a bay steeper than T-087's 0.15 m stays empty: on main one car stood in its one
+  // level bay, by the bays' phase along Ciasna's axis; with the street graph's axis (E4) the bays fall elsewhere and none is
+  // level (the user's decision of 28.11: the empty strip is T-087's, back with the cars' tilt, G-133). Any car it keeps stands
+  // across the kerb, wholly in the strip.
+  it("keep any car of Ciasna's deep strip across the kerb and wholly in it, none on its slope", () => {
     const ring = ringOf("w227679486");
     const cars = carsIn(ring);
-    expect(cars.length).toBeGreaterThanOrEqual(1);
     for (const c of cars) for (const q of corners(c, 0.1)) expect(inRing(q, ring), `${c.model} ${c.x},${c.z} corner`).toBe(true);
   });
 });

@@ -41,7 +41,9 @@ export const bdotWays = (lines: readonly Line[], districts = graphDistricts(), o
     // The map's as mapped (`osm`), not as corrected: the orthophoto's measure is written as `width:carriageway` too (Narutowicza's 9.2 m).
     const own = osm.get(l.id) ?? l.tags;
     // Nor a street the game closes to cars (T-324's deptak): off the street graph, laid as before, its setts out to the kerb of its bays.
-    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || !inside(l) || isCarFree(l.id) || parseLength(own.width ?? own["width:carriageway"]) !== null) continue;
+    // Nor a bridge: off the graph too, its deck laid as before with its sidewalks; BDOT10k's width over the deck dropped the
+    // sidewalks mapped on Mełgiewska's bridges as footways on the carriageway, and the deck had a slot (`deck-slot`, ADR-0104 E4).
+    if (!STREETS.has(l.tags.highway ?? "") || l.tags.area === "yes" || (l.tags.bridge !== undefined && l.tags.bridge !== "no") || !inside(l) || isCarFree(l.id) || parseLength(own.width ?? own["width:carriageway"]) !== null) continue;
     const checked = KERBS_CHECKED.get(l.id);
     if (checked) {
       out.set(l.id, { width: checked.width, offset: checked.offset });

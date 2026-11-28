@@ -1,0 +1,2 @@
+# furniture-in-car-lane: grid 1 m (x,z rounded); a count after the place is how many findings hold it
+podzamcze-1-2 860,603
