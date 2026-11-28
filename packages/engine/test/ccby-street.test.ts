@@ -66,8 +66,9 @@ describe("utility poles over the side streets (ADR-0063)", () => {
     expect(fitting.length).toBeGreaterThan(40);
     // Ciasna's lamp stood at (634.9; 538.0), its pole's arm in the wall, and stayed a lamp. The kerb
     // it keeps off runs round the street's bend since ADR-0078 step 2 (the band's round join), which
-    // moved it 0.2 m to (635.1; 538.1), clear of the wall: the pole fits there, the check below holds it.
-    const ciasna = poles.find((p) => Math.hypot(p.x - 635.1, p.z - 538.1) < 0.5);
+    // moved it 0.2 m to (635.1; 538.1), clear of the wall: the pole fits there, the check below holds it. The street graph's
+    // kerb of Ciasna (E4, 6 m measured on the orthophoto, T-363) takes it 0.6 m on, to (635.6; 538.5).
+    const ciasna = poles.find((p) => Math.hypot(p.x - 635.1, p.z - 538.1) < 1);
     expect(ciasna).toBeDefined();
     expect(poleFits(pole, ciasna!)).toBe(true);
     for (const p of fitting) {

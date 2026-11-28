@@ -383,7 +383,8 @@ export const graphBands = <B extends Band>(
   const replaced = new Set<Band>(mapped);
   const kept = bands.filter((b) => !replaced.has(b) && !(ways.has(b.source) && (b.carriageway || b.along || b.patch || b.slit || b.surface === "sidewalk")) && !b.bridge && inside(b.box));
   // What ranks over a sidewalk in the partition (`partitionGround`) and is not a street's: its pieces less it, or it cut them to hairs the rounding crosses over.
-  const over = join(...kept.filter((b) => OVER_WALKS.has(b.surface)).map((b) => areaOfRing(b.ring)));
+  // And the beds between the places: an island of the streets' ground laid whole took them in as paving too.
+  const over = join(...kept.filter((b) => OVER_WALKS.has(b.surface)).map((b) => areaOfRing(b.ring)), ...beds.map((b) => areaOfRing(b)));
   const laid: Boxed<B>[] = [];
   const add = (from: B, area: Area, more: Partial<Band>) => {
     const own = from.surface === "road" ? area : less(area, over);

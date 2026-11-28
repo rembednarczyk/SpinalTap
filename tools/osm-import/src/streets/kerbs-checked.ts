@@ -21,7 +21,7 @@ export const KERBS_CHECKED: ReadonlyMap<string, { readonly width: number; readon
   // BDOT10k 3.6 m (one lane) laid half the carriageway as a sidewalk, its posts on the road.
   ["w438384687", { width: 6.6, offset: -0.3, reason: "Kowalska east of the Brama Grodzka steps: two lanes between the kerb and the parking lane's line (T-362)" }],
   // Ciasna: 5 m between the wall and the kiosk at Lubartowska, the car park's aisle 7 m between the rows; BDOT10k 3 m on another line.
-  ["w227679341", { width: 6, offset: 0, reason: "Ciasna: the mouth between the walls and the car park's aisle (T-363)" }],
+  ["w227679341", { width: 6.4, offset: 0, reason: "Ciasna: the mouth between the walls (5 m) and the car park's aisle (7 m), as main laid it, room for the strip's car (T-363)" }],
   // Lubartowska by Probostwo: kerbs −5.2…+5.4 m round a double line on the axis; BDOT10k 8.7 m sat 1 m right of it.
   ["w215632413", { width: 10.6, offset: -0.1, reason: "Lubartowska by Probostwo: kerb to kerb (T-364)" }],
   // Aleja Unii Lubelskiej south of Rondo Dmowskiego: four lanes (OSM lanes=4, merge_to_left) −5.7…+8.7 m; BDOT10k 10.7 m is three.
