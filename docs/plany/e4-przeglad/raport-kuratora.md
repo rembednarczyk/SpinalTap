@@ -240,3 +240,141 @@ python3 -I tools/rejestry/rej.py g-note G-144 "Kurator E4 27.11: na grafie E4 go
 python3 -I tools/rejestry/rej.py g-note G-351 "Kurator E4 27.11: na grafie E4 pas dzielący al. Tysiąclecia x 625–735 ma nawierzchnię 2,5–2,7 m, ortofoto 2,5 m płyt między krawężnikami: do zamknięcia po włączeniu E4 (bariera osobno)."
 python3 -I tools/rejestry/rej.py g-note G-353 "Kurator E4 27.11: na grafie E4 x 625–735 chodnik z krawężnikiem przy jezdni; zostaje x 806–872 (T-173, przystanek)."
 ```
+
+## Runda 2 (28.11): po P1, P4, P5, P6
+
+Gałąź @ d2f1ed1f (72f9d118 i d2f1ed1f). Tablice próbne z drzewa roboczego, zbudowane 27.11 o 23:58, raport skanu `reports/glitch-scan.json`, diff wobec main `e4-diff3.txt` (suma 5501 → 4717). Ortofoto PZGiK 2025-04, dodatkowe 9 kafli HighResolution. Zrzuty w `.../scratchpad/topo-e4/img/`: `lp*.png` (próbki `lane-place-on-green`: żółte to chodnik, czerwone jezdnia), `ls*.png` (`lawn-strip-on-paving`), `kj-*.png`, `m-pdz*.png`, `m-mel.png`, `tys-bed2.png`.
+
+### Werdykt rundy 2: ZGODNE Z UWAGAMI, z 4 poprawkami przed scaleniem
+
+Wszystkie 9 wyjątków P1 działają w tablicach. Przekroje na stacjach z rundy 1 zgadzają się ze zdjęciem do 0,3 m:
+- Kowalska −2,8…+3,6;
+- Ciasna −2,9…+8,0 razem z rzędem aut;
+- Lubartowska −5,2…+5,4;
+- Unii Lubelskiej −5,6 do miejsc postojowych;
+- Turystyczna w210273909 −4,0…+4,8, w90972510 −5,0…+7,2;
+- Rondo Cybulskiego −8,2…+7,2;
+- łącznica Andersa 5,9 m;
+- Cerkiewna 9,7 m.
+
+Ze skanu zniknęły `two-way-fit-narrow` przy Kowalskiej i Ciasnej (zostaje Zamkowa, wierna) i 5 z 6 miejsc `furniture-in-car-lane` (zostaje drzewo przy Szkolnej).
+
+Nie działa P4: grządki przed Bazarem nadal leżą pod chodnikiem. Reguły P5 nie zdejmują chodnika z trawnika przy węźle Andersa ani przy łącznicy Ruskiej.
+
+### R2-P1. Grządki T-165 przed Bazarem nadal pod chodnikiem (przed scaleniem)
+- **Dowód:** w tablicach próbnych (670; 382,3), (662; 382,3) i (670; 382) to `sidewalk`, (705; 377,5) to `square`. Pas chodnika (x 659–684, z ok. 379,5–383,5) przykrywa całą rabatę. Na ortofoto w tym miejscu są krzewy i rabaty (`tys-bed2.png`). W obrębie x 655–720, z 370–392 nie ma ani jednego kawałka trawy (na main są). Test G-337 (`surfaceAt(670, 382.3) === "grass"`) powinien na tych tablicach padać. Jeśli przeszedł, to na innych tablicach.
+- **Przyczyna (z kodu):** `PLACE_HOLE_MAX` bierze dziury w sumie placów (`holesOf(join(placesOf))`). Rabata nie jest otoczona placami ze wszystkich stron: od południa graniczy z pasem chodnika ulicy, który do sumy placów nie należy. Dziury więc nie ma.
+- **Reguła poprawki:** obrysy grządek z korekt (`BEDS` z T-165 i T-285, a ogólnie `landuse=flowerbed` i grządki z `ADDED_AREAS`) wchodzą do `streetAreas` jako przeszkody, tak jak `greens`. Chodnik grafu kończy się na nich. Test: G-337 bez zmian. Kontrola `added-area-under-graph` z rundy 1 to złapie.
+
+### R2-P2. Chodnik z trawnikiem przy krawężniku: łącznica Ruskiej, Lwowska i węzeł Andersa (przed scaleniem, jedna reguła)
+- **Węzeł Andersa (2319,6; 310,9), 282 próbki `sidewalk`** (`lpA.png`):
+  - **Ortofoto:** za północno-zachodnim krawężnikiem łącznicy i Mełgiewskiej jest pas trawy 2,5–3 m, a za nim ciemna ścieżka asfaltowa.
+  - **OSM:** linia tej ścieżki, w231372275 (`highway=footway`), leży 2–3 m bliżej jezdni niż ścieżka na zdjęciu, czyli 1–1,5 m za krawężnikiem.
+  - **Skutek:** warunek P5 (`across − half > LAWN_GAP` 1,5 m) nie zachodzi i graf kładzie chodnik ulicy od krawężnika po linię OSM, na całym trawniku.
+- **Łącznica Ruskiej w216655518 (1060,8; 455,1), 43 próbki `sidewalk`** (`lpD.png`):
+  - **Ortofoto:** zewnętrzny łuk łącznicy ma trawę od samego krawężnika.
+  - **W grze:** pas chodnika 1–1,5 m na trawniku wzdłuż całego łuku. Tak samo po wschodniej stronie Lwowskiej przy (1084–1086; 425–431).
+  - **Tagi:** łącznica ma `sidewalk:right=separate`, a reguła z d2f1ed1f tu nie działa. Najpewniej `mappedWalk` znajduje drogę po tej stronie (przejście w227698429 albo chodnik w227698408 za trawnikiem), więc `m === null` nie zachodzi.
+- **Reguła poprawki (jedna dla obu):** o tym, czy między krawężnikiem a zmapowaną drogą (albo szerokością chodnika z szacunku) leży chodnik, decyduje zieleń ortofoto w samym pasie: udział próbek `green` co 0,5 m w paśmie od krawężnika do bliższej krawędzi drogi.
+  - Ponad 50% zieleni na odcinku co najmniej 5 m: pas to trawnik (`verge`), a droga to osobna ścieżka.
+  - Inaczej: chodnik jak dotąd.
+  - Pas ma decydować bez względu na odległość linii OSM i na tag `separate`: linia OSM ścieżki bywa przesunięta o 2–3 m, a jeden punkt w połowie odstępu tego nie łapie.
+  - Wzorzec: klasyfikacja pasa przekroju z pokrycia terenu (land cover), jak przy `vergeOf`, tylko zamiast jednej próbki udział na długości.
+- **Test:** (2325; 322), (2320; 318) i (1066; 444) to trawa, a ścieżka w231372275 jest `footway` na swojej linii.
+
+### R2-P3. BDOT10k bierze pas włączania do szerokości: Podzamcze przy Lwowskiej i Mełgiewska (przed scaleniem, wyjątki)
+- **Podzamcze w1282489910 i w233334279 (BDOT10k 10 m, 2 pasy), węzeł (1106,2; 519,2), 76 próbek `road`** (`lpC.png`, `m-pdz1.png`, `m-pdz2.png`):
+  - na północ od węzła są dwa pasy −3,8…+3,6, za zębami ustąp pierwszeństwa zaczyna się pas łącznicy Lwowskiej (osobna droga w40052351);
+  - na południe od węzła asfalt z betonową opaską −4,2…+4,8;
+  - BDOT10k liczy pas włączania do szerokości ulicy, przez co zachodnia krawędź gry leży 1–1,2 m na trawniku.
+- **Mełgiewska w931927880:**
+  - pomiar ortofoto obu stron daje 7,7 m (3,75 i 3,95), BDOT10k 9,5 m. To konflikt z listy rundy 2;
+  - na zdjęciu przy węźle Andersa −3,6…+4,2 (`m-mel.png`), w grze −4,6…+4,8;
+  - stąd rząd próbek `road on green` wzdłuż południowej krawędzi (2311–2330; 304–312) w `lpA.png`.
+- **Gotowe wpisy:**
+```ts
+  // Podzamcze north of Lwowska's link: two lanes −3.8…+3.6 m (zebra and the yield line); BDOT10k 10 m takes in the link's merging lane.
+  ["w1282489910", { width: 7.6, offset: 0, reason: "Podzamcze north of Lwowska's link: its two lanes (T-NNN)" }],
+  // Podzamcze south of it: the asphalt and its concrete edging −4.2…+4.8 m; BDOT10k 10 m laid the west kerb 1 m on the lawn.
+  ["w233334279", { width: 9, offset: -0.3, reason: "Podzamcze south of Lwowska's link: kerb to kerb (T-NNN)" }],
+  // Mełgiewska: the orthophoto's both sides 3.75/3.95 m, at Andersa's node −3.6…+4.2 m; BDOT10k 9.5 m.
+  ["w931927880", { width: 7.7, offset: -0.1, reason: "Mełgiewska: kerb to kerb as the orthophoto measures both sides (T-NNN)" }],
+```
+
+### R2-P4. Konflikty szerokości z pomiarem obu stron: 18, z czego 9 nieprzejrzanych na Podzamczu i Nabrzeżu (przed scaleniem)
+- Raport `WidthReport` z P6 (`e4-build3.log`) ma 18 konfliktów z pomiarem obu stron. W rundzie 1 lista była ucięta do 20 z 44 (`slice(0, 20)`), więc tych nikt nie oglądał.
+- Na Podzamczu i Nabrzeżu do przejrzenia według wzorca P1:
+  - w1004768546 Podzamcze (BDOT10k 13,3 wobec 5,2);
+  - w330086796 Rondo Mohyły (12,5 wobec 6,7);
+  - w384719820 Turystyczna (7,1 wobec 10,1);
+  - w364239030 Plac Zamkowy (9 wobec 11);
+  - w330086794 Rondo Dmowskiego (10,6 wobec 13,3);
+  - Lubartowska w263054588, w719381318 i w742414722 (10 wobec 8,8, 8,8 i 12,5);
+  - Grafa w225998474 i w229613172 (7 wobec 11,3 i 8,6).
+- Przejrzane: Mełgiewska (R2-P3); Andersa ×2 i Nowy Plac Targowy (BDOT10k zostaje, P1).
+- Krakowskie (3 Maja w300663402 i w757848901, Kapucyńska w470936350) to stan main, po scaleniu.
+- **Poprawka narzędzia:** `toString` wypisuje wszystkie konflikty do pliku obok tablic albo przynajmniej podaje, ile ucięto.
+
+### R2-P5. `lane-place-on-green`, pozostałe próbki (do przyjęcia)
+- **Węzeł Andersa (2362,8; 362,8), 38 `road` i 25 `sidewalk`** (`lpB.png`): jeden rząd próbek wzdłuż krawędzi łącznicy i wschodniej krawędzi Andersa. Na zdjęciu asfalt styka się z trawą bez opaski, a krawędź gry leży do 0,5 m od krawędzi asfaltu: tyle wynosi komórka pokrycia.
+- **Lwowska zachodnia (1122,5; 396,6), 45 `sidewalk`** (`lpE.png`): jedna kolumna przy krawędzi. Na zdjęciu betonowa opaska ok. 0,3 m, w grze wąski pas chodnika na niej. Wierne co do 0,3 m.
+- **Ruska (1060,8; 455,1), 19 `road`** (x 1058–1068, z 457–463): rząd przy krawężniku północnym. Taki sam przypadek.
+- **Al. Solidarności (538,0; 391,3), 19 `road`** (`lpF.png`):
+  - jezdnia łącznicy w60149306 (BDOT10k 10 m przy 2 pasach) wchodzi ok. 1–1,5 m na czubek trawiastej wysepki (520–524; 387,5–389,5), ok. 4 m²;
+  - na main był tam trawnik i plac;
+  - to prawdziwe, drobne odstępstwo: do pomiaru po scaleniu.
+- **Jak kontrola liczy pasy:** pasy jezdni czyta z linii i szerokości mapy (`roadWidth`, `ORTHO_OFFSETS`), bez szerokości i przesunięć z BDOT10k i `KERBS_CHECKED`. Każda ulica grafu przesunięta przez BDOT10k daje więc rząd próbek na krawędzi, nawet gdy krawężnik leży na krawędzi asfaltu.
+- **Poprawka kontroli (po scaleniu):** brać pasy z grafu (`withBdot`) i margines jednej komórki pokrycia plus zaokrąglenie obrysów (0,75 m).
+
+### R2-P6. `lawn-strip-on-paving` 1 → 20 kluczy
+- **nabrzeze-1-1, Turystyczna w90972510, 48 próbek** (2553–2567; 290–302), (2546–2547; 272–273) (`lsA.png`):
+  - nowe po wyjątku P1;
+  - na zdjęciu między krawężnikiem a trawą biegnie jasna betonowa opaska 0,6–1,2 m, a w grze trawnik zaczyna się od krawężnika;
+  - prawdziwe, drobne odstępstwo;
+  - reguła: trawnik (`vergeOf`) zaczyna się tam, gdzie ortofoto przechodzi w zieleń, a pas kostki albo betonu przy krawężniku szerszy niż 0,5 m to `square`;
+  - po scaleniu, glitch S4.
+- **podzamcze-2-1 (1077–1078; 492–499), 17 próbek** (`lsB.png`): szary pas 1–2 m za krawędzią jezdni gry przy zebrze leży w grze jako trawa. Drobne, ok. 4 m², ta sama reguła. Po scaleniu.
+- **podzamcze-1-2 (813–815; 747–758), 13 próbek** (`lsC.png`): wjazd z kostki do bramy (813–815; 749–751) przykryty trawą, do tego kolumna przy krawędzi. Drobne, ok. 3 m², po scaleniu.
+- **podzamcze-2-2 (1073; 622–631), 11 próbek** (`lsD.png`): jedna kolumna na krawędzi ścieżki z kostki i trawnika. Szum, do przyjęcia.
+- **Pozostałe 1–4 próbki w kluczu** (podzamcze-2-0 960,350 i 1060,350, podzamcze-2-2 1070,730, nabrzeze-0-1 2390,330, 2390,440 i 2470,280, nabrzeze-1-0 2640,250, nabrzeze-1-1 2600,290, 2610,310 i 2550,280): pojedyncze komórki 0,6–3,3 m od krawężnika. Na ortofoto ich nie oglądałem. Do przyjęcia jako szum pokrycia, z kluczami w glitchu zbiorczym.
+- Miejsca nabrzeze-1-1 (2550–2554; 362–365) i nabrzeze-0-1 (2341–2345; 337–341) z wiadomości orkiestratora nie występują w `reports/glitch-scan.json` rundy 2. Klucze nabrzeze-1-1 leżą na z 270–310, a w nabrzeze-0-1 próbki są na (2391; 330) i (2399; 448).
+
+### R2-P7. `kerb-jag` 20 → 34 (do przyjęcia jako G-982)
+- 31 kluczy to te same co w rundzie 1 (przyjęte jako klasa G-982). 8 kluczy rundy 1 zniknęło po wyjątkach P1: Rondo Cybulskiego, Turystyczna ×3, Kowalska przy (520; 180), Unii (1050; 280) i dwa przy G-845 (930; 460–480).
+- Nowe po P1 są 3 (`kj-*.png`), wszystkie to zygzaki 0,22–0,31 m na narożniku przy drodze z wyjątkiem:
+  - (617,4; 467,8) Lubartowska z Probostwem;
+  - (629,3; 541,1) Ciasna na załamaniu przy kamienicy, pod pochyleniem dachu;
+  - (1057,8; 267,9) Unii Lubelskiej przy zebrze n1739182823.
+- Klasa G-982 (narożnik grafu przy przesuniętej osi), do przyjęcia z kluczami w G-982.
+
+### Lista do przyjęcia (`GLITCH_BASELINE=accept`)
+- `kerb-jag`, 34 klucze: klasa G-982. Zygzaki 0,1–0,9 m na narożnikach grafu przy osi przesuniętej przez BDOT10k albo `KERBS_CHECKED`, klucze do G-982.
+- `lane-place-on-green`:
+  - nabrzeze-0-1 2350–2370 × 350–380 (7 kluczy), podzamcze-2-1 1110–1120 × 390–430 (4), podzamcze-2-1 1050–1070 × 460–470 (2): jeden rząd komórek pokrycia na krawędzi asfaltu. Kontrola czyta pasy z mapy bez BDOT10k, krawężnik gry leży do 0,5 m od zdjęcia;
+  - podzamcze-0-1 520–530 × 380–400 (2): czubek wysepki Al. Solidarności, ok. 4 m², do pomiaru po scaleniu.
+- `lawn-strip-on-paving`, pojedyncze komórki (podzamcze-2-2 1070,620 i 1070,630 oraz 10 kluczy z R2-P6): szum pokrycia na krawędzi ścieżki albo opaski, do glitcha zbiorczego.
+- `two-way-fit-narrow` Zamkowa (990; 289): wierna, ciąg pieszo-jezdny 3,2–3,5 m na ortofoto (P3).
+- Z rundy 1 bez zmian: `paving-coplanar`, `lit-street-dark`, `lamp-beside-deck` (P7) oraz `deck-abutment-step`, `bus-stop-on-fill` i sygnalizatory, które mają już glitche G-991–G-994.
+
+### Lista poprawek przed scaleniem
+1. **R2-P1:** grządki T-165 jako przeszkody w `streetAreas`. Miejsce: x 659–715, z 373–385, testy G-337.
+2. **R2-P2:** chodnik ulicy tylko tam, gdzie pas między krawężnikiem a drogą nie jest w ponad 50% zielenią ortofoto. Miejsca: węzeł Andersa (2311–2341; 313–331), łącznica Ruskiej (1061–1073; 433–446), Lwowska wschodnia (1084–1086; 425–431). Klucze `lane-place-on-green` nabrzeze-0-1 2310–2350 × 300–340 i podzamcze-2-1 1060–1090 × 420–460 znikają.
+3. **R2-P3:** wyjątki w1282489910 (7.6 / 0), w233334279 (9 / −0.3) i w931927880 (7.7 / −0.1) z wierszami T. Klucze podzamcze-2-1 1100–1110 × 510–530 i rząd przy Mełgiewskiej znikają.
+4. **R2-P4:** przejrzeć 9 konfliktów z pomiarem obu stron na Podzamczu i Nabrzeżu. Raport szerokości bez ucinania listy.
+
+### Lista po scaleniu
+- Opaska betonowa przy krawężniku jako `square`, gdy ma ponad 0,5 m (Turystyczna w90972510, przy zebrze (1077; 495), wjazd (813–815; 749–751)): glitch S4.
+- Czubek wysepki Al. Solidarności (520–524; 387,5–389,5): pomiar łącznicy w60149306.
+- Kontrola `lane-place-on-green` z pasami grafu (`withBdot`) i marginesem 0,75 m.
+- Szkolna w335644107 (drzewo (860; 603), asfalt ok. 10 m wobec 5,4 m w grze): pomiar i wyjątek (P1 rundy 1).
+- Konflikty Krakowskiego z pomiarem obu stron (3 Maja ×2, Kapucyńska) i 3 Maja w186145292 (P11).
+
+### Polecenia rejestrów rundy 2 (wykonuje orkiestrator)
+```
+python3 -I tools/rejestry/rej.py t-new "Podzamcze, ul. Podzamcze w1282489910 na północ od łącznicy Lwowskiej (1106–1116; 492–519)" "jezdnia 7,6 m na osi OSM (KERBS_CHECKED), zamiast BDOT10k 10 m" "ortofoto PZGiK 2025-04: dwa pasy −3,8…+3,6 m od osi przy zebrze i linii ustąp pierwszeństwa; za nią pas łącznicy w40052351 (osobna droga); BDOT10k liczy go do szerokości" "geometria (jezdnia)" "celowe: sprawdzony spór danych (decyzja 27.11, wzorzec T-360), przegląd kuratora E4 runda 2, R2-P3"
+python3 -I tools/rejestry/rej.py t-new "Podzamcze, ul. Podzamcze w233334279 na południe od łącznicy Lwowskiej (1091–1106; 519–575)" "jezdnia 9 m, środek 0,3 m na prawo od osi (KERBS_CHECKED), zamiast BDOT10k 10 m" "ortofoto PZGiK 2025-04: asfalt z betonową opaską −4,2…+4,8 m od osi; z BDOT10k zachodni krawężnik 1–1,2 m na trawniku (lane-place-on-green, 76 próbek)" "geometria (jezdnia)" "celowe: sprawdzony spór danych (decyzja 27.11, wzorzec T-360), przegląd kuratora E4 runda 2, R2-P3"
+python3 -I tools/rejestry/rej.py t-new "Nabrzeże, Mełgiewska w931927880 przy węźle Andersa (2300–2368; 290–320)" "jezdnia 7,7 m, środek 0,1 m na prawo od osi (KERBS_CHECKED), zamiast BDOT10k 9,5 m" "ortofoto PZGiK 2025-04: pomiar obu stron 3,75 i 3,95 m, przy węźle −3,6…+4,2 m; z BDOT10k południowa krawędź do 1 m na trawniku" "geometria (jezdnia)" "celowe: sprawdzony spór danych (decyzja 27.11, wzorzec T-360), przegląd kuratora E4 runda 2, R2-P3"
+python3 -I tools/rejestry/rej.py g-new "Opaska betonowa przy krawężniku ulic grafu leży jako trawnik" --waznosc S4 --zasieg "Turystyczna w90972510 (2546–2567; 272–302), (1077–1078; 492–499), wjazd (813–815; 747–751)" --opis "Na ortofoto PZGiK 2025-04 między krawężnikiem a trawą jest jasna opaska z betonu albo kostki 0,6–2 m; graf E4 kładzie trawnik (vergeOf) od samego krawężnika. Reguła: trawnik od miejsca, gdzie ortofoto przechodzi w zieleń, pas kostki szerszy niż 0,5 m jako square. Przegląd kuratora E4, runda 2, R2-P6." --status zgłoszone --pakiet "tools/osm-import (streets/graph-bands)" --klucze "lawn-strip-on-paving nabrzeze-1-1 2540..2550,270..280; lawn-strip-on-paving nabrzeze-1-1 2550..2560,290..300; lawn-strip-on-paving nabrzeze-1-1 2560..2570,290..300; lawn-strip-on-paving nabrzeze-1-1 2560..2570,300..310; lawn-strip-on-paving podzamcze-2-1 1070..1080,490..500; lawn-strip-on-paving podzamcze-1-2 810..820,740..750; lawn-strip-on-paving podzamcze-1-2 810..820,750..760"
+python3 -I tools/rejestry/rej.py g-new "Łącznica Al. Solidarności w60149306 na czubku trawiastej wysepki" --waznosc S4 --zasieg "(520–524; 387,5–389,5), ok. 4 m², podzamcze-0-1" --opis "BDOT10k 10 m przy łącznicy dwupasowej: jezdnia grafu E4 wchodzi 1–1,5 m na wysepkę z trawą (ortofoto 2025-04); na main trawa i plac. Do pomiaru łącznicy i wyjątku KERBS_CHECKED. Przegląd kuratora E4, runda 2, R2-P5." --status zgłoszone --pakiet "tools/osm-import (streets)" --klucze "lane-place-on-green podzamcze-0-1 520..530,380..390; lane-place-on-green podzamcze-0-1 520..530,390..400"
+python3 -I tools/rejestry/rej.py g-note G-982 "Kurator E4 r2 28.11: klasa obejmuje 34 klucze kerb-jag Podzamcza i Nabrzeża na grafie E4, w tym 3 nowe po wyjątkach KERBS_CHECKED (617,4; 467,8), (629,3; 541,1), (1057,8; 267,9), 0,22–0,31 m."
+```

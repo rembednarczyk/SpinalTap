@@ -35,8 +35,18 @@ const INSIDE = 1;
 const PARALLEL = 0.9;
 /** How much farther a footway may lie when a mapped bay (a car park along the kerb, an asphalt area) lies between it and the carriageway (m): a perpendicular bay 5 m deep and its kerb. */
 const BAY = 6;
-/** A footway farther than this past the kerb with a lawn between them is a path of its own (m). */
-const LAWN_GAP = 1.5;
+/** The strip between a kerb and a footway is sampled across this often (m). */
+const ACROSS_STEP = 0.5;
+
+/** The share of the strip across from `from` to `to` m off a street's sample, on `side`, that is green. */
+const greenShare = (q: Sample, side: number, from: number, to: number, green: (p: Pt) => boolean): number => {
+  let [n, g] = [0, 0];
+  for (let d = from + ACROSS_STEP / 2; d < to; d += ACROSS_STEP) {
+    n++;
+    if (green({ x: q.x - side * q.tz * d, z: q.z + side * q.tx * d })) g++;
+  }
+  return n === 0 ? 0 : g / n;
+};
 /** The share of a footway's samples by a street. */
 export const SHARE = 0.6;
 /** The shortest footway laid as a sidewalk (m): a link of a few metres to a crossing is no sidewalk. */
@@ -102,11 +112,11 @@ export const footwaysAlongStreets = (lines: readonly Line[], placeRings: readonl
           if (Math.abs(along) > STEP || across < q.half - INSIDE) continue;
           // Behind a bay: the point halfway between the kerb and the footway lies in it.
           const side = Math.sign((p.z - q.z) * q.tx - (p.x - q.x) * q.tz);
-          const mid = (q.half + across) / 2;
-          // Behind a lawn more than `LAWN_GAP` wide it is a path of its own, not the street's sidewalk (the curator's review of E4, P5:
-          // Andersa's link, a winding path 2 m past its kerb, laid as the street's sidewalk over the lawn).
-          if (across - q.half > LAWN_GAP && green({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) continue;
+          // Behind a lawn it is a path of its own, not the street's sidewalk: most of the strip from the kerb to it green on the
+          // orthophoto (the curator's review of E4, P5 and round 2: Andersa's link, its path past a lawn; OSM's line lies 2-3 m off it).
+          if (greenShare(q, side, q.half, across, green) > 0.5) continue;
           if (across <= q.half + BEYOND) return true;
+          const mid = (q.half + across) / 2;
           if (across <= q.half + BEYOND + BAY && inBay({ x: q.x - side * q.tz * mid, z: q.z + side * q.tx * mid })) return true;
         }
     return false;

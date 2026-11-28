@@ -36,4 +36,9 @@ export const KERBS_CHECKED: ReadonlyMap<string, { readonly width: number; readon
   ["w40051729", { width: 6, offset: -0.2, reason: "Andersa's link to Mełgiewska: the link's asphalt (T-369)" }],
   // Cerkiewna's northern branch: 9.8 m at z 355, 11.2 m in the mouth at the zebra (z 348); BDOT10k 8 m.
   ["w739432830", { width: 9.8, offset: -0.2, reason: "Cerkiewna's northern branch: kerb to kerb (T-370)" }],
+  // Round 2 of the review (P2 r2): Podzamcze north of the Lwowska link, 7.6 m on the photo where BDOT10k's 10 m took in the
+  // merging lane; south of it 9 m; Mełgiewska by Andersa's node 7.7 m on both sides where BDOT10k has 9.5 m.
+  ["w1282489910", { width: 7.6, offset: 0, reason: "Podzamcze north of the Lwowska link: kerb to kerb (T-372)" }],
+  ["w233334279", { width: 9, offset: -0.3, reason: "Podzamcze south of the Lwowska link: kerb to kerb (T-373)" }],
+  ["w931927880", { width: 7.7, offset: -0.1, reason: "Mełgiewska by Andersa's node: kerb to kerb (T-374)" }],
 ]);

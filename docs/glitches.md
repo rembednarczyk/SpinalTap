@@ -15,6 +15,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: skrzyżowanie trzech ulic, jedna z osią jezdni przesuniętą o 2,2 m: krawężnik bez zygzaka ponad 0,1 m (jak `jags` w `street-ground.test.ts`); miejsca znikają z bazy `kerb-jag`.
 - Kurator 27.11: T-360 usuwa miejsce Lubartowska z Bajkowskiego (kerb-jag krakowskie-2-0 430..440,-30..-20).
 - Próba 27.11 noc (gałąź fix/g982-rampa-w-skrzyzowaniu, 6bf7b502, bez PR): rampa stron także dla par odcinków idących prosto przez skrzyżowanie zdejmuje jedno miejsce (krakowskie-1-1 190,80), ale dodaje 3 kerb-gap-bare (krakowskie-1-1 200..210,20..30 i 190..200,90..100, krakowskie-2-1 390..400,40..50); miejsca z wpisu zostają. Plac Wolności z Bernardyńską to inny układ: krótki łącznik w1054482135 (6,2 m, prawa strona 4,84 m z BDOT10k) skręca w Bernardyńską o ok. 30°, na progu STRAIGHT_ON, więc idzie gałęzią narożnika bez rampy stron; dodanie tam rampy psuje test Lubartowskiej z Olejną i nie usuwa zygzaka w teście syntetycznym. Kandydat: rampa stron przed zaokrągleniem narożnika (najpierw ramp, potem domknięcie w dysku), z testem narożnika Olejnej jako ograniczeniem.
+- Kurator E4 r2 28.11: klasa obejmuje 34 klucze kerb-jag Podzamcza i Nabrzeża na grafie E4, w tym 3 nowe po wyjątkach KERBS_CHECKED (617,4; 467,8), (629,3; 541,1), (1057,8; 267,9), 0,22–0,31 m.
 ### G-981 Przechodzień z trasy tłumu przy ukośnej fasadzie nadal przerzuca stronę skrętu (pozostałość G-980)
 - Status: zgłoszone (27.11)
 - Ważność: S3 · Zasięg: ucieczki przy fasadach ukośnych do kierunku „od gracza”, gdy przechodzień startuje kilka dziesiątych metra od punktu testu G-980; Krakowskie Przedmieście przy (275,4; −123,9) · Koszt: duży
@@ -2285,6 +2286,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Opis: Pas ukośnych linii za prawą linią krawędziową w184191188 to na ortofoto 2025-04 asfalt w poziomie jezdni; E4 kładzie sidewalk (krawężnik 0,16 m), main square. Przegląd kuratora E4, P10.
 - Status: zgłoszone
 - Pakiet właściciela: tools/osm-import
+
+### G-995 Opaska betonowa przy krawężniku ulic grafu leży jako trawnik
+- Ważność: S4 · Zasięg: Turystyczna w90972510 (2546–2567; 272–302), (1077–1078; 492–499), wjazd (813–815; 747–751)
+- Opis: Na ortofoto PZGiK 2025-04 między krawężnikiem a trawą jest jasna opaska z betonu albo kostki 0,6–2 m; graf E4 kładzie trawnik (vergeOf) od samego krawężnika. Reguła: trawnik od miejsca, gdzie ortofoto przechodzi w zieleń, pas kostki szerszy niż 0,5 m jako square. Przegląd kuratora E4, runda 2, R2-P6.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets/graph-bands)
+- Miejsca skanu (komórki 10 m): lawn-strip-on-paving nabrzeze-1-1 2540..2550,270..280; 2550..2560,290..300; 2560..2570,290..300; 2560..2570,300..310; podzamcze-2-1 1070..1080,490..500; podzamcze-1-2 810..820,740..750; 810..820,750..760.
+
+### G-996 Łącznica Al. Solidarności w60149306 na czubku trawiastej wysepki
+- Ważność: S4 · Zasięg: (520–524; 387,5–389,5), ok. 4 m², podzamcze-0-1
+- Opis: BDOT10k 10 m przy łącznicy dwupasowej: jezdnia grafu E4 wchodzi 1–1,5 m na wysepkę z trawą (ortofoto 2025-04); na main trawa i plac. Do pomiaru łącznicy i wyjątku KERBS_CHECKED. Przegląd kuratora E4, runda 2, R2-P5.
+- Status: zgłoszone
+- Pakiet właściciela: tools/osm-import (streets)
+- Miejsca skanu (komórki 10 m): lane-place-on-green podzamcze-0-1 520..530,380..390 i 520..530,390..400.
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: zgłoszone (weryfikator ADR-0057, 1.11)

@@ -48,8 +48,12 @@ export const builtGraphDistricts = (chunks: readonly { readonly district: { read
  * rest. ADR-0080 had 6 m by the main streets; a fillet reaches r / tan(θ / 2) along each kerb, and at
  * the city's acute corners (30-45°) 6 m flooded 15-22 m of the corner with asphalt (ADR-0104 E2).
  */
+/** A sidewalk by type, where neither the tags nor a mapped way give one (m). */
+const WALK_BY_TYPE = 2.5;
 /** A hole between the places smaller than this is theirs, kept off the sidewalks (m²): a bed between two pavements, not a block. */
 const PLACE_HOLE_MAX = 500;
+/** The seams between places closed before their holes are read (m). */
+const PLACE_SEAM = 0.3;
 
 export const kerbRadius = (highway: string): number => (highway.startsWith("primary") || highway.startsWith("secondary") ? 4 : 3);
 
@@ -253,6 +257,16 @@ const coverReads = <B extends Band>(bands: readonly Boxed<B>[], inside: (box: Re
     const ps = probes(offsetLine(axis, side * off));
     return ps.filter((p) => cover(p) === COVER.paving).length * 2 > ps.length;
   };
+  // The share of the strip from `from` to `to` m off an axis that is green, on lines every `VERGE_STEP`.
+  const greenStrip = (axis: readonly Pt[], from: number, to: number, side: 1 | -1): number => {
+    let [n, g] = [0, 0];
+    for (let d = from + VERGE_STEP / 2; d < to; d += VERGE_STEP) {
+      const ps = probes(offsetLine(axis, side * d));
+      n += ps.length;
+      g += ps.filter(green).length;
+    }
+    return n === 0 ? 0 : g / n;
+  };
   const vergeOf = (axis: readonly Pt[], kerb: number, side: 1 | -1): number => {
     const ws: number[] = [];
     for (let i = 0; i + 1 < axis.length; i++) {
@@ -271,7 +285,7 @@ const coverReads = <B extends Band>(bands: readonly Boxed<B>[], inside: (box: Re
     const w = median(ws) ?? 0;
     return w < VERGE_MIN ? 0 : w;
   };
-  return { greens, vergeAt, pavedAt, vergeOf };
+  return { greens, vergeAt, pavedAt, vergeOf, greenStrip };
 };
 
 /** The bands with the districts' streets laid from the street graph (see the head of the file). */
@@ -313,7 +327,7 @@ export const graphBands = <B extends Band>(
   // A side's kerb and sidewalk: by the tags; else to the mapped sidewalk, its asphalt out to it where
   // the street's width is the estimate and the gap a lane's (G-570, T-247: a parking lane or a bay);
   // else the sidewalk by type.
-  const { greens, vergeAt, pavedAt, vergeOf } = coverReads(bands, inside, cover);
+  const { greens, vergeAt, pavedAt, vergeOf, greenStrip } = coverReads(bands, inside, cover);
   // Whether along most of a side another street's carriageway lies within `MEDIAN` m past the kerb (probed 1, 2.5, 4 and 6 m out).
   const medianAt = (way: string, axis: readonly Pt[], kerb: number, side: 1 | -1): boolean => {
     const other = (p: Pt) => streets.some((o) => o.source !== way && p.x >= o.box.minX && p.x <= o.box.maxX && p.z >= o.box.minZ && p.z <= o.box.maxZ && pointInRing(p, o.ring));
@@ -336,14 +350,10 @@ export const graphBands = <B extends Band>(
     const m = mappedWalk(axis, half, side, mappedWays);
     // A median: another carriageway close past the kerb (a dual road's other half), no sidewalk by type there.
     if (m === null && medianAt(b.source, axis, half, side)) return { kerb: half, verge: 0, walk: 0 };
-    // OSM's `sidewalk:*=separate` with no way of it by the kerb: the sidewalk is a path of its own past a lawn, laid as one
-    // (`footwaysAlongStreets`), not one by type at the kerb over the lawn (Andersa's link, the curator's review of E4, P5).
-    // Where the orthophoto shows paving at the kerb, the sidewalk by type stays: the path's own paving reaches it.
-    if (m === null && sideTag(tags.get(b.source)!, side) === "separate") {
-      const verge = vergeOf(axis, half, side);
-      if (verge > 0) return { kerb: half, verge, walk: 0 };
-    }
-    if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: 2.5 };
+    // No way of it by the kerb and most of a sidewalk by type's strip green on the orthophoto: a lawn by the kerb, any path past it
+    // laid as its own (`footwaysAlongStreets`), not a sidewalk by type over the lawn (Andersa's link, the curator's review of E4, P5 r2).
+    if (m === null && greenStrip(axis, half, half + WALK_BY_TYPE, side) > 0.5) return { kerb: half, verge: 0, walk: 0 };
+    if (m === null) return { kerb: half, verge: vergeOf(axis, half, side), walk: WALK_BY_TYPE };
     if (m.near < ROAD_GAP) return { kerb: half, verge: 0, walk: m.far };
     // A green gap is a verge; a wider one than `GAP` too (ADR-0080: past `KERB_REACH`, no lane's
     // asphalt), but for one the orthophoto shows paved: the sidewalk reaches the kerb across it, or its
@@ -366,7 +376,8 @@ export const graphBands = <B extends Band>(
   // The small holes the places leave between them, left out of their ground on purpose: the beds of shrubs between
   // T-165's pavement of al. Tysiąclecia and the strip under the Bazar's eaves, which the bare ground rule lays as
   // lawns. A sidewalk stops at them as at the places (the curator's review of E4, P4): it laid its slabs over the beds.
-  const beds = holesOf(join(...placesOf.map((r) => areaOfRing(r)))).filter((h) => Math.abs(signedArea(h)) < PLACE_HOLE_MAX);
+  // Closed by `PLACE_SEAM` first: the two areas round a bed meet along it a few centimetres apart, which left it open.
+  const beds = holesOf(grown(grown(join(...placesOf.map((r) => areaOfRing(r))), PLACE_SEAM), -PLACE_SEAM)).filter((h) => Math.abs(signedArea(h)) < PLACE_HOLE_MAX);
   const areas = streetAreas(edges, [...near, ...greens.map((g) => g.ring), ...placesOf, ...beds], join(...mapped.map((m) => areaOfRing(m.ring))));
   // The old bands of those streets and mapped sidewalks: only outside the districts, cut at their edge.
   const replaced = new Set<Band>(mapped);

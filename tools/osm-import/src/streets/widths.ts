@@ -152,6 +152,6 @@ export class WidthReport {
   toString(): string {
     const total = [...this.length.values()].reduce((a, b) => a + b, 0) || 1;
     const by = (["osm", "bdot10k", "ortho", "fitted", "default"] as const).map((s) => `${s} ${((this.length.get(s) ?? 0) / 1000).toFixed(2)} km (${((100 * (this.length.get(s) ?? 0)) / total).toFixed(1)}%)`).join(", ");
-    return `street graph widths (ADR-0104 pkt 4), carriageway sides: ${by}; conflicts over ${CONFLICT} m: ${this.conflicts.length}${this.conflicts.length ? ` (${this.conflicts.slice(0, 20).join("; ")})` : ""}; against a one-sided measurement, not compared: ${this.oneSide.length}`;
+    return `street graph widths (ADR-0104 pkt 4), carriageway sides: ${by}; conflicts over ${CONFLICT} m: ${this.conflicts.length}${this.conflicts.length ? ` (${this.conflicts.join("; ")})` : ""}; against a one-sided measurement, not compared: ${this.oneSide.length}`;
   }
 }

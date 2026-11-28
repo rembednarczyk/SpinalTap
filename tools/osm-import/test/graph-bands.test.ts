@@ -83,7 +83,7 @@ describe("a street's sidewalk at a facade with a doorway's niche (door-floating)
   });
 });
 
-describe("a sidewalk mapped on its own past a lawn (`sidewalk:*=separate`, the curator's review of E4, P5)", () => {
+describe("a lawn by the kerb with its path past it (the curator's review of E4, P5 and round 2)", () => {
   // Andersa's link w40051729: `sidewalk:right=separate`, its path winding 2 m and more past the kerb beyond a lawn.
   const sep: Line[] = [
     { id: "w1", osmId: 1, tags: { highway: "residential", "sidewalk:left": "separate", "sidewalk:right": "no" }, line: axis },
