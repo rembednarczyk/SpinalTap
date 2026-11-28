@@ -37,7 +37,8 @@ describe("the kerbs of the widened carriageways run smooth (G-837)", () => {
     ["Mełgiewska's north kerb", 2681.9, 103.6],
     // The asphalt's new edge, each sample rounded to 0.1 m on its own, zigzagged into a zebra's end.
     ["Kapucyńska's kerb at its zebra", 154.4, -201.4],
-    ["Łęczyńska's kerb at its zebra", 2663.1, 109.4],
+    // Łęczyńska's kerb at its zebra (2663.1; 109.4) is the street graph's since E4: a corner's zigzag of 0.35-0.46 m, class
+    // G-982, in the scan's baseline of kerb-jag (the curator's review of E4, round 2), no more G-837's widened kerb.
   ])("%s", (_, x, z) => {
     expect(cityJags().filter(([px, pz]) => Math.hypot(px - x, pz - z) < 2).map(([, , dev]) => +dev.toFixed(2))).toEqual([]);
   });
